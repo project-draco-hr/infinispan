@@ -1,0 +1,16 @@
+{
+  if (!cacheEntryLoadedListeners.isEmpty()) {
+    boolean originLocal=ctx.isOriginLocal();
+    Transaction tx=ctx.getTransaction();
+    InvocationContext backup=resetInvocationContext(ctx);
+    EventImpl e=new EventImpl();
+    e.setCache(cache);
+    e.setOriginLocal(originLocal);
+    e.setPre(pre);
+    e.setKey(key);
+    e.setTransaction(tx);
+    e.setType(CACHE_ENTRY_LOADED);
+    for (    ListenerInvocation listener : cacheEntryLoadedListeners)     listener.invoke(e);
+    restoreInvocationContext(backup);
+  }
+}

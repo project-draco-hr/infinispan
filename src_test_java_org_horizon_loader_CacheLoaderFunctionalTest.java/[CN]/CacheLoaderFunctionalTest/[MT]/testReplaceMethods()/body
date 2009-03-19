@@ -1,0 +1,35 @@
+{
+  assertNotInCacheAndStore("k1","k2","k3","k4");
+  cache.replace("k1","v1-SHOULD-NOT-STORE");
+  assertNoLocks(cache);
+  cache.replace("k2","v2-SHOULD-NOT-STORE",lifespan,MILLISECONDS);
+  assertNoLocks(cache);
+  assertNotInCacheAndStore("k1","k2","k3","k4");
+  cache.put("k1","v1");
+  assertNoLocks(cache);
+  cache.put("k2","v2");
+  assertNoLocks(cache);
+  cache.put("k3","v3");
+  assertNoLocks(cache);
+  cache.put("k4","v4");
+  assertNoLocks(cache);
+  for (int i=1; i < 5; i++)   assertInCacheAndStore("k" + i,"v" + i);
+  cache.replace("k1","v1-SHOULD-NOT-STORE","v1-STILL-SHOULD-NOT-STORE");
+  assertNoLocks(cache);
+  cache.replace("k2","v2-SHOULD-NOT-STORE","v2-STILL-SHOULD-NOT-STORE",lifespan,MILLISECONDS);
+  assertNoLocks(cache);
+  for (int i=1; i < 5; i++)   assertInCacheAndStore("k" + i,"v" + i);
+  cache.replace("k1","v1-REPLACED");
+  assertNoLocks(cache);
+  cache.replace("k2","v2-REPLACED",lifespan,MILLISECONDS);
+  assertNoLocks(cache);
+  cache.replace("k3","v3","v3-REPLACED");
+  assertNoLocks(cache);
+  cache.replace("k4","v4","v4-REPLACED",lifespan,MILLISECONDS);
+  assertNoLocks(cache);
+  for (int i=1; i < 5; i++) {
+    if (i % 2 == 1)     assertInCacheAndStore("k" + i,"v" + i + "-REPLACED");
+ else     assertInCacheAndStore("k" + i,"v" + i + "-REPLACED",lifespan);
+  }
+  assertNoLocks(cache);
+}

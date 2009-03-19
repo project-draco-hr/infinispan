@@ -1,0 +1,37 @@
+{
+  testCount++;
+  log.info("testConcurrentStateTransfer start - " + testCount);
+  Cache<Object,Object> cache1=null, cache2=null, cache3=null, cache4=null;
+  cache1=createCacheManager().getCache(cacheName);
+  writeInitialData(cache1);
+  cache2=createCacheManager().getCache(cacheName);
+  cache1.put("delay",new StateTransferFunctionalTest.DelayTransfer());
+  TestingUtil.blockUntilViewsReceived(60000,cache1,cache2);
+  verifyInitialData(cache2);
+  final CacheManager cm3=createCacheManager();
+  final CacheManager cm4=createCacheManager();
+  Thread t1=new Thread(new Runnable(){
+    public void run(){
+      cm3.getCache(cacheName);
+    }
+  }
+);
+  t1.setName("CacheStarter-Cache3");
+  t1.start();
+  Thread t2=new Thread(new Runnable(){
+    public void run(){
+      cm4.getCache(cacheName);
+    }
+  }
+);
+  t2.setName("CacheStarter-Cache4");
+  t2.start();
+  t1.join();
+  t2.join();
+  cache3=cm3.getCache(cacheName);
+  cache4=cm4.getCache(cacheName);
+  TestingUtil.blockUntilViewsReceived(120000,cache1,cache2,cache3,cache4);
+  verifyInitialData(cache3);
+  verifyInitialData(cache4);
+  log.info("testConcurrentStateTransfer end - " + testCount);
+}

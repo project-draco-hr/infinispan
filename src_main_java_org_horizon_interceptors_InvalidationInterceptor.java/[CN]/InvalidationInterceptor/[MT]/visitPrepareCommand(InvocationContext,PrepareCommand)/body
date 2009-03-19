@@ -1,0 +1,25 @@
+{
+  Object retval=invokeNextInterceptor(ctx,command);
+  Transaction tx=ctx.getTransaction();
+  if (tx != null) {
+    if (trace)     log.trace("Entering InvalidationInterceptor's prepare phase");
+    GlobalTransaction gtx=ctx.getGlobalTransaction();
+    TransactionContext transactionContext=ctx.getTransactionContext();
+    if (transactionContext == null)     throw new IllegalStateException("cannot find transaction transactionContext for " + gtx);
+    if (transactionContext.hasModifications()) {
+      List<WriteCommand> mods;
+      if (transactionContext.hasLocalModifications()) {
+        mods=Arrays.asList(command.getModifications());
+        mods.removeAll(transactionContext.getLocalModifications());
+      }
+ else {
+        mods=Arrays.asList(command.getModifications());
+      }
+      broadcastInvalidate(mods,tx,ctx);
+    }
+ else {
+      if (trace)       log.trace("Nothing to invalidate - no modifications in the transaction.");
+    }
+  }
+  return retval;
+}

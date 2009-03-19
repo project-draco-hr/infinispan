@@ -1,0 +1,34 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  Node<Object,Object> nodeA=rootNode.addChild(A);
+  nodeA.put(k,vA);
+  Node<Object,Object> nodeB=rootNode.addChild(B);
+  nodeB.put(k,vB);
+  Node<Object,Object> nodeC=nodeA.addChild(C);
+  nodeC.put(k,vC);
+  assertTrue(rootNode.hasChild(A));
+  assertTrue(rootNode.hasChild(B));
+  assertFalse(rootNode.hasChild(C));
+  assertTrue(nodeA.hasChild(C));
+  assertEquals("" + nodeA,vA,nodeA.get(k));
+  assertEquals(vB,nodeB.get(k));
+  assertEquals(vC,nodeC.get(k));
+  assertEquals(nodeA,nodeC.getParent());
+  log.info("BEFORE MOVE " + treeCache);
+  treeCache.move(nodeC.getFqn(),nodeB.getFqn());
+  nodeC=treeCache.getNode(Fqn.fromRelativeFqn(nodeB.getFqn(),C));
+  log.info("POST MOVE " + treeCache);
+  log.info("HC " + nodeC + " "+ System.identityHashCode(nodeC));
+  Node x=treeCache.getRoot().getChild(Fqn.fromString("b/c"));
+  log.info("HC " + x + " "+ System.identityHashCode(x));
+  assertEquals("NODE C " + nodeC,"/b/c",nodeC.getFqn().toString());
+  assertTrue(rootNode.hasChild(A));
+  assertTrue(rootNode.hasChild(B));
+  assertFalse(rootNode.hasChild(C));
+  assertFalse(nodeA.hasChild(C));
+  assertTrue(nodeB.hasChild(C));
+  assertEquals(vA,nodeA.get(k));
+  assertEquals(vB,nodeB.get(k));
+  assertEquals(vC,nodeC.get(k));
+  assertEquals("B is parent of C: " + nodeB,nodeB,nodeC.getParent());
+}

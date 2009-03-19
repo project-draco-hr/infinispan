@@ -1,0 +1,15 @@
+{
+  assertClusterSize("Should only be 2  caches in the cluster!!!",2);
+  Fqn f=Fqn.fromString("/test/data");
+  String k="key", v="value";
+  assertNull("Should be null",cache1.getRoot().getChild(f));
+  assertNull("Should be null",cache2.getRoot().getChild(f));
+  Node<Object,Object> node=cache1.getRoot().addChild(f);
+  assertNotNull("Should not be null",node);
+  TransactionManager tm=beginTransaction(cache1.getCache());
+  node.put(k,v);
+  tm.commit();
+  assertEquals(v,node.get(k));
+  assertEquals(v,cache1.get(f,k));
+  assertEquals("Should have replicated",v,cache2.get(f,k));
+}

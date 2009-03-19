@@ -1,0 +1,62 @@
+{
+  if (lookupFailed)   return;
+  InitialContext ctx;
+  try {
+    ctx=new InitialContext();
+  }
+ catch (  NamingException e) {
+    log.error("Failed creating initial JNDI context",e);
+    lookupFailed=true;
+    return;
+  }
+  for (  String[] knownJNDIManager : knownJNDIManagers) {
+    Object jndiObject;
+    try {
+      if (log.isDebugEnabled())       log.debug("Trying to lookup TransactionManager for " + knownJNDIManager[1]);
+      jndiObject=ctx.lookup(knownJNDIManager[0]);
+    }
+ catch (    NamingException e) {
+      log.debug("Failed to perform a lookup for [" + knownJNDIManager[0] + " ("+ knownJNDIManager[1]+ ")]");
+      continue;
+    }
+    if (jndiObject instanceof TransactionManager) {
+      tm=(TransactionManager)jndiObject;
+      log.debug("Found TransactionManager for " + knownJNDIManager[1]);
+      return;
+    }
+  }
+  Class clazz;
+  try {
+    log.debug("Trying WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
+    clazz=Class.forName(WS_FACTORY_CLASS_5_1);
+    log.debug("Found WebSphere 5.1: " + WS_FACTORY_CLASS_5_1);
+  }
+ catch (  ClassNotFoundException ex) {
+    try {
+      log.debug("Trying WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
+      clazz=Class.forName(WS_FACTORY_CLASS_5_0);
+      log.debug("Found WebSphere 5.0: " + WS_FACTORY_CLASS_5_0);
+    }
+ catch (    ClassNotFoundException ex2) {
+      try {
+        log.debug("Trying WebSphere 4: " + WS_FACTORY_CLASS_4);
+        clazz=Class.forName(WS_FACTORY_CLASS_4);
+        log.debug("Found WebSphere 4: " + WS_FACTORY_CLASS_4);
+      }
+ catch (      ClassNotFoundException ex3) {
+        log.debug("Couldn't find any WebSphere TransactionManager factory class, neither for WebSphere version 5.1 nor 5.0 nor 4");
+        lookupFailed=true;
+        return;
+      }
+    }
+  }
+  try {
+    Class[] signature=null;
+    Object[] args=null;
+    Method method=clazz.getMethod("getTransactionManager",signature);
+    tm=(TransactionManager)method.invoke(null,args);
+  }
+ catch (  Exception ex) {
+    log.error("Found WebSphere TransactionManager factory class [" + clazz.getName() + "], but couldn't invoke its static 'getTransactionManager' method",ex);
+  }
+}

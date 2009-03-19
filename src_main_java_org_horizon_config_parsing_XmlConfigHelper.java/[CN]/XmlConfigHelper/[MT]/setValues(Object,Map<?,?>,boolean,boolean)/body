@@ -1,0 +1,50 @@
+{
+  Class objectClass=target.getClass();
+  for (  Map.Entry entry : attribs.entrySet()) {
+    String propName=(String)entry.getKey();
+    String setter=BeanUtils.setterName(propName);
+    Method method;
+    try {
+      if (isXmlAttribs) {
+        method=objectClass.getMethod(setter,Element.class);
+        method.invoke(target,entry.getValue());
+      }
+ else {
+        method=objectClass.getMethod(setter,String.class);
+        method.invoke(target,entry.getValue());
+      }
+      continue;
+    }
+ catch (    NoSuchMethodException me) {
+    }
+catch (    Exception e) {
+      throw new ConfigurationException("Unable to invoke setter " + setter + " on "+ objectClass,e);
+    }
+    boolean setterFound=false;
+    for (    Method m : objectClass.getMethods()) {
+      if (setter.equals(m.getName())) {
+        Class paramTypes[]=m.getParameterTypes();
+        if (paramTypes.length != 1) {
+          if (log.isTraceEnabled())           log.trace("Rejecting setter " + m + " on class "+ objectClass+ " due to incorrect number of parameters");
+          continue;
+        }
+        Class parameterType=paramTypes[0];
+        PropertyEditor editor=PropertyEditorManager.findEditor(parameterType);
+        if (editor == null) {
+          throw new ConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
+        }
+        editor.setAsText((String)attribs.get(propName));
+        Object parameter=editor.getValue();
+        try {
+          m.invoke(target,parameter);
+          setterFound=true;
+          break;
+        }
+ catch (        Exception e) {
+          throw new ConfigurationException("Unable to invoke setter " + setter + " on "+ objectClass,e);
+        }
+      }
+    }
+    if (!setterFound && failOnMissingSetter)     throw new ConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter "+ propName+ " on class ["+ objectClass+ "]");
+  }
+}

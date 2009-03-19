@@ -1,0 +1,17 @@
+{
+  while (true) {
+    Lock lock=getLock(key);
+    if (lock.tryLock(timeout,unit)) {
+      Lock existingLock=locks.putIfAbsent(key,lock);
+      if (existingLock != null && existingLock != lock) {
+        lock.unlock();
+      }
+ else {
+        return true;
+      }
+    }
+ else {
+      return false;
+    }
+  }
+}

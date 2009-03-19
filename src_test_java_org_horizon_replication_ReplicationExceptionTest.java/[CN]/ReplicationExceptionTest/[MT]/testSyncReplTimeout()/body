@@ -1,0 +1,13 @@
+{
+  cache2.addInterceptor(new CommandInterceptor(){
+    @Override protected Object handleDefault(    InvocationContext ctx,    VisitableCommand cmd) throws Throwable {
+      Thread.sleep(100);
+      return super.handleDefault(ctx,cmd);
+    }
+  }
+,0);
+  cache1.getConfiguration().setSyncReplTimeout(1);
+  cache2.getConfiguration().setSyncReplTimeout(1);
+  TestingUtil.blockUntilViewsReceived(10000,cache1,cache2);
+  cache1.put("k","v");
+}

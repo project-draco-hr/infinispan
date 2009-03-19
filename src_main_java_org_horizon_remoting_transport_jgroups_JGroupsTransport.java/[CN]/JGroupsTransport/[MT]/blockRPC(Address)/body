@@ -1,0 +1,45 @@
+{
+  if (flushInProgress.compareAndSet(false,true)) {
+    int retries=5;
+    int sleepBetweenRetries=250;
+    int sleepIncreaseFactor=2;
+    if (trace)     log.trace("Attempting a partial flush on members {0} with up to {1} retries.",members,retries);
+    boolean success=false;
+    int i;
+    for (i=1; i <= retries; i++) {
+      if (trace)       log.trace("Attempt number " + i);
+      try {
+        if (addresses == null) {
+          success=channel.startFlush(false);
+        }
+ else {
+          membersBlocked=toJGroupsAddressList(addresses);
+          success=channel.startFlush(membersBlocked,false);
+        }
+        if (success)         break;
+        if (trace)         log.trace("Channel.startFlush() returned false!");
+      }
+ catch (      Exception e) {
+        if (trace)         log.trace("Caught exception attempting a partial flush",e);
+      }
+      try {
+        if (trace)         log.trace("Partial state transfer failed.  Backing off for " + sleepBetweenRetries + " millis and retrying");
+        Thread.sleep(sleepBetweenRetries);
+        sleepBetweenRetries*=sleepIncreaseFactor;
+      }
+ catch (      InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
+    }
+    if (success) {
+      if (log.isDebugEnabled())       log.debug("Partial flush between {0} succeeded!",membersBlocked);
+    }
+ else {
+      flushInProgress.set(false);
+      throw new CacheException("Could initiate partial flush between " + membersBlocked + "!");
+    }
+  }
+ else {
+    throw new CacheException("Cannot block RPC; a block is already in progress!");
+  }
+}

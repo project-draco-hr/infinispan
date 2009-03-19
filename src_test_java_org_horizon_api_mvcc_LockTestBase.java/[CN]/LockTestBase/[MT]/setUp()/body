@@ -1,0 +1,13 @@
+{
+  LockTestBaseTL tl=new LockTestBaseTL();
+  Configuration defaultCfg=new Configuration();
+  defaultCfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
+  defaultCfg.setLockAcquisitionTimeout(200);
+  CacheManager cm=new DefaultCacheManager(defaultCfg);
+  tl.cache=cm.getCache();
+  tl.lockManager=TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
+  tl.icc=TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);
+  tl.tm=TestingUtil.extractComponentRegistry(tl.cache).getComponent(TransactionManager.class);
+  threadLocal.set(tl);
+}

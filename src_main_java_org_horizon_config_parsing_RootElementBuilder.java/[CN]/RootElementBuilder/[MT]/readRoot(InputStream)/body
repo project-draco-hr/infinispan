@@ -1,0 +1,23 @@
+{
+  try {
+    DocumentBuilderFactory docBuilderFactory=DocumentBuilderFactory.newInstance();
+    docBuilderFactory.setNamespaceAware(true);
+    if (isValidating) {
+      docBuilderFactory.setValidating(true);
+      docBuilderFactory.setAttribute("http://java.sun.com/xml/jaxp/properties/schemaLanguage","http://www.w3.org/2001/XMLSchema");
+      String[] value={HORIZON_NS};
+      docBuilderFactory.setAttribute("http://java.sun.com/xml/jaxp/properties/schemaSource",value);
+    }
+    DocumentBuilder parser=docBuilderFactory.newDocumentBuilder();
+    parser.setEntityResolver(resolver);
+    parser.setErrorHandler(errorHandler);
+    Document doc=parser.parse(config);
+    Element root=doc.getDocumentElement();
+    root.normalize();
+    return root;
+  }
+ catch (  Exception e) {
+    log.error(e);
+    throw new ConfigurationException("Could not parse the config file",e);
+  }
+}

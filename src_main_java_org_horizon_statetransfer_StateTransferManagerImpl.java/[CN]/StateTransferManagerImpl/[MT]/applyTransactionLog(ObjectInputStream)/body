@@ -1,0 +1,27 @@
+{
+  if (trace)   log.trace("Integrating transaction log");
+  processCommitLog(ois);
+  Transport t=rpcManager.getTransport();
+  t.blockRPC(rpcManager.getTransport().getAddress(),rpcManager.getCurrentStateTransferSource());
+  try {
+    if (trace)     log.trace("Retrieving/Applying post-flush commits");
+    processCommitLog(ois);
+    if (trace)     log.trace("Retrieving/Applying pending prepares");
+    Object object=marshaller.objectFromObjectStream(ois);
+    while (object instanceof PrepareCommand) {
+      PrepareCommand command=(PrepareCommand)object;
+      if (!transactionLog.hasPendingPrepare(command)) {
+        InvocationContext ctx=invocationContextContainer.get();
+        ctx.setOriginLocal(false);
+        ctx.setOptions(Options.CACHE_MODE_LOCAL,Options.SKIP_CACHE_STATUS_CHECK);
+        interceptorChain.invoke(ctx,command);
+      }
+      object=marshaller.objectFromObjectStream(ois);
+    }
+    assertDelimited(object);
+  }
+  finally {
+    if (trace)     log.trace("Stopping partial flush");
+    t.unblockRPC();
+  }
+}

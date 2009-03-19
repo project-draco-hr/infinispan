@@ -1,0 +1,32 @@
+{
+  BaseEvictionAlgorithmConfig config=getNewEvictionAlgorithmConfig();
+  config.setMaxEntries(4);
+  config.setMinEntries(2);
+  BlockingQueue<EvictionEvent> eventQueue=new LinkedBlockingQueue<EvictionEvent>();
+  eventQueue.put(new EvictionEvent("one",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("two",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("three",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("four",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("five",ADD_ENTRY_EVENT));
+  EvictionAlgorithm algo=createAndInit(config);
+  EvictionAction mockAction=createMock(EvictionAction.class);
+  algo.setEvictionAction(mockAction);
+  if (timeOrderedQueue()) {
+    if (reverseOrder()) {
+      expect(mockAction.evict(eq("five"))).andReturn(true).once();
+      expect(mockAction.evict(eq("four"))).andReturn(true).once();
+      expect(mockAction.evict(eq("three"))).andReturn(true).once();
+    }
+ else {
+      expect(mockAction.evict(eq("one"))).andReturn(true).once();
+      expect(mockAction.evict(eq("two"))).andReturn(true).once();
+      expect(mockAction.evict(eq("three"))).andReturn(true).once();
+    }
+  }
+ else {
+    expect(mockAction.evict(anyObject())).andReturn(true).times(3);
+  }
+  replay(mockAction);
+  algo.process(eventQueue);
+  verify(mockAction);
+}

@@ -1,0 +1,16 @@
+{
+  Configuration c=globalConfiguration.getDefaultConfiguration().clone();
+  if (!cacheName.equals(DEFAULT_CACHE_NAME)) {
+    Configuration overrides=configurationOverrides.get(cacheName);
+    if (overrides != null)     c.applyOverrides(overrides);
+  }
+  Cache cache=new DefaultCacheFactory().createCache(c,globalComponentRegistry,cacheName);
+  Cache other=caches.putIfAbsent(cacheName,cache);
+  if (other == null) {
+    cache.start();
+    return cache;
+  }
+ else {
+    return other;
+  }
+}

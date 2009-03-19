@@ -1,0 +1,19 @@
+{
+  if (!state.stopAllowed()) {
+    return;
+  }
+  boolean failed=state == ComponentStatus.FAILED;
+  try {
+    internalStop();
+  }
+ catch (  Throwable t) {
+    if (failed) {
+      getLog().warn("Attempted to stop() from FAILED state, but caught exception; try calling destroy()",t);
+    }
+    failed=true;
+    handleLifecycleTransitionFailure(t);
+  }
+ finally {
+    if (!failed)     state=ComponentStatus.TERMINATED;
+  }
+}

@@ -1,0 +1,20 @@
+{
+  getLog().trace("Testing if invocations are allowed.");
+  if (state.allowInvocations())   return true;
+  if (originLocal)   return false;
+  getLog().trace("Is remotely originating.");
+  if (state == ComponentStatus.INITIALIZING) {
+    getLog().trace("Cache is initializing; block.");
+    try {
+      blockUntilCacheStarts();
+      return true;
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+ else {
+    getLog().warn("Received a remote call but the cache is not in STARTED state - ignoring call.");
+  }
+  return false;
+}

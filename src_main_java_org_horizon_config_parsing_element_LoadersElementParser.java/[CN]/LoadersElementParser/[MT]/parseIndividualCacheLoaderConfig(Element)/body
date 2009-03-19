@@ -1,0 +1,26 @@
+{
+  String clClass=getAttributeValue(indivElement,"class");
+  if (!existsAttribute(clClass))   throw new ConfigurationException("Missing 'class'  attribute for cache loader configuration");
+  CacheLoader cl;
+  CacheLoaderConfig clc;
+  try {
+    cl=(CacheLoader)Util.getInstance(clClass);
+    clc=Util.getInstance(cl.getConfigurationClass());
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException("Unable to instantiate cache loader or configuration",e);
+  }
+  String fetchPersistentState=getAttributeValue(indivElement,"fetchPersistentState");
+  if (existsAttribute(fetchPersistentState))   clc.setFetchPersistentState(getBoolean(fetchPersistentState));
+  String ignoreModifications=getAttributeValue(indivElement,"ignoreModifications");
+  if (existsAttribute(ignoreModifications))   clc.setIgnoreModifications(getBoolean(ignoreModifications));
+  String purgeOnStartup=getAttributeValue(indivElement,"purgeOnStartup");
+  if (existsAttribute(purgeOnStartup))   clc.setPurgeOnStartup(getBoolean(purgeOnStartup));
+  clc.setCacheLoaderClassName(clClass);
+  Element propertiesElement=getSingleElementInCoreNS("properties",indivElement);
+  Properties props=XmlConfigHelper.extractProperties(propertiesElement);
+  if (props != null)   XmlConfigHelper.setValues(clc,props,false,true);
+  clc.setSingletonStoreConfig(parseSingletonStoreConfig(getSingleElementInCoreNS("singletonStore",indivElement)));
+  clc.setAsyncStoreConfig(parseAsyncStoreConfig(getSingleElementInCoreNS("async",indivElement)));
+  return clc;
+}

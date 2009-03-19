@@ -1,0 +1,26 @@
+{
+  if (c == null)   return;
+switch (c.getCommandId()) {
+case PutKeyValueCommand.METHOD_ID:
+    ((PutKeyValueCommand)c).init(notifier);
+  break;
+case PutMapCommand.METHOD_ID:
+((PutMapCommand)c).init(notifier);
+break;
+case RemoveCommand.METHOD_ID:
+((RemoveCommand)c).init(notifier);
+break;
+case ReplicateCommand.METHOD_ID:
+ReplicateCommand rc=(ReplicateCommand)c;
+if (rc.getCommands() != null) for (ReplicableCommand nested : rc.getCommands()) initializeReplicableCommand(nested);
+break;
+case InvalidateCommand.METHOD_ID:
+InvalidateCommand ic=(InvalidateCommand)c;
+ic.init(notifier);
+break;
+case PrepareCommand.METHOD_ID:
+PrepareCommand pc=(PrepareCommand)c;
+if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+break;
+}
+}

@@ -1,0 +1,16 @@
+{
+  Node<Object,Object> rootNode=cache.getRoot();
+  rootNode.addChild(A).put("k","v");
+  rootNode.addChild(B).put("k","v");
+  Set<Object> childrenNames=new HashSet<Object>();
+  childrenNames.add(A.getLastElement());
+  childrenNames.add(B.getLastElement());
+  assertEquals(childrenNames,rootNode.getChildrenNames());
+  tm.begin();
+  rootNode.removeChild(B);
+  assertFalse(rootNode.hasChild(B));
+  childrenNames.remove(B.getLastElement());
+  assertEquals(childrenNames,rootNode.getChildrenNames());
+  tm.commit();
+  assertEquals(childrenNames,rootNode.getChildrenNames());
+}

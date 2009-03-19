@@ -1,0 +1,60 @@
+{
+  out.writeByte(MAGICNUMBER_ARRAY);
+  Class arrayTypeClass=o.getClass().getComponentType();
+  int sz=Array.getLength(o);
+  writeUnsignedInt(out,sz);
+  boolean isPrim=arrayTypeClass.isPrimitive();
+  if (!isPrim && arrayTypeClass.equals(Object.class)) {
+    out.writeByte(MAGICNUMBER_OBJECT);
+    for (int i=0; i < sz; i++)     marshallObject(Array.get(o,i),out,refMap);
+  }
+ else   if (arrayTypeClass.equals(byte.class) || arrayTypeClass.equals(Byte.class)) {
+    out.writeByte(MAGICNUMBER_BYTE);
+    out.writeBoolean(isPrim);
+    if (isPrim)     out.write((byte[])o);
+ else     for (int i=0; i < sz; i++)     out.writeByte((Byte)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(int.class) || arrayTypeClass.equals(Integer.class)) {
+    out.writeByte(MAGICNUMBER_INTEGER);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeInt(Array.getInt(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeInt((Integer)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(long.class) || arrayTypeClass.equals(Long.class)) {
+    out.writeByte(MAGICNUMBER_LONG);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeLong(Array.getLong(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeLong((Long)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(boolean.class) || arrayTypeClass.equals(Boolean.class)) {
+    out.writeByte(MAGICNUMBER_BOOLEAN);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeBoolean(Array.getBoolean(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeBoolean((Boolean)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(char.class) || arrayTypeClass.equals(Character.class)) {
+    out.writeByte(MAGICNUMBER_CHAR);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeChar(Array.getChar(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeChar((Character)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(short.class) || arrayTypeClass.equals(Short.class)) {
+    out.writeByte(MAGICNUMBER_SHORT);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeShort(Array.getShort(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeShort((Short)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(float.class) || arrayTypeClass.equals(Float.class)) {
+    out.writeByte(MAGICNUMBER_FLOAT);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeFloat(Array.getFloat(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeFloat((Float)Array.get(o,i));
+  }
+ else   if (arrayTypeClass.equals(double.class) || arrayTypeClass.equals(Double.class)) {
+    out.writeByte(MAGICNUMBER_DOUBLE);
+    out.writeBoolean(isPrim);
+    if (isPrim)     for (int i=0; i < sz; i++)     out.writeDouble(Array.getDouble(o,i));
+ else     for (int i=0; i < sz; i++)     out.writeDouble((Double)Array.get(o,i));
+  }
+ else   throw new CacheException("Unknown array type!");
+}

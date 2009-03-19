@@ -1,0 +1,14 @@
+{
+  ChainingCacheStore store=new ChainingCacheStore();
+  CacheLoaderConfig cfg;
+  store1=new DummyInMemoryCacheStore();
+  store1.init((cfg=new DummyInMemoryCacheStore.Cfg("instance1")),null,new ObjectStreamMarshaller());
+  store.addCacheLoader(store1,cfg);
+  store2=new DummyInMemoryCacheStore();
+  store2.init((cfg=new DummyInMemoryCacheStore.Cfg("instance2")),null,new ObjectStreamMarshaller());
+  cfg.setFetchPersistentState(true);
+  store.addCacheLoader(store2,cfg);
+  stores=new DummyInMemoryCacheStore[]{store1,store2};
+  store.start();
+  return store;
+}

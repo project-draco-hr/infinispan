@@ -1,0 +1,21 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  Node<Object,Object> nodeA=rootNode.addChild(A);
+  Node<Object,Object> nodeB=nodeA.addChild(B);
+  assertEquals(rootNode,nodeA.getParent());
+  assertEquals(nodeA,nodeB.getParent());
+  assertEquals(nodeA,rootNode.getChildren().iterator().next());
+  assertEquals(nodeB,nodeA.getChildren().iterator().next());
+  tm.begin();
+  System.out.println("Before: " + TreeStructureSupport.printTree(treeCache,true));
+  treeCache.move(nodeB.getFqn(),Fqn.ROOT);
+  System.out.println("After: " + TreeStructureSupport.printTree(treeCache,true));
+  tm.rollback();
+  System.out.println("Rolled back: " + TreeStructureSupport.printTree(treeCache,true));
+  nodeA=rootNode.getChild(A);
+  nodeB=nodeA.getChild(B);
+  assertEquals(rootNode,nodeA.getParent());
+  assertEquals(nodeA,nodeB.getParent());
+  assertEquals(nodeA,rootNode.getChildren().iterator().next());
+  assertEquals(nodeB,nodeA.getChildren().iterator().next());
+}

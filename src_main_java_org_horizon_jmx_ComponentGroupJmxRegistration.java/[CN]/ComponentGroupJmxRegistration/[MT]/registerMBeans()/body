@@ -1,0 +1,23 @@
+{
+  try {
+    List<ResourceDMBean> resourceDMBeans=getResourceDMBeansFromComponents();
+    for (    ResourceDMBean resource : resourceDMBeans) {
+      String resourceName=resource.getObjectName();
+      ObjectName objectName=new ObjectName(getObjectName(resourceName));
+      if (!mBeanServer.isRegistered(objectName)) {
+        try {
+          mBeanServer.registerMBean(resource,objectName);
+        }
+ catch (        InstanceAlreadyExistsException e) {
+          log.info("Could not register object with name:" + objectName + "("+ e.getMessage()+ ")");
+        }
+      }
+ else {
+        if (log.isInfoEnabled())         log.info("Could not register object with name: " + objectName);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheException("Failure while registering mbeans",e);
+  }
+}

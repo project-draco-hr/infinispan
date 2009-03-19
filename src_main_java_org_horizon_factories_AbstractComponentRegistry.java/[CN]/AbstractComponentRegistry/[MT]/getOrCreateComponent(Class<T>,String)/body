@@ -1,0 +1,22 @@
+{
+  if (DEBUG_DEPENDENCIES)   debugStack.push(name);
+  T component=getComponent(componentClass,name);
+  if (component == null) {
+    component=getFromConfiguration(componentClass);
+    boolean attemptedFactoryConstruction=false;
+    if (component == null) {
+      AbstractComponentFactory factory=getFactory(componentClass);
+      component=factory instanceof NamedComponentFactory ? ((NamedComponentFactory)factory).construct(componentClass,name) : factory.construct(componentClass);
+      attemptedFactoryConstruction=true;
+    }
+    if (component != null) {
+      registerComponent(component,componentClass);
+    }
+ else     if (attemptedFactoryConstruction) {
+      if (getLog().isTraceEnabled())       getLog().trace("Registering a null for component {0}",componentClass.getSimpleName());
+      registerNullComponent(componentClass);
+    }
+  }
+  if (DEBUG_DEPENDENCIES)   debugStack.pop();
+  return component;
+}

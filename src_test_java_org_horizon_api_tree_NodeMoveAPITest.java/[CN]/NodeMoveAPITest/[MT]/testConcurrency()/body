@@ -1,0 +1,60 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  final int N=3;
+  final int loops=1 << 6;
+  final Fqn FQN_A=A, FQN_B=B, FQN_C=C, FQN_D=D, FQN_E=E, FQN_X=Fqn.fromString("/x"), FQN_Y=Fqn.fromString("/y");
+  final Node[] NODES={rootNode.addChild(FQN_A),rootNode.addChild(FQN_B),rootNode.addChild(FQN_C),rootNode.addChild(FQN_D),rootNode.addChild(FQN_E)};
+  final Node<Object,Object> NODE_X=genericize(NODES[0]).addChild(FQN_X);
+  final Node<Object,Object> NODE_Y=genericize(NODES[1]).addChild(FQN_Y);
+  Thread[] movers=new Thread[N];
+  final CountDownLatch latch=new CountDownLatch(1);
+  final Random rnd=new Random();
+  for (int i=0; i < N; i++) {
+    movers[i]=new Thread("Mover-" + i){
+      public void run(){
+        try {
+          latch.await();
+        }
+ catch (        InterruptedException e) {
+        }
+        for (int counter=0; counter < loops; counter++) {
+          treeCache.move(NODE_X.getFqn(),NODES[rnd.nextInt(NODES.length)].getFqn());
+          TestingUtil.sleepRandom(250);
+          treeCache.move(NODE_Y.getFqn(),NODES[rnd.nextInt(NODES.length)].getFqn());
+          TestingUtil.sleepRandom(250);
+        }
+      }
+    }
+;
+    movers[i].start();
+  }
+  latch.countDown();
+  for (  Thread t : movers) {
+    t.join();
+  }
+  assertNoLocks();
+  boolean found_x=false, found_x_again=false;
+  for (  Node erased : NODES) {
+    Node<Object,Object> n=genericize(erased);
+    if (!found_x) {
+      found_x=n.hasChild(FQN_X);
+    }
+ else {
+      found_x_again=found_x_again || n.hasChild(FQN_X);
+    }
+  }
+  boolean found_y=false, found_y_again=false;
+  for (  Node erased : NODES) {
+    Node<Object,Object> n=genericize(erased);
+    if (!found_y) {
+      found_y=n.hasChild(FQN_Y);
+    }
+ else {
+      found_y_again=found_y_again || n.hasChild(FQN_Y);
+    }
+  }
+  assertTrue("Should have found x",found_x);
+  assertTrue("Should have found y",found_y);
+  assertFalse("Should have only found x once",found_x_again);
+  assertFalse("Should have only found y once",found_y_again);
+}

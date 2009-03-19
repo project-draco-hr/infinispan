@@ -1,0 +1,30 @@
+{
+  TransactionManager transactionManager=null;
+  TransactionManagerLookup lookup=null;
+  if (transactionManager == null) {
+    if (configuration.getTransactionManagerLookupClass() != null) {
+      try {
+        ClassLoader cl=Thread.currentThread().getContextClassLoader();
+        if (cl == null)         cl=getClass().getClassLoader();
+        Class clazz=cl.loadClass(configuration.getTransactionManagerLookupClass());
+        lookup=(TransactionManagerLookup)clazz.newInstance();
+      }
+ catch (      Exception e) {
+        throw new ConfigurationException("Problems looking up transaction manager",e);
+      }
+    }
+    try {
+      if (lookup != null) {
+        transactionManager=lookup.getTransactionManager();
+      }
+    }
+ catch (    Exception e) {
+      log.info("failed looking up TransactionManager, will not use transactions",e);
+    }
+  }
+  if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
+    log.info("Using a batchMode transaction manager");
+    transactionManager=BatchModeTransactionManager.getInstance();
+  }
+  return componentType.cast(transactionManager);
+}

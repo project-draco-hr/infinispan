@@ -1,0 +1,19 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  try {
+    String sql=tableManipulation.getDeleteExpiredRowsSql();
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    ps.setLong(1,System.currentTimeMillis());
+    int result=ps.executeUpdate();
+    if (log.isTraceEnabled())     log.trace("Successfully purged " + result + " rows.");
+  }
+ catch (  SQLException ex) {
+    logAndThrow(ex,"Failed purging JdbcBinaryCacheStore");
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+}

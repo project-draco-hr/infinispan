@@ -1,0 +1,47 @@
+{
+  int initialWaitTime=1000;
+  int waitTimeIncreaseFactor=2;
+  int numRetries=3;
+  List<Address> members=t.getMembers();
+  if (members.size() < 2) {
+    if (log.isDebugEnabled())     log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
+    return;
+  }
+  boolean success=false;
+  try {
+    outer:     for (int i=0, wait=initialWaitTime; i < numRetries; i++) {
+      for (      Address member : members) {
+        if (!member.equals(t.getAddress())) {
+          try {
+            if (log.isInfoEnabled())             log.info("Trying to fetch state from {0}",member);
+            currentStateTransferSource=member;
+            if (t.retrieveState(cacheName,member,timeout)) {
+              if (log.isInfoEnabled())               log.info("Successfully retrieved and applied state from {0}",member);
+              success=true;
+              break outer;
+            }
+          }
+ catch (          StateTransferException e) {
+            if (log.isDebugEnabled())             log.debug("Error while fetching state from member " + member,e);
+          }
+ finally {
+            currentStateTransferSource=null;
+          }
+        }
+      }
+      if (!success) {
+        if (log.isWarnEnabled())         log.warn("Could not find available peer for state, backing off and retrying");
+        try {
+          Thread.sleep(wait*=waitTimeIncreaseFactor);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+  finally {
+    currentStateTransferSource=null;
+  }
+  if (!success)   throw new StateTransferException("Unable to fetch state on startup");
+}

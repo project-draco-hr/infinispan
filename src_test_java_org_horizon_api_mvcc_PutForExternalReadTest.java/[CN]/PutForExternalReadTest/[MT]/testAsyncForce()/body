@@ -1,0 +1,21 @@
+{
+  Transport mockTransport=createNiceMock(Transport.class);
+  RPCManagerImpl rpcManager=(RPCManagerImpl)TestingUtil.extractComponent(cache1,RPCManager.class);
+  Transport originalTransport=TestingUtil.extractComponent(cache1,Transport.class);
+  try {
+    Address mockAddress1=createNiceMock(Address.class);
+    Address mockAddress2=createNiceMock(Address.class);
+    List<Address> memberList=new ArrayList<Address>(2);
+    memberList.add(mockAddress1);
+    memberList.add(mockAddress2);
+    expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
+    rpcManager.setTransport(mockTransport);
+    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(RPCCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)isNull(),anyBoolean())).andReturn(null);
+    replay(mockAddress1,mockAddress2,mockTransport);
+    cache1.putForExternalRead(key,value);
+    verify(mockTransport);
+  }
+  finally {
+    if (rpcManager != null)     rpcManager.setTransport(originalTransport);
+  }
+}

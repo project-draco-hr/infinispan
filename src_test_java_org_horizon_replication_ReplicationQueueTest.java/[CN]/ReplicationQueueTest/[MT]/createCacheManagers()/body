@@ -1,0 +1,20 @@
+{
+  GlobalConfiguration globalConfiguration=GlobalConfiguration.getClusteredDefault();
+  globalConfiguration.setReplicationQueueScheduledExecutorFactoryClass(ReplQueueTestScheduledExecutorFactory.class.getName());
+  globalConfiguration.setReplicationQueueScheduledExecutorProperties(ReplQueueTestScheduledExecutorFactory.myProps);
+  CacheManager first=TestingUtil.createClusteredCacheManager(globalConfiguration);
+  CacheManager second=TestingUtil.createClusteredCacheManager(globalConfiguration);
+  registerCacheManager(first,second);
+  Configuration config=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
+  config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  config.setUseReplQueue(true);
+  config.setReplQueueInterval(REPL_QUEUE_INTERVAL);
+  config.setReplQueueMaxElements(REPL_QUEUE_MAX_ELEMENTS);
+  creationTime=System.currentTimeMillis();
+  manager(0).defineCache("replQueue",config);
+  Configuration conf2=config.clone();
+  conf2.setUseReplQueue(false);
+  manager(1).defineCache("replQueue",conf2);
+  cache1=cache(0,"replQueue");
+  cache2=cache(1,"replQueue");
+}

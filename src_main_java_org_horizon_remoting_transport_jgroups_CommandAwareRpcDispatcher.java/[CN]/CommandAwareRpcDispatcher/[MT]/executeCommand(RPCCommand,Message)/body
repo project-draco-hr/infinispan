@@ -1,0 +1,32 @@
+{
+  if (cmd == null)   throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+  if (trace)   log.trace("Attempting to execute command: {0} [sender={1}]",cmd,req.getSrc());
+  boolean unlock=false;
+  try {
+    int flushCount=distributedSync.getSyncCount();
+    distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
+    unlock=true;
+    distributedSync.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+    boolean replayIgnored=distributedSync.getSyncCount() != flushCount;
+    Object retval;
+    try {
+      retval=inboundInvocationHandler.handle(cmd);
+    }
+ catch (    IllegalStateException ise) {
+      if (trace)       log.trace("Unable to execute command, cache not in a receptive state");
+      return REQUEST_IGNORED_RESPONSE;
+    }
+    if (replayIgnored) {
+      ExtendedResponse extended=new ExtendedResponse(retval);
+      extended.setReplayIgnoredRequests(true);
+      return extended;
+    }
+ else {
+      if (cmd.isSingleCommand() && cmd.getSingleCommand() instanceof ClusteredGetCommand)       return retval;
+ else       return null;
+    }
+  }
+  finally {
+    if (unlock)     distributedSync.releaseProcessingLock();
+  }
+}

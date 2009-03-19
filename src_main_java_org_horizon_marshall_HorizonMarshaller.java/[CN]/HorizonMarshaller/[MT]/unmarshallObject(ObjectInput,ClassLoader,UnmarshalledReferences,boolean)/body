@@ -1,0 +1,16 @@
+{
+  if (loader == null) {
+    return unmarshallObject(in,refMap);
+  }
+ else {
+    Thread currentThread=Thread.currentThread();
+    ClassLoader old=currentThread.getContextClassLoader();
+    try {
+      if (overrideContextClassloaderOnThread || old == null)       currentThread.setContextClassLoader(loader);
+      return unmarshallObject(in,refMap);
+    }
+  finally {
+      if (overrideContextClassloaderOnThread || old == null)       currentThread.setContextClassLoader(old);
+    }
+  }
+}

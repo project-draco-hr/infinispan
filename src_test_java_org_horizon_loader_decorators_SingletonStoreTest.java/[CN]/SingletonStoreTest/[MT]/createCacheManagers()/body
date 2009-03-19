@@ -1,0 +1,35 @@
+{
+  cm0=addClusterEnabledCacheManager();
+  cm1=addClusterEnabledCacheManager();
+  cm2=addClusterEnabledCacheManager();
+  Configuration conf=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  DummyInMemoryCacheStore.Cfg cfg=new DummyInMemoryCacheStore.Cfg();
+  cfg.setStore("Store-" + storeCounter.getAndIncrement());
+  CacheLoaderManagerConfig pushingCfg=new CacheLoaderManagerConfig();
+  pushingCfg.addCacheLoaderConfig(cfg);
+  SingletonStoreConfig ssc=new SingletonStoreConfig();
+  ssc.setPushStateWhenCoordinator(true);
+  ssc.setSingletonStoreEnabled(true);
+  cfg.setSingletonStoreConfig(ssc);
+  conf.setCacheLoaderManagerConfig(pushingCfg);
+  cm0.defineCache("pushing",conf);
+  ((DummyInMemoryCacheStore.Cfg)conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+  cm1.defineCache("pushing",conf);
+  ((DummyInMemoryCacheStore.Cfg)conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+  cm2.defineCache("pushing",conf);
+  conf=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  cfg=new DummyInMemoryCacheStore.Cfg();
+  cfg.setStore("Store-" + storeCounter.getAndIncrement());
+  CacheLoaderManagerConfig nonPushingCfg=new CacheLoaderManagerConfig();
+  nonPushingCfg.addCacheLoaderConfig(cfg);
+  ssc=new SingletonStoreConfig();
+  ssc.setPushStateWhenCoordinator(false);
+  ssc.setSingletonStoreEnabled(true);
+  cfg.setSingletonStoreConfig(ssc);
+  conf.setCacheLoaderManagerConfig(nonPushingCfg);
+  cm0.defineCache("nonPushing",conf);
+  ((DummyInMemoryCacheStore.Cfg)conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+  cm1.defineCache("nonPushing",conf);
+  ((DummyInMemoryCacheStore.Cfg)conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
+  cm2.defineCache("nonPushing",conf);
+}

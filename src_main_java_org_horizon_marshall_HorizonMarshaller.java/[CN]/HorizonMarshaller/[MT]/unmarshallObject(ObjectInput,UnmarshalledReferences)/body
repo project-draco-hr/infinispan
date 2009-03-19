@@ -1,0 +1,80 @@
+{
+  byte magicNumber=in.readByte();
+  int reference=0;
+  Object retVal;
+switch (magicNumber) {
+case MAGICNUMBER_NULL:
+    return null;
+case MAGICNUMBER_REF:
+  if (useRefs) {
+    reference=readReference(in);
+    return refMap.getReferencedObject(reference);
+  }
+ else   break;
+case MAGICNUMBER_SERIALIZABLE:
+if (useRefs) reference=readReference(in);
+retVal=in.readObject();
+if (useRefs) refMap.putReferencedObject(reference,retVal);
+return retVal;
+case MAGICNUMBER_MARSHALLEDVALUE:
+MarshalledValue mv=new MarshalledValue();
+mv.readExternal(in);
+return mv;
+case MAGICNUMBER_COMMAND:
+retVal=unmarshallCommand(in,refMap);
+return retVal;
+case MAGICNUMBER_GTX:
+if (useRefs) reference=readReference(in);
+retVal=unmarshallGlobalTransaction(in,refMap);
+if (useRefs) refMap.putReferencedObject(reference,retVal);
+return retVal;
+case MAGICNUMBER_JG_ADDRESS:
+retVal=unmarshallJGroupsAddress(in);
+return retVal;
+case MAGICNUMBER_TRANSACTION_LOG:
+GlobalTransaction gtx=(GlobalTransaction)unmarshallObject(in,refMap);
+int numCommands=readUnsignedInt(in);
+WriteCommand[] cmds=new WriteCommand[numCommands];
+for (int i=0; i < numCommands; i++) cmds[i]=(WriteCommand)unmarshallObject(in,refMap);
+return new TransactionLog.LogEntry(gtx,cmds);
+case MAGICNUMBER_ARRAY:
+return unmarshallArray(in,refMap);
+case MAGICNUMBER_ARRAY_LIST:
+return unmarshallArrayList(in,refMap);
+case MAGICNUMBER_LINKED_LIST:
+return unmarshallLinkedList(in,refMap);
+case MAGICNUMBER_SINGLETON_LIST:
+return unmarshallSingletonList(in,refMap);
+case MAGICNUMBER_HASH_MAP:
+return unmarshallHashMap(in,refMap);
+case MAGICNUMBER_TREE_MAP:
+return unmarshallTreeMap(in,refMap);
+case MAGICNUMBER_HASH_SET:
+return unmarshallHashSet(in,refMap);
+case MAGICNUMBER_TREE_SET:
+return unmarshallTreeSet(in,refMap);
+case MAGICNUMBER_IMMUTABLE_MAPCOPY:
+return unmarshallMapCopy(in,refMap);
+case MAGICNUMBER_FASTCOPY_HASHMAP:
+return unmarshallFastCopyHashMap(in,refMap);
+case MAGICNUMBER_BOOLEAN:
+return in.readBoolean() ? Boolean.TRUE : Boolean.FALSE;
+case MAGICNUMBER_INTEGER:
+return in.readInt();
+case MAGICNUMBER_LONG:
+return in.readLong();
+case MAGICNUMBER_SHORT:
+return in.readShort();
+case MAGICNUMBER_STRING:
+if (useRefs) reference=readReference(in);
+retVal=unmarshallString(in);
+if (useRefs) refMap.putReferencedObject(reference,retVal);
+return retVal;
+default :
+if (log.isErrorEnabled()) {
+log.error("Unknown Magic Number " + magicNumber);
+}
+throw new IOException("Unknown magic number " + magicNumber);
+}
+throw new IOException("Unknown magic number " + magicNumber);
+}

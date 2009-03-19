@@ -1,0 +1,14 @@
+{
+  if (!createdInStart) {
+    resetNonVolatile();
+    rewire();
+  }
+  populateLifecycleMethods();
+  List<PrioritizedMethod> startMethods=new ArrayList<PrioritizedMethod>(componentLookup.size());
+  for (  Component c : componentLookup.values())   startMethods.addAll(c.startMethods);
+  Collections.sort(startMethods);
+  for (  PrioritizedMethod em : startMethods)   em.invoke();
+  addShutdownHook();
+  getLog().info("Horizon version: " + Version.printVersion());
+  state=ComponentStatus.RUNNING;
+}

@@ -1,0 +1,29 @@
+{
+  NodeList interceptorNodes=element.getElementsByTagName("interceptor");
+  List<CustomInterceptorConfig> interceptorConfigs=new ArrayList<CustomInterceptorConfig>(interceptorNodes.getLength());
+  for (int i=0; i < interceptorNodes.getLength(); i++) {
+    boolean first=false;
+    boolean last=false;
+    int index=-1;
+    String after=null;
+    String before=null;
+    Element interceptorElement=(Element)interceptorNodes.item(i);
+    String position=getAttributeValue(interceptorElement,"position");
+    if (existsAttribute(position) && "first".equalsIgnoreCase(position)) {
+      first=true;
+    }
+    if (existsAttribute(position) && "last".equalsIgnoreCase(position)) {
+      last=true;
+    }
+    String indexStr=getAttributeValue(interceptorElement,"index");
+    index=existsAttribute(indexStr) ? getInt(indexStr) : -1;
+    before=getAttributeValue(interceptorElement,"before");
+    if (!existsAttribute(before))     before=null;
+    after=getAttributeValue(interceptorElement,"after");
+    if (!existsAttribute(after))     after=null;
+    CommandInterceptor interceptor=buildCommandInterceptor(interceptorElement);
+    CustomInterceptorConfig customInterceptorConfig=new CustomInterceptorConfig(interceptor,first,last,index,after,before);
+    interceptorConfigs.add(customInterceptorConfig);
+  }
+  return interceptorConfigs;
+}

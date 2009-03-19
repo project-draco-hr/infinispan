@@ -1,0 +1,20 @@
+{
+  tearDown();
+  Configuration cacheCofig=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  cacheCofig.setUseLazyDeserialization(true);
+  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
+  DummyInMemoryCacheStore.Cfg clc=new DummyInMemoryCacheStore.Cfg();
+  clc.setStore(getClass().getSimpleName());
+  clmc.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)clc));
+  cacheCofig.setCacheLoaderManagerConfig(clmc);
+  defineCacheOnAllManagers("replSync2",cacheCofig);
+  cache1=cache(0,"replSync2");
+  cache2=cache(1,"replSync2");
+  Pojo pojo=new Pojo();
+  cache1.put("key",pojo);
+  assertMarshalledValueInterceptorPresent(cache1);
+  assertMarshalledValueInterceptorPresent(cache2);
+  assertSerializationCounts(1,0);
+  cache2.get("key");
+  assertSerializationCounts(1,1);
+}

@@ -1,0 +1,20 @@
+{
+  try {
+    if (b.getEntries().isEmpty()) {
+      s3Connection.removeObjectFromBucket(b.getBucketName(),rootS3Bucket);
+    }
+ else {
+      ByteArrayInputStream dataIS=new ByteArrayInputStream(marshaller.objectToByteBuffer(b));
+      byte[] md5Hash=ServiceUtils.computeMD5Hash(dataIS);
+      dataIS.reset();
+      S3Object s3Object=s3Connection.createObject(b.getBucketName());
+      s3Object.setDataInputStream(dataIS);
+      s3Object.setContentLength(dataIS.available());
+      s3Object.setMd5Hash(md5Hash);
+      s3Connection.putObjectIntoBucket(s3Object,rootS3Bucket);
+    }
+  }
+ catch (  Exception ex) {
+    throw convertToCacheLoaderException("Exception while saving bucket " + b,ex);
+  }
+}

@@ -1,0 +1,23 @@
+{
+  int kBytesCached=(bytesPerCharacter * numEntries * (payloadSize + keySize)) / 1024;
+  System.out.println("Bytes to be cached: " + NumberFormat.getIntegerInstance().format(kBytesCached) + " kb");
+  Cache c=new DefaultCacheManager().getCache();
+  for (int i=0; i < numEntries; i++) {
+switch (payloadType) {
+case STRINGS:
+      c.put(generateUniqueString(i,keySize),generateRandomString(payloadSize));
+    break;
+case BYTE_ARRAYS:
+  c.put(generateUniqueKey(i,keySize),generateBytePayload(payloadSize));
+break;
+default :
+throw new CacheException("Unknown payload type");
+}
+if (i % 1000 == 0) System.out.println("Added " + i + " entries");
+}
+System.out.println("Calling System.gc()");
+System.gc();
+TestingUtil.sleepThread(1000);
+System.out.println("Cache populated; check mem usage using jconsole, etc.!");
+System.in.read();
+}

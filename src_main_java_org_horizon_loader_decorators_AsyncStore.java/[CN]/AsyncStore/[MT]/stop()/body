@@ -1,0 +1,18 @@
+{
+  stopped.set(true);
+  if (executor != null) {
+    for (    Future f : processorFutures)     f.cancel(true);
+    executor.shutdown();
+    try {
+      boolean terminated=executor.isTerminated();
+      while (!terminated) {
+        terminated=executor.awaitTermination(60,TimeUnit.SECONDS);
+      }
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+  executor=null;
+  super.stop();
+}

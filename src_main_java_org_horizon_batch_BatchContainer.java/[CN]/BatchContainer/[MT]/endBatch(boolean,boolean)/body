@@ -1,0 +1,29 @@
+{
+  BatchDetails bd=batchDetails.get();
+  if (bd.tx == null)   return;
+  if (autoBatch)   bd.invocationCount--;
+  if (!autoBatch || bd.invocationCount == 0) {
+    Transaction existingTx=null;
+    try {
+      existingTx=transactionManager.getTransaction();
+      if ((existingTx == null && !autoBatch) || !bd.tx.equals(existingTx))       transactionManager.resume(bd.tx);
+      if (success)       bd.tx.commit();
+ else       bd.tx.rollback();
+    }
+ catch (    Exception e) {
+      throw new CacheException("Unable to end batch",e);
+    }
+ finally {
+      batchDetails.remove();
+      try {
+        if (!autoBatch && existingTx != null)         transactionManager.resume(existingTx);
+      }
+ catch (      Exception e) {
+        throw new CacheException("Failed resuming existing transaction " + existingTx,e);
+      }
+    }
+  }
+ else {
+    batchDetails.set(bd);
+  }
+}

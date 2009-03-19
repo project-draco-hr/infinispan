@@ -1,0 +1,16 @@
+{
+  Integer age;
+  TransactionManager tm=TestingUtil.getTransactionManager(cache1);
+  tm.begin();
+  Transaction tx=tm.getTransaction();
+  LocalListener lis=new LocalListener();
+  cache1.addListener(lis);
+  lis.put("age",38);
+  tm.suspend();
+  assertNull("age on cache2 must be null as the TX has not yet been committed",cache2.get("age"));
+  tm.resume(tx);
+  tm.commit();
+  age=(Integer)cache2.get("age");
+  assertNotNull("\"age\" obtained from cache2 must be non-null ",age);
+  assertTrue("\"age\" must be 38",age == 38);
+}

@@ -1,0 +1,19 @@
+{
+  List<ReplicableCommand> toReplicate;
+synchronized (elements) {
+    if (log.isTraceEnabled())     log.trace("flush(): flushing repl queue (num elements={0})",elements.size());
+    toReplicate=new ArrayList<ReplicableCommand>(elements);
+    elements.clear();
+  }
+  int toReplicateSize=toReplicate.size();
+  if (toReplicateSize > 0) {
+    try {
+      log.trace("Flushing {0} elements",toReplicateSize);
+      ReplicateCommand replicateCommand=commandsFactory.buildReplicateCommand(toReplicate);
+      rpcManager.invokeRemotely(null,replicateCommand,ResponseMode.ASYNCHRONOUS,configuration.getSyncReplTimeout(),stateTransferEnabled);
+    }
+ catch (    Throwable t) {
+      log.error("failed replicating " + toReplicate.size() + " elements in replication queue",t);
+    }
+  }
+}

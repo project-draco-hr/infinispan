@@ -1,0 +1,18 @@
+{
+  Set<StoredEntry> result=new HashSet<StoredEntry>();
+  try {
+    for (    S3Object s3Object : s3Connection.getAllObjectsInBucketWithoutTheirData(rootS3Bucket)) {
+      Bucket bucket=loadBucket(s3Object);
+      if (bucket != null) {
+        if (bucket.removeExpiredEntries()) {
+          saveBucket(bucket);
+        }
+        result.addAll(bucket.getStoredEntries());
+      }
+    }
+  }
+ catch (  S3ServiceException e) {
+    throw convertToCacheLoaderException("Error while loading entries",e);
+  }
+  return result;
+}

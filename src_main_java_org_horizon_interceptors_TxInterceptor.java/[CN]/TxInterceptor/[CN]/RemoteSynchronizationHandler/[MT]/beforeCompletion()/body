@@ -1,0 +1,13 @@
+{
+  if (trace)   log.trace("Running beforeCompletion on gtx " + gtx);
+  if (transactionContext == null) {
+    log.error("Transaction has a null transaction entry - beforeCompletion() will fail.");
+    throw new IllegalStateException("cannot find transaction entry for " + gtx);
+  }
+  modifications=transactionContext.getModifications();
+  ctx=invocationContextContainer.get();
+  setTransactionalContext(tx,gtx,transactionContext,ctx);
+  if (ctx.isOptionsUninit())   ctx.setOptions(transactionContext.getOptions());
+  assertCanContinue();
+  ctx.setOriginLocal(false);
+}

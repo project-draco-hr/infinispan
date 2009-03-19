@@ -1,0 +1,21 @@
+{
+  boolean cleanup=false;
+  try {
+    StateTransferMonitor mon=new StateTransferMonitor();
+    if (stateTransfersInProgress.putIfAbsent(cacheName,mon) != null)     throw new StateTransferException("There already appears to be a state transfer in progress for the cache named " + cacheName);
+    cleanup=true;
+    ((JChannel)channel).getState(toJGroupsAddress(address),cacheName,timeout,false);
+    mon.waitForState();
+    return mon.getSetStateException() == null;
+  }
+ catch (  StateTransferException ste) {
+    throw ste;
+  }
+catch (  Exception e) {
+    if (log.isInfoEnabled())     log.info("Unable to retrieve state from member " + address,e);
+    return false;
+  }
+ finally {
+    if (cleanup)     stateTransfersInProgress.remove(cacheName);
+  }
+}

@@ -1,0 +1,15 @@
+{
+  Object object=marshaller.objectFromObjectStream(ois);
+  while (object instanceof TransactionLog.LogEntry) {
+    WriteCommand[] mods=((TransactionLog.LogEntry)object).getModifications();
+    if (trace)     log.trace("Mods = {0}",Arrays.toString(mods));
+    for (    WriteCommand mod : mods) {
+      InvocationContext ctx=invocationContextContainer.get();
+      ctx.setOriginLocal(false);
+      ctx.setOptions(Options.CACHE_MODE_LOCAL,Options.SKIP_CACHE_STATUS_CHECK);
+      interceptorChain.invoke(ctx,mod);
+    }
+    object=marshaller.objectFromObjectStream(ois);
+  }
+  assertDelimited(object);
+}

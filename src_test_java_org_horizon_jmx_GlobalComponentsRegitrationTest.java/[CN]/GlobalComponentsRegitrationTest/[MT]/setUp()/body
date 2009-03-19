@@ -1,0 +1,19 @@
+{
+  mBeanServer=ManagementFactory.getPlatformMBeanServer();
+  GlobalConfiguration globalConfiguration=TestingUtil.getGlobalConfiguration();
+  globalConfiguration.setExposeGlobalManagementStatistics(false);
+  cacheManager=TestingUtil.createClusteredCacheManager(globalConfiguration);
+  cacheManager.start();
+  Configuration config=new Configuration();
+  config.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+  config.setExposeManagementStatistics(false);
+  cacheManager.defineCache("a",config);
+  cacheManager.getCache("a");
+  registration=new PlatformMBeanServerGlobalRegistration();
+  registration.setMBeanServer(mBeanServer);
+  GlobalComponentRegistry componentRegistry=TestingUtil.extractGlobalComponentRegistry(cacheManager);
+  GlobalConfiguration configuration=GlobalConfiguration.getClusteredDefault();
+  configuration.setJmxDomain(JMX_NAME_BASE);
+  registration.init(componentRegistry,configuration);
+  registration.start();
+}

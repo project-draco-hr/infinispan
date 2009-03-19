@@ -1,0 +1,26 @@
+{
+  Bucket bucket=null;
+  if (bucketFile.exists()) {
+    if (log.isTraceEnabled())     log.trace("Found bucket file: '" + bucketFile + "'");
+    FileInputStream is=null;
+    ObjectInputStream ois=null;
+    try {
+      is=new FileInputStream(bucketFile);
+      ois=new ObjectInputStream(is);
+      bucket=(Bucket)ois.readObject();
+    }
+ catch (    Exception e) {
+      String message="Error while reading from file: " + bucketFile.getAbsoluteFile();
+      log.error(message,e);
+      throw new CacheLoaderException(message,e);
+    }
+ finally {
+      safeClose(ois);
+      safeClose(is);
+    }
+  }
+  if (bucket != null) {
+    bucket.setBucketName(bucketFile.getName());
+  }
+  return bucket;
+}

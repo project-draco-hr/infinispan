@@ -1,0 +1,25 @@
+{
+  try {
+    if (componentName.equals(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)) {
+      return (T)buildAndConfigureExecutorService(globalConfiguration.getAsyncListenerExecutorFactoryClass(),globalConfiguration.getAsyncListenerExecutorProperties());
+    }
+ else     if (componentName.equals(KnownComponentNames.ASYNC_SERIALIZATION_EXECUTOR)) {
+      return (T)buildAndConfigureExecutorService(globalConfiguration.getAsyncSerializationExecutorFactoryClass(),globalConfiguration.getAsyncSerializationExecutorProperties());
+    }
+ else     if (componentName.equals(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)) {
+      return (T)buildAndConfigureScheduledExecutorService(globalConfiguration.getEvictionScheduledExecutorFactoryClass(),globalConfiguration.getEvictionScheduledExecutorProperties());
+    }
+ else     if (componentName.equals(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
+      return (T)buildAndConfigureScheduledExecutorService(globalConfiguration.getReplicationQueueScheduledExecutorFactoryClass(),globalConfiguration.getReplicationQueueScheduledExecutorProperties());
+    }
+ else {
+      throw new ConfigurationException("Unknown named executor " + componentName);
+    }
+  }
+ catch (  ConfigurationException ce) {
+    throw ce;
+  }
+catch (  Exception e) {
+    throw new ConfigurationException("Unable to instantiate ExecutorFactory for named component " + componentName,e);
+  }
+}

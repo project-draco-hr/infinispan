@@ -1,0 +1,14 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  Node<Object,Object> nodeA=rootNode.addChild(A);
+  Node<Object,Object> nodeB=nodeA.addChild(B);
+  Node<Object,Object> nodeD=nodeB.addChild(D);
+  Node<Object,Object> nodeC=rootNode.addChild(C);
+  Node<Object,Object> nodeE=nodeC.addChild(E);
+  assertNoLocks();
+  tm.begin();
+  treeCache.move(nodeC.getFqn(),nodeB.getFqn());
+  checkLocksDeep();
+  tm.commit();
+  assertNoLocks();
+}

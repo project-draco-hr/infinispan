@@ -1,0 +1,20 @@
+{
+  if (loader != null) {
+    if (clmConfig.isPreload()) {
+      log.debug("Preloading transient state from cache loader {0}",loader);
+      long start=0, stop=0, total=0;
+      if (log.isDebugEnabled())       start=System.currentTimeMillis();
+      Set<StoredEntry> state;
+      try {
+        state=loader.loadAll();
+      }
+ catch (      CacheLoaderException e) {
+        throw new CacheException("Unable to preload!",e);
+      }
+      for (      StoredEntry se : state)       cache.getAdvancedCache().put(se.getKey(),se.getValue(),se.getLifespan(),TimeUnit.MILLISECONDS,Options.SKIP_CACHE_STATUS_CHECK);
+      if (log.isDebugEnabled())       stop=System.currentTimeMillis();
+      if (log.isDebugEnabled())       total=stop - start;
+      log.debug("Preloaded {0} keys in {1} milliseconds",state.size(),total);
+    }
+  }
+}

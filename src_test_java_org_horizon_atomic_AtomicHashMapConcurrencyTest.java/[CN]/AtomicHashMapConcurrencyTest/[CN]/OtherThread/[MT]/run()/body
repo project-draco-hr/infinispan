@@ -1,0 +1,40 @@
+{
+  try {
+    tm.begin();
+    AtomicMap<Integer,String> atomicMap=cache.getAtomicMap(KEY,Integer.class,String.class);
+    boolean notCommited=true;
+    while (notCommited) {
+      Operation op=toExecute.take();
+switch (op) {
+case PUT:
+{
+          atomicMap.put(1,"val");
+          response.put(new Object());
+          break;
+        }
+case READ:
+{
+        String val=atomicMap.get(1);
+        response.put(String.valueOf(val));
+        break;
+      }
+case COMMIT:
+{
+      tm.commit();
+      response.put(new Object());
+      notCommited=false;
+      break;
+    }
+}
+}
+}
+ catch (Exception e) {
+try {
+response.put(e);
+}
+ catch (InterruptedException e1) {
+e1.printStackTrace();
+}
+e.printStackTrace();
+}
+}

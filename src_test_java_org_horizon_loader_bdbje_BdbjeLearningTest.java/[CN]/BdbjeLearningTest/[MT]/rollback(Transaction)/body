@@ -1,0 +1,17 @@
+{
+  com.sleepycat.je.Transaction txn=txnMap.remove(tx);
+  CurrentTransaction currentTransaction=CurrentTransaction.getInstance(env);
+  if (txn != null) {
+    if (currentTransaction.getTransaction() == txn) {
+      try {
+        currentTransaction.abortTransaction();
+      }
+ catch (      DatabaseException e) {
+        e.printStackTrace();
+      }
+    }
+ else {
+      log.error("Transactions must be committed on the same thread");
+    }
+  }
+}

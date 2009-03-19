@@ -1,0 +1,11 @@
+{
+  CachedValue immortal=immortalData.get(key);
+  if (immortal != null)   return new StoredEntry(key,immortal.getValue());
+  ExpirableCachedValue ecv=expirableData.get(key);
+  if (ecv == null)   return null;
+  if (ecv.isExpired()) {
+    expirableData.remove(key);
+    return null;
+  }
+  return new StoredEntry(key,ecv.getValue(),ecv.getCreatedTime(),ecv.getExpiryTime());
+}

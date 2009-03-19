@@ -1,0 +1,11 @@
+{
+  if (enabled) {
+    if (!getLatch.await(60000,TimeUnit.MILLISECONDS))     throw new TimeoutException("Didn't see get after 60 seconds!");
+  }
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    if (enabled)     evictLatch.countDown();
+  }
+}

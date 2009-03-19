@@ -1,0 +1,31 @@
+{
+  ObjectOutputStream oos=null;
+  Cursor cursor=null;
+  try {
+    oos=(outputStream instanceof ObjectOutputStream) ? (ObjectOutputStream)outputStream : new ObjectOutputStream(outputStream);
+    long recordCount=storedEntriesDb.count();
+    log.trace("writing {0} records to stream",recordCount);
+    oos.writeLong(recordCount);
+    cursor=storedEntriesDb.openCursor(null,null);
+    DatabaseEntry key=new DatabaseEntry();
+    DatabaseEntry data=new DatabaseEntry();
+    while (cursor.getNext(key,data,null) == OperationStatus.SUCCESS) {
+      oos.writeObject(key.getData());
+      oos.writeObject(data.getData());
+    }
+  }
+ catch (  IOException e) {
+    throw new CacheLoaderException("Error writing to object stream",e);
+  }
+catch (  DatabaseException e) {
+    throw new CacheLoaderException("Error accessing database",e);
+  }
+ finally {
+    if (cursor != null)     try {
+      cursor.close();
+    }
+ catch (    DatabaseException e) {
+      throw new CacheLoaderException("Error closing cursor",e);
+    }
+  }
+}

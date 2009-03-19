@@ -1,0 +1,26 @@
+{
+  Object o;
+  MVCCEntry e=ctx.lookupEntry(key);
+  if (e.getValue() != null && putIfAbsent) {
+    successful=false;
+    return e.getValue();
+  }
+ else {
+    notifier.notifyCacheEntryModified(key,e.getValue(),true,ctx);
+    if (value instanceof Delta) {
+      Delta dv=(Delta)value;
+      Object existing=e.getValue();
+      DeltaAware toMergeWith=null;
+      if (existing instanceof DeltaAware)       toMergeWith=(DeltaAware)existing;
+      e.setValue(dv.merge(toMergeWith));
+      o=existing;
+      e.setLifespan(lifespanMillis);
+    }
+ else {
+      o=e.setValue(value);
+      e.setLifespan(lifespanMillis);
+    }
+    notifier.notifyCacheEntryModified(key,e.getValue(),false,ctx);
+  }
+  return o;
+}

@@ -1,0 +1,11 @@
+{
+  if (globalComponents.getStatus() != ComponentStatus.RUNNING || globalComponents.getStatus() != ComponentStatus.INITIALIZING) {
+    globalComponents.start();
+  }
+  boolean needToNotify=state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+  globalComponents.registerNamedComponentRegistry(this,cacheName);
+  super.start();
+  if (needToNotify && state == ComponentStatus.RUNNING) {
+    cacheManagerNotifier.notifyCacheStarted(cacheName);
+  }
+}

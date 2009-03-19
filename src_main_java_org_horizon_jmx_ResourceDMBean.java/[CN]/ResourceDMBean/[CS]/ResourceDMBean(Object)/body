@@ -1,0 +1,25 @@
+{
+  if (instance == null)   throw new NullPointerException("Cannot make an MBean wrapper for null instance");
+  this.obj=instance;
+  findDescription();
+  findFields();
+  findMethods();
+  attrInfo=new MBeanAttributeInfo[atts.size()];
+  int i=0;
+  MBeanAttributeInfo info;
+  for (  AttributeEntry entry : atts.values()) {
+    info=entry.getInfo();
+    attrInfo[i++]=info;
+    if (log.isInfoEnabled()) {
+      log.trace("Attribute " + info.getName() + "[r="+ info.isReadable()+ ",w="+ info.isWritable()+ ",is="+ info.isIs()+ ",type="+ info.getType()+ "]");
+    }
+  }
+  opInfo=new MBeanOperationInfo[ops.size()];
+  ops.toArray(opInfo);
+  if (log.isInfoEnabled()) {
+    if (ops.size() > 0)     log.trace("Operations are:");
+    for (    MBeanOperationInfo op : opInfo) {
+      log.trace("Operation " + op.getReturnType() + " "+ op.getName());
+    }
+  }
+}

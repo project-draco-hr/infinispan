@@ -1,0 +1,20 @@
+{
+  try {
+    if (componentType.isInterface()) {
+      Class componentImpl;
+      if (componentType.equals(Marshaller.class)) {
+        componentImpl=VersionAwareMarshaller.class;
+      }
+ else {
+        componentImpl=getClass().getClassLoader().loadClass(componentType.getName() + "Impl");
+      }
+      return componentType.cast(componentImpl.newInstance());
+    }
+ else {
+      return componentType.newInstance();
+    }
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException("Unable to create component " + componentType,e);
+  }
+}

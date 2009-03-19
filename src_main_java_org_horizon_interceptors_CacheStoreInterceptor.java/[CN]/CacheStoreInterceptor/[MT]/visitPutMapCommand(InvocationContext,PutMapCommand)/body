@@ -1,0 +1,12 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (skip(ctx,command) || inTransaction())   return returnValue;
+  Map<Object,Object> map=command.getMap();
+  for (  Object key : map.keySet()) {
+    StoredEntry se=getStoredEntry(key,ctx);
+    store.store(se);
+    log.trace("Stored entry {0} under key {1}",se,key);
+  }
+  if (getStatisticsEnabled())   cacheStores.getAndAdd(map.size());
+  return returnValue;
+}

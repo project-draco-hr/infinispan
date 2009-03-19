@@ -1,0 +1,14 @@
+{
+  EvictionManagerImpl em=new EvictionManagerImpl();
+  em.evictionEventQueue=createMock(BlockingQueue.class);
+  em.evictionAlgorithm=createNiceMock(EvictionAlgorithm.class);
+  expect(em.evictionEventQueue.size()).andReturn(0).anyTimes();
+  em.evictionEventQueue.put(eq(new InUseEvictionEvent("x",7000)));
+  expectLastCall().once();
+  em.evictionEventQueue.put(eq(new EvictionEvent("x",EvictionEvent.Type.UNMARK_IN_USE_EVENT)));
+  expectLastCall().once();
+  replay(em.evictionEventQueue);
+  em.markKeyCurrentlyInUse("x",7,TimeUnit.SECONDS);
+  em.unmarkKeyCurrentlyInUse("x");
+  verify(em.evictionEventQueue);
+}

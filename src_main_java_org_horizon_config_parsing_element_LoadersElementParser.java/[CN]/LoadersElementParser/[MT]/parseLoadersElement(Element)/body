@@ -1,0 +1,16 @@
+{
+  CacheLoaderManagerConfig cacheLoaderConfig=new CacheLoaderManagerConfig();
+  String passivation=getAttributeValue(element,"passivation");
+  if (existsAttribute(passivation))   cacheLoaderConfig.setPassivation(getBoolean(passivation));
+  String shared=getAttributeValue(element,"shared");
+  if (existsAttribute(shared))   cacheLoaderConfig.setShared(getBoolean(shared));
+  boolean preload=getBoolean(getAttributeValue(element,"preload"));
+  cacheLoaderConfig.setPreload(preload);
+  NodeList cacheLoaderNodes=element.getElementsByTagName("loader");
+  for (int i=0; i < cacheLoaderNodes.getLength(); i++) {
+    Element indivElement=(Element)cacheLoaderNodes.item(i);
+    CacheLoaderConfig iclc=parseIndividualCacheLoaderConfig(indivElement);
+    cacheLoaderConfig.addCacheLoaderConfig(iclc);
+  }
+  return cacheLoaderConfig;
+}

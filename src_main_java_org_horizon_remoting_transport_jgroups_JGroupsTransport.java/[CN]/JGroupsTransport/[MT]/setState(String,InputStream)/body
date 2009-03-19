@@ -1,0 +1,16 @@
+{
+  StateTransferMonitor mon=null;
+  try {
+    if (trace)     log.trace("Received state for cache named '{0}'.  Attempting to apply state.",cacheName);
+    mon=stateTransfersInProgress.get(cacheName);
+    inboundInvocationHandler.applyState(cacheName,istream);
+    mon.notifyStateReceiptSucceeded();
+  }
+ catch (  Exception e) {
+    log.error("Failed setting state",e);
+    mon.notifyStateReceiptFailed(e instanceof StateTransferException ? (StateTransferException)e : new StateTransferException(e));
+  }
+ finally {
+    Util.closeStream(istream);
+  }
+}

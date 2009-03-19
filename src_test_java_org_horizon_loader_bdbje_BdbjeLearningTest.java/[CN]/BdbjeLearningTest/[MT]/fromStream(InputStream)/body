@@ -1,0 +1,32 @@
+{
+  ObjectInputStream ois=null;
+  try {
+    ois=(inputStream instanceof ObjectInputStream) ? (ObjectInputStream)inputStream : new ObjectInputStream(inputStream);
+    long recordCount=ois.readLong();
+    log.info("reading {0} records from stream",recordCount);
+    log.info("clearing all records");
+    cacheMap.clear();
+    Cursor cursor=null;
+    com.sleepycat.je.Transaction txn=env.beginTransaction(null,null);
+    try {
+      cursor=storedEntriesDb.openCursor(txn,null);
+      for (int i=0; i < recordCount; i++) {
+        byte[] keyBytes=(byte[])ois.readObject();
+        byte[] dataBytes=(byte[])ois.readObject();
+        DatabaseEntry key=new DatabaseEntry(keyBytes);
+        DatabaseEntry data=new DatabaseEntry(dataBytes);
+        cursor.put(key,data);
+      }
+      cursor.close();
+      cursor=null;
+      txn.commit();
+    }
+  finally {
+      if (cursor != null)       cursor.close();
+    }
+  }
+ catch (  Exception e) {
+    CacheLoaderException cle=(e instanceof CacheLoaderException) ? (CacheLoaderException)e : new CacheLoaderException("Problems reading from stream",e);
+    throw cle;
+  }
+}

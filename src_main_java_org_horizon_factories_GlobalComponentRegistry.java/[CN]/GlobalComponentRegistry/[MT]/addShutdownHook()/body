@@ -1,0 +1,23 @@
+{
+  ArrayList al=MBeanServerFactory.findMBeanServer(null);
+  boolean registerShutdownHook=(globalConfiguration.getShutdownHookBehavior() == DEFAULT && al.size() == 0) || globalConfiguration.getShutdownHookBehavior() == REGISTER;
+  if (registerShutdownHook) {
+    log.trace("Registering a shutdown hook.  Configured behavior = {0}",globalConfiguration.getShutdownHookBehavior());
+    shutdownHook=new Thread(){
+      @Override public void run(){
+        try {
+          invokedFromShutdownHook=true;
+          GlobalComponentRegistry.this.stop();
+        }
+  finally {
+          invokedFromShutdownHook=false;
+        }
+      }
+    }
+;
+    Runtime.getRuntime().addShutdownHook(shutdownHook);
+  }
+ else {
+    log.trace("Not registering a shutdown hook.  Configured behavior = {0}",globalConfiguration.getShutdownHookBehavior());
+  }
+}

@@ -1,0 +1,26 @@
+{
+  if (ctx.getTransactionContext() == null) {
+    if (ctx.isContainsModifications() || ctx.isContainsLocks()) {
+      cleanupLocks(ctx,Thread.currentThread(),true);
+    }
+ else {
+      if (trace)       log.trace("Nothing to do since there are no modifications in scope.");
+    }
+  }
+ else {
+    if (useReadCommitted) {
+      Map<Object,MVCCEntry> lookedUpEntries=ctx.getLookedUpEntries();
+      if (!lookedUpEntries.isEmpty()) {
+        List<Object> keysToRemove=new ArrayList<Object>(lookedUpEntries.size());
+        for (        Map.Entry<Object,MVCCEntry> e : lookedUpEntries.entrySet()) {
+          if (!lockManager.possiblyLocked(e.getValue()))           keysToRemove.add(e.getKey());
+        }
+        if (!keysToRemove.isEmpty()) {
+          if (trace)           log.trace("Removing keys {0} since they have not been modified.  Context currently contains {1} keys",keysToRemove,ctx.getLookedUpEntries().size());
+          for (          Object key : keysToRemove)           ctx.removeLookedUpEntry(key);
+          if (trace)           log.trace("After removal, context contains {0} keys",ctx.getLookedUpEntries().size());
+        }
+      }
+    }
+  }
+}

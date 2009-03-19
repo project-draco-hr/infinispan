@@ -1,0 +1,21 @@
+{
+  Map<Class,Class<? extends AbstractComponentFactory>> temp=new HashMap<Class,Class<? extends AbstractComponentFactory>>();
+  Set<Class<? extends AbstractComponentFactory>> factories=getHardcodedFactories();
+  for (  Class<? extends AbstractComponentFactory> factory : factories) {
+    boolean factoryValid=true;
+    try {
+      if (AutoInstantiableFactory.class.isAssignableFrom(factory) && factory.getConstructor() == null) {
+        factoryValid=false;
+      }
+    }
+ catch (    Exception e) {
+      factoryValid=false;
+    }
+    if (!factoryValid)     throw new RuntimeException("Factory class " + factory + " implements AutoInstantiableFactory but does not expose a public, no-arg constructor!  Debug stack: "+ debugStack);
+    DefaultFactoryFor dFFAnnotation=factory.getAnnotation(DefaultFactoryFor.class);
+    if (dFFAnnotation != null) {
+      for (      Class targetClass : dFFAnnotation.classes())       temp.put(targetClass,factory);
+    }
+  }
+  defaultFactories=temp;
+}

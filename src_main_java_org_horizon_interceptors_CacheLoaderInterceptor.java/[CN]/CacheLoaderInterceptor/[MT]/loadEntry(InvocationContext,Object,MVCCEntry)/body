@@ -1,0 +1,23 @@
+{
+  log.trace("Loading key {0}",key);
+  StoredEntry storedEntry=loader.load(key);
+  boolean entryExists=(storedEntry != null);
+  log.trace("Entry exists in loader? " + entryExists);
+  if (getStatisticsEnabled()) {
+    if (entryExists) {
+      cacheLoads.incrementAndGet();
+    }
+ else {
+      cacheMisses.incrementAndGet();
+    }
+  }
+  if (entryExists) {
+    sendNotification(key,true,ctx);
+    entry.setValue(storedEntry.getValue());
+    entry.setLifespan(storedEntry.getLifespan());
+    entry.setValid(true);
+    notifier.notifyCacheEntryLoaded(key,false,ctx);
+    sendNotification(key,false,ctx);
+  }
+  return entry;
+}

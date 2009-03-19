@@ -1,0 +1,15 @@
+{
+  boolean sync=testListenerClassValidity(listener.getClass());
+  boolean foundMethods=false;
+  Map<Class<? extends Annotation>,Class> allowedListeners=getAllowedMethodAnnotations();
+  for (  Method m : listener.getClass().getMethods()) {
+    for (    Class<? extends Annotation> annotation : allowedListeners.keySet()) {
+      if (m.isAnnotationPresent(annotation)) {
+        testListenerMethodValidity(m,allowedListeners.get(annotation),annotation.getName());
+        addListenerInvocation(annotation,new ListenerInvocation(listener,m,sync));
+        foundMethods=true;
+      }
+    }
+  }
+  if (!foundMethods && getLog().isWarnEnabled())   getLog().warn("Attempted to register listener of class " + listener.getClass() + ", but no valid, public methods annotated with method-level event annotations found! Ignoring listener.");
+}

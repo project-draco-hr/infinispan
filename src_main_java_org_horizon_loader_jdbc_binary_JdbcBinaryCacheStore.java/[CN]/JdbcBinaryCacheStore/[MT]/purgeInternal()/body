@@ -1,0 +1,105 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  Set<Bucket> expiredBuckets=new HashSet<Bucket>();
+  final int batchSize=100;
+  try {
+    String sql=tableManipulation.getSelectExpiredRowsSql();
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    ps.setLong(1,System.currentTimeMillis());
+    rs=ps.executeQuery();
+    while (rs.next()) {
+      String key=rs.getString(2);
+      if (immediateLockForWritting(key)) {
+        if (log.isTraceEnabled())         log.trace("Adding bucket keyed " + key + " for purging.");
+        InputStream binaryStream=rs.getBinaryStream(1);
+        Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+        bucket.setBucketName(key);
+        expiredBuckets.add(bucket);
+      }
+ else {
+        if (log.isTraceEnabled())         log.trace("Could not acquire write lock for " + key + ", this won't be purged even though it has expired elements");
+      }
+    }
+  }
+ catch (  SQLException ex) {
+    releaseLocks(expiredBuckets);
+    connectionFactory.releaseConnection(conn);
+    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    JdbcUtil.safeClose(rs);
+  }
+  if (log.isTraceEnabled())   log.trace("Found following buckets: " + expiredBuckets + " which are about to be expired");
+  if (expiredBuckets.isEmpty())   return;
+  Set<Bucket> emptyBuckets=new HashSet<Bucket>();
+  try {
+    String sql=tableManipulation.getUpdateRowSql();
+    ps=conn.prepareStatement(sql);
+    int updateCount=0;
+    Iterator<Bucket> it=expiredBuckets.iterator();
+    while (it.hasNext()) {
+      Bucket bucket=it.next();
+      bucket.removeExpiredEntries();
+      if (!bucket.isEmpty()) {
+        ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),bucket);
+        ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
+        ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+        ps.addBatch();
+        updateCount++;
+        if (updateCount % batchSize == 0) {
+          ps.executeBatch();
+          if (log.isTraceEnabled())           log.trace("Flushing batch, update count is: " + updateCount);
+        }
+      }
+ else {
+        it.remove();
+        emptyBuckets.add(bucket);
+      }
+    }
+    if (updateCount % batchSize != 0) {
+      ps.executeBatch();
+    }
+    if (log.isTraceEnabled())     log.trace("Updated " + updateCount + " buckets.");
+  }
+ catch (  SQLException ex) {
+    releaseLocks(emptyBuckets);
+    connectionFactory.releaseConnection(conn);
+    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+  }
+ finally {
+    releaseLocks(expiredBuckets);
+    JdbcUtil.safeClose(ps);
+  }
+  if (log.isTraceEnabled())   log.trace("About to remove empty buckets " + emptyBuckets);
+  if (emptyBuckets.isEmpty())   return;
+  try {
+    String sql=tableManipulation.getDeleteRowSql();
+    ps=conn.prepareStatement(sql);
+    int deletionCount=0;
+    for (    Bucket bucket : emptyBuckets) {
+      ps.setString(1,bucket.getBucketName());
+      ps.addBatch();
+      deletionCount++;
+      if (deletionCount % batchSize == 0) {
+        if (log.isTraceEnabled())         log.trace("Flushing deletion batch, total deletion count so far is " + deletionCount);
+        ps.executeBatch();
+      }
+    }
+    if (deletionCount % batchSize != 0) {
+      int[] batchResult=ps.executeBatch();
+      if (log.isTraceEnabled())       log.trace("Flushed the batch and received following results: " + Arrays.toString(batchResult));
+    }
+  }
+ catch (  SQLException ex) {
+    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+  }
+ finally {
+    releaseLocks(emptyBuckets);
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+}

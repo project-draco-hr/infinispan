@@ -1,0 +1,28 @@
+{
+  try {
+    long recordCount=ois.readLong();
+    currentTransaction.beginTransaction(null);
+    log.debug("clearing and reading {0} records from stream",recordCount);
+    cacheMap.clear();
+    Cursor cursor=null;
+    try {
+      cursor=cacheDb.openCursor(currentTransaction.getTransaction(),null);
+      for (int i=0; i < recordCount; i++) {
+        byte[] keyBytes=(byte[])ois.readObject();
+        byte[] dataBytes=(byte[])ois.readObject();
+        DatabaseEntry key=new DatabaseEntry(keyBytes);
+        DatabaseEntry data=new DatabaseEntry(dataBytes);
+        cursor.put(key,data);
+      }
+    }
+  finally {
+      if (cursor != null)       cursor.close();
+    }
+    completeCurrentTransaction(true);
+  }
+ catch (  Exception caught) {
+    completeCurrentTransaction(false);
+    clear();
+    throw convertToCacheLoaderException("Problems reading from stream",caught);
+  }
+}

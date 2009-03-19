@@ -1,0 +1,16 @@
+{
+  for (int currentTries=0; ; currentTries++) {
+    Transaction txn=null;
+    try {
+      txn=currentTxn.beginTransaction(getTransactionConfig());
+      worker.doWork();
+      return;
+    }
+ catch (    Throwable caught) {
+      currentTries=abortOverflowingCurrentTriesOnError(txn,currentTries);
+      caught=ExceptionUnwrapper.unwrapAny(caught);
+      rethrowIfNotDeadLock(caught);
+      if (currentTries >= getMaxRetries())       throw (DeadlockException)caught;
+    }
+  }
+}

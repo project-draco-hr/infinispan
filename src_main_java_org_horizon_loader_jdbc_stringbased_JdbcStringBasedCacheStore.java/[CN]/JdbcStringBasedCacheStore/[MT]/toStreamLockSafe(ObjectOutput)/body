@@ -1,0 +1,30 @@
+{
+  Connection connection=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  try {
+    String sql=tableManipulation.getLoadAllRowsSql();
+    if (log.isTraceEnabled())     log.trace("Running sql '" + sql);
+    connection=connectionFactory.getConnection();
+    ps=connection.prepareStatement(sql);
+    rs=ps.executeQuery();
+    rs.setFetchSize(config.getFetchSize());
+    while (rs.next()) {
+      InputStream is=rs.getBinaryStream(1);
+      StoredEntry se=(StoredEntry)JdbcUtil.unmarshall(getMarshaller(),is);
+      objectOutput.writeObject(se);
+    }
+    objectOutput.writeObject(STRING_STREAM_DELIMITER);
+  }
+ catch (  SQLException e) {
+    logAndThrow(e,"SQL Error while storing string keys to database");
+  }
+catch (  IOException e) {
+    logAndThrow(e,"I/O Error while storing string keys to database");
+  }
+ finally {
+    JdbcUtil.safeClose(rs);
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(connection);
+  }
+}

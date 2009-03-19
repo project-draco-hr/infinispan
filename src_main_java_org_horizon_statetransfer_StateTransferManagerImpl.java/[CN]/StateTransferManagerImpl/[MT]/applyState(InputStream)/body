@@ -1,0 +1,31 @@
+{
+  if (log.isDebugEnabled())   log.debug("Applying state");
+  ObjectInputStream ois=null;
+  try {
+    ois=new ObjectInputStream(in);
+    boolean canProvideState=(Boolean)marshaller.objectFromObjectStream(ois);
+    if (canProvideState) {
+      assertDelimited(ois);
+      if (transientState)       applyInMemoryState(ois);
+      assertDelimited(ois);
+      if (persistentState)       applyPersistentState(ois);
+      assertDelimited(ois);
+      applyTransactionLog(ois);
+      if (log.isDebugEnabled())       log.debug("State applied, closing object stream");
+    }
+ else {
+      String msg="Provider cannot provide state!";
+      if (log.isDebugEnabled())       log.debug(msg);
+      throw new StateTransferException(msg);
+    }
+  }
+ catch (  StateTransferException ste) {
+    throw ste;
+  }
+catch (  Exception e) {
+    throw new StateTransferException(e);
+  }
+ finally {
+    Util.closeStream(ois);
+  }
+}

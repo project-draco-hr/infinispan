@@ -1,0 +1,16 @@
+{
+  if (channel == null)   return null;
+synchronized (membersListLock) {
+    while (members == null || members.isEmpty()) {
+      log.debug("Waiting on view being accepted");
+      try {
+        membersListLock.wait();
+      }
+ catch (      InterruptedException e) {
+        log.error("getCoordinator(): Interrupted while waiting for members to be set",e);
+        break;
+      }
+    }
+    return members == null || members.isEmpty() ? null : members.get(0);
+  }
+}

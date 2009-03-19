@@ -1,0 +1,21 @@
+{
+  if (e == null)   return;
+  boolean repl=true;
+  String mode=getAttributeValue(e,"mode").toUpperCase();
+  if (mode.startsWith("R"))   repl=true;
+ else   if (mode.startsWith("I"))   repl=false;
+  Element asyncEl=getSingleElementInCoreNS("async",e);
+  Element syncEl=getSingleElementInCoreNS("sync",e);
+  if (syncEl != null && asyncEl != null)   throw new ConfigurationException("Cannot have sync and async elements within the same cluster element!");
+  boolean sync=asyncEl == null;
+  if (sync) {
+    config.setCacheMode(repl ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.INVALIDATION_SYNC);
+    configureSyncMode(syncEl,config);
+  }
+ else {
+    config.setCacheMode(repl ? Configuration.CacheMode.REPL_ASYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
+    configureAsyncMode(asyncEl,config);
+  }
+  String cn=getAttributeValue(e,"clusterName");
+  configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval",e),config);
+}

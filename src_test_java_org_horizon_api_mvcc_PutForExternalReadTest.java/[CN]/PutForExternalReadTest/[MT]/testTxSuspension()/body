@@ -1,0 +1,17 @@
+{
+  replListener2.expect(PutKeyValueCommand.class);
+  cache1.put(key + "0",value);
+  replListener2.waitForRPC();
+  replListener2.expect(PutKeyValueCommand.class);
+  tm1.begin();
+  cache1.get(key + "0");
+  cache1.putForExternalRead(key,value);
+  Transaction t=tm1.suspend();
+  replListener2.waitForRPC();
+  assertEquals("PFER should have completed",value,cache1.get(key));
+  assertEquals("PFER should have completed",value,cache2.get(key));
+  tm1.resume(t);
+  tm1.commit();
+  assertEquals("tx should have completed",value,cache1.get(key + "0"));
+  assertEquals("tx should have completed",value,cache2.get(key + "0"));
+}

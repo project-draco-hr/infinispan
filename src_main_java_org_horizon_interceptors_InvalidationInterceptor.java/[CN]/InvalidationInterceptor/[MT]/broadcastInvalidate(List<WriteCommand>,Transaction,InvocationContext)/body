@@ -1,0 +1,26 @@
+{
+  if (ctx.getTransaction() != null && !isLocalModeForced(ctx)) {
+    if (modifications == null || modifications.isEmpty())     return;
+    InvalidationFilterVisitor filterVisitor=new InvalidationFilterVisitor(modifications.size());
+    filterVisitor.visitCollection(null,modifications);
+    if (filterVisitor.containsPutForExternalRead) {
+      log.debug("Modification list contains a putForExternalRead operation.  Not invalidating.");
+    }
+ else {
+      try {
+        invalidateAcrossCluster(defaultSynchronous,ctx,filterVisitor.result.toArray());
+      }
+ catch (      Throwable t) {
+        log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.",t);
+        try {
+          tx.setRollbackOnly();
+        }
+ catch (        SystemException se) {
+          throw new RuntimeException("setting tx rollback failed ",se);
+        }
+        if (t instanceof RuntimeException)         throw (RuntimeException)t;
+ else         throw new RuntimeException("Unable to broadcast invalidation messages",t);
+      }
+    }
+  }
+}

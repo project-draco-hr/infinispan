@@ -1,0 +1,27 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  try {
+    String sql=tableManipulation.getInsertRowSql();
+    if (log.isTraceEnabled()) {
+      log.trace("Running insertBucket. Sql: '" + sql + "', on bucket: "+ bucket);
+    }
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),bucket);
+    ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
+    ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+    ps.setString(3,bucket.getBucketName());
+    int insertedRows=ps.executeUpdate();
+    if (insertedRows != 1) {
+      throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
+    }
+  }
+ catch (  SQLException ex) {
+    logAndThrow(ex,"sql failure while inserting bucket: " + bucket);
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+}

@@ -1,0 +1,39 @@
+{
+  ReversibleOrderedSet entries=ctx.getLookedUpEntries().entrySet();
+  Iterator<Map.Entry<Object,MVCCEntry>> it=entries.reverseIterator();
+  if (trace)   log.trace("Number of entries in context: {0}",entries.size());
+  if (commit) {
+    while (it.hasNext()) {
+      Map.Entry<Object,MVCCEntry> e=it.next();
+      MVCCEntry entry=e.getValue();
+      Object key=e.getKey();
+      boolean needToUnlock=lockManager.possiblyLocked(entry);
+      if (entry != null)       entry.commitUpdate(dataContainer);
+ else {
+        if (trace)         log.trace("Entry for key {0} is null, not calling commitUpdate",key);
+      }
+      if (needToUnlock) {
+        if (trace)         log.trace("Releasing lock on [" + key + "] for owner "+ owner);
+        lockManager.unlock(key,owner);
+      }
+    }
+  }
+ else {
+    while (it.hasNext()) {
+      Map.Entry<Object,MVCCEntry> e=it.next();
+      MVCCEntry entry=e.getValue();
+      Object key=e.getKey();
+      boolean needToUnlock=lockManager.possiblyLocked(entry);
+      if (entry != null)       entry.rollbackUpdate();
+ else {
+        if (trace)         log.trace("Entry for key {0} is null, not calling rollbackUpdate",key);
+      }
+      if (needToUnlock) {
+        if (trace)         log.trace("Releasing lock on [" + key + "] for owner "+ owner);
+        lockManager.unlock(key,owner);
+      }
+    }
+  }
+  ctx.setContainsModifications(false);
+  ctx.setContainsLocks(false);
+}

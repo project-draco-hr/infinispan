@@ -1,0 +1,42 @@
+{
+  EvictionEvent event;
+  int count=0;
+  long startTime=System.currentTimeMillis();
+  Set<Object> keysToRetainInQueue=null;
+  while ((event=nextEvent(queue)) != null) {
+    if (trace)     count++;
+switch (event.getEventType()) {
+case ADD_ENTRY_EVENT:
+      Object key=event.getKey();
+    processAddedEntries(key);
+  recordEventKey(keysToRetainInQueue,key);
+break;
+case REMOVE_ENTRY_EVENT:
+processRemovedEntries(event.getKey());
+break;
+case VISIT_ENTRY_EVENT:
+processVisitedEntries(event.getKey());
+break;
+case CLEAR_CACHE_EVENT:
+processClearCacheEvent();
+break;
+case MARK_IN_USE_EVENT:
+processMarkInUse(event.getKey(),((InUseEvictionEvent)event).getInUseTimeout());
+break;
+case UNMARK_IN_USE_EVENT:
+processUnmarkInUse(event.getKey());
+break;
+case EXPIRED_DATA_PURGE_START:
+if (keysToRetainInQueue == null) keysToRetainInQueue=new HashSet<Object>();
+break;
+case EXPIRED_DATA_PURGE_END:
+Set<Object> keysPurged=((PurgedDataEndEvent)event).getKeysPurged();
+if (keysToRetainInQueue != null) keysPurged.removeAll(keysToRetainInQueue);
+for (Object o : keysPurged) evictionQueue.remove(o);
+break;
+default :
+throw new EvictionException("Illegal eviction event type " + event.getEventType());
+}
+}
+if (trace) log.trace("processed {0} eviction events in {1} millis",count,System.currentTimeMillis() - startTime);
+}

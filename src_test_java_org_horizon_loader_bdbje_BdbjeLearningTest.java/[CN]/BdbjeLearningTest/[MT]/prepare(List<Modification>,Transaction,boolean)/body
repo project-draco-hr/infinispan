@@ -1,0 +1,23 @@
+{
+  if (isOnePhase) {
+    TransactionRunner runner=new TransactionRunner(env);
+    try {
+      runner.run(new ModificationsTransactionWorker(mods));
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+  }
+ else {
+    PreparableTransactionRunner runner=new PreparableTransactionRunner(env);
+    com.sleepycat.je.Transaction txn=null;
+    try {
+      runner.prepare(new ModificationsTransactionWorker(mods));
+      txn=CurrentTransaction.getInstance(env).getTransaction();
+      txnMap.put(tx,txn);
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+  }
+}

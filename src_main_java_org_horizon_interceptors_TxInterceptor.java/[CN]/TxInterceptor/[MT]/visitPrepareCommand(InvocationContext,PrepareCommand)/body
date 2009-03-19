@@ -1,0 +1,18 @@
+{
+  Object result=null;
+  if (log.isDebugEnabled())   log.debug("Got gtx from invocation context " + ctx.getGlobalTransaction());
+  try {
+    if (ctx.getGlobalTransaction().isRemote()) {
+      result=handleRemotePrepare(ctx,command);
+      if (getStatisticsEnabled())       prepares.incrementAndGet();
+    }
+ else {
+      if (trace)       log.trace("received my own message (discarding it)");
+      result=null;
+    }
+  }
+ catch (  Throwable e) {
+    throwIfNeeded(ctx,e);
+  }
+  return result;
+}

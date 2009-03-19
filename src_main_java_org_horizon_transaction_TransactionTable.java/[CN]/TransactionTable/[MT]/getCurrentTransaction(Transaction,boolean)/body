@@ -1,0 +1,20 @@
+{
+  GlobalTransaction gtx=get(tx);
+  if (gtx == null && createIfNotExists) {
+    Address addr=getAddress();
+    gtx=GlobalTransaction.create(addr);
+    if (trace)     log.trace("Creating new GlobalTransaction " + gtx);
+    TransactionContext transactionContext;
+    try {
+      transactionContext=contextFactory.createTransactionContext(tx);
+    }
+ catch (    Exception e) {
+      throw new CacheException("Unable to create a transaction entry!",e);
+    }
+    associateTransaction(tx,gtx,transactionContext);
+    if (trace) {
+      log.trace("created new GTX: " + gtx + ", local TX="+ tx);
+    }
+  }
+  return gtx;
+}

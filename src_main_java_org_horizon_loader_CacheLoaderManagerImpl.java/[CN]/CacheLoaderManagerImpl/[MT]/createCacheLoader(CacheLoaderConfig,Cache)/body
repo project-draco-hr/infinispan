@@ -1,0 +1,23 @@
+{
+  CacheLoader tmpLoader=(CacheLoader)Util.getInstance(cfg.getCacheLoaderClassName());
+  if (tmpLoader != null) {
+    if (tmpLoader instanceof CacheStore) {
+      CacheStore tmpStore=(CacheStore)tmpLoader;
+      if (cfg.getAsyncStoreConfig().isEnabled()) {
+        tmpStore=new AsyncStore(tmpStore,cfg.getAsyncStoreConfig());
+        tmpLoader=tmpStore;
+      }
+      if (cfg.isIgnoreModifications()) {
+        tmpStore=new ReadOnlyStore(tmpStore);
+        tmpLoader=tmpStore;
+      }
+      SingletonStoreConfig ssc=cfg.getSingletonStoreConfig();
+      if (ssc != null && ssc.isSingletonStoreEnabled()) {
+        tmpStore=new SingletonStore(tmpStore,cache,ssc);
+        tmpLoader=tmpStore;
+      }
+    }
+    tmpLoader.init(cfg,cache,m);
+  }
+  return tmpLoader;
+}

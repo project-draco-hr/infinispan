@@ -1,0 +1,23 @@
+{
+  Object result;
+  try {
+    if (trace)     log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to false.");
+    ctx.setOriginLocal(false);
+    if (cacheCommand instanceof VisitableCommand) {
+      Object retVal=interceptorChain.invokeRemote((VisitableCommand)cacheCommand);
+      if (returnValueForRemoteCall(cacheCommand)) {
+        result=retVal;
+      }
+ else {
+        result=null;
+      }
+    }
+ else {
+      throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
+    }
+  }
+ catch (  Throwable ex) {
+    throw ex;
+  }
+  return result;
+}

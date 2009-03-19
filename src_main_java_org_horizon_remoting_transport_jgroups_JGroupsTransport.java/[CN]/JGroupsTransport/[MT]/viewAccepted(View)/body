@@ -1,0 +1,16 @@
+{
+  Vector<org.jgroups.Address> newMembers=newView.getMembers();
+  if (log.isInfoEnabled())   log.info("Received new cluster view: {0}",newView);
+synchronized (membersListLock) {
+    boolean needNotification=false;
+    if (newMembers != null) {
+      members=fromJGroupsAddressList(newMembers);
+      needNotification=true;
+    }
+    coordinator=(members != null && members.size() != 0 && members.get(0).equals(getAddress()));
+    if (needNotification && notifier != null) {
+      notifier.notifyViewChange(members,getAddress());
+    }
+    membersListLock.notifyAll();
+  }
+}

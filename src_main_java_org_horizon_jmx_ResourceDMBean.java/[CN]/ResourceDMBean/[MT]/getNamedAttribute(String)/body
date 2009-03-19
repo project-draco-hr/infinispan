@@ -1,0 +1,23 @@
+{
+  Attribute result=null;
+  if (name.equals(MBEAN_DESCRITION)) {
+    result=new Attribute(MBEAN_DESCRITION,this.description);
+  }
+ else {
+    AttributeEntry entry=atts.get(name);
+    if (entry != null) {
+      MBeanAttributeInfo i=entry.getInfo();
+      try {
+        result=new Attribute(name,entry.invoke(null));
+        if (log.isDebugEnabled())         log.debug("Attribute " + name + " has r="+ i.isReadable()+ ",w="+ i.isWritable()+ ",is="+ i.isIs()+ " and value "+ result.getValue());
+      }
+ catch (      Exception e) {
+        log.debug("Exception while reading value of attribute " + name,e);
+      }
+    }
+ else {
+      log.warn("Did not find queried attribute with name " + name);
+    }
+  }
+  return result;
+}

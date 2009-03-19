@@ -1,0 +1,43 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  try {
+    conn=connectionFactory.getConnection();
+    String sql=tableManipulation.getInsertRowSql();
+    ps=conn.prepareStatement(sql);
+    int readBuckets=0;
+    int batchSize=config.getBatchSize();
+    String bucketName=(String)objectInput.readObject();
+    while (!bucketName.equals(BINARY_STREAM_DELIMITER)) {
+      Bucket bucket=(Bucket)objectInput.readObject();
+      readBuckets++;
+      ByteBuffer buffer=JdbcUtil.marshall(getMarshaller(),bucket);
+      ps.setBinaryStream(1,buffer.getStream(),buffer.getLength());
+      ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+      ps.setString(3,bucketName);
+      if (readBuckets % batchSize == 0) {
+        ps.executeBatch();
+        if (log.isTraceEnabled())         log.trace("Executing batch " + (readBuckets / batchSize) + ", batch size is "+ batchSize);
+      }
+ else {
+        ps.addBatch();
+      }
+      bucketName=(String)objectInput.readObject();
+    }
+    if (readBuckets % batchSize != 0)     ps.executeBatch();
+    if (log.isTraceEnabled())     log.trace("Successfully inserted " + readBuckets + " buckets into the database, batch size is "+ batchSize);
+  }
+ catch (  IOException ex) {
+    logAndThrow(ex,"I/O failure while integrating state into store");
+  }
+catch (  SQLException e) {
+    logAndThrow(e,"SQL failure while integrating state into store");
+  }
+catch (  ClassNotFoundException e) {
+    logAndThrow(e,"Unexpected failure while integrating state into store");
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+}

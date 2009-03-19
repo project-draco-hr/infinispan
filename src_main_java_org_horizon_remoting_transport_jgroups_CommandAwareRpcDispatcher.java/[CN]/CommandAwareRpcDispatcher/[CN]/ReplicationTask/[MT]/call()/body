@@ -1,0 +1,37 @@
+{
+  Buffer buf;
+  try {
+    buf=req_marshaller.objectToBuffer(command);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Failure to marshal argument(s)",e);
+  }
+  Message msg=new Message();
+  msg.setBuffer(buf);
+  if (oob)   msg.setFlag(Message.OOB);
+  int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
+  RspList retval=castMessage(dests,msg,mode,timeout,anycasting,filter);
+  if (trace)   log.trace("responses: {0}",retval);
+  if (retval == null)   throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
+  if (supportReplay) {
+    boolean replay=false;
+    Vector<Address> ignorers=new Vector<Address>();
+    for (    Map.Entry<Address,Rsp> entry : retval.entrySet()) {
+      Object value=entry.getValue().getValue();
+      if (value instanceof RequestIgnoredResponse) {
+        ignorers.add(entry.getKey());
+      }
+ else       if (value instanceof ExtendedResponse) {
+        ExtendedResponse extended=(ExtendedResponse)value;
+        replay|=extended.isReplayIgnoredRequests();
+        entry.getValue().setValue(extended.getResponse());
+      }
+    }
+    if (replay && ignorers.size() > 0) {
+      if (trace)       log.trace("Replaying message to ignoring senders: " + ignorers);
+      RspList responses=castMessage(ignorers,msg,GroupRequest.GET_ALL,timeout,anycasting,filter);
+      if (responses != null)       retval.putAll(responses);
+    }
+  }
+  return retval;
+}

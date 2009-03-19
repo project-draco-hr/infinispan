@@ -1,0 +1,22 @@
+{
+  Transaction tx;
+  if ((tx=getLocalTransaction()) == null) {
+    return null;
+  }
+  if (!isValid(tx)) {
+    int status=-1;
+    try {
+      status=tx.getStatus();
+    }
+ catch (    SystemException e) {
+    }
+    if (status != Status.STATUS_COMMITTED) {
+      log.warn("status is " + status + " (not ACTIVE or PREPARING); returning null)");
+    }
+ else {
+      log.trace("status is COMMITTED; returning null");
+    }
+    return null;
+  }
+  return getCurrentTransaction(tx,createIfNotExists);
+}

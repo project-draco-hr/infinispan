@@ -1,0 +1,13 @@
+{
+  boolean shouldSkipLocking=ctx.hasOption(Options.SKIP_LOCKING);
+  if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
+    if (lockManager.lockAndRecord(key,ctx)) {
+      return true;
+    }
+ else {
+      Object owner=lockManager.getOwner(key);
+      throw new TimeoutException("Unable to acquire lock on key [" + key + "] after ["+ getLockAcquisitionTimeout(ctx)+ "] milliseconds for requestor ["+ lockManager.getLockOwner(ctx)+ "]! Lock held by ["+ owner+ "]");
+    }
+  }
+  return false;
+}

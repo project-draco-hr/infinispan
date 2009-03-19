@@ -1,0 +1,17 @@
+{
+  new File(dbHome).mkdirs();
+  System.out.println("Opening environment in: " + dbHome);
+  EnvironmentConfig envConfig=new EnvironmentConfig();
+  envConfig.setTransactional(true);
+  envConfig.setAllowCreate(true);
+  env=new Environment(new File(dbHome),envConfig);
+  DatabaseConfig dbConfig=new DatabaseConfig();
+  dbConfig.setTransactional(true);
+  dbConfig.setAllowCreate(true);
+  Database catalogDb=env.openDatabase(null,CLASS_CATALOG,dbConfig);
+  javaCatalog=new StoredClassCatalog(catalogDb);
+  EntryBinding storedEntryKeyBinding=new SerialBinding(javaCatalog,Object.class);
+  EntryBinding storedEntryValueBinding=new SerialBinding(javaCatalog,StoredEntry.class);
+  storedEntriesDb=env.openDatabase(null,STORED_ENTRIES,dbConfig);
+  cacheMap=new StoredMap<Object,StoredEntry>(storedEntriesDb,storedEntryKeyBinding,storedEntryValueBinding,true);
+}

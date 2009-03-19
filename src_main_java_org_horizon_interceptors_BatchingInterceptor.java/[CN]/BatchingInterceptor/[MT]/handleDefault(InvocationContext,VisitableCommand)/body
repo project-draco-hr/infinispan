@@ -1,0 +1,12 @@
+{
+  Transaction tx=null;
+  try {
+    if (transactionManager.getTransaction() == null && (tx=batchContainer.getBatchTransaction()) != null) {
+      transactionManager.resume(tx);
+    }
+    return super.handleDefault(ctx,command);
+  }
+  finally {
+    if (tx != null && transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())     transactionManager.suspend();
+  }
+}

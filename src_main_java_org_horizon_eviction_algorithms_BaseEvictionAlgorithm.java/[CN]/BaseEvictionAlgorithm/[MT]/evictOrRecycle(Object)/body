@@ -1,0 +1,14 @@
+{
+  log.trace("Attempting to evict {0}",key);
+  if (!action.evict(key)) {
+    try {
+      boolean result=recycleQueue.offer(key,5,TimeUnit.SECONDS);
+      if (!result) {
+        log.warn("Unable to add key {0} to the recycle queue." + "This is often sign that " + "evictions are not occurring and entries that should be "+ "evicted are piling up waiting to be evicted.",key);
+      }
+    }
+ catch (    InterruptedException e) {
+      log.debug("InterruptedException",e);
+    }
+  }
+}

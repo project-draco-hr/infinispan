@@ -1,0 +1,38 @@
+{
+  try {
+    int operation=operationQueue.take();
+    Boolean response;
+switch (operation) {
+case CAN_ACQUIRE_RL:
+{
+        response=stripedLock.acquireLock(KEY,false,0);
+        if (response)         stripedLock.releaseLock(KEY);
+        break;
+      }
+case CAN_ACQUIRE_WL:
+{
+      response=stripedLock.acquireLock(KEY,true,0);
+      if (response)       stripedLock.releaseLock(KEY);
+      break;
+    }
+case ACQUIRE_RL:
+{
+    response=stripedLock.acquireLock(KEY,false,0);
+    break;
+  }
+case ACQUIRE_WL:
+{
+  response=stripedLock.acquireLock(KEY,true,0);
+  break;
+}
+default :
+{
+throw new IllegalStateException("Unknown operation: " + operation);
+}
+}
+responseQueue.put(response);
+}
+ catch (Throwable e) {
+e.printStackTrace();
+}
+}

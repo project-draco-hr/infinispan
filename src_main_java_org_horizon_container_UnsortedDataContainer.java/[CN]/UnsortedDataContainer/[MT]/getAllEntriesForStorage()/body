@@ -1,0 +1,11 @@
+{
+  Set<StoredEntry> set=new HashSet<StoredEntry>(immortalData.size() + expirableData.size());
+  for (  Map.Entry<Object,CachedValue> entry : immortalData.entrySet())   set.add(new StoredEntry(entry.getKey(),entry.getValue().getValue()));
+  for (Iterator<Map.Entry<Object,ExpirableCachedValue>> it=expirableData.entrySet().iterator(); it.hasNext(); ) {
+    Map.Entry<Object,ExpirableCachedValue> entry=it.next();
+    ExpirableCachedValue ecv=entry.getValue();
+    if (ecv.isExpired())     it.remove();
+ else     set.add(new StoredEntry(entry.getKey(),ecv.getValue(),ecv.getCreatedTime(),ecv.getExpiryTime()));
+  }
+  return set;
+}

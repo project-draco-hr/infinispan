@@ -1,0 +1,16 @@
+{
+  BaseEvictionAlgorithmConfig config=getNewEvictionAlgorithmConfig();
+  config.setMaxEntries(-1);
+  config.setMinEntries(2);
+  BlockingQueue<EvictionEvent> eventQueue=new LinkedBlockingQueue<EvictionEvent>();
+  eventQueue.put(new EvictionEvent("one",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("two",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("three",ADD_ENTRY_EVENT));
+  eventQueue.put(new EvictionEvent("four",ADD_ENTRY_EVENT));
+  EvictionAlgorithm algo=createAndInit(config);
+  EvictionAction mockAction=createMock(EvictionAction.class);
+  algo.setEvictionAction(mockAction);
+  EasyMock.replay(mockAction);
+  algo.process(eventQueue);
+  EasyMock.verify(mockAction);
+}

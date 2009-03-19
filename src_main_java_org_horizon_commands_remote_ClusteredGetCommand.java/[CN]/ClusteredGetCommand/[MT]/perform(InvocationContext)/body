@@ -1,0 +1,25 @@
+{
+  if (trace)   log.trace("Clustered Get called with param: " + dataCommand);
+  Object callResults=null;
+  try {
+    InvocationContext ctx=interceptorChain.getInvocationContext();
+    ctx.setOriginLocal(false);
+    callResults=dataCommand.perform(ctx);
+    boolean found=true;
+    if (trace)     log.trace("Got result " + callResults + ", found="+ found);
+    if (found && callResults == null)     callResults=createEmptyResults();
+  }
+ catch (  Exception e) {
+    log.warn("Problems processing clusteredGet call",e);
+  }
+  List<Object> results=new ArrayList<Object>(2);
+  if (callResults != null) {
+    results.add(true);
+    results.add(callResults);
+  }
+ else {
+    results.add(false);
+    results.add(null);
+  }
+  return results;
+}

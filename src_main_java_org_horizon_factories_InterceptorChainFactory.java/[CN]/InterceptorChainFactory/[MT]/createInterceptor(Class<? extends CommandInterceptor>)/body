@@ -1,0 +1,17 @@
+{
+  CommandInterceptor chainedInterceptor=componentRegistry.getComponent(clazz);
+  if (chainedInterceptor == null) {
+    chainedInterceptor=clazz.newInstance();
+    try {
+      componentRegistry.registerComponent(chainedInterceptor,clazz);
+    }
+ catch (    RuntimeException e) {
+      log.warn("Problems creating interceptor " + clazz);
+      throw e;
+    }
+  }
+ else {
+    chainedInterceptor.setNext(null);
+  }
+  return chainedInterceptor;
+}

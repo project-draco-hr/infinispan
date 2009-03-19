@@ -1,0 +1,10 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (skip(ctx,command) || inTransaction() || !command.isSuccessful())   return returnValue;
+  Object key=command.getKey();
+  StoredEntry se=getStoredEntry(key,ctx);
+  store.store(se);
+  log.trace("Stored entry {0} under key {1}",se,key);
+  if (getStatisticsEnabled())   cacheStores.incrementAndGet();
+  return returnValue;
+}

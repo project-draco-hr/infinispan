@@ -1,0 +1,15 @@
+{
+  ReversibleOrderedSet<Map.Entry<Object,MVCCEntry>> entries=ctx.getLookedUpEntries().entrySet();
+  if (!entries.isEmpty()) {
+    Iterator<Map.Entry<Object,MVCCEntry>> it=entries.reverseIterator();
+    while (it.hasNext()) {
+      Map.Entry<Object,MVCCEntry> e=it.next();
+      MVCCEntry entry=e.getValue();
+      if (possiblyLocked(entry)) {
+        Object k=e.getKey();
+        if (trace)         log.trace("Attempting to unlock " + k);
+        lockContainer.releaseLock(k);
+      }
+    }
+  }
+}

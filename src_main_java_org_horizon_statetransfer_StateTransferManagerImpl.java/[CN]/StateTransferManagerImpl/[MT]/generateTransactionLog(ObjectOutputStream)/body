@@ -1,0 +1,29 @@
+{
+  int maxNonProgressingLogWrites=100;
+  int flushTimeout=60000;
+  DistributedSync distributedSync=rpcManager.getTransport().getDistributedSync();
+  try {
+    if (trace)     log.trace("Transaction log size is {0}",transactionLog.size());
+    for (int nonProgress=0, size=transactionLog.size(); size > 0; ) {
+      if (trace)       log.trace("Tx Log remaining entries = " + size);
+      transactionLog.writeCommitLog(marshaller,oos);
+      int newSize=transactionLog.size();
+      if (newSize >= size && ++nonProgress >= maxNonProgressingLogWrites)       break;
+      size=newSize;
+    }
+    distributedSync.acquireProcessingLock(true,configuration.getStateRetrievalTimeout(),MILLISECONDS);
+    delimit(oos);
+    oos.flush();
+    if (trace)     log.trace("Waiting for a distributed sync block");
+    distributedSync.blockUntilAcquired(flushTimeout,MILLISECONDS);
+    if (trace)     log.trace("Distributed sync block received, proceeding with writing commit log");
+    transactionLog.writeCommitLog(marshaller,oos);
+    delimit(oos);
+    transactionLog.writePendingPrepares(marshaller,oos);
+    delimit(oos);
+    oos.flush();
+  }
+  finally {
+    distributedSync.releaseProcessingLock();
+  }
+}

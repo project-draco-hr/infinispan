@@ -1,0 +1,23 @@
+{
+  if (restartInProgress.compareAndSet(false,true)) {
+    try {
+      component.stop();
+      component.start();
+    }
+  finally {
+      restartInProgress.set(false);
+      for (      Thread waiter : restartWaiters) {
+        try {
+          LockSupport.unpark(waiter);
+        }
+ catch (        Throwable t) {
+        }
+      }
+    }
+  }
+ else {
+    restartWaiters.add(Thread.currentThread());
+    if (restartInProgress.get())     LockSupport.park();
+    restartWaiters.remove(Thread.currentThread());
+  }
+}

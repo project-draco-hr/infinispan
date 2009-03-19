@@ -1,0 +1,41 @@
+{
+  String cfg;
+  if (p != null) {
+    if (p.containsKey(CONFIGURATION_FILE)) {
+      cfg=p.getProperty(CONFIGURATION_FILE);
+      try {
+        channel=new JChannel(new FileLookup().lookupFileLocation(cfg));
+      }
+ catch (      Exception e) {
+        channel=null;
+      }
+    }
+    if (channel == null && p.containsKey(CONFIGURATION_XML)) {
+      cfg=p.getProperty(CONFIGURATION_XML);
+      try {
+        channel=new JChannel(XmlConfigHelper.stringToElement(cfg));
+      }
+ catch (      Exception e) {
+        channel=null;
+      }
+    }
+    if (channel == null && p.containsKey(CONFIGURATION_STRING)) {
+      cfg=p.getProperty(CONFIGURATION_STRING);
+      try {
+        channel=new JChannel(cfg);
+      }
+ catch (      Exception e) {
+        channel=null;
+      }
+    }
+  }
+  if (channel == null) {
+    log.info("Unable to use any JGroups configuration mechanisms provided in properties {0}.  Using default JGroups configuration!",p);
+    try {
+      channel=new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
+    }
+ catch (    ChannelException e) {
+      throw new CacheException("Unable to start JGroups channel",e);
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  int pollFrequencyMS=100;
+  long startupWaitTime=getConfiguration().getStateRetrievalTimeout();
+  long giveUpTime=System.currentTimeMillis() + startupWaitTime;
+  while (System.currentTimeMillis() < giveUpTime) {
+    if (state.allowInvocations())     break;
+    Thread.sleep(pollFrequencyMS);
+  }
+  if (!state.allowInvocations())   throw new IllegalStateException("Cache not in STARTED state, even after waiting " + getConfiguration().getStateRetrievalTimeout() + " millis.");
+}

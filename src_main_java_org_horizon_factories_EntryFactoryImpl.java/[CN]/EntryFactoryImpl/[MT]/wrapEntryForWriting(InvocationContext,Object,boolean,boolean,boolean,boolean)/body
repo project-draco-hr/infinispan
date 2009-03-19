@@ -1,0 +1,50 @@
+{
+  MVCCEntry mvccEntry=ctx.lookupEntry(key);
+  if (createIfAbsent && mvccEntry != null && mvccEntry.isNullEntry())   mvccEntry=null;
+  if (mvccEntry != null) {
+    if (alreadyLocked || acquireLock(ctx,key)) {
+      UpdateableEntry ue;
+      if (mvccEntry instanceof UpdateableEntry && (!forRemoval || !(mvccEntry instanceof NullMarkerEntry))) {
+        ue=(UpdateableEntry)mvccEntry;
+      }
+ else {
+        ue=createWrappedEntry(key,mvccEntry.getValue(),false,forRemoval,mvccEntry.getLifespan());
+        mvccEntry=ue;
+        ctx.putLookedUpEntry(key,mvccEntry);
+      }
+      ue.copyForUpdate(container,writeSkewCheck);
+    }
+    if (trace)     log.trace("Exists in context.");
+    if (mvccEntry.isDeleted() && createIfAbsent) {
+      if (trace)       log.trace("Entry is deleted in current scope.  Need to un-delete.");
+      mvccEntry.setDeleted(false);
+      mvccEntry.setValid(true);
+    }
+  }
+ else {
+    CachedValue cachedValue=container.getEntry(key);
+    if (cachedValue != null) {
+      if (trace)       log.trace("Retrieved from container.");
+      boolean needToCopy=alreadyLocked || acquireLock(ctx,key) || ctx.hasOption(Options.SKIP_LOCKING);
+      UpdateableEntry ue=createWrappedEntry(key,cachedValue.getValue(),false,false,cachedValue.getLifespan());
+      ctx.putLookedUpEntry(key,ue);
+      if (needToCopy)       ue.copyForUpdate(container,writeSkewCheck);
+      mvccEntry=ue;
+    }
+ else     if (createIfAbsent) {
+      if (trace)       log.trace("Creating new entry.");
+      if (!alreadyLocked)       acquireLock(ctx,key);
+      notifier.notifyCacheEntryCreated(key,true,ctx);
+      UpdateableEntry ue=createWrappedEntry(key,null,true,false,-1);
+      ue.setCreated(true);
+      ctx.putLookedUpEntry(key,ue);
+      ue.copyForUpdate(container,writeSkewCheck);
+      notifier.notifyCacheEntryCreated(key,false,ctx);
+      mvccEntry=ue;
+    }
+  }
+  if (mvccEntry == null && forceLockIfAbsent) {
+    if (acquireLock(ctx,key))     ctx.putLookedUpEntry(key,null);
+  }
+  return mvccEntry;
+}

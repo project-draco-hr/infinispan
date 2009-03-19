@@ -1,0 +1,26 @@
+{
+  boolean success=true;
+  for (int i=0; i < sharedLocks.length; i++) {
+    Lock toAcquire=exclusive ? sharedLocks[i].writeLock() : sharedLocks[i].readLock();
+    try {
+      success=toAcquire.tryLock(timeout,TimeUnit.MILLISECONDS);
+      if (!success) {
+        if (log.isTraceEnabled())         log.trace("Could not aquire lock on " + toAcquire + ". Exclusive?"+ exclusive);
+        break;
+      }
+    }
+ catch (    InterruptedException e) {
+      if (log.isTraceEnabled())       log.trace("Cought InterruptedException while trying to aquire global lock",e);
+      success=false;
+    }
+ finally {
+      if (!success) {
+        for (int j=0; j < i; j++) {
+          Lock toRelease=exclusive ? sharedLocks[j].writeLock() : sharedLocks[j].readLock();
+          toRelease.unlock();
+        }
+      }
+    }
+  }
+  return success;
+}

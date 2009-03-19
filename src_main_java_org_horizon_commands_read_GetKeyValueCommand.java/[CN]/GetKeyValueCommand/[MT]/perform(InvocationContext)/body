@@ -1,0 +1,16 @@
+{
+  MVCCEntry entry=ctx.lookupEntry(key);
+  if (entry == null || entry.isNullEntry()) {
+    if (trace)     log.trace("Entry not found");
+    return null;
+  }
+  if (entry.isDeleted()) {
+    if (trace)     log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+    return null;
+  }
+  notifier.notifyCacheEntryVisited(key,true,ctx);
+  Object result=entry.getValue();
+  if (trace)   log.trace("Found value " + result);
+  notifier.notifyCacheEntryVisited(key,false,ctx);
+  return result;
+}

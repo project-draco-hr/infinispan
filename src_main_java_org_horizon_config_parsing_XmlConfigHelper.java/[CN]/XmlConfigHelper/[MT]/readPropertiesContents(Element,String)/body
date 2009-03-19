@@ -1,0 +1,18 @@
+{
+  String stringContents=readStringContents(element,elementName);
+  if (stringContents == null)   return new Properties();
+  stringContents=escapeBackslashes(stringContents);
+  ByteArrayInputStream is=null;
+  Properties properties=null;
+  try {
+    is=new ByteArrayInputStream(stringContents.trim().getBytes("ISO8859_1"));
+    properties=new Properties();
+    properties.load(is);
+    is.close();
+  }
+ catch (  IOException e) {
+    log.warn("Unexpected",e);
+    throw new ConfigurationException("Exception occured while reading properties from XML document",e);
+  }
+  return properties;
+}

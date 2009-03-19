@@ -1,0 +1,41 @@
+{
+  if (recipients != null && recipients.isEmpty()) {
+    log.trace("Destination list is empty: no need to send message");
+    return Collections.emptyList();
+  }
+  log.trace("dests={0}, command={1}, mode={2}, timeout={3}",recipients,rpcCommand,mode,timeout);
+  flushTracker.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
+  boolean unlock=true;
+  flushTracker.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+  try {
+    RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,false,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay);
+    if (mode == ResponseMode.ASYNCHRONOUS)     return Collections.emptyList();
+    if (trace)     log.trace("Cache [{0}]: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps);
+    if (rsps == null)     return Collections.emptyList();
+    List<Object> retval=new ArrayList<Object>(rsps.size());
+    for (    Rsp rsp : rsps.values()) {
+      if (rsp.wasSuspected() || !rsp.wasReceived()) {
+        CacheException ex;
+        if (rsp.wasSuspected()) {
+          ex=new SuspectException("Suspected member: " + rsp.getSender());
+        }
+ else {
+          ex=new TimeoutException("Replication timeout for " + rsp.getSender());
+        }
+        retval.add(new ReplicationException("rsp=" + rsp,ex));
+      }
+ else {
+        Object value=rsp.getValue();
+        if (value instanceof Exception && !(value instanceof ReplicationException)) {
+          if (trace)           log.trace("Recieved exception'" + value + "' from "+ rsp.getSender());
+          throw (Exception)value;
+        }
+        retval.add(value);
+      }
+    }
+    return retval;
+  }
+  finally {
+    if (unlock)     flushTracker.releaseProcessingLock();
+  }
+}

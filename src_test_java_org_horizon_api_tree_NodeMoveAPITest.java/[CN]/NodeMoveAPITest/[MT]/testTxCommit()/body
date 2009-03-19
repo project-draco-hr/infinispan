@@ -1,0 +1,18 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  Node<Object,Object> nodeA=rootNode.addChild(A);
+  Node<Object,Object> nodeB=nodeA.addChild(B);
+  assertEquals(rootNode,nodeA.getParent());
+  assertEquals(nodeA,nodeB.getParent());
+  assertEquals(nodeA,rootNode.getChildren().iterator().next());
+  assertEquals(nodeB,nodeA.getChildren().iterator().next());
+  tm.begin();
+  treeCache.move(nodeB.getFqn(),Fqn.ROOT);
+  tm.commit();
+  nodeB=rootNode.getChild(B);
+  assertEquals(rootNode,nodeA.getParent());
+  assertEquals(rootNode,nodeB.getParent());
+  assertTrue(rootNode.getChildren().contains(nodeA));
+  assertTrue(rootNode.getChildren().contains(nodeB));
+  assertTrue(nodeA.getChildren().isEmpty());
+}

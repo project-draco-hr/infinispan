@@ -1,0 +1,29 @@
+{
+  StoredEntry existingOne=loadLockSafe(ed,lockingKey);
+  String sql;
+  if (existingOne == null) {
+    sql=tableManipulation.getInsertRowSql();
+  }
+ else {
+    sql=tableManipulation.getUpdateRowSql();
+  }
+  if (log.isTraceEnabled())   log.trace("Running sql '" + sql + "' on "+ ed+ ". Key string is '"+ lockingKey+ "'");
+  Connection connection=null;
+  PreparedStatement ps=null;
+  try {
+    connection=connectionFactory.getConnection();
+    ps=connection.prepareStatement(sql);
+    ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),ed);
+    ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
+    ps.setLong(2,ed.getExpiryTime());
+    ps.setString(3,lockingKey);
+    ps.executeUpdate();
+  }
+ catch (  SQLException ex) {
+    logAndThrow(ex,"Error while storing string keys to database");
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(connection);
+  }
+}

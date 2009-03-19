@@ -1,0 +1,23 @@
+{
+  MVCCEntry mvccEntry;
+  if (ctx.hasOption(Options.FORCE_WRITE_LOCK)) {
+    if (trace)     log.trace("Forcing lock on reading");
+    return wrapEntryForWriting(ctx,key,false,false,false,false);
+  }
+ else   if ((mvccEntry=ctx.lookupEntry(key)) == null) {
+    if (trace)     log.trace("Key " + key + " is not in context, fetching from container.");
+    CachedValue se=container.getEntry(key);
+    if (ctx.getTransaction() == null) {
+      if (se != null)       ctx.putLookedUpEntry(key,se);
+    }
+ else {
+      mvccEntry=se == null ? createWrappedEntry(key,null,false,false,-1) : createWrappedEntry(key,se.getValue(),false,false,se.getLifespan());
+      if (mvccEntry != null)       ctx.putLookedUpEntry(key,mvccEntry);
+    }
+    return mvccEntry;
+  }
+ else {
+    if (trace)     log.trace("Key is already in context");
+    return mvccEntry;
+  }
+}

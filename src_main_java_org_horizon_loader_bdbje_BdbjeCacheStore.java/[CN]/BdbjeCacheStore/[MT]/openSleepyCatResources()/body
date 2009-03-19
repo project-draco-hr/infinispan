@@ -1,0 +1,16 @@
+{
+  if (trace)   log.trace("creating je environment with home dir {0}",cfg.getLocation());
+  if (cfg.getCacheDbName() == null)   cfg.setCacheDbName(cache.getName());
+  if (cfg.getCatalogDbName() == null)   cfg.setCatalogDbName(cfg.getCacheDbName() + "_class_catalog");
+  File location=verifyOrCreateEnvironmentDirectory(new File(cfg.getLocation()));
+  try {
+    env=factory.createEnvironment(location);
+    cacheDb=factory.createDatabase(env,cfg.getCacheDbName());
+    Database catalogDb=factory.createDatabase(env,cfg.getCatalogDbName());
+    catalog=factory.createStoredClassCatalog(catalogDb);
+    cacheMap=factory.createStoredMapViewOfDatabase(cacheDb,catalog);
+  }
+ catch (  DatabaseException e) {
+    throw convertToCacheLoaderException("could not open sleepycat je resource",e);
+  }
+}

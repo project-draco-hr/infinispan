@@ -1,0 +1,18 @@
+{
+  if (algoConfig == null)   throw new IllegalArgumentException("Eviction algorithm class must not be null!");
+  if (evictionActionClass == null)   throw new IllegalArgumentException("Eviction action policy class must not be null!");
+  try {
+    if (trace)     log.trace("Instantiating {0}",evictionActionClass);
+    EvictionAction evictionAction=(EvictionAction)Util.getInstance(evictionActionClass);
+    evictionAction.setCache(cache);
+    if (trace)     log.trace("Instantiating {0}",algoConfig.getEvictionAlgorithmClassName());
+    EvictionAlgorithm algorithm=(EvictionAlgorithm)Util.getInstance(algoConfig.getEvictionAlgorithmClassName());
+    algorithm.setEvictionAction(evictionAction);
+    algorithm.init(cache,dataContainer,algoConfig);
+    return algorithm;
+  }
+ catch (  Exception e) {
+    log.fatal("Unable to instantiate eviction algorithm {0}",e,algoConfig.getEvictionAlgorithmClassName());
+    throw new IllegalStateException(e);
+  }
+}

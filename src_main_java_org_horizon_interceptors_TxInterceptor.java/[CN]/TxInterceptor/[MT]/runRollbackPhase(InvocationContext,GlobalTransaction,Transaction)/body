@@ -1,0 +1,15 @@
+{
+  try {
+    VisitableCommand rollbackCommand=commandsFactory.buildRollbackCommand(gtx);
+    if (trace)     log.trace(" running rollback for {0}",gtx);
+    transactionLog.rollback(gtx);
+    rollbackTransactions.put(tx,gtx);
+    handleCommitRollback(ctx,rollbackCommand);
+  }
+ catch (  Throwable e) {
+    log.warn("Rollback had a problem",e);
+  }
+ finally {
+    rollbackTransactions.remove(tx);
+  }
+}

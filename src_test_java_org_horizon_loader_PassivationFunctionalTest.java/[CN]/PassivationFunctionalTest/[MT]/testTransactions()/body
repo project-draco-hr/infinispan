@@ -1,0 +1,36 @@
+{
+  assertNotInCacheAndStore("k1","k2");
+  tm.begin();
+  cache.put("k1","v1");
+  cache.put("k2","v2",lifespan,MILLISECONDS);
+  Transaction t=tm.suspend();
+  assertNotInCacheAndStore("k1","k2");
+  tm.resume(t);
+  tm.commit();
+  assertInCacheNotInStore("k1","v1");
+  assertInCacheNotInStore("k2","v2",lifespan);
+  tm.begin();
+  cache.clear();
+  t=tm.suspend();
+  assertInCacheNotInStore("k1","v1");
+  assertInCacheNotInStore("k2","v2",lifespan);
+  tm.resume(t);
+  tm.commit();
+  assertNotInCacheAndStore("k1","k2");
+  tm.begin();
+  cache.put("k1","v1");
+  cache.put("k2","v2",lifespan,MILLISECONDS);
+  t=tm.suspend();
+  assertNotInCacheAndStore("k1","k2");
+  tm.resume(t);
+  tm.rollback();
+  assertNotInCacheAndStore("k1","k2");
+  cache.put("k1","v1");
+  cache.put("k2","v2",lifespan,MILLISECONDS);
+  assertInCacheNotInStore("k1","v1");
+  assertInCacheNotInStore("k2","v2",lifespan);
+  cache.evict("k1");
+  cache.evict("k2");
+  assertInStoreNotInCache("k1","v1");
+  assertInStoreNotInCache("k2","v2",lifespan);
+}
