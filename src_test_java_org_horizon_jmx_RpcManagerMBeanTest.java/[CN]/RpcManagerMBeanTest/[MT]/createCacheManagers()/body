@@ -1,0 +1,21 @@
+{
+  GlobalConfiguration globalConfiguration=TestingUtil.getGlobalConfiguration();
+  globalConfiguration.setExposeGlobalJmxStatistics(true);
+  globalConfiguration.setJmxDomain(JMX_DOMAIN);
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  CacheManager cacheManager1=TestingUtil.createClusteredCacheManager(globalConfiguration);
+  cacheManager1.start();
+  GlobalConfiguration globalConfiguration2=TestingUtil.getGlobalConfiguration();
+  globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration2.setJmxDomain(JMX_DOMAIN);
+  globalConfiguration2.setExposeGlobalJmxStatistics(true);
+  CacheManager cacheManager2=TestingUtil.createClusteredCacheManager(globalConfiguration2);
+  cacheManager2.start();
+  registerCacheManager(cacheManager1,cacheManager2);
+  defineCacheOnAllManagers("repl_sync_cache",getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC));
+  cache1=manager(0).getCache("repl_sync_cache");
+  cache2=manager(1).getCache("repl_sync_cache");
+  mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  rpcManager1=new ObjectName("RpcManagerMBeanTest:cache-name=[global],jmx-resource=RPCManager");
+  rpcManager2=new ObjectName("RpcManagerMBeanTest2:cache-name=[global],jmx-resource=RPCManager");
+}

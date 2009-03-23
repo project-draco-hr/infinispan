@@ -1,3 +1,11 @@
 {
-  return t.invokeRemotely(recipients,rpcCommand,mode,timeout,usePriorityQueue,responseFilter,stateTransferEnabled);
+  try {
+    List<Object> result=t.invokeRemotely(recipients,rpcCommand,mode,timeout,usePriorityQueue,responseFilter,stateTransferEnabled);
+    if (isStatisticsEnabled())     replicationCount.incrementAndGet();
+    return result;
+  }
+ catch (  Throwable e) {
+    if (isStatisticsEnabled())     replicationFailures.incrementAndGet();
+    throw new CacheException(e);
+  }
 }
