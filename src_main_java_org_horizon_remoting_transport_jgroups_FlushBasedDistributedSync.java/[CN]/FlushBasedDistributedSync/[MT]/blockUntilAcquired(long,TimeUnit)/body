@@ -1,3 +1,11 @@
 {
-  if (!flushWaitGate.await(timeout,timeUnit))   throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+  while (true) {
+    try {
+      if (!flushWaitGate.await(timeout,timeUnit))       throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+      break;
+    }
+ catch (    InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+  }
 }
