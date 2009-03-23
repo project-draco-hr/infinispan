@@ -1,9 +1,11 @@
 {
+  if (trace)   log.trace("Applying commit log");
   Object object=marshaller.objectFromObjectStream(ois);
   while (object instanceof TransactionLog.LogEntry) {
     WriteCommand[] mods=((TransactionLog.LogEntry)object).getModifications();
     if (trace)     log.trace("Mods = {0}",Arrays.toString(mods));
     for (    WriteCommand mod : mods) {
+      commandsFactory.initializeReplicableCommand(mod);
       InvocationContext ctx=invocationContextContainer.get();
       ctx.setOriginLocal(false);
       ctx.setOptions(Options.CACHE_MODE_LOCAL,Options.SKIP_CACHE_STATUS_CHECK);
@@ -12,4 +14,5 @@
     object=marshaller.objectFromObjectStream(ois);
   }
   assertDelimited(object);
+  if (trace)   log.trace("Finished applying commit log");
 }

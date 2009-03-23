@@ -1,12 +1,4 @@
 {
   Lock lock=exclusive ? processingLock.writeLock() : processingLock.readLock();
-  while (true) {
-    try {
-      if (!lock.tryLock(timeout,timeUnit))       throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
-      return;
-    }
- catch (    InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-  }
+  if (!lock.tryLock(timeout,timeUnit))   throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
 }

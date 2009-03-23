@@ -1,7 +1,9 @@
 {
   if (isValid(req)) {
     try {
-      return executeCommand((RPCCommand)req_marshaller.objectFromByteBuffer(req.getBuffer(),req.getOffset(),req.getLength()),req);
+      ReplicableCommand cmd=(ReplicableCommand)req_marshaller.objectFromByteBuffer(req.getBuffer(),req.getOffset(),req.getLength());
+      if (cmd instanceof CacheRPCCommand)       return executeCommand((CacheRPCCommand)cmd,req);
+ else       return cmd.perform(null);
     }
  catch (    Throwable x) {
       if (trace)       log.trace("Problems invoking command.",x);

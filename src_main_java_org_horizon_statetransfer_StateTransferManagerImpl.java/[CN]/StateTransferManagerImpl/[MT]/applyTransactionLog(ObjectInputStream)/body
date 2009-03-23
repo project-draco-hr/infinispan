@@ -1,8 +1,9 @@
 {
   if (trace)   log.trace("Integrating transaction log");
   processCommitLog(ois);
-  Transport t=rpcManager.getTransport();
-  t.blockRPC(rpcManager.getTransport().getAddress(),rpcManager.getCurrentStateTransferSource());
+  stateSender=rpcManager.getCurrentStateTransferSource();
+  mimicPartialFlushViaRPC(stateSender,true);
+  needToUnblockRPC=true;
   try {
     if (trace)     log.trace("Retrieving/Applying post-flush commits");
     processCommitLog(ois);
@@ -11,17 +12,24 @@
     while (object instanceof PrepareCommand) {
       PrepareCommand command=(PrepareCommand)object;
       if (!transactionLog.hasPendingPrepare(command)) {
+        if (trace)         log.trace("Applying pending prepare {0}",command);
+        commandsFactory.initializeReplicableCommand(command);
         InvocationContext ctx=invocationContextContainer.get();
         ctx.setOriginLocal(false);
         ctx.setOptions(Options.CACHE_MODE_LOCAL,Options.SKIP_CACHE_STATUS_CHECK);
         interceptorChain.invoke(ctx,command);
       }
+ else {
+        if (trace)         log.trace("Prepare {0} not in tx log; not applying",command);
+      }
       object=marshaller.objectFromObjectStream(ois);
     }
     assertDelimited(object);
   }
-  finally {
-    if (trace)     log.trace("Stopping partial flush");
-    t.unblockRPC();
+ catch (  Exception e) {
+    if (trace)     log.trace("Stopping RPC block");
+    mimicPartialFlushViaRPC(stateSender,false);
+    needToUnblockRPC=false;
+    throw e;
   }
 }
