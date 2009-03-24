@@ -1,14 +1,14 @@
 {
-  ReversibleOrderedSet entries=ctx.getLookedUpEntries().entrySet();
-  Iterator<Map.Entry<Object,MVCCEntry>> it=entries.reverseIterator();
+  ReversibleOrderedSet<Map.Entry<Object,CacheEntry>> entries=ctx.getLookedUpEntries().entrySet();
+  Iterator<Map.Entry<Object,CacheEntry>> it=entries.reverseIterator();
   if (trace)   log.trace("Number of entries in context: {0}",entries.size());
   if (commit) {
     while (it.hasNext()) {
-      Map.Entry<Object,MVCCEntry> e=it.next();
-      MVCCEntry entry=e.getValue();
+      Map.Entry<Object,CacheEntry> e=it.next();
+      CacheEntry entry=e.getValue();
       Object key=e.getKey();
       boolean needToUnlock=lockManager.possiblyLocked(entry);
-      if (entry != null)       entry.commitUpdate(dataContainer);
+      if (entry != null && entry.isChanged())       entry.commit(dataContainer);
  else {
         if (trace)         log.trace("Entry for key {0} is null, not calling commitUpdate",key);
       }
@@ -20,11 +20,11 @@
   }
  else {
     while (it.hasNext()) {
-      Map.Entry<Object,MVCCEntry> e=it.next();
-      MVCCEntry entry=e.getValue();
+      Map.Entry<Object,CacheEntry> e=it.next();
+      CacheEntry entry=e.getValue();
       Object key=e.getKey();
       boolean needToUnlock=lockManager.possiblyLocked(entry);
-      if (entry != null)       entry.rollbackUpdate();
+      if (entry != null && entry.isChanged())       entry.rollback();
  else {
         if (trace)         log.trace("Entry for key {0} is null, not calling rollbackUpdate",key);
       }

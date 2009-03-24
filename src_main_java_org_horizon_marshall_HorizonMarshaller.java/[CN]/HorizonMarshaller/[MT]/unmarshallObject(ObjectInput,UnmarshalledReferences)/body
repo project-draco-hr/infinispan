@@ -20,16 +20,26 @@ case MAGICNUMBER_MARSHALLEDVALUE:
 MarshalledValue mv=new MarshalledValue();
 mv.readExternal(in);
 return mv;
+case MAGICNUMBER_INTERNAL_CACHED_ENTRY:
+Object k=unmarshallObject(in,refMap);
+Object v=unmarshallObject(in,refMap);
+boolean canExpire=in.readBoolean();
+if (canExpire) {
+long created=readUnsignedLong(in);
+long lifespan=readUnsignedLong(in);
+long lastUsed=readUnsignedLong(in);
+long maxIdle=readUnsignedLong(in);
+return InternalEntryFactory.create(k,v,created,lifespan,lastUsed,maxIdle);
+}
+ else {
+return InternalEntryFactory.create(k,v);
+}
 case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
 return RequestIgnoredResponse.INSTANCE;
 case MAGICNUMBER_EXTENDED_RESPONSE:
 boolean replayIgnoredRequests=in.readBoolean();
 Object response=unmarshallObject(in,refMap);
 return new ExtendedResponse(response,replayIgnoredRequests);
-case MAGICNUMBER_STORED_ENTRY:
-StoredEntry se=new StoredEntry();
-se.readExternal(in);
-return se;
 case MAGICNUMBER_COMMAND:
 retVal=unmarshallCommand(in,refMap);
 return retVal;

@@ -1,23 +1,24 @@
 {
-  MVCCEntry mvccEntry;
+  CacheEntry cacheEntry;
   if (ctx.hasOption(Options.FORCE_WRITE_LOCK)) {
     if (trace)     log.trace("Forcing lock on reading");
     return wrapEntryForWriting(ctx,key,false,false,false,false);
   }
- else   if ((mvccEntry=ctx.lookupEntry(key)) == null) {
-    if (trace)     log.trace("Key " + key + " is not in context, fetching from container.");
-    CachedValue se=container.getEntry(key);
+ else   if ((cacheEntry=ctx.lookupEntry(key)) == null) {
+    if (trace)     log.trace("Key {0} is not in context, fetching from container.",key);
+    cacheEntry=container.get(key);
     if (ctx.getTransaction() == null) {
-      if (se != null)       ctx.putLookedUpEntry(key,se);
+      if (cacheEntry != null)       ctx.putLookedUpEntry(key,cacheEntry);
+      return cacheEntry;
     }
  else {
-      mvccEntry=se == null ? createWrappedEntry(key,null,false,false,-1) : createWrappedEntry(key,se.getValue(),false,false,se.getLifespan());
+      MVCCEntry mvccEntry=cacheEntry == null ? createWrappedEntry(key,null,false,false,-1) : createWrappedEntry(key,cacheEntry.getValue(),false,false,cacheEntry.getLifespan());
       if (mvccEntry != null)       ctx.putLookedUpEntry(key,mvccEntry);
+      return mvccEntry;
     }
-    return mvccEntry;
   }
  else {
     if (trace)     log.trace("Key is already in context");
-    return mvccEntry;
+    return cacheEntry;
   }
 }

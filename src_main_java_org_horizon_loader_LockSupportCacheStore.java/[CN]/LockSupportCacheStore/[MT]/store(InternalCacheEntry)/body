@@ -1,0 +1,17 @@
+{
+  if (trace)   log.trace("store(" + ed + ")");
+  if (ed == null)   return;
+  if (ed.isExpired()) {
+    if (trace)     log.trace("Entry " + ed + " is expired!  Not doing anything.");
+    return;
+  }
+  String keyHashCode=getLockFromKey(ed.getKey());
+  lockForWritting(keyHashCode);
+  try {
+    storeLockSafe(ed,keyHashCode);
+  }
+  finally {
+    unlock(keyHashCode);
+  }
+  if (trace)   log.trace("exit store(" + ed + ")");
+}

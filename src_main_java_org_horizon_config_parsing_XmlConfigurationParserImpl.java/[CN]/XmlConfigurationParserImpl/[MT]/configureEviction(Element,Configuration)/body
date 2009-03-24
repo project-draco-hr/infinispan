@@ -1,27 +1,10 @@
 {
-  if (evictionElement == null)   return;
-  EvictionConfig evictionConfig=new EvictionConfig();
-  String tmp=getAttributeValue(evictionElement,"wakeUpInterval");
-  if (existsAttribute(tmp)) {
-    evictionConfig.setWakeUpInterval(getInt(tmp));
+  if (evictionElement != null) {
+    String tmp=getAttributeValue(evictionElement,"strategy");
+    if (existsAttribute(tmp))     config.setEvictionStrategy(EvictionStrategy.valueOf(tmp.trim().toUpperCase()));
+    tmp=getAttributeValue(evictionElement,"maxEntries");
+    if (existsAttribute(tmp))     config.setEvictionMaxEntries(getInt(tmp));
+    tmp=getAttributeValue(evictionElement,"wakeUpInterval");
+    if (existsAttribute(tmp))     config.setEvictionWakeupInterval(getLong(tmp));
   }
-  tmp=getAttributeValue(evictionElement,"actionPolicyClass");
-  if (existsAttribute(tmp))   evictionConfig.setActionPolicyClass(tmp);
-  tmp=getAttributeValue(evictionElement,"eventQueueSize");
-  if (existsAttribute(tmp))   evictionConfig.setEventQueueSize(getInt(tmp));
-  tmp=getAttributeValue(evictionElement,"algorithmClass");
-  if (!existsAttribute(tmp))   throw new ConfigurationException("Required attribute 'algorithmClass' is missing on the 'eviction' element!");
-  Properties p=XmlConfigHelper.extractProperties(evictionElement);
-  EvictionAlgorithmConfig cfg;
-  try {
-    EvictionAlgorithm algo=(EvictionAlgorithm)Util.getInstance(tmp);
-    Class<? extends EvictionAlgorithmConfig> cfgClass=algo.getConfigurationClass();
-    cfg=Util.getInstance(cfgClass);
-  }
- catch (  Exception e) {
-    throw new ConfigurationException("Unable to configure eviction",e);
-  }
-  if (p != null && !p.isEmpty())   XmlConfigHelper.setValues(cfg,p,false,true);
-  evictionConfig.setAlgorithmConfig(cfg);
-  config.setEvictionConfig(evictionConfig);
 }
