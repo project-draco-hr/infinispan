@@ -1,0 +1,21 @@
+{
+  GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
+  cacheManager=new DefaultCacheManager(globalConfiguration);
+  ConnectionFactoryConfig connectionFactoryConfig=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+  TableManipulation tableManipulation=UnitTestDatabaseManager.buildDefaultTableManipulation();
+  JdbcBinaryCacheStoreConfig config=new JdbcBinaryCacheStoreConfig(connectionFactoryConfig,tableManipulation);
+  CacheLoaderManagerConfig clManagerConfig=new CacheLoaderManagerConfig();
+  clManagerConfig.setPassivation(true);
+  clManagerConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)config));
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+  configuration.setCacheLoaderManagerConfig(clManagerConfig);
+  cacheManager.defineCache("test",configuration);
+  cache=cacheManager.getCache("test");
+  activationInterceptorObjName=new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=ActivationInterceptor");
+  passivationInterceptorObjName=new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=PassivationInterceptor");
+  threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  cacheStore=TestingUtil.extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+  return cacheManager;
+}
