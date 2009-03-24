@@ -2,17 +2,19 @@
   MVCCEntry e=entryFactory.wrapEntryForReading(ctx,key);
   if (e == null || e.isNullEntry()) {
     if (!loader.containsKey(key)) {
-      log.trace("No need to load.  Key doesn't exist in the loader.");
-      return;
+      if (log.isTraceEnabled())       log.trace("No need to load.  Key doesn't exist in the loader.");
+      return false;
     }
     boolean keyLocked=entryFactory.acquireLock(ctx,key);
     if (dataContainer.containsKey(key)) {
       if (keyLocked)       entryFactory.releaseLock(key);
       log.trace("No need to load.  Key exists in the data container.");
-      return;
+      return true;
     }
     MVCCEntry n=entryFactory.wrapEntryForWriting(ctx,key,true,false,keyLocked,false);
     n=loadEntry(ctx,key,n);
     ctx.setContainsModifications(true);
+    return true;
   }
+  return false;
 }
