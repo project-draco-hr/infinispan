@@ -1,0 +1,14 @@
+{
+  GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration.setJmxDomain("MvccLockManagerMBeanTest");
+  cacheManager=new DefaultCacheManager(globalConfiguration);
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+  configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  configuration.setConcurrencyLevel(CONCURRENCY_LEVEL);
+  cacheManager.defineCache("test",configuration);
+  cache=cacheManager.getCache("test");
+  lockManagerObjName=new ObjectName("MvccLockManagerMBeanTest:cache-name=test(local),jmx-resource=MvccLockManager");
+  threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  return cacheManager;
+}
