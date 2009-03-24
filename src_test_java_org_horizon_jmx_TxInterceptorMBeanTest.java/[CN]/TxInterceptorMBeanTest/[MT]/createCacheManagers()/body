@@ -1,0 +1,18 @@
+{
+  GlobalConfiguration globalConfiguration=TestingUtil.getGlobalConfiguration();
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration.setJmxDomain("TxInterceptorMBeanTest");
+  CacheManager cacheManager1=new DefaultCacheManager(globalConfiguration);
+  registerCacheManager(cacheManager1);
+  CacheManager cacheManager2=new DefaultCacheManager(globalConfiguration.clone());
+  registerCacheManager(cacheManager2);
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  cacheManager1.defineCache("test",configuration);
+  cacheManager2.defineCache("test",configuration.clone());
+  cache1=cacheManager1.getCache("test");
+  cache2=cacheManager2.getCache("test");
+  txInterceptor=new ObjectName("TxInterceptorMBeanTest:cache-name=test(repl_sync),jmx-resource=TxInterceptor");
+  threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  tm=TestingUtil.getTransactionManager(cache1);
+}
