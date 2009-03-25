@@ -3,16 +3,16 @@
     return (AtomicHashMap<K,V>)cache.get(deltaMapKey);
   }
  else {
-    boolean suppressLocks=icc.get().hasOption(Options.SKIP_LOCKING);
-    if (!suppressLocks)     icc.get().setOptions(Options.FORCE_WRITE_LOCK);
+    boolean suppressLocks=icc.get().hasFlag(Flag.SKIP_LOCKING);
+    if (!suppressLocks)     icc.get().setFlags(Flag.FORCE_WRITE_LOCK);
     if (trace) {
-      if (suppressLocks)       log.trace("Skip locking option used.  Skipping locking.");
+      if (suppressLocks)       log.trace("Skip locking flag used.  Skipping locking.");
  else       log.trace("Forcing write lock even for reads");
     }
     AtomicHashMap map=getDeltaMapForRead();
     AtomicHashMap copy=map == null ? new AtomicHashMap() : map.copyForWrite();
     copy.initForWriting();
-    if (suppressLocks)     icc.get().setOptions(Options.SKIP_LOCKING);
+    if (suppressLocks)     icc.get().setFlags(Flag.SKIP_LOCKING);
     cache.put(deltaMapKey,copy);
     return copy;
   }

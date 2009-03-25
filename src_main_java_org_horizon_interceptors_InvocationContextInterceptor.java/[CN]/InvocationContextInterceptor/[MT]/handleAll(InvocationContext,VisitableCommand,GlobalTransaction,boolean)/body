@@ -13,8 +13,8 @@
  else {
       setTransactionalContext(null,null,null,ctx);
     }
-    if (ctx.hasOption(Options.FAIL_SILENTLY)) {
-      log.debug("FAIL_SILENTLY Option is present - suspending any ongoing transaction.");
+    if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+      log.debug("FAIL_SILENTLY flag is present - suspending any ongoing transaction.");
       suppressExceptions=true;
       if (ctx.getTransaction() != null) {
         suspendedTransaction=txManager.suspend();
@@ -44,14 +44,14 @@
   }
   finally {
     if (scrubContextOnCompletion)     setTransactionalContext(null,null,null,ctx);
-    if (trace)     log.trace("Resetting invocation-scope options");
-    ctx.resetOptions();
+    if (trace)     log.trace("Resetting invocation-scope flags");
+    ctx.resetFlags();
     if (resumeSuspended) {
       txManager.resume(suspendedTransaction);
     }
  else {
       if (ctx.getTransaction() != null && (TransactionTable.isValid(ctx.getTransaction()))) {
-        copyInvocationScopeOptionsToTxScope(ctx);
+        copyInvocationScopeFlagsToTxScope(ctx);
       }
     }
     ctx.clearLookedUpEntries();
