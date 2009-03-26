@@ -13,10 +13,14 @@
     e=mortalEntries.get(k);
     if (e != null) {
       e.setValue(v);
+      InternalCacheEntry original=e;
       e=e.setLifespan(lifespan).setMaxIdle(maxIdle);
       if (!e.canExpire()) {
         mortalEntries.remove(k);
         immortalEntries.put(k,e);
+      }
+ else       if (e != original) {
+        mortalEntries.put(k,e);
       }
     }
  else {
