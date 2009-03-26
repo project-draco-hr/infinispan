@@ -1,2 +1,33 @@
 {
+  try {
+    if (trace)     log.trace("Purging data container of expired entries");
+    dataContainer.purgeExpired();
+  }
+ catch (  Exception e) {
+    log.warn("Caught exception purging data container!",e);
+  }
+  if (cacheStore != null) {
+    try {
+      if (trace)       log.trace("Purging cache store of expired entries");
+      cacheStore.purgeExpired();
+    }
+ catch (    Exception e) {
+      log.warn("Caught exception purging cache store!",e);
+    }
+  }
+  if (dataContainer.size() > maxEntries) {
+    if (trace)     log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...",dataContainer.size());
+    for (    InternalCacheEntry ice : dataContainer) {
+      if (dataContainer.size() > maxEntries) {
+        cache.evict(ice.getKey());
+      }
+ else {
+        if (trace)         log.trace("Evicted enough entries");
+        break;
+      }
+    }
+  }
+ else {
+    if (trace)     log.trace("Data container is smaller than or equal to the maxEntries; not doing anything");
+  }
 }
