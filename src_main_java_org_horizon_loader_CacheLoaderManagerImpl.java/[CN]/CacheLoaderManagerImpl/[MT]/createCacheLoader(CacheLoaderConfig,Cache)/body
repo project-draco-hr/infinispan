@@ -1,17 +1,18 @@
 {
   CacheLoader tmpLoader=(CacheLoader)Util.getInstance(cfg.getCacheLoaderClassName());
   if (tmpLoader != null) {
-    if (tmpLoader instanceof CacheStore) {
+    if (cfg instanceof CacheStoreConfig) {
       CacheStore tmpStore=(CacheStore)tmpLoader;
-      if (cfg.getAsyncStoreConfig().isEnabled()) {
-        tmpStore=new AsyncStore(tmpStore,cfg.getAsyncStoreConfig());
+      CacheStoreConfig cfg2=(CacheStoreConfig)cfg;
+      if (cfg2.getAsyncStoreConfig().isEnabled()) {
+        tmpStore=new AsyncStore(tmpStore,cfg2.getAsyncStoreConfig());
         tmpLoader=tmpStore;
       }
-      if (cfg.isIgnoreModifications()) {
+      if (cfg2.isIgnoreModifications()) {
         tmpStore=new ReadOnlyStore(tmpStore);
         tmpLoader=tmpStore;
       }
-      SingletonStoreConfig ssc=cfg.getSingletonStoreConfig();
+      SingletonStoreConfig ssc=cfg2.getSingletonStoreConfig();
       if (ssc != null && ssc.isSingletonStoreEnabled()) {
         tmpStore=new SingletonStore(tmpStore,cache,ssc);
         tmpLoader=tmpStore;

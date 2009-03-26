@@ -5,9 +5,11 @@
     tmpLoader=ccl;
     int numLoadersWithFetchPersistentState=0;
     for (    CacheLoaderConfig cfg : clmConfig.getCacheLoaderConfigs()) {
-      if (cfg.isFetchPersistentState())       numLoadersWithFetchPersistentState++;
-      if (numLoadersWithFetchPersistentState > 1)       throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
-      assertNotSingletonAndShared(cfg);
+      if (cfg instanceof CacheStoreConfig) {
+        if (((CacheStoreConfig)cfg).isFetchPersistentState())         numLoadersWithFetchPersistentState++;
+        if (numLoadersWithFetchPersistentState > 1)         throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
+        assertNotSingletonAndShared(((CacheStoreConfig)cfg));
+      }
       CacheLoader l=createCacheLoader(cfg,cache);
       ccl.addCacheLoader(l,cfg);
     }
@@ -15,7 +17,7 @@
  else {
     CacheLoaderConfig cfg=clmConfig.getFirstCacheLoaderConfig();
     tmpLoader=createCacheLoader(cfg,cache);
-    assertNotSingletonAndShared(cfg);
+    if (cfg instanceof CacheStoreConfig)     assertNotSingletonAndShared(((CacheStoreConfig)cfg));
   }
   ReflectionUtil.setValue(clmConfig,"accessible",true);
   return tmpLoader;

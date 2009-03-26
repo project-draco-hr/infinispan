@@ -1,3 +1,11 @@
 {
-  throw new IllegalStateException("TODO - please implement me!!!");
+  System.out.println("ClusterCacheLoader.load");
+  if (!(isCacheReady() && isLocalCall()))   return null;
+  ClusteredGetCommand clusteredGetCommand=new ClusteredGetCommand(key,cache.getName());
+  List<Object> response=doRemoteCall(clusteredGetCommand);
+  if (response.isEmpty())   return null;
+  if (response.size() > 1)   throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
+  Object firstResponse=response.get(0);
+  if (firstResponse instanceof InternalCacheEntry)   return (InternalCacheEntry)firstResponse;
+  return (InternalCacheEntry)unknownResponse(firstResponse);
 }

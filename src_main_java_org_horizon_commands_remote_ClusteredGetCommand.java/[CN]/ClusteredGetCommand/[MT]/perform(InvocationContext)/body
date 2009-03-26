@@ -1,25 +1,14 @@
 {
-  if (trace)   log.trace("Clustered Get called with param: " + dataCommand);
-  Object callResults=null;
-  try {
-    InvocationContext ctx=interceptorChain.getInvocationContext();
-    ctx.setOriginLocal(false);
-    callResults=dataCommand.perform(ctx);
-    boolean found=true;
-    if (trace)     log.trace("Got result " + callResults + ", found="+ found);
-    if (found && callResults == null)     callResults=createEmptyResults();
-  }
- catch (  Exception e) {
-    log.warn("Problems processing clusteredGet call",e);
-  }
-  List<Object> results=new ArrayList<Object>(2);
-  if (callResults != null) {
-    results.add(true);
-    results.add(callResults);
+  System.out.println("ClusteredGetCommand.perform");
+  if (key != null) {
+    InternalCacheEntry cacheEntry=dataContainer.get(key);
+    if (cacheEntry == null) {
+      context.setOriginLocal(false);
+      if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null)       cacheEntry=cacheLoaderManager.getCacheLoader().load(key);
+    }
+    return cacheEntry;
   }
  else {
-    results.add(false);
-    results.add(null);
+    throw new CacheException("Invalid command. Missing key!");
   }
-  return results;
 }
