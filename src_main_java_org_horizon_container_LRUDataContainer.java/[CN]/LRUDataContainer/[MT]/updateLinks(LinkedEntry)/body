@@ -1,0 +1,35 @@
+{
+  if (l.next != dummyEntry.prev) {
+    if (l.tryLock()) {
+      try {
+        Aux before=l.prev;
+        before.lock();
+        Aux after=l.next;
+        after.lock();
+        LinkedEntry nextEntry=after.next;
+        nextEntry.lock();
+        dummyEntry.lock();
+        Aux last=dummyEntry.prev;
+        last.lock();
+        try {
+          last.next=l;
+          l.prev=last;
+          after.next=dummyEntry;
+          dummyEntry.prev=after;
+          nextEntry.prev=before;
+          before.next=nextEntry;
+        }
+  finally {
+          last.unlock();
+          dummyEntry.unlock();
+          nextEntry.unlock();
+          after.unlock();
+          before.unlock();
+        }
+      }
+  finally {
+        l.unlock();
+      }
+    }
+  }
+}

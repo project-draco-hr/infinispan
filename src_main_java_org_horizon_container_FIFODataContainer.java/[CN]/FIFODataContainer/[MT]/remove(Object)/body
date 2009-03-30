@@ -1,5 +1,35 @@
 {
-  InternalCacheEntry ice=entries.remove(k);
+  int h=hash(k.hashCode());
+  Segment s=segmentFor(h);
+  s.lock();
+  InternalCacheEntry ice=null;
+  LinkedEntry le=null;
+  boolean linksLocked=false;
+  LinkedEntry nextEntry=null;
+  Aux before=null, after=null;
+  try {
+    le=s.locklessRemove(k,h);
+    if (le != null) {
+      ice=le.entry;
+      linksLocked=true;
+      le.lock();
+      (before=le.prev).lock();
+      (after=le.next).lock();
+      nextEntry=after.next;
+      nextEntry.lock();
+      before.next=after.next;
+      before.next.prev=before;
+    }
+  }
+  finally {
+    if (linksLocked) {
+      nextEntry.unlock();
+      before.unlock();
+      after.unlock();
+      le.unlock();
+    }
+    s.unlock();
+  }
   if (ice == null || ice.isExpired())   return null;
  else   return ice;
 }
