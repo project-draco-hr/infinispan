@@ -2,7 +2,8 @@
   GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
   globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
   globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
-  cacheManager=new DefaultCacheManager(globalConfiguration);
+  globalConfiguration.setExposeGlobalJmxStatistics(true);
+  cacheManager=TestCacheManagerFactory.createCacheManager(globalConfiguration);
   ConnectionFactoryConfig connectionFactoryConfig=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
   TableManipulation tableManipulation=UnitTestDatabaseManager.buildDefaultTableManipulation();
   JdbcBinaryCacheStoreConfig config=new JdbcBinaryCacheStoreConfig(connectionFactoryConfig,tableManipulation);
@@ -10,6 +11,7 @@
   clManagerConfig.setPassivation(true);
   clManagerConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)config));
   Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+  configuration.setExposeJmxStatistics(true);
   configuration.setCacheLoaderManagerConfig(clManagerConfig);
   cacheManager.defineCache("test",configuration);
   cache=cacheManager.getCache("test");
