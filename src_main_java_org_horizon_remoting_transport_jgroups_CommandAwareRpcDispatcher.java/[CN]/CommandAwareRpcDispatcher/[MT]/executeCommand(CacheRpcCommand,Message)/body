@@ -3,17 +3,18 @@
   if (trace)   log.trace("Attempting to execute command: {0} [sender={1}]",cmd,req.getSrc());
   boolean unlock=false;
   try {
-    int flushCount=distributedSync.getSyncCount();
     distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
     unlock=true;
-    distributedSync.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
-    boolean replayIgnored=distributedSync.getSyncCount() != flushCount;
+    DistributedSync.SyncResponse sr=distributedSync.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+    boolean replayIgnored=sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
+    if (trace)     log.trace("Enough waiting; replayIgnored = {0}, sr {1}",replayIgnored,sr);
     Object retval;
     try {
       retval=inboundInvocationHandler.handle(cmd);
     }
  catch (    IllegalStateException ise) {
-      if (trace)       log.trace("Unable to execute command, cache not in a receptive state");
+      newCacheStarting.set(true);
+      if (trace)       log.trace("Unable to execute command, cache not in a receptive state: " + ise.getMessage());
       return RequestIgnoredResponse.INSTANCE;
     }
     if (replayIgnored) {

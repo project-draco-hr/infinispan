@@ -1,8 +1,9 @@
 {
+  int initState=flushWaitGateCount.get();
   while (true) {
     try {
       if (!flushWaitGate.await(timeout,timeUnit))       throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
-      break;
+      return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
     }
  catch (    InterruptedException ie) {
       Thread.currentThread().interrupt();
