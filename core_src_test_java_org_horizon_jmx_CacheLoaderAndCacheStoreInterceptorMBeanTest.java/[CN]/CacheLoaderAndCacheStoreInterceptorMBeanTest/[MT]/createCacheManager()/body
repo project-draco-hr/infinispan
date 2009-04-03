@@ -1,3 +1,21 @@
 {
-  return null;
+  GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration.setJmxDomain("CacheLoaderAndCacheStoreInterceptorMBeanTest");
+  globalConfiguration.setExposeGlobalJmxStatistics(true);
+  cacheManager=TestCacheManagerFactory.createCacheManager(globalConfiguration);
+  DummyInMemoryCacheStore.Cfg cfg=new DummyInMemoryCacheStore.Cfg();
+  CacheLoaderManagerConfig clManagerConfig=new CacheLoaderManagerConfig();
+  clManagerConfig.setPassivation(false);
+  clManagerConfig.addCacheLoaderConfig(cfg);
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+  configuration.setExposeJmxStatistics(true);
+  configuration.setCacheLoaderManagerConfig(clManagerConfig);
+  cacheManager.defineCache("test",configuration);
+  cache=cacheManager.getCache("test");
+  loaderInterceptorObjName=new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheLoaderInterceptor");
+  storeInterceptorObjName=new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheStoreInterceptor");
+  threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  cacheStore=TestingUtil.extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+  return cacheManager;
 }
