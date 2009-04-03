@@ -1,0 +1,35 @@
+{
+  if (trace)   log.trace("Moving node '" + nodeToMoveFqn + "' to '"+ newParentFqn+ "'");
+  if (nodeToMoveFqn == null || newParentFqn == null)   throw new NullPointerException("Cannot accept null parameters!");
+  if (nodeToMoveFqn.getParent().equals(newParentFqn)) {
+    if (trace)     log.trace("Not doing anything as this node is equal with its parent");
+    return;
+  }
+  startAtomic();
+  try {
+    Node nodeToMove=getNode(nodeToMoveFqn,Flag.FORCE_WRITE_LOCK);
+    if (nodeToMove == null) {
+      if (trace)       log.trace("Did not find the node that needs to be moved. Returning...");
+      return;
+    }
+    if (!exists(newParentFqn)) {
+      createNodeInCache(newParentFqn);
+      if (trace)       log.trace("The new parent (" + newParentFqn + ") did not exists, was created");
+    }
+    Fqn newFqn=Fqn.fromRelativeElements(newParentFqn,nodeToMoveFqn.getLastElement());
+    createNodeInCache(newFqn);
+    Node newNode=getNode(newFqn);
+    Map oldData=nodeToMove.getData();
+    if (oldData != null && !oldData.isEmpty())     newNode.putAll(oldData);
+    for (    Object child : nodeToMove.getChildrenNames()) {
+      if (trace)       log.trace("Moving child " + child);
+      Fqn oldChildFqn=Fqn.fromRelativeElements(nodeToMoveFqn,child);
+      move(oldChildFqn,newFqn);
+    }
+    removeNode(nodeToMoveFqn);
+  }
+  finally {
+    endAtomic();
+  }
+  log.trace("Successfully moved node '" + nodeToMoveFqn + "' to '"+ newParentFqn+ "'");
+}
