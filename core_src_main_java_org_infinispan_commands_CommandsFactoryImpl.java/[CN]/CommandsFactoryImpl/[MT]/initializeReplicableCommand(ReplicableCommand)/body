@@ -1,27 +1,32 @@
 {
   if (c == null)   return;
 switch (c.getCommandId()) {
-case PutKeyValueCommand.METHOD_ID:
+case PutKeyValueCommand.COMMAND_ID:
     ((PutKeyValueCommand)c).init(notifier);
   break;
-case PutMapCommand.METHOD_ID:
+case PutMapCommand.COMMAND_ID:
 ((PutMapCommand)c).init(notifier);
 break;
-case RemoveCommand.METHOD_ID:
+case RemoveCommand.COMMAND_ID:
 ((RemoveCommand)c).init(notifier);
 break;
-case ReplicateCommand.METHOD_ID:
-ReplicateCommand rc=(ReplicateCommand)c;
+case MultipleRpcCommand.COMMAND_ID:
+MultipleRpcCommand rc=(MultipleRpcCommand)c;
 rc.setInterceptorChain(interceptorChain);
 if (rc.getCommands() != null) for (ReplicableCommand nested : rc.getCommands()) {
 initializeReplicableCommand(nested);
 }
 break;
-case InvalidateCommand.METHOD_ID:
+case SingleRpcCommand.COMMAND_ID:
+SingleRpcCommand src=(SingleRpcCommand)c;
+src.setInterceptorChain(interceptorChain);
+if (src.getCommand() != null) initializeReplicableCommand(src.getCommand());
+break;
+case InvalidateCommand.COMMAND_ID:
 InvalidateCommand ic=(InvalidateCommand)c;
 ic.init(notifier);
 break;
-case PrepareCommand.METHOD_ID:
+case PrepareCommand.COMMAND_ID:
 PrepareCommand pc=(PrepareCommand)c;
 if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
 break;
