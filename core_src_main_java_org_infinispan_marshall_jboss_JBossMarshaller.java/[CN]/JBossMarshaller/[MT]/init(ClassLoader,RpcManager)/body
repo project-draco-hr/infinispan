@@ -1,0 +1,19 @@
+{
+  log.debug("Using JBoss Marshalling based marshaller.");
+  defaultClassLoader=defaultCl;
+  try {
+    factory=(MarshallerFactory)Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY,e);
+  }
+  classTable=createMagicNumberClassTable();
+  objectTable=createCustomObjectTable();
+  externalizerFactoryAndObjectTable=createCustomExternalizerFactory(rpcManager,objectTable);
+  configuration=new MarshallingConfiguration();
+  configuration.setCreator(new SunReflectiveCreator());
+  configuration.setClassTable(classTable);
+  configuration.setClassExternalizerFactory(externalizerFactoryAndObjectTable);
+  configuration.setObjectTable(objectTable);
+  configuration.setClassResolver(new ContextClassResolver());
+}

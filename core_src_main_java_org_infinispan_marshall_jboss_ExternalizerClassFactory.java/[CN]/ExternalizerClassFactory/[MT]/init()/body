@@ -1,0 +1,22 @@
+{
+  try {
+    for (    Map.Entry<String,String> entry : EXTERNALIZERS.entrySet()) {
+      Class typeClazz=Util.loadClass(entry.getKey());
+      Externalizer ext=(Externalizer)Util.getInstance(entry.getValue());
+      if (ext instanceof StateTransferControlCommandExternalizer) {
+        ((StateTransferControlCommandExternalizer)ext).init(rpcManager);
+      }
+      externalizers.put(typeClazz,ext);
+      objectTable.add(ext);
+    }
+  }
+ catch (  IOException e) {
+    throw new CacheException("Unable to open load magicnumbers.properties",e);
+  }
+catch (  ClassNotFoundException e) {
+    throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties",e);
+  }
+catch (  Exception e) {
+    throw new CacheException("Unable to instantiate Externalizer class",e);
+  }
+}

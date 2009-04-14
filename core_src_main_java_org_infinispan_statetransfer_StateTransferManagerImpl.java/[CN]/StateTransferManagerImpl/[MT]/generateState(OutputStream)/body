@@ -1,18 +1,18 @@
 {
-  ObjectOutputStream oos=null;
+  ObjectOutput oo=null;
   boolean txLogActivated=false;
   try {
     boolean canProvideState=(transientState || persistentState) && (txLogActivated=transactionLog.activate());
     if (log.isDebugEnabled())     log.debug("Generating state.  Can provide? {0}",canProvideState);
-    oos=new ObjectOutputStream(out);
-    marshaller.objectToObjectStream(canProvideState,oos);
+    oo=marshaller.startObjectOutput(out);
+    marshaller.objectToObjectStream(canProvideState,oo);
     if (canProvideState) {
-      delimit(oos);
-      if (transientState)       generateInMemoryState(oos);
-      delimit(oos);
-      if (persistentState)       generatePersistentState(oos);
-      delimit(oos);
-      generateTransactionLog(oos);
+      delimit(oo);
+      if (transientState)       generateInMemoryState(oo);
+      delimit(oo);
+      if (persistentState)       generatePersistentState(oo);
+      delimit(oo);
+      generateTransactionLog(oo);
       if (log.isDebugEnabled())       log.debug("State generated, closing object stream");
     }
  else {
@@ -26,7 +26,7 @@ catch (  Exception e) {
     throw new StateTransferException(e);
   }
  finally {
-    Util.flushAndCloseStream(oos);
+    marshaller.finishObjectOutput(oo);
     if (txLogActivated)     transactionLog.deactivate();
   }
 }
