@@ -1,21 +1,43 @@
 {
   if (e == null)   return;
-  boolean repl=true;
+  Configuration.CacheMode cacheMode;
   String mode=getAttributeValue(e,"mode").toUpperCase();
-  if (mode.startsWith("R"))   repl=true;
- else   if (mode.startsWith("I"))   repl=false;
+  if (mode.startsWith("R"))   cacheMode=Configuration.CacheMode.REPL_SYNC;
+ else   if (mode.startsWith("I"))   cacheMode=Configuration.CacheMode.INVALIDATION_SYNC;
+ else   cacheMode=Configuration.CacheMode.DIST_SYNC;
   Element asyncEl=getSingleElementInCoreNS("async",e);
   Element syncEl=getSingleElementInCoreNS("sync",e);
   if (syncEl != null && asyncEl != null)   throw new ConfigurationException("Cannot have sync and async elements within the same cluster element!");
   boolean sync=asyncEl == null;
   if (sync) {
-    config.setCacheMode(repl ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.INVALIDATION_SYNC);
+    config.setCacheMode(cacheMode);
     configureSyncMode(syncEl,config);
   }
  else {
-    config.setCacheMode(repl ? Configuration.CacheMode.REPL_ASYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
+    cacheMode=cacheMode.toAsync();
+    config.setCacheMode(cacheMode);
     configureAsyncMode(asyncEl,config);
   }
-  String cn=getAttributeValue(e,"clusterName");
-  configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval",e),config);
+  if (cacheMode.isDistributed()) {
+    Element l1=getSingleElementInCoreNS("l1",e);
+    String tmp=getAttributeValue(l1,"enabled");
+    if (existsAttribute(tmp))     config.setL1CacheEnabled(getBoolean(tmp));
+    tmp=getAttributeValue(l1,"lifespan");
+    if (existsAttribute(tmp))     config.setL1Lifespan(getLong(tmp));
+    tmp=getAttributeValue(l1,"onRehash");
+    if (existsAttribute(tmp))     config.setL1OnRehash(getBoolean(tmp));
+    Element hash=getSingleElementInCoreNS("hash",e);
+    tmp=getAttributeValue(hash,"class");
+    if (existsAttribute(tmp))     config.setConsistentHashClass(tmp);
+    tmp=getAttributeValue(hash,"numOwners");
+    if (existsAttribute(tmp))     config.setNumOwners(getInt(tmp));
+    tmp=getAttributeValue(hash,"rehashWait");
+    if (existsAttribute(tmp))     config.setRehashWaitTime(getLong(tmp));
+    config.setFetchInMemoryState(false);
+    if (getSingleElementInCoreNS("stateRetrieval",e) != null)     throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+  }
+ else {
+    configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval",e),config);
+    if (getSingleElementInCoreNS("l1",e) != null || getSingleElementInCoreNS("hash",e) != null)     throw new ConfigurationException("l1 and hash elements cannot be used with cache modes 'REPLICATION' and 'INVALIDATION'!");
+  }
 }
