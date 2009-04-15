@@ -1,16 +1,9 @@
 {
   super.start();
-  String awsAccessKey=config.getAwsAccessKey();
-  if (awsAccessKey == null)   throw new IllegalArgumentException("awsAccessKey must be set");
-  String awsSecretKey=config.getAwsSecretKey();
-  if (awsSecretKey == null)   throw new IllegalArgumentException("awsSecretKey must be set");
+  if (config.getAwsAccessKey() == null)   throw new IllegalArgumentException("awsAccessKey must be set");
+  if (config.getAwsSecretKey() == null)   throw new IllegalArgumentException("awsSecretKey must be set");
+  this.connection.connect(config,marshaller);
   String s3Bucket=config.getBucket();
   if (s3Bucket == null)   throw new IllegalArgumentException("s3Bucket must be set");
-  try {
-    s3Connection.connect(awsAccessKey,awsSecretKey);
-    rootS3Bucket=s3Connection.getOrCreateBucket(s3Bucket);
-  }
- catch (  S3ServiceException e) {
-    throw convertToCacheLoaderException("error opening s3 service",e);
-  }
+  this.s3Bucket.init(this.connection,connection.verifyOrCreateBucket(s3Bucket));
 }

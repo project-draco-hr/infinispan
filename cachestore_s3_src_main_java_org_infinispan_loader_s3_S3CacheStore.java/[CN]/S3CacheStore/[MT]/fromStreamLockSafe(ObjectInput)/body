@@ -1,21 +1,15 @@
 {
+  String source;
   try {
-    S3Bucket source=(S3Bucket)objectInput.readObject();
-    if (rootS3Bucket.getName().equals(source.getName())) {
-      log.info("Attempt to load the same s3 bucket ignored");
-    }
- else {
-      S3Object[] sourceObjects=s3Connection.getAllObjectsInBucketWithoutTheirData(source);
-      String[] sourceKeys=new String[sourceObjects.length];
-      int i=0;
-      for (      S3Object sourceObject : sourceObjects) {
-        sourceKeys[i++]=sourceObject.getKey();
-      }
-      s3Connection.copyObjectsFromOneBucketToAnother(sourceKeys,source.getName(),rootS3Bucket.getName());
-    }
-    loadAll();
+    source=(String)objectInput.readObject();
   }
  catch (  Exception e) {
     throw convertToCacheLoaderException("Error while reading from stream",e);
+  }
+  if (config.getBucket().equals(source)) {
+    log.info("Attempt to load the same s3 bucket ignored");
+  }
+ else {
+    connection.copyBucket(source,config.getBucket());
   }
 }
