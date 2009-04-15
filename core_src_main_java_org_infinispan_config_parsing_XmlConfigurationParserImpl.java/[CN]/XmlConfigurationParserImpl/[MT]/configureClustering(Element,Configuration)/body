@@ -34,7 +34,11 @@
     tmp=getAttributeValue(hash,"rehashWait");
     if (existsAttribute(tmp))     config.setRehashWaitTime(getLong(tmp));
     config.setFetchInMemoryState(false);
-    if (getSingleElementInCoreNS("stateRetrieval",e) != null)     throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+    Element ste=null;
+    if ((ste=getSingleElementInCoreNS("stateRetrieval",e)) != null) {
+      tmp=getAttributeValue(ste,"fetchInMemoryState");
+      if (!existsAttribute(tmp) || getBoolean(tmp))       throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+    }
   }
  else {
     configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval",e),config);
