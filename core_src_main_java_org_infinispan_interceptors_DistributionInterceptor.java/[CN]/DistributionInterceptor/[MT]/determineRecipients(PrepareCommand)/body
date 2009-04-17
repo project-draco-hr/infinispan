@@ -1,0 +1,19 @@
+{
+  Set<Address> r=new HashSet<Address>();
+  boolean toAll=false;
+  for (  WriteCommand c : cmd.getModifications()) {
+    if (c instanceof ClearCommand) {
+      toAll=true;
+      break;
+    }
+ else {
+      if (c instanceof DataCommand) {
+        r.addAll(dm.locate(((DataCommand)c).getKey()));
+      }
+ else       if (c instanceof PutMapCommand) {
+        r.addAll(new MultipleKeysRecipientGenerator(((PutMapCommand)c).getMap().keySet()).generateRecipients());
+      }
+    }
+  }
+  return toAll ? null : Immutables.immutableListConvert(r);
+}

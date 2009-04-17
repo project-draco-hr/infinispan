@@ -1,0 +1,25 @@
+{
+  MagicKey k1=new MagicKey(c1);
+  MagicKey k2=new MagicKey(c2);
+  init(k1,k2);
+  TransactionManager tm4=getTransactionManager(c4);
+  tm4.begin();
+  c4.put(k1,"new_value1");
+  c4.put(k2,"new_value2");
+  tm4.commit();
+  asyncWait();
+  assertIsInContainerImmortal(c1,k1);
+  assertIsInContainerImmortal(c2,k1);
+  assertIsInContainerImmortal(c2,k2);
+  assertIsInContainerImmortal(c3,k2);
+  assertIsInL1(c4,k1);
+  assertIsInL1(c4,k2);
+  assertIsNotInL1(c1,k2);
+  assertIsNotInL1(c3,k1);
+  assertOnAllCachesAndOwnership(k1,"new_value1");
+  assertOnAllCachesAndOwnership(k2,"new_value2");
+  assertIsInL1(c4,k1);
+  assertIsInL1(c4,k2);
+  assertIsInL1(c1,k2);
+  assertIsInL1(c3,k1);
+}

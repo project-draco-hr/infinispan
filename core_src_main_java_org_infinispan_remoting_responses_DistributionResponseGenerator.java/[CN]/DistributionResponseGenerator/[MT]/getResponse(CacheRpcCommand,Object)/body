@@ -1,0 +1,15 @@
+{
+  if (command instanceof ClusteredGetCommand) {
+    return returnValue == null ? null : new SuccessfulResponse(returnValue);
+  }
+ else   if (command instanceof SingleRpcCommand) {
+    SingleRpcCommand src=(SingleRpcCommand)command;
+    ReplicableCommand c=src.getCommand();
+    if (c instanceof WriteCommand) {
+      if (((WriteCommand)c).isSuccessful())       return new SuccessfulResponse(returnValue);
+ else       return UnsuccessfulResponse.INSTANCE;
+    }
+  }
+  if (returnValue == null)   return UnsuccessfulResponse.INSTANCE;
+ else   return new SuccessfulResponse(returnValue);
+}

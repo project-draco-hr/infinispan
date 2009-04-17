@@ -1,6 +1,7 @@
 {
   Transport originalTransport=null;
   RpcManagerImpl rpcManager=null;
+  List<Response> emptyResponses=Collections.emptyList();
   try {
     Configuration asyncCache=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
     defineCacheOnAllManagers("asyncCache",asyncCache);
@@ -17,13 +18,13 @@
     originalTransport=TestingUtil.extractComponent(asyncCache1,Transport.class);
     rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(asyncCache1,RpcManager.class);
     rpcManager.setTransport(mockTransport);
-    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(Collections.emptyList()).once();
+    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(emptyResponses).once();
     replay(mockTransport);
     cache1.put("k","v");
     reset(mockTransport);
     expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
     expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
-    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(Collections.emptyList()).once();
+    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(emptyResponses).once();
     replay(mockTransport);
     asyncCache1.put("k","v");
     verify(mockTransport);

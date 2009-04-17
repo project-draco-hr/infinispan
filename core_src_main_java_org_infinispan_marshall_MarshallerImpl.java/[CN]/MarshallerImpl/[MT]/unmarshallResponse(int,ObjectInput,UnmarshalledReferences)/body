@@ -1,0 +1,20 @@
+{
+switch (magic) {
+case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
+    return RequestIgnoredResponse.INSTANCE;
+case MAGICNUMBER_UNSUCCESSFUL_RESPONSE:
+  return UnsuccessfulResponse.INSTANCE;
+case MAGICNUMBER_SUCCESSFUL_RESPONSE:
+Object retval=unmarshallObject(in,refMap);
+return new SuccessfulResponse(retval);
+case MAGICNUMBER_EXCEPTION_RESPONSE:
+Exception e=(Exception)unmarshallObject(in,refMap);
+return new ExceptionResponse(e);
+case MAGICNUMBER_EXTENDED_RESPONSE:
+boolean replay=in.readBoolean();
+Response response=(Response)unmarshallObject(in,refMap);
+return new ExtendedResponse(response,replay);
+default :
+return null;
+}
+}

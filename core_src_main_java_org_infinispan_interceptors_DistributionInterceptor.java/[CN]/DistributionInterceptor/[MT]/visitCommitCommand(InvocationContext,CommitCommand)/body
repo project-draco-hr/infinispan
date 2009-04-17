@@ -1,0 +1,12 @@
+{
+  try {
+    if (!skipReplicationOfTransactionMethod(ctx)) {
+      List<Address> recipients=txRecipients.get(command.getGlobalTransaction());
+      if (recipients != null)       replicateCall(ctx,recipients,command,configuration.isSyncCommitPhase(),true);
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    txRecipients.remove(command.getGlobalTransaction());
+  }
+}

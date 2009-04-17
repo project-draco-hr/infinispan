@@ -12,25 +12,28 @@
     if (mode == ResponseMode.ASYNCHRONOUS)     return Collections.emptyList();
     if (trace)     log.trace("Cache [{0}]: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps);
     if (rsps == null)     return Collections.emptyList();
-    List<Object> retval=new ArrayList<Object>(rsps.size());
+    List<Response> retval=new ArrayList<Response>(rsps.size());
     for (    Rsp rsp : rsps.values()) {
       if (rsp.wasSuspected() || !rsp.wasReceived()) {
-        CacheException ex;
         if (rsp.wasSuspected()) {
-          ex=new SuspectException("Suspected member: " + rsp.getSender());
+          throw new SuspectException("Suspected member: " + rsp.getSender());
         }
  else {
-          ex=new TimeoutException("Replication timeout for " + rsp.getSender());
+          throw new TimeoutException("Replication timeout for " + rsp.getSender());
         }
-        retval.add(new ReplicationException("rsp=" + rsp,ex));
       }
  else {
-        Object value=rsp.getValue();
-        if (value instanceof Exception && !(value instanceof ReplicationException)) {
-          if (trace)           log.trace("Recieved exception'" + value + "' from "+ rsp.getSender());
-          throw (Exception)value;
+        if (rsp.getValue() != null) {
+          Response value=(Response)rsp.getValue();
+          if (value instanceof ExceptionResponse) {
+            Exception e=((ExceptionResponse)value).getException();
+            if (!(e instanceof ReplicationException)) {
+              if (trace)               log.trace("Recieved exception '{0}' from {1}",e,rsp.getSender());
+              throw e;
+            }
+          }
+          retval.add(value);
         }
-        retval.add(value);
       }
     }
     return retval;
