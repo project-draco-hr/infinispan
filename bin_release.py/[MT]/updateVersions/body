@@ -1,0 +1,32 @@
+def updateVersions(version, workingDir):
+    client = svnConn.getClient()
+    client.checkout(((svnBase + '/tags/') + version), localTagsDir)
+    getModules(workingDir)
+    print ('Available modules are ' + str(modules))
+    pomsToPatch = [(workingDir + '/pom.xml')]
+    for m in modules:
+        pomsToPatch.append((((workingDir + '/') + m) + '/pom.xml'))
+    for pom in pomsToPatch:
+        patch(pom, version)
+    version_bytes = '{'
+    for ch in version:
+        if (not (ch == '.')):
+            version_bytes += ("'%s', " % ch)
+    version_bytes = version_bytes[:(-2)]
+    version_bytes += '}'
+    version_java = (workingDir + '/core/src/main/java/org/infinispan/Version.java')
+    f_in = open(version_java)
+    f_out = open((version_java + '.tmp'), 'w')
+    try:
+        for l in f_in:
+            if (l.find('static final byte[] version_id = ') > (-1)):
+                l = re.sub('version_id = .*;', (('version_id = ' + version_bytes) + ';'), l)
+            elif (l.find('public static final String version =') > (-1)):
+                l = re.sub('version = "[A-Z0-9\\.]*";', (('version = "' + version) + '";'), l)
+            f_out.write(l)
+    finally:
+        f_in.close()
+        f_out.close()
+    os.rename((version_java + '.tmp'), version_java)
+    checkInMessage = 'Infinispan Release Script: Updated version numbers'
+    client.checkin(workingDir, checkInMessage)

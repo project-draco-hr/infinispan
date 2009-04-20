@@ -1,0 +1,13 @@
+def checkInMaven2Repo(version, workingDir):
+    os.chdir(localMvnRepoDir)
+    client = svnConn.getClient()
+    poms = [(workingDir + '/pom.xml')]
+    for m in modules:
+        poms.append((((workingDir + '/') + m) + '/pom.xml'))
+    moduleNames = []
+    for p in poms:
+        moduleNames.append(((((localMvnRepoDir + '/') + getModuleName(p)) + '/') + version))
+    client.add(moduleNames)
+    for mn in moduleNames:
+        checkInMessage = (((('Infinispan Release Script: Releasing module ' + mn) + ' version ') + version) + ' to public Maven2 repo')
+        client.checkin(mn, checkInMessage)

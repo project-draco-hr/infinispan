@@ -1,0 +1,27 @@
+def release():
+    if (len(sys.argv) < 2):
+        helpAndExit()
+    version = validateVersion(sys.argv[1])
+    print ('Releasing Infinispan version ' + version)
+    print 'Please stand by!'
+    newVersion = ('%s/tags/%s' % (svnBase, version))
+    print ('Step 1: Tagging trunk in SVN as %s' % newVersion)
+    tagInSubversion(version, newVersion)
+    print 'Step 1: Complete'
+    workingDir = ((localTagsDir + '/') + version)
+    print 'Step 2: Updating version number in source files'
+    updateVersions(version, workingDir)
+    print 'Step 2: Complete'
+    print 'Step 3: Build and test in Maven2'
+    buildAndTest(workingDir)
+    print 'Step 3: Complete'
+    print 'Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)'
+    checkInMaven2Repo(version, workingDir)
+    print 'Step 4: Complete'
+    print 'Step 5: Uploading Javadocs'
+    uploadJavadocs(workingDir)
+    print 'Step 5: Complete'
+    print '\n\n\nDone!  Now all you need to do is:'
+    print '   1.  Update http://www.infinispan.org'
+    print '   2.  Update wiki pages with relevant information and links to docs, etc'
+    print (('   3.  Upload artifacts from http://repository.jboss.org/maven2/org/infinispan/<blah>/' + version) + ' to Sourceforge.net\n\n')

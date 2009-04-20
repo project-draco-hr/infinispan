@@ -1,0 +1,15 @@
+def patch(pomFile, version):
+    print ('Patching %s' % pomFile)
+    tree = ElementTree()
+    tree.parse(pomFile)
+    need_to_write = False
+    tags = []
+    tags.append(getParentVersionTag(tree))
+    tags.append(getProjectVersionTag(tree))
+    tags.append(getPropertiesVersionTag(tree))
+    for tag in tags:
+        if (tag is not None):
+            tag.text = version
+            need_to_write = True
+    if need_to_write:
+        writePom(tree, pomFile)
