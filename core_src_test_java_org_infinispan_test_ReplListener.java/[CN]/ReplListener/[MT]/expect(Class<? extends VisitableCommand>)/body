@@ -3,5 +3,14 @@
     this.expectedCommands=new HashSet<Class<? extends VisitableCommand>>();
   }
   this.expectedCommands.addAll(Arrays.asList(expectedCommands));
-  if (recordCommandsEagerly)   this.expectedCommands.removeAll(eagerCommands);
+  if (recordCommandsEagerly) {
+    eagerCommandsLock.lock();
+    try {
+      this.expectedCommands.removeAll(eagerCommands);
+      eagerCommands.clear();
+    }
+  finally {
+      eagerCommandsLock.unlock();
+    }
+  }
 }
