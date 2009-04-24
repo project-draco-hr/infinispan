@@ -1,19 +1,17 @@
 {
-  System.out.println("Cache [" + c + "] saw command "+ cmd);
-  if (expectedCommands != null) {
-    expectedCommands.remove(cmd.getClass());
-    sawAtLeastOneInvocation=true;
-    if (expectedCommands.isEmpty())     latch.countDown();
-  }
- else {
-    if (recordCommandsEagerly) {
-      eagerCommandsLock.lock();
-      try {
-        eagerCommands.add(cmd.getClass());
-      }
-  finally {
-        eagerCommandsLock.unlock();
-      }
+  expectationSetupLock.lock();
+  try {
+    log.fatal("Cache [" + c + "] saw command "+ cmd);
+    if (expectedCommands != null) {
+      expectedCommands.remove(cmd.getClass());
+      sawAtLeastOneInvocation=true;
+      if (expectedCommands.isEmpty())       latch.countDown();
     }
+ else {
+      if (recordCommandsEagerly)       eagerCommands.add(cmd.getClass());
+    }
+  }
+  finally {
+    expectationSetupLock.unlock();
   }
 }
