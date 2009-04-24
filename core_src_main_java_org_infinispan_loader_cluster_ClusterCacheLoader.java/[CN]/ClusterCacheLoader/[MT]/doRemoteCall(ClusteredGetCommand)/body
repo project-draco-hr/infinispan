@@ -1,5 +1,7 @@
 {
-  ResponseFilter filter=new ClusteredGetResponseValidityFilter(rpcManager.getTransport().getMembers(),rpcManager.getLocalAddress());
+  Set<Address> validMembers=new HashSet<Address>(rpcManager.getTransport().getMembers());
+  validMembers.remove(rpcManager.getLocalAddress());
+  ResponseFilter filter=new ClusteredGetResponseValidityFilter(validMembers);
   try {
     return rpcManager.invokeRemotely(null,clusteredGetCommand,ResponseMode.WAIT_FOR_VALID_RESPONSE,config.getRemoteCallTimeout(),false,filter,false);
   }

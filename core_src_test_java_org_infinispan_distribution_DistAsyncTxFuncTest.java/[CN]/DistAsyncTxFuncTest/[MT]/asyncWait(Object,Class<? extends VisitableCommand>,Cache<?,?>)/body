@@ -1,0 +1,18 @@
+{
+  if (key == null) {
+    for (    ReplListener rl : r)     rl.expect(command);
+    for (    ReplListener rl : r)     rl.waitForRpc();
+  }
+ else {
+    for (    Cache<?,?> c : getOwners(key)) {
+      listenerLookup.get(c).expect(command);
+      listenerLookup.get(c).waitForRpc();
+    }
+    if (cachesOnWhichKeyShouldInval != null) {
+      for (      Cache<?,?> c : cachesOnWhichKeyShouldInval) {
+        listenerLookup.get(c).expect(InvalidateCommand.class);
+        listenerLookup.get(c).waitForRpc();
+      }
+    }
+  }
+}

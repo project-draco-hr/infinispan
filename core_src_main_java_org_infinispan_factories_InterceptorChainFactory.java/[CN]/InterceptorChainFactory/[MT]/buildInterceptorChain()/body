@@ -5,7 +5,8 @@
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   if (invocationBatching)   interceptorChain.appendIntereceptor(createInterceptor(InvocationContextInterceptor.class));
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
-  interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
+  if (configuration.getCacheMode().isDistributed())   interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
+ else   interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
   if (configuration.isUseLazyDeserialization())   interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
   interceptorChain.appendIntereceptor(createInterceptor(NotificationInterceptor.class));
 switch (configuration.getCacheMode()) {
@@ -33,7 +34,8 @@ interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.cla
 interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
 }
 }
-interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
+if (configuration.getCacheMode().isDistributed()) interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
+ else interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
 CommandInterceptor callInterceptor=createInterceptor(CallInterceptor.class);
 interceptorChain.appendIntereceptor(callInterceptor);
 if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");

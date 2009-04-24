@@ -1,8 +1,11 @@
 {
   try {
     for (    VisitableCommand modification : command.getModifications()) {
-      invokeNextInterceptor(ctx,modification);
-      assertTxIsStillValid(ltx);
+      VisitableCommand toReplay=getCommandToReplay(modification);
+      if (toReplay != null) {
+        invokeNextInterceptor(ctx,toReplay);
+        assertTxIsStillValid(ltx);
+      }
     }
   }
  catch (  Throwable th) {

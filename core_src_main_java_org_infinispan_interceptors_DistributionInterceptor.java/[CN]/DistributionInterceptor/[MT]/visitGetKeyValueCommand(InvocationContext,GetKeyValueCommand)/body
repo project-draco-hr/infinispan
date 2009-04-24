@@ -1,21 +1,5 @@
 {
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (returnValue == null) {
-    ClusteredGetCommand get=cf.buildClusteredGetCommand(command.getKey());
-    List<Response> responses=rpcManager.invokeRemotely(dm.locate(command.getKey()),get,ResponseMode.SYNCHRONOUS,configuration.getSyncReplTimeout(),false,false);
-    if (responses.isEmpty())     return returnValue;
-    for (    Object response : responses) {
-      if (!(response instanceof Throwable)) {
-        InternalCacheEntry ice=(InternalCacheEntry)response;
-        if (configuration.isL1CacheEnabled()) {
-          long lifespan=ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(),configuration.getL1Lifespan());
-          PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),lifespan,-1);
-          invokeNextInterceptor(ctx,put);
-        }
-        return ice.getValue();
-      }
-    }
-    return null;
-  }
+  if (returnValue == null && ctx.lookupEntry(command.getKey()) == null)   returnValue=remoteGetAndStoreInL1(ctx,command.getKey());
   return returnValue;
 }

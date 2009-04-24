@@ -13,16 +13,18 @@
     if (trace)     log.trace("Cache [{0}]: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps);
     if (rsps == null)     return Collections.emptyList();
     List<Response> retval=new ArrayList<Response>(rsps.size());
+    boolean noValidResponses=true;
     for (    Rsp rsp : rsps.values()) {
       if (rsp.wasSuspected() || !rsp.wasReceived()) {
         if (rsp.wasSuspected()) {
           throw new SuspectException("Suspected member: " + rsp.getSender());
         }
  else {
-          throw new TimeoutException("Replication timeout for " + rsp.getSender());
+          if (responseFilter == null)           throw new TimeoutException("Replication timeout for " + rsp.getSender());
         }
       }
  else {
+        noValidResponses=false;
         if (rsp.getValue() != null) {
           Response value=(Response)rsp.getValue();
           if (value instanceof ExceptionResponse) {
@@ -36,6 +38,7 @@
         }
       }
     }
+    if (noValidResponses)     throw new TimeoutException("Timed out waiting for valid responses!");
     return retval;
   }
   finally {
