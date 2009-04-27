@@ -1,9 +1,9 @@
 {
-  if (ctx.isOriginLocal() && !dm.isLocal(key)) {
+  if (ctx.isOriginLocal() && !dm.isLocal(key) && isNotInL1(key)) {
     if (trace)     log.trace("Doing a remote get for key {0}",key);
     InternalCacheEntry ice=dm.retrieveFromRemoteSource(key);
     if (ice != null) {
-      if (configuration.isL1CacheEnabled()) {
+      if (isL1CacheEnabled) {
         if (trace)         log.trace("Caching remotely retrieved entry for key {0} in L1",key);
         long lifespan=ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(),configuration.getL1Lifespan());
         PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),lifespan,-1);

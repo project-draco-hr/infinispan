@@ -1,6 +1,9 @@
 {
   Configuration c=getDefaultClusteredConfig(sync ? DIST_SYNC : DIST_ASYNC);
-  if (!sync)   c.setUnsafeUnreliableReturnValues(true);
+  if (!testRetVals) {
+    c.setUnsafeUnreliableReturnValues(true);
+    c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+  }
   if (tx)   c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
   caches=createClusteredCaches(4,"dist",c);
   c1=caches.get(0);
