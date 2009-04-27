@@ -5,6 +5,10 @@
   cacheStatusProgressBar.setVisible(false);
   cacheStatusProgressBar.setEnabled(false);
   configFileName.setText(cacheConfigFile);
+  clusterTableModel=new ClusterTableModel();
+  clusterTable.setModel(clusterTableModel);
+  cachedDataTableModel=new CachedDataTableModel();
+  dataTable.setModel(cachedDataTableModel);
   actionButton.setText(startCacheButtonLabel);
   cacheStatus.setText(statusStopped);
   actionButton.addActionListener(new ActionListener(){
@@ -93,6 +97,20 @@
         public void run(){
           cache.clear();
           processAction(cacheClearButton,false);
+          mainPane.setSelectedIndex(1);
+        }
+      }
+);
+    }
+  }
+);
+  refreshDataTableButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      processAction(refreshDataTableButton,true);
+      asyncExecutor.execute(new Runnable(){
+        public void run(){
+          InfinispanDemo.this.updateCachedDataTable();
+          processAction(refreshDataTableButton,false);
           mainPane.setSelectedIndex(1);
         }
       }

@@ -5,27 +5,26 @@
       try {
         if (cache == null) {
           URL resource=getClass().getClassLoader().getResource(cacheConfigFile);
-          String contents;
-          if (resource != null) {
-            configFileName.setText(resource.toString());
-          }
- else {
-            configFileName.setText(cacheConfigFile);
-          }
+          if (resource == null)           resource=new URL(cacheConfigFile);
+          configFileName.setText(resource.toString());
           configFileName.repaint();
           try {
-            configFileContents.setText(readContents(resource == null ? new FileInputStream(cacheConfigFile) : resource.openStream()));
+            configFileContents.setText(readContents(resource.openStream()));
             configFileContents.setEditable(false);
           }
  catch (          Exception e) {
-            log.warn("Unable to open config file for display",e);
+            log.warn("Unable to open config file [" + cacheConfigFile + "] for display",e);
           }
           configFileContents.repaint();
-          cache=new DefaultCacheManager(cacheConfigFile).getCache();
+          cache=new DefaultCacheManager(resource.openStream()).getCache();
         }
  else {
           cache.start();
         }
+        CacheListener cl=new CacheListener();
+        cache.addListener(cl);
+        cache.getCacheManager().addListener(cl);
+        updateClusterTable(cache.getCacheManager().getMembers());
         moveCacheToState(ComponentStatus.RUNNING);
       }
  catch (      Exception e) {
