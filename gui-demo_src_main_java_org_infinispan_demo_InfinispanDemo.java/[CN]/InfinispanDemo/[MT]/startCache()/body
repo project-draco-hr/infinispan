@@ -1,0 +1,37 @@
+{
+  moveCacheToState(ComponentStatus.INITIALIZING);
+  asyncExecutor.execute(new Runnable(){
+    public void run(){
+      try {
+        if (cache == null) {
+          URL resource=getClass().getClassLoader().getResource(cacheConfigFile);
+          String contents;
+          if (resource != null) {
+            configFileName.setText(resource.toString());
+          }
+ else {
+            configFileName.setText(cacheConfigFile);
+          }
+          configFileName.repaint();
+          try {
+            configFileContents.setText(readContents(resource == null ? new FileInputStream(cacheConfigFile) : resource.openStream()));
+            configFileContents.setEditable(false);
+          }
+ catch (          Exception e) {
+            log.warn("Unable to open config file for display",e);
+          }
+          configFileContents.repaint();
+          cache=new DefaultCacheManager(cacheConfigFile).getCache();
+        }
+ else {
+          cache.start();
+        }
+        moveCacheToState(ComponentStatus.RUNNING);
+      }
+ catch (      Exception e) {
+        log.error("Unable to start cache!",e);
+      }
+    }
+  }
+);
+}

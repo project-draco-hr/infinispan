@@ -1,0 +1,115 @@
+{
+  asyncExecutor=Executors.newFixedThreadPool(1);
+  asyncTaskQueue=((ThreadPoolExecutor)asyncExecutor).getQueue();
+  cacheConfigFile=cfgFileName;
+  cacheStatusProgressBar.setVisible(false);
+  cacheStatusProgressBar.setEnabled(false);
+  configFileName.setText(cacheConfigFile);
+  actionButton.setText(startCacheButtonLabel);
+  cacheStatus.setText(statusStopped);
+  actionButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      if (actionButton.getText().equals(startCacheButtonLabel)) {
+        startCache();
+      }
+ else       if (actionButton.getText().equals(stopCacheButtonLabel)) {
+        stopCache();
+      }
+    }
+  }
+);
+  goButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      processAction(goButton,true);
+      asyncExecutor.execute(new Runnable(){
+        public void run(){
+          if (putEntryRadioButton.isSelected()) {
+            cache.put(keyTextField.getText(),valueTextField.getText());
+          }
+ else           if (removeEntryRadioButton.isSelected()) {
+            cache.remove(keyTextField.getText());
+          }
+ else           if (getEntryRadioButton.isSelected()) {
+            cache.get(keyTextField.getText());
+          }
+          dataViewTab.repaint();
+          processAction(goButton,false);
+          mainPane.setSelectedIndex(1);
+        }
+      }
+);
+    }
+  }
+);
+  removeEntryRadioButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      keyTextField.setEnabled(true);
+      valueTextField.setEnabled(false);
+    }
+  }
+);
+  putEntryRadioButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      keyTextField.setEnabled(true);
+      valueTextField.setEnabled(true);
+    }
+  }
+);
+  getEntryRadioButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      keyTextField.setEnabled(true);
+      valueTextField.setEnabled(false);
+    }
+  }
+);
+  randomGeneratorButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      processAction(randomGeneratorButton,true);
+      asyncExecutor.execute(new Runnable(){
+        public void run(){
+          int entries=1;
+          try {
+            entries=Integer.parseInt(maxEntriesTextField.getText());
+          }
+ catch (          NumberFormatException nfe) {
+            log.warn("Entered a non-integer for depth.  Using 1.",nfe);
+          }
+          for (int i=0; i < entries; i++)           cache.put(randomString(),randomString());
+          processAction(randomGeneratorButton,false);
+          mainPane.setSelectedIndex(1);
+        }
+      }
+);
+    }
+    private String randomString(){
+      return Integer.toHexString(r.nextInt(Integer.MAX_VALUE)).toUpperCase();
+    }
+  }
+);
+  cacheClearButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      processAction(cacheClearButton,true);
+      asyncExecutor.execute(new Runnable(){
+        public void run(){
+          cache.clear();
+          processAction(cacheClearButton,false);
+          mainPane.setSelectedIndex(1);
+        }
+      }
+);
+    }
+  }
+);
+  cacheDetailsButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      if (cache != null)       debugTextArea.setText(cache.toString());
+    }
+  }
+);
+  cacheLockInfoButton.addActionListener(new ActionListener(){
+    public void actionPerformed(    ActionEvent e){
+      if (cache != null)       debugTextArea.setText(cache.toString());
+    }
+  }
+);
+}
