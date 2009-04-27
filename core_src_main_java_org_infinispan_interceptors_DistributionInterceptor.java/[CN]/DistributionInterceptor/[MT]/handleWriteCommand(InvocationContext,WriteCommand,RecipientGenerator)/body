@@ -4,17 +4,24 @@
   if (local && ctx.getTransaction() == null)   return invokeNextInterceptor(ctx,command);
   Object returnValue=invokeNextInterceptor(ctx,command);
   if (command.isSuccessful()) {
-    if (ctx.getTransaction() == null && ctx.isOriginLocal()) {
-      List<Address> rec=recipientGenerator.generateRecipients();
-      if (trace)       log.trace("Invoking command {0} on hosts {1}",command,rec);
-      if (configuration.isL1CacheEnabled() && rec != null) {
-        InvalidateCommand ic=cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-        replicateCall(ctx,ic,isSynchronous(ctx),false);
+    if (ctx.getTransaction() == null) {
+      if (ctx.isOriginLocal()) {
+        List<Address> rec=recipientGenerator.generateRecipients();
+        if (trace)         log.trace("Invoking command {0} on hosts {1}",command,rec);
+        if (configuration.isL1CacheEnabled() && rec != null) {
+          InvalidateCommand ic=cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
+          replicateCall(ctx,ic,isSynchronous(ctx),false);
+        }
+        replicateCall(ctx,rec,command,isSynchronous(ctx),false);
       }
-      replicateCall(ctx,rec,command,isSynchronous(ctx),false);
     }
  else {
-      if (local)       ctx.getTransactionContext().addLocalModification(command);
+      if (local) {
+        ctx.getTransactionContext().addLocalModification(command);
+      }
+ else {
+        ctx.getTransactionContext().addTransactionParticipants(recipientGenerator.generateRecipients());
+      }
     }
   }
   return returnValue;

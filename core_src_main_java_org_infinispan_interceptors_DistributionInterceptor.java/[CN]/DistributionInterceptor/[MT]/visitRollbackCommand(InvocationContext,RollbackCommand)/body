@@ -1,12 +1,7 @@
 {
-  try {
-    if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
-      List<Address> recipients=txRecipients.get(command.getGlobalTransaction());
-      if (recipients != null)       replicateCall(ctx,recipients,command,configuration.isSyncRollbackPhase(),true);
-    }
-    return invokeNextInterceptor(ctx,command);
+  if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
+    List<Address> recipients=new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
+    replicateCall(ctx,recipients,command,configuration.isSyncRollbackPhase(),true);
   }
-  finally {
-    txRecipients.remove(command.getGlobalTransaction());
-  }
+  return invokeNextInterceptor(ctx,command);
 }
