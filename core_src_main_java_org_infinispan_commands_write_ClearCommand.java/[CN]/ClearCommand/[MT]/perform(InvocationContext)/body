@@ -2,8 +2,11 @@
   for (  CacheEntry e : ctx.getLookedUpEntries().values()) {
     if (e instanceof MVCCEntry) {
       MVCCEntry me=(MVCCEntry)e;
+      Object k=me.getKey(), v=me.getValue();
+      notifier.notifyCacheEntryRemoved(k,v,true,ctx);
       me.setRemoved(true);
       me.setValid(false);
+      notifier.notifyCacheEntryRemoved(k,null,false,ctx);
     }
   }
   return null;
