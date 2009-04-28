@@ -1,0 +1,19 @@
+{
+  accessKey=(AWSAccessKeyId == null) ? sysAWSAccessKeyId : AWSAccessKeyId;
+  secretKey=(AWSSecretAccessKey == null) ? sysAWSSecretAccessKey : AWSSecretAccessKey;
+  if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
+    accessKey="dummy";
+    secretKey="dummy";
+    connectionClass=MockS3Connection.class;
+    bucketClass=MockS3Bucket.class;
+  }
+ else {
+    connectionClass=JCloudsConnection.class;
+    bucketClass=JCloudsBucket.class;
+    proxyHost="localhost";
+    proxyPort=8888;
+  }
+  csBucket=System.getProperty("user.name") + "." + this.getClass().getName();
+  System.err.printf("accessKey: %1s, connectionClass: %2s, bucketClass: %3s, bucket: %4s%n",accessKey,connectionClass,bucketClass,csBucket);
+  cs2Bucket=csBucket + "2";
+}

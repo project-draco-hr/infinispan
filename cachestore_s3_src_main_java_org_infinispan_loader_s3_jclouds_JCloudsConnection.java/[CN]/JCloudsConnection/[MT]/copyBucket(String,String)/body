@@ -1,0 +1,24 @@
+{
+  Set<String> sourceKeys=null;
+  try {
+    S3Bucket source=new S3Bucket();
+    source.setName(sourceBucket);
+    source=s3Service.getBucket(source).get();
+    sourceKeys=keysInBucket(source);
+    S3Bucket dest=new S3Bucket();
+    dest.setName(destinationBucket);
+    for (    String key : sourceKeys) {
+      try {
+        S3Object object=new S3Object();
+        object.setKey(key);
+        s3Service.copyObject(source,object,dest,object).get();
+      }
+ catch (      Exception ex) {
+        throw convertToS3ConnectionException("Exception while copying key " + key + " from bucket "+ sourceBucket,ex);
+      }
+    }
+  }
+ catch (  Exception ex) {
+    throw convertToS3ConnectionException("Cannot access bucket " + sourceBucket,ex);
+  }
+}

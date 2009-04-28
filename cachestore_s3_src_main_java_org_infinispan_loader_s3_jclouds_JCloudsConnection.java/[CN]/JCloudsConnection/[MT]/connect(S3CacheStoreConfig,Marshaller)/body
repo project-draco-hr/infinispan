@@ -1,0 +1,22 @@
+{
+  InputStream propertiesIS=null;
+  try {
+    propertiesIS=JCloudsConnection.class.getResourceAsStream("/jclouds.properties");
+    Properties properties=new Properties();
+    properties.load(propertiesIS);
+    if (!config.isSecure()) {
+      properties.put("jclouds.http.port","80");
+      properties.put("jclouds.http.secure","false");
+    }
+    if (!properties.containsKey("jclouds.aws.accesskeyid"))     properties.put("jclouds.aws.accesskeyid",config.getAwsAccessKey());
+    if (!properties.containsKey("jclouds.aws.secretaccesskey"))     properties.put("jclouds.aws.secretaccesskey",config.getAwsSecretKey());
+    this.s3Service=S3ConnectionFactory.getConnection(properties,new S3HttpNioConnectionPoolClientModule());
+    if (this.s3Service == null) {
+      throw new S3ConnectionException("Could not connect");
+    }
+  }
+ catch (  Exception ex) {
+    throw convertToS3ConnectionException("Exception connecting to s3",ex);
+  }
+  this.marshaller=m;
+}

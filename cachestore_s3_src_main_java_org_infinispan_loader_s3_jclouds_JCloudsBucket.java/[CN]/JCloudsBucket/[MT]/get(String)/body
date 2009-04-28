@@ -1,0 +1,21 @@
+{
+  Bucket bucket=null;
+  InputStream is=null;
+  ObjectInputStream ois=null;
+  try {
+    S3Object s3Object=connection.getConnection().getObject(rootS3Bucket,key).get();
+    if (s3Object != null && s3Object.getContent() != null) {
+      is=(InputStream)s3Object.getContent();
+      bucket=(Bucket)connection.marshaller.objectFromStream(is);
+      bucket.setBucketName(key);
+    }
+  }
+ catch (  Exception e) {
+    throw connection.convertToS3ConnectionException("Error while reading from object: " + key,e);
+  }
+ finally {
+    safeClose(ois);
+    safeClose(is);
+  }
+  return bucket;
+}

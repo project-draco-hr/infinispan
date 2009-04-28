@@ -1,0 +1,14 @@
+{
+  try {
+    List<Future<Boolean>> deletes=new ArrayList<Future<Boolean>>();
+    for (    String key : keySet()) {
+      deletes.add(connection.getConnection().deleteObject(rootS3Bucket,key));
+    }
+    for (    Future<Boolean> delete : deletes) {
+      if (!delete.get())       throw new S3ConnectionException("could not delete entry");
+    }
+  }
+ catch (  Exception ex) {
+    throw connection.convertToS3ConnectionException("Exception clearing store",ex);
+  }
+}
