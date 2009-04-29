@@ -3,30 +3,31 @@
   asyncExecutor.execute(new Runnable(){
     public void run(){
       try {
+        URL resource=getClass().getClassLoader().getResource(cacheConfigFile);
+        if (resource == null)         resource=new URL(cacheConfigFile);
         if (cache == null) {
-          URL resource=getClass().getClassLoader().getResource(cacheConfigFile);
-          if (resource == null)           resource=new URL(cacheConfigFile);
-          configFileName.setText(resource.toString());
-          configFileName.repaint();
-          try {
-            configFileContents.setText(readContents(resource.openStream()));
-            configFileContents.setEditable(false);
-          }
- catch (          Exception e) {
-            log.warn("Unable to open config file [" + cacheConfigFile + "] for display",e);
-          }
-          configFileContents.repaint();
           cache=new DefaultCacheManager(resource.openStream()).getCache();
         }
  else {
           cache.start();
         }
+        configFileName.setText(resource.toString());
+        configFileName.repaint();
+        try {
+          configFileContents.setText(readContents(resource.openStream()));
+          configFileContents.setEditable(false);
+        }
+ catch (        Exception e) {
+          log.warn("Unable to open config file [" + cacheConfigFile + "] for display",e);
+        }
+        configFileContents.repaint();
         CacheListener cl=new CacheListener();
         cache.addListener(cl);
         cache.getCacheManager().addListener(cl);
         updateClusterTable(cache.getCacheManager().getMembers());
         lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
         maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+        cacheContentsSizeLabel.setText("Cache contains " + cache.size() + " entries");
         moveCacheToState(ComponentStatus.RUNNING);
       }
  catch (      Exception e) {
