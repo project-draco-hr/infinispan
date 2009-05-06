@@ -2,13 +2,11 @@
   Set<String> sourceKeys;
   try {
     S3Bucket source=new S3Bucket(sourceBucket);
-    source=s3Service.getBucket(source).get(config.getRequestTimeout(),TimeUnit.MILLISECONDS);
+    source=s3Service.getBucket(sourceBucket).get(config.getRequestTimeout(),TimeUnit.MILLISECONDS);
     sourceKeys=keysInBucket(source);
-    S3Bucket dest=new S3Bucket(destinationBucket);
     for (    String key : sourceKeys) {
       try {
-        S3Object object=new S3Object(key);
-        s3Service.copyObject(source,object,dest,object).get(config.getRequestTimeout(),TimeUnit.MILLISECONDS);
+        s3Service.copyObject(sourceBucket,key,destinationBucket,key).get(config.getRequestTimeout(),TimeUnit.MILLISECONDS);
       }
  catch (      Exception ex) {
         throw convertToS3ConnectionException("Exception while copying key " + key + " from bucket "+ sourceBucket,ex);
