@@ -1,0 +1,31 @@
+{
+  TupleBrowser browse=expiryTree.browse();
+  Tuple tuple=new Tuple();
+  List<Long> times=new ArrayList<Long>();
+  List<Object> keys=new ArrayList<Object>();
+synchronized (expiryLock) {
+    while (browse.getNext(tuple)) {
+      Long time=(Long)tuple.getKey();
+      if (time > System.currentTimeMillis())       break;
+      times.add(time);
+      Object key=tuple.getValue();
+      if (key instanceof List)       keys.addAll((List)key);
+ else       keys.add(key);
+    }
+    for (    Long time : times) {
+      expiryTree.remove(time);
+    }
+  }
+  if (!keys.isEmpty())   log.debug("purge (up to) " + keys.size() + " entries");
+  int count=0;
+  for (  Object key : keys) {
+    InternalCacheEntry ice=(InternalCacheEntry)tree.find(key);
+    if (ice == null)     continue;
+    if (ice.isExpired()) {
+      tree.remove(key);
+      count++;
+    }
+  }
+  if (count != 0)   log.debug("purged " + count + " entries");
+  recman.commit();
+}

@@ -1,0 +1,35 @@
+{
+  String locationStr=config.getLocation();
+  if (locationStr == null) {
+    locationStr=System.getProperty("java.io.tmpdir");
+    config.setLocation(locationStr);
+  }
+  int offset=locationStr.indexOf('#');
+  String cacheDbName;
+  if (offset >= 0 && offset < locationStr.length() - 1) {
+    cacheDbName=locationStr.substring(offset + 1);
+    locationStr=locationStr.substring(0,offset);
+  }
+ else {
+    cacheDbName=cache.getName();
+    if (cacheDbName == null)     cacheDbName="jdbm";
+  }
+  File location=new File(locationStr);
+  if (!location.exists()) {
+    boolean created=location.mkdirs();
+    if (!created)     throw new ConfigurationException("Unable to create cache loader location " + location);
+  }
+  if (!location.isDirectory()) {
+    throw new ConfigurationException("Cache loader location [" + location + "] is not a directory!");
+  }
+  try {
+    openDatabase(new File(location,cacheDbName));
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException(e);
+  }
+  log.debug("cleaning up expired entries...");
+  purgeInternal();
+  log.debug("started");
+  super.start();
+}
