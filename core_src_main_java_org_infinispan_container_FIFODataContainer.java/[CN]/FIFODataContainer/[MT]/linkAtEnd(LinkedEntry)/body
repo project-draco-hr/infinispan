@@ -1,15 +1,11 @@
 {
   LinkedEntry prev=tail.p;
-  long backOffNanos=100000;
   for (; ; ) {
     entry.p=prev;
     entry.n=tail;
     if (prev.casNext(tail,entry))     break;
     prev=correctPrev(prev,tail);
-    LockSupport.parkNanos(backOffNanos);
-    backOffNanos<<=1;
   }
-  backOffNanos=100000;
   for (; ; ) {
     LinkedEntry l1=tail.p;
     if (isMarkedForRemoval(l1) || entry.n != tail)     break;
@@ -17,7 +13,5 @@
       if (isMarkedForRemoval(entry.p))       entry=correctPrev(entry,tail);
       break;
     }
-    LockSupport.parkNanos(backOffNanos);
-    backOffNanos<<=1;
   }
 }
