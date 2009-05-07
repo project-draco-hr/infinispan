@@ -1,24 +1,18 @@
 {
-  final TupleBrowser browse;
+  final FastIterator fi;
   try {
-    browse=tree.browse();
+    fi=tree.values();
   }
  catch (  IOException e) {
     throw new CacheException(e);
   }
   return new Iterator<InternalCacheEntry>(){
-    final Tuple tuple=new Tuple();
     InternalCacheEntry current=null;
     boolean next=true;
     public boolean hasNext(){
-      if (current == null) {
-        try {
-          next=browse.getNext(tuple);
-          current=(InternalCacheEntry)tuple.getValue();
-        }
- catch (        IOException e) {
-          throw new CacheException(e);
-        }
+      if (current == null && next) {
+        current=(InternalCacheEntry)fi.next();
+        if (current == null)         next=false;
       }
       return next;
     }
