@@ -1,0 +1,26 @@
+{
+  if (icv.getClass().equals(ImmortalCacheEntry.class)) {
+    out.writeByte(MAGICNUMBER_ICV_IMMORTAL);
+    marshallObject(icv.getValue(),out,refMap);
+  }
+ else   if (icv.getClass().equals(MortalCacheEntry.class)) {
+    out.writeByte(MAGICNUMBER_ICV_MORTAL);
+    marshallObject(icv.getValue(),out,refMap);
+    writeUnsignedLong(out,icv.getCreated());
+    out.writeLong(icv.getLifespan());
+  }
+ else   if (icv.getClass().equals(TransientCacheEntry.class)) {
+    out.writeByte(MAGICNUMBER_ICV_TRANSIENT);
+    marshallObject(icv.getValue(),out,refMap);
+    writeUnsignedLong(out,icv.getLastUsed());
+    out.writeLong(icv.getMaxIdle());
+  }
+ else   if (icv.getClass().equals(TransientMortalCacheEntry.class)) {
+    out.writeByte(MAGICNUMBER_ICV_TRANSIENT_MORTAL);
+    marshallObject(icv.getValue(),out,refMap);
+    writeUnsignedLong(out,icv.getCreated());
+    out.writeLong(icv.getLifespan());
+    writeUnsignedLong(out,icv.getLastUsed());
+    out.writeLong(icv.getMaxIdle());
+  }
+}

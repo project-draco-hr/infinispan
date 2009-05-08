@@ -41,20 +41,10 @@
       marshallResponse((Response)o,out,refMap);
     }
  else     if (o instanceof InternalCacheEntry) {
-      out.writeByte(MAGICNUMBER_INTERNAL_CACHED_ENTRY);
-      InternalCacheEntry ice=(InternalCacheEntry)o;
-      marshallObject(ice.getKey(),out,refMap);
-      marshallObject(ice.getValue(),out,refMap);
-      if (ice.canExpire()) {
-        out.writeBoolean(true);
-        writeUnsignedLong(out,ice.getCreated());
-        out.writeLong(ice.getLifespan());
-        writeUnsignedLong(out,ice.getLastUsed());
-        out.writeLong(ice.getMaxIdle());
-      }
- else {
-        out.writeBoolean(false);
-      }
+      marshallInternalCacheEntry((InternalCacheEntry)o,out,refMap);
+    }
+ else     if (o instanceof InternalCacheValue) {
+      marshallInternalCacheValue((InternalCacheValue)o,out,refMap);
     }
  else     if (o.getClass().equals(ArrayList.class)) {
       out.writeByte(MAGICNUMBER_ARRAY_LIST);

@@ -20,20 +20,16 @@ case MAGICNUMBER_MARSHALLEDVALUE:
 MarshalledValue mv=new MarshalledValue();
 mv.readExternal(in);
 return mv;
-case MAGICNUMBER_INTERNAL_CACHED_ENTRY:
-Object k=unmarshallObject(in,refMap);
-Object v=unmarshallObject(in,refMap);
-boolean canExpire=in.readBoolean();
-if (canExpire) {
-long created=readUnsignedLong(in);
-long lifespan=in.readLong();
-long lastUsed=readUnsignedLong(in);
-long maxIdle=in.readLong();
-return InternalEntryFactory.create(k,v,created,lifespan,lastUsed,maxIdle);
-}
- else {
-return InternalEntryFactory.create(k,v);
-}
+case MAGICNUMBER_ICE_IMMORTAL:
+case MAGICNUMBER_ICE_MORTAL:
+case MAGICNUMBER_ICE_TRANSIENT:
+case MAGICNUMBER_ICE_TRANSIENT_MORTAL:
+return unmarshallInternalCacheEntry(magicNumber,in,refMap);
+case MAGICNUMBER_ICV_IMMORTAL:
+case MAGICNUMBER_ICV_MORTAL:
+case MAGICNUMBER_ICV_TRANSIENT:
+case MAGICNUMBER_ICV_TRANSIENT_MORTAL:
+return unmarshallInternalCacheValue(magicNumber,in,refMap);
 case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
 case MAGICNUMBER_EXTENDED_RESPONSE:
 case MAGICNUMBER_EXCEPTION_RESPONSE:
