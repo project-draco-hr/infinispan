@@ -9,17 +9,17 @@
       properties.setProperty(S3Constants.PROPERTY_HTTP_PORT,"80");
       properties.setProperty(S3Constants.PROPERTY_HTTP_SECURE,"false");
     }
-    if (properties.containsKey(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)) {
-      config.setRequestTimeout(Long.parseLong(properties.getProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)));
+    if (properties.containsKey(S3Constants.PROPERTY_S3_MAP_TIMEOUT)) {
+      config.setRequestTimeout(Long.parseLong(properties.getProperty(S3Constants.PROPERTY_S3_MAP_TIMEOUT)));
     }
  else {
-      properties.setProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT,config.getRequestTimeout() + "");
+      properties.setProperty(S3Constants.PROPERTY_S3_MAP_TIMEOUT,config.getRequestTimeout() + "");
     }
     if (!properties.containsKey(S3Constants.PROPERTY_AWS_ACCESSKEYID))     properties.setProperty(S3Constants.PROPERTY_AWS_ACCESSKEYID,checkNotNull(config.getAwsAccessKey(),"config.getAwsAccessKey()"));
     if (!properties.containsKey(S3Constants.PROPERTY_AWS_SECRETACCESSKEY))     properties.setProperty(S3Constants.PROPERTY_AWS_SECRETACCESSKEY,checkNotNull(config.getAwsSecretKey(),"config.getAwsSecretKey()"));
     if (!properties.containsKey(S3Constants.PROPERTY_POOL_MAX_CONNECTIONS))     properties.setProperty(S3Constants.PROPERTY_POOL_MAX_CONNECTIONS,config.getMaxConnections() + "");
     Module loggingModule=org.infinispan.util.logging.LogFactory.IS_LOG4J_AVAILABLE ? new Log4JLoggingModule() : new JDKLoggingModule();
-    this.context=S3ContextFactory.createS3Context(properties,new S3HttpNioConnectionPoolClientModule(),loggingModule);
+    this.context=S3ContextFactory.createS3Context(properties,new HttpNioConnectionPoolClientModule(),loggingModule);
     this.s3Service=context.getConnection();
     if (this.s3Service == null) {
       throw new S3ConnectionException("Could not connect");
