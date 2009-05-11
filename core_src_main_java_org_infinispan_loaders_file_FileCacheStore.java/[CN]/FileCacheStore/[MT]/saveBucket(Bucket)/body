@@ -8,12 +8,10 @@
   }
   if (!b.getEntries().isEmpty()) {
     FileOutputStream fos=null;
-    ObjectOutputStream oos=null;
     try {
+      byte[] bytes=marshaller.objectToByteBuffer(b);
       fos=new FileOutputStream(f);
-      oos=new ObjectOutputStream(fos);
-      oos.writeObject(b);
-      oos.flush();
+      fos.write(bytes);
       fos.flush();
     }
  catch (    IOException ex) {
@@ -21,7 +19,6 @@
       throw new CacheLoaderException(ex);
     }
  finally {
-      safeClose(oos);
       safeClose(fos);
     }
   }

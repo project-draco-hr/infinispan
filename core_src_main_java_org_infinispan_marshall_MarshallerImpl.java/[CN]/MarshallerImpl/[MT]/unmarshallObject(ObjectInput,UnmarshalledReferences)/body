@@ -17,9 +17,7 @@ retVal=in.readObject();
 if (useRefs) refMap.putReferencedObject(reference,retVal);
 return retVal;
 case MAGICNUMBER_MARSHALLEDVALUE:
-MarshalledValue mv=new MarshalledValue();
-mv.readExternal(in);
-return mv;
+return unmarshallMarshalledValue(in,refMap);
 case MAGICNUMBER_ICE_IMMORTAL:
 case MAGICNUMBER_ICE_MORTAL:
 case MAGICNUMBER_ICE_TRANSIENT:
@@ -53,6 +51,8 @@ int numCommands=readUnsignedInt(in);
 WriteCommand[] cmds=new WriteCommand[numCommands];
 for (int i=0; i < numCommands; i++) cmds[i]=(WriteCommand)unmarshallObject(in,refMap);
 return new TransactionLog.LogEntry(gtx,cmds);
+case MAGICNUMBER_CACHESTORE_BUCKET:
+return unmarshallBucket(in,refMap);
 case MAGICNUMBER_ARRAY:
 return unmarshallArray(in,refMap);
 case MAGICNUMBER_ARRAY_LIST:

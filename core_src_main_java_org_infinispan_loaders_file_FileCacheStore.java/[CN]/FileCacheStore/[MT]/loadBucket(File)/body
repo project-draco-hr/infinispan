@@ -3,11 +3,9 @@
   if (bucketFile.exists()) {
     if (log.isTraceEnabled())     log.trace("Found bucket file: '" + bucketFile + "'");
     FileInputStream is=null;
-    ObjectInputStream ois=null;
     try {
       is=new FileInputStream(bucketFile);
-      ois=new ObjectInputStream(is);
-      bucket=(Bucket)ois.readObject();
+      bucket=(Bucket)marshaller.objectFromInputStream(is);
     }
  catch (    Exception e) {
       String message="Error while reading from file: " + bucketFile.getAbsoluteFile();
@@ -15,7 +13,6 @@
       throw new CacheLoaderException(message,e);
     }
  finally {
-      safeClose(ois);
       safeClose(is);
     }
   }
