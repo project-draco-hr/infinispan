@@ -1,0 +1,17 @@
+{
+  try {
+    List<Response> result=t.invokeRemotely(recipients,rpcCommand,mode,timeout,usePriorityQueue,responseFilter,stateTransferEnabled);
+    if (isStatisticsEnabled())     replicationCount.incrementAndGet();
+    return result;
+  }
+ catch (  CacheException e) {
+    if (log.isTraceEnabled())     log.trace("replicaiton exception: ",e);
+    if (isStatisticsEnabled())     replicationFailures.incrementAndGet();
+    throw e;
+  }
+catch (  Throwable th) {
+    log.error("unexpected error while replicating",th);
+    if (isStatisticsEnabled())     replicationFailures.incrementAndGet();
+    throw new CacheException(th);
+  }
+}

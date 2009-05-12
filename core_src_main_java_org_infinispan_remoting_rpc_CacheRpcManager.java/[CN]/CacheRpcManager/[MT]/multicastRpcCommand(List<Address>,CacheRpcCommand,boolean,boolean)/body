@@ -1,0 +1,20 @@
+{
+  if (log.isTraceEnabled()) {
+    log.trace("invoking method " + command.getClass().getSimpleName() + ", members="+ rpcManager.getTransport().getMembers()+ ", mode="+ configuration.getCacheMode()+ ", exclude_self="+ true+ ", timeout="+ configuration.getSyncReplTimeout());
+    log.trace("Broadcasting call " + command + " to recipient list "+ recipients);
+  }
+  List rsps;
+  try {
+    rsps=rpcManager.invokeRemotely(recipients,command,sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS,configuration.getSyncReplTimeout(),useOutOfBandMessage,stateTransferEnabled);
+    if (log.isTraceEnabled())     log.trace("responses=" + rsps);
+    if (sync)     checkResponses(rsps);
+  }
+ catch (  CacheException e) {
+    log.error("Replication exception",e);
+    throw e;
+  }
+catch (  Exception ex) {
+    log.error("Unexpected exception",ex);
+    throw new ReplicationException("Unexpected exception while replicating",ex);
+  }
+}

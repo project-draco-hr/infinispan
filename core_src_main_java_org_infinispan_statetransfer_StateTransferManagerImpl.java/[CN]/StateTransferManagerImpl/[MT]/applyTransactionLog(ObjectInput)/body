@@ -14,8 +14,7 @@
       if (!transactionLog.hasPendingPrepare(command)) {
         if (trace)         log.trace("Applying pending prepare {0}",command);
         commandsFactory.initializeReplicableCommand(command);
-        InvocationContext ctx=invocationContextContainer.get();
-        ctx.setOriginLocal(false);
+        InvocationContext ctx=invocationContextContainer.getRemoteTxInvocationContext(command.getGlobalTransaction(),true);
         ctx.setFlags(Flag.CACHE_MODE_LOCAL,Flag.SKIP_CACHE_STATUS_CHECK);
         interceptorChain.invoke(ctx,command);
       }

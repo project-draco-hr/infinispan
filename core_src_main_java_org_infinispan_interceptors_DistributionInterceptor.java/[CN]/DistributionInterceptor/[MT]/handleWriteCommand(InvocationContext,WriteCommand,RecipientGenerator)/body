@@ -1,26 +1,25 @@
 {
-  boolean local=isLocalModeForced(ctx);
+  boolean localModeForced=isLocalModeForced(ctx);
   remoteGetBeforeWrite(ctx,command.isConditional(),recipientGenerator.getKeys());
-  if (local && ctx.getTransaction() == null)   return invokeNextInterceptor(ctx,command);
+  if (localModeForced && ctx.isInTxScope())   return invokeNextInterceptor(ctx,command);
   Object returnValue=invokeNextInterceptor(ctx,command);
   if (command.isSuccessful()) {
-    if (ctx.getTransaction() == null) {
+    if (!ctx.isInTxScope()) {
       if (ctx.isOriginLocal()) {
         List<Address> rec=recipientGenerator.generateRecipients();
         if (trace)         log.trace("Invoking command {0} on hosts {1}",command,rec);
         if (isL1CacheEnabled && rec != null) {
           InvalidateCommand ic=cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-          replicateCall(ctx,ic,isSynchronous(ctx),false);
+          rpcManager.broadcastReplicableCommand(ic,isSynchronous(ctx));
         }
-        replicateCall(ctx,rec,command,isSynchronous(ctx),false);
+        rpcManager.multicastReplicableCommand(rec,command,isSynchronous(ctx));
       }
     }
  else {
-      if (local) {
-        ctx.getTransactionContext().addLocalModification(command);
+      if (!localModeForced) {
+        ((TxInvocationContext)ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
       }
  else {
-        ctx.getTransactionContext().addTransactionParticipants(recipientGenerator.generateRecipients());
       }
     }
   }

@@ -1,0 +1,16 @@
+{
+  RollbackCommand rollbackCommand=commandsFactory.buildRollbackCommand(transactionIdentifier);
+  InitiatorTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
+  ctx.setXaCache(this);
+  try {
+    invoker.invoke(ctx,rollbackCommand);
+  }
+ catch (  Throwable e) {
+    log.error("Exception while ",e);
+    throw new XAException(XAException.XA_HEURHAZ);
+  }
+ finally {
+    txEnlistingManager.delist(transaction);
+    this.modifications=null;
+  }
+}

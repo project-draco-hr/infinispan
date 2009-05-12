@@ -1,17 +1,7 @@
 {
-  boolean local=isLocalModeForced(ctx);
-  if (local && ctx.getTransaction() == null)   return invokeNextInterceptor(ctx,command);
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (command.isSuccessful()) {
-    if (ctx.getTransaction() == null && ctx.isOriginLocal()) {
-      if (trace) {
-        log.trace("invoking method " + command.getClass().getSimpleName() + ", members="+ rpcManager.getTransport().getMembers()+ ", mode="+ configuration.getCacheMode()+ ", exclude_self="+ true+ ", timeout="+ configuration.getSyncReplTimeout());
-      }
-      replicateCall(ctx,command,isSynchronous(ctx));
-    }
- else {
-      if (local)       ctx.getTransactionContext().addLocalModification(command);
-    }
+  if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal()&& !ctx.isInTxScope()) {
+    rpcManager.broadcastReplicableCommand(command,isSynchronous(ctx));
   }
   return returnValue;
 }

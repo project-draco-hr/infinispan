@@ -1,12 +1,16 @@
 {
-  Transaction tx=null;
-  try {
-    if (transactionManager.getTransaction() == null && (tx=batchContainer.getBatchTransaction()) != null) {
+  Transaction tx;
+  if (!ctx.isOriginLocal())   return invokeNextInterceptor(ctx,command);
+  if (transactionManager.getTransaction() == null && (tx=batchContainer.getBatchTransaction()) != null) {
+    try {
       transactionManager.resume(tx);
+      return invokeNextInterceptor(icc.getLocalInvocationContext(true),command);
     }
-    return super.handleDefault(ctx,command);
-  }
   finally {
-    if (tx != null && transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())     transactionManager.suspend();
+      if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())       transactionManager.suspend();
+    }
+  }
+ else {
+    return invokeNextInterceptor(ctx,command);
   }
 }

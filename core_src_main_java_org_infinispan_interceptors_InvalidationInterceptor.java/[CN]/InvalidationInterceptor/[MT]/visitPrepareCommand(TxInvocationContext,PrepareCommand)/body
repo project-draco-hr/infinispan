@@ -1,0 +1,14 @@
+{
+  Object retval=invokeNextInterceptor(ctx,command);
+  if (trace)   log.trace("Entering InvalidationInterceptor's prepare phase");
+  if (ctx.hasModifications() && ctx.isOriginLocal()) {
+    List<WriteCommand> mods=Arrays.asList(command.getModifications());
+    Transaction runningTransaction=ctx.getRunningTransaction();
+    if (runningTransaction == null)     throw new IllegalStateException("we must have an associated transaction");
+    broadcastInvalidate(mods,runningTransaction,ctx);
+  }
+ else {
+    if (trace)     log.trace("Nothing to invalidate - no modifications in the transaction.");
+  }
+  return retval;
+}

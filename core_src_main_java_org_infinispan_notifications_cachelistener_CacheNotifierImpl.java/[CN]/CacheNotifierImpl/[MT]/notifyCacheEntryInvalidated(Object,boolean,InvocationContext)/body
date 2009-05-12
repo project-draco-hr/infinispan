@@ -1,16 +1,15 @@
 {
   if (!cacheEntryInvalidatedListeners.isEmpty()) {
     final boolean originLocal=ctx.isOriginLocal();
-    Transaction tx=ctx.getTransaction();
-    InvocationContext backup=resetInvocationContext(ctx);
+    Object contexts=icc.suspend();
     EventImpl e=new EventImpl();
     e.setCache(cache);
     e.setOriginLocal(originLocal);
     e.setPre(pre);
     e.setKey(key);
-    e.setTransaction(tx);
+    setTx(ctx,e);
     e.setType(CACHE_ENTRY_INVALIDATED);
     for (    ListenerInvocation listener : cacheEntryInvalidatedListeners)     listener.invoke(e);
-    restoreInvocationContext(backup);
+    icc.resume(contexts);
   }
 }

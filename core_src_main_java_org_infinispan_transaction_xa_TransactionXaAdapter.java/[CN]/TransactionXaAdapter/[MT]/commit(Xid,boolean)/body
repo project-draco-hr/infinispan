@@ -1,0 +1,32 @@
+{
+  if (log.isTraceEnabled())   log.trace("commiting TransactionXaAdapter: " + transactionIdentifier);
+  try {
+    InitiatorTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
+    ctx.setXaCache(this);
+    if (configuration.isOnePhaseCommit()) {
+      if (log.isTraceEnabled())       log.trace("Doing an 1PC prepare call on the interceptor chain");
+      PrepareCommand command=commandsFactory.buildPrepareCommand(transactionIdentifier,modifications,true);
+      try {
+        invoker.invoke(ctx,command);
+      }
+ catch (      Throwable e) {
+        log.error("Error while processing 1PC PrepareCommand",e);
+        throw new XAException(XAException.XAER_RMERR);
+      }
+    }
+ else {
+      CommitCommand commitCommand=commandsFactory.buildCommitCommand(transactionIdentifier);
+      try {
+        invoker.invoke(ctx,commitCommand);
+      }
+ catch (      Throwable e) {
+        log.error("Error while processing 1PC PrepareCommand",e);
+        throw new XAException(XAException.XAER_RMERR);
+      }
+    }
+  }
+  finally {
+    txEnlistingManager.delist(transaction);
+    this.modifications=null;
+  }
+}

@@ -1,8 +1,8 @@
 {
-  BatchDetails bd=batchDetails.get();
+  BatchDetails bd=batchDetailsTl.get();
   if (bd.tx == null)   return;
-  if (autoBatch)   bd.invocationCount--;
-  if (!autoBatch || bd.invocationCount == 0) {
+  if (autoBatch)   bd.nestedInvocationCount--;
+  if (!autoBatch || bd.nestedInvocationCount == 0) {
     Transaction existingTx=null;
     try {
       existingTx=transactionManager.getTransaction();
@@ -14,7 +14,7 @@
       throw new CacheException("Unable to end batch",e);
     }
  finally {
-      batchDetails.remove();
+      batchDetailsTl.remove();
       try {
         if (!autoBatch && existingTx != null)         transactionManager.resume(existingTx);
       }
@@ -24,6 +24,6 @@
     }
   }
  else {
-    batchDetails.set(bd);
+    batchDetailsTl.set(bd);
   }
 }

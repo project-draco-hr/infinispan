@@ -1,0 +1,23 @@
+{
+  if (transactionContext == null) {
+    throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
+  }
+  List<WriteCommand> modifications=transactionContext.getModifications();
+  if (modifications.size() == 0) {
+    log.trace("Transaction has not logged any modifications!");
+    return;
+  }
+  log.trace("Cache loader modification list: {0}",modifications);
+  StoreModificationsBuilder modsBuilder=new StoreModificationsBuilder(getStatisticsEnabled());
+  for (  WriteCommand cacheCommand : modifications)   cacheCommand.acceptVisitor(ctx,modsBuilder);
+  int numMods=modsBuilder.modifications.size();
+  log.trace("Converted method calls to cache loader modifications.  List size: {0}",numMods);
+  if (numMods > 0) {
+    Transaction tx=transactionContext.getRunningTransaction();
+    store.prepare(modsBuilder.modifications,tx,onePhase);
+    preparingTxs.put(tx,modsBuilder.affectedKeys);
+    if (getStatisticsEnabled() && modsBuilder.putCount > 0) {
+      txStores.put(tx,modsBuilder.putCount);
+    }
+  }
+}

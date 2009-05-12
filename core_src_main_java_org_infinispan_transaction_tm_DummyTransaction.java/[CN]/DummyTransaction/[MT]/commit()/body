@@ -1,0 +1,33 @@
+{
+  try {
+    if (!notifyBeforeCompletion()) {
+      log.trace("Not running 2PC as Synchronization.before not successfull");
+      return;
+    }
+    status=Status.STATUS_PREPARING;
+    if (!runPrepare()) {
+      status=Status.STATUS_ROLLING_BACK;
+    }
+ else {
+      status=Status.STATUS_PREPARED;
+    }
+    if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
+      runRollback();
+      throw new RollbackException("Exception rollbacked, status is: " + status);
+    }
+    try {
+      status=Status.STATUS_COMMITTING;
+      runCommitTx();
+      status=Status.STATUS_COMMITTED;
+    }
+ catch (    HeuristicMixedException e) {
+      status=Status.STATUS_UNKNOWN;
+    }
+ finally {
+      notifyAfterCompletion(status);
+    }
+  }
+  finally {
+    tm_.setTransaction(null);
+  }
+}

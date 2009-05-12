@@ -1,15 +1,8 @@
 {
   Object retval=invokeNextInterceptor(ctx,command);
-  if (command.isSuccessful()) {
-    Transaction tx=ctx.getTransaction();
-    if (log.isDebugEnabled())     log.debug("Is a CRUD method");
+  if (command.isSuccessful() && !ctx.isInTxScope()) {
     if (keys != null && keys.length != 0) {
-      if (tx == null || !TransactionTable.isValid(tx)) {
-        invalidateAcrossCluster(isSynchronous(ctx),ctx,keys);
-      }
- else {
-        if (isLocalModeForced(ctx))         ctx.getTransactionContext().addLocalModification(command);
-      }
+      invalidateAcrossCluster(isSynchronous(ctx),ctx,keys);
     }
   }
   return retval;

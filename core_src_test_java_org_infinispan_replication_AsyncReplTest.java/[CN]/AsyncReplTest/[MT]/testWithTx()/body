@@ -2,7 +2,8 @@
   String key="key";
   replListener(cache2).expectAny();
   cache1.put(key,"value1");
-  replListener(cache2).waitForRpc(60,TimeUnit.SECONDS);
+  replListener(cache2).waitForRpc();
+  assertNotLocked(cache1,key);
   assertEquals("value1",cache1.get(key));
   assertEquals("value1",cache2.get(key));
   TransactionManager mgr=TestingUtil.getTransactionManager(cache1);
@@ -13,6 +14,7 @@
   assertEquals("value1",cache2.get(key));
   mgr.commit();
   replListener(cache2).waitForRpc(60,TimeUnit.SECONDS);
+  assertNotLocked(cache1,key);
   assertEquals("value2",cache1.get(key));
   assertEquals("value2",cache2.get(key));
   mgr.begin();
@@ -22,4 +24,5 @@
   mgr.rollback();
   assertEquals("value2",cache1.get(key));
   assertEquals("value2",cache2.get(key));
+  assertNotLocked(cache1,key);
 }

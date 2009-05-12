@@ -12,14 +12,14 @@ case RemoveCommand.COMMAND_ID:
 break;
 case MultipleRpcCommand.COMMAND_ID:
 MultipleRpcCommand rc=(MultipleRpcCommand)c;
-rc.setInterceptorChain(interceptorChain);
+rc.init(interceptorChain,icc);
 if (rc.getCommands() != null) for (ReplicableCommand nested : rc.getCommands()) {
 initializeReplicableCommand(nested);
 }
 break;
 case SingleRpcCommand.COMMAND_ID:
 SingleRpcCommand src=(SingleRpcCommand)c;
-src.setInterceptorChain(interceptorChain);
+src.init(interceptorChain,icc);
 if (src.getCommand() != null) initializeReplicableCommand(src.getCommand());
 break;
 case InvalidateCommand.COMMAND_ID:
@@ -32,7 +32,17 @@ ilc.init(distributionManager,notifier);
 break;
 case PrepareCommand.COMMAND_ID:
 PrepareCommand pc=(PrepareCommand)c;
+pc.init(interceptorChain,icc);
+pc.initialize(notifier);
 if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+break;
+case CommitCommand.COMMAND_ID:
+CommitCommand commitCommand=(CommitCommand)c;
+commitCommand.init(interceptorChain,icc);
+break;
+case RollbackCommand.COMMAND_ID:
+RollbackCommand rollbackCommand=(RollbackCommand)c;
+rollbackCommand.init(interceptorChain,icc);
 break;
 case ClearCommand.COMMAND_ID:
 ClearCommand cc=(ClearCommand)c;
@@ -40,7 +50,7 @@ cc.init(notifier);
 break;
 case ClusteredGetCommand.COMMAND_ID:
 ClusteredGetCommand clusteredGetCommand=(ClusteredGetCommand)c;
-clusteredGetCommand.initialize(dataContainer,cacheLoaderManager);
+clusteredGetCommand.initialize(dataContainer,cacheLoaderManager,icc);
 break;
 }
 }

@@ -4,9 +4,11 @@
     retval=command.perform(ctx);
   }
  catch (  Throwable t) {
-    Transaction tx=ctx.getTransaction();
-    if (ctx.isValidTransaction()) {
-      tx.setRollbackOnly();
+    if (ctx.isInTxScope()) {
+      TxInvocationContext txContext=(TxInvocationContext)ctx;
+      if (txContext.isValidRunningTx()) {
+        txContext.getRunningTransaction().setRollbackOnly();
+      }
     }
     throw t;
   }

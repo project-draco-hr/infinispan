@@ -1,5 +1,12 @@
 {
   if (trace)   log.trace("Executing remotely originated commands: " + commands.length);
-  for (  ReplicableCommand command : commands)   processCommand(ctx,command);
+  for (  ReplicableCommand command : commands) {
+    if (command instanceof TransactionBoundaryCommand) {
+      command.perform(null);
+    }
+ else {
+      processVisitableCommand(command);
+    }
+  }
   return null;
 }

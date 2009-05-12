@@ -1,0 +1,18 @@
+{
+  if (!ctx.isOriginLocal()) {
+    for (    VisitableCommand modification : command.getModifications()) {
+      VisitableCommand toReplay=getCommandToReplay(modification);
+      if (toReplay != null) {
+        invokeNextInterceptor(ctx,toReplay);
+      }
+    }
+  }
+  if (!command.isOnePhaseCommit()) {
+    transactionLog.logPrepare(command);
+  }
+ else {
+    transactionLog.logOnePhaseCommit(ctx.getClusterTransactionId(),Arrays.asList(command.getModifications()));
+  }
+  if (getStatisticsEnabled())   prepares.incrementAndGet();
+  return invokeNextInterceptor(ctx,command);
+}

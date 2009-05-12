@@ -1,4 +1,6 @@
 {
-  getInvocationContext().setFlags(flags);
-  return put(key,value,defaultLifespan,MILLISECONDS,defaultMaxIdleTime,MILLISECONDS);
+  InvocationContext invocationContext=getInvocationContext();
+  invocationContext.setFlags(flags);
+  PutKeyValueCommand command=commandsFactory.buildPutKeyValueCommand(key,value,MILLISECONDS.toMillis(defaultLifespan),MILLISECONDS.toMillis(defaultMaxIdleTime));
+  return (V)invoker.invoke(invocationContext,command);
 }

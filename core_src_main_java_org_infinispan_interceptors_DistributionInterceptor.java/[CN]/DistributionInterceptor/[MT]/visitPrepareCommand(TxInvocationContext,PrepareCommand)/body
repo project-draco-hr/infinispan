@@ -1,0 +1,10 @@
+{
+  Object retVal=invokeNextInterceptor(ctx,command);
+  boolean sync=isSynchronous(ctx);
+  if (ctx.isOriginLocal()) {
+    List<Address> recipients=new ArrayList<Address>(ctx.getTransactionParticipants());
+    if (trace)     log.trace("Multicasting PrepareCommand to recipients : " + recipients);
+    rpcManager.multicastRpcCommand(recipients,command,sync,false);
+  }
+  return retVal;
+}

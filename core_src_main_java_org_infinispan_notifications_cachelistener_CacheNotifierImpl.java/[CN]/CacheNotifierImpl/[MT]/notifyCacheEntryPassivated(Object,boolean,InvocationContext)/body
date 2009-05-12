@@ -1,14 +1,13 @@
 {
   if (!cacheEntryPassivatedListeners.isEmpty()) {
-    Transaction tx=ctx.getTransaction();
-    InvocationContext backup=resetInvocationContext(ctx);
+    Object contexts=icc.suspend();
     EventImpl e=new EventImpl();
     e.setCache(cache);
     e.setPre(pre);
     e.setKey(key);
-    e.setTransaction(tx);
+    setTx(ctx,e);
     e.setType(CACHE_ENTRY_PASSIVATED);
     for (    ListenerInvocation listener : cacheEntryPassivatedListeners)     listener.invoke(e);
-    restoreInvocationContext(backup);
+    icc.resume(contexts);
   }
 }

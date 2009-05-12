@@ -1,0 +1,31 @@
+{
+  if (sync == null)   throw new IllegalArgumentException("null synchronization " + this);
+  if (syncs == null)   syncs=new HashSet<Synchronization>(8);
+switch (status) {
+case Status.STATUS_ACTIVE:
+case Status.STATUS_PREPARING:
+    break;
+case Status.STATUS_PREPARED:
+  throw new IllegalStateException("already prepared. " + this);
+case Status.STATUS_COMMITTING:
+throw new IllegalStateException("already started committing. " + this);
+case Status.STATUS_COMMITTED:
+throw new IllegalStateException("already committed. " + this);
+case Status.STATUS_MARKED_ROLLBACK:
+throw new RollbackException("already marked for rollback " + this);
+case Status.STATUS_ROLLING_BACK:
+throw new RollbackException("already started rolling back. " + this);
+case Status.STATUS_ROLLEDBACK:
+throw new RollbackException("already rolled back. " + this);
+case Status.STATUS_NO_TRANSACTION:
+throw new IllegalStateException("no transaction. " + this);
+case Status.STATUS_UNKNOWN:
+throw new IllegalStateException("unknown state " + this);
+default :
+throw new IllegalStateException("illegal status: " + status + " tx="+ this);
+}
+if (log.isDebugEnabled()) {
+log.debug("registering synchronization handler " + sync);
+}
+syncs.add(sync);
+}

@@ -1,0 +1,24 @@
+{
+  boolean suppressExceptions=false;
+  if (trace)   log.trace("Invoked with command " + command + " and InvocationContext ["+ ctx+ "]");
+  if (ctx == null)   throw new IllegalStateException("Null context not allowed!!");
+  if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+    suppressExceptions=true;
+  }
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable th) {
+    if (suppressExceptions) {
+      log.trace("Exception while executiong code, failing silently...",th);
+      return null;
+    }
+ else {
+      log.error("Execution error: ",th);
+    }
+    throw th;
+  }
+ finally {
+    ctx.resetFlags();
+  }
+}

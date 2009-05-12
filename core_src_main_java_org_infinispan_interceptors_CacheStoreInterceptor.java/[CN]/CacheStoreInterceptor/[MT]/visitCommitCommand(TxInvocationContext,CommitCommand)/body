@@ -1,0 +1,27 @@
+{
+  if (!skip(ctx,command)) {
+    if (ctx.hasModifications()) {
+      Transaction tx=ctx.getRunningTransaction();
+      log.trace("Calling loader.commit() for transaction {0}",tx);
+      try {
+        store.commit(tx);
+      }
+ catch (      Throwable t) {
+        preparingTxs.remove(tx);
+        throw t;
+      }
+      if (getStatisticsEnabled()) {
+        Integer puts=txStores.get(tx);
+        if (puts != null) {
+          cacheStores.getAndAdd(puts);
+        }
+        txStores.remove(tx);
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+ else {
+      if (trace)       log.trace("Commit called with no modifications; ignoring.");
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

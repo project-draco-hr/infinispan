@@ -1,4 +1,22 @@
 {
-  getInvocationContext().setFlags(flags);
-  putForExternalRead(key,value);
+  InvocationContext invocationContext=getInvocationContext();
+  invocationContext.setFlags(flags);
+  Transaction ongoingTransaction=null;
+  try {
+    if (transactionManager != null && (ongoingTransaction=transactionManager.getTransaction()) != null) {
+      transactionManager.suspend();
+    }
+    putIfAbsent(key,value,Flag.FAIL_SILENTLY,Flag.FORCE_ASYNCHRONOUS,Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+  }
+ catch (  Exception e) {
+    if (log.isDebugEnabled())     log.debug("Caught exception while doing putForExternalRead()",e);
+  }
+ finally {
+    try {
+      if (ongoingTransaction != null)       transactionManager.resume(ongoingTransaction);
+    }
+ catch (    Exception e) {
+      log.debug("Had problems trying to resume a transaction after putForExternalread()",e);
+    }
+  }
 }

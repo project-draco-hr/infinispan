@@ -1,0 +1,17 @@
+{
+  PossibleContexts contexts=contextsTl.get();
+  Transaction tx=txEnlistingManager.getRunningTx();
+  if (tx != null) {
+    contexts.initInitiatorInvicationContext();
+    InitiatorTxInvocationContext context=contexts.initiatorTxInvocationContext;
+    TransactionXaAdapter xaAdapter=txEnlistingManager.getXaCache(tx);
+    context.setXaCache(xaAdapter);
+    return contexts.updateThreadContextAndReturn(context);
+  }
+ else {
+    contexts.initNonTxInvocationContext();
+    contexts.nonTxInvocationContext.setOriginLocal(true);
+    if (prepareForCall)     contexts.nonTxInvocationContext.prepareForCall();
+    return contexts.updateThreadContextAndReturn(contexts.nonTxInvocationContext);
+  }
+}

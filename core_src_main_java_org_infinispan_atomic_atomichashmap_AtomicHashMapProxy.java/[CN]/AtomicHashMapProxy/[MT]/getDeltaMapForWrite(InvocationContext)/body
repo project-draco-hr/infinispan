@@ -1,0 +1,19 @@
+{
+  if (ctx.hasLockedKey(deltaMapKey)) {
+    return (AtomicHashMap<K,V>)cache.get(deltaMapKey);
+  }
+ else {
+    boolean suppressLocks=ctx.hasFlag(Flag.SKIP_LOCKING);
+    if (!suppressLocks)     ctx.setFlags(Flag.FORCE_WRITE_LOCK);
+    if (trace) {
+      if (suppressLocks)       log.trace("Skip locking flag used.  Skipping locking.");
+ else       log.trace("Forcing write lock even for reads");
+    }
+    AtomicHashMap map=getDeltaMapForRead();
+    AtomicHashMap copy=map == null ? new AtomicHashMap() : map.copyForWrite();
+    copy.initForWriting();
+    if (suppressLocks)     ctx.setFlags(Flag.SKIP_LOCKING);
+    cache.put(deltaMapKey,copy);
+    return copy;
+  }
+}
