@@ -1,10 +1,22 @@
 {
   try {
+    if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+      c.attachGlobalTransaction((GlobalTransaction)ctx.getLockOwner());
+    }
     if (c.isLock()) {
-      for (      Object key : c.getKeys())       entryFactory.acquireLock(ctx,key);
+      for (      Object key : c.getKeys()) {
+        boolean needed=entryFactory.acquireLock(ctx,key);
+        if (trace) {
+          if (needed)           log.trace("Key " + key + " was needed and acquired by "+ ctx.getLockOwner());
+ else           log.trace("Key " + key + " was already held by "+ ctx.getLockOwner());
+        }
+      }
     }
  else     if (c.isUnlock()) {
-      for (      Object key : c.getKeys())       entryFactory.releaseLock(key);
+      for (      Object key : c.getKeys()) {
+        entryFactory.releaseLock(key);
+        if (trace)         log.trace("Unlocked key " + key);
+      }
     }
     return invokeNextInterceptor(ctx,c);
   }
