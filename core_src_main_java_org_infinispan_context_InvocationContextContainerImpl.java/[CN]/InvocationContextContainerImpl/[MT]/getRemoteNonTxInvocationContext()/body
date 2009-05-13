@@ -1,6 +1,13 @@
 {
-  PossibleContexts contexts=contextsTl.get();
-  contexts.initRemoteNonTxInvocationContext();
-  contexts.remoteNonTxContext.prepareForCall();
-  return contexts.updateThreadContextAndReturn(contexts.remoteNonTxContext);
+  InvocationContext existing=icTl.get();
+  if (existing != null && existing instanceof NonTxInvocationContext) {
+    NonTxInvocationContext context=(NonTxInvocationContext)existing;
+    context.prepareForCall();
+    context.setOriginLocal(false);
+    return context;
+  }
+  NonTxInvocationContext remoteNonTxContext=new NonTxInvocationContext();
+  remoteNonTxContext.setOriginLocal(false);
+  icTl.set(remoteNonTxContext);
+  return remoteNonTxContext;
 }
