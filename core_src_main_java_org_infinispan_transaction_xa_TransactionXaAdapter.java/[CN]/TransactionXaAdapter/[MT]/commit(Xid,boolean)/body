@@ -1,11 +1,11 @@
 {
-  if (log.isTraceEnabled())   log.trace("commiting TransactionXaAdapter: " + transactionIdentifier);
+  if (log.isTraceEnabled())   log.trace("commiting TransactionXaAdapter: " + globalTx);
   try {
-    InitiatorTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
+    LocalTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
     ctx.setXaCache(this);
     if (configuration.isOnePhaseCommit()) {
       if (log.isTraceEnabled())       log.trace("Doing an 1PC prepare call on the interceptor chain");
-      PrepareCommand command=commandsFactory.buildPrepareCommand(transactionIdentifier,modifications,true);
+      PrepareCommand command=commandsFactory.buildPrepareCommand(globalTx,modifications,true);
       try {
         invoker.invoke(ctx,command);
       }
@@ -15,7 +15,7 @@
       }
     }
  else {
-      CommitCommand commitCommand=commandsFactory.buildCommitCommand(transactionIdentifier);
+      CommitCommand commitCommand=commandsFactory.buildCommitCommand(globalTx);
       try {
         invoker.invoke(ctx,commitCommand);
       }
@@ -26,7 +26,7 @@
     }
   }
   finally {
-    txEnlistingManager.delist(transaction);
+    txTable.removeLocalTransaction(transaction);
     this.modifications=null;
   }
 }

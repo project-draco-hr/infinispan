@@ -1,4 +1,7 @@
 {
-  getInvocationContext().setFlags(flags);
-  return putIfAbsent(key,value,lifespan,lifespanUnit,maxIdleTime,maxIdleTimeUnit);
+  InvocationContext context=getInvocationContext();
+  context.setFlags(flags);
+  PutKeyValueCommand command=commandsFactory.buildPutKeyValueCommand(key,value,lifespanUnit.toMillis(lifespan),maxIdleTimeUnit.toMillis(maxIdleTime));
+  command.setPutIfAbsent(true);
+  return (V)invoker.invoke(context,command);
 }

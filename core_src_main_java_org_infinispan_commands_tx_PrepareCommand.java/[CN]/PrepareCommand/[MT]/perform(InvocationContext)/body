@@ -1,7 +1,8 @@
 {
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
-  RemoteTxInvocationContext ctx=icc.getRemoteTxInvocationContext(getGlobalTransaction(),true);
-  notifier.notifyTransactionRegistered(ctx.getClusterTransactionId(),ctx);
-  ctx.initialize(modifications,globalTx);
+  RemoteTransaction remoteTransaction=txTable.createRemoteTransaction(globalTx,modifications);
+  RemoteTxInvocationContext ctx=icc.getRemoteTxInvocationContext();
+  ctx.setRemoteTransaction(remoteTransaction);
+  notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(),ctx);
   return invoker.invoke(ctx,this);
 }

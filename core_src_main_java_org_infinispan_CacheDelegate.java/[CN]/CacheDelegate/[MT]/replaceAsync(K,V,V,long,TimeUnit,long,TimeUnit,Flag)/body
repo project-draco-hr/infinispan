@@ -1,4 +1,7 @@
 {
-  getInvocationContext().setFlags(flags);
-  return replaceAsync(k,oV,nV,lifespan,lifespanUnit,maxIdle,maxIdleUnit);
+  InvocationContext ctx=getInvocationContext();
+  ctx.setFlags(flags);
+  ctx.setUseFutureReturnType(true);
+  ReplaceCommand command=commandsFactory.buildReplaceCommand(k,oV,nV,lifespanUnit.toMillis(lifespan),maxIdleUnit.toMillis(maxIdle));
+  return wrapInFuture(invoker.invoke(ctx,command));
 }

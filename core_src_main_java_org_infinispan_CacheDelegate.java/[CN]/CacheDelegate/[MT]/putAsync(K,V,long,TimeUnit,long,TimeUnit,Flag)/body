@@ -1,4 +1,7 @@
 {
-  getInvocationContext().setFlags(flags);
-  return putAsync(key,value,lifespan,lifespanUnit,maxIdleTime,maxIdleTimeUnit);
+  InvocationContext ctx=getInvocationContext();
+  ctx.setFlags(flags);
+  ctx.setUseFutureReturnType(true);
+  PutKeyValueCommand command=commandsFactory.buildPutKeyValueCommand(key,value,lifespanUnit.toMillis(lifespan),maxIdleTimeUnit.toMillis(maxIdleTime));
+  return wrapInFuture(invoker.invoke(ctx,command));
 }

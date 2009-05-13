@@ -1,0 +1,18 @@
+{
+  TransactionXaAdapter current=localTransactions.get(transaction);
+  if (current == null) {
+    Address localAddress=rpcManager != null ? rpcManager.getLocalAddress() : null;
+    GlobalTransaction tx=localAddress == null ? new GlobalTransaction(false) : new GlobalTransaction(localAddress,false);
+    current=new TransactionXaAdapter(tx,icc,invoker,commandsFactory,configuration,this,transaction);
+    localTransactions.put(transaction,current);
+    try {
+      transaction.enlistResource(current);
+    }
+ catch (    Exception e) {
+      log.error("Failed to emlist TransactionXaAdapter to transaction");
+      throw new CacheException(e);
+    }
+    notifier.notifyTransactionRegistered(tx,icc.getThreadContext());
+  }
+  return current;
+}

@@ -1,9 +1,16 @@
 {
   if (ctx != null)   throw new IllegalStateException("Expected null context!");
-  RemoteTxInvocationContext ctxt=icc.getRemoteTxInvocationContext(getGlobalTransaction(),false);
-  if (ctxt == null) {
-    if (log.isInfoEnabled())     log.info("Not found RemoteTxInvocationContext for tx: " + getGlobalTransaction());
+  RemoteTransaction transaction=txTable.getRemoteTransaction(globalTx);
+  if (transaction == null) {
+    if (log.isInfoEnabled())     log.info("Not found RemoteTransaction for tx id: " + globalTx);
     return null;
   }
-  return invoker.invoke(ctxt,this);
+  RemoteTxInvocationContext ctxt=icc.getRemoteTxInvocationContext();
+  ctxt.setRemoteTransaction(transaction);
+  try {
+    return invoker.invoke(ctxt,this);
+  }
+  finally {
+    txTable.removeRemoteTransaction(globalTx);
+  }
 }

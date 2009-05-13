@@ -1,4 +1,7 @@
 {
-  getInvocationContext().setFlags(flags);
-  return putAllAsync(map,MILLISECONDS.toMillis(defaultLifespan),MILLISECONDS,MILLISECONDS.toMillis(defaultMaxIdleTime),MILLISECONDS);
+  InvocationContext ctx=getInvocationContext();
+  ctx.setFlags(flags);
+  ctx.setUseFutureReturnType(true);
+  PutMapCommand command=commandsFactory.buildPutMapCommand(map,MILLISECONDS.toMillis(MILLISECONDS.toMillis(defaultLifespan)),MILLISECONDS.toMillis(MILLISECONDS.toMillis(defaultMaxIdleTime)));
+  return wrapInFuture(invoker.invoke(ctx,command));
 }

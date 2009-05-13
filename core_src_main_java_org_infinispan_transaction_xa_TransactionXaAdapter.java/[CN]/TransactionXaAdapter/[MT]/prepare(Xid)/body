@@ -3,9 +3,9 @@
     if (log.isTraceEnabled())     log.trace("Recieved prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
     return XA_OK;
   }
-  PrepareCommand prepareCommand=commandsFactory.buildPrepareCommand(transactionIdentifier,modifications,configuration.isOnePhaseCommit());
+  PrepareCommand prepareCommand=commandsFactory.buildPrepareCommand(globalTx,modifications,configuration.isOnePhaseCommit());
   if (log.isTraceEnabled())   log.trace("Sending prepare command through the chain: " + prepareCommand);
-  InitiatorTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
+  LocalTxInvocationContext ctx=icc.getInitiatorTxInvocationContext();
   ctx.setXaCache(this);
   try {
     invoker.invoke(ctx,prepareCommand);

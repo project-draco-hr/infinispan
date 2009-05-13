@@ -1,0 +1,17 @@
+{
+  PossibleContexts contexts=contextsTl.get();
+  Transaction tx=getRunningTx();
+  if (tx != null) {
+    contexts.initInitiatorInvicationContext();
+    LocalTxInvocationContext context=contexts.localTxInvocationContext;
+    TransactionXaAdapter xaAdapter=transactionTable.getXaCacheAdapter(tx);
+    context.setXaCache(xaAdapter);
+    return contexts.updateThreadContextAndReturn(context);
+  }
+ else {
+    contexts.initNonTxInvocationContext();
+    contexts.nonTxInvocationContext.prepareForCall();
+    contexts.nonTxInvocationContext.setOriginLocal(true);
+    return contexts.updateThreadContextAndReturn(contexts.nonTxInvocationContext);
+  }
+}

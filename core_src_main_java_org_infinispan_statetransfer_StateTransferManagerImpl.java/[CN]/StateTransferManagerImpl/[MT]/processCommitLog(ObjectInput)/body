@@ -1,13 +1,15 @@
 {
   if (trace)   log.trace("Applying commit log");
   Object object=marshaller.objectFromObjectStream(oi);
+  RemoteTxInvocationContext ctx=invocationContextContainer.getRemoteTxInvocationContext();
   while (object instanceof TransactionLog.LogEntry) {
     TransactionLog.LogEntry logEntry=(TransactionLog.LogEntry)object;
+    RemoteTransaction remoteTransaction=txTable.getRemoteTransaction(logEntry.getTransaction());
+    ctx.setRemoteTransaction(remoteTransaction);
     WriteCommand[] mods=logEntry.getModifications();
     if (trace)     log.trace("Mods = {0}",Arrays.toString(mods));
     for (    WriteCommand mod : mods) {
       commandsFactory.initializeReplicableCommand(mod);
-      InvocationContext ctx=invocationContextContainer.getRemoteTxInvocationContext(logEntry.getTransaction(),true);
       ctx.setFlags(Flag.CACHE_MODE_LOCAL,Flag.SKIP_CACHE_STATUS_CHECK);
       interceptorChain.invoke(ctx,mod);
     }
