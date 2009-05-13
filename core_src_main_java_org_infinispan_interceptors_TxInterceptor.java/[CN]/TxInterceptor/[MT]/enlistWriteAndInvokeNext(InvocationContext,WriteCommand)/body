@@ -1,12 +1,16 @@
 {
+  TransactionXaAdapter xaAdapter=null;
+  boolean shouldAddMod=false;
   if (shouldEnlist(ctx)) {
-    TransactionXaAdapter xaAdapter=enlist(ctx);
+    xaAdapter=enlist(ctx);
     LocalTxInvocationContext localTxContext=(LocalTxInvocationContext)ctx;
     if (!isLocalModeForced(ctx)) {
-      xaAdapter.addModification(command);
+      shouldAddMod=true;
     }
     localTxContext.setXaCache(xaAdapter);
   }
   if (!ctx.isInTxScope())   transactionLog.logNoTxWrite(command);
-  return invokeNextInterceptor(ctx,command);
+  Object rv=invokeNextInterceptor(ctx,command);
+  if (command.isSuccessful() && shouldAddMod)   xaAdapter.addModification(command);
+  return rv;
 }
