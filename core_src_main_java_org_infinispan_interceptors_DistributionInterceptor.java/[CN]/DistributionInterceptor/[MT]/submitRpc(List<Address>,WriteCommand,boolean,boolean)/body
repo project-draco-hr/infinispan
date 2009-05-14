@@ -1,26 +1,9 @@
 {
   if (useFuture) {
-    Callable<Object> c=new Callable<Object>(){
-      public Object call(){
-        if (recipients == null) {
-          rpcManager.broadcastReplicableCommand(cmd,true);
-        }
- else {
-          rpcManager.multicastReplicableCommand(recipients,cmd,true);
-        }
-        return null;
-      }
-    }
-;
-    return asyncExecutorService.submit(c);
+    return rpcManager.anycastRpcCommandInFuture(recipients,cmd);
   }
  else {
-    if (recipients == null) {
-      rpcManager.broadcastReplicableCommand(cmd,sync);
-    }
- else {
-      rpcManager.multicastReplicableCommand(recipients,cmd,sync);
-    }
+    rpcManager.anycastRpcCommand(recipients,cmd,sync);
     return null;
   }
 }

@@ -2,16 +2,10 @@
   final Object returnValue=invokeNextInterceptor(ctx,command);
   if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal()&& !ctx.isInTxScope()) {
     if (ctx.isUseFutureReturnType()) {
-      return submitRpcCall(new Callable<Object>(){
-        public Object call() throws Exception {
-          rpcManager.broadcastReplicableCommand(command,true);
-          return null;
-        }
-      }
-,returnValue);
+      return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command),returnValue);
     }
  else {
-      rpcManager.broadcastReplicableCommand(command,isSynchronous(ctx));
+      rpcManager.broadcastRpcCommand(command,isSynchronous(ctx));
     }
   }
   return returnValue;

@@ -2,18 +2,12 @@
   if (!isLocalModeForced(ctx)) {
     incrementInvalidations();
     final InvalidateCommand command=commandsFactory.buildInvalidateCommand(keys);
-    if (log.isDebugEnabled())     log.debug("Cache [" + rpcManager.getLocalAddress() + "] replicating "+ command);
+    if (log.isDebugEnabled())     log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating "+ command);
     if (useFuture) {
-      return submitRpcCall(new Callable<Object>(){
-        public Object call() throws Exception {
-          rpcManager.broadcastReplicableCommand(command,true);
-          return null;
-        }
-      }
-,retvalForFuture);
+      return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command),retvalForFuture);
     }
  else {
-      rpcManager.broadcastReplicableCommand(command,synchronous);
+      rpcManager.broadcastRpcCommand(command,synchronous);
     }
   }
   return retvalForFuture;

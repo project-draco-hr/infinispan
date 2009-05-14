@@ -11,12 +11,12 @@
         Future<Object> f1=null, f2;
         boolean useFuture=ctx.isUseFutureReturnType();
         boolean sync=isSynchronous(ctx);
-        if (isL1CacheEnabled && rec != null && rpcManager.getMembers().size() > rec.size()) {
+        if (isL1CacheEnabled && rec != null && rpcManager.getTransport().getMembers().size() > rec.size()) {
           InvalidateCommand ic=cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
           f1=submitRpc(null,ic,sync,useFuture);
         }
         f2=submitRpc(rec,command,sync,useFuture);
-        if (f2 != null)         return new DistributionCommunicationFuture(f1,f2,returnValue);
+        if (f2 != null)         return new DistAsyncReturnValue(f1,f2,returnValue);
       }
     }
  else {

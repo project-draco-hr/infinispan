@@ -1,5 +1,10 @@
 {
-  if (!c.equals(Object.class))   inspectRecursively(c.getSuperclass(),s,annotationType);
+  if (!c.equals(Object.class)) {
+    if (!c.isInterface()) {
+      inspectRecursively(c.getSuperclass(),s,annotationType);
+      for (      Class ifc : c.getInterfaces())       inspectRecursively(ifc,s,annotationType);
+    }
+  }
   for (  Method m : c.getDeclaredMethods()) {
     if (!alreadyFound(m,s) && m.isAnnotationPresent(annotationType)) {
       s.add(m);
