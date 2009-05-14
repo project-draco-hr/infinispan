@@ -1,0 +1,18 @@
+{
+  Transport mockTransport=createMock(Transport.class);
+  RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
+  Transport originalTransport=TestingUtil.extractComponent(cache1,Transport.class);
+  try {
+    Address mockAddress1=createNiceMock(Address.class);
+    List<Address> memberList=new ArrayList<Address>(1);
+    memberList.add(mockAddress1);
+    expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
+    rpcManager.setTransport(mockTransport);
+    replay(mockAddress1,mockTransport);
+    cache1.put(key,value);
+    verify(mockTransport);
+  }
+  finally {
+    if (rpcManager != null)     rpcManager.setTransport(originalTransport);
+  }
+}
