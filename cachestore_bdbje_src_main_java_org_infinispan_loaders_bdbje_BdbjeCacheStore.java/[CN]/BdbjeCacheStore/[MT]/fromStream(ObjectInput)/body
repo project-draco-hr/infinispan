@@ -1,22 +1,25 @@
 {
   try {
-    long recordCount=ois.readLong();
     currentTransaction.beginTransaction(null);
-    log.debug("clearing and reading {0} records from stream",recordCount);
     cacheMap.clear();
-    Cursor cursor=null;
-    try {
-      cursor=cacheDb.openCursor(currentTransaction.getTransaction(),null);
-      for (int i=0; i < recordCount; i++) {
-        byte[] keyBytes=(byte[])ois.readObject();
-        byte[] dataBytes=(byte[])ois.readObject();
-        DatabaseEntry key=new DatabaseEntry(keyBytes);
-        DatabaseEntry data=new DatabaseEntry(dataBytes);
-        cursor.put(key,data);
+    expiryMap.clear();
+    for (    Database db : new Database[]{cacheDb,expiryDb}) {
+      long recordCount=ois.readLong();
+      log.debug("clearing and reading {0} records from stream",recordCount);
+      Cursor cursor=null;
+      try {
+        cursor=db.openCursor(currentTransaction.getTransaction(),null);
+        for (int i=0; i < recordCount; i++) {
+          byte[] keyBytes=(byte[])ois.readObject();
+          byte[] dataBytes=(byte[])ois.readObject();
+          DatabaseEntry key=new DatabaseEntry(keyBytes);
+          DatabaseEntry data=new DatabaseEntry(dataBytes);
+          cursor.put(key,data);
+        }
       }
-    }
   finally {
-      if (cursor != null)       cursor.close();
+        if (cursor != null)         cursor.close();
+      }
     }
     completeCurrentTransaction(true);
   }

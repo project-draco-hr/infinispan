@@ -1,8 +1,9 @@
 {
   try {
-    Iterator<Map.Entry<Object,InternalCacheEntry>> i=cacheMap.entrySet().iterator();
-    while (i.hasNext()) {
-      if (i.next().getValue().isExpired())       i.remove();
+    Map<Long,Object> expired=expiryMap.tailMap(System.currentTimeMillis(),true);
+    for (    Map.Entry<Long,Object> entry : expired.entrySet()) {
+      expiryMap.remove(entry.getKey());
+      cacheMap.remove(entry.getValue());
     }
   }
  catch (  RuntimeException caught) {
