@@ -7,9 +7,10 @@
   flushTracker.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
   boolean unlock=true;
   flushTracker.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+  boolean asyncMarshalling=mode == ResponseMode.ASYNCHRONOUS;
   try {
-    RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,false,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay);
-    if (mode == ResponseMode.ASYNCHRONOUS)     return Collections.emptyList();
+    RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,false,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling);
+    if (mode.isAsynchronous())     return Collections.emptyList();
     if (trace)     log.trace("Cache [{0}]: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps);
     if (rsps == null)     return Collections.emptyList();
     List<Response> retval=new ArrayList<Response>(rsps.size());
