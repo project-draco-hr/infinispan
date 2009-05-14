@@ -1,5 +1,9 @@
 {
   if (getStatisticsEnabled())   rollbacks.incrementAndGet();
-  transactionLog.rollback(command.getGlobalTransaction());
-  return invokeNextInterceptor(ctx,command);
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    transactionLog.rollback(command.getGlobalTransaction());
+  }
 }

@@ -10,9 +10,13 @@
   if (!command.isOnePhaseCommit()) {
     transactionLog.logPrepare(command);
   }
- else {
-    transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(),Arrays.asList(command.getModifications()));
-  }
   if (getStatisticsEnabled())   prepares.incrementAndGet();
-  return invokeNextInterceptor(ctx,command);
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    if (command.isOnePhaseCommit()) {
+      transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(),Arrays.asList(command.getModifications()));
+    }
+  }
 }
