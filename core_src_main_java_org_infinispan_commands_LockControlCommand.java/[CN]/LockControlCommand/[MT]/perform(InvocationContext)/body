@@ -1,8 +1,11 @@
 {
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
+  RemoteTxInvocationContext ctxt=icc.createRemoteTxInvocationContext();
   boolean remoteTxinitiated=txTable.getRemoteTransaction(globalTx) != null ? true : false;
+  RemoteTransaction transaction=null;
   if (!remoteTxinitiated) {
-    txTable.createRemoteTransaction(globalTx,new WriteCommand[]{});
+    transaction=txTable.createRemoteTransaction(globalTx,new WriteCommand[]{});
+    ctxt.setRemoteTransaction(transaction);
   }
-  return super.perform(ignored);
+  return invoker.invoke(ctxt,this);
 }
