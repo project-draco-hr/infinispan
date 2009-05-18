@@ -1,14 +1,4 @@
 {
-  String sourceName=System.getProperty("source");
-  if (sourceName == null) {
-    System.err.println("Missing property 'source'.");
-    System.exit(1);
-  }
-  String destinationName=System.getProperty("destination");
-  if (destinationName == null) {
-    System.err.println("Missing property 'destination'.");
-    System.exit(1);
-  }
   File oldConfig=new File(sourceName);
   if (!oldConfig.exists()) {
     System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -19,7 +9,7 @@
   File destination=new File(destinationName);
   if (!destination.exists())   destination.createNewFile();
   FileOutputStream fos=new FileOutputStream(destinationName);
-  convertor.parse(is,fos,"C:\\jboss\\ifspn\\zzzz_trunk_pristine\\src\\main\\resources\\xslt\\jbc3x2infinispan4x.xslt");
+  convertor.parse(is,fos,"xslt/jbc3x2infinispan4x.xslt");
   fos.close();
   is.close();
   String jgroupsConfig=destination.getParent() + File.separator + "jgroupsConfig.xml";
@@ -29,14 +19,11 @@
   is=new FileInputStream(oldConfig);
   fos=new FileOutputStream(jgroupsConfigFile);
   convertor=new ConfigFilesConvertor();
-  convertor.parse(is,fos,"C:\\jboss\\ifspn\\zzzz_trunk_pristine\\src\\main\\resources\\xslt\\jgroupsFileGen.xslt");
+  convertor.parse(is,fos,"xslt/jgroupsFileGen.xslt");
   is.close();
   fos.close();
   System.out.println("jgroupsConfigFile.length() = " + jgroupsConfigFile.length());
   if (jgroupsConfigFile.length() < 5) {
     jgroupsConfigFile.delete();
   }
-  System.out.println("---");
-  System.out.println("New configuration file [" + destinationName + "] successfully created.");
-  System.out.println("---");
 }
