@@ -4,7 +4,9 @@
     final InvalidateCommand command=commandsFactory.buildInvalidateCommand(keys);
     if (log.isDebugEnabled())     log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating "+ command);
     if (useFuture) {
-      return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command),retvalForFuture);
+      NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl(retvalForFuture);
+      rpcManager.broadcastRpcCommandInFuture(command,future);
+      return future;
     }
  else {
       rpcManager.broadcastRpcCommand(command,synchronous);
