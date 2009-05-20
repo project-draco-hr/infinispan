@@ -9,6 +9,11 @@
     return invokeNextInterceptor(ctx,c);
   }
   finally {
-    doAfterCall(ctx);
+    if (ctx.isInTxScope()) {
+      doAfterCall(ctx);
+    }
+ else {
+      throw new IllegalStateException("Attempting to lock but there is no transactional context in scope. " + ctx);
+    }
   }
 }
