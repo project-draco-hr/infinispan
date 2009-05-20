@@ -1,0 +1,17 @@
+{
+  ClassLoader existingCl=Thread.currentThread().getContextClassLoader();
+  try {
+    ClassLoader delegatingCl=new TestClassLoader(existingCl);
+    Thread.currentThread().setContextClassLoader(delegatingCl);
+    String[] testFiles={"buddy-replication.xml","cacheloader-enabled.xml","eviction-enabled.xml","external-jgroups-file.xml","invalidation-async.xml","total-replication.xml"};
+    for (    String name : testFiles) {
+      String fileName=getFileName(name);
+      ByteArrayOutputStream baos=new ByteArrayOutputStream();
+      convertor.parse(fileName,baos,XSLT_FILE);
+      String baosStr=new String(baos.toByteArray());
+    }
+  }
+  finally {
+    Thread.currentThread().setContextClassLoader(existingCl);
+  }
+}
