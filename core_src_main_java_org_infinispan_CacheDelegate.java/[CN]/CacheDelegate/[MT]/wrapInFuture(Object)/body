@@ -1,9 +1,9 @@
 {
-  if (retval instanceof Future) {
-    return (Future<X>)retval;
+  if (retval instanceof NotifyingFuture) {
+    return (NotifyingFuture<X>)retval;
   }
  else {
-    return new Future<X>(){
+    return new NotifyingFuture<X>(){
       public boolean cancel(      boolean mayInterruptIfRunning){
         return true;
       }
@@ -18,6 +18,10 @@
       }
       public X get(      long timeout,      TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         return get();
+      }
+      public NotifyingFuture<X> attachListener(      FutureListener<X> futureListener){
+        futureListener.futureDone(this);
+        return this;
       }
     }
 ;
