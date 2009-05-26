@@ -1,12 +1,18 @@
 {
+  boolean localTxScope=ctx.isOriginLocal() && ctx.isInTxScope();
+  boolean shouldInvokeOnCluster=false;
   try {
-    if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+    if (localTxScope) {
       c.attachGlobalTransaction((GlobalTransaction)ctx.getLockOwner());
     }
     for (    Object key : c.getKeys()) {
+      if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key,ctx.getLockOwner())) {
+        shouldInvokeOnCluster=true;
+      }
       entryFactory.wrapEntryForWriting(ctx,key,true,false,false,false);
     }
-    return invokeNextInterceptor(ctx,c);
+    if (shouldInvokeOnCluster || c.isExplicit())     return invokeNextInterceptor(ctx,c);
+ else     return null;
   }
   finally {
     if (ctx.isInTxScope()) {
