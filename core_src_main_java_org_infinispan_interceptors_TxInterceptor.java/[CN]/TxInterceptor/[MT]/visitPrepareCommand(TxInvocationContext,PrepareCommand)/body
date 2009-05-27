@@ -11,12 +11,9 @@
     transactionLog.logPrepare(command);
   }
   if (getStatisticsEnabled())   prepares.incrementAndGet();
-  try {
-    return invokeNextInterceptor(ctx,command);
+  Object result=invokeNextInterceptor(ctx,command);
+  if (command.isOnePhaseCommit()) {
+    transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(),command.getModifications());
   }
-  finally {
-    if (command.isOnePhaseCommit()) {
-      transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(),Arrays.asList(command.getModifications()));
-    }
-  }
+  return result;
 }
