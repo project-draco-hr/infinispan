@@ -1,12 +1,17 @@
 {
-  Class<?> subjectType=classExt.readClass(input);
+  int magicNumber=input.readUnsignedByte();
   Map subject=null;
-  try {
-    subject=(Map)Util.getInstance(subjectType);
-  }
- catch (  Exception e) {
-    throw new CacheException("Unable to create new instance of ReplicableCommand",e);
-  }
-  MarshallUtil.unmarshallMap(subject,input);
-  return subject;
+switch (magicNumber) {
+case HASHMAP:
+    subject=new HashMap();
+  break;
+case TREEMAP:
+subject=new TreeMap();
+break;
+case FASTCOPYHASHMAP:
+subject=new FastCopyHashMap();
+break;
+}
+MarshallUtil.unmarshallMap(subject,input);
+return subject;
 }

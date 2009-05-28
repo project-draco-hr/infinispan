@@ -1,21 +1,18 @@
 {
   objects.add(RequestIgnoredResponse.INSTANCE);
-  writers.put(RequestIgnoredResponse.INSTANCE,new InstanceWriter(index++));
+  writers.put(RequestIgnoredResponse.class,new InstanceWriter(index++));
   objects.add(UnsuccessfulResponse.INSTANCE);
-  writers.put(UnsuccessfulResponse.INSTANCE,new InstanceWriter(index++));
+  writers.put(UnsuccessfulResponse.class,new InstanceWriter(index++));
   try {
     for (    Map.Entry<String,String> entry : EXTERNALIZERS.entrySet()) {
       Class typeClazz=Util.loadClass(entry.getKey());
       Externalizer delegate=(Externalizer)Util.getInstance(entry.getValue());
-      if (delegate instanceof StateTransferControlCommandExternalizer) {
-        ((StateTransferControlCommandExternalizer)delegate).init(transport);
-      }
-      if (delegate instanceof ClassExternalizer.ClassWritable) {
-        ((ClassExternalizer.ClassWritable)delegate).setClassExternalizer(classTable);
+      if (delegate instanceof ReplicableCommandExternalizer) {
+        ((ReplicableCommandExternalizer)delegate).init(cmdFactory);
       }
       Externalizer rwrt=new DelegatingReadWriter(index++,delegate);
       objects.add(rwrt);
-      externalizers.put(typeClazz,rwrt);
+      writers.put(typeClazz,rwrt);
     }
   }
  catch (  IOException e) {
