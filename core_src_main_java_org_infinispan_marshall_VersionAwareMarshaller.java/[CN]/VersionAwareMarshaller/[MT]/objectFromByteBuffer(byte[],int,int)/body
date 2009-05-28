@@ -1,13 +1,12 @@
 {
-  int versionId;
-  ObjectInputStream in=new MarshalledValueInputStream(new ByteArrayInputStream(bytes,offset,len));
+  ByteArrayInputStream is=new ByteArrayInputStream(bytes,offset,len);
+  ObjectInput in=startObjectInput(is);
+  Object o=null;
   try {
-    versionId=in.readShort();
-    log.trace("Read version {0}",versionId);
+    o=defaultMarshaller.objectFromObjectStream(in);
   }
- catch (  Exception e) {
-    log.error("Unable to read version id from first two bytes of stream, barfing.");
-    throw new IOException("Unable to read version id from first two bytes of stream.");
+  finally {
+    finishObjectInput(in);
   }
-  return defaultMarshaller.objectFromObjectStream(in);
+  return o;
 }

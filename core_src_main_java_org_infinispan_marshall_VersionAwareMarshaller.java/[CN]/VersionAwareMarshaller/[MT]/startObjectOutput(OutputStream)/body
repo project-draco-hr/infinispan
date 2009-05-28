@@ -1,3 +1,13 @@
 {
-  return defaultMarshaller.startObjectOutput(os);
+  ObjectOutput out=defaultMarshaller.startObjectOutput(os);
+  try {
+    out.writeShort(VERSION_400);
+    if (trace)     log.trace("Wrote version {0}",VERSION_400);
+  }
+ catch (  Exception e) {
+    finishObjectOutput(out);
+    log.error("Unable to read version id from first two bytes of stream, barfing.");
+    throw new IOException("Unable to read version id from first two bytes of stream.",e);
+  }
+  return out;
 }
