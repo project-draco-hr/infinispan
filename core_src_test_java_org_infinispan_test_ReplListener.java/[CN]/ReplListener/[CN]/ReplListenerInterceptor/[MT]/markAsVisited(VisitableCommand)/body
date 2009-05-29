@@ -1,11 +1,16 @@
 {
   expectationSetupLock.lock();
   try {
-    log.info("Cache [" + c + "] saw command "+ cmd);
+    info("ReplListener saw command " + cmd);
     if (expectedCommands != null) {
-      expectedCommands.remove(cmd.getClass());
+      if (expectedCommands.remove(cmd.getClass())) {
+        info("Successfully removed command: " + cmd.getClass());
+      }
       sawAtLeastOneInvocation=true;
-      if (expectedCommands.isEmpty())       latch.countDown();
+      if (expectedCommands.isEmpty()) {
+        info("Nothing to wait for, releasing latch");
+        latch.countDown();
+      }
     }
  else {
       if (recordCommandsEagerly)       eagerCommands.add(cmd.getClass());
