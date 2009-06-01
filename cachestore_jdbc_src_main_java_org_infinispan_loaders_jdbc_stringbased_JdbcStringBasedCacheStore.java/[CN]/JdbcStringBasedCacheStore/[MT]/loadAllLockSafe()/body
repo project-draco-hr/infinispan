@@ -11,8 +11,9 @@
     Set<InternalCacheEntry> result=new HashSet<InternalCacheEntry>();
     while (rs.next()) {
       InputStream inputStream=rs.getBinaryStream(1);
-      InternalCacheEntry se=(InternalCacheEntry)JdbcUtil.unmarshall(getMarshaller(),inputStream);
-      result.add(se);
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      Object key=rs.getObject(2);
+      result.add(icv.toInternalCacheEntry(key));
     }
     return result;
   }

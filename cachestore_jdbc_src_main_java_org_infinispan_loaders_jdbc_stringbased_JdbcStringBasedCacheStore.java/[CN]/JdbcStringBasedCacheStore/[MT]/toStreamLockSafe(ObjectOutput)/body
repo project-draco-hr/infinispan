@@ -11,8 +11,9 @@
     rs.setFetchSize(config.getFetchSize());
     while (rs.next()) {
       InputStream is=rs.getBinaryStream(1);
-      InternalCacheEntry se=(InternalCacheEntry)JdbcUtil.unmarshall(getMarshaller(),is);
-      marshaller.objectToObjectStream(se,objectOutput);
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),is);
+      Object key=rs.getObject(2);
+      marshaller.objectToObjectStream(icv.toInternalCacheEntry(key),objectOutput);
     }
     marshaller.objectToObjectStream(STRING_STREAM_DELIMITER,objectOutput);
   }

@@ -10,7 +10,8 @@
     rs=ps.executeQuery();
     if (rs.next()) {
       InputStream inputStream=rs.getBinaryStream(2);
-      InternalCacheEntry storedEntry=(InternalCacheEntry)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      InternalCacheEntry storedEntry=icv.toInternalCacheEntry(key);
       if (storedEntry.isExpired()) {
         if (log.isTraceEnabled()) {
           log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");
