@@ -1,0 +1,35 @@
+{
+  EmsConnection conn=getConnection();
+  for (  MeasurementScheduleRequest req : metrics) {
+    String metric=req.getName();
+    try {
+      String abbrev=metric.substring(0,metric.indexOf("."));
+      String mbean=abbrevToMBean.get(abbrev);
+      mbean=myNamePattern + mbean;
+      EmsBean bean=conn.getBean(mbean);
+      bean.refreshAttributes();
+      String attName=metric.substring(metric.indexOf(".") + 1);
+      EmsAttribute att=bean.getAttribute(attName);
+      Object o=att.getValue();
+      Class type=att.getTypeClass();
+      if (type.equals(Long.class) || type.equals(long.class)) {
+        Long tmp=(Long)o;
+        MeasurementDataNumeric res=new MeasurementDataNumeric(req,Double.valueOf(tmp));
+        report.addData(res);
+      }
+ else       if (type.equals(Double.class) || type.equals(double.class)) {
+        Double tmp=(Double)o;
+        MeasurementDataNumeric res=new MeasurementDataNumeric(req,tmp);
+        report.addData(res);
+      }
+ else       if (type.equals(Integer.class) || type.equals(int.class)) {
+        Integer tmp=(Integer)o;
+        MeasurementDataNumeric res=new MeasurementDataNumeric(req,Double.valueOf(tmp));
+        report.addData(res);
+      }
+    }
+ catch (    Exception e) {
+      log.warn("getValues failed for " + metric + " : ",e);
+    }
+  }
+}

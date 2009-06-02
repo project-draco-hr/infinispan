@@ -1,0 +1,19 @@
+{
+  Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
+  Configuration c=new Configuration();
+  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,REMOTE));
+  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,connector));
+  c.put(new PropertySimple("objectName",MANAGER_OBJECT));
+  ConnectionHelper helper=new ConnectionHelper();
+  EmsConnection conn=helper.getEmsConnection(c);
+  ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(MANAGER_OBJECT);
+  List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
+  for (  EmsBean bean : beans) {
+    String managerName=bean.getBeanName().getCanonicalName();
+    c.put(new PropertySimple("objectName",managerName));
+    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(discoveryContext.getResourceType(),managerName,"Infinispan Cache Manager",null,"The Infinispan Manager",c,null);
+    discoveredResources.add(detail);
+    log.info("Discovered Infinispan instance: " + managerName);
+  }
+  return discoveredResources;
+}
