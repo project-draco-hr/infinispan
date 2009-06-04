@@ -1,15 +1,20 @@
 {
   if (raw == null) {
     try {
-      ByteArrayOutputStream baos=new ByteArrayOutputStream();
-      ObjectOutputStream oos=new ObjectOutputStream(baos);
-      oos.writeObject(instance);
-      oos.close();
-      baos.close();
-      raw=baos.toByteArray();
+      ExposedByteArrayOutputStream baos=new ExposedByteArrayOutputStream(128);
+      ObjectOutput out=marshaller.startObjectOutput(baos,true);
+      try {
+        marshaller.objectToObjectStream(instance,out);
+      }
+  finally {
+        marshaller.finishObjectOutput(out);
+      }
+      raw=baos.getRawBuffer();
     }
  catch (    Exception e) {
       throw new CacheException("Unable to marshall value " + instance,e);
+    }
+ finally {
     }
   }
 }
