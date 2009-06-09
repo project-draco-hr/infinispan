@@ -1,17 +1,19 @@
 {
-  if (key != null) {
-    InternalCacheEntry cacheEntry=dataContainer.get(key);
-    if (trace)     log.trace("Found InternalCacheEntry {0} for key {1}",cacheEntry,key);
-    if (cacheEntry == null) {
-      if (trace)       log.trace("Checking in cache loader");
-      icc.createRemoteInvocationContext();
-      if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null) {
-        cacheEntry=cacheLoaderManager.getCacheLoader().load(key);
-      }
-    }
-    return cacheEntry != null ? cacheEntry.toInternalCacheValue() : null;
+  GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key);
+  command.setReturnCacheEntry(true);
+  NonTxInvocationContext invocationContext=icc.createRemoteInvocationContext();
+  CacheEntry cacheEntry=(CacheEntry)invoker.invoke(invocationContext,command);
+  if (cacheEntry == null) {
+    if (trace)     log.trace("Did not find anything, returning null");
+    return null;
+  }
+  if (cacheEntry instanceof MVCCEntry) {
+    if (trace)     log.trace("Handloing an internal cache entry...");
+    MVCCEntry mvccEntry=(MVCCEntry)cacheEntry;
+    return InternalEntryFactory.createValue(mvccEntry.getValue(),-1,mvccEntry.getLifespan(),-1,mvccEntry.getMaxIdle());
   }
  else {
-    throw new CacheException("Invalid command. Missing key!");
+    InternalCacheEntry internalCacheEntry=(InternalCacheEntry)cacheEntry;
+    return internalCacheEntry.toInternalCacheValue();
   }
 }
