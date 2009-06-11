@@ -1,22 +1,9 @@
 {
   loadTcp();
-  Matcher m=TCP_START_PORT.matcher(tcpConfig);
-  String result;
-  String newStartPort;
-  if (m.find()) {
-    newStartPort=threadTcpStartPort.get();
-    result=m.replaceFirst("bind_port=" + newStartPort);
+  if (tcpConfig.contains("TCPPING")) {
+    return getTcpConfigWithTCPPINGDiscoevry();
   }
  else {
-    System.out.println("Config is:" + tcpConfig);
-    Thread.dumpStack();
-    throw new IllegalStateException();
+    return replaceMCastAddressAndPort(tcpConfig);
   }
-  if (result.indexOf("TCPGOSSIP") < 0) {
-    m=TCP_INITIAL_HOST.matcher(result);
-    if (m.find()) {
-      result=m.replaceFirst("initial_hosts=" + bind_addr + "["+ newStartPort+ "]");
-    }
-  }
-  return result;
 }
