@@ -1,30 +1,29 @@
 {
   objects.add(RequestIgnoredResponse.INSTANCE);
-  writers.put(RequestIgnoredResponse.class,new InstanceWriter(index++));
+  writers.put(RequestIgnoredResponse.class,new ExternalizerAdapter(index++,new InstanceWriter()));
   objects.add(UnsuccessfulResponse.INSTANCE);
-  writers.put(UnsuccessfulResponse.class,new InstanceWriter(index++));
+  writers.put(UnsuccessfulResponse.class,new ExternalizerAdapter(index++,new InstanceWriter()));
   try {
     for (    Map.Entry<String,String> entry : EXTERNALIZERS.entrySet()) {
-      Class typeClazz=Util.loadClass(entry.getKey());
-      Externalizer delegate=(Externalizer)Util.getInstance(entry.getValue());
-      if (delegate instanceof ReplicableCommandExternalizer) {
-        ((ReplicableCommandExternalizer)delegate).init(cmdFactory);
+      try {
+        Class typeClazz=Util.loadClass(entry.getKey());
+        Externalizer delegate=(Externalizer)Util.getInstance(entry.getValue());
+        if (delegate instanceof ReplicableCommandExternalizer) {
+          ((ReplicableCommandExternalizer)delegate).init(cmdFactory);
+        }
+        if (delegate instanceof MarshalledValueExternalizer) {
+          ((MarshalledValueExternalizer)delegate).init(ispnMarshaller);
+        }
+        ExternalizerAdapter rwrt=new ExternalizerAdapter(index++,delegate);
+        objects.add(rwrt);
+        writers.put(typeClazz,rwrt);
       }
-      if (delegate instanceof MarshalledValueExternalizer) {
-        ((MarshalledValueExternalizer)delegate).init(ispnMarshaller);
+ catch (      ClassNotFoundException e) {
+        log.debug("Unable to load class" + e.getMessage());
       }
-      Externalizer rwrt=new DelegatingReadWriter(index++,delegate);
-      objects.add(rwrt);
-      writers.put(typeClazz,rwrt);
     }
   }
- catch (  IOException e) {
-    throw new CacheException("Unable to open load magicnumbers.properties",e);
-  }
-catch (  ClassNotFoundException e) {
-    throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties",e);
-  }
-catch (  Exception e) {
+ catch (  Exception e) {
     throw new CacheException("Unable to instantiate Externalizer class",e);
   }
 }
