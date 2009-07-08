@@ -32,7 +32,15 @@ interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.cla
 }
  else {
 interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
+switch (configuration.getCacheMode()) {
+case DIST_SYNC:
+case DIST_ASYNC:
+interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
+break;
+default :
 interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+break;
+}
 }
 }
 if (configuration.getCacheMode().isDistributed()) interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
