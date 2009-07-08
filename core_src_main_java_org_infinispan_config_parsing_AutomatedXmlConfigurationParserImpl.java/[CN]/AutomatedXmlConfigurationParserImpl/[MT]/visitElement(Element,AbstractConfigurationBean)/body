@@ -1,0 +1,32 @@
+{
+  ConfigurationElement ce=customReader(e,bean.getClass());
+  if (ce != null) {
+    Class<? extends ConfigurationElementReader> readerClass=ce.customReader();
+    ConfigurationElementReader reader=null;
+    try {
+      reader=readerClass.newInstance();
+      reader.setParser(this);
+      reader.process(e,bean);
+    }
+ catch (    Exception e1) {
+      throw new ConfigurationException(e1);
+    }
+  }
+ else {
+    for (    Method m : bean.getClass().getMethods()) {
+      boolean setter=m.getName().startsWith("set") && m.getParameterTypes().length == 1;
+      if (setter) {
+        reflectAndInvokeAttribute(bean,m,e);
+        reflectAndInvokeProperties(bean,m,e);
+      }
+    }
+    NodeList nodeList=e.getChildNodes();
+    for (int numChildren=nodeList.getLength(), i=0; i < numChildren; i++) {
+      Node node=nodeList.item(i);
+      if (node instanceof Element) {
+        Element childNode=(Element)node;
+        visitElement(childNode,bean);
+      }
+    }
+  }
+}

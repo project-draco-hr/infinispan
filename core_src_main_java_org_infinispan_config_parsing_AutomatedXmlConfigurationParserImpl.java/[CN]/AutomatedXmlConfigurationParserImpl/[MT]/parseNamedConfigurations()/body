@@ -1,0 +1,24 @@
+{
+  assertInitialized();
+  if (namedCaches == null) {
+    Set<Element> elements=getAllElementsInCoreNS("namedCache",rootElement);
+    if (elements.isEmpty())     return Collections.emptyMap();
+    namedCaches=new HashMap<String,Configuration>(elements.size(),1.0f);
+    for (    Element e : elements) {
+      String configurationName=getAttributeValue(e,"name");
+      if (namedCaches.containsKey(configurationName)) {
+        namedCaches=null;
+        throw new DuplicateCacheNameException("Named cache " + configurationName + " is declared more than once!");
+      }
+      try {
+        AbstractConfigurationBean bean=findAndInstantiateBean(CONFIG_BEANS,e);
+        visitElement(e,bean);
+        namedCaches.put(configurationName,(Configuration)bean);
+      }
+ catch (      ConfigurationException ce) {
+        throw new ConfigurationException("Problems configuring named cache '" + configurationName + "'",ce);
+      }
+    }
+  }
+  return namedCaches;
+}

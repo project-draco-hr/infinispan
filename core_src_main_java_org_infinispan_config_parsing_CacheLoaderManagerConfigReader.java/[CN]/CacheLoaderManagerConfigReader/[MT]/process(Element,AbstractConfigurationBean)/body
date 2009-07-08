@@ -1,0 +1,24 @@
+{
+  CacheLoaderManagerConfig cBean=(CacheLoaderManagerConfig)parser.findAndInstantiateBean(AutomatedXmlConfigurationParserImpl.CONFIG_BEANS,e);
+  Set<Element> elements=parser.getAllElementsInCoreNS("loader",e);
+  if (elements.isEmpty())   throw new ConfigurationException("No loader elements found!");
+  for (  Element element : elements) {
+    String clClass=parser.getAttributeValue(element,"class");
+    if (!parser.existsAttribute(clClass))     throw new ConfigurationException("Missing 'class'  attribute for cache loader configuration");
+    CacheLoader cl;
+    CacheLoaderConfig clc;
+    try {
+      cl=(CacheLoader)Util.getInstance(clClass);
+      clc=Util.getInstance(cl.getConfigurationClass());
+    }
+ catch (    Exception ex) {
+      throw new ConfigurationException("Unable to instantiate cache loader or configuration",ex);
+    }
+    clc.setCacheLoaderClassName(clClass);
+    Element propertiesElement=parser.getSingleElementInCoreNS("properties",element);
+    if (propertiesElement == null)     throw new ConfigurationException("loader " + clClass + " is missing properties element");
+    parser.visitElement(element,(AbstractConfigurationBean)clc);
+    cBean.addCacheLoaderConfig(clc);
+  }
+  ((Configuration)bean).setCacheLoaderManagerConfig(cBean);
+}

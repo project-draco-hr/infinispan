@@ -1,0 +1,50 @@
+{
+  Class<?> parameterType=m.getParameterTypes()[0];
+  ConfigurationProperty[] cprops=null;
+  ConfigurationProperties cp=m.getAnnotation(ConfigurationProperties.class);
+  if (cp != null) {
+    cprops=cp.elements();
+  }
+ else {
+    ConfigurationProperty p=null;
+    p=m.getAnnotation(ConfigurationProperty.class);
+    if (p != null) {
+      cprops=new ConfigurationProperty[]{p};
+    }
+  }
+  boolean matchedPropertyToSetter=cprops != null && cprops.length > 0;
+  if (matchedPropertyToSetter) {
+    String parentElement=cprops[0].parentElement();
+    String propertyName=cprops[0].name();
+    if (parentElement.equals(node.getParentNode().getNodeName())) {
+      if (node.getNodeName().equals("property")) {
+        Properties props=XmlConfigHelper.extractProperties((Element)node.getParentNode());
+        if (Properties.class.isAssignableFrom(parameterType)) {
+          try {
+            m.invoke(bean,props);
+          }
+ catch (          Exception ae) {
+            throw new ConfigurationException("Illegal props " + props + ",type="+ parameterType+ ", method="+ m,ae);
+          }
+        }
+ else         if (parameterType.isAssignableFrom(String.class) || parameterType.isPrimitive()) {
+          String value=props.getProperty(propertyName);
+          if (value != null && value.length() > 0) {
+            Object o=value;
+            if (parameterType.isPrimitive()) {
+              o=convertToType(value,parameterType);
+            }
+            try {
+              m.invoke(bean,o);
+            }
+ catch (            Exception ae) {
+              throw new ConfigurationException("Illegal value " + o + ",type="+ parameterType+ ", method="+ m,ae);
+            }
+          }
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}

@@ -1,0 +1,30 @@
+{
+  Class<?> parameterType=m.getParameterTypes()[0];
+  ConfigurationAttribute a=m.getAnnotation(ConfigurationAttribute.class);
+  boolean matchedAttributeToSetter=a != null && a.containingElement().equals(node.getNodeName());
+  boolean isConfigBean=AbstractConfigurationBean.class.isAssignableFrom(parameterType);
+  if (matchedAttributeToSetter) {
+    String attValue=getAttributeValue((Element)node,a.name());
+    if (attValue != null && attValue.length() > 0) {
+      Object o=convertToType(attValue,parameterType);
+      try {
+        m.invoke(bean,o);
+      }
+ catch (      Exception ae) {
+        throw new ConfigurationException("Illegal attribute value " + attValue + ",type="+ parameterType+ ", method="+ m,ae);
+      }
+    }
+  }
+ else   if (isConfigBean) {
+    AbstractConfigurationBean childBean=findAndInstantiateBean(CONFIG_BEANS,node);
+    boolean foundMatchingChild=childBean != null && !bean.getClass().equals(childBean.getClass()) && parameterType.isInstance(childBean);
+    if (foundMatchingChild) {
+      try {
+        m.invoke(bean,childBean);
+      }
+ catch (      Exception ae) {
+        throw new ConfigurationException("Illegal bean value " + childBean + ",type="+ parameterType+ ", method="+ m,ae);
+      }
+    }
+  }
+}

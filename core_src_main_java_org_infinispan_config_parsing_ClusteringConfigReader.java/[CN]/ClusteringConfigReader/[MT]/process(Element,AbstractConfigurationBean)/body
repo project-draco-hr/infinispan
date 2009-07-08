@@ -1,0 +1,28 @@
+{
+  if (e == null)   return;
+  Configuration config=(Configuration)bean;
+  Configuration.CacheMode cacheMode;
+  String mode=parser.getAttributeValue(e,"mode").toUpperCase();
+  if (mode.startsWith("R"))   cacheMode=Configuration.CacheMode.REPL_SYNC;
+ else   if (mode.startsWith("I"))   cacheMode=Configuration.CacheMode.INVALIDATION_SYNC;
+ else   cacheMode=Configuration.CacheMode.DIST_SYNC;
+  Element asyncEl=parser.getSingleElementInCoreNS("async",e);
+  Element syncEl=parser.getSingleElementInCoreNS("sync",e);
+  if (syncEl != null && asyncEl != null)   throw new ConfigurationException("Cannot have sync and async elements within the same cluster element!");
+  boolean sync=asyncEl == null;
+  if (sync) {
+    config.setCacheMode(cacheMode);
+  }
+ else {
+    cacheMode=cacheMode.toAsync();
+    config.setCacheMode(cacheMode);
+  }
+  NodeList nodeList=e.getChildNodes();
+  for (int numChildren=nodeList.getLength(), i=0; i < numChildren; i++) {
+    Node node=nodeList.item(i);
+    if (node instanceof Element) {
+      Element childNode=(Element)node;
+      parser.visitElement(childNode,bean);
+    }
+  }
+}
