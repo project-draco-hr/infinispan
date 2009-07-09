@@ -4,11 +4,15 @@
   boolean matchedAttributeToSetter=a != null && a.containingElement().equals(node.getNodeName());
   boolean isConfigBean=AbstractConfigurationBean.class.isAssignableFrom(parameterType);
   if (matchedAttributeToSetter) {
-    String attValue=getAttributeValue((Element)node,a.name());
+    String attValue=getAttributeValue(node,a.name());
     if (attValue != null && attValue.length() > 0) {
-      Object o=convertToPrimitiveType(attValue,parameterType);
+      PropertyEditor editor=PropertyEditorManager.findEditor(parameterType);
+      if (editor == null) {
+        throw new ConfigurationException("Could not find property editor, type=" + parameterType + ",method="+ m+ ",attribute="+ a.name());
+      }
+      editor.setAsText(attValue);
       try {
-        m.invoke(bean,o);
+        m.invoke(bean,editor.getValue());
       }
  catch (      Exception ae) {
         throw new ConfigurationException("Illegal attribute value " + attValue + ",type="+ parameterType+ ",method="+ m+ ",attribute="+ a.name(),ae);

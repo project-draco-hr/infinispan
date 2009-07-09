@@ -15,7 +15,6 @@
   boolean matchedPropertyToSetter=cprops != null && cprops.length > 0;
   if (matchedPropertyToSetter) {
     String parentElement=cprops[0].parentElement();
-    String propertyName=cprops[0].name();
     if (parentElement.equals(node.getParentNode().getNodeName())) {
       if (node.getNodeName().equals("property")) {
         Properties props=XmlConfigHelper.extractProperties((Element)node.getParentNode());
@@ -27,20 +26,8 @@
             throw new ConfigurationException("Illegal props " + props + ",type="+ parameterType+ ", method="+ m,ae);
           }
         }
- else         if (parameterType.isAssignableFrom(String.class) || parameterType.isPrimitive()) {
-          String value=props.getProperty(propertyName);
-          if (value != null && value.length() > 0) {
-            Object o=value;
-            if (parameterType.isPrimitive()) {
-              o=convertToPrimitiveType(value,parameterType);
-            }
-            try {
-              m.invoke(bean,o);
-            }
- catch (            Exception ae) {
-              throw new ConfigurationException("Illegal value of extracted property " + value + ", converted to "+ o+ ",type="+ parameterType+ ", method="+ m,ae);
-            }
-          }
+ else {
+          XmlConfigHelper.setValues(bean,props,false,true);
         }
         return true;
       }
