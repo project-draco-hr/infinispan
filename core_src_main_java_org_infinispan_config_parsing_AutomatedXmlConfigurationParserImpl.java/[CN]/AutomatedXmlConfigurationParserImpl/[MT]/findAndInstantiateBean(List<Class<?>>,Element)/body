@@ -1,10 +1,12 @@
 {
   String name=e.getTagName();
+  String parentName=((Element)e.getParentNode()).getTagName();
+  if (parentName.equals("namedCache"))   parentName="default";
   for (  Class<?> clazz : b) {
     ConfigurationElements elements=clazz.getAnnotation(ConfigurationElements.class);
     if (elements != null) {
       for (      ConfigurationElement ce : elements.elements()) {
-        if (ce.name().equals(name)) {
+        if (ce.name().equals(name) && ce.parent().equals(parentName)) {
           try {
             return (AbstractConfigurationBean)clazz.newInstance();
           }
@@ -16,7 +18,7 @@
     }
  else {
       ConfigurationElement ce=clazz.getAnnotation(ConfigurationElement.class);
-      if (ce != null && ce.name().equals(name)) {
+      if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
         try {
           return (AbstractConfigurationBean)clazz.newInstance();
         }
