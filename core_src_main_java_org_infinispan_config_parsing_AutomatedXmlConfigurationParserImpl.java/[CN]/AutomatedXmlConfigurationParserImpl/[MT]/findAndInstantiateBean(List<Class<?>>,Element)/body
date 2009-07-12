@@ -4,28 +4,23 @@
   if (parentName.equals("namedCache"))   parentName="default";
   for (  Class<?> clazz : b) {
     ConfigurationElements elements=clazz.getAnnotation(ConfigurationElements.class);
-    if (elements != null) {
-      for (      ConfigurationElement ce : elements.elements()) {
-        if (ce.name().equals(name) && ce.parent().equals(parentName)) {
-          try {
+    try {
+      if (elements != null) {
+        for (        ConfigurationElement ce : elements.elements()) {
+          if (ce.name().equals(name) && ce.parent().equals(parentName)) {
             return (AbstractConfigurationBean)clazz.newInstance();
           }
- catch (          Exception e1) {
-            throw new ConfigurationException("Could not instantiate class " + clazz,e1);
-          }
+        }
+      }
+ else {
+        ConfigurationElement ce=clazz.getAnnotation(ConfigurationElement.class);
+        if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
+          return (AbstractConfigurationBean)clazz.newInstance();
         }
       }
     }
- else {
-      ConfigurationElement ce=clazz.getAnnotation(ConfigurationElement.class);
-      if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
-        try {
-          return (AbstractConfigurationBean)clazz.newInstance();
-        }
- catch (        Exception e1) {
-          throw new ConfigurationException("Could not instantiate class " + clazz,e1);
-        }
-      }
+ catch (    Exception e1) {
+      throw new ConfigurationException("Could not instantiate class " + clazz,e1);
     }
   }
   return null;

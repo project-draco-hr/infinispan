@@ -1,7 +1,10 @@
 {
+  ConfigurationElement result=null;
   ConfigurationElement ces[]=null;
   ConfigurationElements configurationElements=bean.getAnnotation(ConfigurationElements.class);
   ConfigurationElement configurationElement=bean.getAnnotation(ConfigurationElement.class);
+  String parentName=((Element)e.getParentNode()).getTagName();
+  if (parentName.equals("namedCache"))   parentName="default";
   if (configurationElement != null) {
     ces=new ConfigurationElement[]{configurationElement};
   }
@@ -10,10 +13,11 @@
   }
   if (ces != null) {
     for (    ConfigurationElement el : ces) {
-      if (el.name().equals(e.getNodeName())) {
-        return el;
+      if (el.name().equals(e.getNodeName()) && el.parent().equals(parentName)) {
+        result=el;
+        break;
       }
     }
   }
-  return null;
+  return result;
 }

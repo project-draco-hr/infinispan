@@ -1,15 +1,14 @@
 {
-  ConfigurationElement result=findConfigurationElement(e,bean);
-  if (result == null) {
+  Class<? extends ConfigurationElementReader> clazz=null;
+  ConfigurationElement ce=findConfigurationElement(e,bean);
+  if (ce == null) {
     for (    Class<?> beanClass : CONFIG_BEANS) {
-      result=findConfigurationElement(e,beanClass);
-      if (result != null)       break;
+      ce=findConfigurationElement(e,beanClass);
+      if (ce != null)       break;
     }
   }
-  if (result != null) {
-    if (!result.customReader().equals(ConfigurationElementReader.class)) {
-      return result;
-    }
+  if (ce != null && !ce.customReader().equals(ConfigurationElementReader.class)) {
+    clazz=ce.customReader();
   }
-  return null;
+  return clazz;
 }
