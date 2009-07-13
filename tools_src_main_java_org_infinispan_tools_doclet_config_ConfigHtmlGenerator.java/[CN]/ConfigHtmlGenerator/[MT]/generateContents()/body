@@ -5,9 +5,10 @@
   List<Class<?>> configBeans;
   try {
     configBeans=getConfigBeans();
-    TreeNode root=tree(configBeans);
+    XMLTreeOutputWalker tw=new XMLTreeOutputWalker(sb);
+    TreeNode root=tw.constructTreeFromBeans(configBeans);
     sb.append("<div class=\"" + "source" + "\"><pre>");
-    sb.append(root.pp(""));
+    tw.preOrderTraverse(root);
     sb.append("</pre></div>");
     for (    Class<?> clazz : configBeans) {
       ConfigurationElement ces[]=null;
@@ -32,14 +33,14 @@
  else {
             sb.append("todo");
           }
-          TreeNode n=findNode(root,ce.name(),ce.parent());
-          sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.parent.parent.name + "_"+ n.parent.name+ "\">"+ "&lt;"+ ce.parent()+ "&gt;"+ "</a>.");
-          if (n != null && !n.children.isEmpty()) {
+          TreeNode n=tw.findNode(root,ce.name(),ce.parent());
+          sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + "_"+ n.getParent().getName()+ "\">"+ "&lt;"+ ce.parent()+ "&gt;"+ "</a>.");
+          if (n != null && !n.getChildren().isEmpty()) {
             sb.append(" Child elements are ");
-            int childCount=n.children.size();
+            int childCount=n.getChildren().size();
             int count=1;
-            for (            TreeNode tn : n.children) {
-              sb.append("<a href=\"").append("#ce_" + tn.parent.name + "_"+ tn.name+ "\">"+ "&lt;"+ tn.name+ "&gt;"+ "</a>");
+            for (            TreeNode tn : n.getChildren()) {
+              sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_"+ tn.getName()+ "\">"+ "&lt;"+ tn.getName()+ "&gt;"+ "</a>");
               if (count < childCount) {
                 sb.append(",");
               }
