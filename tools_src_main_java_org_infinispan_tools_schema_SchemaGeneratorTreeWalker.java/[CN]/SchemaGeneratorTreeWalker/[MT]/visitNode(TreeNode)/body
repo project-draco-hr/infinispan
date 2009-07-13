@@ -1,0 +1,34 @@
+{
+  Element complexType=xmldoc.createElement("xs:complexType");
+  complexType.setAttribute("name",treeNode.getName() + "Type");
+  if (treeNode.hasChildren()) {
+    Element all=xmldoc.createElement("xs:all");
+    complexType.appendChild(all);
+    Set<TreeNode> children=treeNode.getChildren();
+    for (    TreeNode child : children) {
+      Element childElement=xmldoc.createElement("xs:element");
+      childElement.setAttribute("name",child.getName());
+      childElement.setAttribute("type","tns:" + child.getName() + "Type");
+      all.appendChild(childElement);
+    }
+  }
+ else {
+    Class<?> bean=findBean(beans,treeNode.getName(),treeNode.getParent().getName());
+    for (    Method m : bean.getMethods()) {
+      ConfigurationAttribute a=m.getAnnotation(ConfigurationAttribute.class);
+      boolean childElement=a != null && a.containingElement().equals(treeNode.getName());
+      if (childElement) {
+        String type="";
+        if (isSetterMethod(m)) {
+          type=m.getParameterTypes()[0].getSimpleName();
+          type=type.toLowerCase();
+        }
+        Element att=xmldoc.createElement("xs:attribute");
+        att.setAttribute("name",a.name());
+        att.setAttribute("type","xs:" + type);
+        complexType.appendChild(att);
+      }
+    }
+  }
+  xmldoc.getDocumentElement().appendChild(complexType);
+}
