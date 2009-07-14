@@ -1,34 +1,57 @@
 {
-  Element complexType=xmldoc.createElement("xs:complexType");
-  complexType.setAttribute("name",treeNode.getName() + "Type");
-  if (treeNode.hasChildren()) {
-    Element all=xmldoc.createElement("xs:all");
-    complexType.appendChild(all);
-    Set<TreeNode> children=treeNode.getChildren();
-    for (    TreeNode child : children) {
-      Element childElement=xmldoc.createElement("xs:element");
-      childElement.setAttribute("name",child.getName());
-      childElement.setAttribute("type","tns:" + child.getName() + "Type");
-      all.appendChild(childElement);
-    }
+  Class<?> bean=findBean(beans,treeNode.getName(),treeNode.getParent().getName());
+  if (bean == null) {
+    log.warn("Did not find bean for node " + treeNode + ". Should happen only for infinispan node");
+    writeInfinispanType();
+    return;
   }
- else {
-    Class<?> bean=findBean(beans,treeNode.getName(),treeNode.getParent().getName());
-    for (    Method m : bean.getMethods()) {
-      ConfigurationAttribute a=m.getAnnotation(ConfigurationAttribute.class);
-      boolean childElement=a != null && a.containingElement().equals(treeNode.getName());
-      if (childElement) {
-        String type="";
-        if (isSetterMethod(m)) {
-          type=m.getParameterTypes()[0].getSimpleName();
-          type=type.toLowerCase();
+  boolean hasCustomWriter=false;
+  ConfigurationElementWriter writer=null;
+  ConfigurationElement[] onBean=configurationElementsOnBean(bean);
+  for (  ConfigurationElement ce : onBean) {
+    if (ce.name().equals(treeNode.getName()) && ce.parent().equals(treeNode.getParent().getName())) {
+      hasCustomWriter=!ce.customWriter().equals(ConfigurationElementWriter.class);
+      if (hasCustomWriter) {
+        try {
+          writer=ce.customWriter().newInstance();
         }
-        Element att=xmldoc.createElement("xs:attribute");
-        att.setAttribute("name",a.name());
-        att.setAttribute("type","xs:" + type);
-        complexType.appendChild(att);
+ catch (        Exception e1) {
+          throw new ConfigurationException("Could not instantiate custom writer ",e1);
+        }
+        break;
       }
     }
   }
-  xmldoc.getDocumentElement().appendChild(complexType);
+  if (hasCustomWriter) {
+    try {
+      writer.process(treeNode,xmldoc);
+    }
+ catch (    Exception e1) {
+      throw new ConfigurationException("Exception while using custom writer ",e1);
+    }
+  }
+ else {
+    Element complexType=xmldoc.createElement("xs:complexType");
+    complexType.setAttribute("name",treeNode.getName() + "TypeIn" + treeNode.getParent().getName());
+    createProperty(treeNode,complexType);
+    if (treeNode.hasChildren()) {
+      Element all=xmldoc.createElement("xs:all");
+      complexType.appendChild(all);
+      Set<TreeNode> children=treeNode.getChildren();
+      for (      TreeNode child : children) {
+        Element childElement=xmldoc.createElement("xs:element");
+        childElement.setAttribute("name",child.getName());
+        childElement.setAttribute("type","tns:" + child.getName() + "TypeIn"+ child.getParent().getName());
+        childElement.setAttribute("minOccurs","0");
+        childElement.setAttribute("maxOccurs","1");
+        all.appendChild(childElement);
+      }
+      createAttribute(treeNode,complexType);
+    }
+ else {
+      createAttribute(treeNode,complexType);
+    }
+    postProcess(treeNode,complexType);
+    xmldoc.getDocumentElement().appendChild(complexType);
+  }
 }
