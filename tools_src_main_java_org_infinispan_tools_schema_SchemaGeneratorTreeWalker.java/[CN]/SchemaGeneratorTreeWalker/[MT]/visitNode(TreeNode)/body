@@ -1,27 +1,29 @@
 {
-  Class<?> bean=findBean(beans,treeNode.getName(),treeNode.getParent().getName());
+  String name=treeNode.getName();
+  String parentName=treeNode.getParent().getName();
+  Class<?> bean=findBean(beans,name,parentName);
   if (bean == null) {
     log.warn("Did not find bean for node " + treeNode + ". Should happen only for infinispan node");
     writeInfinispanType();
     return;
   }
-  boolean hasCustomWriter=false;
+  ConfigurationElement ce=findConfigurationElementForBean(bean,name,parentName);
+  if (ce == null) {
+    log.warn("Did not find ConfigurationElement for " + treeNode + ". Verify annotations on all AbstractConfigurationBeans");
+    return;
+  }
+  log.debug("Visiting node " + name);
   ConfigurationElementWriter writer=null;
-  ConfigurationElement[] onBean=configurationElementsOnBean(bean);
-  for (  ConfigurationElement ce : onBean) {
-    if (ce.name().equals(treeNode.getName()) && ce.parent().equals(treeNode.getParent().getName())) {
-      hasCustomWriter=!ce.customWriter().equals(ConfigurationElementWriter.class);
-      if (hasCustomWriter) {
-        try {
-          writer=ce.customWriter().newInstance();
-        }
- catch (        Exception e1) {
-          throw new ConfigurationException("Could not instantiate custom writer ",e1);
-        }
-        break;
-      }
+  boolean hasCustomWriter=!ce.customWriter().equals(ConfigurationElementWriter.class);
+  if (hasCustomWriter) {
+    try {
+      writer=ce.customWriter().newInstance();
+    }
+ catch (    Exception e1) {
+      throw new ConfigurationException("Could not instantiate custom writer ",e1);
     }
   }
+  log.debug("Visiting node " + name + ((hasCustomWriter) ? " will use " + writer : " will use default creation of elements"));
   if (hasCustomWriter) {
     try {
       writer.process(treeNode,xmldoc);
@@ -35,16 +37,36 @@
     complexType.setAttribute("name",treeNode.getName() + "TypeIn" + treeNode.getParent().getName());
     createProperty(treeNode,complexType);
     if (treeNode.hasChildren()) {
-      Element all=xmldoc.createElement("xs:all");
-      complexType.appendChild(all);
+      boolean sequence=false;
+      for (      TreeNode child : treeNode.getChildren()) {
+        ConfigurationElement cce=findConfigurationElement(beans,child.getName(),treeNode.getName());
+        if (cce.cardinalityInParent().equals(Cardinality.UNBOUNDED)) {
+          sequence=true;
+          break;
+        }
+      }
+      Element allOrSequence=null;
+      if (sequence) {
+        allOrSequence=xmldoc.createElement("xs:sequence");
+      }
+ else {
+        allOrSequence=xmldoc.createElement("xs:all");
+      }
+      complexType.appendChild(allOrSequence);
       Set<TreeNode> children=treeNode.getChildren();
       for (      TreeNode child : children) {
+        ConfigurationElement cce=findConfigurationElement(beans,child.getName(),treeNode.getName());
         Element childElement=xmldoc.createElement("xs:element");
         childElement.setAttribute("name",child.getName());
         childElement.setAttribute("type","tns:" + child.getName() + "TypeIn"+ child.getParent().getName());
         childElement.setAttribute("minOccurs","0");
-        childElement.setAttribute("maxOccurs","1");
-        all.appendChild(childElement);
+        if (cce.cardinalityInParent().equals(Cardinality.UNBOUNDED)) {
+          childElement.setAttribute("maxOccurs","unbounded");
+        }
+ else {
+          childElement.setAttribute("maxOccurs","1");
+        }
+        allOrSequence.appendChild(childElement);
       }
       createAttribute(treeNode,complexType);
     }

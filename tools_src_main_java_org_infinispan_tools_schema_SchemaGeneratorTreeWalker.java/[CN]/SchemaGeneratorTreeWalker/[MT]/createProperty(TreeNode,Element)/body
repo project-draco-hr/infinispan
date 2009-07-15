@@ -1,26 +1,25 @@
 {
   if (treeNode.getParent().getParent() == null)   return;
-  Class<?> bean=findBean(beans,treeNode.getParent().getName(),treeNode.getParent().getParent().getName());
+  Class<?> bean=findBean(beans,treeNode.getName(),treeNode.getParent().getName());
   if (bean == null) {
-    log.warn("Did not find bean for node " + treeNode + ". Should happen only for infinispan node");
-    return;
+    log.warn("Did not find bean for node " + treeNode + ". Try parent, maybe property is there...");
+    bean=findBean(beans,treeNode.getParent().getName(),treeNode.getParent().getParent().getName());
+    if (bean == null)     return;
   }
   String createdForParentElement=null;
   for (  Method m : bean.getMethods()) {
-    if (propertiesElementsOnMethod(m).length > 0) {
-      for (      ConfigurationProperty c : propertiesElementsOnMethod(m)) {
-        boolean property=treeNode.getName().equals(c.parentElement());
-        if (property && !c.parentElement().equals(createdForParentElement)) {
-          createdForParentElement=c.parentElement();
-          Element prop=xmldoc.createElement("xs:sequence");
-          Element e=xmldoc.createElement("xs:element");
-          prop.appendChild(e);
-          e.setAttribute("name","property");
-          e.setAttribute("maxOccurs","unbounded");
-          e.setAttribute("minOccurs","0");
-          e.setAttribute("type","tns:propertyType");
-          complexType.appendChild(prop);
-        }
+    for (    ConfigurationProperty c : propertiesElementsOnMethod(m)) {
+      boolean property=treeNode.getName().equals(c.parentElement());
+      if (property && !c.parentElement().equals(createdForParentElement)) {
+        createdForParentElement=c.parentElement();
+        Element prop=xmldoc.createElement("xs:sequence");
+        Element e=xmldoc.createElement("xs:element");
+        prop.appendChild(e);
+        e.setAttribute("name","property");
+        e.setAttribute("maxOccurs","unbounded");
+        e.setAttribute("minOccurs","0");
+        e.setAttribute("type","tns:propertyType");
+        complexType.appendChild(prop);
       }
     }
   }
