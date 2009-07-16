@@ -5,12 +5,17 @@
     List<File> classFiles=new ArrayList<File>();
     dir(classFiles,path);
     for (    File cf : classFiles) {
+      String clazz=null;
       try {
-        claz=Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
+        clazz=toClassName(cf.getAbsolutePath().toString());
+        claz=Util.loadClass(clazz);
         classes.add(claz);
       }
- catch (      Throwable e) {
-        log.warn("Could not load class " + toClassName(cf.getAbsolutePath().toString()) + " on path "+ cf.getAbsolutePath().toString(),e);
+ catch (      NoClassDefFoundError ncdfe) {
+        log.warn(cf.getAbsolutePath().toString() + " has reference to a class " + ncdfe.getMessage()+ " that could not be loaded from classpath");
+      }
+catch (      Throwable e) {
+        log.warn("On path " + cf.getAbsolutePath().toString() + " could not load class "+ clazz,e);
       }
     }
   }
@@ -28,12 +33,17 @@
       while (en.hasMoreElements()) {
         JarEntry entry=en.nextElement();
         if (entry.getName().endsWith("class")) {
+          String clazz=null;
           try {
-            claz=Util.loadClass(toClassName(entry.getName()));
+            clazz=toClassName(entry.getName());
+            claz=Util.loadClass(clazz);
             classes.add(claz);
           }
- catch (          Throwable e) {
-            log.warn("Could not load class " + toClassName(entry.getName()) + " as a jar entry with path "+ entry.getName(),e);
+ catch (          NoClassDefFoundError ncdfe) {
+            log.warn(entry.getName() + " has reference to a class " + ncdfe.getMessage()+ " that could not be loaded from classpath");
+          }
+catch (          Throwable e) {
+            log.warn("From jar path " + entry.getName() + " could not load class "+ clazz,e);
           }
         }
       }
