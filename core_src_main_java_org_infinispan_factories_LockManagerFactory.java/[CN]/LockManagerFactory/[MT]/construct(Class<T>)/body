@@ -1,3 +1,11 @@
 {
-  return (T)new LockManagerImpl();
+  if (configuration.isEnableDeadlockDetection()) {
+    if (!configuration.getCacheMode().isSynchronous()) {
+      throw new ConfigurationException("Eager Dead lock detection can only be used for sync caches!");
+    }
+    return (T)new DeadlockDetectingLockManager();
+  }
+ else {
+    return (T)new LockManagerImpl();
+  }
 }

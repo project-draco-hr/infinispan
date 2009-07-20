@@ -1,0 +1,20 @@
+{
+  CacheManager cm=TestCacheManagerFactory.createLocalCacheManager();
+  try {
+    Configuration configuration=getConfiguration();
+    cm.defineCache("test",configuration);
+    Cache localCache=cm.getCache("test");
+    CountDownLatch startLatch=new CountDownLatch(1);
+    List<ExecutorThread> executorThreads=new ArrayList<ExecutorThread>();
+    for (int i=0; i < THREAD_COUNT; i++) {
+      ExecutorThread executorThread=new ExecutorThread(startLatch,localCache);
+      executorThreads.add(executorThread);
+    }
+    startLatch.countDown();
+    Thread.sleep(BENCHMARK_DURATION);
+    joinThreadsAndPrintResult(executorThreads);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
+}

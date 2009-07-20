@@ -1,0 +1,19 @@
+{
+  if (isMarkedForRollback) {
+    if (trace)     log.trace("Not interrupting as tx is marked for rollback");
+    return;
+  }
+  if (processingThread == null) {
+    if (trace)     log.trace("Processing thread is null, nothing to interrupt");
+    return;
+  }
+  if (trace) {
+    StackTraceElement[] stackTraceElements=processingThread.getStackTrace();
+    StringBuilder builder=new StringBuilder();
+    for (    StackTraceElement stackTraceElement : stackTraceElements) {
+      builder.append("            ").append(stackTraceElement).append('\n');
+    }
+    log.trace("About to interrupt thread: " + processingThread + ". Thread's stack trace is: \n"+ builder.toString());
+  }
+  this.processingThread.interrupt();
+}

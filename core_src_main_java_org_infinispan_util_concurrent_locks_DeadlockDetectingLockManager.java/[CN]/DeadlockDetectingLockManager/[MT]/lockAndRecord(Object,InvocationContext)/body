@@ -1,0 +1,37 @@
+{
+  long lockTimeout=getLockAcquisitionTimeout(ctx);
+  if (trace)   log.trace("Attempting to lock {0} with acquisition timeout of {1} millis",key,lockTimeout);
+  if (ctx.isInTxScope()) {
+    if (trace)     log.trace("Using early dead lock detection");
+    final long start=System.currentTimeMillis();
+    long now;
+    while ((now=System.currentTimeMillis()) < (start + lockTimeout)) {
+      if (lockContainer.acquireLock(key,spinDuration,MILLISECONDS)) {
+        if (trace)         log.trace("successfully acquired lock on " + key + ", returning ...");
+        return true;
+      }
+ else {
+        if (trace)         log.trace("Could not acquire lock on '" + key + "' as it is locked by '"+ getOwner(key)+ "', check for dead locks");
+        Object owner=getOwner(key);
+        if (!(owner instanceof DeadlockDetectingGlobalTransaction)) {
+          if (trace)           log.trace("Owner is not instance of DeadlockDetectingGlobalTransaction: " + owner + ", continuing ...");
+          if (exposeJmxStats)           overlapWithNotDeadlockAwareLockOwners.incrementAndGet();
+          continue;
+        }
+        DeadlockDetectingGlobalTransaction lockOwnerTx=(DeadlockDetectingGlobalTransaction)owner;
+        if (!ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+          return remoteVsRemoteDld(key,ctx,lockTimeout,start,now,lockOwnerTx);
+        }
+        if (ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+          localVsLocalDld(ctx,lockOwnerTx);
+        }
+      }
+    }
+  }
+ else {
+    if (lockContainer.acquireLock(key,lockTimeout,MILLISECONDS)) {
+      return true;
+    }
+  }
+  return false;
+}

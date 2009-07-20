@@ -11,7 +11,7 @@
   try {
     RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,false,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling);
     if (mode.isAsynchronous())     return Collections.emptyList();
-    if (trace)     log.trace("Cache [{0}]: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps);
+    if (trace)     log.trace("Cache [{0}], is caller thread interupted? {3}: responses for command {1}:\n{2}",getAddress(),rpcCommand.getClass().getSimpleName(),rsps,Thread.currentThread().isInterrupted());
     if (rsps == null)     return Collections.emptyList();
     List<Response> retval=new ArrayList<Response>(rsps.size());
     boolean noValidResponses=true;
@@ -31,7 +31,7 @@
           if (value instanceof ExceptionResponse) {
             Exception e=((ExceptionResponse)value).getException();
             if (!(e instanceof ReplicationException)) {
-              if (trace)               log.trace("Recieved exception '{0}' from {1}",e,rsp.getSender());
+              if (trace)               log.trace("Received exception from " + rsp.getSender(),e);
               throw e;
             }
           }

@@ -1,0 +1,25 @@
+{
+  CacheManager cm=null;
+  List<CacheManager> managers=new ArrayList<CacheManager>();
+  try {
+    CountDownLatch startLatch=new CountDownLatch(1);
+    List<ExecutorThread> executorThreads=new ArrayList<ExecutorThread>();
+    for (int i=0; i < THREAD_COUNT; i++) {
+      cm=TestCacheManagerFactory.createClusteredCacheManager();
+      Configuration configuration=getConfiguration();
+      configuration.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+      cm.defineCache("test",configuration);
+      Cache distCache=cm.getCache("test");
+      ExecutorThread executorThread=new ExecutorThread(startLatch,distCache);
+      executorThreads.add(executorThread);
+      managers.add(cm);
+    }
+    TestingUtil.blockUntilViewsReceived(10000,managers.toArray(new CacheManager[managers.size()]));
+    startLatch.countDown();
+    Thread.sleep(BENCHMARK_DURATION);
+    joinThreadsAndPrintResult(executorThreads);
+  }
+  finally {
+    TestingUtil.killCacheManagers(managers);
+  }
+}

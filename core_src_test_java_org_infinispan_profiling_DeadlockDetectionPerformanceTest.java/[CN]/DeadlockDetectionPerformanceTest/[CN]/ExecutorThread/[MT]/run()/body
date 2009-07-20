@@ -1,0 +1,23 @@
+{
+  long start=System.currentTimeMillis();
+  try {
+    startLatch.await();
+  }
+ catch (  InterruptedException e) {
+    e.printStackTrace();
+  }
+  while ((start + BENCHMARK_DURATION) - System.currentTimeMillis() > 0) {
+    try {
+      txManager.begin();
+      List<String> keysToUpdate=getKeysPerTx();
+      for (      String key : keysToUpdate) {
+        cache.put(key,"value");
+      }
+      txManager.commit();
+      successfullTx++;
+    }
+ catch (    Throwable e) {
+      failedTx++;
+    }
+  }
+}

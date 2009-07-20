@@ -1,0 +1,35 @@
+{
+  DeadlockDetectingGlobalTransaction globalTransaction=(DeadlockDetectingGlobalTransaction)ctx.getGlobalTransaction();
+  globalTransaction.setProcessingThread(Thread.currentThread());
+  if (ctx.isOriginLocal()) {
+    if (configuration.getCacheMode().isDistributed()) {
+      Set<Address> transactionParticipants=ctx.getTransactionParticipants();
+      globalTransaction.setReplicatingTo(transactionParticipants);
+    }
+ else {
+      globalTransaction.setReplicatingTo(null);
+    }
+    if (trace)     log.trace("Deadlock detection information was added to " + globalTransaction);
+  }
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable dde) {
+    if (ctx.isOriginLocal()) {
+      globalTransaction.setMarkedForRollback(true);
+      boolean wasInterrupted=Thread.interrupted();
+      if (trace)       log.trace("Deadlock was detected on the remote side, marking the tx for rollback. Was this thread interrupted? " + wasInterrupted);
+    }
+    throw dde;
+  }
+ finally {
+    if (!ctx.isOriginLocal()) {
+      if (!txTable.containRemoteTx(ctx.getGlobalTransaction())) {
+        if (trace) {
+          log.trace("While returning from prepare we determined that remote tx is no longer in the txTable. " + "This means that a rollback was executed in between; releasing locks");
+        }
+        lockManager.releaseLocks(ctx);
+      }
+    }
+  }
+}

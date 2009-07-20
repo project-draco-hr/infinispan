@@ -1,0 +1,20 @@
+{
+  Object owner=ctx.getLockOwner();
+  ReversibleOrderedSet<Map.Entry<Object,CacheEntry>> entries=ctx.getLookedUpEntries().entrySet();
+  Iterator<Map.Entry<Object,CacheEntry>> it=entries.reverseIterator();
+  if (trace)   log.trace("Number of entries in context: {0}",entries.size());
+  while (it.hasNext()) {
+    Map.Entry<Object,CacheEntry> e=it.next();
+    CacheEntry entry=e.getValue();
+    Object key=e.getKey();
+    boolean needToUnlock=possiblyLocked(entry);
+    if (entry != null && entry.isChanged())     entry.rollback();
+ else {
+      if (trace)       log.trace("Entry for key {0} is null, not calling rollbackUpdate",key);
+    }
+    if (needToUnlock) {
+      if (trace)       log.trace("Releasing lock on [" + key + "] for owner "+ owner);
+      unlock(key,owner);
+    }
+  }
+}

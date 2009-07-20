@@ -2,7 +2,11 @@
   try {
     return invokeNextInterceptor(ctx,command);
   }
-  finally {
-    if (command.isOnePhaseCommit())     cleanupLocks(ctx,ctx.getLockOwner(),true);
+ catch (  TimeoutException te) {
+    cleanupLocks(ctx,false);
+    throw te;
+  }
+ finally {
+    if (command.isOnePhaseCommit())     cleanupLocks(ctx,true);
   }
 }

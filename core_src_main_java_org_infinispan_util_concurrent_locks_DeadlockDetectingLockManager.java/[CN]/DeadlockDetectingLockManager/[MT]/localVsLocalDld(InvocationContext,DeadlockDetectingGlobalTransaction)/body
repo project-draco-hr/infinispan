@@ -1,0 +1,16 @@
+{
+  if (trace)   log.trace("Looking for local vs local deadlocks");
+  DeadlockDetectingGlobalTransaction thisThreadsTx=(DeadlockDetectingGlobalTransaction)ctx.getLockOwner();
+  boolean weOwnLock=ownsLock(lockOwnerTx.getLockInterntion(),thisThreadsTx);
+  if (trace) {
+    log.trace("Other owner's intention is " + lockOwnerTx.getLockInterntion() + ". Do we("+ thisThreadsTx+ ") own lock for it? "+ weOwnLock+ ". Lock owner is "+ getOwner(lockOwnerTx.getLockInterntion()));
+  }
+  if (weOwnLock) {
+    boolean iShouldInterrupt=thisThreadsTx.thisWillInterrupt(lockOwnerTx);
+    if (trace)     log.trace("deadlock situation detected. Shall I interrupt?" + iShouldInterrupt);
+    if (iShouldInterrupt) {
+      lockOwnerTx.interruptProcessingThread();
+      if (exposeJmxStats)       detectedDeadlocks.incrementAndGet();
+    }
+  }
+}
