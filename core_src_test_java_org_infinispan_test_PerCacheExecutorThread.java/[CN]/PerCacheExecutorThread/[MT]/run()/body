@@ -1,0 +1,93 @@
+{
+  Operations operation;
+  boolean run=true;
+  while (run) {
+    try {
+      operation=(Operations)toExecute.take();
+    }
+ catch (    InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    System.out.println("about to process operation " + operation);
+switch (operation) {
+case BEGGIN_TX:
+{
+        TransactionManager txManager=TestingUtil.getTransactionManager(cache);
+        try {
+          txManager.begin();
+          setResponse(OperationsResult.BEGGIN_TX_OK);
+        }
+ catch (        Exception e) {
+          log.trace("Failure on beggining tx",e);
+          setResponse(e);
+        }
+        break;
+      }
+case COMMIT_TX:
+{
+      TransactionManager txManager=TestingUtil.getTransactionManager(cache);
+      try {
+        txManager.commit();
+        setResponse(OperationsResult.COMMIT_TX_OK);
+      }
+ catch (      Exception e) {
+        log.trace("Exception while committing tx",e);
+        setResponse(e);
+      }
+      break;
+    }
+case PUT_KEY_VALUE:
+{
+    try {
+      cache.put(key,value);
+      log.trace("Successfully exucuted putKeyValue(" + key + ", "+ value+ ")");
+      setResponse(OperationsResult.PUT_KEY_VALUE_OK);
+    }
+ catch (    Exception e) {
+      log.trace("Exception while executing putKeyValue(" + key + ", "+ value+ ")",e);
+      setResponse(e);
+    }
+    break;
+  }
+case REMOVE_KEY:
+{
+  try {
+    cache.remove(key);
+    log.trace("Successfully exucuted remove(" + key + ")");
+    setResponse(OperationsResult.REMOVE_KEY_OK);
+  }
+ catch (  Exception e) {
+    log.trace("Exception while executing remove(" + key + ")",e);
+    setResponse(e);
+  }
+  break;
+}
+case REPLACE_KEY_VALUE:
+{
+try {
+  cache.replace(key,value);
+  log.trace("Successfully exucuted replace(" + key + ","+ value+ ")");
+  setResponse(OperationsResult.REPLACE_KEY_VALUE_OK);
+}
+ catch (Exception e) {
+  log.trace("Exception while executing replace(" + key + ","+ value+ ")",e);
+  setResponse(e);
+}
+break;
+}
+case STOP_THREAD:
+{
+System.out.println("Exiting...");
+toExecute=null;
+run=false;
+break;
+}
+default :
+{
+setResponse(new IllegalStateException("Unknown operation!" + operation));
+}
+}
+if (responseLatch != null) responseLatch.countDown();
+}
+setResponse("EXIT");
+}
