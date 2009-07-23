@@ -8,7 +8,7 @@
   if (thisShouldInterrupt && isDeadLock) {
     lockOwnerTx.interruptProcessingThread();
     if (exposeJmxStats) {
-      detectedDeadlocks.incrementAndGet();
+      detectedRemoteDeadlocks.incrementAndGet();
       locallyInterruptedTransactions.incrementAndGet();
     }
     return lockForTheRemainingTime(key,lockTimeout,start,now);
@@ -19,7 +19,7 @@
  else {
     if (trace)     log.trace("Not trying to acquire lock anymore, as we're in deadlock and this will be rollback at origin");
     if (exposeJmxStats) {
-      detectedDeadlocks.incrementAndGet();
+      detectedRemoteDeadlocks.incrementAndGet();
     }
     remoteGlobalTransaction.setMarkedForRollback(true);
     throw new DeadlockDetectedException("Deadlock situation detected on tx: " + remoteTxContext.getLockOwner());

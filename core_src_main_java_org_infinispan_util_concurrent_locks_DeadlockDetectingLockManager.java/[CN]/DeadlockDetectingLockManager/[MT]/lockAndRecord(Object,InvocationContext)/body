@@ -19,10 +19,10 @@
           continue;
         }
         DeadlockDetectingGlobalTransaction lockOwnerTx=(DeadlockDetectingGlobalTransaction)owner;
-        if (!ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+        if (isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
           return remoteVsRemoteDld(key,ctx,lockTimeout,start,now,lockOwnerTx);
         }
-        if (ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+        if ((ctx.isOriginLocal() && !lockOwnerTx.isRemote()) || (!isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote())) {
           localVsLocalDld(ctx,lockOwnerTx);
         }
       }
