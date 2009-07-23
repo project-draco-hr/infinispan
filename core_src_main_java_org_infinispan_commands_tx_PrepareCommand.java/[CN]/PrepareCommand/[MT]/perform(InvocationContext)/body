@@ -12,5 +12,12 @@
   ctx.setRemoteTransaction(remoteTransaction);
   if (trace)   log.trace("Invoking remotly orginated prepare: " + this);
   notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(),ctx);
-  return invoker.invoke(ctx,this);
+  try {
+    return invoker.invoke(ctx,this);
+  }
+  finally {
+    if (this.isOnePhaseCommit()) {
+      txTable.removeRemoteTransaction(globalTx);
+    }
+  }
 }
