@@ -7,4 +7,32 @@
     doConnectionFactoryInitialization(connectionFactory);
   }
   this.key2StringMapper=config.getKey2StringMapper();
+  dmHelper=new DataManiulationHelper(connectionFactory,tableManipulation,marshaller){
+    @Override public void loadAllProcess(    ResultSet rs,    Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
+      InputStream inputStream=rs.getBinaryStream(1);
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      Object key=rs.getObject(2);
+      result.add(icv.toInternalCacheEntry(key));
+    }
+    @Override public void toStreamProcess(    ResultSet rs,    InputStream is,    ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),is);
+      Object key=rs.getObject(2);
+      marshaller.objectToObjectStream(icv.toInternalCacheEntry(key),objectOutput);
+    }
+    public boolean fromStreamProcess(    Object objFromStream,    PreparedStatement ps,    ObjectInput objectInput) throws SQLException, CacheLoaderException {
+      if (objFromStream instanceof InternalCacheEntry) {
+        InternalCacheEntry se=(InternalCacheEntry)objFromStream;
+        String key=key2StringMapper.getStringMapping(se.getKey());
+        ByteBuffer buffer=JdbcUtil.marshall(getMarshaller(),se.toInternalCacheValue());
+        ps.setBinaryStream(1,buffer.getStream(),buffer.getLength());
+        ps.setLong(2,se.getExpiryTime());
+        ps.setString(3,key);
+        return true;
+      }
+ else {
+        return false;
+      }
+    }
+  }
+;
 }

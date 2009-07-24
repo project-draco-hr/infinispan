@@ -6,4 +6,32 @@
     factory.start(config.getConnectionFactoryConfig());
     doConnectionFactoryInitialization(factory);
   }
+  dmHelper=new DataManiulationHelper(connectionFactory,tableManipulation,marshaller){
+    @Override public void loadAllProcess(    ResultSet rs,    Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
+      InputStream binaryStream=rs.getBinaryStream(1);
+      Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+      result.addAll(bucket.getStoredEntries());
+    }
+    @Override public void toStreamProcess(    ResultSet rs,    InputStream is,    ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
+      InputStream inputStream=rs.getBinaryStream(1);
+      Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      String bucketName=rs.getString(2);
+      marshaller.objectToObjectStream(bucketName,objectOutput);
+      marshaller.objectToObjectStream(bucket,objectOutput);
+    }
+    public boolean fromStreamProcess(    Object bucketName,    PreparedStatement ps,    ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException {
+      if (bucketName instanceof String) {
+        Bucket bucket=(Bucket)marshaller.objectFromObjectStream(objectInput);
+        ByteBuffer buffer=JdbcUtil.marshall(getMarshaller(),bucket);
+        ps.setBinaryStream(1,buffer.getStream(),buffer.getLength());
+        ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+        ps.setString(3,(String)bucketName);
+        return true;
+      }
+ else {
+        return false;
+      }
+    }
+  }
+;
 }
