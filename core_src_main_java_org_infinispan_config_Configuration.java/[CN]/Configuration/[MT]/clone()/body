@@ -1,19 +1,22 @@
 {
-  Configuration obj=null;
   try {
-    ByteArrayOutputStream bos=new ByteArrayOutputStream();
-    ObjectOutputStream out=new ObjectOutputStream(bos);
-    out.writeObject(this);
-    out.flush();
-    out.close();
-    ObjectInputStream in=new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-    obj=(Configuration)in.readObject();
+    Configuration dolly=(Configuration)super.clone();
+    if (globalConfiguration != null)     dolly.globalConfiguration=globalConfiguration.clone();
+    if (locking != null)     dolly.locking=(LockingType)locking.clone();
+    if (loaders != null)     dolly.loaders=loaders.clone();
+    if (transaction != null)     dolly.transaction=(TransactionType)transaction.clone();
+    if (customInterceptors != null)     dolly.customInterceptors=customInterceptors.clone();
+    if (eviction != null)     dolly.eviction=(EvictionType)eviction.clone();
+    if (expiration != null)     dolly.expiration=(ExpirationType)expiration.clone();
+    if (unsafe != null)     dolly.unsafe=(UnsafeType)unsafe.clone();
+    if (clustering != null)     dolly.clustering=clustering.clone();
+    if (jmxStatistics != null)     dolly.jmxStatistics=(BooleanAttributeType)jmxStatistics.clone();
+    if (lazyDeserialization != null)     dolly.lazyDeserialization=(BooleanAttributeType)lazyDeserialization.clone();
+    if (invocationBatching != null)     dolly.invocationBatching=(BooleanAttributeType)invocationBatching.clone();
+    if (deadlockDetection != null)     dolly.deadlockDetection=(DeadlockDetectionType)deadlockDetection.clone();
+    return dolly;
   }
- catch (  IOException e) {
-    e.printStackTrace();
+ catch (  CloneNotSupportedException e) {
+    throw new CacheException("Unexpected!",e);
   }
-catch (  ClassNotFoundException cnfe) {
-    cnfe.printStackTrace();
-  }
-  return obj;
 }
