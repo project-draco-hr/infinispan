@@ -1,5 +1,9 @@
 {
   globalConfiguration=initializedParser.parseGlobalConfiguration();
-  configurationOverrides.putAll(initializedParser.parseNamedConfigurations());
+  for (  Map.Entry<String,Configuration> entry : initializedParser.parseNamedConfigurations().entrySet()) {
+    Configuration c=globalConfiguration.getDefaultConfiguration().clone();
+    c.applyOverrides(entry.getValue());
+    configurationOverrides.put(entry.getKey(),c);
+  }
   globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this);
 }

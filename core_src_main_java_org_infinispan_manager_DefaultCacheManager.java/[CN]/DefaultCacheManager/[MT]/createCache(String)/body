@@ -1,9 +1,7 @@
 {
-  Configuration c=globalConfiguration.getDefaultConfiguration().clone();
-  if (!cacheName.equals(DEFAULT_CACHE_NAME)) {
-    Configuration overrides=configurationOverrides.get(cacheName);
-    if (overrides != null)     c.applyOverrides(overrides);
-  }
+  Configuration c=null;
+  if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))   c=globalConfiguration.getDefaultConfiguration().clone();
+ else   c=configurationOverrides.get(cacheName);
   c.assertValid();
   Cache cache=new InternalCacheFactory().createCache(c,globalComponentRegistry,cacheName);
   Cache other=caches.putIfAbsent(cacheName,cache);
