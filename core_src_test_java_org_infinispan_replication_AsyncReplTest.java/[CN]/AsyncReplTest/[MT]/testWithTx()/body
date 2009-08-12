@@ -1,6 +1,6 @@
 {
   String key="key";
-  replListener(cache2).expectAny();
+  replListener(cache2).expect(PutKeyValueCommand.class);
   cache1.put(key,"value1");
   replListener(cache2).waitForRpc();
   assertNotLocked(cache1,key);
@@ -8,12 +8,12 @@
   assertEquals("value1",cache2.get(key));
   TransactionManager mgr=TestingUtil.getTransactionManager(cache1);
   mgr.begin();
-  replListener(cache2).expectAnyWithTx();
+  replListener(cache2).expectWithTx(PutKeyValueCommand.class);
   cache1.put(key,"value2");
   assertEquals("value2",cache1.get(key));
   assertEquals("value1",cache2.get(key));
   mgr.commit();
-  replListener(cache2).waitForRpc(60,TimeUnit.SECONDS);
+  replListener(cache2).waitForRpc();
   assertNotLocked(cache1,key);
   assertEquals("value2",cache1.get(key));
   assertEquals("value2",cache2.get(key));
