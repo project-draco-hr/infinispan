@@ -1,2 +1,17 @@
 {
+  cacheName="dist";
+  configuration=getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC);
+  if (!testRetVals) {
+    configuration.setUnsafeUnreliableReturnValues(true);
+    configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+  }
+  if (tx)   configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  caches=createClusteredCaches(4,cacheName,configuration);
+  reorderBasedOnCHPositions();
+  c1=caches.get(0);
+  c2=caches.get(1);
+  c3=caches.get(2);
+  c4=caches.get(3);
+  cacheAddresses=new ArrayList<Address>(4);
+  for (  Cache cache : caches)   cacheAddresses.add(cache.getCacheManager().getAddress());
 }

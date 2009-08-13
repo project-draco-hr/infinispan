@@ -1,0 +1,47 @@
+{
+  if (recipients != null && recipients.isEmpty()) {
+    log.trace("Destination list is empty: no need to send message");
+    return Collections.emptyList();
+  }
+  log.trace("dests={0}, command={1}, mode={2}, timeout={3}",recipients,rpcCommand,mode,timeout);
+  flushTracker.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
+  boolean unlock=true;
+  flushTracker.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+  boolean asyncMarshalling=mode == ResponseMode.ASYNCHRONOUS;
+  try {
+    RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,false,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling);
+    if (mode.isAsynchronous())     return Collections.emptyList();
+    if (rsps == null)     return Collections.emptyList();
+    List<Response> retval=new ArrayList<Response>(rsps.size());
+    boolean noValidResponses=true;
+    for (    Rsp rsp : rsps.values()) {
+      if (rsp.wasSuspected() || !rsp.wasReceived()) {
+        if (rsp.wasSuspected()) {
+          throw new SuspectException("Suspected member: " + rsp.getSender());
+        }
+ else {
+          if (responseFilter == null)           throw new TimeoutException("Replication timeout for " + rsp.getSender());
+        }
+      }
+ else {
+        noValidResponses=false;
+        if (rsp.getValue() != null) {
+          Response value=(Response)rsp.getValue();
+          if (value instanceof ExceptionResponse) {
+            Exception e=((ExceptionResponse)value).getException();
+            if (!(e instanceof ReplicationException)) {
+              if (trace)               log.trace("Received exception from " + rsp.getSender(),e);
+              throw e;
+            }
+          }
+          retval.add(value);
+        }
+      }
+    }
+    if (noValidResponses)     throw new TimeoutException("Timed out waiting for valid responses!");
+    return retval;
+  }
+  finally {
+    if (unlock)     flushTracker.releaseProcessingLock();
+  }
+}

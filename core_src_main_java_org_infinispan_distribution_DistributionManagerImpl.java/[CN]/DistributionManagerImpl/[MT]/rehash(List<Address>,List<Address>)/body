@@ -1,0 +1,14 @@
+{
+  boolean join=oldMembers == null || oldMembers.size() < newMembers.size();
+  log.info("Detected a veiw change.  Member list changed from {0} to {1}",oldMembers,newMembers);
+  if (join) {
+    Address joiner=diff(newMembers,oldMembers);
+    log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
+  }
+ else {
+    log.info("This is a LEAVE event!");
+    ConsistentHash newCH=new DefaultConsistentHash();
+    newCH.setCaches(newMembers);
+    consistentHash=newCH;
+  }
+}
