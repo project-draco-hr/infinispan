@@ -3,9 +3,10 @@
   boolean unlocked=false;
   try {
     dmi.joinComplete=false;
-    long sleepTime=500;
-    int incrementFactor=2;
-    int maxSleepTime=600000;
+    long minSleepTime=500, maxSleepTime=2000;
+    int maxWaitTime=600000;
+    Random rand=new Random();
+    long giveupTime=System.currentTimeMillis() + maxWaitTime;
     do {
       log.trace("Requesting old consistent hash from coordinator");
       List<Response> resp=rpcManager.invokeRemotely(coordinator(),commandsFactory.buildGetConsistentHashCommand(self),ResponseMode.SYNCHRONOUS,100000,true);
@@ -18,16 +19,17 @@
       }
       log.trace("Retrieved old consistent hash address list {0}",addresses);
       if (addresses == null) {
-        if (sleepTime > maxSleepTime)         throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
-        log.debug("Sleeping for {0}",Util.prettyPrintTime(sleepTime));
-        Thread.sleep(sleepTime);
-        sleepTime*=incrementFactor;
+        long time=rand.nextInt((int)(maxSleepTime - minSleepTime) / 10);
+        time=(time * 10) + minSleepTime;
+        log.debug("Sleeping for {0}",Util.prettyPrintTime(time));
+        Thread.sleep(time);
       }
  else {
         chOld=createConsistentHash(addresses);
       }
     }
- while (chOld == null);
+ while (chOld == null && System.currentTimeMillis() < giveupTime);
+    if (chOld == null)     throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
     chNew=createConsistentHash(chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
     transactionLogger.enable();
