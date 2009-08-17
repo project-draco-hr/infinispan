@@ -4,9 +4,10 @@
     for (    Object k : keys) {
       cachesInTx.addAll(Arrays.asList(getOwners(k)));
     }
+    log.warn("In asyncTxWait, waiting for repl events on caches " + cachesInTx + " on keys "+ Arrays.toString(keys));
     for (    Cache<?,?> c : cachesInTx) {
       listenerLookup.get(c).expectAnyWithTx();
-      listenerLookup.get(c).waitForRpc();
+      listenerLookup.get(c).waitForRpc(240,TimeUnit.SECONDS);
     }
   }
 }
