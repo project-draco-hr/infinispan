@@ -1,7 +1,7 @@
 {
   TransactionManager transactionManager=null;
-  TransactionManagerLookup lookup=null;
-  if (transactionManager == null) {
+  TransactionManagerLookup lookup=configuration.getTransactionManagerLookup();
+  if (lookup == null) {
     if (configuration.getTransactionManagerLookupClass() != null) {
       try {
         lookup=(TransactionManagerLookup)Util.getInstance(configuration.getTransactionManagerLookupClass());
@@ -10,14 +10,14 @@
         throw new ConfigurationException("Problems looking up transaction manager",e);
       }
     }
-    try {
-      if (lookup != null) {
-        transactionManager=lookup.getTransactionManager();
-      }
+  }
+  try {
+    if (lookup != null) {
+      transactionManager=lookup.getTransactionManager();
     }
- catch (    Exception e) {
-      log.info("failed looking up TransactionManager, will not use transactions",e);
-    }
+  }
+ catch (  Exception e) {
+    log.info("failed looking up TransactionManager, will not use transactions",e);
   }
   if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {
     log.info("Using a batchMode transaction manager");
