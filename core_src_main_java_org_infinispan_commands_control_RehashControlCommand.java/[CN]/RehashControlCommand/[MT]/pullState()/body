@@ -1,0 +1,18 @@
+{
+  Address self=transport.getAddress();
+  ConsistentHash oldCH=distributionManager.getConsistentHash();
+  int numCopies=configuration.getNumOwners();
+  Map<Object,InternalCacheValue> state=new HashMap<Object,InternalCacheValue>();
+  for (  InternalCacheEntry ice : dataContainer) {
+    Object k=ice.getKey();
+    if (shouldAddToMap(k,oldCH,numCopies,self))     state.put(k,ice.toInternalCacheValue());
+  }
+  CacheStore cacheStore=distributionManager.getCacheStoreForRehashing();
+  if (cacheStore != null) {
+    for (    InternalCacheEntry ice : cacheStore.loadAll()) {
+      Object k=ice.getKey();
+      if (shouldAddToMap(k,oldCH,numCopies,self) && !state.containsKey(k))       state.put(k,ice.toInternalCacheValue());
+    }
+  }
+  return state;
+}

@@ -9,14 +9,8 @@
     long giveupTime=System.currentTimeMillis() + maxWaitTime;
     do {
       log.trace("Requesting old consistent hash from coordinator");
-      List<Response> resp=rpcManager.invokeRemotely(coordinator(),commandsFactory.buildGetConsistentHashCommand(self),ResponseMode.SYNCHRONOUS,100000,true);
-      List<Address> addresses=null;
-      for (      Response r : resp) {
-        if (r instanceof SuccessfulResponse) {
-          addresses=(List<Address>)((SuccessfulResponse)r).getResponseValue();
-          break;
-        }
-      }
+      List<Response> resp=rpcManager.invokeRemotely(coordinator(),commandsFactory.buildRehashControlCommand(JOIN_REQ,self),SYNCHRONOUS,100000,true);
+      List<Address> addresses=parseResponses(resp);
       log.trace("Retrieved old consistent hash address list {0}",addresses);
       if (addresses == null) {
         long time=rand.nextInt((int)(maxSleepTime - minSleepTime) / 10);
@@ -33,13 +27,13 @@
     chNew=createConsistentHash(chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
     transactionLogger.enable();
-    rpcManager.broadcastRpcCommand(commandsFactory.buildInstallConsistentHashCommand(self,true),true,true);
+    rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
     Address myAddress=rpcManager.getTransport().getAddress();
-    PullStateCommand cmd=commandsFactory.buildPullStateCommand(myAddress,chNew);
-    List<Response> resps=rpcManager.invokeRemotely(chOld.getCaches(),cmd,ResponseMode.SYNCHRONOUS,10000,true);
+    RehashControlCommand cmd=commandsFactory.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
+    List<Response> resps=rpcManager.invokeRemotely(chOld.getCaches(),cmd,SYNCHRONOUS,10000,true);
     for (    Response r : resps) {
       if (r instanceof SuccessfulResponse) {
-        Map<Object,InternalCacheValue> state=(Map<Object,InternalCacheValue>)((SuccessfulResponse)r).getResponseValue();
+        Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
         for (        Map.Entry<Object,InternalCacheValue> e : state.entrySet()) {
           if (chNew.locate(e.getKey(),configuration.getNumOwners()).contains(myAddress)) {
             InternalCacheValue v=e.getValue();
@@ -60,8 +54,8 @@
     apply(c);
     unlocked=true;
     transactionLogger.unlockAndDisable();
-    rpcManager.broadcastRpcCommand(commandsFactory.buildInstallConsistentHashCommand(self,false),true,true);
-    rpcManager.invokeRemotely(coordinator(),commandsFactory.buildJoinCompleteCommand(self),ResponseMode.SYNCHRONOUS,100000,true);
+    rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
+    rpcManager.invokeRemotely(coordinator(),commandsFactory.buildRehashControlCommand(JOIN_COMPLETE,self),SYNCHRONOUS,100000,true);
     Map<Address,Set<Object>> invalidations=new HashMap<Address,Set<Object>>();
     for (    Object key : dataContainer.keySet()) {
       Collection<Address> invalidHolders=getInvalidHolders(key,chOld,chNew);
