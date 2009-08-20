@@ -1,5 +1,9 @@
 {
   if (original instanceof HashSet)   return (Set<E>)((HashSet)original).clone();
   if (original instanceof TreeSet)   return (Set<E>)((TreeSet)original).clone();
+  if (original instanceof FastCopyHashMap.EntrySet || original instanceof FastCopyHashMap.KeySet)   return new HashSet<E>(original);
+  if (original.getClass().equals(Collections.emptySet().getClass()))   return Collections.emptySet();
+  if (original.getClass().equals(Collections.singleton("").getClass()))   return Collections.singleton(original.iterator().next());
+  if (original.getClass().getSimpleName().contains("$"))   return new HashSet<E>(original);
   return attemptClone(original);
 }
