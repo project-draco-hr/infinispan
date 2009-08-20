@@ -1,11 +1,11 @@
 {
   replCount=configuration.getNumOwners();
-  consistentHash=(ConsistentHash)Util.getInstance(configuration.getConsistentHashClass());
-  consistentHash.setCaches(rpcManager.getTransport().getMembers());
+  consistentHash=createConsistentHash(configuration,rpcManager.getTransport().getMembers());
+  self=rpcManager.getTransport().getAddress();
   listener=new ViewChangeListener();
   notifier.addListener(listener);
   if (rpcManager.getTransport().getMembers().size() > 1) {
-    JoinTask joinTask=new JoinTask(rpcManager,cf,configuration,transactionLogger,dataContainer,interceptorChain,icc,this);
+    JoinTask joinTask=new JoinTask(rpcManager,cf,configuration,transactionLogger,dataContainer,this);
     rehashExecutor.submit(joinTask);
   }
  else {

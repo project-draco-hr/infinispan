@@ -1,0 +1,11 @@
+{
+  for (  Map.Entry<Object,InternalCacheValue> e : state.entrySet()) {
+    if (consistentHash.locate(e.getKey(),configuration.getNumOwners()).contains(self)) {
+      InternalCacheValue v=e.getValue();
+      PutKeyValueCommand put=cf.buildPutKeyValueCommand(e.getKey(),v.getValue(),v.getLifespan(),v.getMaxIdle());
+      InvocationContext ctx=icc.createInvocationContext();
+      ctx.setFlags(Flag.CACHE_MODE_LOCAL,Flag.SKIP_REMOTE_LOOKUP);
+      interceptorChain.invoke(ctx,put);
+    }
+  }
+}

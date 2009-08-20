@@ -6,9 +6,33 @@
     log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
   }
  else {
-    log.info("This is a LEAVE event!");
-    ConsistentHash newCH=new DefaultConsistentHash();
-    newCH.setCaches(newMembers);
-    consistentHash=newCH;
+    Address leaver=diff(newMembers,oldMembers);
+    log.info("This is a LEAVE event!  Node {0} has just left",leaver);
+    boolean willReceiveLeaverState=willReceiveLeaverState(leaver);
+    boolean willSendLeaverState=willSendLeaverState(leaver);
+    try {
+      oldConsistentHash=consistentHash;
+      consistentHash=ConsistentHashHelper.removeAddress(consistentHash,leaver,configuration);
+    }
+ catch (    Exception e) {
+      log.fatal("Unable to process leaver!!",e);
+      throw new CacheException(e);
+    }
+    if (willReceiveLeaverState) {
+      log.info("Starting transaction logging; expecting state from someone!");
+      transactionLogger.enable();
+    }
+    if (willSendLeaverState) {
+      if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
+        leaveTaskFuture.cancel(true);
+      }
+      leavers.add(leaver);
+      LeaveTask task=new LeaveTask(this,rpcManager,configuration,leavers,transactionLogger,cf,dataContainer);
+      leaveTaskFuture=rehashExecutor.submit(task);
+      log.info("Need to rehash");
+    }
+ else {
+      log.info("Not in same subspace, so ignoring leave event");
+    }
   }
 }

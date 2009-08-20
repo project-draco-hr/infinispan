@@ -1,0 +1,22 @@
+{
+  Map<Address,Set<Object>> invalidations=new HashMap<Address,Set<Object>>();
+  for (  Object key : dataContainer.keySet()) {
+    Collection<Address> invalidHolders=getInvalidHolders(key,chOld,chNew);
+    for (    Address a : invalidHolders) {
+      Set<Object> s=invalidations.get(a);
+      if (s == null) {
+        s=new HashSet<Object>();
+        invalidations.put(a,s);
+      }
+      s.add(key);
+    }
+  }
+  Set<Future> futures=new HashSet<Future>();
+  for (  Map.Entry<Address,Set<Object>> e : invalidations.entrySet()) {
+    InvalidateCommand ic=cf.buildInvalidateFromL1Command(e.getValue().toArray());
+    NotifyingNotifiableFuture f=new NotifyingFutureImpl(null);
+    rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()),ic,true,f);
+    futures.add(f);
+  }
+  for (  Future f : futures)   f.get();
+}

@@ -1,84 +1,53 @@
 {
-  log.trace("Starting rehash on new joiner");
+  long start=System.currentTimeMillis();
+  if (log.isDebugEnabled())   log.debug("Commencing");
   boolean unlocked=false;
   try {
     dmi.joinComplete=false;
     long minSleepTime=500, maxSleepTime=2000;
-    int maxWaitTime=600000;
+    int maxWaitTime=(int)configuration.getRehashRpcTimeout() * 10;
     Random rand=new Random();
     long giveupTime=System.currentTimeMillis() + maxWaitTime;
     do {
-      log.trace("Requesting old consistent hash from coordinator");
-      List<Response> resp=rpcManager.invokeRemotely(coordinator(),commandsFactory.buildRehashControlCommand(JOIN_REQ,self),SYNCHRONOUS,100000,true);
+      if (log.isTraceEnabled())       log.trace("Requesting old consistent hash from coordinator");
+      List<Response> resp=rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_REQ,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
       List<Address> addresses=parseResponses(resp);
-      log.trace("Retrieved old consistent hash address list {0}",addresses);
+      if (log.isDebugEnabled())       log.debug("Retrieved old consistent hash address list {0}",addresses);
       if (addresses == null) {
         long time=rand.nextInt((int)(maxSleepTime - minSleepTime) / 10);
         time=(time * 10) + minSleepTime;
-        log.debug("Sleeping for {0}",Util.prettyPrintTime(time));
+        if (log.isTraceEnabled())         log.trace("Sleeping for {0}",Util.prettyPrintTime(time));
         Thread.sleep(time);
       }
  else {
-        chOld=createConsistentHash(addresses);
+        chOld=createConsistentHash(configuration,addresses);
       }
     }
  while (chOld == null && System.currentTimeMillis() < giveupTime);
     if (chOld == null)     throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
-    chNew=createConsistentHash(chOld.getCaches(),self);
+    chNew=createConsistentHash(configuration,chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
     transactionLogger.enable();
-    rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
+    rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
     Address myAddress=rpcManager.getTransport().getAddress();
-    RehashControlCommand cmd=commandsFactory.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
-    List<Response> resps=rpcManager.invokeRemotely(chOld.getCaches(),cmd,SYNCHRONOUS,10000,true);
+    RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
+    List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff();
+    List<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
     for (    Response r : resps) {
       if (r instanceof SuccessfulResponse) {
         Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
-        for (        Map.Entry<Object,InternalCacheValue> e : state.entrySet()) {
-          if (chNew.locate(e.getKey(),configuration.getNumOwners()).contains(myAddress)) {
-            InternalCacheValue v=e.getValue();
-            PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(e.getKey(),v.getValue(),v.getLifespan(),v.getMaxIdle());
-            InvocationContext ctx=icc.createInvocationContext();
-            ctx.setFlags(Flag.CACHE_MODE_LOCAL,Flag.SKIP_REMOTE_LOOKUP);
-            interceptorChain.invoke(ctx,put);
-          }
-        }
+        dmi.applyState(chNew,state);
       }
     }
-    List<WriteCommand> c=null;
-    while (transactionLogger.size() > 10) {
-      c=transactionLogger.drain();
-      apply(c);
-    }
-    c=transactionLogger.drainAndLock();
-    apply(c);
+    dmi.drainTransactionLog();
     unlocked=true;
-    transactionLogger.unlockAndDisable();
-    rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
-    rpcManager.invokeRemotely(coordinator(),commandsFactory.buildRehashControlCommand(JOIN_COMPLETE,self),SYNCHRONOUS,100000,true);
-    Map<Address,Set<Object>> invalidations=new HashMap<Address,Set<Object>>();
-    for (    Object key : dataContainer.keySet()) {
-      Collection<Address> invalidHolders=getInvalidHolders(key,chOld,chNew);
-      for (      Address a : invalidHolders) {
-        Set<Object> s=invalidations.get(a);
-        if (s == null) {
-          s=new HashSet<Object>();
-          invalidations.put(a,s);
-        }
-        s.add(key);
-      }
-    }
-    Set<Future> futures=new HashSet<Future>();
-    for (    Map.Entry<Address,Set<Object>> e : invalidations.entrySet()) {
-      InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(e.getValue().toArray());
-      NotifyingNotifiableFuture f=new NotifyingFutureImpl(null);
-      rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()),ic,true,f);
-      futures.add(f);
-    }
-    for (    Future f : futures)     f.get();
+    rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
+    rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_COMPLETE,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
+    invalidateInvalidHolders(chOld,chNew);
+    if (log.isInfoEnabled())     log.info("Completed in {0}!",Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
  catch (  Exception e) {
-    log.warn("Caught error performing rehash!",e);
+    log.error("Caught exception!",e);
   }
  finally {
     if (!unlocked)     transactionLogger.unlockAndDisable();

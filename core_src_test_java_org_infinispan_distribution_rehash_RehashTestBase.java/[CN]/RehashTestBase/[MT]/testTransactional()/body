@@ -1,0 +1,41 @@
+{
+  final List<MagicKey> keys=init();
+  final CountDownLatch l=new CountDownLatch(1);
+  Thread th=new Thread("Updater"){
+    @Override public void run(){
+      try {
+        TransactionManager t1=TestingUtil.getTransactionManager(c1);
+        t1.begin();
+        c1.put(keys.get(0),"transactionally_replaced");
+        Transaction tx=t1.getTransaction();
+        tx.enlistResource(new XAResourceAdapter(){
+          public int prepare(          Xid id){
+            try {
+              l.await();
+            }
+ catch (            InterruptedException e) {
+            }
+            return XAResource.XA_OK;
+          }
+        }
+);
+        t1.commit();
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+;
+  th.start();
+  log.info("Invoking rehash event");
+  performRehashEvent();
+  l.countDown();
+  th.join();
+  log.info("Rehash complete");
+  assertOnAllCachesAndOwnership(keys.get(0),"transactionally_replaced");
+  assertOnAllCachesAndOwnership(keys.get(1),"v" + 2);
+  assertOnAllCachesAndOwnership(keys.get(2),"v" + 3);
+  assertOnAllCachesAndOwnership(keys.get(3),"v" + 4);
+  assertProperConsistentHashOnAllCaches();
+}

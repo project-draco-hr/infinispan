@@ -1,0 +1,20 @@
+{
+  final List<MagicKey> keys=init();
+  final CountDownLatch latch=new CountDownLatch(1);
+  List<Updater> updaters=new ArrayList<Updater>(keys.size());
+  for (  MagicKey k : keys) {
+    Updater u=new Updater(c1,k,latch,tx);
+    u.start();
+    updaters.add(u);
+  }
+  latch.countDown();
+  log.info("Invoking rehash event");
+  performRehashEvent();
+  for (  Updater u : updaters)   u.complete();
+  for (  Updater u : updaters)   u.join();
+  waitForRehashCompletion();
+  log.info("Rehash complete");
+  int i=0;
+  for (  MagicKey key : keys)   assertOnAllCachesAndOwnership(key,"v" + updaters.get(i++).currentValue);
+  assertProperConsistentHashOnAllCaches();
+}
