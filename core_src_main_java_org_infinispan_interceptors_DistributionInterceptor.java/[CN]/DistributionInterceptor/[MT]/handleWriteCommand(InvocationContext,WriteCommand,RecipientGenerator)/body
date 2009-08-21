@@ -10,17 +10,7 @@
         if (trace)         log.trace("Invoking command {0} on hosts {1}",command,rec);
         boolean useFuture=ctx.isUseFutureReturnType();
         boolean sync=isSynchronous(ctx);
-        NotifyingNotifiableFuture<Object> future=null;
-        if (isL1CacheEnabled && rec != null && rpcManager.getTransport().getMembers().size() > rec.size()) {
-          InvalidateCommand ic=cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-          if (useFuture) {
-            future=new AggregatingNotifyingFutureImpl(returnValue,2);
-            rpcManager.broadcastRpcCommandInFuture(ic,future);
-          }
- else {
-            rpcManager.broadcastRpcCommand(ic,sync);
-          }
-        }
+        NotifyingNotifiableFuture<Object> future=flushL1Cache(rec == null ? 0 : rec.size(),recipientGenerator.getKeys(),useFuture,returnValue,sync);
         if (useFuture) {
           if (future == null)           future=new NotifyingFutureImpl(returnValue);
           rpcManager.invokeRemotelyInFuture(rec,command,future);

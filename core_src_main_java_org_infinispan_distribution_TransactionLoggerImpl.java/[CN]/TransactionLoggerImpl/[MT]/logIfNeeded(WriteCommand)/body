@@ -1,15 +1,20 @@
 {
-  loggingLock.readLock().lock();
-  try {
-    if (enabled) {
-      commandQueue.add(command);
-      return true;
+  if (enabled) {
+    loggingLock.readLock().lock();
+    try {
+      if (enabled) {
+        try {
+          commandQueue.put(command);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        return true;
+      }
     }
- else {
-      return false;
-    }
-  }
   finally {
-    loggingLock.readLock().unlock();
+      loggingLock.readLock().unlock();
+    }
   }
+  return false;
 }

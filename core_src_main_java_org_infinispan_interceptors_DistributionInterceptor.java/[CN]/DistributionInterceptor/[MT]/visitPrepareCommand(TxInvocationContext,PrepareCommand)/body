@@ -5,6 +5,7 @@
     List<Address> recipients=new ArrayList<Address>(ctx.getTransactionParticipants());
     if (trace)     log.trace("Multicasting PrepareCommand to recipients : " + recipients);
     rpcManager.invokeRemotely(recipients,command,sync);
+    if (command.isOnePhaseCommit())     flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),false,null,false);
   }
   return retVal;
 }
