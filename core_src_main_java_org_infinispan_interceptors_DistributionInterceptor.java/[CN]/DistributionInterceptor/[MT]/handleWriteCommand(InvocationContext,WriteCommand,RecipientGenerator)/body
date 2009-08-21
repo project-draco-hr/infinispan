@@ -1,7 +1,10 @@
 {
   boolean localModeForced=isLocalModeForced(ctx);
   remoteGetBeforeWrite(ctx,command.isConditional(),recipientGenerator.getKeys());
-  if (localModeForced)   return invokeNextInterceptor(ctx,command);
+  if (localModeForced) {
+    log.trace("LOCAL mode forced.  No RPC needed.");
+    return invokeNextInterceptor(ctx,command);
+  }
   Object returnValue=invokeNextInterceptor(ctx,command);
   if (command.isSuccessful()) {
     if (!ctx.isInTxScope()) {
