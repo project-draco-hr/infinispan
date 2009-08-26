@@ -1,0 +1,18 @@
+{
+  Field f=null;
+  try {
+    f=c.getDeclaredField(fieldName);
+  }
+ catch (  NoSuchFieldException e) {
+    ClassDoc classDoc=rootDoc.classNamed(c.getName());
+    for (    FieldDoc fd : classDoc.fields()) {
+      for (      Tag t : fd.tags(CONFIG_REF)) {
+        if (t.text().equals(fieldName)) {
+          return findFieldRecursively(c,fd.name());
+        }
+      }
+    }
+    if (!c.equals(Object.class))     f=findFieldRecursively(c.getSuperclass(),fieldName);
+  }
+  return f;
+}

@@ -5,49 +5,32 @@
   List<Class<?>> configBeans;
   try {
     configBeans=getConfigBeans();
+    configBeans.add(TypedProperties.class);
+    configBeans.add(InfinispanConfiguration.class);
     XMLTreeOutputWalker tw=new XMLTreeOutputWalker(sb);
-    TreeNode root=tw.constructTreeFromBeans(configBeans);
+    FileLookup fl=new FileLookup();
+    InputStream file=fl.lookupFile("schema/infinispan-config-" + Version.getMajorVersion() + ".xsd");
+    XSOMParser reader=new XSOMParser();
+    reader.parse(file);
+    XSSchemaSet xss=reader.getResult();
+    XSOMSchemaTreeWalker w=new XSOMSchemaTreeWalker(xss.getSchema(1),"infinispan");
+    TreeNode root=w.getRoot();
+    associateBeansWithTreeNodes(configBeans,root);
     sb.append("<div class=\"" + "source" + "\"><pre>");
     tw.preOrderTraverse(root);
     sb.append("</pre></div>");
-    for (    Class<?> clazz : configBeans) {
-      ConfigurationElement ces[]=configurationElementsOnBean(clazz);
-      for (      ConfigurationElement ce : ces) {
-        boolean createdAttributes=false;
-        boolean createdProperties=false;
-        generateHeaderForConfigurationElement(sb,tw,root,ce);
-        for (        Method m : clazz.getMethods()) {
-          ConfigurationAttribute a=m.getAnnotation(ConfigurationAttribute.class);
-          boolean attribute=a != null && a.containingElement().equals(ce.name());
-          if (attribute && !createdAttributes) {
-            sb.append("<table class=\"bodyTable\"> ");
-            sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
-            createdAttributes=true;
-          }
-          if (attribute) {
-            generateAttributeTableRow(clazz,sb,m,a);
-          }
-        }
-        if (createdAttributes) {
-          sb.append("</table></div>");
-        }
-        for (        Method m : clazz.getMethods()) {
-          ConfigurationProperty[] cprops=propertiesElementsOnMethod(m);
-          for (          ConfigurationProperty c : cprops) {
-            boolean property=c.parentElement().equals(ce.name());
-            if (property && !createdProperties) {
-              sb.append("\n<table class=\"bodyTable\"> ");
-              sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
-              createdProperties=true;
-            }
-            if (property) {
-              generatePropertyTableRow(sb,c);
-            }
-          }
-        }
-        if (createdProperties) {
-          sb.append("</table></div>");
-        }
+    TreeNode node=tw.findNode(root,"namedCache","infinispan");
+    node.detach();
+    PruneTreeWalker ptw=new PruneTreeWalker("property");
+    ptw.postOrderTraverse(root);
+    for (    TreeNode n : root) {
+      if (n.getName().equals("properties"))       continue;
+      generateHeaderForConfigurationElement(sb,tw,n);
+      if (!n.getAttributes().isEmpty()) {
+        generateAttributeTableRows(sb,n);
+      }
+      if (n.hasChild("properties")) {
+        generatePropertiesTableRows(sb,n);
       }
     }
   }
