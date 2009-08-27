@@ -7,15 +7,19 @@
           List<Tag> list=Arrays.asList(classDoc.tags(CONFIG_REF));
           for (          Tag tag : list) {
             String text=tag.text().trim();
+            if (text.contains("|")) {
+              text=text.substring(0,text.indexOf("|"));
+              text.trim();
+            }
             if (text.contains(":")) {
               String strings[]=text.split(":");
               String parent=strings[1].trim();
               String thisNode=strings[0].trim();
-              if (thisNode.startsWith(n.getName()) && parent.startsWith(n.getParent().getName())) {
+              if (n.getName().equalsIgnoreCase(thisNode) && n.getParent().getName().equalsIgnoreCase(parent)) {
                 n.setBeanClass(clazz);
               }
             }
-            if (text.startsWith(n.getName()) && n.getBeanClass() == null) {
+ else             if (n.getName().equalsIgnoreCase(text) && n.getBeanClass() == null) {
               n.setBeanClass(clazz);
             }
           }

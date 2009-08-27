@@ -13,6 +13,7 @@
     }
   }
  catch (  Exception e) {
+    System.out.println("Did noc construct object " + bean);
   }
   Set<XSAttributeDecl> attributes=n.getAttributes();
   for (  XSAttributeDecl a : attributes) {
@@ -25,21 +26,20 @@
       sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
     }
  else {
-      boolean valueSet=false;
+      Field field=null;
+      Object value=null;
       try {
-        Field field=findFieldRecursively(bean,a.getName());
-        Object value=fieldValue(field,object);
+        field=findFieldRecursively(bean,a.getName());
+        value=fieldValue(field,object);
         if (value != null) {
-          valueSet=true;
           sb.append("<td>").append(value.toString()).append("</td>\n");
+        }
+ else {
+          sb.append("<td>").append("null").append("</td>\n");
         }
       }
  catch (      Exception e) {
-      }
- finally {
-        if (!valueSet) {
-          sb.append("<td>").append("N/A").append("</td>\n");
-        }
+        sb.append("<td>").append("N/A").append("</td>\n");
       }
     }
     boolean docSet=false;
