@@ -3,10 +3,12 @@
   boolean foundMethods=false;
   Map<Class<? extends Annotation>,Class> allowedListeners=getAllowedMethodAnnotations();
   for (  Method m : listener.getClass().getMethods()) {
-    for (    Class<? extends Annotation> annotation : allowedListeners.keySet()) {
-      if (m.isAnnotationPresent(annotation)) {
-        testListenerMethodValidity(m,allowedListeners.get(annotation),annotation.getName());
-        addListenerInvocation(annotation,new ListenerInvocation(listener,m,sync));
+    for (    Map.Entry<Class<? extends Annotation>,Class> annotationEntry : allowedListeners.entrySet()) {
+      Class<? extends Annotation> key=annotationEntry.getKey();
+      Class value=annotationEntry.getValue();
+      if (m.isAnnotationPresent(key)) {
+        testListenerMethodValidity(m,value,key.getName());
+        addListenerInvocation(key,new ListenerInvocation(listener,m,sync));
         foundMethods=true;
       }
     }
