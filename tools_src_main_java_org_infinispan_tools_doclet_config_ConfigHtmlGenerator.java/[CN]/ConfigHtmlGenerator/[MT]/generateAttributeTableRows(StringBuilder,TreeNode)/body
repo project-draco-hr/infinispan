@@ -45,12 +45,12 @@
     }
  else {
       Field field=null;
-      Object value=null;
+      Object defaultValue=null;
       try {
         field=findFieldRecursively(bean,a.getName());
-        value=fieldValue(field,object);
-        if (value != null) {
-          sb.append("<td>").append(value.toString()).append("</td>\n");
+        defaultValue=fieldValue(field,object);
+        if (defaultValue != null) {
+          sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
         }
  else {
           sb.append("<td>").append("null").append("</td>\n");
@@ -60,21 +60,11 @@
         sb.append("<td>").append("N/A").append("</td>\n");
       }
     }
-    boolean docSet=false;
     FieldDoc fieldDoc=findFieldDocRecursively(bean,a.getName(),CONFIG_REF);
     if (fieldDoc != null) {
       Tag[] tags=fieldDoc.tags(CONFIG_REF);
-      if (tags.length == 1) {
-        docSet=true;
-        String text=tags[0].text().trim();
-        if (text.contains("|")) {
-          text=text.substring(text.indexOf("|") + 1);
-          sb.append("<td>").append(text).append("</td>\n");
-        }
-      }
-    }
-    if (!docSet) {
-      sb.append("<td>").append("todo").append("</td>\n");
+      Map<String,String> p=parseTag(tags[0].text().trim());
+      sb.append("<td>").append(p.get("desc")).append("</td>\n");
     }
     sb.append("</tr>\n");
   }
