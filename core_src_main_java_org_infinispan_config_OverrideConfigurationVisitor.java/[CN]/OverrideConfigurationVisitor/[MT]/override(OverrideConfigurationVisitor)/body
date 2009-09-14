@@ -3,34 +3,10 @@
   for (  Entry<String,BooleanAttributeType> entry : entrySet) {
     BooleanAttributeType attributeType=bats.get(entry.getKey());
     if (attributeType != null) {
-      attributeType.setEnabled(entry.getValue().enabled);
+      attributeType.enabled=entry.getValue().enabled;
     }
   }
   overrideFields(cacheLoaderManagerConfig,override.cacheLoaderManagerConfig);
-  CacheLoaderManagerConfig config=override.cacheLoaderManagerConfig;
-  List<CacheLoaderConfig> cll2=config.getCacheLoaderConfigs();
-  List<CacheLoaderConfig> cll1=cacheLoaderManagerConfig.getCacheLoaderConfigs();
-  if (cll1.isEmpty() && !cll2.isEmpty()) {
-    cll1.addAll(cll2);
-  }
- else   if (!cll1.isEmpty() && !cll2.isEmpty()) {
-    Iterator<CacheLoaderConfig> i1=cll1.iterator();
-    Iterator<CacheLoaderConfig> i2=cll2.iterator();
-    for (; i1.hasNext() && i2.hasNext(); ) {
-      CacheLoaderConfig l1=i1.next();
-      CacheLoaderConfig l2=i2.next();
-      if (l1.getCacheLoaderClassName().equals(l2.getCacheLoaderClassName())) {
-        overrideFields((AbstractConfigurationBean)l1,(AbstractConfigurationBean)l2);
-        if (l1 instanceof AbstractCacheStoreConfig && l2 instanceof AbstractCacheStoreConfig) {
-          overrideFields(((AbstractCacheStoreConfig)l1).getSingletonStoreConfig(),((AbstractCacheStoreConfig)l2).getSingletonStoreConfig());
-          overrideFields(((AbstractCacheStoreConfig)l1).getAsyncStoreConfig(),((AbstractCacheStoreConfig)l2).getAsyncStoreConfig());
-        }
-      }
-    }
-    while (i2.hasNext()) {
-      cll1.add(i2.next());
-    }
-  }
   overrideFields(asyncType,override.asyncType);
   overrideFields(clusteringType,override.clusteringType);
   overrideFields(deadlockDetectionType,override.deadlockDetectionType);
