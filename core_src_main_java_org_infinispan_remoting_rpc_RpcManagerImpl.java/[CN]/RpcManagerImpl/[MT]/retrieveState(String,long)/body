@@ -1,9 +1,8 @@
 {
   if (t.isSupportStateTransfer()) {
-    Random r=new Random();
-    int initialWaitTime=(r.nextInt(10) + 1) * 100;
-    int waitTimeIncreaseFactor=2;
-    int numRetries=5;
+    long initialWaitTime=configuration.getStateRetrievalInitialRetryWaitTime();
+    int waitTimeIncreaseFactor=configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
+    int numRetries=configuration.getStateRetrievalNumRetries();
     List<Address> members=t.getMembers();
     if (members.size() < 2) {
       if (log.isDebugEnabled())       log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
@@ -11,7 +10,8 @@
     }
     boolean success=false;
     try {
-      outer:       for (int i=0, wait=initialWaitTime; i < numRetries; i++) {
+      long wait=initialWaitTime;
+      outer:       for (int i=0; i < numRetries; i++) {
         for (        Address member : members) {
           if (!member.equals(t.getAddress())) {
             try {
