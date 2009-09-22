@@ -1,0 +1,18 @@
+{
+  IndexSearcher searcher=buildSearcher(searchFactory);
+  try {
+    QueryHits queryHits=getQueryHits(searcher,calculateTopDocsRetrievalSize());
+    int first=first();
+    int max=max(first,queryHits.totalHits);
+    DocumentExtractor extractor=new DocumentExtractor(queryHits,searchFactory,indexProjection,idFieldNames,allowFieldSelectionInProjection);
+    return new LazyIterator(extractor,cache,searcher,searchFactory,first,max,fetchSize);
+  }
+ catch (  IOException e) {
+    try {
+      IndexSearcherCloser.closeSearcher(searcher,searchFactory.getReaderProvider());
+    }
+ catch (    SearchException ee) {
+    }
+    throw new HibernateException("Unable to query Lucene index",e);
+  }
+}

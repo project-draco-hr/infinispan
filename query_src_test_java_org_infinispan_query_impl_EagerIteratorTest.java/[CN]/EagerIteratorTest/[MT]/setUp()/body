@@ -1,0 +1,19 @@
+{
+  keys=new ArrayList<Object>();
+  dummyResults=new HashMap<String,String>();
+  for (int i=1; i <= 10; i++) {
+    String key="key" + i;
+    keys.add(key);
+    dummyResults.put(key,"Result number " + i);
+  }
+  cache=createMock(Cache.class);
+  expect(cache.get(anyObject())).andAnswer(new IAnswer<String>(){
+    public String answer() throws Throwable {
+      String k=getCurrentArguments()[0].toString();
+      return dummyResults.get(k);
+    }
+  }
+).anyTimes();
+  iterator=new EagerIterator(keys,cache,fetchSize);
+  EasyMock.replay(cache);
+}

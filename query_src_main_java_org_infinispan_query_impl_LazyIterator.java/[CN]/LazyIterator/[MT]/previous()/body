@@ -1,0 +1,26 @@
+{
+  if (!hasPrevious())   throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
+  Object toReturn=null;
+  int bufferSize=buffer.length;
+  if (bufferIndex >= 0 && index <= bufferIndex && index >= (bufferIndex + bufferSize)) {
+    int indexToReturn=bufferIndex - index;
+    toReturn=buffer[indexToReturn];
+  }
+  try {
+    Arrays.fill(buffer,null);
+    String documentId=(String)extractor.extract(index).id;
+    toReturn=cache.get(documentId);
+    buffer[0]=toReturn;
+    for (int i=1; i < bufferSize; i++) {
+      String bufferDocumentId=(String)extractor.extract(index - i).id;
+      Object toBuffer=cache.get(bufferDocumentId);
+      buffer[i]=toBuffer;
+    }
+    bufferIndex=index;
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
+  index--;
+  return toReturn;
+}

@@ -1,0 +1,18 @@
+{
+  if (!needClassFilterClause) {
+    return luceneQuery;
+  }
+ else {
+    BooleanQuery classFilter=new BooleanQuery();
+    classFilter.setBoost(0);
+    for (    Class clazz : classesAndSubclasses) {
+      Term t=new Term(DocumentBuilder.CLASS_FIELDNAME,clazz.getName());
+      TermQuery termQuery=new TermQuery(t);
+      classFilter.add(termQuery,BooleanClause.Occur.SHOULD);
+    }
+    BooleanQuery filteredQuery=new BooleanQuery();
+    filteredQuery.add(luceneQuery,BooleanClause.Occur.MUST);
+    filteredQuery.add(classFilter,BooleanClause.Occur.MUST);
+    return filteredQuery;
+  }
+}

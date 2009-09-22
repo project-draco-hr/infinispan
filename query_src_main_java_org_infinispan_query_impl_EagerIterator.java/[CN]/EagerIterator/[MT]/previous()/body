@@ -1,0 +1,27 @@
+{
+  if (!hasPrevious())   throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
+  Object toReturn;
+  int bufferSize=buffer.length;
+  if (bufferIndex >= 0 && index <= bufferIndex && index >= (bufferIndex + bufferSize)) {
+    int indexToReturn=bufferIndex - index;
+    toReturn=buffer[indexToReturn];
+  }
+ else {
+    toReturn=cache.get(idList.get(index));
+    Arrays.fill(buffer,null);
+    buffer[0]=toReturn;
+    for (int i=1; i < bufferSize; i++) {
+      if (index - i < first) {
+        if (log.isDebugEnabled()) {
+          log.debug("Your current index - bufferSize exceeds the size of your number of hits");
+        }
+        break;
+      }
+      Object toBuffer=cache.get(idList.get(index - i));
+      buffer[i]=toBuffer;
+    }
+    bufferIndex=index;
+  }
+  index--;
+  return toReturn;
+}

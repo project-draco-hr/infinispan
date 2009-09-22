@@ -1,0 +1,25 @@
+{
+  Configuration cacheCfg=new Configuration();
+  cacheCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+  cacheCfg.setFetchInMemoryState(false);
+  List<Cache<String,Person>> caches=createClusteredCaches(2,"infinispan-query",cacheCfg);
+  cache1=caches.get(0);
+  cache2=caches.get(1);
+  System.setProperty("query","true");
+  System.setProperty("indexLocal","false");
+  qh=new QueryHelper(cache2,null,Person.class);
+  qh.applyProperties();
+  TestingUtil.blockUntilViewsReceived(60000,cache1,cache2);
+  person1=new Person();
+  person1.setName("Navin Surtani");
+  person1.setBlurb("Likes playing WoW");
+  person2=new Person();
+  person2.setName("BigGoat");
+  person2.setBlurb("Eats grass");
+  person3=new Person();
+  person3.setName("MiniGoat");
+  person3.setBlurb("Eats cheese");
+  cache1.put(key1,person1);
+  cache1.put(key2,person2);
+  cache1.put(key3,person3);
+}

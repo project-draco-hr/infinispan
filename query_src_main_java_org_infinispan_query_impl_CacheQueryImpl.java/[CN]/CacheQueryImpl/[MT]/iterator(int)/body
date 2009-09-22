@@ -1,0 +1,26 @@
+{
+  List<Object> keyList=null;
+  IndexSearcher searcher=buildSearcher(searchFactory);
+  if (searcher == null) {
+    throw new NullPointerException("IndexSearcher instance is null.");
+  }
+  try {
+    QueryHits queryHits=getQueryHits(searcher,calculateTopDocsRetrievalSize());
+    int first=first();
+    int max=max(first,queryHits.totalHits);
+    int size=max - first + 1 < 0 ? 0 : max - first + 1;
+    keyList=new ArrayList<Object>(size);
+    DocumentExtractor extractor=new DocumentExtractor(queryHits,searchFactory,indexProjection,idFieldNames,allowFieldSelectionInProjection);
+    for (int index=first; index <= max; index++) {
+      Object key=extractor.extract(index).id;
+      keyList.add(key);
+    }
+  }
+ catch (  IOException e) {
+    throw new HibernateException("Unable to query Lucene index",e);
+  }
+ finally {
+    IndexSearcherCloser.closeSearcher(searcher,searchFactory.getReaderProvider());
+  }
+  return new EagerIterator(keyList,cache,fetchSize);
+}

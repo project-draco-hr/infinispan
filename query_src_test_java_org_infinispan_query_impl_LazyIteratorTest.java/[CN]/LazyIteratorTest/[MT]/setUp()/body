@@ -1,0 +1,30 @@
+{
+  cache=createMock(Cache.class);
+  expect(cache.get(anyObject())).andAnswer(new IAnswer<Person>(){
+    public Person answer() throws Throwable {
+      String key=getCurrentArguments()[0].toString();
+      return dummyDataMap.get(key);
+    }
+  }
+).anyTimes();
+  SearchFactoryImplementor searchFactory=createMock(SearchFactoryImplementor.class);
+  DocumentExtractor extractor=org.easymock.classextension.EasyMock.createMock(DocumentExtractor.class);
+  try {
+    org.easymock.classextension.EasyMock.expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>(){
+      public EntityInfo answer() throws Throwable {
+        int index=(Integer)getCurrentArguments()[0];
+        String keyString=keyList.get(index);
+        System.out.println("The key for index parameter " + index + " is "+ keyString);
+        return new EntityInfo(Person.class,keyString,null);
+      }
+    }
+).anyTimes();
+  }
+ catch (  IOException e) {
+    e.printStackTrace();
+  }
+  IndexSearcher searcher=org.easymock.classextension.EasyMock.createMock(IndexSearcher.class);
+  EasyMock.replay(cache,searchFactory);
+  org.easymock.classextension.EasyMock.replay(searcher,extractor);
+  iterator=new LazyIterator(extractor,cache,searcher,searchFactory,0,9,fetchSize);
+}

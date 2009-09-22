@@ -1,0 +1,12 @@
+{
+  log.debug("Entered the LocalQueryInterceptor visitReplaceCommand()");
+  Object valueReplaced=invokeNextInterceptor(ctx,command);
+  if (valueReplaced != null && ctx.isOriginLocal()) {
+    log.debug("Origin is local");
+    Object[] parameters=command.getParameters();
+    String keyString=command.getKey().toString();
+    removeFromIndexes(parameters[1],keyString);
+    addToIndexes(parameters[2],keyString);
+  }
+  return valueReplaced;
+}

@@ -1,0 +1,32 @@
+{
+  IndexSearcher searcher=buildSearcher(searchFactory);
+  if (searcher == null)   return Collections.EMPTY_LIST;
+  try {
+    QueryHits queryHits=getQueryHits(searcher,calculateTopDocsRetrievalSize());
+    int first=first();
+    int max=max(first,queryHits.totalHits);
+    int size=max - first + 1 < 0 ? 0 : max - first + 1;
+    DocumentExtractor extractor=new DocumentExtractor(queryHits,searchFactory,indexProjection,idFieldNames,allowFieldSelectionInProjection);
+    List<Object> keysForCache=new ArrayList<Object>(size);
+    for (int index=first; index <= max; index++) {
+      Object cacheKey=extractor.extract(index).id;
+      keysForCache.add(cacheKey);
+    }
+    List<Object> listToReturn=new ArrayList<Object>(size);
+    for (    Object key : keysForCache) {
+      listToReturn.add(cache.get(key));
+    }
+    if (resultTransformer == null) {
+      return listToReturn;
+    }
+ else {
+      return resultTransformer.transformList(listToReturn);
+    }
+  }
+ catch (  IOException e) {
+    throw new HibernateException("Unable to query Lucene index",e);
+  }
+ finally {
+    IndexSearcherCloser.closeSearcher(searcher,searchFactory.getReaderProvider());
+  }
+}
