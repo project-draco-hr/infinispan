@@ -1,20 +1,35 @@
 {
+  List<ExpiryEntry> entries=new ArrayList<ExpiryEntry>();
+  expiryEntryQueue.drainTo(entries);
+  for (  ExpiryEntry entry : entries) {
+    Object existing=expiryTree.insert(entry.expiry,entry.key,false);
+    if (existing != null) {
+      if (existing instanceof List) {
+        ((List)existing).add(entry.key);
+        expiryTree.insert(entry.expiry,existing,true);
+      }
+ else {
+        List<Object> al=new ArrayList<Object>(2);
+        al.add(existing);
+        al.add(entry.key);
+        expiryTree.insert(entry.expiry,al,true);
+      }
+    }
+  }
   TupleBrowser browse=expiryTree.browse();
   Tuple tuple=new Tuple();
   List<Long> times=new ArrayList<Long>();
   List<Object> keys=new ArrayList<Object>();
-synchronized (expiryLock) {
-    while (browse.getNext(tuple)) {
-      Long time=(Long)tuple.getKey();
-      if (time > System.currentTimeMillis())       break;
-      times.add(time);
-      Object key=tuple.getValue();
-      if (key instanceof List)       keys.addAll((List)key);
- else       keys.add(key);
-    }
-    for (    Long time : times) {
-      expiryTree.remove(time);
-    }
+  while (browse.getNext(tuple)) {
+    Long time=(Long)tuple.getKey();
+    if (time > System.currentTimeMillis())     break;
+    times.add(time);
+    Object key=tuple.getValue();
+    if (key instanceof List)     keys.addAll((List)key);
+ else     keys.add(key);
+  }
+  for (  Long time : times) {
+    expiryTree.remove(time);
   }
   if (!keys.isEmpty())   log.debug("purge (up to) " + keys.size() + " entries");
   int count=0;

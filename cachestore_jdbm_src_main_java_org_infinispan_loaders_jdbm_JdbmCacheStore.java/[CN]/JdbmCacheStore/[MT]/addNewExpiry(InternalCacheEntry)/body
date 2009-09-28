@@ -6,19 +6,10 @@
   Long at=new Long(expiry);
   Object key=entry.getKey();
   if (trace)   log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire "+ key);
-synchronized (expiryLock) {
-    Object existing=expiryTree.insert(at,key,false);
-    if (existing != null) {
-      if (existing instanceof List) {
-        ((List)existing).add(key);
-        expiryTree.insert(at,existing,true);
-      }
- else {
-        List<Object> al=new ArrayList<Object>(2);
-        al.add(existing);
-        al.add(key);
-        expiryTree.insert(at,al,true);
-      }
-    }
+  try {
+    expiryEntryQueue.put(new ExpiryEntry(at,key));
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
   }
 }
