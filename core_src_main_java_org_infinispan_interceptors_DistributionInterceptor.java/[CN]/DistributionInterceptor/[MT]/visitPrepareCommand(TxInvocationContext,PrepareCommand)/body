@@ -1,7 +1,7 @@
 {
   Object retVal=invokeNextInterceptor(ctx,command);
   boolean sync=isSynchronous(ctx);
-  if (ctx.isOriginLocal()) {
+  if (ctx.isOriginLocal() && ctx.hasModifications()) {
     List<Address> recipients=new ArrayList<Address>(ctx.getTransactionParticipants());
     if (trace)     log.trace("Multicasting PrepareCommand to recipients : " + recipients);
     rpcManager.invokeRemotely(recipients,command,sync);
