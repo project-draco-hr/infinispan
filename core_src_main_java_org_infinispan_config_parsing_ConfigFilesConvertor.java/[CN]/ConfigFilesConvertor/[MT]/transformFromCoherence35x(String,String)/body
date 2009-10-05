@@ -1,0 +1,25 @@
+{
+  File oldConfig=new File(sourceName);
+  if (!oldConfig.exists()) {
+    System.err.println("File specified as input ('" + sourceName + ") does not exist.");
+    System.exit(1);
+  }
+  ConfigFilesConvertor convertor=new ConfigFilesConvertor();
+  FileInputStream is=null;
+  FileOutputStream fos=null;
+  try {
+    is=new FileInputStream(oldConfig);
+    File destination=new File(destinationName);
+    if (!destination.exists()) {
+      if (!destination.createNewFile()) {
+        System.err.println("Warn! Could not create file " + destination);
+      }
+    }
+    fos=new FileOutputStream(destinationName);
+    convertor.parse(is,fos,"xslt/ehcache16x2infinispan4x.xslt");
+  }
+  finally {
+    Util.flushAndCloseStream(fos);
+    Util.closeStream(is);
+  }
+}
