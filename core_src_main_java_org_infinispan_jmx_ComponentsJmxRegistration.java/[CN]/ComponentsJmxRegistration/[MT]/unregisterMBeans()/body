@@ -2,11 +2,13 @@
   log.trace("Unregistering jmx resources..");
   try {
     List<ResourceDMBean> resourceDMBeans=getResourceDMBeansFromComponents();
+    boolean trace=log.isTraceEnabled();
     for (    ResourceDMBean resource : resourceDMBeans) {
       String resourceName=resource.getObjectName();
       ObjectName objectName=new ObjectName(getObjectName(resourceName));
       if (mBeanServer.isRegistered(objectName)) {
         mBeanServer.unregisterMBean(objectName);
+        if (trace)         log.trace("Unregistered " + objectName);
       }
     }
   }

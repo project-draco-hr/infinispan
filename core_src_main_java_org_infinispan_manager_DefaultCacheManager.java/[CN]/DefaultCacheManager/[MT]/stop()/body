@@ -5,9 +5,14 @@
       defaultCache=entry.getValue();
     }
  else {
+      unregisterCacheMBean(entry.getValue());
       entry.getValue().stop();
     }
   }
-  if (defaultCache != null)   defaultCache.stop();
+  if (defaultCache != null) {
+    unregisterCacheMBean(defaultCache);
+    defaultCache.stop();
+  }
+  globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
   globalComponentRegistry.stop();
 }

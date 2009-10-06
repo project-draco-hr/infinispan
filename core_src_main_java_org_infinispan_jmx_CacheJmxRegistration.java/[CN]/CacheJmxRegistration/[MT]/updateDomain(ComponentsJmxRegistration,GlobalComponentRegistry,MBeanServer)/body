@@ -1,15 +1,22 @@
 {
   GlobalConfiguration gc=componentRegistry.getComponent(GlobalConfiguration.class);
-  String componentName=CacheJmxRegistration.class.getName() + "_jmxDomain";
-  String jmxDomain=componentRegistry.getComponent(String.class,componentName);
-  if (jmxDomain == null) {
-    jmxDomain=getJmxDomain(gc.getJmxDomain(),mBeanServer);
-    if (!jmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
-      String message="There's already an cache manager instance registered under '" + gc.getJmxDomain() + "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable "+ "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
-      if (log.isErrorEnabled())       log.error(message);
-      throw new JmxDomainConflictException(message);
+  CacheManagerJmxRegistration managerJmxReg=componentRegistry.getComponent(CacheManagerJmxRegistration.class);
+  if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
+    String tmpJmxDomain=getJmxDomain(gc.getJmxDomain(),mBeanServer);
+synchronized (managerJmxReg) {
+      if (managerJmxReg.jmxDomain == null) {
+        if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
+          String message="There's already an cache manager instance registered under '" + gc.getJmxDomain() + "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable "+ "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
+          if (log.isErrorEnabled())           log.error(message);
+          throw new JmxDomainConflictException(message);
+        }
+        managerJmxReg.jmxDomain=tmpJmxDomain;
+      }
+      jmxDomain=managerJmxReg.jmxDomain;
     }
-    componentRegistry.registerComponent(jmxDomain,componentName);
+  }
+ else {
+    jmxDomain=managerJmxReg.jmxDomain == null ? gc.getJmxDomain() : managerJmxReg.jmxDomain;
   }
   registrator.setJmxDomain(jmxDomain);
 }

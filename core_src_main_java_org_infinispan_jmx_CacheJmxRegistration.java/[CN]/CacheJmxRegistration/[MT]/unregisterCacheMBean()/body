@@ -1,0 +1,20 @@
+{
+  String pattern=jmxDomain + ":" + ComponentsJmxRegistration.JMX_RESOURCE_KEY+ "="+ CacheDelegate.OBJECT_NAME+ ",*";
+  try {
+    Set<ObjectName> names=mBeanServer.queryNames(new ObjectName(pattern),null);
+    for (    ObjectName name : names) {
+      mBeanServer.unregisterMBean(name);
+    }
+  }
+ catch (  MBeanRegistrationException e) {
+    String message="Unable to unregister Cache MBeans with pattern " + pattern;
+    log.warn(message,e);
+  }
+catch (  InstanceNotFoundException e) {
+  }
+catch (  MalformedObjectNameException e) {
+    String message="Malformed pattern " + pattern;
+    log.error(message,e);
+    throw new CacheException(message,e);
+  }
+}
