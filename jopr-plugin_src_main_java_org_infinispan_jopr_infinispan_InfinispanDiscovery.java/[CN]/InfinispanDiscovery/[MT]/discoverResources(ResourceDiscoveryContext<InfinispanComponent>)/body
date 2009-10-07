@@ -1,13 +1,17 @@
 {
+  boolean trace=log.isTraceEnabled();
+  if (trace)   log.trace("Discover resources with context: " + discoveryContext);
   Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
-  Configuration c=new Configuration();
-  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,REMOTE));
-  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,connector));
+  Configuration c=discoveryContext.getDefaultPluginConfiguration();
+  c.put(c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY));
+  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,CONNECTOR));
   c.put(new PropertySimple("objectName",MANAGER_OBJECT));
   ConnectionHelper helper=new ConnectionHelper();
   EmsConnection conn=helper.getEmsConnection(c);
+  if (trace)   log.trace("Connection to ems server stablished: " + conn);
   ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(MANAGER_OBJECT);
   List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
+  if (trace)   log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: "+ beans);
   for (  EmsBean bean : beans) {
     String managerName=bean.getBeanName().getCanonicalName();
     c.put(new PropertySimple("objectName",managerName));
