@@ -1,0 +1,14 @@
+{
+  Directory dirA=new InfinispanDirectory(cache(0,"lucene"),"indexName");
+  Directory dirB=new InfinispanDirectory(cache(1,"lucene"),"indexName");
+  writeTextToIndex(dirA,0,"hi from node A");
+  assertTextIsFoundInIds(dirA,"hi",0);
+  assertTextIsFoundInIds(dirB,"hi",0);
+  writeTextToIndex(dirB,1,"hello node A, how are you?");
+  assertTextIsFoundInIds(dirA,"hello",1);
+  assertTextIsFoundInIds(dirB,"hello",1);
+  assertTextIsFoundInIds(dirA,"node",1,0);
+  assertTextIsFoundInIds(dirB,"node",1,0);
+  removeByTerm(dirA,"from");
+  assertTextIsFoundInIds(dirB,"node",1);
+}

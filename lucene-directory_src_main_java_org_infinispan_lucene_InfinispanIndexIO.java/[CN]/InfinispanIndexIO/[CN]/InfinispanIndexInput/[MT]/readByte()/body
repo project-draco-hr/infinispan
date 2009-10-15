@@ -1,0 +1,17 @@
+{
+  if (file == null) {
+    throw new IOException("File " + fileKey + " does not exist");
+  }
+  if (filePosition == 0 && file.getSize() == 0) {
+    if (log.isTraceEnabled()) {
+      log.trace("pointer and file sizes are both 0; returning -1");
+    }
+    return -1;
+  }
+  buffer=getChunkFromPosition(cache,fileKey,filePosition,bufferSize);
+  if (buffer == null) {
+    throw new IOException("Chunk id = [ " + getChunkNumberFromPosition(filePosition,bufferSize) + " ] does not exist for file [ "+ fileKey.getFileName()+ " ] for index [ "+ fileKey.getIndexName()+ " ]");
+  }
+  bufferPosition=getPositionInBuffer(filePosition++,bufferSize);
+  return buffer[bufferPosition];
+}

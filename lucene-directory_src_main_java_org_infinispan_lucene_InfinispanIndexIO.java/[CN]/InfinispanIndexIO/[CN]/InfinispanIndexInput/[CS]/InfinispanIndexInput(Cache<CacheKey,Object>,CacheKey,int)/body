@@ -1,0 +1,20 @@
+{
+  this.cache=cache;
+  this.fileKey=fileKey;
+  this.bufferSize=bufferSize;
+  buffer=new byte[this.bufferSize];
+  this.file=(FileMetadata)cache.get(fileKey);
+  if (file == null) {
+    throw new IOException("File [ " + fileKey.getFileName() + " ] for index [ "+ fileKey.getIndexName()+ " ] was not found");
+  }
+  int i=0;
+  Object fileChunk;
+  ChunkCacheKey chunkKey=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),i);
+  while ((fileChunk=cache.get(chunkKey)) != null) {
+    localCache.put(chunkKey,fileChunk);
+    chunkKey=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),++i);
+  }
+  if (log.isDebugEnabled()) {
+    log.debug("Opened new IndexInput for file:{} in index: {}",fileKey.getFileName(),fileKey.getIndexName());
+  }
+}

@@ -1,0 +1,21 @@
+{
+  checkIsOpen();
+  FileMetadata fileFrom=getFile(indexName,from);
+  cache.remove(new FileCacheKey(indexName,from));
+  cache.put(new FileCacheKey(indexName,to),fileFrom);
+  int i=-1;
+  Object ob;
+  do {
+    ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,from,++i);
+    ob=cache.get(chunkKey);
+    if (ob == null) {
+      break;
+    }
+    chunkKey=new ChunkCacheKey(indexName,to,i);
+    cache.put(chunkKey,ob);
+  }
+ while (true);
+  if (log.isTraceEnabled()) {
+    log.trace("Renamed file from: {} to: {} in index {}",new Object[]{from,to,indexName});
+  }
+}
