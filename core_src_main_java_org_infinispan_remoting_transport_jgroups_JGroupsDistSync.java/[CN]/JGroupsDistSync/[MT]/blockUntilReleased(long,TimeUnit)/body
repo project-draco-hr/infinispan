@@ -1,12 +1,5 @@
 {
   int initState=flushBlockGateCount.get();
-  while (true) {
-    try {
-      if (!flushBlockGate.await(timeout,timeUnit))       throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
-      return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
-    }
- catch (    InterruptedException ie) {
-      Thread.currentThread().interrupt();
-    }
-  }
+  if (!flushBlockGate.await(timeout,timeUnit))   throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+  return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
 }
