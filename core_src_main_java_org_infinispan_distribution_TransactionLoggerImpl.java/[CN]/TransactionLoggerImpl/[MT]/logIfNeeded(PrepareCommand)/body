@@ -3,8 +3,14 @@
     loggingLock.readLock().lock();
     try {
       if (enabled) {
-        if (trace)         log.trace("Logging prepare for tx {0}",command.getGlobalTransaction());
-        uncommittedPrepares.put(command.getGlobalTransaction(),command);
+        if (command.isOnePhaseCommit()) {
+          if (trace)           log.trace("Logging 1PC prepare for tx {0}",command.getGlobalTransaction());
+          logModificationsInTransaction(command);
+        }
+ else {
+          if (trace)           log.trace("Logging 2PC prepare for tx {0}",command.getGlobalTransaction());
+          uncommittedPrepares.put(command.getGlobalTransaction(),command);
+        }
       }
     }
   finally {
