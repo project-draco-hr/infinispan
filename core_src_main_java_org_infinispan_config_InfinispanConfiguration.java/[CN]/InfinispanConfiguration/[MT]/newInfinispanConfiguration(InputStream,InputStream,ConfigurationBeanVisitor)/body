@@ -13,7 +13,14 @@
       }
 );
     }
-    InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(config);
+    StreamSource source=null;
+    if (skipTokenReplacement()) {
+      source=new StreamSource(config);
+    }
+ else {
+      source=replaceProperties(config);
+    }
+    InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(source);
     GlobalConfiguration gconf=ic.parseGlobalConfiguration();
     gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
     if (cbv != null) {
