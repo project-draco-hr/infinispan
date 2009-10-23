@@ -1,11 +1,13 @@
 {
-  Configuration cfg=new Configuration();
-  cfg.setConcurrencyLevel(2000);
-  cacheManager=new DefaultCacheManager(GlobalConfiguration.getClusteredDefault());
-  cacheManager.defineConfiguration(LOCAL_CACHE_NAME,cfg);
-  Configuration replCfg=cfg.clone();
-  replCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-  replCfg.setFetchInMemoryState(false);
-  cacheManager.defineConfiguration(REPL_SYNC_CACHE_NAME,replCfg);
+  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
+  gc.setAsyncTransportExecutorFactoryClass(WTE.class.getName());
+  cacheManager=new DefaultCacheManager(gc);
+  cacheManager.defineConfiguration(LOCAL_CACHE_NAME,getBaseCfg());
+  cacheManager.defineConfiguration(REPL_SYNC_CACHE_NAME,getClusteredCfg(REPL_SYNC,false));
+  cacheManager.defineConfiguration(REPL_ASYNC_CACHE_NAME,getClusteredCfg(REPL_ASYNC,false));
+  cacheManager.defineConfiguration(DIST_SYNC_CACHE_NAME,getClusteredCfg(DIST_SYNC,false));
+  cacheManager.defineConfiguration(DIST_ASYNC_CACHE_NAME,getClusteredCfg(DIST_ASYNC,false));
+  cacheManager.defineConfiguration(DIST_SYNC_L1_CACHE_NAME,getClusteredCfg(DIST_SYNC,true));
+  cacheManager.defineConfiguration(DIST_ASYNC_L1_CACHE_NAME,getClusteredCfg(DIST_ASYNC,true));
   return cacheManager;
 }
