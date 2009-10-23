@@ -1,10 +1,13 @@
 {
-  try {
-    return new InfinispanLock(cache,indexName,lockName);
+  InfinispanLock lock;
+  if (DEF_LOCK_NAME.equals(lockName)) {
+    lock=defLock;
   }
-  finally {
-    if (log.isTraceEnabled()) {
-      log.trace("Created new lock: {0} for index {1}",lockName,indexName);
-    }
+ else {
+    lock=new InfinispanLock(cache,indexName,lockName,tm);
   }
+  if (log.isTraceEnabled()) {
+    log.trace("Lock prepared, not acquired: {0} for index {1}",lockName,indexName);
+  }
+  return lock;
 }
