@@ -1,0 +1,56 @@
+{
+  CacheEntry cacheEntry=ctx.lookupEntry(key);
+  MVCCEntry mvccEntry=null;
+  if (createIfAbsent && cacheEntry != null && cacheEntry.isNull())   cacheEntry=null;
+  if (cacheEntry != null) {
+    if (trace)     log.trace("Exists in context.");
+    if (alreadyLocked || acquireLock(ctx,key)) {
+      if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+        mvccEntry=(MVCCEntry)cacheEntry;
+      }
+ else {
+        mvccEntry=createWrappedEntry(key,cacheEntry.getValue(),false,forRemoval,cacheEntry.getLifespan());
+        cacheEntry=mvccEntry;
+        ctx.putLookedUpEntry(key,cacheEntry);
+      }
+      mvccEntry.copyForUpdate(container,writeSkewCheck);
+    }
+    if (cacheEntry.isRemoved() && createIfAbsent) {
+      if (trace)       log.trace("Entry is deleted in current scope.  Need to un-delete.");
+      if (mvccEntry != cacheEntry)       mvccEntry=(MVCCEntry)cacheEntry;
+      mvccEntry.setRemoved(false);
+      mvccEntry.setValid(true);
+    }
+    return mvccEntry;
+  }
+ else {
+    boolean lockAcquired=false;
+    if (!alreadyLocked) {
+      lockAcquired=acquireLock(ctx,key);
+    }
+    cacheEntry=entry != null ? entry : container.get(key);
+    if (cacheEntry != null) {
+      if (trace)       log.trace("Retrieved from container.");
+      boolean needToCopy=alreadyLocked || lockAcquired || ctx.hasFlag(Flag.SKIP_LOCKING);
+      mvccEntry=createWrappedEntry(key,cacheEntry.getValue(),false,false,cacheEntry.getLifespan());
+      ctx.putLookedUpEntry(key,mvccEntry);
+      if (needToCopy)       mvccEntry.copyForUpdate(container,writeSkewCheck);
+    }
+ else     if (createIfAbsent) {
+      if (trace)       log.trace("Creating new entry.");
+      notifier.notifyCacheEntryCreated(key,true,ctx);
+      mvccEntry=createWrappedEntry(key,null,true,false,-1);
+      mvccEntry.setCreated(true);
+      ctx.putLookedUpEntry(key,mvccEntry);
+      mvccEntry.copyForUpdate(container,writeSkewCheck);
+      notifier.notifyCacheEntryCreated(key,false,ctx);
+    }
+ else {
+      releaseLock(key);
+    }
+  }
+  if (mvccEntry == null && forceLockIfAbsent) {
+    if (acquireLock(ctx,key))     ctx.putLookedUpEntry(key,null);
+  }
+  return mvccEntry;
+}
