@@ -27,22 +27,27 @@
     cacheEntry=container.get(key);
     if (cacheEntry != null) {
       if (trace)       log.trace("Retrieved from container.");
-      boolean needToCopy=alreadyLocked || acquireLock(ctx,key) || ctx.hasFlag(Flag.SKIP_LOCKING);
-      mvccEntry=createWrappedEntry(key,cacheEntry.getValue(),false,false,cacheEntry.getLifespan());
-      ctx.putLookedUpEntry(key,mvccEntry);
-      if (needToCopy)       mvccEntry.copyForUpdate(container,writeSkewCheck);
-      cacheEntry=mvccEntry;
+      boolean lockAcquired=acquireLock(ctx,key);
+      mvccEntry=wrapExistingEntryForWriting(ctx,key,alreadyLocked,cacheEntry,lockAcquired);
     }
  else     if (createIfAbsent) {
       if (trace)       log.trace("Creating new entry.");
-      if (!alreadyLocked)       acquireLock(ctx,key);
-      notifier.notifyCacheEntryCreated(key,true,ctx);
-      mvccEntry=createWrappedEntry(key,null,true,false,-1);
-      mvccEntry.setCreated(true);
-      ctx.putLookedUpEntry(key,mvccEntry);
-      mvccEntry.copyForUpdate(container,writeSkewCheck);
-      notifier.notifyCacheEntryCreated(key,false,ctx);
-      cacheEntry=mvccEntry;
+      boolean lockAcquired=false;
+      if (!alreadyLocked) {
+        lockAcquired=acquireLock(ctx,key);
+      }
+      if (lockAcquired) {
+        cacheEntry=container.get(key);
+        if (cacheEntry != null) {
+          mvccEntry=wrapExistingEntryForWriting(ctx,key,true,cacheEntry,lockAcquired);
+        }
+ else {
+          mvccEntry=createAndWrapEntryForWriting(ctx,key);
+        }
+      }
+ else {
+        mvccEntry=createAndWrapEntryForWriting(ctx,key);
+      }
     }
   }
   if (mvccEntry == null && forceLockIfAbsent) {
