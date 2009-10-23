@@ -27,23 +27,30 @@
     if (chOld == null)     throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
     chNew=createConsistentHash(configuration,chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
-    transactionLogger.enable();
-    rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
-    Address myAddress=rpcManager.getTransport().getAddress();
-    RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
-    List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(configuration.getNumOwners());
-    List<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
-    for (    Response r : resps) {
-      if (r instanceof SuccessfulResponse) {
-        Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
-        dmi.applyState(chNew,state);
+    if (configuration.isFetchInMemoryState()) {
+      transactionLogger.enable();
+      rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
+      Address myAddress=rpcManager.getTransport().getAddress();
+      RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
+      List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(configuration.getNumOwners());
+      List<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
+      for (      Response r : resps) {
+        if (r instanceof SuccessfulResponse) {
+          Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
+          dmi.applyState(chNew,state);
+        }
       }
+      dmi.drainTransactionLog();
     }
-    dmi.drainTransactionLog();
     unlocked=true;
+    if (!configuration.isFetchInMemoryState()) {
+      rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
+    }
     rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
     rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_COMPLETE,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
-    invalidateInvalidHolders(chOld,chNew);
+    if (configuration.isFetchInMemoryState()) {
+      invalidateInvalidHolders(chOld,chNew);
+    }
     if (log.isInfoEnabled())     log.info("Completed in {0}!",Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
  catch (  Exception e) {
