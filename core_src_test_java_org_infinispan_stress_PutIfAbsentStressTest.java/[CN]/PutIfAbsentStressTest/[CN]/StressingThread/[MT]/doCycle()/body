@@ -1,0 +1,19 @@
+{
+  String beforePut=cache.putIfAbsent(SHARED_KEY,SHARED_KEY);
+  if (beforePut != null) {
+    stats.canceledPutsCounter.incrementAndGet();
+    sleep();
+  }
+ else {
+    boolean lockIsFine=stats.lockOwnersCounter.compareAndSet(0,1);
+    System.out.print("L");
+    stats.succesfullPutsCounter.incrementAndGet();
+    checkIsTrue(lockIsFine,"I got the lock, some other thread is owning the lock AS WELL.");
+    sleep();
+    lockIsFine=stats.lockOwnersCounter.compareAndSet(1,0);
+    checkIsTrue(lockIsFine,"Some other thread changed the lock count while I was having it!");
+    System.out.print("R");
+    cache.remove(SHARED_KEY);
+    stats.lockReleasedCounter.incrementAndGet();
+  }
+}
