@@ -1,0 +1,50 @@
+{
+  boolean acquired=false;
+synchronized (cache) {
+    try {
+      tm.begin();
+      CacheKey lock=new FileCacheKey(indexName,lockName,true);
+      if (!cache.containsKey(lock)) {
+        cache.put(lock,lock);
+        acquired=true;
+      }
+    }
+ catch (    Exception e) {
+      log.error("Cannot obtain lock for: " + indexName,e);
+    }
+ finally {
+      try {
+        if (tm.getTransaction() != null) {
+          if (acquired) {
+            tm.commit();
+            if (log.isTraceEnabled()) {
+              log.trace("Lock: {0} acquired for index: {1} ",lockName,indexName);
+            }
+          }
+ else {
+            tm.rollback();
+          }
+        }
+      }
+ catch (      RollbackException e) {
+        log.error("Cannot obtain lock for: " + indexName,e);
+        acquired=false;
+      }
+catch (      Exception e) {
+        throw new CacheException(e);
+      }
+    }
+    if (acquired) {
+      try {
+        tm.begin();
+        if (log.isTraceEnabled()) {
+          log.trace("Batch transaction started for index: {0}",indexName);
+        }
+      }
+ catch (      Exception e) {
+        log.error("Unable to start transaction",e);
+      }
+    }
+  }
+  return acquired;
+}
