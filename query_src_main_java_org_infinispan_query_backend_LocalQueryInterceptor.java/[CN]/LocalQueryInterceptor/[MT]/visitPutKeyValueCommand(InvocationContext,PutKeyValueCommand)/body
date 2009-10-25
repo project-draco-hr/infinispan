@@ -1,9 +1,10 @@
 {
-  log.debug("Entered the LocalQueryInterceptor visitPutKeyValueCommand()");
+  if (log.isDebugEnabled())   log.debug("Entered the LocalQueryInterceptor visitPutKeyValueCommand()");
   Object toReturn=invokeNextInterceptor(ctx,command);
+  Object value=checkForMarshalledValue(command.getValue());
   if (ctx.isOriginLocal()) {
-    log.debug("Origin is local");
-    addToIndexes(command.getValue(),command.getKey().toString());
+    if (log.isDebugEnabled())     log.debug("Origin is local");
+    addToIndexes(value,checkForMarshalledValue(command.getKey()).toString());
   }
   return toReturn;
 }
