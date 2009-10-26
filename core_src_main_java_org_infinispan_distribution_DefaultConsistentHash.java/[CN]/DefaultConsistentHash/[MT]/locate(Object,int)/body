@@ -5,14 +5,25 @@
   int numCopiesToFind=min(replCount,addresses.size());
   List<Address> owners=new ArrayList<Address>(numCopiesToFind);
   SortedMap<Integer,Address> candidates=positions.tailMap(hash % HASH_SPACE);
+  int numOwnersFound=0;
   for (  Address a : candidates.values()) {
-    if (owners.size() < numCopiesToFind)     owners.add(a);
- else     break;
+    if (numOwnersFound < numCopiesToFind) {
+      owners.add(a);
+      numOwnersFound++;
+    }
+ else {
+      break;
+    }
   }
-  if (owners.size() < numCopiesToFind) {
+  if (numOwnersFound < numCopiesToFind) {
     for (    Address a : positions.values()) {
-      if (owners.size() < numCopiesToFind)       owners.add(a);
- else       break;
+      if (numOwnersFound < numCopiesToFind) {
+        owners.add(a);
+        numOwnersFound++;
+      }
+ else {
+        break;
+      }
     }
   }
   return owners;
