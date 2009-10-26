@@ -6,17 +6,23 @@ switch (mode) {
 case PUT:
       Object value=Generator.getRandomString();
     st=System.nanoTime();
-  cache.put(key,value);
+  if (USE_TRANSACTIONS)   TestingUtil.getTransactionManager(cache).begin();
+cache.put(key,value);
+if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
 d=System.nanoTime() - st;
 break;
 case GET:
 st=System.nanoTime();
+if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).begin();
 cache.get(key);
+if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
 d=System.nanoTime() - st;
 break;
 case REMOVE:
 st=System.nanoTime();
+if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).begin();
 cache.remove(key);
+if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
 d=System.nanoTime() - st;
 break;
 }
