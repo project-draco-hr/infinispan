@@ -4,7 +4,15 @@
   try {
     defaultMarshaller.objectToObjectStream(obj,out);
   }
-  finally {
+ catch (  NotSerializableException nse) {
+    if (log.isTraceEnabled())     log.trace("Object is not serializable",nse);
+    throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(),nse.getCause());
+  }
+catch (  IOException ioe) {
+    if (log.isTraceEnabled())     log.trace("Exception while marshalling object",ioe);
+    throw ioe;
+  }
+ finally {
     finishObjectOutput(out);
   }
   return new ByteBuffer(baos.getRawBuffer(),0,baos.size());
