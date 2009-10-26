@@ -1,0 +1,17 @@
+{
+  cacheName="dist";
+  configuration=getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC,tx);
+  if (!testRetVals) {
+    configuration.setUnsafeUnreliableReturnValues(true);
+    configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+  }
+  configuration.setSyncReplTimeout(60,TimeUnit.SECONDS);
+  configuration.setNumOwners(1);
+  configuration.setLockAcquisitionTimeout(45,TimeUnit.SECONDS);
+  caches=createClusteredCaches(2,cacheName,configuration);
+  c1=caches.get(0);
+  c2=caches.get(1);
+  cacheAddresses=new ArrayList<Address>(2);
+  for (  Cache cache : caches)   cacheAddresses.add(cache.getCacheManager().getAddress());
+  RehashWaiter.waitForInitRehashToComplete(c1,c2);
+}
