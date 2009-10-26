@@ -1,23 +1,27 @@
 {
   boolean trace=log.isTraceEnabled();
-  if (trace)   log.trace("Discover resources with context: " + discoveryContext);
+  if (trace)   log.trace("Discover resources with context: {0}",discoveryContext);
   Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
-  Configuration c=discoveryContext.getDefaultPluginConfiguration();
-  c.put(c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY));
+  Configuration c=new Configuration();
+  c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,REMOTE));
   c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,CONNECTOR));
   c.put(new PropertySimple("objectName",MANAGER_OBJECT));
+  if (trace)   log.trace("To be used configuration is {0}",c.toString(true));
   ConnectionHelper helper=new ConnectionHelper();
   EmsConnection conn=helper.getEmsConnection(c);
-  if (trace)   log.trace("Connection to ems server stablished: " + conn);
+  if (trace)   log.trace("Connection to ems server stablished: {0}",conn);
   ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(MANAGER_OBJECT);
   List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-  if (trace)   log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: "+ beans);
+  if (trace)   log.trace("Querying [{0}] returned beans: {1}",queryUtility.getTranslatedQuery(),beans);
   for (  EmsBean bean : beans) {
     String managerName=bean.getBeanName().getCanonicalName();
     c.put(new PropertySimple("objectName",managerName));
-    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(discoveryContext.getResourceType(),managerName,"Infinispan Cache Manager",null,"The Infinispan Manager",c,null);
+    String resourceName=bean.getAttribute("Name").getValue().toString();
+    String version=bean.getAttribute("Version").getValue().toString();
+    if (trace)     log.trace("Add resource with name '{0}', version '{1}' and type {2}",resourceName,version,discoveryContext.getResourceType());
+    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(discoveryContext.getResourceType(),managerName,resourceName,version,"A cache manager within Infinispan",c,null);
     discoveredResources.add(detail);
-    log.info("Discovered Infinispan instance: " + managerName);
+    log.info("Discovered Infinispan instance: {0}",managerName);
   }
   return discoveredResources;
 }

@@ -1,3 +1,20 @@
 {
-  return context.getParentResourceComponent().getAvailability();
+  boolean trace=log.isTraceEnabled();
+  EmsConnection conn=getConnection();
+  try {
+    conn.refresh();
+    EmsBean bean=conn.getBean(context.getResourceKey());
+    EmsAttribute attribute=bean.getAttribute("CacheStatus");
+    if (attribute.getValue().equals(ComponentStatus.RUNNING.toString())) {
+      if (trace)       log.trace("Cache status is running, so it's up.");
+      bean.refreshAttributes();
+      return AvailabilityType.UP;
+    }
+    if (trace)     log.trace("Cache status is anything other than running, so it's down.");
+    return AvailabilityType.DOWN;
+  }
+ catch (  Exception e) {
+    if (trace)     log.trace("There was an exception checking availability, so cache status is down.");
+    return AvailabilityType.DOWN;
+  }
 }

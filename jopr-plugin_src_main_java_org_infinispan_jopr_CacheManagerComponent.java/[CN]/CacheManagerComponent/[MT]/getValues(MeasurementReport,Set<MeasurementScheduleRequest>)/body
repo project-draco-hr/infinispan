@@ -1,11 +1,23 @@
 {
+  boolean trace=log.isTraceEnabled();
+  if (trace)   log.trace("Get values for these metrics: {0}",metrics);
   EmsConnection conn=getConnection();
   EmsBean bean=conn.getBean(context.getPluginConfiguration().getSimpleValue("objectName",null));
   bean.refreshAttributes();
   for (  MeasurementScheduleRequest req : metrics) {
-    String tmp=(String)bean.getAttribute(req.getName()).getValue();
-    Double val=Double.valueOf(tmp);
-    MeasurementDataNumeric res=new MeasurementDataNumeric(req,val);
-    report.addData(res);
+    DataType type=req.getDataType();
+    if (type == DataType.MEASUREMENT) {
+      String tmp=(String)bean.getAttribute(req.getName()).getValue();
+      Double val=Double.valueOf(tmp);
+      if (trace)       log.trace("Metric ({0}) is measurement with value {1}",req.getName(),val);
+      MeasurementDataNumeric res=new MeasurementDataNumeric(req,val);
+      report.addData(res);
+    }
+ else     if (type == DataType.TRAIT) {
+      String value=(String)bean.getAttribute(req.getName()).getValue();
+      if (trace)       log.trace("Metric ({0}) is trait with value {1}",req.getName(),value);
+      MeasurementDataTrait res=new MeasurementDataTrait(req,value);
+      report.addData(res);
+    }
   }
 }

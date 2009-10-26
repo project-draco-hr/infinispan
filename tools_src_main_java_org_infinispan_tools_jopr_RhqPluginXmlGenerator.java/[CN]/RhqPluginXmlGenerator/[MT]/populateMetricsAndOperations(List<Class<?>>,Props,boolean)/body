@@ -1,0 +1,110 @@
+{
+  props.setHasOperations(true);
+  props.setHasMetrics(true);
+  for (  Class<?> clazz : classes) {
+    MBean mbean=clazz.getAnnotation(MBean.class);
+    String prefix=withNamePrefix ? mbean.objectName() + '.' : "";
+    Method[] methods=clazz.getMethods();
+    for (    Method method : methods) {
+      Metric rhqMetric=method.getAnnotation(Metric.class);
+      ManagedAttribute managedAttr=method.getAnnotation(ManagedAttribute.class);
+      ManagedOperation managedOp=method.getAnnotation(ManagedOperation.class);
+      Operation rhqOperation=method.getAnnotation(Operation.class);
+      if (rhqMetric != null) {
+        debug("Metric annotation found " + rhqMetric);
+        String property=prefix + BeanConventions.getPropertyFromBeanConvention(method);
+        if (!rhqMetric.property().isEmpty()) {
+          property=prefix + rhqMetric.property();
+        }
+        MetricProps metric=new MetricProps(property);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ rhqMetric.displayName() : rhqMetric.displayName();
+        metric.setDisplayName(displayName);
+        metric.setDisplayType(rhqMetric.displayType());
+        metric.setDataType(rhqMetric.dataType());
+        metric.setUnits(rhqMetric.units());
+        if (managedAttr != null) {
+          debug("Metric has ManagedAttribute annotation " + managedAttr);
+          metric.setDescription(managedAttr.description());
+        }
+ else         if (managedOp != null) {
+          debug("Metric has ManagedOperation annotation " + managedOp);
+          metric.setDescription(managedOp.description());
+        }
+ else {
+          log.debug("Metric has no managed annotations, so take the description from the display name.");
+          metric.setDescription(rhqMetric.displayName());
+        }
+        props.getMetrics().add(metric);
+      }
+      if (rhqOperation != null) {
+        debug("Operation annotation found " + rhqOperation);
+        String name=prefix + method.getName();
+        if (!rhqOperation.name().isEmpty()) {
+          name=prefix + rhqOperation.name();
+        }
+        OperationProps operation=new OperationProps(name);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ rhqOperation.displayName() : rhqOperation.displayName();
+        operation.setDisplayName(displayName);
+        if (managedAttr != null) {
+          debug("Operation has ManagedAttribute annotation " + managedAttr);
+          operation.setDescription(managedAttr.description());
+        }
+ else         if (managedOp != null) {
+          debug("Operation has ManagedOperation annotation " + managedOp);
+          operation.setDescription(managedOp.description());
+        }
+ else {
+          debug("Operation has no managed annotations, so take the description from the display name.");
+          operation.setDescription(rhqOperation.displayName());
+        }
+        Annotation[][] paramAnnotations=method.getParameterAnnotations();
+        int i=0;
+        for (        Annotation[] paramAnnotationsInEach : paramAnnotations) {
+          boolean hadParameter=false;
+          for (          Annotation annot : paramAnnotationsInEach) {
+            debug("Parameter annotation " + annot);
+            if (annot instanceof Parameter) {
+              Parameter param=(Parameter)annot;
+              SimpleProperty prop=new SimpleProperty(param.name());
+              prop.setDescription(param.description());
+              operation.getParams().add(prop);
+              hadParameter=true;
+            }
+          }
+          if (!hadParameter) {
+            operation.getParams().add(new SimpleProperty("p" + i++));
+          }
+        }
+        props.getOperations().add(operation);
+      }
+    }
+    Field[] fields=clazz.getDeclaredFields();
+    for (    Field field : fields) {
+      System.out.println("Inspecting field " + field);
+      Metric rhqMetric=field.getAnnotation(Metric.class);
+      if (rhqMetric != null) {
+        System.out.println("Field " + field + " contains Metric annotation "+ rhqMetric);
+        String property=prefix + BeanConventions.getPropertyFromBeanConvention(field);
+        if (!rhqMetric.property().isEmpty()) {
+          property=prefix + rhqMetric.property();
+        }
+        MetricProps metric=new MetricProps(property);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ rhqMetric.displayName() : rhqMetric.displayName();
+        metric.setDisplayName(displayName);
+        metric.setDisplayType(rhqMetric.displayType());
+        metric.setDataType(rhqMetric.dataType());
+        metric.setUnits(rhqMetric.units());
+        ManagedAttribute managedAttr=field.getAnnotation(ManagedAttribute.class);
+        if (managedAttr != null) {
+          debug("Metric has ManagedAttribute annotation " + managedAttr);
+          metric.setDescription(managedAttr.description());
+        }
+ else {
+          log.debug("Metric has no managed annotations, so take the description from the display name.");
+          metric.setDescription(rhqMetric.displayName());
+        }
+        props.getMetrics().add(metric);
+      }
+    }
+  }
+}
