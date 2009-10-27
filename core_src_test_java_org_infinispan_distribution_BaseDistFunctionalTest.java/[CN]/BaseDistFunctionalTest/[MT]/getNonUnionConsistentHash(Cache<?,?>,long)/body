@@ -2,8 +2,8 @@
   long expTime=System.currentTimeMillis() + timeout;
   while (System.currentTimeMillis() < expTime) {
     ConsistentHash ch=getDistributionManager(c).getConsistentHash();
-    if (ch instanceof DefaultConsistentHash)     return (DefaultConsistentHash)ch;
+    if (!(ch instanceof UnionConsistentHash))     return ch;
     TestingUtil.sleepThread(100);
   }
-  throw new RuntimeException("Timed out waiting for a DefaultConsistentHash to be present on cache [" + addressOf(c) + "]");
+  throw new RuntimeException("Timed out waiting for a non-UnionConsistentHash to be present on cache [" + addressOf(c) + "]");
 }
