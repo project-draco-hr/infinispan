@@ -13,11 +13,31 @@
   if (configuration.isEnableDeadlockDetection()) {
     interceptorChain.appendIntereceptor(createInterceptor(DeadlockDetectingInterceptor.class));
   }
+  if (configuration.isUsingCacheLoaders()) {
+    if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
+      interceptorChain.appendIntereceptor(createInterceptor(ActivationInterceptor.class));
+      interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
+    }
+ else {
+      interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
+switch (configuration.getCacheMode()) {
+case DIST_SYNC:
+case DIST_ASYNC:
+        interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
+      break;
+default :
+    interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+  break;
+}
+}
+}
+if (configuration.getCacheMode().isDistributed()) interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
+ else interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
 switch (configuration.getCacheMode()) {
 case REPL_SYNC:
 case REPL_ASYNC:
-    interceptorChain.appendIntereceptor(createInterceptor(ReplicationInterceptor.class));
-  break;
+interceptorChain.appendIntereceptor(createInterceptor(ReplicationInterceptor.class));
+break;
 case INVALIDATION_SYNC:
 case INVALIDATION_ASYNC:
 interceptorChain.appendIntereceptor(createInterceptor(InvalidationInterceptor.class));
@@ -28,26 +48,6 @@ interceptorChain.appendIntereceptor(createInterceptor(DistributionInterceptor.cl
 break;
 case LOCAL:
 }
-if (configuration.isUsingCacheLoaders()) {
-if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
-interceptorChain.appendIntereceptor(createInterceptor(ActivationInterceptor.class));
-interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
-}
- else {
-interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
-switch (configuration.getCacheMode()) {
-case DIST_SYNC:
-case DIST_ASYNC:
-interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
-break;
-default :
-interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
-break;
-}
-}
-}
-if (configuration.getCacheMode().isDistributed()) interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
- else interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
 CommandInterceptor callInterceptor=createInterceptor(CallInterceptor.class);
 interceptorChain.appendIntereceptor(callInterceptor);
 if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");

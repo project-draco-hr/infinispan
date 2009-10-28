@@ -1,0 +1,12 @@
+{
+  advancedCache.put("k","v");
+  assertNotLocked(advancedCache,"k");
+  tm.begin();
+  advancedCache.get("k",Flag.FORCE_WRITE_LOCK);
+  InvocationContext ic=advancedCache.getInvocationContextContainer().getInvocationContext();
+  CacheEntry cacheEntry=ic.getLookedUpEntries().get("k");
+  assert(cacheEntry instanceof ReadCommittedEntry && cacheEntry.isChanged());
+  assertLocked(advancedCache,"k");
+  tm.commit();
+  assertNotLocked(advancedCache,"k");
+}
