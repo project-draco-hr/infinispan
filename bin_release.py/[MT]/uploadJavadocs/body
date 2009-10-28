@@ -1,2 +1,14 @@
-def uploadJavadocs(workingDir):
-    print 'TODO.  Please do this manually for now.'
+def uploadJavadocs(base_dir, workingDir, version):
+    os.chdir(('%s/target/distribution' % workingDir))
+    subprocess.check_call(['unzip', ('infinispan-%s-all.zip' % version)])
+    os.chdir(('infinispan-%s/doc' % version))
+    subprocess.check_call([('%s/bin/updateTracker.sh' % workingDir)])
+    subprocess.check_call(['tar', 'zcf', ('%s/apidocs-%s.tar.gz' % (base_dir, version)), 'apidocs'])
+    os.chdir(base_dir)
+    subprocess.check_call(['scp', ('apidocs-%s.tar.gz' % version), 'sourceforge_frs:'])
+    print ('API docs are in %s/apidocs-%s.tar.gz' % (base_dir, version))
+    print 'They have also been uploaded to Sourceforge.'
+    print 'MANUAL STEPS:'
+    print '  1) Email archive to helpdesk@redhat.com'
+    print '  2) SSH to sourceforge and run apidocs.sh'
+    print ''
