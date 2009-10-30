@@ -1,53 +1,64 @@
 {
-  if (t.isSupportStateTransfer()) {
-    long initialWaitTime=configuration.getStateRetrievalInitialRetryWaitTime();
-    int waitTimeIncreaseFactor=configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
-    int numRetries=configuration.getStateRetrievalNumRetries();
-    List<Address> members=t.getMembers();
-    if (members.size() < 2) {
-      if (log.isDebugEnabled())       log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
-      return;
-    }
-    boolean success=false;
-    try {
-      long wait=initialWaitTime;
-      outer:       for (int i=0; i < numRetries; i++) {
-        for (        Address member : members) {
-          if (!member.equals(t.getAddress())) {
-            try {
-              if (log.isInfoEnabled())               log.info("Trying to fetch state from {0}",member);
-              currentStateTransferSource=member;
-              if (t.retrieveState(cacheName,member,timeout)) {
-                if (log.isInfoEnabled())                 log.info("Successfully retrieved and applied state from {0}",member);
-                success=true;
-                break outer;
+  long startTime=0;
+  if (statisticsEnabled)   startTime=System.currentTimeMillis();
+  try {
+    if (t.isSupportStateTransfer()) {
+      long initialWaitTime=configuration.getStateRetrievalInitialRetryWaitTime();
+      int waitTimeIncreaseFactor=configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
+      int numRetries=configuration.getStateRetrievalNumRetries();
+      List<Address> members=t.getMembers();
+      if (members.size() < 2) {
+        if (log.isDebugEnabled())         log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
+        return;
+      }
+      boolean success=false;
+      try {
+        long wait=initialWaitTime;
+        outer:         for (int i=0; i < numRetries; i++) {
+          for (          Address member : members) {
+            if (!member.equals(t.getAddress())) {
+              try {
+                if (log.isInfoEnabled())                 log.info("Trying to fetch state from {0}",member);
+                currentStateTransferSource=member;
+                if (t.retrieveState(cacheName,member,timeout)) {
+                  if (log.isInfoEnabled())                   log.info("Successfully retrieved and applied state from {0}",member);
+                  success=true;
+                  break outer;
+                }
+              }
+ catch (              StateTransferException e) {
+                if (log.isDebugEnabled())                 log.debug("Error while fetching state from member " + member,e);
+              }
+ finally {
+                currentStateTransferSource=null;
               }
             }
- catch (            StateTransferException e) {
-              if (log.isDebugEnabled())               log.debug("Error while fetching state from member " + member,e);
-            }
- finally {
-              currentStateTransferSource=null;
-            }
           }
-        }
-        if (!success) {
-          if (log.isWarnEnabled())           log.warn("Could not find available peer for state, backing off and retrying");
-          try {
-            Thread.sleep(wait*=waitTimeIncreaseFactor);
-          }
- catch (          InterruptedException e) {
-            Thread.currentThread().interrupt();
+          if (!success) {
+            if (log.isWarnEnabled())             log.warn("Could not find available peer for state, backing off and retrying");
+            try {
+              Thread.sleep(wait*=waitTimeIncreaseFactor);
+            }
+ catch (            InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
           }
         }
       }
-    }
   finally {
-      currentStateTransferSource=null;
+        currentStateTransferSource=null;
+      }
+      if (!success)       throw new StateTransferException("Unable to fetch state on startup");
     }
-    if (!success)     throw new StateTransferException("Unable to fetch state on startup");
-  }
  else {
-    throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
+      throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
+    }
+  }
+  finally {
+    if (statisticsEnabled) {
+      long timeTaken=System.currentTimeMillis() - startTime;
+      totalReplicationTime.getAndAdd(timeTaken);
+      numReplications.getAndIncrement();
+    }
   }
 }
