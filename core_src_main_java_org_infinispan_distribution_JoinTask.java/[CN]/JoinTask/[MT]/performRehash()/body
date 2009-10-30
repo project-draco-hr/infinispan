@@ -27,7 +27,7 @@
     if (chOld == null)     throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
     chNew=createConsistentHash(configuration,chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
-    if (configuration.isFetchInMemoryState()) {
+    if (configuration.isRehashEnabled()) {
       transactionLogger.enable();
       rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
       Address myAddress=rpcManager.getTransport().getAddress();
@@ -43,12 +43,12 @@
       dmi.drainTransactionLog();
     }
     unlocked=true;
-    if (!configuration.isFetchInMemoryState()) {
+    if (!configuration.isRehashEnabled()) {
       rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
     }
     rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
     rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_COMPLETE,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
-    if (configuration.isFetchInMemoryState()) {
+    if (configuration.isRehashEnabled()) {
       invalidateInvalidHolders(chOld,chNew);
     }
     if (log.isInfoEnabled())     log.info("Completed in {0}!",Util.prettyPrintTime(System.currentTimeMillis() - start));
