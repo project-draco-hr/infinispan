@@ -1,7 +1,22 @@
 {
   String cfg;
   if (props != null) {
-    if (props.containsKey(CONFIGURATION_FILE)) {
+    if (props.containsKey(CHANNEL_LOOKUP)) {
+      String channelLookupClassName=props.getProperty(CHANNEL_LOOKUP);
+      try {
+        JGroupsChannelLookup lookup=(JGroupsChannelLookup)Util.getInstance(channelLookupClassName);
+        channel=lookup.getJGroupsChannel();
+        startChannel=lookup.shouldStartAndConnect();
+        stopChannel=lookup.shouldStopAndDisconnect();
+      }
+ catch (      ClassCastException e) {
+        log.error("Class [" + channelLookupClassName + "] cannot be cast to JGroupsChannelLookup!  Not using a channel lookup.");
+      }
+catch (      Exception e) {
+        log.error("Errors instantiating [" + channelLookupClassName + "]!  Not using a channel lookup.");
+      }
+    }
+    if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
       cfg=props.getProperty(CONFIGURATION_FILE);
       try {
         channel=new JChannel(new FileLookup().lookupFileLocation(cfg));
@@ -11,7 +26,7 @@
         throw new CacheException(e);
       }
     }
-    if (props.containsKey(CONFIGURATION_XML)) {
+    if (channel == null && props.containsKey(CONFIGURATION_XML)) {
       cfg=props.getProperty(CONFIGURATION_XML);
       try {
         channel=new JChannel(XmlConfigHelper.stringToElement(cfg));
@@ -21,7 +36,7 @@
         throw new CacheException(e);
       }
     }
-    if (props.containsKey(CONFIGURATION_STRING)) {
+    if (channel == null && props.containsKey(CONFIGURATION_STRING)) {
       cfg=props.getProperty(CONFIGURATION_STRING);
       try {
         channel=new JChannel(cfg);
