@@ -1,0 +1,23 @@
+{
+  File[] files=dir.listFiles();
+  if (files == null)   return 0;
+  int count=0;
+  for (  File file : files) {
+    if (file.isDirectory())     count+=verifyDir(file);
+ else     if (file.isFile()) {
+      try {
+        String key=file.getPath();
+        byte[] val=getContents(file);
+        byte[] actual_val_in_cache=cache.get(key);
+        if (!Arrays.equals(val,actual_val_in_cache)) {
+          System.err.println("for key " + key + ": the file has "+ val.length+ " bytes in the file system, but "+ actual_val_in_cache.length+ " bytes in the cache");
+        }
+        count++;
+      }
+ catch (      Throwable t) {
+        System.err.println("failed verifying " + file);
+      }
+    }
+  }
+  return count;
+}

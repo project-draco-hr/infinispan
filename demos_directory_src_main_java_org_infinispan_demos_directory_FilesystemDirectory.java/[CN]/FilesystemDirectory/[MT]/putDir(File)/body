@@ -1,0 +1,21 @@
+{
+  File[] files=dir.listFiles();
+  if (files == null)   return 0;
+  int count=0;
+  for (  File file : files) {
+    if (file.isDirectory())     count+=putDir(file);
+ else     if (file.isFile()) {
+      String key=file.getPath();
+      byte[] val=null;
+      try {
+        val=getContents(file);
+        cache.put(key,val);
+        count++;
+      }
+ catch (      Throwable e) {
+        System.err.println("failed reading contents of " + file);
+      }
+    }
+  }
+  return count;
+}
