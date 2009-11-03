@@ -1,0 +1,24 @@
+{
+  boolean locked=false;
+  Transaction tx=null;
+  try {
+    if ((tx=tm.getTransaction()) != null) {
+      tm.suspend();
+    }
+    locked=cache.containsKey(keyOfLock,lockFlags);
+  }
+ catch (  Exception e) {
+    log.error("Error in suspending transaction",e);
+  }
+ finally {
+    if (tx != null) {
+      try {
+        tm.resume(tx);
+      }
+ catch (      Exception e) {
+        throw new CacheException("Unable to resume suspended transaction " + tx,e);
+      }
+    }
+  }
+  return locked;
+}
