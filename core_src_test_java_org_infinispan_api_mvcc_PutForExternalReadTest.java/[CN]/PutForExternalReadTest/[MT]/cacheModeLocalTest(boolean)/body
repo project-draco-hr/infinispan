@@ -1,6 +1,6 @@
 {
-  Cache cache1=cache(0,"replSync");
-  Cache cache2=cache(1,"replSync");
+  Cache<Object,Object> cache1=cache(0,"replSync");
+  Cache<Object,Object> cache2=cache(1,"replSync");
   TransactionManager tm1=TestingUtil.getTransactionManager(cache1);
   TransactionManager tm2=TestingUtil.getTransactionManager(cache2);
   RpcManager rpcManager=EasyMock.createMock(RpcManager.class);
@@ -8,7 +8,7 @@
   try {
     replay(rpcManager);
     if (transactional)     tm1.begin();
-    cache1.getAdvancedCache().putForExternalRead(key,value,Flag.CACHE_MODE_LOCAL);
+    cache1.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).putForExternalRead(key,value);
     if (transactional)     tm1.commit();
     verify(rpcManager);
   }
