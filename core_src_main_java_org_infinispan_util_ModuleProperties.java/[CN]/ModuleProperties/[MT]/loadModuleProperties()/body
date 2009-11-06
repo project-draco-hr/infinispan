@@ -1,0 +1,20 @@
+{
+  Map<String,ModuleProperties> map=new HashMap<String,ModuleProperties>();
+  Enumeration<URL> resources=getResources(MODULE_PROPERTIES_FILENAME);
+  if (resources != null) {
+    while (resources.hasMoreElements()) {
+      URL url=null;
+      try {
+        url=resources.nextElement();
+        ModuleProperties props=new ModuleProperties();
+        props.load(url.openStream());
+        props.verify();
+        map.put(props.getName(),props);
+      }
+ catch (      Exception e) {
+        log.warn("Could not load module at URL " + url,e);
+      }
+    }
+  }
+  return map;
+}

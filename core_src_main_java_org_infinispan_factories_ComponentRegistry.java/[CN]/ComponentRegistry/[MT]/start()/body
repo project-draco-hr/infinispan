@@ -4,8 +4,16 @@
   }
   boolean needToNotify=state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
   globalComponents.registerNamedComponentRegistry(this,cacheName);
+  if (needToNotify) {
+    for (    ModuleLifecycle l : moduleLifecycles) {
+      l.cacheStarting(this,cacheName);
+    }
+  }
   super.start();
   if (needToNotify && state == ComponentStatus.RUNNING) {
+    for (    ModuleLifecycle l : moduleLifecycles) {
+      l.cacheStarted(this,cacheName);
+    }
     cacheManagerNotifier.notifyCacheStarted(cacheName);
   }
 }

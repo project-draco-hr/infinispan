@@ -1,0 +1,16 @@
+{
+  List<ModuleLifecycle> lifecycles=new ArrayList<ModuleLifecycle>();
+  Map<String,ModuleProperties> p=ModuleProperties.loadModuleProperties();
+  for (  Entry<String,ModuleProperties> m : p.entrySet()) {
+    try {
+      String lifecycleClassName=m.getValue().getLifecycleClassName();
+      Class<?> loadClass=Util.loadClass(lifecycleClassName);
+      ModuleLifecycle ml=(ModuleLifecycle)Proxies.newCatchThrowableProxy((ModuleLifecycle)loadClass.newInstance());
+      lifecycles.add(ml);
+    }
+ catch (    Exception e) {
+      log.warn("Module " + m.getKey() + " loaded, but could not be initialized ",e);
+    }
+  }
+  return lifecycles;
+}

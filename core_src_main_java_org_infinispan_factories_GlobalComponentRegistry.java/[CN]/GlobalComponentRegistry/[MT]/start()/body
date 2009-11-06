@@ -1,0 +1,14 @@
+{
+  boolean needToNotify=state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+  if (needToNotify) {
+    for (    ModuleLifecycle l : moduleLifecycles) {
+      l.cacheManagerStarting(this);
+    }
+  }
+  super.start();
+  if (needToNotify && state == ComponentStatus.RUNNING) {
+    for (    ModuleLifecycle l : moduleLifecycles) {
+      l.cacheManagerStarted(this);
+    }
+  }
+}
