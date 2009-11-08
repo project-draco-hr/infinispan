@@ -1,0 +1,16 @@
+{
+  boolean isMappedToLocalNode=false;
+  if (ctx.isOriginLocal() && !(isMappedToLocalNode=dm.isLocal(key)) && isNotInL1(key)) {
+    return realRemoteGetAndStoreInL1(ctx,key);
+  }
+ else {
+    if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
+      if (trace)       log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
+      return realRemoteGetAndStoreInL1(ctx,key);
+    }
+ else {
+      if (trace)       log.trace("Not doing a remote get for key {0} since entry is mapped to current node, or is in L1",key);
+    }
+  }
+  return null;
+}
