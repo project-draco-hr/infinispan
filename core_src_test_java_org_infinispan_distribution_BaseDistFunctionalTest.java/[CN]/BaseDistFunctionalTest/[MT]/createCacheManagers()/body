@@ -2,6 +2,7 @@
   cacheName="dist";
   configuration=getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC,tx);
   configuration.setRehashEnabled(performRehashing);
+  configuration.setNumOwners(NUM_OWNERS);
   if (!testRetVals) {
     configuration.setUnsafeUnreliableReturnValues(true);
     configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
@@ -9,13 +10,13 @@
   configuration.setSyncReplTimeout(60,TimeUnit.SECONDS);
   configuration.setLockAcquisitionTimeout(45,TimeUnit.SECONDS);
   configuration.setL1CacheEnabled(l1CacheEnabled);
-  caches=createClusteredCaches(4,cacheName,configuration);
+  caches=createClusteredCaches(INIT_CLUSTER_SIZE,cacheName,configuration);
   reorderBasedOnCHPositions();
-  c1=caches.get(0);
-  c2=caches.get(1);
-  c3=caches.get(2);
-  c4=caches.get(3);
-  cacheAddresses=new ArrayList<Address>(4);
+  if (INIT_CLUSTER_SIZE > 0)   c1=caches.get(0);
+  if (INIT_CLUSTER_SIZE > 1)   c2=caches.get(1);
+  if (INIT_CLUSTER_SIZE > 2)   c3=caches.get(2);
+  if (INIT_CLUSTER_SIZE > 3)   c4=caches.get(3);
+  cacheAddresses=new ArrayList<Address>(INIT_CLUSTER_SIZE);
   for (  Cache cache : caches)   cacheAddresses.add(cache.getCacheManager().getAddress());
-  RehashWaiter.waitForInitRehashToComplete(c1,c2,c3,c4);
+  RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
 }
