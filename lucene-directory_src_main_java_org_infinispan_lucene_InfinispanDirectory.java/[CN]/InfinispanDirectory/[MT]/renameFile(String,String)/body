@@ -1,18 +1,22 @@
 {
   checkIsOpen();
-  FileMetadata fileFrom=getFile(indexName,from);
-  cache.remove(new FileCacheKey(indexName,from));
+  CacheKey fromKey=new FileCacheKey(indexName,from);
+  FileMetadata fileFrom=(FileMetadata)cache.remove(fromKey);
   cache.put(new FileCacheKey(indexName,to),fileFrom);
+  Set<String> fileList=getFileList();
+  fileList.remove(from);
+  fileList.add(to);
+  cache.put(fileListCacheKey,fileList);
   int i=-1;
   Object ob;
   do {
-    ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,from,++i);
-    ob=cache.get(chunkKey);
+    ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i);
+    ob=cache.get(fromChunkKey);
     if (ob == null) {
       break;
     }
-    chunkKey=new ChunkCacheKey(indexName,to,i);
-    cache.put(chunkKey,ob);
+    ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i);
+    cache.put(toChunkKey,ob);
   }
  while (true);
   if (log.isTraceEnabled()) {
