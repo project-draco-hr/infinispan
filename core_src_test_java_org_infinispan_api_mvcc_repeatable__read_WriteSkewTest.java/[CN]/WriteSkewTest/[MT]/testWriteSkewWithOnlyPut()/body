@@ -1,0 +1,32 @@
+{
+  Configuration writeSkewCheck=new Configuration();
+  writeSkewCheck.setWriteSkewCheck(true);
+  cacheManager.defineConfiguration("writeSkewCheckWithOnlyPut",writeSkewCheck);
+  cache=cacheManager.getCache("writeSkewCheckWithOnlyPut");
+  postStart();
+  tm.begin();
+  try {
+    cache.put("k","init");
+  }
+ catch (  Exception e) {
+    tm.setRollbackOnly();
+    throw e;
+  }
+ finally {
+    if (tm.getStatus() == Status.STATUS_ACTIVE)     tm.commit();
+ else     tm.rollback();
+  }
+  int nbWriters=10;
+  CyclicBarrier barrier=new CyclicBarrier(nbWriters + 1);
+  List<Future<Void>> futures=new ArrayList<Future<Void>>(nbWriters);
+  ExecutorService executorService=Executors.newCachedThreadPool();
+  for (int i=0; i < nbWriters; i++) {
+    log.debug("Schedule execution");
+    Future<Void> future=executorService.submit(new EntryWriter(barrier));
+    futures.add(future);
+  }
+  barrier.await();
+  barrier.await();
+  log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+  for (  Future<Void> future : futures)   future.get();
+}

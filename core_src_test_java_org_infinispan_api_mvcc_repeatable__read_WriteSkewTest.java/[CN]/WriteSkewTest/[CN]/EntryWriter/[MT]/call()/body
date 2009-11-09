@@ -1,0 +1,24 @@
+{
+  try {
+    log.debug("Wait for all executions paths to be ready to perform calls");
+    barrier.await();
+    tm.begin();
+    try {
+      cache.put("k","_lockthisplease_");
+    }
+ catch (    Exception e) {
+      log.error("Unexpected",e);
+      tm.setRollbackOnly();
+      throw e;
+    }
+ finally {
+      if (tm.getStatus() == Status.STATUS_ACTIVE)       tm.commit();
+ else       tm.rollback();
+    }
+    return null;
+  }
+  finally {
+    log.debug("Wait for all execution paths to finish");
+    barrier.await();
+  }
+}
