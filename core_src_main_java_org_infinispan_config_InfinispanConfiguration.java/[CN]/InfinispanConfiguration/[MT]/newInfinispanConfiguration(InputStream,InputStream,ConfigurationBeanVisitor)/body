@@ -13,24 +13,19 @@
       }
 );
     }
-    InputSource source=null;
+    StreamSource source=null;
     if (skipTokenReplacement()) {
-      source=new InputSource(config);
+      source=new StreamSource(config);
     }
  else {
       source=replaceProperties(config);
     }
-    DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
-    dbf.setNamespaceAware(true);
-    DocumentBuilder db=dbf.newDocumentBuilder();
-    Document document=db.parse(source);
-    InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(document);
+    InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(source);
     GlobalConfiguration gconf=ic.parseGlobalConfiguration();
     gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
     if (cbv != null) {
       ic.accept(cbv);
     }
-    ic.accept(new ModuleConfigurationResolverVisitor(document));
     return ic;
   }
  catch (  ConfigurationException cex) {
