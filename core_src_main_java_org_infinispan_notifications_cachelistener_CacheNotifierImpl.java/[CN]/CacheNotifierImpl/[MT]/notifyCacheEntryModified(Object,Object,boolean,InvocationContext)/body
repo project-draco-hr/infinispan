@@ -2,15 +2,19 @@
   if (!cacheEntryModifiedListeners.isEmpty()) {
     boolean originLocal=ctx.isOriginLocal();
     InvocationContext contexts=icc.suspend();
-    EventImpl e=new EventImpl();
-    e.setCache(cache);
-    e.setOriginLocal(originLocal);
-    e.setValue(value);
-    e.setPre(pre);
-    e.setKey(key);
-    setTx(ctx,e);
-    e.setType(CACHE_ENTRY_MODIFIED);
-    for (    ListenerInvocation listener : cacheEntryModifiedListeners)     listener.invoke(e);
-    icc.resume(contexts);
+    try {
+      EventImpl e=new EventImpl();
+      e.setCache(cache);
+      e.setOriginLocal(originLocal);
+      e.setValue(value);
+      e.setPre(pre);
+      e.setKey(key);
+      setTx(ctx,e);
+      e.setType(CACHE_ENTRY_MODIFIED);
+      for (      ListenerInvocation listener : cacheEntryModifiedListeners)       listener.invoke(e);
+    }
+  finally {
+      icc.resume(contexts);
+    }
   }
 }

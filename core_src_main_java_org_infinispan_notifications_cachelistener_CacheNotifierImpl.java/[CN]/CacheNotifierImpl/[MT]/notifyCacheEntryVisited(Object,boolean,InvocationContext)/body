@@ -1,13 +1,17 @@
 {
   if (!cacheEntryVisitedListeners.isEmpty()) {
     InvocationContext contexts=icc.suspend();
-    EventImpl e=new EventImpl();
-    e.setCache(cache);
-    e.setPre(pre);
-    e.setKey(key);
-    setTx(ctx,e);
-    e.setType(CACHE_ENTRY_VISITED);
-    for (    ListenerInvocation listener : cacheEntryVisitedListeners)     listener.invoke(e);
-    icc.resume(contexts);
+    try {
+      EventImpl e=new EventImpl();
+      e.setCache(cache);
+      e.setPre(pre);
+      e.setKey(key);
+      setTx(ctx,e);
+      e.setType(CACHE_ENTRY_VISITED);
+      for (      ListenerInvocation listener : cacheEntryVisitedListeners)       listener.invoke(e);
+    }
+  finally {
+      icc.resume(contexts);
+    }
   }
 }

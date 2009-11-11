@@ -2,12 +2,16 @@
   if (!transactionRegisteredListeners.isEmpty()) {
     boolean isOriginLocal=ctx.isOriginLocal();
     InvocationContext contexts=icc.suspend();
-    EventImpl e=new EventImpl();
-    e.setCache(cache);
-    e.setOriginLocal(isOriginLocal);
-    e.setTransactionId(globalTransaction);
-    e.setType(TRANSACTION_REGISTERED);
-    for (    ListenerInvocation listener : transactionRegisteredListeners)     listener.invoke(e);
-    icc.resume(contexts);
+    try {
+      EventImpl e=new EventImpl();
+      e.setCache(cache);
+      e.setOriginLocal(isOriginLocal);
+      e.setTransactionId(globalTransaction);
+      e.setType(TRANSACTION_REGISTERED);
+      for (      ListenerInvocation listener : transactionRegisteredListeners)       listener.invoke(e);
+    }
+  finally {
+      icc.resume(contexts);
+    }
   }
 }
