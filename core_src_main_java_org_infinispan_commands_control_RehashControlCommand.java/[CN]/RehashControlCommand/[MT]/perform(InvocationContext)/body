@@ -15,6 +15,12 @@ case PULL_STATE:
 return pullState();
 case PUSH_STATE:
 return pushState();
+case DRAIN_TX:
+distributionManager.applyRemoteTxLog(txLogCommands);
+return null;
+case DRAIN_TX_PREPARES:
+for (PrepareCommand pc : pendingPrepares) pc.perform(null);
+return null;
 }
 throw new CacheException("Unknown rehash control command type " + type);
 }

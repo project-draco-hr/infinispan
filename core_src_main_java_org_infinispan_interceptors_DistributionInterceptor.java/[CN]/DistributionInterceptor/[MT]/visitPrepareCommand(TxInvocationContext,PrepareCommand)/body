@@ -2,8 +2,7 @@
   Object retVal=invokeNextInterceptor(ctx,command);
   boolean sync=isSynchronous(ctx);
   if (ctx.isOriginLocal() && ctx.hasModifications()) {
-    List<Address> recipients=new ArrayList<Address>(ctx.getTransactionParticipants());
-    if (trace)     log.trace("Multicasting PrepareCommand to recipients : " + recipients);
+    List<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
     rpcManager.invokeRemotely(recipients,command,sync);
     if (command.isOnePhaseCommit())     flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),false,null,false);
   }

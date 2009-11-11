@@ -6,7 +6,7 @@
   ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,dmi.getConsistentHash().getCaches(),leaversHandled);
   int replCount=configuration.getNumOwners();
   try {
-    StateMap statemap=new StateMap(leaversHandled,self,oldCH,dmi.getConsistentHash(),replCount);
+    InMemoryStateMap statemap=new InMemoryStateMap(leaversHandled,self,oldCH,dmi.getConsistentHash(),replCount);
     if (log.isTraceEnabled())     log.trace("Examining state in data container");
     for (    InternalCacheEntry ice : dataContainer) {
       List<Address> oldOwners=oldCH.locate(ice.getKey(),replCount);
@@ -17,15 +17,16 @@
       if (log.isTraceEnabled())       log.trace("Examining state in cache store");
       for (      InternalCacheEntry ice : cs.loadAll())       if (!statemap.containsKey(ice.getKey()))       statemap.addState(ice);
     }
-    Set<Future<Void>> pushFutures=new HashSet<Future<Void>>();
+    Set<Future<Object>> pushFutures=new HashSet<Future<Object>>();
     for (    Map.Entry<Address,Map<Object,InternalCacheValue>> entry : statemap.getState().entrySet()) {
       if (log.isDebugEnabled())       log.debug("Pushing {0} entries to {1}",entry.getValue().size(),entry.getKey());
       RehashControlCommand push=cf.buildRehashControlCommand(RehashControlCommand.Type.PUSH_STATE,self,entry.getValue());
-      NotifyingNotifiableFuture f=new NotifyingFutureImpl(null);
+      NotifyingNotifiableFuture<Object> f=new NotifyingFutureImpl(null);
       pushFutures.add(f);
       rpcManager.invokeRemotelyInFuture(Collections.singleton(entry.getKey()),push,true,f,configuration.getRehashRpcTimeout());
     }
     for (    Future f : pushFutures)     f.get();
+    processAndDrainTxLog(oldCH,dmi.getConsistentHash(),replCount);
     completedSuccessfully=true;
     invalidateInvalidHolders(oldCH,dmi.getConsistentHash());
     if (log.isInfoEnabled())     log.info("Completed in {0}!",Util.prettyPrintTime(System.currentTimeMillis() - start));

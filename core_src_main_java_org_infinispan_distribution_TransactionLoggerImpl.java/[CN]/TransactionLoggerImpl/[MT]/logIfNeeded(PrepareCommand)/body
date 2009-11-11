@@ -1,20 +1,20 @@
 {
-  if (enabled) {
-    loggingLock.readLock().lock();
-    try {
-      if (enabled) {
-        if (command.isOnePhaseCommit()) {
+  if (command.isOnePhaseCommit()) {
+    if (enabled) {
+      loggingLock.readLock().lock();
+      try {
+        if (enabled) {
           if (trace)           log.trace("Logging 1PC prepare for tx {0}",command.getGlobalTransaction());
           logModificationsInTransaction(command);
         }
- else {
-          if (trace)           log.trace("Logging 2PC prepare for tx {0}",command.getGlobalTransaction());
-          uncommittedPrepares.put(command.getGlobalTransaction(),command);
-        }
+      }
+  finally {
+        loggingLock.readLock().unlock();
       }
     }
-  finally {
-      loggingLock.readLock().unlock();
-    }
+  }
+ else {
+    if (trace)     log.trace("Logging 2PC prepare for tx {0}",command.getGlobalTransaction());
+    uncommittedPrepares.put(command.getGlobalTransaction(),command);
   }
 }

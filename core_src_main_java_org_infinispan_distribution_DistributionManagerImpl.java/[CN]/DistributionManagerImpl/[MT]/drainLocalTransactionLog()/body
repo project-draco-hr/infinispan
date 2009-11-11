@@ -1,0 +1,10 @@
+{
+  List<WriteCommand> c;
+  while (transactionLogger.shouldDrainWithoutLock()) {
+    c=transactionLogger.drain();
+    apply(c);
+  }
+  c=transactionLogger.drainAndLock();
+  apply(c);
+  transactionLogger.unlockAndDisable();
+}

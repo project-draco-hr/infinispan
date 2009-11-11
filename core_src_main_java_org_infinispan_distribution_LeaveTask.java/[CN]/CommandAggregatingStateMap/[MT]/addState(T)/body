@@ -1,0 +1,22 @@
+{
+  for (  Object key : getAffectedKeys(payload)) {
+    for (    Address leaver : leavers) {
+      List<Address> owners=oldCH.locate(key,replCount);
+      int leaverIndex=owners.indexOf(leaver);
+      if (leaverIndex > -1) {
+        List<Address> newOwners=newCH.locate(key,replCount);
+        newOwners.removeAll(owners);
+        if (!newOwners.isEmpty()) {
+          for (          Address no : newOwners) {
+            List<T> s=state.get(no);
+            if (s == null) {
+              s=new LinkedList<T>();
+              state.put(no,s);
+            }
+            s.add(payload);
+          }
+        }
+      }
+    }
+  }
+}
