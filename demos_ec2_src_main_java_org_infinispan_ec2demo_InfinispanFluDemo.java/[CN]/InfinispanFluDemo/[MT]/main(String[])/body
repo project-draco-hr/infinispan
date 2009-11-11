@@ -4,11 +4,16 @@
   JSAPResult config=jsap.parse(args);
   InfluenzaDataLoader fluDemo=new InfluenzaDataLoader();
   try {
+    fluDemo.createCache(config.getString("InfinispanCfg"));
     fluDemo.populateCache(config);
   }
  catch (  SAXException e1) {
     e1.printStackTrace();
     System.exit(1);
+  }
+catch (  IOException e) {
+    e.printStackTrace();
+    System.exit(2);
   }
   while (true) {
     if (config.getBoolean("query")) {
@@ -33,6 +38,6 @@
         e.printStackTrace();
       }
     }
-    System.out.println("Protein/Influenza/Nucleotide Cache Size-->" + fluDemo.proteinCache.size() + "/"+ fluDemo.influenzaCache.size()+ "/"+ fluDemo.nucleiodCache.size());
+    System.out.println(fluDemo.cacheSizes());
   }
 }
