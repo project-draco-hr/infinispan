@@ -1,11 +1,11 @@
 {
   boolean trace=log.isTraceEnabled();
-  if (trace)   log.trace("Discover resources with context: {0}",discoveryContext);
+  if (trace)   log.trace("Discover resources with context: {0}",ctx);
   Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
   Configuration c=new Configuration();
   c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,REMOTE));
   c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,CONNECTOR));
-  c.put(new PropertySimple("objectName",MANAGER_OBJECT));
+  c.put(new PropertySimple(OBJECT_NAME_KEY,MANAGER_OBJECT));
   if (trace)   log.trace("To be used configuration is {0}",c.toString(true));
   ConnectionHelper helper=new ConnectionHelper();
   EmsConnection conn=helper.getEmsConnection(c);
@@ -15,13 +15,20 @@
   if (trace)   log.trace("Querying [{0}] returned beans: {1}",queryUtility.getTranslatedQuery(),beans);
   for (  EmsBean bean : beans) {
     String managerName=bean.getBeanName().getCanonicalName();
-    c.put(new PropertySimple("objectName",managerName));
+    c.put(new PropertySimple(OBJECT_NAME_KEY,managerName));
     String resourceName=bean.getAttribute("Name").getValue().toString();
     String version=bean.getAttribute("Version").getValue().toString();
-    if (trace)     log.trace("Add resource with name '{0}', version '{1}' and type {2}",resourceName,version,discoveryContext.getResourceType());
-    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(discoveryContext.getResourceType(),managerName,resourceName,version,"A cache manager within Infinispan",c,null);
+    if (trace)     log.trace("Add resource with name '{0}', version '{1}' and type {2}",resourceName,version,ctx.getResourceType());
+    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",c,null);
     discoveredResources.add(detail);
-    log.info("Discovered Infinispan instance: {0}",managerName);
+    log.info("Automatically discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
+  }
+  List<Configuration> contextPluginConfigurations=ctx.getPluginConfigurations();
+  for (  Configuration pluginConfiguration : contextPluginConfigurations) {
+    DiscoveredResourceDetails resource=parsePluginConfig(ctx,pluginConfiguration);
+    if (resource != null) {
+      discoveredResources.add(resource);
+    }
   }
   return discoveredResources;
 }
