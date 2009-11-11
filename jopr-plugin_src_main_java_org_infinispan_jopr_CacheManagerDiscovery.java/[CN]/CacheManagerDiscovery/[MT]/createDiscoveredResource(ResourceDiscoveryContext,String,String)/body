@@ -1,12 +1,10 @@
 {
   boolean trace=log.isTraceEnabled();
-  String objectName=cfg.getSimple(OBJECT_NAME_KEY).getStringValue();
-  String connectorAddress=cfg.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue();
   Configuration c=new Configuration();
   c.put(new PropertySimple(OBJECT_NAME_KEY,objectName));
   c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,connectorAddress));
   c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,CONNECTOR));
-  if (trace)   log.trace("Manual configuration is {0}",c.toString(true));
+  if (trace)   log.trace("Configuration is {0}",c.toString(true));
   ConnectionHelper helper=new ConnectionHelper();
   EmsConnection conn=helper.getEmsConnection(c);
   if (trace)   log.trace("Connection to ems server stablished: {0}",conn);
@@ -17,8 +15,8 @@
   String managerName=bean.getBeanName().getCanonicalName();
   String resourceName=bean.getAttribute("Name").getValue().toString();
   String version=bean.getAttribute("Version").getValue().toString();
-  if (trace)   log.trace("Add resource with name '{0}', version '{1}' and type {2}",resourceName,version,ctx.getResourceType());
+  if (trace)   log.trace("Add resource with version '{1}' and type {2}",version,ctx.getResourceType());
   DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",c,null);
-  log.info("Manually discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
+  log.info("Discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
   return detail;
 }
