@@ -2,11 +2,18 @@
   boolean shouldSkipLocking=ctx.hasFlag(Flag.SKIP_LOCKING);
   if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
     if (lockManager.lockAndRecord(key,ctx)) {
+      if (trace)       log.trace("Successfully acquired lock!");
       return true;
     }
  else {
       Object owner=lockManager.getOwner(key);
       throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key ["+ key+ "] for requestor ["+ ctx.getLockOwner()+ "]! Lock held by ["+ owner+ "]");
+    }
+  }
+ else {
+    if (trace) {
+      if (shouldSkipLocking)       log.trace("SKIP_LOCKING flag used!");
+ else       log.trace("Already own lock for entry");
     }
   }
   return false;
