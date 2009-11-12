@@ -7,16 +7,22 @@
   if (trace)   log.trace("Configuration is {0}",c.toString(true));
   ConnectionHelper helper=new ConnectionHelper();
   EmsConnection conn=helper.getEmsConnection(c);
-  if (trace)   log.trace("Connection to ems server stablished: {0}",conn);
-  ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(objectName);
-  List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-  if (trace)   log.trace("Querying [{0}] returned beans: {1}",queryUtility.getTranslatedQuery(),beans);
-  EmsBean bean=beans.get(0);
-  String managerName=bean.getBeanName().getCanonicalName();
-  String resourceName=bean.getAttribute("Name").getValue().toString();
-  String version=bean.getAttribute("Version").getValue().toString();
-  if (trace)   log.trace("Add resource with version '{1}' and type {2}",version,ctx.getResourceType());
-  DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",c,null);
-  log.info("Discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
-  return detail;
+  if (conn != null) {
+    if (trace)     log.trace("Connection to ems server stablished: {0}",conn);
+    ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(objectName);
+    List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
+    if (trace)     log.trace("Querying [{0}] returned beans: {1}",queryUtility.getTranslatedQuery(),beans);
+    EmsBean bean=beans.get(0);
+    String managerName=bean.getBeanName().getCanonicalName();
+    String resourceName=bean.getAttribute("Name").getValue().toString();
+    String version=bean.getAttribute("Version").getValue().toString();
+    if (trace)     log.trace("Add resource with version '{1}' and type {2}",version,ctx.getResourceType());
+    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",c,null);
+    log.info("Discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
+    return detail;
+  }
+ else {
+    log.debug("Unable to establish connection");
+    return null;
+  }
 }

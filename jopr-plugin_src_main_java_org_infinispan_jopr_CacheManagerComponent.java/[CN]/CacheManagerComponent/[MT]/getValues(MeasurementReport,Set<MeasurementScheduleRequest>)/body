@@ -2,8 +2,10 @@
   boolean trace=log.isTraceEnabled();
   if (trace)   log.trace("Get values for these metrics: {0}",metrics);
   EmsConnection conn=getConnection();
-  EmsBean bean=conn.getBean(objectName);
+  if (trace)   log.trace("Connection to ems server stablished: {0}",conn);
+  EmsBean bean=queryCacheManagerBean(conn);
   bean.refreshAttributes();
+  if (trace)   log.trace("Querying returned bean: {0}",bean);
   for (  MeasurementScheduleRequest req : metrics) {
     DataType type=req.getDataType();
     if (type == DataType.MEASUREMENT) {

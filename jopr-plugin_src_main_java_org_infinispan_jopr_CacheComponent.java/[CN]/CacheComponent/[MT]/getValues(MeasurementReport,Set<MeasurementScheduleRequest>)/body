@@ -14,23 +14,28 @@
         bean.refreshAttributes();
         String attName=metric.substring(metric.indexOf(".") + 1);
         EmsAttribute att=bean.getAttribute(attName);
-        Object o=att.getValue();
-        Class attrType=att.getTypeClass();
-        DataType type=req.getDataType();
-        if (type == DataType.MEASUREMENT) {
-          if (o != null) {
-            MeasurementDataNumeric res=constructMeasurementDataNumeric(attrType,o,req);
-            if (res != null)             report.addData(res);
-          }
+        if (att != null) {
+          Object o=att.getValue();
+          Class attrType=att.getTypeClass();
+          DataType type=req.getDataType();
+          if (type == DataType.MEASUREMENT) {
+            if (o != null) {
+              MeasurementDataNumeric res=constructMeasurementDataNumeric(attrType,o,req);
+              if (res != null)               report.addData(res);
+            }
  else {
-            if (log.isDebugEnabled())             log.debug("Metric ({0}) has null value, do not add to report",req.getName());
+              if (log.isDebugEnabled())               log.debug("Metric ({0}) has null value, do not add to report",req.getName());
+            }
+          }
+ else           if (type == DataType.TRAIT) {
+            String value=(String)o;
+            if (trace)             log.trace("Metric ({0}) is trait with value {1}",req.getName(),value);
+            MeasurementDataTrait res=new MeasurementDataTrait(req,value);
+            report.addData(res);
           }
         }
- else         if (type == DataType.TRAIT) {
-          String value=(String)o;
-          if (trace)           log.trace("Metric ({0}) is trait with value {1}",req.getName(),value);
-          MeasurementDataTrait res=new MeasurementDataTrait(req,value);
-          report.addData(res);
+ else {
+          log.warn("Attribute {0} not found",attName);
         }
       }
  else {
