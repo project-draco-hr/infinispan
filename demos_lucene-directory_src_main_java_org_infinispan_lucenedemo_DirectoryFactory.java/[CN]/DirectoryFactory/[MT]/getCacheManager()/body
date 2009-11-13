@@ -1,0 +1,20 @@
+{
+  if (manager != null)   return manager;
+  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
+  gc.setClusterName("infinispan-lucene-demo-cluster");
+  gc.setTransportClass(JGroupsTransport.class.getName());
+  Properties p=new Properties();
+  p.setProperty("configurationFile","jgroups-configuration.xml");
+  gc.setTransportProperties(p);
+  Configuration config=new Configuration();
+  config.setCacheMode(Configuration.CacheMode.DIST_SYNC);
+  config.setSyncCommitPhase(true);
+  config.setSyncRollbackPhase(true);
+  config.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
+  config.setNumOwners(2);
+  config.setL1CacheEnabled(true);
+  config.setInvocationBatchingEnabled(true);
+  config.setL1Lifespan(6000000);
+  manager=new DefaultCacheManager(gc,config,false);
+  return manager;
+}
