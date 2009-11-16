@@ -1,15 +1,24 @@
 def release():
+    require_settings_file()
+    missing_keys = []
+    expected_keys = [svn_base_key, local_tags_dir_key, local_mvn_repo_dir_key]
+    for expected_key in expected_keys:
+        if (expected_key not in settings):
+            missing_keys.append(expected_key)
+    if (len(missing_keys) > 0):
+        print ('Entries %s are missing in configuration file %s!  Cannot proceed!' % (missing_keys, settings_file))
+        sys.exit(2)
     if (len(sys.argv) < 2):
         helpAndExit()
     base_dir = os.getcwd()
     version = validateVersion(sys.argv[1])
     print ('Releasing Infinispan version ' + version)
     print 'Please stand by!'
-    newVersion = ('%s/tags/%s' % (svnBase, version))
+    newVersion = ('%s/tags/%s' % (settings[svn_base_key], version))
     print ('Step 1: Tagging trunk in SVN as %s' % newVersion)
     tagInSubversion(version, newVersion)
     print 'Step 1: Complete'
-    workingDir = ((localTagsDir + '/') + version)
+    workingDir = ((settings[local_tags_dir_key] + '/') + version)
     print 'Step 2: Updating version number in source files'
     updateVersions(version, workingDir, base_dir)
     print 'Step 2: Complete'
