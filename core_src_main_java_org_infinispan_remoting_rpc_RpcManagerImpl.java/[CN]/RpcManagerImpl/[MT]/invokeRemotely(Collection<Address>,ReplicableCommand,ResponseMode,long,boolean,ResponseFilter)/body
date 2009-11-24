@@ -5,6 +5,8 @@
     return Collections.emptyList();
   }
  else {
+    long startTime=0;
+    if (statisticsEnabled)     startTime=System.currentTimeMillis();
     try {
       List<Response> result=t.invokeRemotely(recipients,rpcCommand,mode,timeout,usePriorityQueue,responseFilter,stateTransferEnabled);
       if (isStatisticsEnabled())       replicationCount.incrementAndGet();
@@ -21,6 +23,12 @@ catch (    Throwable th) {
       log.error("unexpected error while replicating",th);
       if (isStatisticsEnabled())       replicationFailures.incrementAndGet();
       throw new CacheException(th);
+    }
+ finally {
+      if (statisticsEnabled) {
+        long timeTaken=System.currentTimeMillis() - startTime;
+        totalReplicationTime.getAndAdd(timeTaken);
+      }
     }
   }
 }
