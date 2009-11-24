@@ -1,6 +1,7 @@
 {
-  if (log.isDebugEnabled())   log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
   Object toReturn=invokeNextInterceptor(ctx,command);
-  addToIndexes(checkForMarshalledValue(command.getValue()),checkForMarshalledValue(command.getKey()).toString());
+  if (shouldModifyIndexes(ctx)) {
+    addToIndexes(extractValue(command.getKey()),extractValue(command.getValue()));
+  }
   return toReturn;
 }

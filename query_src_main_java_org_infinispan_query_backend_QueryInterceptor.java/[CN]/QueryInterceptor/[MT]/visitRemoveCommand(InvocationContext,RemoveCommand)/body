@@ -2,8 +2,8 @@
   if (log.isDebugEnabled())   log.debug("Entered the searchable core interceptor visitRemoveCommand()");
   Object valueRemoved=invokeNextInterceptor(ctx,command);
   if (log.isDebugEnabled())   log.debug("Transaction Manager is " + transactionManager);
-  if (command.isSuccessful()) {
-    removeFromIndexes(checkForMarshalledValue(valueRemoved),checkForMarshalledValue(command.getKey()).toString());
+  if (command.isSuccessful() && shouldModifyIndexes(ctx)) {
+    removeFromIndexes(extractValue(valueRemoved),extractValue(command.getKey()));
   }
   return valueRemoved;
 }

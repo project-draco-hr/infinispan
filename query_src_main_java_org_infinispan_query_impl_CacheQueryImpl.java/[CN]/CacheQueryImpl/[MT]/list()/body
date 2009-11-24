@@ -7,14 +7,14 @@
     int max=max(first,queryHits.totalHits);
     int size=max - first + 1 < 0 ? 0 : max - first + 1;
     DocumentExtractor extractor=new DocumentExtractor(queryHits,searchFactory,indexProjection,idFieldNames,allowFieldSelectionInProjection);
-    List<Object> keysForCache=new ArrayList<Object>(size);
+    List<String> keysForCache=new ArrayList<String>(size);
     for (int index=first; index <= max; index++) {
-      Object cacheKey=extractor.extract(index).id;
+      String cacheKey=extractor.extract(index).id.toString();
       keysForCache.add(cacheKey);
     }
     List<Object> listToReturn=new ArrayList<Object>(size);
-    for (    Object key : keysForCache) {
-      listToReturn.add(cache.get(key));
+    for (    String key : keysForCache) {
+      listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
     }
     if (resultTransformer == null) {
       return listToReturn;

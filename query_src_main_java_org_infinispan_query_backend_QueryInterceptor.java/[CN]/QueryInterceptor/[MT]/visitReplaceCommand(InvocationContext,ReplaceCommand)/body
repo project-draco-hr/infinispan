@@ -1,11 +1,11 @@
 {
   if (log.isDebugEnabled())   log.debug("Entered the searchable core interceptor visitReplaceCommand()");
   Object valueReplaced=invokeNextInterceptor(ctx,command);
-  if (valueReplaced != null) {
+  if (valueReplaced != null && shouldModifyIndexes(ctx)) {
     Object[] parameters=command.getParameters();
-    String keyString=checkForMarshalledValue(command.getKey()).toString();
-    removeFromIndexes(checkForMarshalledValue(parameters[1]),keyString);
-    addToIndexes(checkForMarshalledValue(parameters[2]),keyString);
+    Object key=extractValue(command.getKey());
+    removeFromIndexes(extractValue(parameters[1]),key);
+    addToIndexes(extractValue(parameters[2]),key);
   }
   return valueReplaced;
 }

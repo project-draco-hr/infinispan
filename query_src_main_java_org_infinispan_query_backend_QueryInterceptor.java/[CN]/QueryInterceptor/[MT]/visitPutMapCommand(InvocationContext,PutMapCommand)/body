@@ -1,9 +1,11 @@
 {
   if (log.isDebugEnabled())   log.debug("Entered searchable core interceptor visitPutMapCommand()");
   Object mapPut=invokeNextInterceptor(ctx,command);
-  Map<Object,Object> dataMap=command.getMap();
-  for (  Map.Entry entry : dataMap.entrySet()) {
-    addToIndexes(checkForMarshalledValue(entry.getValue()),checkForMarshalledValue(entry.getKey()).toString());
+  if (shouldModifyIndexes(ctx)) {
+    Map<Object,Object> dataMap=command.getMap();
+    for (    Map.Entry entry : dataMap.entrySet()) {
+      addToIndexes(extractValue(entry.getValue()),extractValue(entry.getKey()));
+    }
   }
   return mapPut;
 }
