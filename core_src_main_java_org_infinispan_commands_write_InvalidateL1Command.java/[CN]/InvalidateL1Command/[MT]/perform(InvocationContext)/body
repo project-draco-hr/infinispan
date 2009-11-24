@@ -1,6 +1,14 @@
 {
-  for (  Object k : getKeys()) {
-    if (!dm.isLocal(k))     invalidate(ctx,k);
+  if (forRehash && config.isL1OnRehash()) {
+    for (    Object k : getKeys()) {
+      InternalCacheEntry ice=dataContainer.get(k);
+      if (ice != null)       dataContainer.put(k,ice.getValue(),config.getL1Lifespan(),config.getExpirationMaxIdle());
+    }
+  }
+ else {
+    for (    Object k : getKeys()) {
+      if (!dm.isLocal(k))       invalidate(ctx,k);
+    }
   }
   return null;
 }
