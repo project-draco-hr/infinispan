@@ -1,0 +1,14 @@
+{
+  while (true) {
+    if (current == tail)     return null;
+    AtomicMarkableReference<LinkedEntry> next=current.n;
+    boolean d=next.getReference().n.isMarked();
+    if (d && (!current.n.isMarked() || current.n.getReference() != next.getReference())) {
+      next.getReference().p.attemptMark(next.getReference().p.getReference(),true);
+      current.n.compareAndSet(next.getReference(),next.getReference().n.getReference(),false,false);
+      continue;
+    }
+    current=next.getReference();
+    if (!d && next.getReference() != tail)     return current;
+  }
+}

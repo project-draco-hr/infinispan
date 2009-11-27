@@ -3,10 +3,7 @@
   Segment s=segmentFor(h);
   LinkedEntry le=s.get(k,h);
   InternalCacheEntry ice=null;
-  if (le != null) {
-    ice=le.e;
-    if (isMarkedForRemoval(le))     unlink(le);
-  }
+  if (le != null)   ice=le.e;
   if (ice != null) {
     if (ice.isExpired()) {
       remove(k);
@@ -14,7 +11,15 @@
     }
  else {
       ice.touch();
-      updateLinks(le);
+      boolean needToUnlockSegment=false;
+      try {
+        s.lock();
+        needToUnlockSegment=true;
+        updateLinks(le);
+      }
+  finally {
+        if (needToUnlockSegment)         s.unlock();
+      }
     }
   }
   return ice;

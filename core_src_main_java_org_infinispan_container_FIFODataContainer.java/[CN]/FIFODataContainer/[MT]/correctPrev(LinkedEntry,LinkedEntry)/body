@@ -1,32 +1,37 @@
 {
   LinkedEntry lastLink=null, link1, prev2;
+  LinkedEntry prev=suggestedPreviousEntry, node=currentEntry;
   long backoffTime=-1;
   while (true) {
-    link1=currentEntry.p;
+    link1=node.p;
     if (isMarkedForRemoval(link1))     break;
-    prev2=suggestedPreviousEntry.n;
+    prev2=prev.n;
     if (isMarkedForRemoval(prev2)) {
       if (lastLink != null) {
-        markPrevReference(suggestedPreviousEntry);
-        lastLink.casNext(suggestedPreviousEntry,prev2.p);
-        suggestedPreviousEntry=lastLink;
+        markPrevReference(prev);
+        LinkedEntry unmarkedPrev2P=unmarkPrevIfNeeded(prev2.p);
+        lastLink.casNext(prev,unmarkedPrev2P);
+        prev=lastLink;
         lastLink=null;
         continue;
       }
-      prev2=suggestedPreviousEntry.p;
-      suggestedPreviousEntry=prev2;
+      prev2=prev.p;
+      prev=prev2;
       continue;
     }
-    if (prev2 != currentEntry) {
-      lastLink=suggestedPreviousEntry;
-      suggestedPreviousEntry=prev2;
+    if (prev2 != node) {
+      lastLink=prev;
+      prev=prev2;
       continue;
     }
-    if (currentEntry.casPrev(link1,suggestedPreviousEntry)) {
-      if (isMarkedForRemoval(suggestedPreviousEntry.p))       continue;
+    LinkedEntry unmarked=unmarkPrevIfNeeded(prev);
+    if (node.casPrev(link1,unmarked)) {
+      if (isMarkedForRemoval(prev.p)) {
+        continue;
+      }
       break;
     }
     backoffTime=backoff(backoffTime);
   }
-  return suggestedPreviousEntry;
+  return prev;
 }

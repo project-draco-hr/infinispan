@@ -1,0 +1,31 @@
+{
+  int h=hash(k.hashCode());
+  Segment s=segmentFor(h);
+  s.lock();
+  LinkedEntry le;
+  boolean newEntry=false;
+  try {
+    le=s.get(k,h);
+    InternalCacheEntry ice=le == null ? null : le.e;
+    if (ice == null) {
+      newEntry=true;
+      ice=InternalEntryFactory.create(k,v,lifespan,maxIdle);
+      le=new LinkedEntry(ice);
+    }
+ else {
+      ice.setValue(v);
+      ice=ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+      le.e=ice;
+    }
+    s.locklessPut(k,h,le);
+    if (newEntry) {
+      linkAtEnd(le);
+    }
+ else {
+      updateLinks(le);
+    }
+  }
+  finally {
+    s.unlock();
+  }
+}

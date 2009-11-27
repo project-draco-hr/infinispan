@@ -1,0 +1,19 @@
+{
+  int h=hash(k.hashCode());
+  Segment s=segmentFor(h);
+  s.lock();
+  InternalCacheEntry ice=null;
+  LinkedEntry le;
+  try {
+    le=s.locklessRemove(k,h);
+    if (le != null) {
+      ice=le.e;
+      unlink(le);
+    }
+  }
+  finally {
+    s.unlock();
+  }
+  if (ice == null || ice.isExpired())   return null;
+ else   return ice;
+}
