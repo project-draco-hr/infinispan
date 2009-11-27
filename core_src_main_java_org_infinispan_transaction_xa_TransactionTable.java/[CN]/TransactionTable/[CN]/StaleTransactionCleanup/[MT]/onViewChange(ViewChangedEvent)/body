@@ -1,0 +1,30 @@
+{
+  final List<Address> leavers=MembershipArithmetic.getMembersLeft(vce.getOldMembers(),vce.getNewMembers());
+  if (!leavers.isEmpty()) {
+    if (trace)     log.trace("Saw {0} leavers - kicking off a lock breaking task",leavers.size());
+    lockBreakingService.submit(new Runnable(){
+      public void run(){
+        Set<GlobalTransaction> toKill=new HashSet<GlobalTransaction>();
+        for (        GlobalTransaction gt : remoteTransactions.keySet()) {
+          if (leavers.contains(gt.getAddress()))           toKill.add(gt);
+        }
+        if (trace)         log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed",toKill,leavers);
+        for (        GlobalTransaction gtx : toKill) {
+          if (trace)           log.trace("Killing {0}",gtx);
+          RollbackCommand rc=new RollbackCommand(gtx);
+          rc.init(invoker,icc,TransactionTable.this);
+          try {
+            rc.perform(null);
+          }
+ catch (          Throwable e) {
+            log.warn("Unable to roll back gtx " + gtx,e);
+          }
+ finally {
+            removeRemoteTransaction(gtx);
+          }
+        }
+      }
+    }
+);
+  }
+}
