@@ -1,0 +1,41 @@
+{
+switch (state) {
+case READ_COMMAND:
+    String line=readLine(buffer);
+  try {
+    command=factory.createCommand(line);
+    corrupted.set(false);
+  }
+ catch (  IOException ioe) {
+    if (corrupted.get())     log.debug("Channel is corrupted and we're reading garbage, ignore read until we find a good command again");
+ else     throw ioe;
+  }
+if (command.getType().isStorage()) checkpoint(State.READ_UNSTRUCTURED_DATA);
+ else return command;
+break;
+case READ_UNSTRUCTURED_DATA:
+StorageCommand storageCmd=(StorageCommand)command;
+byte[] data=new byte[storageCmd.params.bytes];
+buffer.readBytes(data,0,data.length);
+byte next=buffer.readByte();
+if (next == CR) {
+next=buffer.readByte();
+if (next == LF) {
+try {
+return reset(storageCmd.setData(data));
+}
+ catch (IOException ioe) {
+checkpoint(State.READ_COMMAND);
+throw ioe;
+}
+}
+ else {
+throw new StreamCorruptedException("Expecting \r\n after data block");
+}
+}
+ else {
+throw new StreamCorruptedException("Expecting \r\n after data block");
+}
+}
+return null;
+}
