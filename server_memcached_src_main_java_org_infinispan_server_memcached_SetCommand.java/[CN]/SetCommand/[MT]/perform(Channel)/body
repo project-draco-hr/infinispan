@@ -1,16 +1,15 @@
 {
   StorageReply reply;
   try {
-    Value value=new Value(params.flags,data);
     if (params.expiry == 0) {
-      reply=put(params.key,value);
+      reply=put(params.key,params.flags,data);
     }
  else {
       if (params.expiry > 60 * 60 * 24* 30) {
         long future=TimeUnit.SECONDS.toMillis(params.expiry);
         long expiry=future - System.currentTimeMillis();
         if (expiry > 0) {
-          reply=putExpiryUnixTime(params.key,value,expiry);
+          reply=put(params.key,params.flags,data,expiry);
         }
  else {
           StringBuilder sb=new StringBuilder();
@@ -19,7 +18,8 @@
         }
       }
  else {
-        reply=putExpiry(params.key,value,params.expiry);
+        long expiry=TimeUnit.SECONDS.toMillis(params.expiry);
+        reply=put(params.key,params.flags,data,expiry);
       }
     }
   }
