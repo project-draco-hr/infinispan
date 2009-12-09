@@ -2,19 +2,19 @@
   InternalCacheEntry e=immortalEntries.get(k);
   if (e != null) {
     e.setValue(v);
-    if (lifespan > -1)     e=e.setLifespan(lifespan);
-    if (maxIdle > -1)     e=e.setMaxIdle(maxIdle);
+    e=entryFactory.update(e,lifespan,maxIdle);
     if (e.canExpire()) {
       immortalEntries.remove(k);
       mortalEntries.put(k,e);
     }
+    successfulPut(e,false);
   }
  else {
     e=mortalEntries.get(k);
     if (e != null) {
       e.setValue(v);
       InternalCacheEntry original=e;
-      e=e.setLifespan(lifespan).setMaxIdle(maxIdle);
+      e=entryFactory.update(e,lifespan,maxIdle);
       if (!e.canExpire()) {
         mortalEntries.remove(k);
         immortalEntries.put(k,e);
@@ -22,12 +22,14 @@
  else       if (e != original) {
         mortalEntries.put(k,e);
       }
+      successfulPut(e,false);
     }
  else {
       numEntries.getAndIncrement();
-      e=InternalEntryFactory.create(k,v,lifespan,maxIdle);
+      e=entryFactory.createNewEntry(k,v,lifespan,maxIdle);
       if (e.canExpire())       mortalEntries.put(k,e);
  else       immortalEntries.put(k,e);
+      successfulPut(e,true);
     }
   }
 }

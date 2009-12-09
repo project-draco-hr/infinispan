@@ -1,0 +1,56 @@
+{
+  latch=new CountDownLatch(1);
+  final String key="key";
+  final Map<String,String> perf=new ConcurrentSkipListMap<String,String>();
+  final AtomicBoolean run=new AtomicBoolean(true);
+  final int actual_num_loops=warmup ? warmup_num_loops : num_loops;
+  Thread getter=new Thread(){
+    public void run(){
+      waitForStart();
+      long start=System.nanoTime();
+      int runs=0;
+      while (use_time && run.get() || runs < actual_num_loops) {
+        if (runs % 100000 == 0)         log.info("GET run # " + runs);
+        dc.get(key + R.nextInt(NUM_KEYS));
+        runs++;
+      }
+      perf.put("GET",opsPerMS(System.nanoTime() - start,runs));
+    }
+  }
+;
+  Thread putter=new Thread(){
+    public void run(){
+      waitForStart();
+      long start=System.nanoTime();
+      int runs=0;
+      while (use_time && run.get() || runs < actual_num_loops) {
+        if (runs % 100000 == 0)         log.info("PUT run # " + runs);
+        dc.put(key + R.nextInt(NUM_KEYS),"value",-1,-1);
+        runs++;
+      }
+      perf.put("PUT",opsPerMS(System.nanoTime() - start,runs));
+    }
+  }
+;
+  Thread remover=new Thread(){
+    public void run(){
+      waitForStart();
+      long start=System.nanoTime();
+      int runs=0;
+      while (use_time && run.get() || runs < actual_num_loops) {
+        if (runs % 100000 == 0)         log.info("REM run # " + runs);
+        dc.remove(key + R.nextInt(NUM_KEYS));
+        runs++;
+      }
+      perf.put("REM",opsPerMS(System.nanoTime() - start,runs));
+    }
+  }
+;
+  Thread[] threads={getter,putter,remover};
+  for (  Thread t : threads)   t.start();
+  latch.countDown();
+  Thread.sleep(warmup ? WARMUP_TIME_MILLIS : RUN_TIME_MILLIS);
+  run.set(false);
+  for (  Thread t : threads)   t.join();
+  if (!warmup)   log.warn("{0}: Performance: {1}",dc.getClass().getSimpleName(),perf);
+}

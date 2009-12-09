@@ -1,0 +1,128 @@
+{
+  if (ice instanceof ImmortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return ice;
+      }
+ else {
+        return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+      }
+ else {
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,System.currentTimeMillis(),ice.getCreated());
+      }
+    }
+  }
+ else   if (ice instanceof MortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        if (recordCreation) {
+          ice.setLifespan(-1);
+          return ice;
+        }
+ else {
+          return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+        }
+      }
+ else {
+        if (recordCreation) {
+          return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,-1,System.currentTimeMillis(),ice.getCreated());
+        }
+ else {
+          return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+        }
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        ice.setLifespan(lifespan);
+        return ice;
+      }
+ else {
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,System.currentTimeMillis(),ice.getCreated());
+      }
+    }
+  }
+ else   if (ice instanceof TransientCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        if (recordLastUsed) {
+          ice.setMaxIdle(-1);
+          return ice;
+        }
+ else {
+          return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+        }
+      }
+ else {
+        ice.setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        if (recordLastUsed) {
+          return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,ice.getLastUsed(),System.currentTimeMillis());
+        }
+ else {
+          return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+        }
+      }
+ else {
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,System.currentTimeMillis(),ice.getCreated());
+      }
+    }
+  }
+ else   if (ice instanceof TransientMortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        if (recordCreation || recordLastUsed) {
+          if (recordLastUsed && recordCreation) {
+            ice.setLifespan(lifespan);
+            ice.setMaxIdle(maxIdle);
+            return ice;
+          }
+ else           if (recordCreation) {
+            return new MortalCacheEntry(ice.getKey(),ice.getValue(),-1,ice.getCreated());
+          }
+ else {
+            return new TransientCacheEntry(ice.getKey(),ice.getValue(),-1,ice.getLastUsed());
+          }
+        }
+ else {
+          return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+        }
+      }
+ else {
+        if (recordCreation) {
+          return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,-1,System.currentTimeMillis(),ice.getCreated());
+        }
+ else {
+          return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+        }
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        if (recordLastUsed) {
+          ice.setLifespan(lifespan);
+          ice.setMaxIdle(maxIdle);
+          return ice;
+        }
+ else {
+          return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+        }
+      }
+ else {
+        ice.setLifespan(lifespan);
+        ice.setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+  }
+  return ice;
+}
