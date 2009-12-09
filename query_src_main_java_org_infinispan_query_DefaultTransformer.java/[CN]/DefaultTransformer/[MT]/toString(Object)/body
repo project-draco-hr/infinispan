@@ -1,14 +1,8 @@
 {
-  try {
-    ByteArrayOutputStream baos=new ByteArrayOutputStream();
-    ObjectOutputStream oos=new ObjectOutputStream(baos);
-    oos.writeObject(customType);
-    oos.close();
-    baos.close();
-    byte[] b=baos.toByteArray();
-    return b.length + ":" + Arrays.toString(b);
+  if (customType instanceof Serializable) {
+    return Base64.encodeObject((Serializable)customType);
   }
- catch (  Exception e) {
-    throw new CacheException(e);
+ else {
+    throw new IllegalArgumentException("Expected " + customType.getClass() + " to be Serializable!");
   }
 }

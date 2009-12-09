@@ -21,15 +21,18 @@ case 'C':
 return s.charAt(2);
 case 'T':
 int indexOfSecondDelimiter=s.indexOf(":",2);
-String transformerClassName=s.substring(2,indexOfSecondDelimiter);
+String keyClassName=s.substring(2,indexOfSecondDelimiter);
 String keyAsString=s.substring(indexOfSecondDelimiter + 1);
 Transformer t;
+Class keyClass=null;
 try {
-t=(Transformer)Util.getInstance(transformerClassName);
+keyClass=Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
 }
- catch (Exception e) {
-throw new CacheException(e);
+ catch (ClassNotFoundException e) {
+log.error("Could not locate class " + keyClass,e);
 }
+t=getTransformer(keyClass);
+if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
 return t.fromString(keyAsString);
 }
 throw new CacheException("Unknown type metadata " + type);

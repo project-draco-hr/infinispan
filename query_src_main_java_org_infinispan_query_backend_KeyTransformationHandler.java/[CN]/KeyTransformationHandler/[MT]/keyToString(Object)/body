@@ -1,5 +1,6 @@
 {
   char prefix=' ';
+  Transformer tf=null;
   if (isStringOrPrimitive(key)) {
     if (key instanceof String)     prefix='S';
  else     if (key instanceof Integer)     prefix='I';
@@ -12,20 +13,8 @@
  else     if (key instanceof Character)     prefix='C';
     return prefix + ":" + key;
   }
- else   if (isTransformable(key)) {
-    prefix='T';
-    System.out.println("key class is: - " + key.getClass());
-    Transformable transformableAnnotation=key.getClass().getAnnotation(Transformable.class);
-    Class<? extends Transformer> transformerClass=transformableAnnotation.transformer();
-    Transformer t;
-    try {
-      t=Util.getInstance(transformerClass);
-    }
- catch (    Exception e) {
-      throw new CacheException(e);
-    }
-    String subKey=key.getClass().getName() + ":" + t.toString(key);
-    return prefix + ":" + subKey;
+ else   if ((tf=getTransformer(key.getClass())) != null) {
+    return "T:" + key.getClass().getName() + ":"+ tf.toString(key);
   }
  else   throw new IllegalArgumentException("Indexing only works with entries keyed on Strings, primitives " + "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString());
 }
