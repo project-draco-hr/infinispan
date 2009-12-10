@@ -1,3 +1,30 @@
 {
-  loadAll();
+  if (trace)   log.trace("purgeInternal()");
+  acquireGlobalLock(false);
+  try {
+    for (    final File bucketFile : root.listFiles()) {
+      if (multiThreadedPurge) {
+        purgerService.execute(new Runnable(){
+          @Override public void run(){
+            Bucket bucket;
+            try {
+              if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())               saveBucket(bucket);
+            }
+ catch (            CacheLoaderException e) {
+              log.warn("Problems purging file " + bucketFile,e);
+            }
+          }
+        }
+);
+      }
+ else {
+        Bucket bucket;
+        if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())         saveBucket(bucket);
+      }
+    }
+  }
+  finally {
+    releaseGlobalLock(false);
+    if (trace)     log.trace("Exit purgeInternal()");
+  }
 }

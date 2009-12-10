@@ -4,7 +4,15 @@
     purgerService=new WithinThreadExecutor();
   }
  else {
-    purgerService=Executors.newSingleThreadExecutor();
+    multiThreadedPurge=supportsMultiThreadedPurge() && config.getPurgerThreads() > 1;
+    purgerService=Executors.newFixedThreadPool(supportsMultiThreadedPurge() ? config.getPurgerThreads() : 1,new ThreadFactory(){
+      @Override public Thread newThread(      Runnable r){
+        Thread t=new Thread(r,cache.getName() + "-" + config.getCacheLoaderClassName().substring(config.getCacheLoaderClassName().lastIndexOf(".") + 1)+ "-"+ THREAD_COUNTER.getAndIncrement());
+        t.setDaemon(true);
+        return t;
+      }
+    }
+);
   }
   transactions=new ConcurrentHashMap<GlobalTransaction,List<? extends Modification>>(64,0.75f,getConcurrencyLevel());
 }
