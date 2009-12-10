@@ -1,3 +1,26 @@
 {
-  loadAll();
+  if (!config.isLazyPurgingOnly()) {
+    acquireGlobalLock(false);
+    try {
+      if (multiThreadedPurge) {
+        purgerService.execute(new Runnable(){
+          @Override public void run(){
+            try {
+              for (              Bucket bucket : (Set<Bucket>)s3Bucket.values())               if (bucket.removeExpiredEntries())               saveBucket(bucket);
+            }
+ catch (            CacheLoaderException e) {
+              log.warn("Problems purging bucket",e);
+            }
+          }
+        }
+);
+      }
+ else {
+        for (        Bucket bucket : (Set<Bucket>)s3Bucket.values())         if (bucket.removeExpiredEntries())         saveBucket(bucket);
+      }
+    }
+  finally {
+      releaseGlobalLock(false);
+    }
+  }
 }
