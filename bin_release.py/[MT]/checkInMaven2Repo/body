@@ -7,6 +7,13 @@ def checkInMaven2Repo(version, workingDir):
     moduleNames = []
     for p in poms:
         moduleNames.append(((((settings[local_mvn_repo_dir_key] + '/') + getModuleName(p)) + '/') + version))
+    newmodules = []
+    for m in modules:
+        mod_dir = ((settings[local_mvn_repo_dir_key] + '/') + getModuleName(p))
+        if (not is_in_svn(mod_dir)):
+            newmodules.append(mod_dir)
+    if (len(newmodules) > 0):
+        client.add(newmodules)
     client.add(moduleNames)
     for mn in moduleNames:
         checkInMessage = (((('Infinispan Release Script: Releasing module ' + mn) + ' version ') + version) + ' to public Maven2 repo')
