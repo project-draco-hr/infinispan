@@ -22,10 +22,14 @@ List<String> keys=new ArrayList<String>(5);
 keys.addAll(Arrays.asList(args).subList(1,args.length));
 return RetrievalCommand.newRetrievalCommand(cache,type,new RetrievalParameters(keys));
 case DELETE:
+String delKey=getKey(args[1]);
+return DeleteCommand.newDeleteCommand(cache,delKey,queue);
+case INCR:
+case DECR:
 String key=getKey(args[1]);
-long time=getOptionalTime(args[2]);
-return DeleteCommand.newDeleteCommand(cache,key,time,queue);
+BigInteger value=new BigInteger(args[2]);
+return NumericCommand.newNumericCommand(cache,type,key,value);
 default :
-return null;
+throw new NotImplementedException("Parsed type not implemented yet");
 }
 }

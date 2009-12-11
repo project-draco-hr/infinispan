@@ -1,0 +1,20 @@
+{
+  Value old=(Value)cache.get(key);
+  if (old != null) {
+    BigInteger oldBigInt=old.getData().length == 0 ? BigInteger.valueOf(0) : new BigInteger(old.getData());
+    BigInteger newBigInt=operate(oldBigInt,value);
+    byte[] newData=newBigInt.toByteArray();
+    Value curr=new Value(old.getFlags(),newData);
+    boolean replaced=cache.replace(key,old,curr);
+    if (replaced) {
+      ch.write(wrappedBuffer(wrappedBuffer(newBigInt.toString().getBytes()),wrappedBuffer(CRLF)));
+    }
+ else {
+      throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
+    }
+  }
+ else {
+    ch.write(wrappedBuffer(wrappedBuffer(Reply.NOT_FOUND.bytes()),wrappedBuffer(CRLF)));
+  }
+  return null;
+}

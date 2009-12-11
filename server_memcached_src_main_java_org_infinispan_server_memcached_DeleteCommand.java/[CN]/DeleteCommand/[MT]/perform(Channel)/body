@@ -1,9 +1,14 @@
 {
+  Reply reply;
   if (time > 0) {
-    queue.offer(new DeleteDelayedEntry(key,time));
+    DeleteDelayedEntry d=new DeleteDelayedEntry(key,time);
+    queue.offer(d);
+    reply=Reply.DELETED;
   }
  else {
-    cache.remove(key);
+    Object prev=cache.remove(key);
+    reply=reply(prev);
   }
+  ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()),wrappedBuffer(CRLF)));
   return null;
 }
