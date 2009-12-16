@@ -1,7 +1,13 @@
 {
-  Object object=InfinispanIndexIO.getChunkFromPosition(cache,fileKey,pos,bufferSize);
-  if (object == null) {
-    object=InfinispanIndexIO.getChunkFromPosition(localCache,fileKey,pos,bufferSize);
+  if (lastChunkNumberLoaded != getChunkNumberFromPosition(filePosition,bufferSize)) {
+    Object object=InfinispanIndexIO.getChunkFromPosition(cache,fileKey,pos,bufferSize);
+    if (object == null) {
+      object=InfinispanIndexIO.getChunkFromPosition(localCache,fileKey,pos,bufferSize);
+    }
+    lastChunkNumberLoaded=getChunkNumberFromPosition(filePosition,bufferSize);
+    return (byte[])object;
   }
-  return (byte[])object;
+ else {
+    return buffer;
+  }
 }
