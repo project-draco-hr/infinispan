@@ -1,11 +1,10 @@
 {
   try {
-    if (!notifyBeforeCompletion()) {
-      log.trace("Not running 2PC as Synchronization.before not successful");
-      return;
+    boolean successfulInit=notifyBeforeCompletion();
+    if (successfulInit) {
+      status=Status.STATUS_PREPARING;
     }
-    status=Status.STATUS_PREPARING;
-    if (!runPrepare()) {
+    if (!successfulInit || !runPrepare()) {
       status=Status.STATUS_ROLLING_BACK;
     }
  else {
