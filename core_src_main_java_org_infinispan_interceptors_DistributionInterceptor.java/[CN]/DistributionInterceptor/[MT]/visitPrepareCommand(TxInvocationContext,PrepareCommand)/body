@@ -3,8 +3,10 @@
   boolean sync=isSynchronous(ctx);
   if (ctx.isOriginLocal() && ctx.hasModifications()) {
     List<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
+    NotifyingNotifiableFuture<Object> f=null;
+    if (command.isOnePhaseCommit())     f=flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),null,sync);
     rpcManager.invokeRemotely(recipients,command,sync);
-    if (command.isOnePhaseCommit())     flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),false,null,false);
+    if (f != null)     f.get();
   }
   return retVal;
 }

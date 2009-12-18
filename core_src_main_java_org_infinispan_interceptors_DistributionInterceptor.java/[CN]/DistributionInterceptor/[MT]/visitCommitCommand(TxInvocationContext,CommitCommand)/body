@@ -1,9 +1,9 @@
 {
   if (ctx.isOriginLocal() && ctx.hasModifications()) {
     List<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
+    NotifyingNotifiableFuture<Object> f=flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),null,configuration.isSyncCommitPhase());
     rpcManager.invokeRemotely(recipients,command,configuration.isSyncCommitPhase(),true);
-    List<WriteCommand> mods=ctx.getModifications();
-    flushL1Cache(recipients.size(),getKeys(mods),false,null,configuration.isSyncCommitPhase());
+    if (f != null)     f.get();
   }
   return invokeNextInterceptor(ctx,command);
 }
