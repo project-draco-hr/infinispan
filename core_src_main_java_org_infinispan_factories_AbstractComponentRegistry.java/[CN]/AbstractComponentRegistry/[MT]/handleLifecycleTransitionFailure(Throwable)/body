@@ -1,6 +1,8 @@
 {
   state=ComponentStatus.FAILED;
-  if (t instanceof CacheException)   throw (CacheException)t;
+  if (t.getCause() != null && t.getCause() instanceof ConfigurationException)   throw (ConfigurationException)t.getCause();
+ else   if (t.getCause() != null && t.getCause() instanceof InvocationTargetException && t.getCause().getCause() != null && t.getCause().getCause() instanceof ConfigurationException)   throw (ConfigurationException)t.getCause().getCause();
+ else   if (t instanceof CacheException)   throw (CacheException)t;
  else   if (t instanceof RuntimeException)   throw (RuntimeException)t;
  else   if (t instanceof Error)   throw (Error)t;
  else   throw new CacheException(t);
