@@ -1,0 +1,13 @@
+{
+  super.start();
+  if (config.getCloudService() == null)   throw new ConfigurationException("CloudService must be set!");
+  if (config.getIdentity() == null)   throw new ConfigurationException("Identity must be set");
+  if (config.getPassword() == null)   throw new ConfigurationException("Password must be set");
+  if (config.getBucketPrefix() == null)   throw new ConfigurationException("CloudBucket must be set");
+  containerName=getThisContainerName();
+  ctx=createBlobStoreContext(config);
+  BlobStore bs=ctx.getBlobStore();
+  if (!bs.containerExists(containerName))   bs.createContainer(containerName);
+  blobMap=ctx.createBlobMap(containerName);
+  pollFutures=!config.getAsyncStoreConfig().isEnabled();
+}
