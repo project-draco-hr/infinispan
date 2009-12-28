@@ -1,10 +1,8 @@
 {
   Cache cache=manager.getCache();
-  BlockingQueue<DeleteDelayedEntry> queue=new DelayQueue<DeleteDelayedEntry>();
-  DeleteDelayed runnable=new DeleteDelayed(cache,queue);
-  delayedExecutor.submit(runnable);
   ChannelFactory factory=new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),Executors.newCachedThreadPool());
   ServerBootstrap bootstrap=new ServerBootstrap(factory);
-  bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache,queue));
-  bootstrap.bind(new InetSocketAddress(11211));
+  InterceptorChain chain=InterceptorChainFactory.getInstance(cache).buildInterceptorChain();
+  bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache,chain));
+  bootstrap.bind(new InetSocketAddress(port));
 }

@@ -1,13 +1,7 @@
 {
   cacheManager=TestCacheManagerFactory.createLocalCacheManager();
-  server=new MemcachedTextServer(cacheManager);
+  server=MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
   server.start();
-  DefaultConnectionFactory d=new DefaultConnectionFactory(){
-    @Override public long getOperationTimeout(){
-      return 360000;
-    }
-  }
-;
-  client=new MemcachedClient(d,Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(11211)}));
+  client=createMemcachedClient(5000,server.getPort());
   return cacheManager;
 }
