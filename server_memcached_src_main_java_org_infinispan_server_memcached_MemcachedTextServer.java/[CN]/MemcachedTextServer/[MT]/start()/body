@@ -1,8 +1,10 @@
 {
   Cache cache=manager.getCache();
-  ChannelFactory factory=new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),Executors.newCachedThreadPool());
-  ServerBootstrap bootstrap=new ServerBootstrap(factory);
-  InterceptorChain chain=InterceptorChainFactory.getInstance(cache).buildInterceptorChain();
-  bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache,chain,scheduler));
-  bootstrap.bind(new InetSocketAddress(port));
+  InterceptorChain chain=TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
+  NettyMemcachedDecoder decoder=new NettyMemcachedDecoder(cache,chain,scheduler);
+  TextCommandHandler commandHandler=new TextCommandHandler(cache,chain);
+  NettyChannelUpstreamHandler handler=new NettyChannelUpstreamHandler(commandHandler);
+  NettyChannelPipelineFactory pipelineFactory=new NettyChannelPipelineFactory(decoder,handler);
+  bootstrap=new NettyServerBootstrap(pipelineFactory,new InetSocketAddress(port));
+  bootstrap.start();
 }

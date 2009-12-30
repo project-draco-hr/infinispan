@@ -1,5 +1,14 @@
 {
-  Value value=new Value(flags,data);
-  cache.put(key,value,expiry,TimeUnit.MILLISECONDS);
-  return reply();
+  Value prev=cache.get(key);
+  Value value;
+  if (prev != null) {
+    value=new Value(flags,data,prev.getCas() + 1);
+    boolean replaced=cache.replace(key,prev,value,expiry,TimeUnit.MILLISECONDS);
+    return reply(replaced);
+  }
+ else {
+    value=new Value(flags,data,System.currentTimeMillis());
+    prev=cache.putIfAbsent(key,value,expiry,TimeUnit.MILLISECONDS);
+    return reply(prev);
+  }
 }

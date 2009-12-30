@@ -1,9 +1,8 @@
 {
-  Value append=new Value(flags,data);
-  Value current=(Value)cache.get(key);
+  Value current=cache.get(key);
   if (current != null) {
-    byte[] concatenated=concat(current.getData(),append.getData());
-    Value next=new Value(current.getFlags(),concatenated);
+    byte[] concatenated=concat(current.getData(),data);
+    Value next=new Value(current.getFlags(),concatenated,current.getCas() + 1);
     boolean replaced=cache.replace(key,current,next);
     if (replaced)     return Reply.STORED;
  else     return Reply.NOT_STORED;

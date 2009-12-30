@@ -1,5 +1,9 @@
 {
-  Value value=new Value(flags,data);
-  Object prev=cache.replace(params.key,value,expiry,TimeUnit.MILLISECONDS);
-  return reply(prev);
+  Value old=cache.get(key);
+  if (old != null) {
+    Value value=new Value(flags,data,old.getCas() + 1);
+    boolean replaced=cache.replace(params.key,old,value,expiry,TimeUnit.MILLISECONDS);
+    return reply(replaced);
+  }
+  return reply(old);
 }

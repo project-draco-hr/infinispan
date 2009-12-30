@@ -1,0 +1,23 @@
+{
+  Channel ch=ctx.getChannel();
+  ChannelBuffers buffers=ctx.getChannelBuffers();
+  Value old=(Value)cache.get(key);
+  if (old != null) {
+    BigInteger oldBigInt=old.getData().length == 0 ? BigInteger.valueOf(0) : new BigInteger(old.getData());
+    BigInteger newBigInt=operate(oldBigInt,value);
+    byte[] newData=newBigInt.toByteArray();
+    Value curr=new Value(old.getFlags(),newData,old.getCas() + 1);
+    boolean replaced=cache.replace(key,old,curr);
+    if (replaced) {
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newBigInt.toString().getBytes()),buffers.wrappedBuffer(CRLF)));
+    }
+ else {
+      throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
+    }
+    return curr;
+  }
+ else {
+    ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()),buffers.wrappedBuffer(CRLF)));
+    return Reply.NOT_FOUND;
+  }
+}

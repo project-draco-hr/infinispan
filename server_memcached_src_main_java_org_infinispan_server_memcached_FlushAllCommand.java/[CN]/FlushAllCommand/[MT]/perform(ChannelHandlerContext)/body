@@ -1,0 +1,12 @@
+{
+  Channel ch=ctx.getChannel();
+  if (delay == 0) {
+    cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL,Flag.SKIP_CACHE_STORE).clear();
+  }
+ else {
+    scheduler.schedule(new FlushAllDelayed(cache),delay,TimeUnit.SECONDS);
+  }
+  ChannelBuffers buffers=ctx.getChannelBuffers();
+  ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(OK.bytes()),buffers.wrappedBuffer(CRLF)));
+  return OK;
+}
