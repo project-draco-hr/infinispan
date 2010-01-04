@@ -1,0 +1,10 @@
+{
+  Configuration replSync=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  createClusteredCaches(2,"replSync",replSync);
+  server1=MemcachedTestingUtil.createMemcachedTextServer(cache(0,"replSync"));
+  server1.start();
+  server2=MemcachedTestingUtil.createMemcachedTextServer(cache(1,"replSync"),server1.getPort() + 50);
+  server2.start();
+  client1=createMemcachedClient(60000,server1.getPort());
+  client2=createMemcachedClient(60000,server2.getPort());
+}

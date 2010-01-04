@@ -8,16 +8,18 @@
     byte[] newData=newBigInt.toByteArray();
     Value curr=new Value(old.getFlags(),newData,old.getCas() + 1);
     boolean replaced=cache.replace(key,old,curr);
-    if (replaced) {
+    if (replaced && !noReply) {
       ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newBigInt.toString().getBytes()),buffers.wrappedBuffer(CRLF)));
     }
- else {
+ else     if (!replaced) {
       throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
     }
     return curr;
   }
  else {
-    ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()),buffers.wrappedBuffer(CRLF)));
+    if (!noReply) {
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()),buffers.wrappedBuffer(CRLF)));
+    }
     return Reply.NOT_FOUND;
   }
 }

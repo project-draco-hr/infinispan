@@ -11,11 +11,11 @@ case ADD:
 case REPLACE:
 case APPEND:
 case PREPEND:
-    return StorageCommand.newStorageCommand(cache,type,getStorageParameters(args),null);
+    return StorageCommand.newStorageCommand(cache,type,getStorageParameters(args),null,parseNoReply(5,args));
 case CAS:
   tmp=args[5];
 long cas=Long.parseLong(tmp);
-return CasCommand.newCasCommand(cache,getStorageParameters(args),cas,null);
+return CasCommand.newCasCommand(cache,getStorageParameters(args),cas,null,parseNoReply(6,args));
 case GET:
 case GETS:
 List<String> keys=new ArrayList<String>(5);
@@ -23,17 +23,17 @@ keys.addAll(Arrays.asList(args).subList(1,args.length));
 return RetrievalCommand.newRetrievalCommand(cache,type,new RetrievalParameters(keys));
 case DELETE:
 String delKey=getKey(args[1]);
-return DeleteCommand.newDeleteCommand(cache,delKey);
+return DeleteCommand.newDeleteCommand(cache,delKey,parseNoReply(2,args));
 case INCR:
 case DECR:
 String key=getKey(args[1]);
 BigInteger value=new BigInteger(args[2]);
-return NumericCommand.newNumericCommand(cache,type,key,value);
+return NumericCommand.newNumericCommand(cache,type,key,value,parseNoReply(3,args));
 case STATS:
 return StatsCommand.newStatsCommand(cache,type,chain);
 case FLUSH_ALL:
 long delay=args.length > 1 ? Long.parseLong(args[1]) : 0;
-return FlushAllCommand.newFlushAllCommand(cache,delay,scheduler);
+return FlushAllCommand.newFlushAllCommand(cache,delay,scheduler,parseNoReply(2,args));
 case VERSION:
 return VersionCommand.newVersionCommand();
 case QUIT:
