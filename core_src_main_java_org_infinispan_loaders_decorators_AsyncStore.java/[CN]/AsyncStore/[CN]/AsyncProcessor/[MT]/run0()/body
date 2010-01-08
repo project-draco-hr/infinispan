@@ -6,13 +6,30 @@
     unlock=true;
     swap=state;
     state=newStateMap();
+    for (    Object key : swap.keySet()) {
+      boolean acquired=lockContainer.acquireLock(key,0,TimeUnit.NANOSECONDS);
+      if (trace)       log.trace("Lock for key {0} was acquired={1}",key,acquired);
+      if (!acquired) {
+        Modification prev=swap.remove(key);
+        state.put(key,prev);
+      }
+ else {
+        lockedKeys.add(key);
+      }
+    }
   }
   finally {
     if (unlock)     write.unlock();
   }
-  int size=swap.size();
-  if (size == 0)   awaitNotEmpty();
- else   decrementAndGet(size);
-  if (trace)   log.trace("Calling put(List) with {0} modifications",size);
-  put(swap);
+  try {
+    int size=swap.size();
+    if (size == 0)     awaitNotEmpty();
+ else     decrementAndGet(size);
+    if (trace)     log.trace("Apply {0} modifications",size);
+    put(swap);
+  }
+  finally {
+    lockContainer.releaseLocks(lockedKeys);
+    lockedKeys.clear();
+  }
 }

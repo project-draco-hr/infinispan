@@ -1,0 +1,19 @@
+{
+  if (mods.get(key) != null && block) {
+    if (log.isTraceEnabled())     log.trace("Wait for v1 latch");
+    try {
+      v2Latch.countDown();
+      block=false;
+      v1Latch.await(2,TimeUnit.SECONDS);
+    }
+ catch (    InterruptedException e) {
+    }
+    super.applyModificationsSync(mods);
+  }
+ else   if (mods.get(key) != null && !block) {
+    if (log.isTraceEnabled())     log.trace("Do v2 modification and unleash v1 latch");
+    super.applyModificationsSync(mods);
+    v1Latch.countDown();
+    endLatch.countDown();
+  }
+}
