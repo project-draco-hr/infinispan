@@ -1,0 +1,25 @@
+{
+  Callable<Void> worker=new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        Main main=new Main();
+        main.boot(args);
+      }
+ catch (      Exception e) {
+        System.err.println("Failed to boot JBoss:");
+        e.printStackTrace();
+        throw e;
+      }
+      return null;
+    }
+  }
+;
+  Executors.newSingleThreadScheduledExecutor(new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      Thread t=new Thread(r,System.getProperty("program.name") + "-main");
+      t.setDaemon(true);
+      return t;
+    }
+  }
+).submit(worker);
+}

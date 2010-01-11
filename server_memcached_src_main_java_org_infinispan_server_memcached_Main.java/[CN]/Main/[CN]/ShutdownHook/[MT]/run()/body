@@ -1,0 +1,21 @@
+{
+  if (server != null) {
+    System.out.println("Posting Shutdown Request to the memcached server...");
+    Future<Void> f=Executors.newSingleThreadExecutor().submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        server.stop();
+        return null;
+      }
+    }
+);
+    try {
+      f.get();
+    }
+ catch (    InterruptedException ie) {
+      Thread.interrupted();
+    }
+catch (    ExecutionException e) {
+      throw new RuntimeException("Exception encountered in shutting down the server",e);
+    }
+  }
+}

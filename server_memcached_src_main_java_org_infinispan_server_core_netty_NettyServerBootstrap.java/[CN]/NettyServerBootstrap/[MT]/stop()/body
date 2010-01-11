@@ -1,2 +1,14 @@
 {
+  serverChannels.close().awaitUninterruptibly();
+  ChannelGroupFuture future=acceptedChannels.close().awaitUninterruptibly();
+  if (!future.isCompleteSuccess()) {
+    log.warn("Channel group did not completely close");
+    for (    Channel ch : future.getGroup()) {
+      if (ch.isBound()) {
+        log.warn(ch + " is still connected to " + ch.getRemoteAddress());
+      }
+    }
+  }
+  log.debug("Channel group completely closed, release external resources");
+  factory.releaseExternalResources();
 }

@@ -1,0 +1,17 @@
+{
+  processCommandLine(args);
+  int port=props.get(PROP_KEY_PORT) == null ? PORT_DEFAULT : Integer.parseInt(props.get(PROP_KEY_PORT));
+  String host=props.get(PROP_KEY_HOST) == null ? HOST_DEFAULT : props.get(PROP_KEY_HOST);
+  int masterThreads=props.get(PROP_KEY_MASTER_THREADS) == null ? MASTER_THREADS_DEFAULT : Integer.parseInt(props.get(PROP_KEY_MASTER_THREADS));
+  if (masterThreads < 0) {
+    throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads);
+  }
+  int workerThreads=props.get(PROP_KEY_WORKER_THREADS) == null ? WORKER_THREADS_DEFAULT : Integer.parseInt(props.get(PROP_KEY_WORKER_THREADS));
+  if (workerThreads < 0) {
+    throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads);
+  }
+  String configFile=props.get(PROP_KEY_CACHE_CONFIG);
+  server=new TextServer(host,port,configFile,masterThreads,workerThreads);
+  addShutdownHook(new ShutdownHook(server));
+  server.start();
+}
