@@ -1,16 +1,8 @@
 {
-  props=c.getTransportProperties();
+  props=TypedProperties.toTypedProperties(c.getTransportProperties());
   distributedSyncTimeout=c.getDistributedSyncTimeout();
-  log.info("Starting JGroups Channel");
+  if (log.isInfoEnabled())   log.info("Starting JGroups Channel");
   initChannelAndRPCDispatcher();
-  if (startChannel) {
-    try {
-      channel.connect(c.getClusterName());
-    }
- catch (    ChannelException e) {
-      throw new CacheException("Unable to start JGroups Channel",e);
-    }
-  }
-  log.info("Cache local address is {0}, physical addresses are {1}",getAddress(),getPhysicalAddresses());
+  startJGroupsChannelIfNeeded();
   if (channel.getProtocolStack() != null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)   throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
 }
