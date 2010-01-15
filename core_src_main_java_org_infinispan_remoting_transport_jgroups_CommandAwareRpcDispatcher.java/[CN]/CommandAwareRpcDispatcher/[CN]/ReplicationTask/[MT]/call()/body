@@ -6,37 +6,70 @@
  catch (  Exception e) {
     throw new RuntimeException("Failure to marshal argument(s)",e);
   }
-  Message msg=new Message();
-  msg.setBuffer(buf);
-  if (oob)   msg.setFlag(Message.OOB);
   int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
   distributedSync.blockUntilNoJoinsInProgress();
-  if (mode != GroupRequest.GET_NONE) {
-    msg.setFlag(Message.DONT_BUNDLE);
-  }
   if (filter != null)   mode=GroupRequest.GET_FIRST;
-  RspList retval=castMessage(dests,msg,mode,timeout,anycasting,filter);
-  if (trace)   log.trace("responses: {0}",retval);
-  if (retval == null)   throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
-  if (supportReplay) {
-    boolean replay=false;
-    Vector<Address> ignorers=new Vector<Address>();
-    for (    Map.Entry<Address,Rsp> entry : retval.entrySet()) {
-      Object value=entry.getValue().getValue();
-      if (value instanceof RequestIgnoredResponse) {
-        ignorers.add(entry.getKey());
-      }
- else       if (value instanceof ExtendedResponse) {
-        ExtendedResponse extended=(ExtendedResponse)value;
-        replay|=extended.isReplayIgnoredRequests();
-        entry.getValue().setValue(extended.getResponse());
+  RspList retval=null;
+  if (broadcast) {
+    retval=castMessage(dests,constructMessage(buf,null),mode,timeout,false,filter);
+  }
+ else {
+    Set<Address> targets=new HashSet<Address>(dests);
+    RequestOptions opts=new RequestOptions();
+    opts.setMode(mode);
+    opts.setTimeout(timeout);
+    targets.remove(channel.getAddress());
+    if (filter != null) {
+      for (      Address a : targets) {
+        Object response=sendMessage(constructMessage(buf,a),opts);
+        filter.isAcceptable(response,a);
+        if (!filter.needMoreResponses()) {
+          retval=new RspList(Collections.singleton(new Rsp(a,response)));
+          break;
+        }
       }
     }
-    if (replay && ignorers.size() > 0) {
-      msg.setFlag(Message.DONT_BUNDLE);
-      if (trace)       log.trace("Replaying message to ignoring senders: " + ignorers);
-      RspList responses=castMessage(ignorers,msg,GroupRequest.GET_ALL,timeout,anycasting,filter);
-      if (responses != null)       retval.putAll(responses);
+ else     if (mode == GroupRequest.GET_ALL) {
+      Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(targets.size());
+      for (      Address dest : targets)       futures.put(dest,sendMessageWithFuture(constructMessage(buf,dest),opts));
+      retval=new RspList();
+      for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
+        try {
+          retval.addRsp(entry.getKey(),entry.getValue().get(timeout,MILLISECONDS));
+        }
+ catch (        java.util.concurrent.TimeoutException te) {
+          throw new TimeoutException(formatString("Timed out after {0} waiting for a response from {1}",prettyPrintTime(timeout),entry.getKey()));
+        }
+      }
+    }
+ else     if (mode == GroupRequest.GET_NONE) {
+      for (      Address dest : targets)       sendMessageWithFuture(constructMessage(buf,dest),opts);
+    }
+  }
+  if (mode != GroupRequest.GET_NONE) {
+    if (trace)     log.trace("responses: {0}",retval);
+    if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
+    if (supportReplay) {
+      boolean replay=false;
+      Vector<Address> ignorers=new Vector<Address>();
+      for (      Map.Entry<Address,Rsp> entry : retval.entrySet()) {
+        Object value=entry.getValue().getValue();
+        if (value instanceof RequestIgnoredResponse) {
+          ignorers.add(entry.getKey());
+        }
+ else         if (value instanceof ExtendedResponse) {
+          ExtendedResponse extended=(ExtendedResponse)value;
+          replay|=extended.isReplayIgnoredRequests();
+          entry.getValue().setValue(extended.getResponse());
+        }
+      }
+      if (replay && ignorers.size() > 0) {
+        Message msg=constructMessage(buf,null);
+        msg.setFlag(Message.DONT_BUNDLE);
+        if (trace)         log.trace("Replaying message to ignoring senders: " + ignorers);
+        RspList responses=castMessage(ignorers,msg,GroupRequest.GET_ALL,timeout,anycasting,filter);
+        if (responses != null)         retval.putAll(responses);
+      }
     }
   }
   return retval;
