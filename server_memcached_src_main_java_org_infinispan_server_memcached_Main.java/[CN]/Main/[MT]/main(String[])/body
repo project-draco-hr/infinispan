@@ -1,4 +1,5 @@
 {
+  log.info("Start main with args: {0}",Arrays.toString(args));
   Callable<Void> worker=new Callable<Void>(){
     @Override public Void call() throws Exception {
       try {
@@ -14,12 +15,11 @@
     }
   }
 ;
-  Executors.newSingleThreadScheduledExecutor(new ThreadFactory(){
+  Future<Void> f=Executors.newSingleThreadScheduledExecutor(new ThreadFactory(){
     @Override public Thread newThread(    Runnable r){
-      Thread t=new Thread(r,System.getProperty("program.name") + "-main");
-      t.setDaemon(true);
-      return t;
+      return new Thread(r,System.getProperty("program.name") + "-main");
     }
   }
 ).submit(worker);
+  f.get();
 }
