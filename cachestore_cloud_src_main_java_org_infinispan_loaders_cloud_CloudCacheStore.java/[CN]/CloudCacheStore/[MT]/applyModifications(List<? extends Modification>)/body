@@ -1,0 +1,23 @@
+{
+  Set<Future<?>> futures=new HashSet<Future<?>>();
+  asyncCommandFutures.set(futures);
+  try {
+    super.applyModifications(modifications);
+    if (pollFutures) {
+      CacheLoaderException exception=null;
+      try {
+        for (        Future<?> f : asyncCommandFutures.get())         f.get();
+      }
+ catch (      InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
+catch (      ExecutionException ee) {
+        exception=convertToCacheLoaderException("Caught exception in async process",ee.getCause());
+      }
+      if (exception != null)       throw exception;
+    }
+  }
+  finally {
+    asyncCommandFutures.remove();
+  }
+}
