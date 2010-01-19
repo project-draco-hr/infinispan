@@ -1,5 +1,11 @@
 {
-  if (!callCompleted)   listeners.add(objectFutureListener);
-  if (callCompleted)   objectFutureListener.futureDone(this);
-  return this;
+  listenerLock.readLock().lock();
+  try {
+    if (!callCompleted)     listeners.add(objectFutureListener);
+    if (callCompleted)     objectFutureListener.futureDone(this);
+    return this;
+  }
+  finally {
+    listenerLock.readLock().unlock();
+  }
 }

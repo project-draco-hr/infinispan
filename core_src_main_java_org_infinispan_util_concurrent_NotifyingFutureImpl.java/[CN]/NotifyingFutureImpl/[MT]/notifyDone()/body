@@ -1,4 +1,10 @@
 {
-  callCompleted=true;
-  for (  FutureListener<Object> l : listeners)   l.futureDone(this);
+  listenerLock.writeLock().lock();
+  try {
+    callCompleted=true;
+    for (    FutureListener<Object> l : listeners)     l.futureDone(this);
+  }
+  finally {
+    listenerLock.writeLock().unlock();
+  }
 }
