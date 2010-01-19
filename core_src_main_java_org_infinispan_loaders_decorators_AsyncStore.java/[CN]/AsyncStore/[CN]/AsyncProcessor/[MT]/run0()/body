@@ -23,19 +23,23 @@
   }
   try {
     int size=swap.size();
-    if (size == 0)     awaitNotEmpty();
- else     decrementAndGet(size);
-    if (trace)     log.trace("Apply {0} modifications",size);
-    int maxRetries=3;
-    int attemptNumber=0;
-    boolean successful;
-    do {
-      if (attemptNumber > 0 && log.isDebugEnabled())       log.debug("Retrying due to previous failure. {0} attempts left.",maxRetries - attemptNumber);
-      successful=put(swap);
-      attemptNumber++;
+    if (swap.isEmpty()) {
+      awaitNotEmpty();
     }
+ else {
+      decrementAndGet(size);
+      if (trace)       log.trace("Apply {0} modifications",size);
+      int maxRetries=3;
+      int attemptNumber=0;
+      boolean successful;
+      do {
+        if (attemptNumber > 0 && log.isDebugEnabled())         log.debug("Retrying due to previous failure. {0} attempts left.",maxRetries - attemptNumber);
+        successful=put(swap);
+        attemptNumber++;
+      }
  while (!successful && attemptNumber <= maxRetries);
-    if (!successful)     log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
+      if (!successful)       log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
+    }
   }
   finally {
     lockContainer.releaseLocks(lockedKeys);
