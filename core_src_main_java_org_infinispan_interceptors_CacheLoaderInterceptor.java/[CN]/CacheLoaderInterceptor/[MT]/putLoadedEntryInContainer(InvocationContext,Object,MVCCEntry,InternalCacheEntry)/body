@@ -1,7 +1,5 @@
 {
-  log.trace("Loading key {0}",key);
-  InternalCacheEntry storedEntry=loader.load(key);
-  boolean entryExists=(storedEntry != null);
+  boolean entryExists=(loadedEntry != null);
   if (log.isTraceEnabled())   log.trace("Entry exists in loader? " + entryExists);
   if (getStatisticsEnabled()) {
     if (entryExists) {
@@ -13,8 +11,9 @@
   }
   if (entryExists) {
     sendNotification(key,true,ctx);
-    entry.setValue(storedEntry.getValue());
-    entry.setLifespan(storedEntry.getLifespan());
+    entry.setValue(loadedEntry.getValue());
+    entry.setLifespan(loadedEntry.getLifespan());
+    entry.setMaxIdle(loadedEntry.getMaxIdle());
     entry.setValid(true);
     notifier.notifyCacheEntryLoaded(key,false,ctx);
     sendNotification(key,false,ctx);

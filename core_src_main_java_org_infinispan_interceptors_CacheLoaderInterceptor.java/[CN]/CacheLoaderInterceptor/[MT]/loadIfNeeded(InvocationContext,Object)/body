@@ -1,7 +1,8 @@
 {
   CacheEntry e=entryFactory.wrapEntryForReading(ctx,key);
   if (e == null || e.isNull()) {
-    if (!loader.containsKey(key)) {
+    InternalCacheEntry loaded=loader.load(key);
+    if (loaded == null) {
       if (log.isTraceEnabled())       log.trace("No need to load.  Key doesn't exist in the loader.");
       return false;
     }
@@ -12,7 +13,7 @@
       return true;
     }
     MVCCEntry n=entryFactory.wrapEntryForWriting(ctx,key,true,false,keyLocked,false);
-    loadEntry(ctx,key,n);
+    putLoadedEntryInContainer(ctx,key,n,loaded);
     return true;
   }
  else {
