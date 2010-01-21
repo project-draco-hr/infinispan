@@ -1,0 +1,40 @@
+{
+  testCount++;
+  log.info(m.getName() + " start - " + testCount);
+  CacheManager cm1=null, cm2=null, cm30=null;
+  try {
+    Cache<Object,Object> cache1=null, cache2=null, cache3=null;
+    cm1=createCacheManager(tmpDirectory1);
+    cache1=cm1.getCache(cacheName);
+    StateTransferTestingUtil.writeInitialData(cache1);
+    cm2=createCacheManager(tmpDirectory2);
+    cache2=cm2.getCache(cacheName);
+    cache1.put("delay",new StateTransferFunctionalTest.DelayTransfer());
+    TestingUtil.blockUntilViewsReceived(60000,cache1,cache2);
+    StateTransferTestingUtil.verifyInitialData(cache2);
+    final CacheManager cm3=createCacheManager(tmpDirectory3);
+    cm30=cm3;
+    Future<Void> f1=Executors.newSingleThreadExecutor(new ThreadFactory(){
+      public Thread newThread(      Runnable r){
+        return new Thread(r,"CacheStarter-Cache3");
+      }
+    }
+).submit(new Callable<Void>(){
+      public Void call() throws Exception {
+        cm3.getCache(cacheName);
+        return null;
+      }
+    }
+);
+    f1.get();
+    cache3=cm3.getCache(cacheName);
+    TestingUtil.blockUntilViewsReceived(120000,cache1,cache2,cache3);
+    StateTransferTestingUtil.verifyInitialData(cache3);
+    log.info("testConcurrentStateTransfer end - " + testCount);
+  }
+  finally {
+    if (cm1 != null)     cm1.stop();
+    if (cm2 != null)     cm2.stop();
+    if (cm30 != null)     cm30.stop();
+  }
+}

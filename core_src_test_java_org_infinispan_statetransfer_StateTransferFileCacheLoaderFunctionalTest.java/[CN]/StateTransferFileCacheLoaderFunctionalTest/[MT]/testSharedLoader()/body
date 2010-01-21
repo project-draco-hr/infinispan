@@ -1,0 +1,23 @@
+{
+  CacheManager cm1=null, cm2=null;
+  try {
+    sharedCacheLoader.set(true);
+    cm1=createCacheManager(tmpDirectory1);
+    Cache c1=cm1.getCache(cacheName);
+    StateTransferTestingUtil.verifyNoDataOnLoader(c1);
+    StateTransferTestingUtil.verifyNoData(c1);
+    StateTransferTestingUtil.writeInitialData(c1);
+    cm2=createCacheManager(tmpDirectory2);
+    Cache c2=cm2.getCache(cacheName);
+    TestingUtil.blockUntilViewsReceived(60000,c1,c2);
+    StateTransferTestingUtil.verifyInitialDataOnLoader(c1);
+    StateTransferTestingUtil.verifyInitialData(c1);
+    StateTransferTestingUtil.verifyNoDataOnLoader(c2);
+    StateTransferTestingUtil.verifyNoData(c2);
+  }
+  finally {
+    if (cm1 != null)     cm1.stop();
+    if (cm2 != null)     cm2.stop();
+    sharedCacheLoader.set(false);
+  }
+}
