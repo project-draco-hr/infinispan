@@ -1,21 +1,16 @@
 {
-  Buffer buf;
-  try {
-    buf=req_marshaller.objectToBuffer(command);
-  }
- catch (  Exception e) {
-    throw new RuntimeException("Failure to marshal argument(s)",e);
-  }
   int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
   distributedSync.blockUntilNoJoinsInProgress();
   if (filter != null)   mode=GroupRequest.GET_FIRST;
   RspList retval=null;
+  Buffer buf;
   if (broadcast || FORCE_MCAST) {
     RequestOptions opts=new RequestOptions();
     opts.setMode(mode);
     opts.setTimeout(timeout);
     opts.setRspFilter(filter);
     opts.setAnycasting(false);
+    buf=marshallCall();
     retval=castMessage(dests,constructMessage(buf,null),opts);
   }
  else {
@@ -24,6 +19,8 @@
     opts.setMode(mode);
     opts.setTimeout(timeout);
     targets.remove(channel.getAddress());
+    if (targets.isEmpty())     return new RspList();
+    buf=marshallCall();
     if (filter != null) {
       for (      Address a : targets) {
         Object response=sendMessage(constructMessage(buf,a),opts);
