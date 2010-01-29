@@ -1,0 +1,76 @@
+{
+  latch=new CountDownLatch(1);
+  final Map<String,String> perf=new ConcurrentSkipListMap<String,String>();
+  final AtomicBoolean run=new AtomicBoolean(true);
+  List<Thread> threads=new LinkedList<Thread>();
+  for (int i=0; i < numReaders; i++) {
+    Thread getter=new Thread(){
+      public void run(){
+        waitForStart();
+        long start=System.nanoTime();
+        int runs=0;
+        while (run.get() && runs < readOps.size()) {
+          map.get(readOps.get(runs));
+          runs++;
+        }
+        perf.put("GET" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+      }
+    }
+;
+    threads.add(getter);
+  }
+  for (int i=0; i < numWriters; i++) {
+    Thread putter=new Thread(){
+      public void run(){
+        waitForStart();
+        long start=System.nanoTime();
+        int runs=0;
+        while (run.get() && runs < writeOps.size()) {
+          map.put(writeOps.get(runs),runs);
+          runs++;
+        }
+        perf.put("PUT" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+      }
+    }
+;
+    threads.add(putter);
+  }
+  for (int i=0; i < numRemovers; i++) {
+    Thread remover=new Thread(){
+      public void run(){
+        waitForStart();
+        long start=System.nanoTime();
+        int runs=0;
+        while (run.get() && runs < removeOps.size()) {
+          map.remove(removeOps.get(runs));
+          runs++;
+        }
+        perf.put("REM" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+      }
+    }
+;
+    threads.add(remover);
+  }
+  for (  Thread t : threads)   t.start();
+  latch.countDown();
+  Thread.sleep(RUN_TIME_MILLIS);
+  run.set(false);
+  for (  Thread t : threads)   t.join();
+  System.out.println("Size = " + map.size());
+  int puts=0, gets=0, removes=0;
+  for (  Entry<String,String> p : perf.entrySet()) {
+    if (p.getKey().startsWith("PUT")) {
+      puts+=Integer.valueOf(p.getValue());
+    }
+    if (p.getKey().startsWith("GET")) {
+      gets+=Integer.valueOf(p.getValue());
+    }
+    if (p.getKey().startsWith("REM")) {
+      removes+=Integer.valueOf(p.getValue());
+    }
+  }
+  System.out.println("Performance for container " + map.getClass().getSimpleName());
+  System.out.println("Average get ops/ms " + (gets / numReaders));
+  System.out.println("Average put ops/ms " + (puts / numWriters));
+  System.out.println("Average remove ops/ms " + (removes / numRemovers));
+}
