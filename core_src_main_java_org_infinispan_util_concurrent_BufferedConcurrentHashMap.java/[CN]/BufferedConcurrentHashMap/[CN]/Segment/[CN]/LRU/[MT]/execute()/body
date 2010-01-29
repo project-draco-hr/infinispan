@@ -1,0 +1,23 @@
+{
+  Set<HashEntry<K,V>> evicted=Collections.emptySet();
+  try {
+    for (    HashEntry<K,V> e : accessQueue) {
+      if (lruQueue.remove(e)) {
+        lruQueue.addFirst(e);
+      }
+    }
+    while (isOverflow()) {
+      HashEntry<K,V> first=lruQueue.getLast();
+      remove(first.key,first.hash,null);
+      if (evicted.isEmpty()) {
+        evicted=new HashSet<HashEntry<K,V>>();
+      }
+      evicted.add(first);
+    }
+  }
+  finally {
+    accessQueue.clear();
+    accessQueueSize.set(0);
+  }
+  return evicted;
+}
