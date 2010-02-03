@@ -43,7 +43,12 @@
         dcsz=dataContainer.size();
         if (dcsz > maxEntries) {
           if (trace)           log.trace("Attempting to evict key [{0}]",k);
-          cache.evict(k);
+          try {
+            cache.evict(k);
+          }
+ catch (          TimeoutException te) {
+            log.trace("Unable to evict key {0} due to a timeout.  Moving on to next possible evictable entry.",k);
+          }
         }
  else {
           if (trace)           log.trace("Evicted enough entries");
