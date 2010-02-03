@@ -1,7 +1,6 @@
 {
   latch=new CountDownLatch(1);
   final Map<String,String> perf=new ConcurrentSkipListMap<String,String>();
-  final AtomicBoolean run=new AtomicBoolean(true);
   List<Thread> threads=new LinkedList<Thread>();
   for (int i=0; i < numReaders; i++) {
     Thread getter=new Thread(){
@@ -9,7 +8,7 @@
         waitForStart();
         long start=System.nanoTime();
         int runs=0;
-        while (run.get() && runs < readOps.size()) {
+        while (runs < readOps.size()) {
           map.get(readOps.get(runs));
           runs++;
         }
@@ -25,7 +24,7 @@
         waitForStart();
         long start=System.nanoTime();
         int runs=0;
-        while (run.get() && runs < writeOps.size()) {
+        while (runs < writeOps.size()) {
           map.put(writeOps.get(runs),runs);
           runs++;
         }
@@ -41,7 +40,7 @@
         waitForStart();
         long start=System.nanoTime();
         int runs=0;
-        while (run.get() && runs < removeOps.size()) {
+        while (runs < removeOps.size()) {
           map.remove(removeOps.get(runs));
           runs++;
         }
@@ -54,7 +53,6 @@
   for (  Thread t : threads)   t.start();
   latch.countDown();
   Thread.sleep(RUN_TIME_MILLIS);
-  run.set(false);
   for (  Thread t : threads)   t.join();
   System.out.println("Size = " + map.size());
   int puts=0, gets=0, removes=0;

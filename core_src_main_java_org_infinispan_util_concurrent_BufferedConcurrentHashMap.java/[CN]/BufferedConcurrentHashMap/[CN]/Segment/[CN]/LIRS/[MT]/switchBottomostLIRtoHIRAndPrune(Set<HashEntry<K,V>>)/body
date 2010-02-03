@@ -1,0 +1,21 @@
+{
+  boolean seenFirstLIR=false;
+  for (Iterator<HashEntry<K,V>> i=stack.values().iterator(); i.hasNext(); ) {
+    HashEntry<K,V> next=i.next();
+    if (next.recency() == Recency.LIR_RESIDENT) {
+      if (!seenFirstLIR) {
+        seenFirstLIR=true;
+        i.remove();
+        next.transitionLIRResidentToHIRResident();
+        queue.addLast(next);
+      }
+ else {
+        break;
+      }
+    }
+ else {
+      i.remove();
+      evicted.add(next);
+    }
+  }
+}
