@@ -1,0 +1,17 @@
+{
+  Set<HashEntry<K,V>> evicted=null;
+  boolean obtainedLock=!lockedAlready ? tryLock() : true;
+  if (!obtainedLock && eviction.thresholdExpired()) {
+    lock();
+    obtainedLock=true;
+  }
+  if (obtainedLock) {
+    try {
+      evicted=eviction.execute();
+    }
+  finally {
+      if (!lockedAlready)       unlock();
+    }
+  }
+  return evicted;
+}

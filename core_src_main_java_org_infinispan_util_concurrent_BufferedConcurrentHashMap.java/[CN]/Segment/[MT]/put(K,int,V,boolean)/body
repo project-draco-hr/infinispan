@@ -1,0 +1,46 @@
+{
+  lock();
+  Set<HashEntry<K,V>> evicted=null;
+  try {
+    int c=count;
+    if (c++ > threshold && eviction.strategy() == Eviction.NONE)     rehash();
+    HashEntry<K,V>[] tab=table;
+    int index=hash & (tab.length - 1);
+    HashEntry<K,V> first=tab[index];
+    HashEntry<K,V> e=first;
+    while (e != null && (e.hash != hash || !key.equals(e.key)))     e=e.next;
+    V oldValue;
+    if (e != null) {
+      oldValue=e.value;
+      if (!onlyIfAbsent) {
+        e.value=value;
+        eviction.onEntryHit(e);
+      }
+    }
+ else {
+      oldValue=null;
+      ++modCount;
+      count=c;
+      if (eviction.strategy() != Eviction.NONE) {
+        if (c > tab.length) {
+          evicted=eviction.execute();
+          first=tab[index];
+        }
+        tab[index]=new HashEntry<K,V>(key,hash,first,value);
+        eviction.onEntryMiss(tab[index]);
+      }
+ else {
+        tab[index]=new HashEntry<K,V>(key,hash,first,value);
+      }
+    }
+    return oldValue;
+  }
+  finally {
+    unlock();
+    if (evicted != null) {
+      for (      HashEntry<K,V> he : evicted) {
+        evictionListener.evicted(he.key,he.value);
+      }
+    }
+  }
+}
