@@ -1,15 +1,19 @@
 {
   super.start();
-  if (cfg.getCloudService() == null)   throw new ConfigurationException("CloudService must be set!");
-  if (cfg.getIdentity() == null)   throw new ConfigurationException("Identity must be set");
-  if (cfg.getPassword() == null)   throw new ConfigurationException("Password must be set");
+  if (constructInternalBlobstores) {
+    if (cfg.getCloudService() == null)     throw new ConfigurationException("CloudService must be set!");
+    if (cfg.getIdentity() == null)     throw new ConfigurationException("Identity must be set");
+    if (cfg.getPassword() == null)     throw new ConfigurationException("Password must be set");
+  }
   if (cfg.getBucketPrefix() == null)   throw new ConfigurationException("CloudBucket must be set");
   containerName=getThisContainerName();
   try {
-    ctx=new BlobStoreContextFactory().createContext(cfg.getCloudService(),cfg.getIdentity(),cfg.getPassword(),ImmutableSet.of(new EnterpriseConfigurationModule(),new Log4JLoggingModule()),new Properties());
-    blobStore=ctx.getBlobStore();
-    asyncBlobStore=ctx.getAsyncBlobStore();
-    if (!blobStore.containerExists(containerName))     blobStore.createContainerInLocation("DEFAULT",containerName);
+    if (constructInternalBlobstores) {
+      ctx=new BlobStoreContextFactory().createContext(cfg.getCloudService(),cfg.getIdentity(),cfg.getPassword(),ImmutableSet.of(new EnterpriseConfigurationModule(),new Log4JLoggingModule()),new Properties());
+      blobStore=ctx.getBlobStore();
+      asyncBlobStore=ctx.getAsyncBlobStore();
+    }
+    if (!blobStore.containerExists(containerName))     blobStore.createContainerInLocation(cfg.getCloudServiceLocation(),containerName);
     pollFutures=!cfg.getAsyncStoreConfig().isEnabled();
   }
  catch (  IOException ioe) {
