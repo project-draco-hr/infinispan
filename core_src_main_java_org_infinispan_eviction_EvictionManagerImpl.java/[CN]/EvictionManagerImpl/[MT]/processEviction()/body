@@ -33,6 +33,7 @@
   }
   int dcsz=dataContainer.size();
   if (dcsz > maxEntries) {
+    AdvancedCache<Object,Object> ac=cache.getAdvancedCache();
     if (trace) {
       log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...",dcsz);
       start=System.currentTimeMillis();
@@ -43,12 +44,7 @@
         dcsz=dataContainer.size();
         if (dcsz > maxEntries) {
           if (trace)           log.trace("Attempting to evict key [{0}]",k);
-          try {
-            cache.evict(k);
-          }
- catch (          TimeoutException te) {
-            log.trace("Unable to evict key {0} due to a timeout.  Moving on to next possible evictable entry.",k);
-          }
+          ac.withFlags(FAIL_SILENTLY).evict(k);
         }
  else {
           if (trace)           log.trace("Evicted enough entries");
