@@ -1,14 +1,16 @@
 {
-  T a=(T)clazz.getAnnotation(ann);
-  if (a != null)   return a;
-  if (!clazz.isInterface()) {
-    Class[] interfaces=clazz.getInterfaces();
-    for (    Class inter : interfaces) {
-      a=getAnnotation(inter,ann);
-      if (a != null)       return a;
+  while (true) {
+    T a=(T)clazz.getAnnotation(ann);
+    if (a != null)     return a;
+    if (!clazz.isInterface()) {
+      Class[] interfaces=clazz.getInterfaces();
+      for (      Class inter : interfaces) {
+        a=getAnnotation(inter,ann);
+        if (a != null)         return a;
+      }
     }
+    Class superclass=clazz.getSuperclass();
+    if (superclass == null)     return null;
+    clazz=superclass;
   }
-  Class superclass=clazz.getSuperclass();
-  if (superclass == null)   return null;
-  return getAnnotation(superclass,ann);
 }
