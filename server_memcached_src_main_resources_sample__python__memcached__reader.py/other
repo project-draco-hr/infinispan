@@ -1,23 +1,27 @@
 import memcache
 import time
-from ftplib import print_line
-mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-print "Testing set ['{0}': {1}] ...".format('Simple_Key', 'Simple value'),
-value = mc.get('Simple_Key')
-if (value == 'Simple value'):
-    print 'OK'
-else:
-    print 'FAIL'
-print "Testing set ['{0}' : {1} : {2}] ...".format('Expiring_Key', 999, 3),
-mc.set('Expiring_Key', 999, 3)
-print "Testing increment 3 times ['{0}' : starting at {1} ] ...".format('Incr_Key', '1'),
-mc.set('Incr_Key', '1')
-mc.incr('Incr_Key')
-mc.incr('Incr_Key')
-mc.incr('Incr_Key')
-print "Testing decrement 1 time ['{0}' : starting at {1} ] ...".format('Decr_Key', '4'),
-mc.set('Decr_Key', '4')
-mc.decr('Decr_Key')
-print "Testing decrement 2 times in one call ['{0}' : {1} ] ...".format('Multi_Decr_Key', '3'),
-mc.set('Multi_Decr_Key', '3')
-mc.decr('Multi_Decr_Key', 2)
+ip = '127.0.0.1'
+port = '13211'
+ipaddress = ((ip + ':') + port)
+mc = memcache.Client([ipaddress], debug=1)
+print 'Connecting to {0}'.format(ipaddress)
+key = 'Simple_Key'
+expected = 'Simple value'
+print "Testing get ['{0}'] should return {1} ...".format(key, expected),
+get(mc, key, expected)
+key = 'Expiring_Key'
+print "Testing get ['{0}'] should return nothing...".format(key),
+time.sleep(5)
+getNone(mc, key)
+key = 'Incr_Key'
+expected = '4'
+print "Testing get ['{0}'] should return {1} ...".format(key, expected),
+get(mc, key, expected)
+key = 'Decr_Key'
+expected = '3'
+print "Testing get ['{0}'] should return {1} ...".format(key, expected),
+get(mc, key, expected)
+key = 'Multi_Decr_Key'
+expected = '1'
+print "Testing get ['{0}'] should return {1} ...".format(key, expected),
+get(mc, key, expected)
