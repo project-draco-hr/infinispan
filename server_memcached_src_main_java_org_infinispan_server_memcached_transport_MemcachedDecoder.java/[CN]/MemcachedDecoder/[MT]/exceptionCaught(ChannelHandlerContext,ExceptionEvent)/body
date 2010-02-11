@@ -1,0 +1,19 @@
+{
+  Throwable t=e.getCause();
+  log.error("Unexpected exception",t);
+  Channel ch=ctx.getChannel();
+  ChannelBuffers buffers=ctx.getChannelBuffers();
+  if (t instanceof UnknownCommandException) {
+    ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.ERROR.bytes()),buffers.wrappedBuffer(CRLF)));
+  }
+ else   if (t instanceof IOException) {
+    StringBuilder sb=new StringBuilder();
+    sb.append(Reply.CLIENT_ERROR).append(' ').append(t);
+    ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()),buffers.wrappedBuffer(CRLF)));
+  }
+ else {
+    StringBuilder sb=new StringBuilder();
+    sb.append(Reply.SERVER_ERROR).append(' ').append(t);
+    ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()),buffers.wrappedBuffer(CRLF)));
+  }
+}
