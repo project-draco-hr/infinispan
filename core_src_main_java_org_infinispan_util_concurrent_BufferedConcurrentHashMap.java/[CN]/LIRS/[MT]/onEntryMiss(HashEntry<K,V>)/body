@@ -1,2 +1,28 @@
 {
+  if (currentLIRSize + 1 < lirSizeLimit) {
+    currentLIRSize++;
+    e.transitionToLIRResident();
+    stack.put(e.hashCode(),e);
+  }
+ else {
+    if (queue.size() < hirSizeLimit) {
+      queue.addLast(e);
+    }
+ else {
+      boolean inStack=stack.containsKey(e.hashCode());
+      HashEntry<K,V> first=queue.removeFirst();
+      first.transitionHIRResidentToHIRNonResident();
+      stack.put(e.hashCode(),e);
+      if (inStack) {
+        e.transitionToLIRResident();
+        Set<HashEntry<K,V>> evicted=new HashSet<HashEntry<K,V>>();
+        switchBottomostLIRtoHIRAndPrune(evicted);
+        removeFromSegment(evicted);
+      }
+ else {
+        queue.addLast(e);
+      }
+      segment.remove(first.key,first.hash,null);
+    }
+  }
 }
