@@ -1,7 +1,14 @@
 {
   try {
     InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationFile,InfinispanConfiguration.resolveSchemaPath(),new ConfigurationValidatingVisitor());
-    initialize(configuration);
+    globalConfiguration=configuration.parseGlobalConfiguration();
+    defaultConfiguration=configuration.parseDefaultConfiguration();
+    for (    Map.Entry<String,Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
+      Configuration c=defaultConfiguration.clone();
+      c.applyOverrides(entry.getValue());
+      configurationOverrides.put(entry.getKey(),c);
+    }
+    globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this);
   }
  catch (  RuntimeException re) {
     throw new ConfigurationException(re);
