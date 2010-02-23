@@ -1,0 +1,21 @@
+{
+  try {
+    InfinispanConfiguration gconfiguration=InfinispanConfiguration.newInfinispanConfiguration(globalConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),new ConfigurationValidatingVisitor());
+    globalConfiguration=gconfiguration.parseGlobalConfiguration();
+    InfinispanConfiguration dconfiguration=InfinispanConfiguration.newInfinispanConfiguration(defaultConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),new ConfigurationValidatingVisitor());
+    defaultConfiguration=dconfiguration.parseDefaultConfiguration();
+    if (namedCacheFile != null) {
+      InfinispanConfiguration NCconfiguration=InfinispanConfiguration.newInfinispanConfiguration(namedCacheFile,InfinispanConfiguration.resolveSchemaPath(),new ConfigurationValidatingVisitor());
+      for (      Map.Entry<String,Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
+        Configuration c=defaultConfiguration.clone();
+        c.applyOverrides(entry.getValue());
+        configurationOverrides.put(entry.getKey(),c);
+      }
+    }
+    globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this);
+  }
+ catch (  RuntimeException re) {
+    throw new ConfigurationException(re);
+  }
+  if (start)   start();
+}
