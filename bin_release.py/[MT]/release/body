@@ -30,13 +30,13 @@ def release():
     print 'Step 3: Complete'
     async_processes = []
     print 'Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)'
-    async_processes.append(Process(target=checkInMaven2Repo, args=(version, workingDir)))
+    do_task(checkInMaven2Repo, (version, workingDir), async_processes)
     print 'Step 4: Complete'
     print 'Step 5: Uploading Javadocs'
-    async_processes.append(Process(target=uploadJavadocs, args=(base_dir, workingDir, version)))
+    do_task(uploadJavadocs, (base_dir, workingDir, version), async_processes)
     print 'Step 5: Complete'
     print 'Step 6: Uploading to Sourceforge'
-    async_processes.append(Process(target=uploadArtifactsToSourceforge, args=version))
+    do_task(uploadArtifactsToSourceforge, version, async_processes)
     print 'Step 6: Complete'
     for p in async_processes:
         p.start()
