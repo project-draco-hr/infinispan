@@ -1,11 +1,16 @@
 {
   if (blob == null)   return null;
   try {
-    Bucket bucket=(Bucket)marshaller.objectFromInputStream(blob.getContent());
+    Bucket bucket;
+    if (cfg.isCompress())     bucket=(Bucket)marshaller.objectFromInputStream(new GZIPInputStream(blob.getContent()));
+ else     bucket=(Bucket)marshaller.objectFromInputStream(blob.getContent());
     if (bucket != null)     bucket.setBucketName(bucketName);
     return bucket;
   }
- catch (  Exception e) {
+ catch (  ClassNotFoundException e) {
     throw convertToCacheLoaderException("Unable to read blob",e);
+  }
+catch (  IOException e) {
+    throw convertToCacheLoaderException("Class loading issue",e);
   }
 }
