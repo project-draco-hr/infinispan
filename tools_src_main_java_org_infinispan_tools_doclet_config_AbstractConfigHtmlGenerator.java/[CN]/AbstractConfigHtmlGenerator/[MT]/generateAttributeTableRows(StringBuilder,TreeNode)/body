@@ -1,0 +1,83 @@
+{
+  sb.append("<table class=\"bodyTable\"> ");
+  sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
+  Class<?> bean=n.getBeanClass();
+  Object object=null;
+  try {
+    Constructor<?>[] constructors=bean.getDeclaredConstructors();
+    for (    Constructor<?> c : constructors) {
+      if (c.getParameterTypes().length == 0) {
+        c.setAccessible(true);
+        object=c.newInstance();
+      }
+    }
+  }
+ catch (  Exception e) {
+    System.out.println("Did not construct object " + bean);
+  }
+  Set<XSAttributeDecl> attributes=n.getAttributes();
+  for (  XSAttributeDecl a : attributes) {
+    sb.append("<tr class=\"b\">");
+    sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
+    sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
+    boolean isRestricted=false;
+    XSRestrictionSimpleType restriction=a.getType().asRestriction();
+    Collection<? extends XSFacet> declaredFacets=restriction.getDeclaredFacets();
+    for (    XSFacet facet : declaredFacets) {
+      if (facet.getName().equalsIgnoreCase("enumeration")) {
+        isRestricted=true;
+        break;
+      }
+    }
+    debug("attribute = " + a.getName() + "(restricted = "+ isRestricted+ ")",1);
+    if (isRestricted) {
+      sb.append("* (");
+      for (      XSFacet facet : declaredFacets) {
+        sb.append(facet.getValue().toString() + '|');
+      }
+      sb.deleteCharAt(sb.length() - 1);
+      sb.append(")</td>\n");
+    }
+ else {
+      sb.append("</td>\n");
+    }
+    if (a.getDefaultValue() != null) {
+      debug("annotation-defined default = " + a.getDefaultValue(),2);
+      sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
+    }
+ else {
+      Field field=null;
+      Object defaultValue=null;
+      try {
+        field=findFieldRecursively(bean,a.getName());
+        defaultValue=fieldValue(field,object);
+        if (defaultValue != null) {
+          sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
+          debug("field-defined default = " + defaultValue,2);
+        }
+ else {
+          debug("field-defined default is null!",2);
+          sb.append("<td>").append("null").append("</td>\n");
+        }
+      }
+ catch (      Exception e) {
+        debug("Caught exception, bean is " + bean.getName() + ", looking for field "+ a.getName()+ ", field "+ field,2);
+        e.printStackTrace();
+        sb.append("<td>").append("N/A").append("</td>\n");
+      }
+    }
+    FieldDoc fieldDoc=findFieldDocRecursively(bean,a.getName(),CONFIG_REF);
+    if (fieldDoc != null) {
+      Tag[] tags=fieldDoc.tags(CONFIG_REF);
+      Map<String,String> p=parseTag(tags[0].text().trim());
+      sb.append("<td>").append(p.get(CONFIG_REF_DESC_ATT)).append("\n");
+      String packageDir=fieldDoc.containingPackage().toString().replace(".","/").concat("/");
+      String htmlFile=fieldDoc.containingClass().typeName().concat(".html");
+      String field=fieldDoc.name();
+      sb.append(" (<a href=\"" + packageDir.concat(htmlFile).concat("#").concat(field) + "\">"+ "Javadoc</a>)");
+      sb.append("</td>\n");
+    }
+    sb.append("</tr>\n");
+  }
+  sb.append("</table>\n");
+}

@@ -1,8 +1,15 @@
 {
-  ClassDoc classDoc=rootDoc.classNamed(c.getName());
-  for (  FieldDoc fd : classDoc.fields()) {
-    if (fd.tags(tagName).length > 0)     return fd;
+  while (true) {
+    ClassDoc classDoc=rootDoc.classNamed(c.getName());
+    for (    FieldDoc fd : classDoc.fields()) {
+      if (fd.tags(tagName).length > 0) {
+        return fd;
+      }
+    }
+    if (c.getSuperclass() != null) {
+      c=c.getSuperclass();
+      continue;
+    }
+    return null;
   }
-  if (c.getSuperclass() != null)   fieldDocWithTag(c.getSuperclass(),tagName);
-  return null;
 }

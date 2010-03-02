@@ -1,0 +1,26 @@
+{
+  for (  TreeNode n : root) {
+    if (n.getBeanClass() == null) {
+      for (      Class<?> clazz : configBeans) {
+        ClassDoc classDoc=rootDoc.classNamed(clazz.getName());
+        if (classDoc != null) {
+          List<Tag> list=Arrays.asList(classDoc.tags(CONFIG_REF));
+          for (          Tag tag : list) {
+            String text=tag.text().trim();
+            Map<String,String> p=parseTag(text);
+            String thisNode=p.get(CONFIG_REF_NAME_ATT);
+            String parentNode=p.get(CONFIG_REF_PARENT_NAME_ATT);
+            if (n.getName().equalsIgnoreCase(thisNode)) {
+              if (parentNode != null && parentNode.equalsIgnoreCase(n.getParent().getName())) {
+                n.setBeanClass(clazz);
+              }
+ else               if (parentNode == null) {
+                n.setBeanClass(clazz);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

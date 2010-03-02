@@ -1,0 +1,42 @@
+{
+  sb.append(getTitle());
+  List<Class<?>> configBeans;
+  try {
+    configBeans=getConfigBeans();
+    if (configBeans == null || configBeans.isEmpty())     throw new Exception("Configuration bean classes are not specified. Make sure that " + "getConfigBeans() method returns a list of classes. Documentation creation aborted");
+    XMLTreeOutputWalker tw=new XMLTreeOutputWalker(sb);
+    String schemaFile=getSchemaFile();
+    if (schemaFile == null)     throw new Exception("Schema file name not specified. Documentation creation aborted");
+    InputStream file=lookupFile(schemaFile);
+    if (file == null)     throw new Exception("Schema file " + schemaFile + " not found on classpath. Documentation creation aborted");
+    XSOMParser reader=new XSOMParser();
+    reader.parse(file);
+    XSSchemaSet xss=reader.getResult();
+    XSOMSchemaTreeWalker w=new XSOMSchemaTreeWalker(xss.getSchema(1),getRootElementName());
+    TreeNode root=w.getRoot();
+    associateBeansWithTreeNodes(configBeans,root);
+    preXMLTableOfContentsCreate(w,tw);
+    sb.append("<div class=\"" + "source" + "\"><pre>");
+    tw.preOrderTraverse(root);
+    sb.append("</pre></div>");
+    postXMLTableOfContentsCreate(w,tw);
+    for (    TreeNode n : root) {
+      boolean skip=preVisitNode(n);
+      if (skip)       continue;
+      debug("element = " + n.getName(),0);
+      sb.append("<div class=\"section\">\n");
+      generateHeaderForConfigurationElement(sb,tw,n);
+      if (!n.getAttributes().isEmpty()) {
+        generateAttributeTableRows(sb,n);
+      }
+      boolean breakLoop=postVisitNode(n);
+      sb.append("</div>\n");
+      if (breakLoop)       break;
+    }
+  }
+ catch (  Exception e) {
+    System.out.println("Exception while generating configuration reference " + e);
+    e.printStackTrace();
+  }
+  return sb.toString();
+}

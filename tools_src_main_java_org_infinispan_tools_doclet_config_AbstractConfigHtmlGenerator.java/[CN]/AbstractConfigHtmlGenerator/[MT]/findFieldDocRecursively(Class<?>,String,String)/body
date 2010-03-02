@@ -1,0 +1,24 @@
+{
+  while (true) {
+    ClassDoc classDoc=rootDoc.classNamed(c.getName());
+    for (    FieldDoc fd : classDoc.fields()) {
+      if (fd.name().equalsIgnoreCase(fieldName)) {
+        return fd;
+      }
+      for (      Tag t : fd.tags(tagName)) {
+        Map<String,String> m=parseTag(t.text().trim());
+        if (m.containsKey(CONFIG_REF_NAME_ATT)) {
+          String value=m.get(CONFIG_REF_NAME_ATT).trim();
+          if (fieldName.equalsIgnoreCase(value)) {
+            return fd;
+          }
+        }
+      }
+    }
+    if (c.getSuperclass() != null) {
+      c=c.getSuperclass();
+      continue;
+    }
+    return null;
+  }
+}

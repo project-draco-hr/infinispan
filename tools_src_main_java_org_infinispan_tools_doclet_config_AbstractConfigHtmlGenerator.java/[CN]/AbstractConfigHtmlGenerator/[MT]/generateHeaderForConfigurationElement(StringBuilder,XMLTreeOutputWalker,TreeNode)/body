@@ -1,0 +1,38 @@
+{
+  sb.append("<a name=\"").append("ce_" + n.getParent().getName() + "_"+ n.getName()+ "\">"+ "</a>");
+  sb.append("<h3><a name=\"" + n.getName() + "\"></a>"+ n.getName()+ "</h3>");
+  sb.append("\n<p>");
+  Class<?> beanClass=n.getBeanClass();
+  ClassDoc classDoc=rootDoc.classNamed(beanClass.getName());
+  Tag[] tags=classDoc.tags(CONFIG_REF);
+  for (  Tag tag : tags) {
+    String text=tag.text().trim();
+    Map<String,String> m=parseTag(text);
+    String name=m.get(CONFIG_REF_NAME_ATT);
+    if (n.getName().equals(name)) {
+      sb.append(m.get(CONFIG_REF_DESC_ATT));
+    }
+  }
+  sb.append("<BR/><BR />");
+  if (n.getParent().getParent() != null) {
+    sb.append("The parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + "_"+ n.getParent().getName()+ "\">"+ "&lt;"+ n.getParent().getName()+ "&gt;"+ "</a>.  ");
+  }
+  if (!n.getChildren().isEmpty()) {
+    int childCount=n.getChildren().size();
+    int count=1;
+    if (childCount == 1)     sb.append("The only child element is ");
+ else     sb.append("Child elements are ");
+    for (    TreeNode tn : n.getChildren()) {
+      sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_"+ tn.getName()+ "\">"+ "&lt;"+ tn.getName()+ "&gt;"+ "</a>");
+      if (count < childCount) {
+        sb.append(", ");
+      }
+ else {
+        sb.append(".");
+      }
+      count++;
+    }
+    sb.append("\n");
+  }
+  sb.append("</p>");
+}
