@@ -1,8 +1,20 @@
 {
+  long earliestExpiryTime=-1;
+  for (  InternalCacheEntry e : bucket.getEntries().values()) {
+    long t=e.getExpiryTime();
+    if (t != -1) {
+      if (earliestExpiryTime == -1)       earliestExpiryTime=t;
+ else       earliestExpiryTime=Math.min(earliestExpiryTime,t);
+    }
+  }
   try {
     final byte[] payloadBuffer=marshaller.objectToByteBuffer(bucket);
     if (cfg.isCompress())     blob.setPayload(compress(payloadBuffer));
  else     blob.setPayload(payloadBuffer);
+    if (earliestExpiryTime > -1) {
+      Map<String,String> md=Collections.singletonMap(EARLIEST_EXPIRY_TIME,String.valueOf(earliestExpiryTime));
+      blob.getMetadata().setUserMetadata(md);
+    }
   }
  catch (  IOException e) {
     throw new CacheLoaderException(e);

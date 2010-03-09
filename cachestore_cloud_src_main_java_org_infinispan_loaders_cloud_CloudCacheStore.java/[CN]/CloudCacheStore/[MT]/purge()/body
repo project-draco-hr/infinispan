@@ -1,0 +1,8 @@
+{
+  long currentTime=System.currentTimeMillis();
+  PageSet<? extends StorageMetadata> ps=blobStore.list(containerName);
+  for (  StorageMetadata sm : ps) {
+    long lastExpirableEntry=readLastExpirableEntryFromMetadata(sm.getUserMetadata());
+    if (lastExpirableEntry < currentTime)     scanBlobForExpiredEntries(sm.getName());
+  }
+}
