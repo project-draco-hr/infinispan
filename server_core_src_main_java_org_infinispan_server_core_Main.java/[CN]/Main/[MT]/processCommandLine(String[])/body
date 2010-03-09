@@ -1,0 +1,73 @@
+{
+  String programName=System.getProperty("program.name","InfinispanServer");
+  String sopts="-:hD:Vp:l:m:t:c:r:";
+  LongOpt[] lopts={new LongOpt("help",LongOpt.NO_ARGUMENT,null,'h'),new LongOpt("version",LongOpt.NO_ARGUMENT,null,'V'),new LongOpt("port",LongOpt.REQUIRED_ARGUMENT,null,'p'),new LongOpt("host",LongOpt.REQUIRED_ARGUMENT,null,'l'),new LongOpt("master_threads",LongOpt.REQUIRED_ARGUMENT,null,'m'),new LongOpt("worker_threads",LongOpt.REQUIRED_ARGUMENT,null,'t'),new LongOpt("cache_config",LongOpt.REQUIRED_ARGUMENT,null,'c'),new LongOpt("protocol",LongOpt.REQUIRED_ARGUMENT,null,'r')};
+  Getopt getopt=new Getopt(programName,args,sopts,lopts);
+  int code;
+  while ((code=getopt.getopt()) != -1) {
+switch (code) {
+case ':':
+case '?':
+      System.exit(1);
+    break;
+case 1:
+  System.err.println(programName + ": unused non-option argument: " + getopt.getOptarg());
+break;
+case 'h':
+System.out.println("usage: " + programName + " [options]");
+System.out.println();
+System.out.println("options:");
+System.out.println("    -h, --help                         Show this help message");
+System.out.println("    -V, --version                      Show version information");
+System.out.println("    --                                 Stop processing options");
+System.out.println("    -p, --port=<num>                   TCP port number to listen on (default: 11211)");
+System.out.println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)");
+System.out.println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)");
+System.out.println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)");
+System.out.println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)");
+System.out.println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. Choose one of the two options");
+System.out.println("    -D<name>[=<value>]                 Set a system property");
+System.out.println();
+System.exit(0);
+break;
+case 'V':
+Version.printFullVersionInformation();
+System.exit(0);
+break;
+case 'p':
+props.put(PROP_KEY_PORT,getopt.getOptarg());
+break;
+case 'l':
+props.put(PROP_KEY_HOST,getopt.getOptarg());
+break;
+case 'm':
+props.put(PROP_KEY_MASTER_THREADS,getopt.getOptarg());
+break;
+case 't':
+props.put(PROP_KEY_WORKER_THREADS,getopt.getOptarg());
+break;
+case 'c':
+props.put(PROP_KEY_CACHE_CONFIG,getopt.getOptarg());
+break;
+case 'r':
+props.put(PROP_KEY_PROTOCOL,getopt.getOptarg());
+break;
+case 'D':
+String arg=getopt.getOptarg();
+String name, value;
+int i=arg.indexOf("=");
+if (i == -1) {
+name=arg;
+value="true";
+}
+ else {
+name=arg.substring(0,i);
+value=arg.substring(i + 1,arg.length());
+}
+System.setProperty(name,value);
+break;
+default :
+throw new Error("unhandled option code: " + code);
+}
+}
+}

@@ -11,7 +11,9 @@
     throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads);
   }
   String configFile=props.get(PROP_KEY_CACHE_CONFIG);
-  server=new TextServer(host,port,configFile,masterThreads,workerThreads);
+  String protocol=props.get(PROP_KEY_PROTOCOL);
+  Protocol p=protocol == null ? Protocol.HOTROD : Protocol.valueOf(protocol.toUpperCase());
+  server=(ProtocolServer)Util.getInstance(p.clazz);
   addShutdownHook(new ShutdownHook(server));
-  server.start();
+  server.start(host,port,configFile,masterThreads,workerThreads);
 }
