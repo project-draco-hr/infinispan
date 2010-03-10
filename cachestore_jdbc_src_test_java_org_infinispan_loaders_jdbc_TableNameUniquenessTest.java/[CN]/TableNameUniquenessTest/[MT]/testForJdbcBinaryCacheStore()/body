@@ -1,9 +1,15 @@
 {
-  CacheManager cm=TestCacheManagerFactory.fromXml("configs/binary.xml");
-  Cache<String,String> first=cm.getCache("first");
-  Cache<String,String> second=cm.getCache("second");
-  JdbcBinaryCacheStore firstCs=(JdbcBinaryCacheStore)TestingUtil.extractComponent(first,CacheLoaderManager.class).getCacheLoader();
-  JdbcBinaryCacheStore secondCs=(JdbcBinaryCacheStore)TestingUtil.extractComponent(second,CacheLoaderManager.class).getCacheLoader();
-  asserTableExistance(firstCs.getConnectionFactory().getConnection(),"ISPN_BUCKET_TABLE_second","ISPN_BUCKET_TABLE_first","IISPN_BUCKET_TABLE");
-  assertNoOverlapingState(first,second,firstCs,secondCs);
+  CacheManager cm=null;
+  try {
+    cm=TestCacheManagerFactory.fromXml("configs/binary.xml");
+    Cache<String,String> first=cm.getCache("first");
+    Cache<String,String> second=cm.getCache("second");
+    JdbcBinaryCacheStore firstCs=(JdbcBinaryCacheStore)TestingUtil.extractComponent(first,CacheLoaderManager.class).getCacheLoader();
+    JdbcBinaryCacheStore secondCs=(JdbcBinaryCacheStore)TestingUtil.extractComponent(second,CacheLoaderManager.class).getCacheLoader();
+    asserTableExistance(firstCs.getConnectionFactory().getConnection(),"ISPN_BUCKET_TABLE_second","ISPN_BUCKET_TABLE_first","IISPN_BUCKET_TABLE");
+    assertNoOverlapingState(first,second,firstCs,secondCs);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
 }
