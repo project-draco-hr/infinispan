@@ -1,9 +1,9 @@
 {
   if (numEntries < 0)   return loadAll();
-  Set<InternalCacheEntry> fromBuckets=binaryCacheStore.load(numEntries);
-  if (fromBuckets.size() < numEntries) {
-    Set<InternalCacheEntry> fromStrings=stringBasedCacheStore.load(numEntries - fromBuckets.size());
-    fromBuckets.addAll(fromStrings);
+  Set<InternalCacheEntry> set=stringBasedCacheStore.load(numEntries);
+  if (set.size() < numEntries) {
+    Set<InternalCacheEntry> otherSet=binaryCacheStore.load(numEntries - set.size());
+    set.addAll(otherSet);
   }
-  return fromBuckets;
+  return set;
 }

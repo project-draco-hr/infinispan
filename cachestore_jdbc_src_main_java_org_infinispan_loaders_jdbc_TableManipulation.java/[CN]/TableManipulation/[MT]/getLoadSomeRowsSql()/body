@@ -2,22 +2,22 @@
   if (loadSomeRowsSql == null) {
 switch (getDatabaseType()) {
 case ORACLE:
-      loadSomeRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ getTableName()+ " LIMIT ?";
+      loadSomeRowsSql=String.format("SELECT %s, %s FROM (SELECT %s, %s FROM %s) WHERE ROWNUM <= ?",dataColumnName,idColumnName,dataColumnName,idColumnName,getTableName());
     break;
 case DB2:
-  loadSomeRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ getTableName()+ " LIMIT ?";
+  loadSomeRowsSql=String.format("SELECT %s, %s FROM %s FETCH FIRST ? ROWS ONLY",dataColumnName,idColumnName,getTableName());
 break;
 case INFORMIX:
 case INTERBASE:
 case FIREBIRD:
-loadSomeRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ getTableName()+ " LIMIT ?";
+loadSomeRowsSql=String.format("SELECT FIRST ? %s, %s FROM %s",dataColumnName,idColumnName,getTableName());
 break;
 case SQL_SERVER:
 case ACCESS:
-loadSomeRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ getTableName()+ " LIMIT ?";
+loadSomeRowsSql=String.format("SELECT TOP ? %s, %s FROM %s",dataColumnName,idColumnName,getTableName());
 break;
 default :
-loadSomeRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ getTableName()+ " LIMIT ?";
+loadSomeRowsSql=String.format("SELECT %s, %s FROM %s LIMIT ?",dataColumnName,idColumnName,getTableName());
 break;
 }
 }

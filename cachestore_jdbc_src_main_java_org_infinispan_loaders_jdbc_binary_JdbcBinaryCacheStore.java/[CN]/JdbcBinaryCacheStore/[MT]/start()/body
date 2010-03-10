@@ -7,12 +7,18 @@
     doConnectionFactoryInitialization(factory);
   }
   dmHelper=new DataManipulationHelper(connectionFactory,tableManipulation,marshaller){
+    @Override protected String getLoadAllKeysSql(){
+      return tableManipulation.getLoadAllKeysBinarySql();
+    }
     @Override public void loadAllProcess(    ResultSet rs,    Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
       InputStream binaryStream=rs.getBinaryStream(1);
       Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
-      for (      InternalCacheEntry ice : bucket.getStoredEntries()) {
-        if (!ice.isExpired())         result.add(ice);
-      }
+      for (      InternalCacheEntry ice : bucket.getStoredEntries())       if (!ice.isExpired())       result.add(ice);
+    }
+    @Override public void loadAllKeysProcess(    ResultSet rs,    Set<Object> keys,    Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
+      InputStream binaryStream=rs.getBinaryStream(1);
+      Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+      for (      InternalCacheEntry ice : bucket.getStoredEntries())       if (!ice.isExpired() && includeKey(ice.getKey(),keysToExclude))       keys.add(ice.getKey());
     }
     @Override public void toStreamProcess(    ResultSet rs,    InputStream is,    ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
       Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),is);
