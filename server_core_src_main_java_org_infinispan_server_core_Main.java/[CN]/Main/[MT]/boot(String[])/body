@@ -12,7 +12,11 @@
   }
   String configFile=props.get(PROP_KEY_CACHE_CONFIG);
   String protocol=props.get(PROP_KEY_PROTOCOL);
-  Protocol p=protocol == null ? Protocol.HOTROD : Protocol.valueOf(protocol.toUpperCase());
+  if (protocol == null) {
+    System.err.println("ERROR: Please indicate protocol to run with -r parameter");
+    showAndExit();
+  }
+  Protocol p=Protocol.valueOf(protocol.toUpperCase());
   server=(ProtocolServer)Util.getInstance(p.clazz);
   addShutdownHook(new ShutdownHook(server));
   server.start(host,port,configFile,masterThreads,workerThreads);
