@@ -9,7 +9,10 @@
   jdbcCacheStoreConfig.setStringsTableManipulation(stringsTm);
   jdbcCacheStoreConfig.setBinaryTableManipulation(binaryTm);
   JdbcMixedCacheStore cacheStore=new JdbcMixedCacheStore();
-  cacheStore.init(jdbcCacheStoreConfig,null,getMarshaller());
+  Cache<?,?> mockCache=EasyMock.createNiceMock(Cache.class);
+  EasyMock.expect(mockCache.getName()).andReturn(getClass().getName()).anyTimes();
+  EasyMock.replay(mockCache);
+  cacheStore.init(jdbcCacheStoreConfig,mockCache,getMarshaller());
   cacheStore.start();
   return cacheStore;
 }

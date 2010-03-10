@@ -5,6 +5,9 @@
   config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
   config.setPurgeSynchronously(true);
   cacheStore=new JdbcStringBasedCacheStore();
-  cacheStore.init(config,null,getMarshaller());
+  Cache<?,?> mockCache=EasyMock.createNiceMock(Cache.class);
+  EasyMock.expect(mockCache.getName()).andReturn(getClass().getName()).anyTimes();
+  EasyMock.replay(mockCache);
+  cacheStore.init(config,mockCache,getMarshaller());
   cacheStore.start();
 }

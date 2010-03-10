@@ -1,0 +1,22 @@
+{
+  if (databaseType == null) {
+    try {
+      String dbProduct=connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+      databaseType=guessDatabaseType(dbProduct);
+    }
+ catch (    Exception e) {
+      log.debug("Unable to guess database type from JDBC metadata.",e);
+    }
+    if (databaseType == null)     log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+    try {
+      String dbProduct=connectionFactory.getConnection().getMetaData().getDriverName();
+      databaseType=guessDatabaseType(dbProduct);
+    }
+ catch (    Exception e) {
+      log.debug("Unable to guess database type from JDBC driver name.",e);
+    }
+    if (databaseType == null)     throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+ else     log.info("Guessing database type as '" + databaseType + "'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are "+ Arrays.toString(DatabaseType.values()));
+  }
+  return databaseType;
+}

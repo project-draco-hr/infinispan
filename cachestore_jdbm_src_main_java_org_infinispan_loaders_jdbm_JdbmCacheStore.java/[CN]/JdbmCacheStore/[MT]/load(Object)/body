@@ -1,6 +1,11 @@
 {
   try {
-    return unmarshall(tree.get(key),key);
+    InternalCacheEntry ice=unmarshall(tree.get(key),key);
+    if (ice != null && ice.isExpired()) {
+      remove(key);
+      return null;
+    }
+    return ice;
   }
  catch (  IOException e) {
     throw new CacheLoaderException(e);
