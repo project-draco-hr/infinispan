@@ -1,3 +1,11 @@
 {
-  insertBucket(bucket);
+  Blob blob=blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
+  writeToBlob(blob,bucket);
+  List<Future<?>> futures=asyncCommandFutures.get();
+  if (futures == null) {
+    blobStore.putBlob(containerName,blob);
+  }
+ else {
+    futures.add(asyncBlobStore.putBlob(containerName,blob));
+  }
 }
