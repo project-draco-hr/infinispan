@@ -1,9 +1,12 @@
 def uploadJavadocs(base_dir, workingDir, version):
+    version_short = get_version_major_minor(version)
     os.chdir(('%s/target/distribution' % workingDir))
     subprocess.check_call(['unzip', ('infinispan-%s-all.zip' % version)])
     os.chdir(('infinispan-%s/doc' % version))
     subprocess.check_call([('%s/bin/updateTracker.sh' % workingDir)])
-    subprocess.check_call(['tar', 'zcf', ('%s/apidocs-%s.tar.gz' % (base_dir, version)), 'apidocs'])
+    os.mkdir(version_short)
+    os.rename('apidocs', ('%s/apidocs' % version_short))
+    subprocess.check_call(['tar', 'zcf', ('%s/apidocs-%s.tar.gz' % (base_dir, version)), version_short])
     os.chdir(base_dir)
     subprocess.check_call(['scp', ('apidocs-%s.tar.gz' % version), 'sourceforge_frs:'])
     print ('API docs are in %s/apidocs-%s.tar.gz' % (base_dir, version))
