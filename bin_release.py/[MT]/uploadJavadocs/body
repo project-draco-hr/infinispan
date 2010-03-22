@@ -1,4 +1,5 @@
 def uploadJavadocs(base_dir, workingDir, version):
+    "Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"
     version_short = get_version_major_minor(version)
     os.chdir(('%s/target/distribution' % workingDir))
     subprocess.check_call(['unzip', ('infinispan-%s-all.zip' % version)])
@@ -6,12 +7,4 @@ def uploadJavadocs(base_dir, workingDir, version):
     subprocess.check_call([('%s/bin/updateTracker.sh' % workingDir)])
     os.mkdir(version_short)
     os.rename('apidocs', ('%s/apidocs' % version_short))
-    subprocess.check_call(['tar', 'zcf', ('%s/apidocs-%s.tar.gz' % (base_dir, version)), version_short])
-    os.chdir(base_dir)
-    subprocess.check_call(['scp', ('apidocs-%s.tar.gz' % version), 'sourceforge_frs:'])
-    print ('API docs are in %s/apidocs-%s.tar.gz' % (base_dir, version))
-    print 'They have also been uploaded to Sourceforge.'
-    print 'MANUAL STEPS:'
-    print '  1) Email archive to helpdesk@redhat.com'
-    print "  2) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'"
-    print ''
+    subprocess.check_call(['rsync', '-rv', '--protocol=28', version_short, 'infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan'])
