@@ -1,0 +1,16 @@
+{
+  Transport transport=getTransport();
+  try {
+    byte status=sendPutOperation(key,value,transport,PUT_IF_ABSENT_REQUEST);
+    if (status == NO_ERROR_STATUS) {
+      return true;
+    }
+ else     if (status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+      return false;
+    }
+  }
+  finally {
+    transport.release();
+  }
+  throw new IllegalStateException("We should not reach here!");
+}

@@ -1,0 +1,18 @@
+{
+  Transport transport=getTransport();
+  try {
+    byte status=sendKeyOperation(key,transport,GET_REQUEST);
+    if (status == KEY_DOES_NOT_EXIST_STATUS) {
+      return null;
+    }
+    if (status == NO_ERROR_STATUS) {
+      int responseLength=transport.readVInt();
+      byte[] result=new byte[responseLength];
+      return transport.readByteArray(result);
+    }
+  }
+  finally {
+    transport.release();
+  }
+  throw new IllegalStateException("We should not reach here!");
+}
