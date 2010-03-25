@@ -1,12 +1,16 @@
 {
-switch (configuration.getEvictionStrategy()) {
+  EvictionStrategy st=configuration.getEvictionStrategy();
+  int level=configuration.getConcurrencyLevel();
+switch (st) {
 case NONE:
 case UNORDERED:
-    return (T)new SimpleDataContainer(configuration.getConcurrencyLevel());
-case FIFO:
-  return (T)new FIFOSimpleDataContainer(configuration.getConcurrencyLevel());
+    return (T)DefaultDataContainer.unBoundedDataContainer(level);
 case LRU:
-return (T)new LRUSimpleDataContainer(configuration.getConcurrencyLevel());
+case FIFO:
+case LIRS:
+  int maxEntries=configuration.getEvictionMaxEntries();
+EvictionThreadPolicy policy=configuration.getEvictionThreadPolicy();
+return (T)DefaultDataContainer.boundedDataContainer(level,maxEntries,st,policy);
 default :
 throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
 }

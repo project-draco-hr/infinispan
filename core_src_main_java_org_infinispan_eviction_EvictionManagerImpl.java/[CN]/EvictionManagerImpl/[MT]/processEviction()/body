@@ -31,25 +31,18 @@
       log.warn("Caught exception purging cache store!",e);
     }
   }
-  int dcsz=dataContainer.size();
-  if (dcsz > maxEntries) {
+  Set<InternalCacheEntry> evictionCandidates=dataContainer.getEvictionCandidates();
+  if (!evictionCandidates.isEmpty()) {
     AdvancedCache<Object,Object> ac=cache.getAdvancedCache();
     if (trace) {
-      log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...",dcsz);
+      log.trace("Evicting data container entries");
       start=System.currentTimeMillis();
     }
-    for (    InternalCacheEntry ice : dataContainer) {
-      Object k=ice.getKey();
+    for (    InternalCacheEntry entry : evictionCandidates) {
+      Object k=entry.getKey();
       try {
-        dcsz=dataContainer.size();
-        if (dcsz > maxEntries) {
-          if (trace)           log.trace("Attempting to evict key [{0}]",k);
-          ac.withFlags(FAIL_SILENTLY).evict(k);
-        }
- else {
-          if (trace)           log.trace("Evicted enough entries");
-          break;
-        }
+        if (trace)         log.trace("Attempting to evict key [{0}]",k);
+        ac.withFlags(FAIL_SILENTLY).evict(k);
       }
  catch (      Exception e) {
         log.warn("Caught exception when iterating through data container.  Current entry is under key [{0}]",e,k);
