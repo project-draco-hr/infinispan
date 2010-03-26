@@ -1,0 +1,22 @@
+{
+  int bytes_read=0;
+  while (len > 0) {
+    int bytes_remaining_to_read=getBytesRemainingInChunk();
+    if (bytes_remaining_to_read == 0) {
+      if (end_reached)       return bytes_read > 0 ? bytes_read : -1;
+      current_buffer=fetchNextChunk();
+      local_index=0;
+      if (current_buffer == null)       return bytes_read > 0 ? bytes_read : -1;
+ else       if (current_buffer.length < chunk_size)       end_reached=true;
+      bytes_remaining_to_read=getBytesRemainingInChunk();
+    }
+    int bytes_to_read=Math.min(len,bytes_remaining_to_read);
+    System.arraycopy(current_buffer,local_index,b,off,bytes_to_read);
+    local_index+=bytes_to_read;
+    off+=bytes_to_read;
+    len-=bytes_to_read;
+    bytes_read+=bytes_to_read;
+    index+=bytes_to_read;
+  }
+  return bytes_read;
+}

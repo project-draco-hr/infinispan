@@ -1,0 +1,24 @@
+{
+  String[] components=Util.components(path,File.separator);
+  if (components == null)   return false;
+  if (components.length == 1)   return true;
+  StringBuilder sb=new StringBuilder();
+  boolean first=true;
+  for (int i=0; i < components.length - 1; i++) {
+    String tmp=components[i];
+    if (!tmp.equals(File.separator)) {
+      if (first)       first=false;
+ else       sb.append(File.separator);
+    }
+    sb.append(tmp);
+    String comp=sb.toString();
+    if (exists(comp)) {
+      if (isFile(comp))       throw new IOException("cannot create " + path + " as component "+ comp+ " is a file");
+    }
+ else {
+      if (create_if_absent)       metadataCache.put(comp,new Metadata(0,System.currentTimeMillis(),chunk_size,Metadata.DIR));
+ else       return false;
+    }
+  }
+  return true;
+}
