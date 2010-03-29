@@ -1,0 +1,13 @@
+{
+  Transport transport=getTransport();
+  try {
+    short status=sendPutOperation(key,value,transport,PUT_REQUEST,PUT_RESPONSE,lifespan,maxIdle,flags);
+    if (status != NO_ERROR_STATUS) {
+      throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+    }
+    return returnPossiblePrevValue(transport,flags);
+  }
+  finally {
+    transport.release();
+  }
+}

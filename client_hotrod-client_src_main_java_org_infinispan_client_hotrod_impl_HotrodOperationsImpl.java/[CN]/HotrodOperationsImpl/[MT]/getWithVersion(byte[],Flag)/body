@@ -1,0 +1,18 @@
+{
+  Transport transport=getTransport();
+  try {
+    short status=sendKeyOperation(key,transport,GET_WITH_CAS_REQUEST,flags,GET_WITH_CAS_RESPONSE);
+    if (status == KEY_DOES_NOT_EXIST_STATUS) {
+      return null;
+    }
+    if (status == NO_ERROR_STATUS) {
+      long version=transport.readVLong();
+      byte[] value=readValue(transport);
+      return new BinaryVersionedValue(version,value);
+    }
+  }
+  finally {
+    transport.release();
+  }
+  throw new IllegalStateException("We should not reach here!");
+}

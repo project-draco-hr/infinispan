@@ -1,0 +1,21 @@
+{
+  short magic=transport.readByte();
+  if (magic != RESPONSE_MAGIC) {
+    throw new InvalidResponseException("Invalid magic number. Expected " + Integer.toHexString(RESPONSE_MAGIC) + " and received "+ Integer.toHexString(magic));
+  }
+  long receivedMessageId=transport.readVLong();
+  if (receivedMessageId != messageId) {
+    throw new InvalidResponseException("Invalid message id. Expected " + Long.toHexString(messageId) + " and received "+ Long.toHexString(receivedMessageId));
+  }
+  short receivedOpCode=transport.readByte();
+  if (receivedOpCode != opRespCode) {
+    if (receivedOpCode == ERROR_RESPONSE) {
+      checkForErrorsInResponseStatus(transport.readByte(),messageId,transport);
+      throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
+    }
+    throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opCode) + " and received "+ Integer.toHexString(receivedOpCode));
+  }
+  short status=transport.readByte();
+  transport.readByte();
+  return status;
+}

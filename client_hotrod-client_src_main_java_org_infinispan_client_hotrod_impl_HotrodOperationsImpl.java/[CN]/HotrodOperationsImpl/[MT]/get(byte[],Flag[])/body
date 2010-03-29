@@ -1,0 +1,16 @@
+{
+  Transport transport=getTransport();
+  try {
+    short status=sendKeyOperation(key,transport,GET_REQUEST,flags,GET_RESPONSE);
+    if (status == KEY_DOES_NOT_EXIST_STATUS) {
+      return null;
+    }
+    if (status == NO_ERROR_STATUS) {
+      return readValue(transport);
+    }
+  }
+  finally {
+    transport.release();
+  }
+  throw new IllegalStateException("We should not reach here!");
+}
