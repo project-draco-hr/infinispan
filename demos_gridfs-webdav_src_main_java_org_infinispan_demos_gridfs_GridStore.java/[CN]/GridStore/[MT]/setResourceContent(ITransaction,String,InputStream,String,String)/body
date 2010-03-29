@@ -1,0 +1,30 @@
+{
+  log.trace("GridStore.setResourceContent(" + uri + ")");
+  File file=fs.getFile(root,uri);
+  try {
+    OutputStream os=fs.getOutput((GridFile)file);
+    try {
+      int read;
+      byte[] copyBuffer=new byte[BUF_SIZE];
+      while ((read=is.read(copyBuffer,0,copyBuffer.length)) != -1) {
+        os.write(copyBuffer,0,read);
+      }
+    }
+  finally {
+      Util.close(is);
+      Util.close(os);
+    }
+  }
+ catch (  IOException e) {
+    log.error("GridStore.setResourceContent(" + uri + ") failed");
+    throw new WebdavException(e);
+  }
+  long length=-1;
+  try {
+    length=file.length();
+  }
+ catch (  SecurityException e) {
+    log.error("GridStore.setResourceContent(" + uri + ") failed"+ "\nCan't get file.length");
+  }
+  return length;
+}

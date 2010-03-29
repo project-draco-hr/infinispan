@@ -1,0 +1,14 @@
+{
+  data=CacheManagerHolder.cacheManager.getCache(CacheManagerHolder.dataCacheName);
+  metadata=CacheManagerHolder.cacheManager.getCache(CacheManagerHolder.metadataCacheName);
+  try {
+    data.start();
+    metadata.start();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("creation of cluster failed",e);
+  }
+  fs=new GridFilesystem(data,metadata);
+  this.root=fs.getFile(root.getPath());
+  if (!this.root.mkdirs())   throw new WebdavException("root path: " + root.getAbsolutePath() + " does not exist and could not be created");
+}
