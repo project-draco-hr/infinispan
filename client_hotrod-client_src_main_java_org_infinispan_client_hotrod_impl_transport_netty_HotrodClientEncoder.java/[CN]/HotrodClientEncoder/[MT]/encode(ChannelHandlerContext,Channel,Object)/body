@@ -1,0 +1,26 @@
+{
+  if (msg instanceof byte[]) {
+    return wrappedBuffer((byte[])msg);
+  }
+ else   if (msg instanceof Integer) {
+    int intMsg=(Integer)msg;
+    ChannelBuffer buffer=getBuffer(channel);
+    VHelper.writeVInt(intMsg,osa);
+    return buffer;
+  }
+ else   if (msg instanceof Long) {
+    ChannelBuffer buffer=getBuffer(channel);
+    long longMsg=(Long)msg;
+    VHelper.writeVLong(longMsg,osa);
+    return buffer;
+  }
+ else   if (msg instanceof Short) {
+    ChannelBuffer buffer=getBuffer(channel);
+    short byteMsg=(Short)msg;
+    buffer.writeByte(byteMsg);
+    return buffer;
+  }
+ else {
+    throw new TransportException("Unknown msg type: " + msg.getClass());
+  }
+}
