@@ -1,3 +1,16 @@
 {
-  return null;
+  Transport transport=getTransport();
+  try {
+    short status=sendPutOperation(key,value,transport,REPLACE_REQUEST,REPLACE_RESPONSE,lifespan,maxIdle,flags);
+    if (status == NO_ERROR_STATUS) {
+      return returnPossiblePrevValue(transport,flags);
+    }
+ else     if (status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+      return null;
+    }
+  }
+  finally {
+    releaseTransport(transport);
+  }
+  throw new IllegalStateException("We should not reach here!");
 }
