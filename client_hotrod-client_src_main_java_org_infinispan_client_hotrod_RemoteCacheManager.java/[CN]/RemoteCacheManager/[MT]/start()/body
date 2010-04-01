@@ -1,7 +1,15 @@
 {
   String factory=props.getProperty("transport-factory");
-  if (factory == null)   throw new IllegalStateException("Missing required property: transport-factory!");
+  if (factory == null) {
+    factory=TcpTransportFactory.class.getName();
+    log.info("'transport-factory' factory not specified, using " + factory);
+  }
   transportFactory=(TransportFactory)newInstance(factory);
   transportFactory.init(props);
-  hotrodMarshaller=props.getProperty("marshaller",SerializationMarshaller.class.getName());
+  hotrodMarshaller=props.getProperty("marshaller");
+  if (hotrodMarshaller == null) {
+    hotrodMarshaller=SerializationMarshaller.class.getName();
+    log.info("'marshaller' not specified, using " + hotrodMarshaller);
+  }
+  started=true;
 }
