@@ -1,13 +1,16 @@
 {
   Transport transport=getTransport();
   try {
-    short status=sendKeyOperation(key,transport,GET_WITH_CAS_REQUEST,flags,GET_WITH_CAS_RESPONSE);
+    short status=sendKeyOperation(key,transport,GET_WITH_VERSION,flags,GET_WITH_VERSION_RESPONSE);
     if (status == KEY_DOES_NOT_EXIST_STATUS) {
       return null;
     }
     if (status == NO_ERROR_STATUS) {
-      long version=transport.readVLong();
-      byte[] value=transport.readByteArray();
+      long version=transport.readLong();
+      if (log.isTraceEnabled()) {
+        log.trace("Received version: " + version);
+      }
+      byte[] value=transport.readArray();
       return new BinaryVersionedValue(version,value);
     }
   }
