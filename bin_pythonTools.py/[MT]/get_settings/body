@@ -1,0 +1,18 @@
+def get_settings():
+    "Retrieves user-specific settings for all Infinispan tools.  Returns a dict of key/value pairs, or an empty dict if the settings file doesn't exist."
+    f = None
+    try:
+        try:
+            settings = {}
+            f = open(settings_file)
+            for l in f:
+                if (not l.strip().startswith('#')):
+                    kvp = l.split('=')
+                    if (kvp and (len(kvp) > 0) and kvp[0] and (len(kvp) > 1)):
+                        settings[kvp[0].strip()] = kvp[1].strip()
+            return settings
+        except IOError as ioe:
+            return {}
+    finally:
+        if f:
+            f.close()

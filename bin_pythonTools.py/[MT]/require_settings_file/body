@@ -1,0 +1,18 @@
+def require_settings_file(recursive=False):
+    'Tests whether the settings file exists, and if not exits with an error message.'
+    f = None
+    try:
+        try:
+            f = open(settings_file)
+        except IOError as ioe:
+            if (not recursive):
+                handle_release_virgin()
+                require_settings_file(True)
+            else:
+                print ('User-specific environment settings file %s is missing!  Cannot proceed!' % settings_file)
+                print ('Please create a file called %s with the following lines:' % settings_file)
+                print '\n       svn_base = https://svn.jboss.org/repos/infinispan\n       local_tags_dir = /PATH/TO/infinispan/tags\n       local_mvn_repo_dir = /PATH/TO/maven2/org/infinispan\n       multi_threaded = False\n      '
+                sys.exit(3)
+    finally:
+        if f:
+            f.close()
