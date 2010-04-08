@@ -1,0 +1,25 @@
+{
+  if (!warmup)   System.out.printf("%s %s %s %s%n",padString("Function Impl",25),padString("String keys",18),padString("Byte array keys",18),padString("Object keys",18));
+  for (  HashFunction f : functions) {
+    long oRes=0, sRes=0, bRes=0;
+    DescriptiveStatistics oStats=new DescriptiveStatistics();
+    DescriptiveStatistics sStats=new DescriptiveStatistics();
+    DescriptiveStatistics bStats=new DescriptiveStatistics();
+    long st=System.currentTimeMillis();
+    for (    Object o : objectKeys)     captureStats(f.hash(o.hashCode()),oStats);
+    oRes=System.currentTimeMillis() - st;
+    st=System.currentTimeMillis();
+    for (    String s : stringKeys)     captureStats(f.hash(s),sStats);
+    sRes=System.currentTimeMillis() - st;
+    st=System.currentTimeMillis();
+    for (    byte[] b : byteArrayKeys)     captureStats(f.hash(b),bStats);
+    bRes=System.currentTimeMillis() - st;
+    if (!warmup) {
+      System.out.printf("%s %s %s %s%n",padString(f.functionName(),25),padString(prettyPrintTime(sRes),18),padString(prettyPrintTime(bRes),18),padString(prettyPrintTime(oRes),18));
+      System.out.printf("%s %s %s %s%n",padString("  mean",25),padDouble(sStats.getMean()),padDouble(bStats.getMean()),padDouble(oStats.getMean()));
+      System.out.printf("%s %s %s %s%n",padString("  median",25),padDouble(sStats.getPercentile(50.0)),padDouble(bStats.getPercentile(50.0)),padDouble(oStats.getPercentile(50.0)));
+      System.out.printf("%s %s %s %s%n",padString("  deviation",25),padDouble(sStats.getStandardDeviation()),padDouble(bStats.getStandardDeviation()),padDouble(oStats.getStandardDeviation()));
+      System.out.printf("%s %s %s %s%n",padString("  variance",25),padDouble(sStats.getVariance()),padDouble(bStats.getVariance()),padDouble(oStats.getVariance()));
+    }
+  }
+}
