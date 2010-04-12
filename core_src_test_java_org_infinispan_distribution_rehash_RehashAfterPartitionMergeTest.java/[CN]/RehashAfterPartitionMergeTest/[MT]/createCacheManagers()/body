@@ -1,0 +1,21 @@
+{
+  Configuration c=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+  c.setLockAcquisitionTimeout(1000);
+  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
+  amendMarshaller(gc);
+  minimizeThreads(gc);
+  Properties newTransportProps=new Properties();
+  String jgc=JGroupsConfigBuilder.getJGroupsConfig();
+  String discardString="):DISCARD(use_gui=false";
+  String newString=jgc.substring(0,jgc.indexOf("):")) + discardString + jgc.substring(jgc.indexOf("):"));
+  newTransportProps.put(CONFIGURATION_STRING,newString);
+  gc.setTransportProperties(newTransportProps);
+  CacheManager cm1=TestCacheManagerFactory.createCacheManager(gc,c,true,false,true);
+  CacheManager cm2=TestCacheManagerFactory.createCacheManager(gc,c,true,false,true);
+  registerCacheManager(cm1,cm2);
+  c1=cm1.getCache();
+  c2=cm2.getCache();
+  caches=Arrays.asList(c1,c2);
+  d1=getDiscardForCache(c1);
+  d2=getDiscardForCache(c2);
+}
