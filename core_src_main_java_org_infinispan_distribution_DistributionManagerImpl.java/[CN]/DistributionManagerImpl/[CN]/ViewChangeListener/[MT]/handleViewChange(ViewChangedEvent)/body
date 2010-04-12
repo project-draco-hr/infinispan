@@ -1,11 +1,21 @@
 {
   boolean started=false;
-  try {
-    started=startLatch.await(2,TimeUnit.MINUTES);
-    if (started)     rehash(e.getNewMembers(),e.getOldMembers());
- else     log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
+  if (e.isNeedsToRejoin()) {
+    try {
+      join();
+    }
+ catch (    Exception e1) {
+      log.fatal("Unable to recover from a partition merge!",e1);
+    }
   }
- catch (  InterruptedException ie) {
-    log.warn("View change interrupted; not rehashing!");
+ else {
+    try {
+      started=startLatch.await(2,TimeUnit.MINUTES);
+      if (started)       rehash(e.getNewMembers(),e.getOldMembers());
+ else       log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
+    }
+ catch (    InterruptedException ie) {
+      log.warn("View change interrupted; not rehashing!");
+    }
   }
 }
