@@ -1,16 +1,30 @@
 {
-  byte[] bytes=new byte[size];
-  try {
-    size=socket.getInputStream().read(bytes);
+  byte[] result=new byte[size];
+  boolean done=false;
+  int offset=0;
+  do {
+    int read;
+    try {
+      int len=size - offset;
+      if (log.isTraceEnabled()) {
+        log.trace("Offset: " + offset + ", len="+ len+ ", size="+ size);
+      }
+      read=socket.getInputStream().read(result,offset,len);
+    }
+ catch (    IOException e) {
+      throw new TransportException(e);
+    }
+    if (read == -1) {
+      throw new RuntimeException("End of stream reached!");
+    }
+    if (read + offset == size) {
+      done=true;
+    }
+ else {
+      offset+=read;
+      if (offset > result.length)       throw new IllegalStateException("Assertion!");
+    }
   }
- catch (  IOException e) {
-    throw new TransportException(e);
-  }
-  if (size == -1) {
-    throw new RuntimeException("End of stream reached!");
-  }
-  if (size != bytes.length) {
-    throw new TransportException("Expected " + bytes.length + " bytes but only could read "+ size+ " bytes!");
-  }
-  return bytes;
+ while (!done);
+  return result;
 }
