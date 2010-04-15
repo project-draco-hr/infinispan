@@ -11,8 +11,14 @@
     log.info("'hotrod-servers' property not specified in config, using " + servers);
   }
   StringTokenizer tokenizer=new StringTokenizer(servers,";");
-  String server=tokenizer.nextToken();
-  String[] serverDef=tokenizeServer(server);
-  serverHost=serverDef[0];
-  serverPort=Integer.parseInt(serverDef[1]);
+  while (tokenizer.hasMoreTokens()) {
+    String server=tokenizer.nextToken();
+    String[] serverDef=tokenizeServer(server);
+    String serverHost=serverDef[0];
+    int serverPort=Integer.parseInt(serverDef[1]);
+    serverAddresses.add(new InetSocketAddress(serverHost,serverPort));
+  }
+  if (serverAddresses.isEmpty()) {
+    throw new IllegalStateException("No hot-rod servers specified!");
+  }
 }

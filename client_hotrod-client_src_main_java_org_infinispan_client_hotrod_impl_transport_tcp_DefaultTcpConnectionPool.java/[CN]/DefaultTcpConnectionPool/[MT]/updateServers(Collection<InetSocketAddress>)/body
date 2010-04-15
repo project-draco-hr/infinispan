@@ -1,0 +1,25 @@
+{
+  if (newServers.containsAll(servers) && servers.containsAll(newServers)) {
+    log.info("Same list of servers, not changing the pool");
+    return;
+  }
+  for (  InetSocketAddress server : newServers) {
+    if (!servers.contains(server)) {
+      log.info("New server added(" + server + "), adding to the pool.");
+      try {
+        connectionPool.addObject(server);
+      }
+ catch (      Exception e) {
+        log.warn("Failed adding server " + server,e);
+      }
+    }
+  }
+  for (  InetSocketAddress server : servers) {
+    if (!newServers.contains(server)) {
+      log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
+      connectionPool.clear(server);
+    }
+  }
+  servers.clear();
+  servers.addAll(newServers);
+}
