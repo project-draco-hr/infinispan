@@ -1,0 +1,26 @@
+{
+  Set<InetSocketAddress> serverAddresses=new HashSet<InetSocketAddress>();
+  String servers=props.getProperty(CONF_HOTROD_SERVERS);
+  if (servers == null) {
+    servers=System.getProperty(OVERRIDE_HOTROD_SERVERS);
+    if (servers != null) {
+      log.info("Overwriting default server properties (-D" + OVERRIDE_HOTROD_SERVERS + ") with "+ servers);
+    }
+ else {
+      servers="127.0.0.1:11311";
+    }
+    log.info("'hotrod-servers' property not specified in config, using " + servers);
+  }
+  StringTokenizer tokenizer=new StringTokenizer(servers,";");
+  while (tokenizer.hasMoreTokens()) {
+    String server=tokenizer.nextToken();
+    String[] serverDef=tokenizeServer(server);
+    String serverHost=serverDef[0];
+    int serverPort=Integer.parseInt(serverDef[1]);
+    serverAddresses.add(new InetSocketAddress(serverHost,serverPort));
+  }
+  if (serverAddresses.isEmpty()) {
+    throw new IllegalStateException("No hot-rod servers specified!");
+  }
+  return serverAddresses;
+}

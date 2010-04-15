@@ -1,0 +1,11 @@
+{
+  CacheManager cacheManager=TestCacheManagerFactory.createLocalCacheManager();
+  HotRodServer hotrodServer=HotRodServerStarter.startHotRodServer(cacheManager);
+  RemoteCacheManager remoteCacheManager=new RemoteCacheManager("localhost",hotrodServer.getPort());
+  RemoteCache remoteCache=remoteCacheManager.getCache();
+  remoteCache.put("k","v");
+  assertEquals("v",remoteCache.get("k"));
+  hotrodServer.stop();
+  cacheManager.stop();
+  remoteCacheManager.stop();
+}
