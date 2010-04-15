@@ -1,3 +1,19 @@
 {
-  getStateTransferManager(cacheName).generateState(o);
+  StateTransferManager manager=getStateTransferManager(cacheName);
+  if (manager == null) {
+    ObjectOutput oo=null;
+    try {
+      oo=marshaller.startObjectOutput(o,false);
+      marshaller.objectToObjectStream(false,oo);
+    }
+ catch (    Exception e) {
+      throw new StateTransferException(e);
+    }
+ finally {
+      marshaller.finishObjectOutput(oo);
+    }
+  }
+ else {
+    manager.generateState(o);
+  }
 }
