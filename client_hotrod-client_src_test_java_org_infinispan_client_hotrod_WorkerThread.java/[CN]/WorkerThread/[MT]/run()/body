@@ -1,0 +1,23 @@
+{
+  while (true) {
+    try {
+      Object o=send.take();
+      trace("Took from queue: " + o);
+      if (o instanceof Integer) {
+        receive.put(1);
+        trace("exiting!");
+        return;
+      }
+      Object result=remoteCache.put(key,value);
+      trace("Added to the cache (" + key + ","+ value+ ") and returning "+ result);
+      if (PUT_SYNC.equals(o)) {
+        receive.put(result == null ? NULL : result);
+        trace("Que now has: " + receive.peek());
+      }
+    }
+ catch (    InterruptedException e) {
+      e.printStackTrace();
+      throw new IllegalStateException(e);
+    }
+  }
+}

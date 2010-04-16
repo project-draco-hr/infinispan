@@ -26,7 +26,22 @@
     log.trace("Received operation code is: " + receivedOpCode);
   }
   short status=transport.readByte();
-  transport.readByte();
   checkForErrorsInResponseStatus(status,messageId,transport);
+  short topologyChangeByte=transport.readByte();
+  if (topologyChangeByte == 1) {
+    int newTopology=transport.readVInt();
+    TOPOLOGY_ID.set(newTopology);
+    int clusterSize=transport.readVInt();
+    List<InetSocketAddress> hotRodServers=new ArrayList<InetSocketAddress>(clusterSize);
+    for (int i=0; i < clusterSize; i++) {
+      String host=transport.readString();
+      int port=transport.readUnsignedShort();
+      hotRodServers.add(new InetSocketAddress(host,port));
+    }
+    if (log.isInfoEnabled()) {
+      log.info("Received topology change response. New cluster size = " + clusterSize + ", new topology id = "+ newTopology+ ", new topology "+ hotRodServers);
+    }
+    transportFactory.updateServers(hotRodServers);
+  }
   return status;
 }

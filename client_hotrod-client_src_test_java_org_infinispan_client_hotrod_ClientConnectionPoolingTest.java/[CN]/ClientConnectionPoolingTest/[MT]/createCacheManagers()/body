@@ -1,2 +1,33 @@
 {
+  c1=TestCacheManagerFactory.createLocalCacheManager().getCache();
+  c2=TestCacheManagerFactory.createLocalCacheManager().getCache();
+  registerCacheManager(c1.getCacheManager(),c2.getCacheManager());
+  hotRodServer1=TestHelper.startHotRodServer(c1.getCacheManager());
+  hotRodServer2=TestHelper.startHotRodServer(c2.getCacheManager());
+  String servers=TestHelper.getServersString(hotRodServer1,hotRodServer2);
+  Properties hotrodClientConf=new Properties();
+  hotrodClientConf.put(RemoteCacheManager.CONF_HOTROD_SERVERS,servers);
+  hotrodClientConf.put("maxActive",2);
+  hotrodClientConf.put("maxTotal",8);
+  hotrodClientConf.put("maxIdle",6);
+  hotrodClientConf.put("whenExhaustedAction",1);
+  hotrodClientConf.put("testOnBorrow","false");
+  hotrodClientConf.put("testOnReturn","false");
+  hotrodClientConf.put("timeBetweenEvictionRunsMillis","-2");
+  hotrodClientConf.put("minEvictableIdleTimeMillis","7");
+  hotrodClientConf.put("testWhileIdle","true");
+  hotrodClientConf.put("minIdle","-5");
+  hotrodClientConf.put("lifo","true");
+  remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
+  remoteCache=remoteCacheManager.getCache();
+  TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
+  connectionPool=(GenericKeyedObjectPool)TestingUtil.extractField(tcpConnectionFactory,"connectionPool");
+  workerThread1=new WorkerThread(remoteCache);
+  workerThread2=new WorkerThread(remoteCache);
+  workerThread3=new WorkerThread(remoteCache);
+  workerThread4=new WorkerThread(remoteCache);
+  workerThread5=new WorkerThread(remoteCache);
+  workerThread6=new WorkerThread(remoteCache);
+  hrServ1Addr=new InetSocketAddress("localhost",hotRodServer1.getPort());
+  hrServ2Addr=new InetSocketAddress("localhost",hotRodServer2.getPort());
 }
