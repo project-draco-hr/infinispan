@@ -1,25 +1,28 @@
 {
-  if (newServers.containsAll(servers) && servers.containsAll(newServers)) {
-    log.info("Same list of servers, not changing the pool");
-    return;
-  }
-  for (  InetSocketAddress server : newServers) {
-    if (!servers.contains(server)) {
-      log.info("New server added(" + server + "), adding to the pool.");
+synchronized (this) {
+    Set<InetSocketAddress> addedServers=new HashSet<InetSocketAddress>(newServers);
+    addedServers.removeAll(servers);
+    Set<InetSocketAddress> failedServers=new HashSet<InetSocketAddress>(servers);
+    failedServers.removeAll(newServers);
+    if (failedServers.isEmpty() || newServers.isEmpty()) {
+      log.info("Same list of servers, not changing the pool");
+      return;
+    }
+    for (    InetSocketAddress server : newServers) {
       try {
         connectionPool.addObject(server);
       }
  catch (      Exception e) {
-        log.warn("Failed adding server " + server,e);
+        log.warn("Failed adding new server " + server,e);
       }
+      log.info("New server added(" + server + "), adding to the pool.");
     }
-  }
-  for (  InetSocketAddress server : servers) {
-    if (!newServers.contains(server)) {
+    balancer.setServers(newServers);
+    for (    InetSocketAddress server : failedServers) {
       log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
       connectionPool.clear(server);
     }
+    servers.clear();
+    servers.addAll(addedServers);
   }
-  servers.clear();
-  servers.addAll(newServers);
 }
