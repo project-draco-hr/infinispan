@@ -1,0 +1,31 @@
+{
+  List<InetSocketAddress> serverAddresses=new ArrayList<InetSocketAddress>();
+  serverAddresses.add(new InetSocketAddress("localhost",hotRodServer1.getPort()));
+  serverAddresses.add(new InetSocketAddress("localhost",hotRodServer2.getPort()));
+  RoundRobinBalancingStrategy balancer=getBalancer();
+  balancer.setServers(serverAddresses);
+  remoteCache.put("k1","v1");
+  remoteCache.put("k2","v2");
+  remoteCache.put("k3","v3");
+  remoteCache.put("k4","v4");
+  assertEquals(2,c1.size());
+  assertEquals(2,c2.size());
+  assertEquals(0,c3.size());
+  assertEquals(0,c4.size());
+  assertEquals("v1",remoteCache.get("k1"));
+  assertEquals("v2",remoteCache.get("k2"));
+  assertEquals("v3",remoteCache.get("k3"));
+  assertEquals("v4",remoteCache.get("k4"));
+  remoteCache.put("k5","v2");
+  remoteCache.put("k6","v3");
+  remoteCache.put("k7","v1");
+  remoteCache.put("k8","v2");
+  remoteCache.put("k9","v3");
+  remoteCache.put("k10","v3");
+  remoteCache.put("k11","v3");
+  remoteCache.put("k12","v3");
+  assertEquals(6,c1.size());
+  assertEquals(6,c2.size());
+  assertEquals(0,c3.size());
+  assertEquals(0,c4.size());
+}
