@@ -2,7 +2,7 @@ def release():
     assert_python_minimum_version(2, 5)
     require_settings_file()
     missing_keys = []
-    expected_keys = [svn_base_key, local_tags_dir_key, local_mvn_repo_dir_key]
+    expected_keys = [svn_base_key, local_tags_dir_key]
     for expected_key in expected_keys:
         if (expected_key not in settings):
             missing_keys.append(expected_key)
@@ -11,9 +11,6 @@ def release():
         sys.exit(2)
     if (len(sys.argv) < 2):
         helpAndExit()
-    if (not is_in_svn(settings[local_mvn_repo_dir_key])):
-        print ("Your 'local_mvn_repo_dir' - %s - is not in Subversion so cannot be checked in!  Cannot proceed!" % settings[local_mvn_repo_dir_key])
-        sys.exit(3)
     base_dir = os.getcwd()
     version = validateVersion(sys.argv[1])
     print ('Releasing Infinispan version ' + version)
@@ -30,18 +27,15 @@ def release():
     buildAndTest(workingDir)
     print 'Step 3: Complete'
     async_processes = []
-    print 'Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)'
-    do_task(checkInMaven2Repo, [version, workingDir], async_processes)
-    print 'Step 4: Complete'
-    print 'Step 5: Uploading Javadocs'
+    print 'Step 4: Uploading Javadocs'
     do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
-    print 'Step 5: Complete'
-    print 'Step 6: Uploading to Sourceforge'
+    print 'Step 4: Complete'
+    print 'Step 5: Uploading to Sourceforge'
     do_task(uploadArtifactsToSourceforge, [version], async_processes)
-    print 'Step 6: Complete'
-    print 'Step 7: Uploading to configuration XML schema'
+    print 'Step 5: Complete'
+    print 'Step 6: Uploading to configuration XML schema'
     do_task(uploadSchema, [base_dir, workingDir, version], async_processes)
-    print 'Step 7: Complete'
+    print 'Step 6: Complete'
     for p in async_processes:
         p.start()
     for p in async_processes:
