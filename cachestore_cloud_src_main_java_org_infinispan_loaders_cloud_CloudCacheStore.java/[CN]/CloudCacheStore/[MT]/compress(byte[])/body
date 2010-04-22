@@ -1,14 +1,14 @@
 {
   final ByteArrayOutputStream baos=new ByteArrayOutputStream();
   InputStream input=new ByteArrayInputStream(payloadBuffer);
-  GZIPOutputStream output=new GZIPOutputStream(baos);
-  byte[] buf=new byte[COMPRESSION_COPY_BYTEARRAY_SIZE];
-  int bytesRead=input.read(buf);
-  while (bytesRead != -1) {
-    output.write(buf,0,bytesRead);
-    bytesRead=input.read(buf);
+  BZip2CompressorOutputStream output=new BZip2CompressorOutputStream(baos);
+  try {
+    Streams.copy(input,output);
+    return baos.toByteArray();
   }
-  input.close();
-  output.close();
-  return baos.toByteArray();
+  finally {
+    output.close();
+    input.close();
+    baos.close();
+  }
 }
