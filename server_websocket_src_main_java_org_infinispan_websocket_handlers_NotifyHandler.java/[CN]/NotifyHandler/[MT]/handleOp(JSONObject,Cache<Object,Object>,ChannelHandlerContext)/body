@@ -1,0 +1,32 @@
+{
+  String opCode=(String)opPayload.get(OpHandler.OP_CODE);
+  String key=(String)opPayload.opt(OpHandler.KEY);
+  String[] onEvents=(String[])opPayload.opt("onEvents");
+  CacheListener listener=listeners.get(cache);
+  if (key == null) {
+    key="*";
+  }
+  if (listener == null) {
+synchronized (this) {
+      listener=listeners.get(cache);
+      if (listener == null) {
+        listener=new CacheListener();
+        listeners.put(cache,listener);
+        cache.addListener(listener);
+      }
+    }
+  }
+  String[] keyTokens=key.split(",");
+  for (  String keyToken : keyTokens) {
+    ChannelNotifyParams notifyParams=new ChannelNotifyParams(ctx.getChannel(),keyToken,onEvents);
+    if (opCode.equals("notify")) {
+      listener.addChannel(notifyParams);
+      if (!keyToken.equals("*")) {
+        ChannelUtils.pushCacheValue(keyToken,cache,ctx);
+      }
+    }
+ else     if (opCode.equals("unnotify")) {
+      listener.removeChannel(notifyParams);
+    }
+  }
+}

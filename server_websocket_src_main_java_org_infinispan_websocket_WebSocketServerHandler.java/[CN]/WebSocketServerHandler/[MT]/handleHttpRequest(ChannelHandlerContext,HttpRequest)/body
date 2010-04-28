@@ -1,0 +1,30 @@
+{
+  if (req.getMethod() != GET) {
+    sendHttpResponse(ctx,req,new DefaultHttpResponse(HTTP_1_1,FORBIDDEN));
+    return;
+  }
+  if (!connectionUpgraded && req.getUri().equalsIgnoreCase("/" + INFINISPAN_WS_JS_FILENAME)) {
+    DefaultHttpResponse res=new DefaultHttpResponse(HTTP_1_1,OK);
+    loadScriptToResponse(req,res);
+    sendHttpResponse(ctx,req,res);
+    return;
+  }
+ else   if (Values.UPGRADE.equalsIgnoreCase(req.getHeader(CONNECTION)) && WEBSOCKET.equalsIgnoreCase(req.getHeader(Names.UPGRADE))) {
+    HttpResponse res=new DefaultHttpResponse(HTTP_1_1,new HttpResponseStatus(101,"Web Socket Protocol Handshake"));
+    res.addHeader(Names.UPGRADE,WEBSOCKET);
+    res.addHeader(CONNECTION,Values.UPGRADE);
+    res.addHeader(WEBSOCKET_ORIGIN,req.getHeader(ORIGIN));
+    res.addHeader(WEBSOCKET_LOCATION,getWebSocketLocation(req));
+    String protocol=req.getHeader(WEBSOCKET_PROTOCOL);
+    if (protocol != null) {
+      res.addHeader(WEBSOCKET_PROTOCOL,protocol);
+    }
+    ChannelPipeline p=ctx.getChannel().getPipeline();
+    p.remove("aggregator");
+    p.replace("decoder","wsdecoder",new WebSocketFrameDecoder());
+    ctx.getChannel().write(res);
+    p.replace("encoder","wsencoder",new WebSocketFrameEncoder());
+    return;
+  }
+  sendHttpResponse(ctx,req,new DefaultHttpResponse(HTTP_1_1,FORBIDDEN));
+}

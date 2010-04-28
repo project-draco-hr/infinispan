@@ -1,0 +1,17 @@
+{
+  long start=System.currentTimeMillis();
+  while (writer.getBuffer().length() == 0) {
+    if (System.currentTimeMillis() > start + waitTimeout) {
+      throw new RuntimeException("Timed out waiting for data to be pushed onto the channel.");
+    }
+  }
+  try {
+    return new JSONObject(writer.toString());
+  }
+ catch (  JSONException e) {
+    throw new RuntimeException("Invalid JSON payload [" + writer.toString() + "].",e);
+  }
+ finally {
+    clear();
+  }
+}

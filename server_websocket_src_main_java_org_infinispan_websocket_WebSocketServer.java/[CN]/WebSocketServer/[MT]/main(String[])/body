@@ -1,0 +1,28 @@
+{
+  String host=System.getProperty(ORG_INFINISPAN_WS_HOST);
+  String portConfig=System.getProperty(ORG_INFINISPAN_WS_PORT,"61999").trim();
+  File cacheConfigFile=new File(System.getProperty(ORG_INFINISPAN_WS_CACHE_CONFIG_FILE,ORG_INFINISPAN_WS_CACHE_CONFIG_FILE_DEFAULT).trim());
+  int port;
+  try {
+    port=Integer.parseInt(portConfig);
+  }
+ catch (  NumberFormatException e) {
+    throw new IllegalArgumentException("Invalid WebSocket port address '" + portConfig + "'.  Must be a valid integer.");
+  }
+  if (!cacheConfigFile.exists()) {
+    throw new IllegalArgumentException("Infinispan configuration file '" + cacheConfigFile.getAbsolutePath() + "' is not available.");
+  }
+  if (!cacheConfigFile.isFile()) {
+    throw new IllegalArgumentException("Infinispan configuration file '" + cacheConfigFile.getAbsolutePath() + "' is not a readable file.");
+  }
+  InetSocketAddress inetAddress;
+  if (host != null) {
+    inetAddress=new InetSocketAddress(host,port);
+  }
+ else {
+    inetAddress=new InetSocketAddress(port);
+  }
+  new WebSocketServer(inetAddress,new FileInputStream(cacheConfigFile));
+  System.out.println("Infinispan Websocket Server listening on address '" + inetAddress + "'. Using Cache configuration '"+ cacheConfigFile.getAbsolutePath()+ "'.");
+  System.out.println("Infinispan Websocket Server started.");
+}

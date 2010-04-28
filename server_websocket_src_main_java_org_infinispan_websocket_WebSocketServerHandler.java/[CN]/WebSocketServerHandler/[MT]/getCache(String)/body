@@ -1,0 +1,24 @@
+{
+  String key=cacheName;
+  Cache<Object,Object> cache;
+  if (key == null) {
+    key="";
+  }
+  cache=startedCaches.get(key);
+  if (cache == null) {
+synchronized (startedCaches) {
+      cache=startedCaches.get(key);
+      if (cache == null) {
+        if (cacheName != null) {
+          cache=cacheManager.getCache(key);
+        }
+ else {
+          cache=cacheManager.getCache();
+        }
+        startedCaches.put(key,cache);
+        cache.start();
+      }
+    }
+  }
+  return cache;
+}
