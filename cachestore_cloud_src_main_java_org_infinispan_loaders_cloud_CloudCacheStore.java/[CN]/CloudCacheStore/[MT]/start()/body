@@ -13,7 +13,18 @@
       blobStore=ctx.getBlobStore();
       asyncBlobStore=ctx.getAsyncBlobStore();
     }
-    if (!blobStore.containerExists(containerName))     blobStore.createContainerInLocation(cfg.getCloudServiceLocation(),containerName);
+    if (!blobStore.containerExists(containerName)) {
+      Location chosenLoc=null;
+      if (cfg.getCloudServiceLocation() != null && cfg.getCloudServiceLocation().trim().length() > 0) {
+        Map<String,? extends Location> availableLocations=blobStore.getLocations();
+        String loc=cfg.getCloudServiceLocation().trim().toLowerCase();
+        chosenLoc=availableLocations.get(loc);
+        if (chosenLoc == null) {
+          log.warn(String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",loc,cfg.getCloudService(),availableLocations.keySet()));
+        }
+      }
+      blobStore.createContainerInLocation(chosenLoc,containerName);
+    }
     pollFutures=!cfg.getAsyncStoreConfig().isEnabled();
   }
  catch (  IOException ioe) {
