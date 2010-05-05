@@ -1,0 +1,17 @@
+{
+  CacheManager cacheManager1=TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(),new Configuration(),true);
+  CacheManager cacheManager2=TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(),new Configuration(),true);
+  registerCacheManager(cacheManager1,cacheManager2);
+  Configuration config1=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  CacheLoaderManagerConfig clMngrConfig=new CacheLoaderManagerConfig();
+  clMngrConfig.addCacheLoaderConfig(createCacheStoreConfig(1));
+  config1.setCacheLoaderManagerConfig(clMngrConfig);
+  Configuration config2=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  CacheLoaderManagerConfig clMngrConfig2=new CacheLoaderManagerConfig();
+  clMngrConfig2.addCacheLoaderConfig(createCacheStoreConfig(2));
+  config2.setCacheLoaderManagerConfig(clMngrConfig2);
+  cacheManager1.defineConfiguration("clusteredFileCacheStore",config1);
+  cacheManager2.defineConfiguration("clusteredFileCacheStore",config2);
+  cache1=cache(0,"clusteredFileCacheStore");
+  cache2=cache(1,"clusteredFileCacheStore");
+}
