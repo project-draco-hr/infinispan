@@ -16,11 +16,16 @@
     if (!blobStore.containerExists(containerName)) {
       Location chosenLoc=null;
       if (cfg.getCloudServiceLocation() != null && cfg.getCloudServiceLocation().trim().length() > 0) {
-        Map<String,? extends Location> availableLocations=blobStore.getLocations();
+        Map<String,? extends Location> idToLocation=Maps.uniqueIndex(blobStore.listAssignableLocations(),new Function<Location,String>(){
+          @Override public String apply(          Location input){
+            return input.getId();
+          }
+        }
+);
         String loc=cfg.getCloudServiceLocation().trim().toLowerCase();
-        chosenLoc=availableLocations.get(loc);
+        chosenLoc=idToLocation.get(loc);
         if (chosenLoc == null) {
-          log.warn(String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",loc,cfg.getCloudService(),availableLocations.keySet()));
+          log.warn(String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",loc,cfg.getCloudService(),idToLocation.keySet()));
         }
       }
       blobStore.createContainerInLocation(chosenLoc,containerName);
