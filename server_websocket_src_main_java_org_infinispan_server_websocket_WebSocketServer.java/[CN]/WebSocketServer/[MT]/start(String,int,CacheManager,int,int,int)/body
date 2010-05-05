@@ -1,0 +1,9 @@
+{
+  InetSocketAddress address=new InetSocketAddress(host,port);
+  Executor masterExecutor=masterThreads == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(masterThreads);
+  Executor workerExecutor=workerThreads == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(masterThreads);
+  NioServerSocketChannelFactory factory=workerThreads == 0 ? new NioServerSocketChannelFactory(masterExecutor,workerExecutor) : new NioServerSocketChannelFactory(masterExecutor,workerExecutor,workerThreads);
+  ServerBootstrap bootstrap=new ServerBootstrap(factory);
+  bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager));
+  bootstrap.bind(address);
+}
