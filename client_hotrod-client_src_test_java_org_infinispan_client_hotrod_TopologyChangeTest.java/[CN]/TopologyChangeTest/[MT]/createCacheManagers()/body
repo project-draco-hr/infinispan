@@ -1,5 +1,5 @@
 {
-  Configuration config=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+  config=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
   CacheManager cm1=TestCacheManagerFactory.createClusteredCacheManager(config);
   CacheManager cm2=TestCacheManagerFactory.createClusteredCacheManager(config);
   registerCacheManager(cm1);
@@ -9,7 +9,8 @@
   manager(0).getCache();
   manager(1).getCache();
   TestingUtil.blockUntilViewReceived(manager(0).getCache(),2,10000);
-  TestingUtil.blockUntilViewReceived(manager(1).getCache(),2,10000);
+  TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(),ComponentStatus.RUNNING,10000);
+  TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(),ComponentStatus.RUNNING,10000);
   manager(0).getCache().put("k","v");
   manager(0).getCache().get("k").equals("v");
   manager(1).getCache().get("k").equals("v");

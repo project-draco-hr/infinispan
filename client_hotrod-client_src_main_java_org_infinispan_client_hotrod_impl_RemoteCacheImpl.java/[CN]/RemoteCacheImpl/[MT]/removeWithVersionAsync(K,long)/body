@@ -1,0 +1,13 @@
+{
+  final NotifyingFutureImpl<Boolean> result=new NotifyingFutureImpl<Boolean>();
+  Future future=executorService.submit(new Callable(){
+    @Override public Object call() throws Exception {
+      boolean removed=removeWithVersion(key,version);
+      result.notifyFutureCompletion();
+      return removed;
+    }
+  }
+);
+  result.setExecuting(future);
+  return result;
+}

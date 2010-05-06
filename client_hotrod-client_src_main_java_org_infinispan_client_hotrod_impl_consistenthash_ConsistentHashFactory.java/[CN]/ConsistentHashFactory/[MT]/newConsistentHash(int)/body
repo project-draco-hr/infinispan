@@ -1,0 +1,16 @@
+{
+  String hashFunctionClass=version2ConsistentHash.get(version);
+  if (hashFunctionClass == null) {
+    log.trace("No hash function configured for version " + version);
+    hashFunctionClass=ConsistentHashFactory.class.getPackage().getName() + ".ConsitentHashV" + version;
+    if (log.isTraceEnabled())     log.trace("Trying to use default value: " + hashFunctionClass);
+  }
+  ConsistentHash consistentHash=null;
+  try {
+    consistentHash=(ConsistentHash)VHelper.newInstance(hashFunctionClass);
+  }
+ catch (  RuntimeException re) {
+    log.warn("Could not instantiate consistent hash for version " + version + ": "+ hashFunctionClass,re);
+  }
+  return consistentHash;
+}
