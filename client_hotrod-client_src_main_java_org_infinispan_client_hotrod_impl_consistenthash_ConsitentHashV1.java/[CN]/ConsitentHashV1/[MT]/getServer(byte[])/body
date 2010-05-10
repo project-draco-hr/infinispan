@@ -1,7 +1,21 @@
 {
-  InetSocketAddress addr=addresses.get(random.nextInt(addresses.size()));
+  int keyHashCode=hash(key);
+  if (keyHashCode == Integer.MIN_VALUE)   keyHashCode+=1;
+  int hash=Math.abs(keyHashCode);
+  SortedMap<Integer,InetSocketAddress> candidates=positions.tailMap(hash % hashSpace);
   if (log.isTraceEnabled()) {
-    log.trace("Randomly returning an address: " + addr);
+    log.trace("Found possible candidates: " + candidates);
   }
-  return addr;
+  if (candidates.isEmpty()) {
+    InetSocketAddress socketAddress=positions.get(positions.firstKey());
+    if (log.isTraceEnabled()) {
+      log.trace("Over the wheel, returning first member: " + socketAddress);
+    }
+    return socketAddress;
+  }
+ else {
+    InetSocketAddress socketAddress=candidates.get(candidates.firstKey());
+    log.trace("Found candidate: " + socketAddress);
+    return socketAddress;
+  }
 }
