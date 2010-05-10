@@ -1,0 +1,18 @@
+{
+  config=getDefaultClusteredConfig(getCacheMode());
+  CacheManager cm1=TestCacheManagerFactory.createClusteredCacheManager(config);
+  CacheManager cm2=TestCacheManagerFactory.createClusteredCacheManager(config);
+  registerCacheManager(cm1);
+  registerCacheManager(cm2);
+  initStateTransfer(manager(0));
+  initStateTransfer(manager(1));
+  manager(0).getCache();
+  manager(1).getCache();
+  TestingUtil.blockUntilViewReceived(manager(0).getCache(),2,10000);
+  TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(),ComponentStatus.RUNNING,10000);
+  TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(),ComponentStatus.RUNNING,10000);
+  manager(0).getCache().put("k","v");
+  manager(0).getCache().get("k").equals("v");
+  manager(1).getCache().get("k").equals("v");
+  log.info("Local replication test passed!");
+}
