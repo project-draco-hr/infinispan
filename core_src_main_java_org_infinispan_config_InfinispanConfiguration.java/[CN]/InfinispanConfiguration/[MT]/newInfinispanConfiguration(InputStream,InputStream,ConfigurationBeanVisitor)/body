@@ -2,6 +2,9 @@
   try {
     JAXBContext jc=JAXBContext.newInstance(InfinispanConfiguration.class);
     Unmarshaller u=jc.createUnmarshaller();
+    NamespaceFilter nf=new NamespaceFilter();
+    XMLReader reader=XMLReaderFactory.createXMLReader();
+    nf.setParent(reader);
     if (schema != null) {
       SchemaFactory factory=SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
       u.setSchema(factory.newSchema(new StreamSource(schema)));
@@ -13,12 +16,12 @@
       }
 );
     }
-    StreamSource source=null;
+    SAXSource source=null;
     if (skipTokenReplacement()) {
-      source=new StreamSource(config);
+      source=new SAXSource(nf,new InputSource(config));
     }
  else {
-      source=replaceProperties(config);
+      source=replaceProperties(config,nf);
     }
     InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(source);
     ic.accept(cbv);
