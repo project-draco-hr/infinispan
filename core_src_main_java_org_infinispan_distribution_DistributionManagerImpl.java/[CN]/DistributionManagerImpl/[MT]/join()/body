@@ -1,10 +1,12 @@
 {
   startLatch.close();
-  consistentHash=createConsistentHash(configuration,rpcManager.getTransport().getMembers());
-  self=rpcManager.getTransport().getAddress();
-  if (rpcManager.getTransport().getMembers().size() > 1) {
+  Transport t=rpcManager.getTransport();
+  List<Address> members=t.getMembers();
+  consistentHash=createConsistentHash(configuration,members);
+  self=t.getAddress();
+  if (members.size() > 1 && !t.getCoordinator().equals(self)) {
     JoinTask joinTask=new JoinTask(rpcManager,cf,configuration,transactionLogger,dataContainer,this);
-    rehashExecutor.submit(joinTask);
+    joinFuture=rehashExecutor.submit(joinTask);
   }
  else {
     joinComplete=true;

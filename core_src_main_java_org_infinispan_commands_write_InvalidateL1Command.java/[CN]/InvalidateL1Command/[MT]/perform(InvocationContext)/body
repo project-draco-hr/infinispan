@@ -2,7 +2,10 @@
   if (forRehash && config.isL1OnRehash()) {
     for (    Object k : getKeys()) {
       InternalCacheEntry ice=dataContainer.get(k);
-      if (ice != null)       dataContainer.put(k,ice.getValue(),config.getL1Lifespan(),config.getExpirationMaxIdle());
+      if (ice != null) {
+        if (log.isTraceEnabled())         log.trace("Not removing, instead putting entry into L1.");
+        dataContainer.put(k,ice.getValue(),config.getL1Lifespan(),config.getExpirationMaxIdle());
+      }
     }
   }
  else {
