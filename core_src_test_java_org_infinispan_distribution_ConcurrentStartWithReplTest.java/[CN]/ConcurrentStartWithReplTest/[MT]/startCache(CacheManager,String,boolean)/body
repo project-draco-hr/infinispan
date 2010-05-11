@@ -1,0 +1,26 @@
+{
+  final Callable<Cache<String,String>> cacheCreator=new Callable<Cache<String,String>>(){
+    @Override public Cache<String,String> call() throws Exception {
+      Cache<String,String> c=cm.getCache(cacheName);
+      return c;
+    }
+  }
+;
+  if (nonBlockingStartup) {
+    final ExecutorService e=Executors.newFixedThreadPool(1);
+    return e.submit(cacheCreator);
+  }
+ else {
+    return new AbstractInProcessFuture<Cache<String,String>>(){
+      @Override public Cache<String,String> get() throws InterruptedException, ExecutionException {
+        try {
+          return cacheCreator.call();
+        }
+ catch (        Exception e) {
+          throw new ExecutionException(e);
+        }
+      }
+    }
+;
+  }
+}
