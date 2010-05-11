@@ -1,0 +1,22 @@
+{
+  Runnable runnable=new Runnable(){
+    public void run(){
+      joinerManagers=new ArrayList<CacheManager>(numJoiners);
+      joiners=new ArrayList<Cache<Object,String>>(numJoiners);
+      for (int i=0; i < numJoiners; i++) {
+        CacheManager joinerManager=addClusterEnabledCacheManager();
+        joinerManager.defineConfiguration(cacheName,configuration);
+        Cache<Object,String> joiner=joinerManager.getCache(cacheName);
+        joinerManagers.add(joinerManager);
+        joiners.add(joiner);
+      }
+    }
+  }
+;
+  if (offline) {
+    new Thread(runnable).start();
+  }
+ else {
+    runnable.run();
+  }
+}
