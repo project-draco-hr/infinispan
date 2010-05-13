@@ -1,20 +1,23 @@
 def release():
+    global settings
+    global uploader
+    global svn_conn
     assert_python_minimum_version(2, 5)
     require_settings_file()
-    missing_keys = []
-    expected_keys = [svn_base_key, local_tags_dir_key]
-    for expected_key in expected_keys:
-        if (expected_key not in settings):
-            missing_keys.append(expected_key)
-    if (len(missing_keys) > 0):
-        print ('Entries %s are missing in configuration file %s!  Cannot proceed!' % (missing_keys, settings_file))
-        sys.exit(2)
     if (len(sys.argv) < 2):
         helpAndExit()
     base_dir = os.getcwd()
     version = validateVersion(sys.argv[1])
     print ('Releasing Infinispan version ' + version)
     print 'Please stand by!'
+    if settings['dry_run']:
+        print '*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***'
+        print ('Your settings are %s' % settings)
+        uploader = DryRunUploader()
+        svn_conn = DryRunSvnConn()
+    else:
+        uploader = Uploader()
+        svn_conn = SvnConn()
     newVersion = ('%s/tags/%s' % (settings[svn_base_key], version))
     print ('Step 1: Tagging trunk in SVN as %s' % newVersion)
     tagInSubversion(version, newVersion)
@@ -27,14 +30,15 @@ def release():
     buildAndTest(workingDir)
     print 'Step 3: Complete'
     async_processes = []
+    unzip_archive(workingDir, version)
     print 'Step 4: Uploading Javadocs'
-    do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
+    do_task(uploadJavadocs, [workingDir, version], async_processes)
     print 'Step 4: Complete'
     print 'Step 5: Uploading to Sourceforge'
     do_task(uploadArtifactsToSourceforge, [version], async_processes)
     print 'Step 5: Complete'
     print 'Step 6: Uploading to configuration XML schema'
-    do_task(uploadSchema, [base_dir, workingDir, version], async_processes)
+    do_task(uploadSchema, [workingDir, version], async_processes)
     print 'Step 6: Complete'
     for p in async_processes:
         p.start()

@@ -1,10 +1,8 @@
-def uploadJavadocs(base_dir, workingDir, version):
+def uploadJavadocs(workingDir, version):
     "Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"
     version_short = get_version_major_minor(version)
-    os.chdir(('%s/target/distribution' % workingDir))
-    subprocess.check_call(['unzip', ('infinispan-%s-all.zip' % version)])
-    os.chdir(('infinispan-%s/doc' % version))
+    os.chdir(('%s/target/distribution/infinispan-%s/doc' % (workingDir, version)))
     subprocess.check_call([('%s/bin/updateTracker.sh' % workingDir)])
     os.mkdir(version_short)
     os.rename('apidocs', ('%s/apidocs' % version_short))
-    subprocess.check_call(['rsync', '-rv', '--protocol=28', version_short, 'infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan'])
+    uploader.upload_rsync(version_short, 'infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan', flags=['-rv', '--protocol=28'])

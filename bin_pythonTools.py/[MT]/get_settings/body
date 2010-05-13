@@ -10,6 +10,10 @@ def get_settings():
                     kvp = l.split('=')
                     if (kvp and (len(kvp) > 0) and kvp[0] and (len(kvp) > 1)):
                         settings[kvp[0].strip()] = kvp[1].strip()
+            settings = apply_defaults(settings)
+            check_mandatory_settings(settings)
+            for k in boolean_keys:
+                settings[k] = to_bool(settings[k])
             return settings
         except IOError as ioe:
             return {}

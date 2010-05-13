@@ -1,0 +1,8 @@
+def tag(self, fr_url, to_url, version):
+    self.urls[version] = ('%s/svn/%s' % (self.location_root, version))
+    trunk_dir = settings[local_tags_dir_key].replace('/tags', '/trunk')
+    if (os.path.isdir(trunk_dir) and is_in_svn(trunk_dir)):
+        self.copy(trunk_dir, ('%s/svn' % self.location_root))
+        os.rename(('%s/svn/trunk' % self.location_root), self.urls[version])
+    else:
+        subprocess.check_call(['svn', 'export', fr_url, self.urls[version]])

@@ -1,9 +1,5 @@
-def updateVersions(version, workingDir, trunkDir, test=False):
-    if test:
-        shutil.copytree(trunkDir, workingDir)
-    else:
-        client = get_svn_conn()
-        client.checkout(((settings[svn_base_key] + '/tags/') + version), workingDir)
+def updateVersions(version, workingDir, trunkDir):
+    svn_conn.checkout(((settings[svn_base_key] + '/tags/') + version), workingDir)
     pomsToPatch = get_poms_to_patch(workingDir)
     for pom in pomsToPatch:
         patch(pom, version)
@@ -27,6 +23,5 @@ def updateVersions(version, workingDir, trunkDir, test=False):
         f_in.close()
         f_out.close()
     os.rename((version_java + '.tmp'), version_java)
-    if (not test):
-        checkInMessage = 'Infinispan Release Script: Updated version numbers'
-        client.checkin(workingDir, checkInMessage)
+    checkInMessage = 'Infinispan Release Script: Updated version numbers'
+    svn_conn.checkin(workingDir, checkInMessage)

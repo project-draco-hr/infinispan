@@ -1,7 +1,13 @@
 def uploadArtifactsToSourceforge(version):
+    shutil.rmtree('.tmp', ignore_errors=True)
     os.mkdir('.tmp')
+    os.mkdir(('.tmp/%s' % version))
     os.chdir('.tmp')
-    do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom', '.svn')
-    shutil.copytree(('%s/%s/target/distribution' % (settings[local_tags_dir_key], version)), version, ignore=do_not_copy)
-    subprocess.check_call(['scp', '-r', version, 'sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan'])
+    dist_dir = ('%s/%s/target/distribution' % (settings[local_tags_dir_key], version))
+    print ('Copying from %s to %s' % (dist_dir, version))
+    for item in os.listdir(dist_dir):
+        full_name = ('%s/%s' % (dist_dir, item))
+        if (item.strip().lower().endswith('.zip') and os.path.isfile(full_name)):
+            shutil.copy2(full_name, version)
+    uploader.upload_scp(version, 'sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan')
     shutil.rmtree('.tmp', ignore_errors=True)

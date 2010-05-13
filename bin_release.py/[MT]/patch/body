@@ -1,5 +1,6 @@
 def patch(pomFile, version):
-    print ('Patching %s' % pomFile)
+    if settings['verbose']:
+        print ('Patching %s' % pomFile)
     tree = ElementTree()
     tree.parse(pomFile)
     need_to_write = False
@@ -9,10 +10,11 @@ def patch(pomFile, version):
     tags.append(getPropertiesVersionTag(tree))
     for tag in tags:
         if (tag != None):
-            print ('%s is %s.  Setting to %s' % (str(tag), tag.text, version))
+            if settings['verbose']:
+                print ('%s is %s.  Setting to %s' % (str(tag), tag.text, version))
             tag.text = version
             need_to_write = True
     if need_to_write:
         writePom(tree, pomFile)
-    else:
+    elif settings['verbose']:
         print "File doesn't need updating; nothing replaced!"
