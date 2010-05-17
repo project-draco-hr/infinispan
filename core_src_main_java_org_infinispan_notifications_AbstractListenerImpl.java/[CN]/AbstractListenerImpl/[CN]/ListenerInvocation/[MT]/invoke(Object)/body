@@ -5,9 +5,8 @@
         method.invoke(target,event);
       }
  catch (      InvocationTargetException exception) {
-        Throwable cause=exception.getCause();
-        if (cause != null)         throw new CacheException("Caught exception invoking method " + method + " on listener instance "+ target,cause);
- else         throw new CacheException("Caught exception invoking method " + method + " on listener instance "+ target,exception);
+        Throwable cause=getRealException(exception);
+        throw new CacheException("Caught exception invoking method " + method + " on listener instance "+ target,cause);
       }
 catch (      IllegalAccessException exception) {
         getLog().warn("Unable to invoke method " + method + " on Object instance "+ target+ " - removing this target object from list of listeners!",exception);

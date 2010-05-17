@@ -5,7 +5,11 @@
     try {
       locked=lock.tryLock(timeout,unit);
     }
- catch (    Throwable th) {
+ catch (    InterruptedException ie) {
+      safeRelease(lock);
+      throw ie;
+    }
+catch (    Throwable th) {
       safeRelease(lock);
       locked=false;
     }
