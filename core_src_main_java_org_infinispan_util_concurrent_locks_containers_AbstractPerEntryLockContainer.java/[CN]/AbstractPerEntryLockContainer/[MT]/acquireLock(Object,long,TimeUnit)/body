@@ -1,10 +1,18 @@
 {
   while (true) {
     Lock lock=getLock(key);
-    if (lock.tryLock(timeout,unit)) {
+    boolean locked=false;
+    try {
+      locked=lock.tryLock(timeout,unit);
+    }
+ catch (    Throwable th) {
+      safeRelease(lock);
+      locked=false;
+    }
+    if (locked) {
       Lock existingLock=locks.putIfAbsent(key,lock);
       if (existingLock != null && existingLock != lock) {
-        lock.unlock();
+        safeRelease(lock);
       }
  else {
         return lock;

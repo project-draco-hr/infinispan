@@ -1,4 +1,12 @@
 {
   Lock lock=getLock(key);
-  return lock.tryLock(timeout,unit) ? lock : null;
+  boolean locked=false;
+  try {
+    locked=lock.tryLock(timeout,unit);
+  }
+ catch (  Throwable th) {
+    safeRelease(lock);
+    locked=false;
+  }
+  return locked ? lock : null;
 }
