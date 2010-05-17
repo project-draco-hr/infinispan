@@ -1,0 +1,21 @@
+{
+  BZip2CompressorInputStream is;
+  Bucket bucket;
+  ByteArrayOutputStream bos=new ByteArrayOutputStream();
+  Streams.copy(content,bos);
+  final byte[] compressedByteArray=bos.toByteArray();
+  ByteArrayInputStream bis=new ByteArrayInputStream(compressedByteArray);
+  is=new BZip2CompressorInputStream(bis);
+  ByteArrayOutputStream bos2=new ByteArrayOutputStream();
+  Streams.copy(is,bos2);
+  final byte[] uncompressedByteArray=bos2.toByteArray();
+  byte[] md5FromStoredBlob=blob.getMetadata().getContentMD5();
+  byte[] hash=getMd5Digest(compressedByteArray);
+  if (!Arrays.equals(hash,md5FromStoredBlob))   throw new CacheLoaderException("MD5 hash failed when reading (transfer error) for entry " + bucketName);
+  is.close();
+  bis.close();
+  bos.close();
+  bos2.close();
+  bucket=(Bucket)marshaller.objectFromInputStream(new ByteArrayInputStream(uncompressedByteArray));
+  return bucket;
+}

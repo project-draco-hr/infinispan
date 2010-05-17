@@ -1,0 +1,12 @@
+{
+  final ByteArrayOutputStream baos=new ByteArrayOutputStream();
+  InputStream input=new ByteArrayInputStream(uncompressedByteArray);
+  BZip2CompressorOutputStream output=new BZip2CompressorOutputStream(baos);
+  Streams.copy(input,output);
+  output.close();
+  input.close();
+  final byte[] compressedByteArray=baos.toByteArray();
+  blob.getMetadata().setContentMD5(getMd5Digest(compressedByteArray));
+  baos.close();
+  return compressedByteArray;
+}

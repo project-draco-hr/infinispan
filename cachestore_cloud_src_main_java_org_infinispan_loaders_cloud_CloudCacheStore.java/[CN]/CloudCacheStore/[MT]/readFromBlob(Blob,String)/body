@@ -1,28 +1,10 @@
 {
   if (blob == null)   return null;
-  BZip2CompressorInputStream is=null;
   try {
     Bucket bucket;
     final InputStream content=blob.getContent();
     if (cfg.isCompress()) {
-      ByteArrayOutputStream bos=new ByteArrayOutputStream();
-      Streams.copy(content,bos);
-      final byte[] byteArray=bos.toByteArray();
-      ByteArrayInputStream bis=new ByteArrayInputStream(byteArray);
-      is=new BZip2CompressorInputStream(bis);
-      ByteArrayOutputStream bos2=new ByteArrayOutputStream();
-      try {
-        Streams.copy(is,bos2);
-        final byte[] byteArray2=bos2.toByteArray();
-        log.debug("Decompressed " + bucketName + " from "+ byteArray.length+ " -> "+ byteArray2.length);
-        bucket=(Bucket)marshaller.objectFromInputStream(new ByteArrayInputStream(byteArray2));
-      }
-  finally {
-        is.close();
-        bis.close();
-        bos.close();
-        bos2.close();
-      }
+      bucket=uncompress(blob,bucketName,content);
     }
  else     bucket=(Bucket)marshaller.objectFromInputStream(content);
     if (bucket != null)     bucket.setBucketName(bucketName);
