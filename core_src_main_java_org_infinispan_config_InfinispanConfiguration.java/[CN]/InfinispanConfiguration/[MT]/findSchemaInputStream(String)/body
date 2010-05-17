@@ -1,0 +1,29 @@
+{
+  boolean validating=!skipSchemaValidation();
+  if (!validating)   return null;
+  FileLookup fileLookup=new FileLookup();
+  InputStream is=null;
+  if (localPathToSchema != null) {
+    is=fileLookup.lookupFile(localPathToSchema);
+    if (is != null) {
+      log.debug("Using schema " + localPathToSchema);
+      return is;
+    }
+    log.debug("Could not find schema on path " + localPathToSchema + ", resolving "+ SCHEMA_SYSTEM_PROPERTY+ " to "+ schemaPath());
+  }
+  is=fileLookup.lookupFile(schemaPath());
+  if (is != null) {
+    log.debug("Using schema " + schemaPath());
+    return is;
+  }
+  log.debug("Could not find schema on path " + schemaPath() + ", resolving "+ SCHEMA_URL_SYSTEM_PROPERTY+ " to "+ schemaURL());
+  try {
+    is=new URL(schemaURL()).openStream();
+    log.debug("Using schema " + schemaURL());
+    return is;
+  }
+ catch (  Exception e) {
+  }
+  log.warn("Infinispan schema could not be resolved locally nor fetched from URL. Local path=" + localPathToSchema + ", schemaPath="+ schemaPath()+ ",schemaURL="+ schemaURL());
+  return null;
+}
