@@ -9,6 +9,18 @@
     return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable th) {
+    for (    Object key : ctx.getKeysAddedInCurrentInvocation()) {
+      if (ctx.hasLockedKey(key)) {
+        if (suppressExceptions) {
+          if (log.isDebugEnabled())           log.debug("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
+        }
+ else {
+          if (log.isInfoEnabled())           log.info("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
+        }
+        lockManager.unlock(key);
+        ctx.removeLookedUpEntry(key);
+      }
+    }
     if (suppressExceptions) {
       log.trace("Exception while executing code, failing silently...",th);
       return null;
