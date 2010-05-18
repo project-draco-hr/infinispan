@@ -7,6 +7,13 @@
   TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(),ComponentStatus.RUNNING,10000);
   TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(),ComponentStatus.RUNNING,10000);
   TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(),ComponentStatus.RUNNING,10000);
-  expectTopologyChange(new InetSocketAddress("localhost",hotRodServer3.getPort()),true);
-  assertEquals(3,tcpConnectionFactory.getServers().size());
+  try {
+    expectTopologyChange(new InetSocketAddress("localhost",hotRodServer3.getPort()),true);
+    assertEquals(3,tcpConnectionFactory.getServers().size());
+  }
+  finally {
+    log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+    log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+    log.info("Members are: " + manager(2).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+  }
 }
