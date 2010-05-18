@@ -6,7 +6,7 @@
   }
   transportFactory=(TransportFactory)VHelper.newInstance(factory);
   String servers=props.getProperty(CONF_HOTROD_SERVERS);
-  transportFactory.start(props,getStaticConfiguredServers(servers));
+  transportFactory.start(props,getStaticConfiguredServers(servers),topologyId);
   hotrodMarshaller=props.getProperty("marshaller");
   String asyncExecutorClass=DefaultAsyncExecutorFactory.class.getName();
   if (props.contains("asyn-executor-factory")) {
@@ -20,6 +20,11 @@
   }
   if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
     forceReturnValueDefault=true;
+  }
+synchronized (cacheName2RemoteCache) {
+    for (    RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
+      startRemoteCache(remoteCache);
+    }
   }
   started=true;
 }

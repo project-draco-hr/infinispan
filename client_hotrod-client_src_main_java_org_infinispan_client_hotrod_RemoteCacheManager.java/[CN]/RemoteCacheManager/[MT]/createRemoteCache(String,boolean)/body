@@ -1,5 +1,15 @@
 {
-  HotrodMarshaller marshaller=(HotrodMarshaller)VHelper.newInstance(hotrodMarshaller);
-  HotrodOperations hotrodOperations=new HotrodOperationsImpl(cacheName,transportFactory);
-  return new RemoteCacheImpl<K,V>(hotrodOperations,marshaller,cacheName,this,asyncExecutorService,forceReturnValue);
+synchronized (cacheName2RemoteCache) {
+    if (!cacheName2RemoteCache.containsKey(cacheName)) {
+      RemoteCacheImpl<K,V> result=new RemoteCacheImpl<K,V>(this,cacheName,forceReturnValue);
+      if (isStarted()) {
+        startRemoteCache(result);
+      }
+      cacheName2RemoteCache.put(cacheName,result);
+      return result;
+    }
+ else {
+      return cacheName2RemoteCache.get(cacheName);
+    }
+  }
 }
