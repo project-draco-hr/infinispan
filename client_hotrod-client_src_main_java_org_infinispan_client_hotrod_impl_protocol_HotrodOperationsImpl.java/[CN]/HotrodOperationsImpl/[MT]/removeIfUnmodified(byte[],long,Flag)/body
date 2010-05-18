@@ -1,0 +1,12 @@
+{
+  Transport transport=transportFactory.getTransport(key);
+  try {
+    long messageId=HotRodOperationsHelper.writeHeader(transport,REMOVE_IF_UNMODIFIED_REQUEST,cacheName,topologyId,flags);
+    transport.writeArray(key);
+    transport.writeLong(version);
+    return returnVersionedOperationResponse(transport,messageId,REMOVE_IF_UNMODIFIED_RESPONSE,flags);
+  }
+  finally {
+    releaseTransport(transport);
+  }
+}

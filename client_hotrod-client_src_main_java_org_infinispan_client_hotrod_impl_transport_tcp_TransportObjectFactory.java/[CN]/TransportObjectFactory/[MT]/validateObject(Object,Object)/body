@@ -1,7 +1,22 @@
 {
   TcpTransport transport=(TcpTransport)obj;
-  if (log.isTraceEnabled()) {
-    log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is "+ transport);
+  try {
+    if (log.isTraceEnabled()) {
+      log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is "+ transport);
+    }
+    long messageId=HotRodOperationsHelper.writeHeader(transport,HotrodConstants.PING_REQUEST,DefaultCacheManager.DEFAULT_CACHE_NAME,topologyId);
+    short respStatus=HotRodOperationsHelper.readHeaderAndValidate(transport,messageId,HotrodConstants.PING_RESPONSE,topologyId);
+    if (respStatus == HotrodConstants.NO_ERROR_STATUS) {
+      if (log.isTraceEnabled())       log.trace("Successfully validated transport: " + transport);
+      return true;
+    }
+ else {
+      if (log.isTraceEnabled())       log.trace("Unknown response status: " + respStatus);
+      return false;
+    }
   }
-  return true;
+ catch (  Exception e) {
+    if (log.isTraceEnabled())     log.trace("Failed to validate transport: " + transport,e);
+    return false;
+  }
 }

@@ -1,0 +1,34 @@
+{
+  int newTopologyId=transport.readVInt();
+  topologyId.set(newTopologyId);
+  int numKeyOwners=transport.readUnsignedShort();
+  short hashFunctionVersion=transport.readByte();
+  int hashSpace=transport.readVInt();
+  int clusterSize=transport.readVInt();
+  if (log.isTraceEnabled()) {
+    log.trace("Topology change request: newTopologyId=" + newTopologyId + ", numKeyOwners="+ numKeyOwners+ ", hashFunctionVersion="+ hashFunctionVersion+ ", hashSpaceSize="+ hashSpace+ ", clusterSize="+ clusterSize);
+  }
+  LinkedHashMap<InetSocketAddress,Integer> servers2HashCode=new LinkedHashMap<InetSocketAddress,Integer>();
+  for (int i=0; i < clusterSize; i++) {
+    String host=transport.readString();
+    int port=transport.readUnsignedShort();
+    if (log.isTraceEnabled()) {
+      log.trace("Server read:" + host + ":"+ port);
+    }
+    int hashCode=transport.read4ByteInt();
+    servers2HashCode.put(new InetSocketAddress(host,port),hashCode);
+    if (log.isTraceEnabled()) {
+      log.trace("Hash code is: " + hashCode);
+    }
+  }
+  if (log.isInfoEnabled()) {
+    log.info("New topology: " + servers2HashCode);
+  }
+  transport.getTransportFactory().updateServers(servers2HashCode.keySet());
+  if (hashFunctionVersion == 0) {
+    if (log.isTraceEnabled())     log.trace("Not using a consistent hash function (hash function version == 0).");
+  }
+ else {
+    transport.getTransportFactory().updateHashFunction(servers2HashCode,numKeyOwners,hashFunctionVersion,hashSpace);
+  }
+}

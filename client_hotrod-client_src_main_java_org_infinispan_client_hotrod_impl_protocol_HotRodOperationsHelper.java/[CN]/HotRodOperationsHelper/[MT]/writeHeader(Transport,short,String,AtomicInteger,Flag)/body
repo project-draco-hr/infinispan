@@ -1,0 +1,21 @@
+{
+  transport.writeByte(HotrodConstants.REQUEST_MAGIC);
+  long messageId=MSG_ID.incrementAndGet();
+  transport.writeVLong(messageId);
+  transport.writeByte(HotrodConstants.HOTROD_VERSION);
+  transport.writeByte(operationCode);
+  transport.writeArray(cacheName.getBytes());
+  int flagInt=0;
+  if (flags != null) {
+    for (    Flag flag : flags) {
+      flagInt=flag.getFlagInt() | flagInt;
+    }
+  }
+  transport.writeVInt(flagInt);
+  transport.writeByte(CLIENT_INTELLIGENCE);
+  transport.writeVInt(topologyId.get());
+  if (log.isTraceEnabled()) {
+    log.trace("wrote header for message " + messageId + ". Operation code: "+ operationCode+ ". Flags: "+ Integer.toHexString(flagInt));
+  }
+  return messageId;
+}
