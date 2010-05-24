@@ -1,29 +1,6 @@
 {
-  if (lifespan < 0 && maxIdle < 0) {
-    if (recordCreation || recordLastUsed) {
-      if (recordCreation && !recordLastUsed)       return new MortalCacheEntry(key,value,-1);
-      if (!recordCreation && recordLastUsed)       return new TransientCacheEntry(key,value,-1);
-      return new TransientMortalCacheEntry(key,value,-1,-1);
-    }
- else {
-      return new ImmortalCacheEntry(key,value);
-    }
-  }
-  if (lifespan > -1 && maxIdle < 0) {
-    if (recordLastUsed) {
-      return new TransientMortalCacheEntry(key,value,-1,lifespan);
-    }
- else {
-      return new MortalCacheEntry(key,value,lifespan);
-    }
-  }
-  if (lifespan < 0 && maxIdle > -1) {
-    if (recordCreation) {
-      return new TransientMortalCacheEntry(key,value,maxIdle,-1);
-    }
- else {
-      return new TransientCacheEntry(key,value,maxIdle);
-    }
-  }
+  if (lifespan < 0 && maxIdle < 0)   return new ImmortalCacheEntry(key,value);
+  if (lifespan > -1 && maxIdle < 0)   return new MortalCacheEntry(key,value,lifespan);
+  if (lifespan < 0 && maxIdle > -1)   return new TransientCacheEntry(key,value,maxIdle);
   return new TransientMortalCacheEntry(key,value,maxIdle,lifespan);
 }

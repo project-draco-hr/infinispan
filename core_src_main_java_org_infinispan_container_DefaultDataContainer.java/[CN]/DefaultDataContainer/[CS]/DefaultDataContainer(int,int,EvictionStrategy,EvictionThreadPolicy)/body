@@ -1,0 +1,28 @@
+{
+switch (policy) {
+case DEFAULT:
+    evictionListener=new DefaultEvictionListener();
+  break;
+case PIGGYBACK:
+evictionListener=new PiggybackEvictionListener();
+break;
+default :
+throw new IllegalArgumentException("No such eviction thread policy " + strategy);
+}
+Eviction eviction;
+switch (strategy) {
+case FIFO:
+case UNORDERED:
+case LRU:
+eviction=Eviction.LRU;
+break;
+case LIRS:
+eviction=Eviction.LIRS;
+break;
+default :
+throw new IllegalArgumentException("No such eviction strategy " + strategy);
+}
+immortalEntries=new BoundedConcurrentHashMap<Object,InternalCacheEntry>(maxEntries,concurrencyLevel,eviction,evictionListener);
+mortalEntries=new ConcurrentHashMap<Object,InternalCacheEntry>(64,0.75f,concurrencyLevel);
+entryFactory=new InternalEntryFactory();
+}
