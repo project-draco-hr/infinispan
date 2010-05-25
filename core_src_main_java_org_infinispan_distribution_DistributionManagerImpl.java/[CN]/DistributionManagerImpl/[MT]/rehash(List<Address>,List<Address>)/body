@@ -10,6 +10,7 @@
     log.info("This is a LEAVE event!  Node {0} has just left",leaver);
     boolean willReceiveLeaverState=willReceiveLeaverState(leaver);
     boolean willSendLeaverState=willSendLeaverState(leaver);
+    List<Address> stateProviders=holdersOfLeaversState(newMembers,leaver);
     try {
       if (!(consistentHash instanceof UnionConsistentHash))       oldConsistentHash=consistentHash;
  else       oldConsistentHash=((UnionConsistentHash)consistentHash).newCH;
@@ -20,17 +21,14 @@
       throw new CacheException(e);
     }
     if (willReceiveLeaverState || willSendLeaverState) {
-      log.info("Starting transaction logging!");
+      log.info("I {0} am participating in rehash",rpcManager.getTransport().getAddress());
       transactionLogger.enable();
-    }
-    if (willSendLeaverState) {
       if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
         leaveTaskFuture.cancel(true);
       }
       leavers.add(leaver);
-      LeaveTask task=new LeaveTask(this,rpcManager,configuration,leavers,transactionLogger,cf,dataContainer);
+      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,leavers,stateProviders,willReceiveLeaverState);
       leaveTaskFuture=rehashExecutor.submit(task);
-      log.info("Need to rehash");
     }
  else {
       log.info("Not in same subspace, so ignoring leave event");

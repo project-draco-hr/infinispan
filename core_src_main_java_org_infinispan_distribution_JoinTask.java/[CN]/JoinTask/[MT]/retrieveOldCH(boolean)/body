@@ -1,0 +1,34 @@
+{
+  ConsistentHash result=null;
+  long minSleepTime=500, maxSleepTime=2000;
+  int maxWaitTime=(int)configuration.getRehashRpcTimeout() * 10;
+  Random rand=new Random();
+  long giveupTime=System.currentTimeMillis() + maxWaitTime;
+  do {
+    if (trace)     log.trace("Requesting old consistent hash from coordinator");
+    List<Response> resp;
+    List<Address> addresses;
+    try {
+      resp=rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_REQ,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
+      addresses=parseResponses(resp);
+      if (log.isDebugEnabled())       log.debug("Retrieved old consistent hash address list {0}",addresses);
+    }
+ catch (    TimeoutException te) {
+      resp=null;
+      addresses=null;
+      if (log.isDebugEnabled())       log.debug("Timed out waiting for responses.");
+    }
+    if (addresses == null) {
+      long time=rand.nextInt((int)(maxSleepTime - minSleepTime) / 10);
+      time=(time * 10) + minSleepTime;
+      if (trace)       log.trace("Sleeping for {0}",Util.prettyPrintTime(time));
+      Thread.sleep(time);
+    }
+ else {
+      result=createConsistentHash(configuration,addresses);
+    }
+  }
+ while (result == null && System.currentTimeMillis() < giveupTime);
+  if (result == null)   throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
+  return result;
+}

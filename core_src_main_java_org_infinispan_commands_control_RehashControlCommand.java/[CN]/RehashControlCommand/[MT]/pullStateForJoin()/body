@@ -1,0 +1,19 @@
+{
+  Map<Object,InternalCacheValue> state=new HashMap<Object,InternalCacheValue>();
+  for (  InternalCacheEntry ice : dataContainer) {
+    Object k=ice.getKey();
+    if (shouldTransferOwnershipToJoinNode(k)) {
+      state.put(k,ice.toInternalCacheValue());
+    }
+  }
+  CacheStore cacheStore=distributionManager.getCacheStoreForRehashing();
+  if (cacheStore != null) {
+    for (    Object k : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+      if (!state.containsKey(k) && shouldTransferOwnershipToJoinNode(k)) {
+        InternalCacheValue v=loadValue(cacheStore,k);
+        if (v != null)         state.put(k,v);
+      }
+    }
+  }
+  return state;
+}

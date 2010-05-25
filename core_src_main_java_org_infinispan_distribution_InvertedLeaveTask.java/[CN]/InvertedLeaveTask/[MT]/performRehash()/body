@@ -1,0 +1,46 @@
+{
+  long start=System.currentTimeMillis();
+  boolean trace=log.isTraceEnabled();
+  int replCount=configuration.getNumOwners();
+  ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,dmi.getConsistentHash().getCaches(),leaversHandled);
+  ConsistentHash newCH=dmi.getConsistentHash();
+  try {
+    if (log.isDebugEnabled()) {
+      if (isReceiver) {
+        log.debug("Commencing rehash at {0}, I am a state receiver",self);
+      }
+ else {
+        log.debug("Commencing rehash at {0}, I am a state producer",self);
+      }
+    }
+    if (configuration.isRehashEnabled()) {
+      if (isReceiver) {
+        Address myAddress=rpcManager.getTransport().getAddress();
+        RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_LEAVE,myAddress,null,oldCH,newCH,leaversHandled);
+        List<Address> addressesWhoMaySendStuff=getStateProviderTargets();
+        log.debug("I {0} am pulling state from {1}",self,addressesWhoMaySendStuff);
+        List<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
+        log.debug("I {0} received response {1} ",self,resps);
+        for (        Response r : resps) {
+          if (r instanceof SuccessfulResponse) {
+            Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
+            log.debug("I {0} am applying state {1} ",self,state);
+            dmi.applyState(newCH,state);
+          }
+        }
+      }
+      processAndDrainTxLog(oldCH,newCH,replCount);
+      invalidateInvalidHolders(leaversHandled,oldCH,newCH);
+    }
+ else {
+      if (trace)       log.trace("Rehash not enabled, so not pulling state.");
+    }
+    if (trace)     log.info("{0} completed leave rehash in {1}!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unexpected exception",e);
+  }
+ finally {
+    leavers.removeAll(leaversHandled);
+  }
+}

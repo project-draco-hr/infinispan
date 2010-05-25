@@ -2,39 +2,13 @@
   long start=System.currentTimeMillis();
   boolean trace=log.isTraceEnabled();
   if (log.isDebugEnabled())   log.debug("Commencing");
+  TransactionLogger transactionLogger=dmi.getTransactionLogger();
   boolean unlocked=false;
+  ConsistentHash chOld;
+  ConsistentHash chNew;
   try {
     dmi.joinComplete=false;
-    long minSleepTime=500, maxSleepTime=2000;
-    int maxWaitTime=(int)configuration.getRehashRpcTimeout() * 10;
-    Random rand=new Random();
-    long giveupTime=System.currentTimeMillis() + maxWaitTime;
-    do {
-      if (trace)       log.trace("Requesting old consistent hash from coordinator");
-      List<Response> resp;
-      List<Address> addresses;
-      try {
-        resp=rpcManager.invokeRemotely(coordinator(),cf.buildRehashControlCommand(JOIN_REQ,self),SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
-        addresses=parseResponses(resp);
-        if (log.isDebugEnabled())         log.debug("Retrieved old consistent hash address list {0}",addresses);
-      }
- catch (      TimeoutException te) {
-        resp=null;
-        addresses=null;
-        if (log.isDebugEnabled())         log.debug("Timed out waiting for responses.");
-      }
-      if (addresses == null) {
-        long time=rand.nextInt((int)(maxSleepTime - minSleepTime) / 10);
-        time=(time * 10) + minSleepTime;
-        if (trace)         log.trace("Sleeping for {0}",Util.prettyPrintTime(time));
-        Thread.sleep(time);
-      }
- else {
-        chOld=createConsistentHash(configuration,addresses);
-      }
-    }
- while (chOld == null && System.currentTimeMillis() < giveupTime);
-    if (chOld == null)     throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
+    chOld=retrieveOldCH(trace);
     if (chOld.getCaches().contains(self))     chNew=chOld;
  else     chNew=createConsistentHash(configuration,chOld.getCaches(),self);
     dmi.setConsistentHash(chNew);
@@ -42,8 +16,8 @@
       transactionLogger.enable();
       rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
       Address myAddress=rpcManager.getTransport().getAddress();
-      RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE,myAddress,null,chNew);
-      List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(configuration.getNumOwners());
+      RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_JOIN,myAddress,null,chOld,chNew,null);
+      List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(chNew,configuration.getNumOwners());
       List<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
       for (      Response r : resps) {
         if (r instanceof SuccessfulResponse) {
