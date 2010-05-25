@@ -7,17 +7,20 @@
   transportFactory=(TransportFactory)VHelper.newInstance(factory);
   String servers=props.getProperty(CONF_HOTROD_SERVERS);
   transportFactory.start(props,getStaticConfiguredServers(servers),topologyId);
-  hotrodMarshaller=props.getProperty("marshaller");
+  if (hotRodMarshaller == null) {
+    String hotrodMarshallerClass=props.getProperty("marshaller");
+    if (hotrodMarshallerClass == null) {
+      hotrodMarshallerClass=SerializationMarshaller.class.getName();
+      log.info("'marshaller' not specified, using " + hotrodMarshallerClass);
+    }
+    hotRodMarshaller=(HotRodMarshaller)VHelper.newInstance(hotrodMarshallerClass);
+  }
   String asyncExecutorClass=DefaultAsyncExecutorFactory.class.getName();
   if (props.contains("asyn-executor-factory")) {
     asyncExecutorClass=props.getProperty("asyn-executor-factory");
   }
   ExecutorFactory executorFactory=(ExecutorFactory)VHelper.newInstance(asyncExecutorClass);
   asyncExecutorService=executorFactory.getExecutor(props);
-  if (hotrodMarshaller == null) {
-    hotrodMarshaller=SerializationMarshaller.class.getName();
-    log.info("'marshaller' not specified, using " + hotrodMarshaller);
-  }
   if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
     forceReturnValueDefault=true;
   }
