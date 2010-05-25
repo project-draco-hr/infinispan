@@ -1,0 +1,15 @@
+{
+  for (  String name : cacheNames) {
+    CloudCacheStore ccs=new CloudCacheStore();
+    Cache c=EasyMock.createNiceMock(Cache.class);
+    EasyMock.expect(c.getName()).andReturn(name).anyTimes();
+    EasyMock.replay(c);
+    ccs.init(createCacheStoreConfig(),c,null);
+    ccs.start();
+    System.out.println("**** Nuking container " + ccs.containerName);
+    ccs.blobStore.clearContainer(ccs.containerName);
+    ccs.blobStore.deleteContainer(ccs.containerName);
+    ccs.stop();
+  }
+  cacheNames.clear();
+}
