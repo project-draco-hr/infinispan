@@ -1,22 +1,5 @@
 {
-  String configFile=System.getProperty("EC2Demo-jgroups-config");
-  if ((configFile == null) || (configFile.isEmpty()))   configFile=inConfigFile;
-  if ((configFile == null) || (configFile.isEmpty()))   throw new RuntimeException("Need to either set system property EC2Demo-jgroups-config to point to the jgroups configuration file or pass in the the location of the jgroups configuration file");
-  System.out.println("CacheBuilder called with " + configFile);
-  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
-  gc.setClusterName("infinispan-demo-cluster");
-  gc.setTransportClass(JGroupsTransport.class.getName());
-  Properties p=new Properties();
-  p.setProperty("configurationFile",configFile);
-  gc.setTransportProperties(p);
-  Configuration c=new Configuration();
-  c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-  c.setExposeJmxStatistics(true);
-  c.setUnsafeUnreliableReturnValues(true);
-  c.setNumOwners(3);
-  c.setL1CacheEnabled(true);
-  c.setInvocationBatchingEnabled(true);
-  c.setUseReplQueue(true);
-  c.setL1Lifespan(6000000);
-  cache_manager=new DefaultCacheManager(gc,c,false);
+  if ((inConfigFile == null) || (inConfigFile.isEmpty()))   throw new RuntimeException("Infinispan configuration file not found-->" + inConfigFile);
+  System.out.println("CacheBuilder called with " + inConfigFile);
+  cache_manager=new DefaultCacheManager(inConfigFile,false);
 }
