@@ -1,0 +1,19 @@
+{
+  if (started) {
+    log.info("Service already started, ignoring call to start!");
+    return;
+  }
+  List<Address> existingNodes=getExistingNodes();
+  maxNumberInvariant.writeLock().lock();
+  try {
+    addQueuesForAddresses(existingNodes);
+    revisitNumberOfKeys();
+  }
+  finally {
+    maxNumberInvariant.writeLock().unlock();
+  }
+  executor.execute(new KeyGeneratorWorker());
+  cache.addListener(new TopologyChangeListener(this));
+  keyProducerStartLatch.open();
+  started=true;
+}

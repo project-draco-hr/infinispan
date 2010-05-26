@@ -1,0 +1,14 @@
+{
+  if (log.isTraceEnabled()) {
+    log.trace("ViewChange received: " + vce);
+  }
+synchronized (address2key) {
+    for (    Address address : vce.getOldMembers()) {
+      BlockingQueue queue=address2key.remove(address);
+      if (queue == null) {
+        KeyAffinityServiceImpl.log.warn("Null queue not expected for address: " + address + ". Did we miss a view change?");
+      }
+    }
+    addQueuesForAddresses(vce.getNewMembers());
+  }
+}
