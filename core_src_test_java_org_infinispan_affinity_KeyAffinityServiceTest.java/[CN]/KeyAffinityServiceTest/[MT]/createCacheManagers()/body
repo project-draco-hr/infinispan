@@ -1,0 +1,19 @@
+{
+  super.createCacheManagers();
+  assertEquals(4,topology(caches.get(0).getCacheManager()).size());
+  assertEquals(4,topology(caches.get(1).getCacheManager()).size());
+  assertEquals(4,topology(caches.get(2).getCacheManager()).size());
+  assertEquals(4,topology(caches.get(3).getCacheManager()).size());
+  cache(0,cacheName).put("k","v");
+  assertEquals("v",cache(0,cacheName).get("k"));
+  assertEquals("v",cache(1,cacheName).get("k"));
+  assertEquals("v",cache(2,cacheName).get("k"));
+  assertEquals("v",cache(3,cacheName).get("k"));
+  ThreadFactory tf=new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      return new Thread(r,"KeyGeneratorThread");
+    }
+  }
+;
+  keyAffinityService=(KeyAffinityServiceImpl)KeyAffinityServiceFactory.newKeyAffinityService(manager(0).getCache(cacheName),Executors.newSingleThreadExecutor(tf),new RndKeyGenerator(),100);
+}

@@ -1,0 +1,16 @@
+{
+  List<KeyConsumer> consumers=new ArrayList<KeyConsumer>();
+  int keysToConsume=1000;
+  CountDownLatch consumersStart=new CountDownLatch(1);
+  for (int i=0; i < 10; i++) {
+    consumers.add(new KeyConsumer(keysToConsume,consumersStart));
+  }
+  consumersStart.countDown();
+  for (  KeyConsumer kc : consumers) {
+    kc.join();
+  }
+  for (  KeyConsumer kc : consumers) {
+    assertEquals(null,kc.exception);
+  }
+  assertEventualFullCapacity();
+}

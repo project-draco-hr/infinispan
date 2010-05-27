@@ -7,13 +7,16 @@
   maxNumberInvariant.writeLock().lock();
   try {
     addQueuesForAddresses(existingNodes);
-    revisitNumberOfKeys();
+    resetNumberOfKeys();
   }
   finally {
     maxNumberInvariant.writeLock().unlock();
   }
-  executor.execute(new KeyGeneratorWorker());
-  cache.addListener(new TopologyChangeListener(this));
+  keyGenWorker=new KeyGeneratorWorker();
+  executor.execute(keyGenWorker);
+  listenerRegistration=new ListenerRegistration(this);
+  ((EmbeddedCacheManager)cache.getCacheManager()).addListener(listenerRegistration);
+  cache.addListener(listenerRegistration);
   keyProducerStartLatch.open();
   started=true;
 }

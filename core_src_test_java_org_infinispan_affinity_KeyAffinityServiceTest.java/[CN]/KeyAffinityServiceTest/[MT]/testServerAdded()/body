@@ -1,0 +1,16 @@
+{
+  EmbeddedCacheManager cm=addClusterEnabledCacheManager();
+  cm.defineConfiguration(cacheName,configuration);
+  Cache cache=cm.getCache(cacheName);
+  caches.add(cache);
+  waitForClusterToResize();
+  for (int i=0; i < 10; i++) {
+    if (keyAffinityService.getAddress2KeysMapping().keySet().size() == 5) {
+      break;
+    }
+    Thread.sleep(500);
+  }
+  assertEquals(5,keyAffinityService.getAddress2KeysMapping().keySet().size());
+  assertEventualFullCapacity();
+  assertKeyAffinityCorrectness();
+}

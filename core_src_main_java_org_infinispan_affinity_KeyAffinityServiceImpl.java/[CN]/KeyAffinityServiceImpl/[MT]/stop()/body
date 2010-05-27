@@ -1,2 +1,18 @@
 {
+  if (!started) {
+    log.info("Ignoring call to stop as service is not started.");
+    return;
+  }
+  started=false;
+  EmbeddedCacheManager cacheManager=(EmbeddedCacheManager)cache.getCacheManager();
+  if (cacheManager.getListeners().contains(listenerRegistration)) {
+    cacheManager.removeListener(listenerRegistration);
+  }
+ else {
+    throw new IllegalStateException("Listener must have been registered!");
+  }
+  if (cache.getListeners().contains(listenerRegistration)) {
+    cache.removeListener(listenerRegistration);
+  }
+  keyGenWorker.stop();
 }

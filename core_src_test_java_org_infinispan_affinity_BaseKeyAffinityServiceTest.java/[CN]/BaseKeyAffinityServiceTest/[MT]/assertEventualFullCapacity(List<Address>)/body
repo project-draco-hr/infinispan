@@ -1,0 +1,18 @@
+{
+  Map<Address,BlockingQueue> blockingQueueMap=keyAffinityService.getAddress2KeysMapping();
+  for (  Address addr : addresses) {
+    BlockingQueue queue=blockingQueueMap.get(addr);
+    for (int i=0; i < 10; i++) {
+      if (!(queue.size() == 100)) {
+        Thread.sleep(1000);
+      }
+ else {
+        break;
+      }
+    }
+    assertEquals(100,queue.size());
+  }
+  assertEquals(keyAffinityService.getMaxNumberOfKeys(),keyAffinityService.getExitingNumberOfKeys());
+  assertEquals(addresses.size() * 100,keyAffinityService.getExitingNumberOfKeys());
+  assertEquals(false,keyAffinityService.isKeyGeneratorThreadActive());
+}

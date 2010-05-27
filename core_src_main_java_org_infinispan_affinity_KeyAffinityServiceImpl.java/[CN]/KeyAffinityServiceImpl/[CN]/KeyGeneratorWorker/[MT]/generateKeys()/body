@@ -1,16 +1,16 @@
 {
-  maxNumberInvariant.writeLock().lock();
+  maxNumberInvariant.readLock().lock();
   try {
-    for (    Address address : address2key.keySet()) {
+    while (maxNumberOfKeys.get() != exitingNumberOfKeys.get()) {
       Object key=keyGenerator.getKey();
-      tryAddKey(address,key);
-      if (maxNumberOfKeys.equals(exitingNumberOfKeys)) {
-        keyProducerStartLatch.close();
-        return;
+      Address addressForKey=getAddressForKey(key);
+      if (interestedInAddress(addressForKey)) {
+        tryAddKey(addressForKey,key);
       }
     }
+    keyProducerStartLatch.close();
   }
   finally {
-    maxNumberInvariant.writeLock().unlock();
+    maxNumberInvariant.readLock().unlock();
   }
 }
