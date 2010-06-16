@@ -18,18 +18,14 @@
   mustExist(sourceName,"source");
   mustExist(destinationName,"destination");
   mustExist(type,"type");
-  List<String> stringList=Arrays.asList(SUPPORTED_FORMATS);
-  if (!stringList.contains(type)) {
-    System.err.println("Unsupported transformation type: " + type + ". Supported formats are: "+ stringList);
+  if (!TRANSFORMATIONS.containsKey(type)) {
+    System.err.println("Unsupported transformation type: " + type + ". Supported formats are: "+ getSupportedFormats());
   }
   if (type.equals(JBOSS_CACHE3X)) {
     transformFromJbossCache3x(sourceName,destinationName);
   }
- else   if (type.equals(EHCACHE_CACHE1X)) {
-    transformFromEhcache1x(sourceName,destinationName);
-  }
- else   if (type.equals(COHERENCE_35X)) {
-    transformFromCoherence35x(sourceName,destinationName);
+ else {
+    transformFromNonJBoss(sourceName,destinationName,TRANSFORMATIONS.get(type));
   }
   System.out.println("---");
   System.out.println("New configuration file [" + destinationName + "] successfully created.");
