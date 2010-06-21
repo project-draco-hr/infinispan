@@ -1,5 +1,6 @@
 {
   checkIsOpen();
+  cache.startBatch();
   CacheKey fromKey=new FileCacheKey(indexName,from);
   FileMetadata fileFrom=(FileMetadata)cache.remove(fromKey);
   cache.put(new FileCacheKey(indexName,to),fileFrom);
@@ -15,6 +16,7 @@
     if (ob == null) {
       break;
     }
+    cache.remove(fromChunkKey);
     ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i);
     cache.put(toChunkKey,ob);
   }
@@ -22,4 +24,5 @@
   if (log.isTraceEnabled()) {
     log.trace("Renamed file from: {0} to: {1} in index {2}",from,to,indexName);
   }
+  cache.endBatch(true);
 }
