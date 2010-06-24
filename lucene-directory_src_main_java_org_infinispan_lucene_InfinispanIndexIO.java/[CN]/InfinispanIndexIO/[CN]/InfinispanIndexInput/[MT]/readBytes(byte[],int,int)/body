@@ -1,15 +1,17 @@
 {
   int bytesToRead=len;
+  if (buffer == null) {
+    nextChunk();
+  }
   while (bytesToRead > 0) {
-    buffer=getChunkFromPosition(cache,fileKey,filePosition,bufferSize);
-    if (buffer == null) {
-      throw new IOException("Chunk id = [ " + getChunkNumberFromPosition(filePosition,bufferSize) + " ] does not exist for file [ "+ fileKey.getFileName()+ " ] for index [ "+ fileKey.getIndexName()+ " ], file position: [ "+ filePosition+ " ], file size: [ "+ file.getSize()+ " ]");
-    }
-    bufferPosition=getPositionInBuffer(filePosition,bufferSize);
-    int bytesToCopy=Math.min(buffer.length - bufferPosition,bytesToRead);
+    int bytesToCopy=Math.min(currentBufferSize - bufferPosition,bytesToRead);
     System.arraycopy(buffer,bufferPosition,b,offset,bytesToCopy);
     offset+=bytesToCopy;
     bytesToRead-=bytesToCopy;
-    filePosition+=bytesToCopy;
+    bufferPosition+=bytesToCopy;
+    if (bufferPosition >= currentBufferSize && bytesToRead > 0) {
+      nextChunk();
+      bufferPosition=0;
+    }
   }
 }

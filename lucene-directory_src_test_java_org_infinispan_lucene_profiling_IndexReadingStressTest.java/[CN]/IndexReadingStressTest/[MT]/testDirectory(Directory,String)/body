@@ -1,0 +1,15 @@
+{
+  SharedState state=fillDirectory(dir);
+  ExecutorService e=Executors.newFixedThreadPool(THREADS);
+  for (int i=0; i < THREADS; i++) {
+    e.execute(new LuceneReaderThread(dir,state));
+  }
+  e.shutdown();
+  state.startWaitingThreads();
+  Thread.sleep(DURATION_MS);
+  long searchesCount=state.incrementIndexSearchesCount(0);
+  long writerTaskCount=state.incrementIndexWriterTaskCount(0);
+  state.quit();
+  e.awaitTermination(10,TimeUnit.SECONDS);
+  System.out.println("Test " + testLabel + " run in "+ DURATION_MS+ "ms:\n\tSearches: "+ searchesCount+ "\n\t"+ "Writes: "+ writerTaskCount);
+}
