@@ -8,16 +8,24 @@
         trace("exiting!");
         return;
       }
-      Object result=remoteCache.put(key,value);
-      trace("Added to the cache (" + key + ","+ value+ ") and returning "+ result);
-      if (PUT_SYNC.equals(o)) {
-        receive.put(result == null ? NULL : result);
-        trace("Que now has: " + receive.peek());
+      if (PUT_SYNC.equals(o) || PUT_ASYNC.equals(o)) {
+        Object result=remoteCache.put(key,value);
+        trace("Added to the cache (" + key + ","+ value+ ") and returning "+ result);
+        if (PUT_SYNC.equals(o)) {
+          receive.put(result == null ? NULL : result);
+          trace("Que now has: " + receive.peek());
+        }
+      }
+      if (STRESS.equals(o)) {
+        stress_();
       }
     }
  catch (    InterruptedException e) {
       e.printStackTrace();
       throw new IllegalStateException(e);
+    }
+ finally {
+      finished=true;
     }
   }
 }

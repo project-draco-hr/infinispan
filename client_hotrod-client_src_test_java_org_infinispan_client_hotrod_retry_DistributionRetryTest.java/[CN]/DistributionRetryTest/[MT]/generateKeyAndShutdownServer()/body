@@ -1,0 +1,23 @@
+{
+  resetStats();
+  Cache<Object,Object> cache=manager(1).getCache();
+  KeyAffinityService kaf=KeyAffinityServiceFactory.newKeyAffinityService(cache,Executors.newSingleThreadExecutor(),new ByteKeyGenerator(),2,true);
+  Address address=cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
+  byte[] keyBytes=(byte[])kaf.getKeyForAddress(address);
+  String key=ByteKeyGenerator.getStringObject(keyBytes);
+  kaf.stop();
+  remoteCache.put(key,"v");
+  assertOnlyServerHit(getAddress(hotRodServer2));
+  TcpTransportFactory tcpTp=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
+  SerializationMarshaller sm=new SerializationMarshaller();
+  TcpTransport transport=(TcpTransport)tcpTp.getTransport(sm.marshallObject(key));
+  try {
+    assertEquals(transport.getServerAddress(),new InetSocketAddress("localhost",hotRodServer2.getPort()));
+  }
+  finally {
+    tcpTp.releaseTransport(transport);
+  }
+  log.info("About to stop hotrod server 2");
+  hotRodServer2.stop();
+  return key;
+}

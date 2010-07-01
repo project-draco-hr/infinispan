@@ -1,17 +1,22 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    short status=sendPutOperation(key,value,transport,PUT_IF_ABSENT_REQUEST,PUT_IF_ABSENT_RESPONSE,lifespan,maxIdle,flags);
-    if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-      byte[] bytes=returnPossiblePrevValue(transport,flags);
-      if (log.isTraceEnabled()) {
-        log.trace("Returning from putIfAbsent: " + Arrays.toString(bytes));
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=getTransport(key,i == 0);
+    try {
+      short status=sendPutOperation(key,value,transport,PUT_IF_ABSENT_REQUEST,PUT_IF_ABSENT_RESPONSE,lifespan,maxIdle,flags);
+      if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+        byte[] bytes=returnPossiblePrevValue(transport,flags);
+        if (log.isTraceEnabled()) {
+          log.trace("Returning from putIfAbsent: " + Arrays.toString(bytes));
+        }
+        return bytes;
       }
-      return bytes;
     }
-  }
-  finally {
-    releaseTransport(transport);
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
   }
   throw new IllegalStateException("We should not reach here!");
 }

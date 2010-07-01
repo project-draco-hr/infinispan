@@ -1,10 +1,15 @@
 {
-  Transport transport=transportFactory.getTransport();
-  try {
-    long messageId=HotRodOperationsHelper.writeHeader(transport,CLEAR_REQUEST,cacheName,topologyId,flags);
-    HotRodOperationsHelper.readHeaderAndValidate(transport,messageId,CLEAR_RESPONSE,topologyId);
-  }
-  finally {
-    releaseTransport(transport);
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=transportFactory.getTransport();
+    try {
+      long messageId=HotRodOperationsHelper.writeHeader(transport,CLEAR_REQUEST,cacheName,topologyId,flags);
+      HotRodOperationsHelper.readHeaderAndValidate(transport,messageId,CLEAR_RESPONSE,topologyId);
+    }
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
   }
 }

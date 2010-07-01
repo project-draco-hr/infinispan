@@ -1,13 +1,18 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    short status=sendPutOperation(key,value,transport,REPLACE_REQUEST,REPLACE_RESPONSE,lifespan,maxIdle,flags);
-    if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-      return returnPossiblePrevValue(transport,flags);
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=getTransport(key,i == 0);
+    try {
+      short status=sendPutOperation(key,value,transport,REPLACE_REQUEST,REPLACE_RESPONSE,lifespan,maxIdle,flags);
+      if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+        return returnPossiblePrevValue(transport,flags);
+      }
+    }
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
     }
   }
-  finally {
-    releaseTransport(transport);
-  }
-  throw new IllegalStateException("We should not reach here!");
+  throw new IllegalStateException(" should not reach here!");
 }

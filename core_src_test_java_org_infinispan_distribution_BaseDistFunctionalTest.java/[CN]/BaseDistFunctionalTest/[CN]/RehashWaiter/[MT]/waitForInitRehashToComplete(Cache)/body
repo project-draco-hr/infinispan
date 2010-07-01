@@ -3,9 +3,14 @@
   long giveup=System.currentTimeMillis() + gracetime;
   for (  Cache c : caches) {
     DistributionManagerImpl dmi=(DistributionManagerImpl)TestingUtil.extractComponent(c,DistributionManager.class);
-    while (!dmi.joinComplete) {
-      if (System.currentTimeMillis() > giveup)       throw new RuntimeException("Timed out waiting for initial join sequence to complete!");
+    while (!dmi.isJoinComplete()) {
+      if (System.currentTimeMillis() > giveup) {
+        String message="Timed out waiting for initial join sequence to complete on node " + dmi.rpcManager.getAddress() + " !";
+        log.error(message);
+        throw new RuntimeException(message);
+      }
       LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
     }
+    log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
   }
 }

@@ -1,16 +1,23 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    short status=sendKeyOperation(key,transport,GET_REQUEST,flags,GET_RESPONSE);
-    if (status == KEY_DOES_NOT_EXIST_STATUS) {
-      return null;
-    }
-    if (status == NO_ERROR_STATUS) {
-      return transport.readArray();
-    }
-  }
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    try {
+      Transport transport=getTransport(key,i == 0);
+      try {
+        short status=sendKeyOperation(key,transport,GET_REQUEST,flags,GET_RESPONSE);
+        if (status == KEY_DOES_NOT_EXIST_STATUS) {
+          return null;
+        }
+        if (status == NO_ERROR_STATUS) {
+          return transport.readArray();
+        }
+      }
   finally {
-    releaseTransport(transport);
+        releaseTransport(transport);
+      }
+    }
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
   }
   throw new IllegalStateException("We should not reach here!");
 }

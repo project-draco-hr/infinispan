@@ -1,21 +1,26 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    short status=sendKeyOperation(key,transport,GET_WITH_VERSION,flags,GET_WITH_VERSION_RESPONSE);
-    if (status == KEY_DOES_NOT_EXIST_STATUS) {
-      return null;
-    }
-    if (status == NO_ERROR_STATUS) {
-      long version=transport.readLong();
-      if (log.isTraceEnabled()) {
-        log.trace("Received version: " + version);
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=getTransport(key,i == 0);
+    try {
+      short status=sendKeyOperation(key,transport,GET_WITH_VERSION,flags,GET_WITH_VERSION_RESPONSE);
+      if (status == KEY_DOES_NOT_EXIST_STATUS) {
+        return null;
       }
-      byte[] value=transport.readArray();
-      return new BinaryVersionedValue(version,value);
+      if (status == NO_ERROR_STATUS) {
+        long version=transport.readLong();
+        if (log.isTraceEnabled()) {
+          log.trace("Received version: " + version);
+        }
+        byte[] value=transport.readArray();
+        return new BinaryVersionedValue(version,value);
+      }
     }
-  }
-  finally {
-    releaseTransport(transport);
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
   }
   throw new IllegalStateException("We should not reach here!");
 }

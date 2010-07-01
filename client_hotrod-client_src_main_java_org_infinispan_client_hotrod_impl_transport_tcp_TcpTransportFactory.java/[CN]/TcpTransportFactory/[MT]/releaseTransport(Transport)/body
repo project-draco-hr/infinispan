@@ -1,12 +1,25 @@
 {
   TcpTransport tcpTransport=(TcpTransport)transport;
-  try {
-    connectionPool.returnObject(tcpTransport.getServerAddress(),tcpTransport);
+  if (!tcpTransport.isValid()) {
+    try {
+      if (log.isTraceEnabled()) {
+        log.info("Dropping connection as it is no longer valid: " + tcpTransport);
+      }
+      connectionPool.invalidateObject(tcpTransport.getServerAddress(),tcpTransport);
+    }
+ catch (    Exception e) {
+      log.warn("Could not invalidate connection: " + tcpTransport,e);
+    }
   }
- catch (  Exception e) {
-    log.warn("Could not release connection: " + tcpTransport,e);
-  }
+ else {
+    try {
+      connectionPool.returnObject(tcpTransport.getServerAddress(),tcpTransport);
+    }
+ catch (    Exception e) {
+      log.warn("Could not release connection: " + tcpTransport,e);
+    }
  finally {
-    logConnectionInfo(tcpTransport.getServerAddress());
+      logConnectionInfo(tcpTransport.getServerAddress());
+    }
   }
 }

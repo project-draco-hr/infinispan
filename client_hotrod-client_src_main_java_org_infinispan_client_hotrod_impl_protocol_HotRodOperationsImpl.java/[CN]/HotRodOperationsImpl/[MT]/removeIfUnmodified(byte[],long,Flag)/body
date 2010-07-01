@@ -1,12 +1,18 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    long messageId=HotRodOperationsHelper.writeHeader(transport,REMOVE_IF_UNMODIFIED_REQUEST,cacheName,topologyId,flags);
-    transport.writeArray(key);
-    transport.writeLong(version);
-    return returnVersionedOperationResponse(transport,messageId,REMOVE_IF_UNMODIFIED_RESPONSE,flags);
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=getTransport(key,i == 0);
+    try {
+      long messageId=HotRodOperationsHelper.writeHeader(transport,REMOVE_IF_UNMODIFIED_REQUEST,cacheName,topologyId,flags);
+      transport.writeArray(key);
+      transport.writeLong(version);
+      return returnVersionedOperationResponse(transport,messageId,REMOVE_IF_UNMODIFIED_RESPONSE,flags);
+    }
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
   }
-  finally {
-    releaseTransport(transport);
-  }
+  throw new IllegalStateException("Should not reach this point!");
 }

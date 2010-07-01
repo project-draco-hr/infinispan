@@ -1,13 +1,19 @@
 {
-  Transport transport=transportFactory.getTransport(key);
-  try {
-    short status=sendPutOperation(key,value,transport,PUT_REQUEST,PUT_RESPONSE,lifespan,maxIdle,flags);
-    if (status != NO_ERROR_STATUS) {
-      throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+  for (int i=0; i < transportFactory.getTransportCount(); i++) {
+    Transport transport=getTransport(key,i == 0);
+    try {
+      short status=sendPutOperation(key,value,transport,PUT_REQUEST,PUT_RESPONSE,lifespan,maxIdle,flags);
+      if (status != NO_ERROR_STATUS) {
+        throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+      }
+      return returnPossiblePrevValue(transport,flags);
     }
-    return returnPossiblePrevValue(transport,flags);
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(i,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
   }
-  finally {
-    releaseTransport(transport);
-  }
+  throw new IllegalStateException("This should not be reached!");
 }

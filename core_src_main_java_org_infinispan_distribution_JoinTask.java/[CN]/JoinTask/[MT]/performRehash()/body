@@ -1,13 +1,15 @@
 {
   long start=System.currentTimeMillis();
   boolean trace=log.isTraceEnabled();
-  if (log.isDebugEnabled())   log.debug("Commencing");
+  if (log.isDebugEnabled())   log.debug("Commencing rehash on node: " + getMyAddress() + ". Before start, dmi.joinComplete = "+ dmi.isJoinComplete());
   TransactionLogger transactionLogger=dmi.getTransactionLogger();
   boolean unlocked=false;
   ConsistentHash chOld;
   ConsistentHash chNew;
   try {
-    dmi.joinComplete=false;
+    if (dmi.isJoinComplete()) {
+      throw new IllegalStateException("Join cannot be complete without rehash to finish (node " + getMyAddress() + " )");
+    }
     chOld=retrieveOldCH(trace);
     if (chOld.getCaches().contains(self))     chNew=chOld;
  else     chNew=createConsistentHash(configuration,chOld.getCaches(),self);
@@ -47,6 +49,6 @@
   }
  finally {
     if (!unlocked)     transactionLogger.unlockAndDisable();
-    dmi.joinComplete=true;
+    dmi.setJoinComplete(true);
   }
 }

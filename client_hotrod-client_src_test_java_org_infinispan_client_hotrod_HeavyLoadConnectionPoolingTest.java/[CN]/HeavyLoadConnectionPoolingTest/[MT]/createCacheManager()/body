@@ -1,0 +1,14 @@
+{
+  cacheManager=TestCacheManagerFactory.createLocalCacheManager();
+  cache=cacheManager.getCache();
+  hotRodServer=TestHelper.startHotRodServer(cacheManager);
+  Properties hotrodClientConf=new Properties();
+  hotrodClientConf.put("hotrod-servers","localhost:" + hotRodServer.getPort());
+  hotrodClientConf.put("timeBetweenEvictionRunsMillis","3000");
+  hotrodClientConf.put("minEvictableIdleTimeMillis","1000");
+  remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
+  remoteCache=remoteCacheManager.getCache();
+  TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
+  connectionPool=(GenericKeyedObjectPool)TestingUtil.extractField(tcpConnectionFactory,"connectionPool");
+  return cacheManager;
+}
