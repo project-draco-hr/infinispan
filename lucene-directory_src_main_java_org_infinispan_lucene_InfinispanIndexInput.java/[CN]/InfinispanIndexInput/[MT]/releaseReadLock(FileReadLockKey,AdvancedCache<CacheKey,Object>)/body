@@ -1,0 +1,14 @@
+{
+  int newValue=0;
+  boolean done=false;
+  while (done == false) {
+    Object lockValue=cache.get(readLockKey);
+    if (lockValue == null)     return;
+    int refCount=(Integer)lockValue;
+    newValue=refCount - 1;
+    done=cache.replace(readLockKey,refCount,newValue);
+  }
+  if (newValue == 0) {
+    realFileDelete(readLockKey,cache);
+  }
+}

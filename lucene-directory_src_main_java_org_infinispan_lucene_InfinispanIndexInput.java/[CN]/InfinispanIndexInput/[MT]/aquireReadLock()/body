@@ -1,0 +1,13 @@
+{
+  boolean done=false;
+  while (done == false) {
+    Object lockValue=cache.get(readLockKey);
+    if (lockValue == null)     return;
+    int refCount=(Integer)lockValue;
+    if (refCount == 0) {
+      throw new FileNotFoundException("segment file was deleted");
+    }
+    Integer newValue=Integer.valueOf(refCount + 1);
+    done=cache.replace(readLockKey,refCount,newValue);
+  }
+}

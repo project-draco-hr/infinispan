@@ -1,19 +1,13 @@
 {
   checkIsOpen();
-  FileCacheKey key=new FileCacheKey(indexName,name);
-  cache.remove(key);
   Set<String> fileList=getFileList();
-  fileList.remove(name);
-  cache.put(fileListCacheKey,fileList);
-  int i=0;
-  Object removed;
-  ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,name,i);
-  do {
-    removed=cache.remove(chunkKey);
-    chunkKey=new ChunkCacheKey(indexName,name,++i);
+  boolean deleted=fileList.remove(name);
+  if (deleted) {
+    cache.put(fileListCacheKey,fileList);
   }
- while (removed != null);
+  FileReadLockKey fileReadLockKey=new FileReadLockKey(indexName,name);
+  InfinispanIndexInput.releaseReadLock(fileReadLockKey,cache);
   if (log.isDebugEnabled()) {
-    log.debug("Removed file: {0} from index: {1}",key.getFileName(),indexName);
+    log.debug("Removed file: {0} from index: {1}",name,indexName);
   }
 }

@@ -3,10 +3,14 @@
     indexReader=IndexReader.open(directory,true);
   }
  else {
+    IndexReader before=indexReader;
     indexReader=indexReader.reopen();
+    if (before != indexReader) {
+      before.close();
+    }
   }
   if (searcher != null) {
     searcher.close();
   }
-  searcher=new IndexSearcher(directory,true);
+  searcher=new IndexSearcher(indexReader);
 }
