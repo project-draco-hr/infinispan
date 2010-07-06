@@ -1,13 +1,5 @@
 {
   checkIsOpen();
-  cache.startBatch();
-  CacheKey fromKey=new FileCacheKey(indexName,from);
-  FileMetadata fileFrom=(FileMetadata)cache.remove(fromKey);
-  cache.put(new FileCacheKey(indexName,to),fileFrom);
-  Set<String> fileList=getFileList();
-  fileList.remove(from);
-  fileList.add(to);
-  cache.put(fileListCacheKey,fileList);
   int i=-1;
   Object ob;
   do {
@@ -16,13 +8,23 @@
     if (ob == null) {
       break;
     }
-    cache.remove(fromChunkKey);
     ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i);
-    cache.put(toChunkKey,ob);
+    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey,ob);
   }
  while (true);
+  cache.startBatch();
+  CacheKey fromKey=new FileCacheKey(indexName,from);
+  FileMetadata metadata=(FileMetadata)cache.remove(fromKey);
+  cache.put(new FileCacheKey(indexName,to),metadata);
+  Set<String> fileList=getFileList();
+  fileList.remove(from);
+  fileList.add(to);
+  createRefCountForNewFile(to);
+  cache.put(fileListCacheKey,fileList);
+  cache.endBatch(true);
+  FileReadLockKey fileFromReadLockKey=new FileReadLockKey(indexName,from);
+  InfinispanIndexInput.releaseReadLock(fileFromReadLockKey,cache);
   if (log.isTraceEnabled()) {
     log.trace("Renamed file from: {0} to: {1} in index {2}",from,to,indexName);
   }
-  cache.endBatch(true);
 }
