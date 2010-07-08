@@ -8,7 +8,10 @@ def release():
         helpAndExit()
     base_dir = os.getcwd()
     version = validateVersion(sys.argv[1])
-    print ('Releasing Infinispan version ' + version)
+    branch = 'trunk'
+    if (len(sys.argv) > 2):
+        branch = sys.argv[2]
+    print ("Releasing Infinispan version %s from branch '%s'" + (version, branch))
     print 'Please stand by!'
     if settings['dry_run']:
         print '*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***'
@@ -20,7 +23,7 @@ def release():
         svn_conn = SvnConn()
     newVersion = ('%s/tags/%s' % (settings[svn_base_key], version))
     print ('Step 1: Tagging trunk in SVN as %s' % newVersion)
-    tagInSubversion(version, newVersion)
+    tagInSubversion(version, newVersion, branch)
     print 'Step 1: Complete'
     workingDir = ((settings[local_tags_dir_key] + '/') + version)
     print 'Step 2: Updating version number in source files'
