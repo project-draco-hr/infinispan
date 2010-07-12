@@ -1,12 +1,11 @@
 {
-  T instance=null;
   try {
-    Method factoryMethod=getFactoryMethod(clazz);
-    if (factoryMethod != null)     instance=(T)factoryMethod.invoke(null);
+    return getInstanceStrict(clazz);
   }
- catch (  Exception e) {
-    instance=null;
+ catch (  IllegalAccessException iae) {
+    throw new ConfigurationException("Unable to instantiate class " + clazz.getName(),iae);
   }
-  if (instance == null)   instance=clazz.newInstance();
-  return instance;
+catch (  InstantiationException ie) {
+    throw new ConfigurationException("Unable to instantiate class " + clazz.getName(),ie);
+  }
 }

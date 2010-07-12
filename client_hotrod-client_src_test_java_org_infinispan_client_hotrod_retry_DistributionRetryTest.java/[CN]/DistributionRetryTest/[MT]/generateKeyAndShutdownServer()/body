@@ -9,8 +9,8 @@
   remoteCache.put(key,"v");
   assertOnlyServerHit(getAddress(hotRodServer2));
   TcpTransportFactory tcpTp=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
-  SerializationMarshaller sm=new SerializationMarshaller();
-  TcpTransport transport=(TcpTransport)tcpTp.getTransport(sm.marshallObject(key,true));
+  Marshaller sm=new JBossMarshaller();
+  TcpTransport transport=(TcpTransport)tcpTp.getTransport(sm.objectToByteBuffer(key,64));
   try {
     assertEquals(transport.getServerAddress(),new InetSocketAddress("localhost",hotRodServer2.getPort()));
   }

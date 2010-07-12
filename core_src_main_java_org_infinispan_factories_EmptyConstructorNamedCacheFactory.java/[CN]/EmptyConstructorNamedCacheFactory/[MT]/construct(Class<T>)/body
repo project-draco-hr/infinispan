@@ -1,24 +1,19 @@
 {
-  try {
-    if (componentType.isInterface()) {
-      Class componentImpl;
-      if (componentType.equals(Marshaller.class)) {
-        VersionAwareMarshaller versionAwareMarshaller=Util.getInstance(VersionAwareMarshaller.class);
-        return componentType.cast(versionAwareMarshaller);
-      }
- else       if (componentType.equals(InvocationContextContainer.class)) {
-        componentImpl=InvocationContextContainerImpl.class;
-      }
- else {
-        componentImpl=Util.loadClass(componentType.getName() + "Impl");
-      }
-      return componentType.cast(Util.getInstance(componentImpl));
+  if (componentType.isInterface()) {
+    Class componentImpl;
+    if (componentType.equals(StreamingMarshaller.class)) {
+      VersionAwareMarshaller versionAwareMarshaller=Util.getInstance(VersionAwareMarshaller.class);
+      return componentType.cast(versionAwareMarshaller);
+    }
+ else     if (componentType.equals(InvocationContextContainer.class)) {
+      componentImpl=InvocationContextContainerImpl.class;
     }
  else {
-      return Util.getInstance(componentType);
+      componentImpl=Util.loadClass(componentType.getName() + "Impl");
     }
+    return componentType.cast(Util.getInstance(componentImpl));
   }
- catch (  Exception e) {
-    throw new ConfigurationException("Unable to create component " + componentType,e);
+ else {
+    return Util.getInstance(componentType);
   }
 }

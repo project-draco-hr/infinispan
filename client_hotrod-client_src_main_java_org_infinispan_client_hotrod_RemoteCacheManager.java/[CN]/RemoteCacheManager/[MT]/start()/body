@@ -4,22 +4,23 @@
     factory=TcpTransportFactory.class.getName();
     log.info("'transport-factory' factory not specified, using " + factory);
   }
-  transportFactory=(TransportFactory)VHelper.newInstance(factory);
+  transportFactory=(TransportFactory)getInstance(factory);
   String servers=props.getProperty(CONF_HOTROD_SERVERS);
   transportFactory.start(props,getStaticConfiguredServers(servers),topologyId);
-  if (hotRodMarshaller == null) {
-    String hotrodMarshallerClass=props.getProperty("marshaller");
-    if (hotrodMarshallerClass == null) {
-      hotrodMarshallerClass=SerializationMarshaller.class.getName();
-      log.info("'marshaller' not specified, using " + hotrodMarshallerClass);
+  if (marshaller == null) {
+    String marshaller=props.getProperty("marshaller");
+    if (marshaller == null) {
+      marshaller=JBossMarshaller.class.getName();
+      log.info("'marshaller' not specified, using " + marshaller);
     }
-    setHotRodMarshaller((HotRodMarshaller)VHelper.newInstance(hotrodMarshallerClass));
+    setMarshaller((Marshaller)getInstance(marshaller));
   }
   String asyncExecutorClass=DefaultAsyncExecutorFactory.class.getName();
   if (props.contains("asyn-executor-factory")) {
     asyncExecutorClass=props.getProperty("asyn-executor-factory");
   }
-  ExecutorFactory executorFactory=(ExecutorFactory)VHelper.newInstance(asyncExecutorClass);
+  ExecutorFactory executorFactory=null;
+  executorFactory=(ExecutorFactory)getInstance(asyncExecutorClass);
   asyncExecutorService=executorFactory.getExecutor(props);
   if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
     forceReturnValueDefault=true;
