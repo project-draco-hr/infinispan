@@ -4,5 +4,15 @@
   if (log.isTraceEnabled()) {
     log.trace("Created tcp transport: " + tcpTransport);
   }
+  if (pingOnStartup && !firstPingExecuted) {
+    log.trace("Executing first ping!");
+    firstPingExecuted=true;
+    try {
+      HotRodOperationsHelper.ping(tcpTransport,topologyId);
+    }
+ catch (    Exception e) {
+      log.trace("Ignoring ping request failure during ping on startup: " + e.getMessage());
+    }
+  }
   return tcpTransport;
 }

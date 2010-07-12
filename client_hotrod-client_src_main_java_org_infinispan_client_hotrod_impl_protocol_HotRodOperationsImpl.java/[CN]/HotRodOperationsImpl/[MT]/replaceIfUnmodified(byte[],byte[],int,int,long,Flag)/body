@@ -1,6 +1,7 @@
 {
-  for (int i=0; i < transportFactory.getTransportCount(); i++) {
-    Transport transport=getTransport(key,i == 0);
+  Transport transport=getTransport(key,true);
+  int retryCount=0;
+  do {
     try {
       long messageId=HotRodOperationsHelper.writeHeader(transport,REPLACE_IF_UNMODIFIED_REQUEST,cacheName,topologyId,flags);
       transport.writeArray(key);
@@ -11,11 +12,16 @@
       return returnVersionedOperationResponse(transport,messageId,REPLACE_IF_UNMODIFIED_RESPONSE,flags);
     }
  catch (    TransportException te) {
-      logErrorAndThrowExceptionIfNeeded(i,te);
+      logErrorAndThrowExceptionIfNeeded(retryCount,te);
     }
  finally {
       releaseTransport(transport);
     }
+    if (shouldRetry(retryCount)) {
+      transport=getTransport(key,false);
+    }
+    retryCount++;
   }
+ while (shouldRetry(retryCount));
   throw new IllegalStateException(" should not reach here!");
 }

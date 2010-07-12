@@ -1,15 +1,21 @@
 {
-  for (int i=0; i < transportFactory.getTransportCount(); i++) {
-    Transport transport=transportFactory.getTransport();
+  Transport transport=transportFactory.getTransport();
+  int retryCount=0;
+  do {
     try {
       long messageId=HotRodOperationsHelper.writeHeader(transport,CLEAR_REQUEST,cacheName,topologyId,flags);
       HotRodOperationsHelper.readHeaderAndValidate(transport,messageId,CLEAR_RESPONSE,topologyId);
     }
  catch (    TransportException te) {
-      logErrorAndThrowExceptionIfNeeded(i,te);
+      logErrorAndThrowExceptionIfNeeded(retryCount,te);
     }
  finally {
       releaseTransport(transport);
     }
+    if (shouldRetry(retryCount)) {
+      transport=transportFactory.getTransport();
+    }
+    retryCount++;
   }
+ while (shouldRetry(retryCount));
 }

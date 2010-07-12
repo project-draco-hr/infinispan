@@ -1,6 +1,7 @@
 {
-  for (int i=0; i < transportFactory.getTransportCount(); i++) {
-    Transport transport=getTransport(key,i == 0);
+  Transport transport=getTransport(key,true);
+  int retryCount=0;
+  do {
     try {
       short status=sendPutOperation(key,value,transport,PUT_REQUEST,PUT_RESPONSE,lifespan,maxIdle,flags);
       if (status != NO_ERROR_STATUS) {
@@ -9,11 +10,16 @@
       return returnPossiblePrevValue(transport,flags);
     }
  catch (    TransportException te) {
-      logErrorAndThrowExceptionIfNeeded(i,te);
+      logErrorAndThrowExceptionIfNeeded(retryCount,te);
     }
  finally {
       releaseTransport(transport);
     }
+    if (shouldRetry(retryCount)) {
+      transport=getTransport(key,false);
+    }
+    retryCount++;
   }
-  throw new IllegalStateException("This should not be reached!");
+ while (shouldRetry(retryCount));
+  throw new IllegalStateException("We should not reach here!");
 }
