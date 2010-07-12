@@ -1,0 +1,23 @@
+def get_slabs(self):
+    data = []
+    for s in self.servers:
+        if (not s.connect()):
+            continue
+        if (s.family == socket.AF_INET):
+            name = ('%s:%s (%s)' % (s.ip, s.port, s.weight))
+        else:
+            name = ('unix:%s (%s)' % (s.address, s.weight))
+        serverData = {}
+        data.append((name, serverData))
+        s.send_cmd('stats items')
+        readline = s.readline
+        while 1:
+            line = readline()
+            if ((not line) or (line.strip() == 'END')):
+                break
+            item = line.split(' ', 2)
+            slab = item[1].split(':', 2)
+            if (slab[1] not in serverData):
+                serverData[slab[1]] = {}
+            serverData[slab[1]][slab[2]] = item[2]
+    return data

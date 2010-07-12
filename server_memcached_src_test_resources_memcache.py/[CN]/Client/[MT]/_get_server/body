@@ -1,0 +1,11 @@
+def _get_server(self, key):
+    if isinstance(key, tuple):
+        (serverhash, key) = key
+    else:
+        serverhash = serverHashFunction(key)
+    for i in range(Client._SERVER_RETRIES):
+        server = self.buckets[(serverhash % len(self.buckets))]
+        if server.connect():
+            return (server, key)
+        serverhash = serverHashFunction((str(serverhash) + str(i)))
+    return (None, None)

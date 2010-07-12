@@ -1,0 +1,15 @@
+def readline(self):
+    buf = self.buffer
+    recv = self.socket.recv
+    while True:
+        index = buf.find('\r\n')
+        if (index >= 0):
+            break
+        data = recv(4096)
+        if (not data):
+            self.mark_dead(('Connection closed while reading from %s' % repr(self)))
+            self.buffer = ''
+            return None
+        buf += data
+    self.buffer = buf[(index + 2):]
+    return buf[:index]

@@ -1,0 +1,20 @@
+def __init__(self, servers, debug=0, pickleProtocol=0, pickler=pickle.Pickler, unpickler=pickle.Unpickler, pload=None, pid=None, server_max_key_length=SERVER_MAX_KEY_LENGTH, server_max_value_length=SERVER_MAX_VALUE_LENGTH):
+    "\n        Create a new Client object with the given list of servers.\n\n        @param servers: C{servers} is passed to L{set_servers}.\n        @param debug: whether to display error messages when a server can't be\n        contacted.\n        @param pickleProtocol: number to mandate protocol used by (c)Pickle.\n        @param pickler: optional override of default Pickler to allow subclassing.\n        @param unpickler: optional override of default Unpickler to allow subclassing.\n        @param pload: optional persistent_load function to call on pickle loading.\n        Useful for cPickle since subclassing isn't allowed.\n        @param pid: optional persistent_id function to call on pickle storing.\n        Useful for cPickle since subclassing isn't allowed.\n        "
+    local.__init__(self)
+    self.debug = debug
+    self.set_servers(servers)
+    self.stats = {}
+    self.cas_ids = {}
+    self.pickleProtocol = pickleProtocol
+    self.pickler = pickler
+    self.unpickler = unpickler
+    self.persistent_load = pload
+    self.persistent_id = pid
+    self.server_max_key_length = server_max_key_length
+    self.server_max_value_length = server_max_value_length
+    file = StringIO()
+    try:
+        pickler = self.pickler(file, protocol=self.pickleProtocol)
+        self.picklerIsKeyword = True
+    except TypeError:
+        self.picklerIsKeyword = False

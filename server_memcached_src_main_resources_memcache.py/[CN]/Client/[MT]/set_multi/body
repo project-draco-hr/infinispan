@@ -1,0 +1,36 @@
+def set_multi(self, mapping, time=0, key_prefix='', min_compress_len=0):
+    '\n        Sets multiple keys in the memcache doing just one query.\n\n        >>> notset_keys = mc.set_multi({\'key1\' : \'val1\', \'key2\' : \'val2\'})\n        >>> mc.get_multi([\'key1\', \'key2\']) == {\'key1\' : \'val1\', \'key2\' : \'val2\'}\n        1\n\n\n        This method is recommended over regular L{set} as it lowers the number of\n        total packets flying around your network, reducing total latency, since\n        your app doesn\'t have to wait for each round-trip of L{set} before sending\n        the next one.\n\n        @param mapping: A dict of key/value pairs to set.\n        @param time: Tells memcached the time which this value should expire, either\n        as a delta number of seconds, or an absolute unix time-since-the-epoch\n        value. See the memcached protocol docs section "Storage Commands"\n        for more info on <exptime>. We default to 0 == cache forever.\n        @param key_prefix:  Optional string to prepend to each key when sending to memcache. Allows you to efficiently stuff these keys into a pseudo-namespace in memcache:\n            >>> notset_keys = mc.set_multi({\'key1\' : \'val1\', \'key2\' : \'val2\'}, key_prefix=\'subspace_\')\n            >>> len(notset_keys) == 0\n            True\n            >>> mc.get_multi([\'subspace_key1\', \'subspace_key2\']) == {\'subspace_key1\' : \'val1\', \'subspace_key2\' : \'val2\'}\n            True\n\n            Causes key \'subspace_key1\' and \'subspace_key2\' to be set. Useful in conjunction with a higher-level layer which applies namespaces to data in memcache.\n            In this case, the return result would be the list of notset original keys, prefix not applied.\n\n        @param min_compress_len: The threshold length to kick in auto-compression\n        of the value using the zlib.compress() routine. If the value being cached is\n        a string, then the length of the string is measured, else if the value is an\n        object, then the length of the pickle result is measured. If the resulting\n        attempt at compression yeilds a larger string than the input, then it is\n        discarded. For backwards compatability, this parameter defaults to 0,\n        indicating don\'t ever try to compress.\n        @return: List of keys which failed to be stored [ memcache out of memory, etc. ].\n        @rtype: list\n\n        '
+    self._statlog('set_multi')
+    (server_keys, prefixed_to_orig_key) = self._map_and_prefix_keys(mapping.iterkeys(), key_prefix)
+    dead_servers = []
+    for server in server_keys.iterkeys():
+        bigcmd = []
+        write = bigcmd.append
+        try:
+            for key in server_keys[server]:
+                store_info = self._val_to_store_info(mapping[prefixed_to_orig_key[key]], min_compress_len)
+                write(('set %s %d %d %d\r\n%s\r\n' % (key, store_info[0], time, store_info[1], store_info[2])))
+            server.send_cmds(''.join(bigcmd))
+        except socket.error as msg:
+            if isinstance(msg, tuple):
+                msg = msg[1]
+            server.mark_dead(msg)
+            dead_servers.append(server)
+    for server in dead_servers:
+        del server_keys[server]
+    if (not server_keys):
+        return mapping.keys()
+    notstored = []
+    for (server, keys) in server_keys.iteritems():
+        try:
+            for key in keys:
+                line = server.readline()
+                if (line == 'STORED'):
+                    continue
+                else:
+                    notstored.append(prefixed_to_orig_key[key])
+        except (_Error, socket.error) as msg:
+            if isinstance(msg, tuple):
+                msg = msg[1]
+            server.mark_dead(msg)
+    return notstored

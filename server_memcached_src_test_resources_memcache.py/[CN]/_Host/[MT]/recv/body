@@ -1,0 +1,10 @@
+def recv(self, rlen):
+    self_socket_recv = self.socket.recv
+    buf = self.buffer
+    while (len(buf) < rlen):
+        foo = self_socket_recv(max((rlen - len(buf)), 4096))
+        buf += foo
+        if (not foo):
+            raise _Error(('Read %d bytes, expecting %d, read returned 0 length bytes' % (len(buf), rlen)))
+    self.buffer = buf[rlen:]
+    return buf[:rlen]

@@ -1,0 +1,36 @@
+def delete_multi(self, keys, time=0, key_prefix=''):
+    "\n        Delete multiple keys in the memcache doing just one query.\n\n        >>> notset_keys = mc.set_multi({'key1' : 'val1', 'key2' : 'val2'})\n        >>> mc.get_multi(['key1', 'key2']) == {'key1' : 'val1', 'key2' : 'val2'}\n        1\n        >>> mc.delete_multi(['key1', 'key2'])\n        1\n        >>> mc.get_multi(['key1', 'key2']) == {}\n        1\n\n\n        This method is recommended over iterated regular L{delete}s as it reduces total latency, since\n        your app doesn't have to wait for each round-trip of L{delete} before sending\n        the next one.\n\n        @param keys: An iterable of keys to clear\n        @param time: number of seconds any subsequent set / update commands should fail. Defaults to 0 for no delay.\n        @param key_prefix:  Optional string to prepend to each key when sending to memcache.\n            See docs for L{get_multi} and L{set_multi}.\n\n        @return: 1 if no failure in communication with any memcacheds.\n        @rtype: int\n\n        "
+    self._statlog('delete_multi')
+    (server_keys, prefixed_to_orig_key) = self._map_and_prefix_keys(keys, key_prefix)
+    dead_servers = []
+    rc = 1
+    for server in server_keys.iterkeys():
+        bigcmd = []
+        write = bigcmd.append
+        if (time != None):
+            for key in server_keys[server]:
+                write(('delete %s %d\r\n' % (key, time)))
+        else:
+            for key in server_keys[server]:
+                write(('delete %s\r\n' % key))
+        try:
+            server.send_cmds(''.join(bigcmd))
+        except socket.error as msg:
+            rc = 0
+            if isinstance(msg, tuple):
+                msg = msg[1]
+            server.mark_dead(msg)
+            dead_servers.append(server)
+    for server in dead_servers:
+        del server_keys[server]
+    notstored = []
+    for (server, keys) in server_keys.iteritems():
+        try:
+            for key in keys:
+                server.expect('DELETED')
+        except socket.error as msg:
+            if isinstance(msg, tuple):
+                msg = msg[1]
+            server.mark_dead(msg)
+            rc = 0
+    return rc

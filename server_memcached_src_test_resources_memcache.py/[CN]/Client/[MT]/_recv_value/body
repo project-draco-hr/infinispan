@@ -1,0 +1,28 @@
+def _recv_value(self, server, flags, rlen):
+    rlen += 2
+    buf = server.recv(rlen)
+    if (len(buf) != rlen):
+        raise _Error(('received %d bytes when expecting %d' % (len(buf), rlen)))
+    if (len(buf) == rlen):
+        buf = buf[:(-2)]
+    if (flags & Client._FLAG_COMPRESSED):
+        buf = decompress(buf)
+    if ((flags == 0) or (flags == Client._FLAG_COMPRESSED)):
+        val = buf
+    elif (flags & Client._FLAG_INTEGER):
+        val = int(buf)
+    elif (flags & Client._FLAG_LONG):
+        val = long(buf)
+    elif (flags & Client._FLAG_PICKLE):
+        try:
+            file = StringIO(buf)
+            unpickler = self.unpickler(file)
+            if self.persistent_load:
+                unpickler.persistent_load = self.persistent_load
+            val = unpickler.load()
+        except Exception as e:
+            self.debuglog(('Pickle error: %s\n' % e))
+            val = None
+    else:
+        self.debuglog(('unknown flags on get: %x\n' % flags))
+    return val

@@ -1,0 +1,191 @@
+'\nclient module for memcached (memory cache daemon)\n\nOverview\n========\n\nSee U{the MemCached homepage<http://www.danga.com/memcached>} for more about memcached.\n\nUsage summary\n=============\n\nThis should give you a feel for how this module operates::\n\n    import memcache\n    mc = memcache.Client([\'127.0.0.1:11211\'], debug=0)\n\n    mc.set("some_key", "Some value")\n    value = mc.get("some_key")\n\n    mc.set("another_key", 3)\n    mc.delete("another_key")\n\n    mc.set("key", "1")   # note that the key used for incr/decr must be a string.\n    mc.incr("key")\n    mc.decr("key")\n\nThe standard way to use memcache with a database is like this::\n\n    key = derive_key(obj)\n    obj = mc.get(key)\n    if not obj:\n        obj = backend_api.get(...)\n        mc.set(key, obj)\n\n    # we now have obj, and future passes through this code\n    # will use the object from the cache.\n\nDetailed Documentation\n======================\n\nMore detailed documentation is available in the L{Client} class.\n'
+import sys
+import socket
+import time
+import os
+import re
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+from binascii import crc32
+serverHashFunction = cmemcache_hash
+try:
+    from zlib import compress, decompress
+    _supports_compress = True
+except ImportError:
+    _supports_compress = False
+
+    def decompress(val):
+        raise _Error("received compressed data but I don't support compession (import error)")
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+__author__ = 'Evan Martin <martine@danga.com>'
+__version__ = '1.45'
+__copyright__ = 'Copyright (C) 2003 Danga Interactive'
+__license__ = 'Python'
+SERVER_MAX_KEY_LENGTH = 250
+SERVER_MAX_VALUE_LENGTH = (1024 * 1024)
+try:
+    from threading import local
+except ImportError:
+
+
+    class local(object):
+        pass
+if (__name__ == '__main__'):
+    failures = 0
+    print 'Testing docstrings...'
+    _doctest()
+    print 'Running tests:'
+    print 
+    serverList = [['127.0.0.1:11211']]
+    if ('--do-unix' in sys.argv):
+        serverList.append([os.path.join(os.getcwd(), 'memcached.socket')])
+    for servers in serverList:
+        mc = Client(servers, debug=1)
+
+        def to_s(val):
+            if (not isinstance(val, basestring)):
+                return ('%s (%s)' % (val, type(val)))
+            return ('%s' % val)
+
+        def test_setget(key, val):
+            print ("Testing set/get {'%s': %s} ..." % (to_s(key), to_s(val))),
+            mc.set(key, val)
+            newval = mc.get(key)
+            if (newval == val):
+                print 'OK'
+                return 1
+            else:
+                print 'FAIL'
+                failures = (failures + 1)
+                return 0
+
+
+        class FooStruct(object):
+
+            def __init__(self):
+                self.bar = 'baz'
+
+            def __str__(self):
+                return 'A FooStruct'
+
+            def __eq__(self, other):
+                if isinstance(other, FooStruct):
+                    return (self.bar == other.bar)
+                return 0
+        test_setget('a_string', 'some random string')
+        test_setget('an_integer', 42)
+        if test_setget('long', long((1 << 30))):
+            print 'Testing delete ...',
+            if mc.delete('long'):
+                print 'OK'
+            else:
+                print 'FAIL'
+                failures = (failures + 1)
+        print 'Testing get_multi ...',
+        print mc.get_multi(['a_string', 'an_integer'])
+        print 'Testing get(unknown value) ...',
+        print to_s(mc.get('unknown_value'))
+        f = FooStruct()
+        test_setget('foostruct', f)
+        print 'Testing incr ...',
+        x = mc.incr('an_integer', 1)
+        if (x == 43):
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing decr ...',
+        x = mc.decr('an_integer', 1)
+        if (x == 42):
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        sys.stdout.flush()
+        print 'Testing sending spaces...',
+        sys.stdout.flush()
+        try:
+            x = mc.set('this has spaces', 1)
+        except Client.MemcachedKeyCharacterError as msg:
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing sending control characters...',
+        try:
+            x = mc.set('this\x10has\x11control characters\x02', 1)
+        except Client.MemcachedKeyCharacterError as msg:
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing using insanely long key...',
+        try:
+            x = mc.set((('a' * SERVER_MAX_KEY_LENGTH) + 'aaaa'), 1)
+        except Client.MemcachedKeyLengthError as msg:
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing sending a unicode-string key...',
+        try:
+            x = mc.set(u'keyhere', 1)
+        except Client.MemcachedStringEncodingError as msg:
+            print 'OK',
+        else:
+            print 'FAIL',
+            failures = (failures + 1)
+        try:
+            x = mc.set((u'a' * SERVER_MAX_KEY_LENGTH).encode('utf-8'), 1)
+        except:
+            print 'FAIL',
+            failures = (failures + 1)
+        else:
+            print 'OK',
+        import pickle
+        s = pickle.loads('V\\u4f1a\np0\n.')
+        try:
+            x = mc.set((s * SERVER_MAX_KEY_LENGTH).encode('utf-8'), 1)
+        except Client.MemcachedKeyLengthError:
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing using a value larger than the memcached value limit...',
+        x = mc.set('keyhere', ('a' * SERVER_MAX_VALUE_LENGTH))
+        if (mc.get('keyhere') == None):
+            print 'OK',
+        else:
+            print 'FAIL',
+            failures = (failures + 1)
+        x = mc.set('keyhere', (('a' * SERVER_MAX_VALUE_LENGTH) + 'aaa'))
+        if (mc.get('keyhere') == None):
+            print 'OK'
+        else:
+            print 'FAIL'
+            failures = (failures + 1)
+        print 'Testing set_multi() with no memcacheds running',
+        mc.disconnect_all()
+        errors = mc.set_multi({'keyhere': 'a', 'keythere': 'b', })
+        if (errors != []):
+            print 'FAIL'
+            failures = (failures + 1)
+        else:
+            print 'OK'
+        print 'Testing delete_multi() with no memcacheds running',
+        mc.disconnect_all()
+        ret = mc.delete_multi({'keyhere': 'a', 'keythere': 'b', })
+        if (ret != 1):
+            print 'FAIL'
+            failures = (failures + 1)
+        else:
+            print 'OK'
+    if (failures > 0):
+        print '*** THERE WERE FAILED TESTS'
+        sys.exit(1)
+    sys.exit(0)

@@ -1,0 +1,22 @@
+def _map_and_prefix_keys(self, key_iterable, key_prefix):
+    'Compute the mapping of server (_Host instance) -> list of keys to stuff onto that server, as well as the mapping of\n        prefixed key -> original key.\n\n\n        '
+    key_extra_len = len(key_prefix)
+    if key_prefix:
+        self.check_key(key_prefix)
+    server_keys = {}
+    prefixed_to_orig_key = {}
+    for orig_key in key_iterable:
+        if isinstance(orig_key, tuple):
+            str_orig_key = str(orig_key[1])
+            (server, key) = self._get_server((orig_key[0], (key_prefix + str_orig_key)))
+        else:
+            str_orig_key = str(orig_key)
+            (server, key) = self._get_server((key_prefix + str_orig_key))
+        self.check_key(str_orig_key, key_extra_len=key_extra_len)
+        if (not server):
+            continue
+        if (server not in server_keys):
+            server_keys[server] = []
+        server_keys[server].append(key)
+        prefixed_to_orig_key[key] = orig_key
+    return (server_keys, prefixed_to_orig_key)

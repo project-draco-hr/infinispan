@@ -1,0 +1,33 @@
+def _val_to_store_info(self, val, min_compress_len):
+    '\n           Transform val to a storable representation, returning a tuple of the flags, the length of the new value, and the new value itself.\n        '
+    flags = 0
+    if isinstance(val, str):
+        pass
+    elif isinstance(val, int):
+        flags |= Client._FLAG_INTEGER
+        val = ('%d' % val)
+        min_compress_len = 0
+    elif isinstance(val, long):
+        flags |= Client._FLAG_LONG
+        val = ('%d' % val)
+        min_compress_len = 0
+    else:
+        flags |= Client._FLAG_PICKLE
+        file = StringIO()
+        if self.picklerIsKeyword:
+            pickler = self.pickler(file, protocol=self.pickleProtocol)
+        else:
+            pickler = self.pickler(file, self.pickleProtocol)
+        if self.persistent_id:
+            pickler.persistent_id = self.persistent_id
+        pickler.dump(val)
+        val = file.getvalue()
+    lv = len(val)
+    if (min_compress_len and _supports_compress and (lv > min_compress_len)):
+        comp_val = compress(val)
+        if (len(comp_val) < lv):
+            flags |= Client._FLAG_COMPRESSED
+            val = comp_val
+    if ((self.server_max_value_length != 0) and (len(val) >= self.server_max_value_length)):
+        return 0
+    return (flags, len(val), val)
