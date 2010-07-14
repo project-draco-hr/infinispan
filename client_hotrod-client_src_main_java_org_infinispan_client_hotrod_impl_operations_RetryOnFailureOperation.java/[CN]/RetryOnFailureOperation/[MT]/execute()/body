@@ -1,0 +1,21 @@
+{
+  int retryCount=0;
+  Transport transport=getTransport(retryCount);
+  do {
+    try {
+      return executeOperation(transport);
+    }
+ catch (    TransportException te) {
+      logErrorAndThrowExceptionIfNeeded(retryCount,te);
+    }
+ finally {
+      releaseTransport(transport);
+    }
+    if (shouldRetry(retryCount)) {
+      transport=getTransport(retryCount);
+    }
+    retryCount++;
+  }
+ while (shouldRetry(retryCount));
+  throw new IllegalStateException("We should not reach here!");
+}

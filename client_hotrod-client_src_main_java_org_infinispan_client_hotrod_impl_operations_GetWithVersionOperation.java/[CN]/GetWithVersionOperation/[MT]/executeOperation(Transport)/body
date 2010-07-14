@@ -1,0 +1,16 @@
+{
+  short status=sendKeyOperation(key,transport,GET_WITH_VERSION,GET_WITH_VERSION_RESPONSE);
+  Object result=null;
+  if (status == KEY_DOES_NOT_EXIST_STATUS) {
+    result=null;
+  }
+ else   if (status == NO_ERROR_STATUS) {
+    long version=transport.readLong();
+    if (log.isTraceEnabled()) {
+      log.trace("Received version: " + version);
+    }
+    byte[] value=transport.readArray();
+    result=new BinaryVersionedValue(version,value);
+  }
+  return result;
+}

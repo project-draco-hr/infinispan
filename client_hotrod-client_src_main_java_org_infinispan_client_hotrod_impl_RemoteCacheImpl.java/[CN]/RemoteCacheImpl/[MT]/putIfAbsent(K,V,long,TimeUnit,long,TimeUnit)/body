@@ -2,6 +2,7 @@
   assertRemoteCacheManagerIsStarted();
   int lifespanSecs=toSeconds(lifespan,lifespanUnit);
   int maxIdleSecs=toSeconds(maxIdleTime,maxIdleTimeUnit);
-  byte[] bytes=operations.putIfAbsent(obj2bytes(key,true),obj2bytes(value,false),lifespanSecs,maxIdleSecs,flags());
+  PutIfAbsentOperation op=operationsFactory.newPutIfAbsentOperation(obj2bytes(key,true),obj2bytes(value,false),lifespanSecs,maxIdleSecs);
+  byte[] bytes=(byte[])op.execute();
   return (V)bytes2obj(bytes);
 }

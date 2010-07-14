@@ -1,0 +1,20 @@
+{
+  boolean success;
+  try {
+    long messageId=writeHeader(transport,HotRodConstants.PING_REQUEST);
+    short respStatus=readHeaderAndValidate(transport,messageId,HotRodConstants.PING_RESPONSE);
+    if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
+      if (log.isTraceEnabled())       log.trace("Successfully validated transport: " + transport);
+      success=true;
+    }
+ else {
+      if (log.isTraceEnabled())       log.trace("Unknown response status: " + respStatus);
+      success=false;
+    }
+  }
+ catch (  Exception e) {
+    if (log.isTraceEnabled())     log.trace("Failed to validate transport: " + transport,e);
+    success=false;
+  }
+  return success;
+}
