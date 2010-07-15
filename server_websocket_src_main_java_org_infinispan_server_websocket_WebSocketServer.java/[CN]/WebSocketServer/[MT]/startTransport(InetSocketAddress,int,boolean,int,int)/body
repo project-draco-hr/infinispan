@@ -1,0 +1,11 @@
+{
+  Executor masterExecutor=masterThreads() == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(masterThreads());
+  Executor workerExecutor=workerThreads() == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(workerThreads());
+  NioServerSocketChannelFactory factory=workerThreads() == 0 ? new NioServerSocketChannelFactory(masterExecutor,workerExecutor) : new NioServerSocketChannelFactory(masterExecutor,workerExecutor,workerThreads());
+  ServerBootstrap bootstrap=new ServerBootstrap(factory);
+  bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager()));
+  bootstrap.setOption("child.tcpNoDelay",tcpNoDelay);
+  if (sendBufSize > 0)   bootstrap.setOption("child.sendBufferSize",sendBufSize);
+  if (recvBufSize > 0)   bootstrap.setOption("receiveBufferSize",recvBufSize);
+  bootstrap.bind(address);
+}

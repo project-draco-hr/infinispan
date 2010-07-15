@@ -1,29 +1,16 @@
 {
-  String factory=props.getProperty("transport-factory");
-  if (factory == null) {
-    factory=TcpTransportFactory.class.getName();
-    log.info("'transport-factory' factory not specified, using " + factory);
-  }
+  String factory=config.getTransportFactory();
   transportFactory=(TransportFactory)getInstance(factory);
-  String servers=props.getProperty(CONF_HOTROD_SERVERS);
-  transportFactory.start(props,getStaticConfiguredServers(servers),topologyId);
+  Collection<InetSocketAddress> servers=config.getServerList();
+  transportFactory.start(config,servers,topologyId);
   if (marshaller == null) {
-    String marshaller=props.getProperty("marshaller");
-    if (marshaller == null) {
-      marshaller=GenericJBossMarshaller.class.getName();
-      log.info("'marshaller' not specified, using " + marshaller);
-    }
-    setMarshaller((Marshaller)getInstance(marshaller));
+    String marshallerName=config.getMarshaller();
+    setMarshaller((Marshaller)getInstance(marshallerName));
   }
-  String asyncExecutorClass=DefaultAsyncExecutorFactory.class.getName();
-  if (props.contains("asyn-executor-factory")) {
-    asyncExecutorClass=props.getProperty("asyn-executor-factory");
-  }
+  String asyncExecutorClass=config.getAsyncExecutorFactory();
   ExecutorFactory executorFactory=(ExecutorFactory)getInstance(asyncExecutorClass);
-  asyncExecutorService=executorFactory.getExecutor(props);
-  if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
-    forceReturnValueDefault=true;
-  }
+  asyncExecutorService=executorFactory.getExecutor(config.getProperties());
+  forceReturnValueDefault=config.getForceReturnValues();
 synchronized (cacheName2RemoteCache) {
     for (    RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
       startRemoteCache(remoteCache);
