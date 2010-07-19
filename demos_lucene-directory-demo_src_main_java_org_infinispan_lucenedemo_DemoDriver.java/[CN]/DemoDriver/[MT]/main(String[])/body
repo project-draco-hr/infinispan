@@ -1,5 +1,13 @@
 {
-  DemoDriver driver=new DemoDriver();
-  driver.run();
-  DirectoryFactory.close();
+  DefaultCacheManager cacheManager=new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
+  cacheManager.start();
+  try {
+    Cache cache=cacheManager.getCache();
+    InfinispanDirectory directory=new InfinispanDirectory(cache);
+    DemoDriver driver=new DemoDriver(directory);
+    driver.run();
+  }
+  finally {
+    cacheManager.stop();
+  }
 }
