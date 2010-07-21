@@ -1,5 +1,18 @@
 {
   Object toReturn=invokeNextInterceptor(ctx,command);
-  if (shouldModifyIndexes(ctx))   addToIndexes(extractValue(command.getValue()),extractValue(command.getKey()));
+  if (shouldModifyIndexes(ctx)) {
+    Object key=command.getKey();
+    Object value=command.getValue();
+    System.out.println("Key, value pairing is: - " + key + " + "+ value);
+    CacheEntry entry=ctx.lookupEntry(key);
+    if (entry.isCreated()) {
+      System.out.println("Entry is created");
+      addToIndexes(extractValue(value),extractValue(key));
+    }
+    if (entry.isChanged()) {
+      System.out.println("Entry is changed");
+      updateIndexes((value),extractValue(key));
+    }
+  }
   return toReturn;
 }
