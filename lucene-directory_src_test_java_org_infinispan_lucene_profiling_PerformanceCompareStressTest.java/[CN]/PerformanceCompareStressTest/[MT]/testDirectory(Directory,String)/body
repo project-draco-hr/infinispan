@@ -1,11 +1,13 @@
 {
-  SharedState state=new SharedState(200000);
+  SharedState state=new SharedState(DICTIONARY_SIZE);
   CacheTestSupport.initializeDirectory(dir);
-  ExecutorService e=Executors.newFixedThreadPool(THREADS + 1);
-  for (int i=0; i < THREADS; i++) {
+  ExecutorService e=Executors.newFixedThreadPool(READER_THREADS + 1);
+  for (int i=0; i < READER_THREADS; i++) {
     e.execute(new LuceneReaderThread(dir,state));
   }
-  e.execute(new LuceneWriterThread(dir,state));
+  for (int i=0; i < WRITER_THREADS; i++) {
+    e.execute(new LuceneWriterThread(dir,state));
+  }
   e.shutdown();
   state.startWaitingThreads();
   Thread.sleep(DURATION_MS);
