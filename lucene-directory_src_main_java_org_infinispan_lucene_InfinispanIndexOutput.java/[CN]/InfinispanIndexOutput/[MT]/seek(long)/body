@@ -1,9 +1,14 @@
 {
-  flush();
+  int requestedChunkNumber=getChunkNumberFromPosition(pos,bufferSize);
   if (pos > file.getSize()) {
-    throw new IOException(fileKey.getFileName() + ": seeking past of the file");
+    resizeFileIfNeeded();
+    if (pos > file.getSize())     throw new IOException(fileKey.getFileName() + ": seeking past of the file");
   }
-  buffer=getChunkFromPosition(cache,fileKey,(int)pos,bufferSize);
-  bufferPosition=getPositionInBuffer((int)pos,bufferSize);
-  filePosition=(int)pos;
+  if (requestedChunkNumber != currentChunkNumber) {
+    flush();
+    buffer=getChunkById(cache,fileKey,requestedChunkNumber);
+    currentChunkNumber=requestedChunkNumber;
+  }
+  positionInBuffer=getPositionInBuffer(pos,bufferSize);
+  filePosition=pos;
 }

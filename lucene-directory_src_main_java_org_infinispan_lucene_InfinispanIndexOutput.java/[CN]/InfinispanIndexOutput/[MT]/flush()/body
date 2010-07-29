@@ -1,10 +1,7 @@
 {
-  chunkNumber=getChunkNumberFromPosition(filePosition - 1,bufferSize);
-  ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),chunkNumber);
+  ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
   file.touch();
-  if (file.getSize() < filePosition) {
-    file.setSize(filePosition);
-  }
+  resizeFileIfNeeded();
   cache.startBatch();
   cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key,buffer);
   cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey,file);
