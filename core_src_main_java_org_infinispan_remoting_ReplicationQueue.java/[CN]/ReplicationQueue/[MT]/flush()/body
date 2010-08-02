@@ -1,10 +1,7 @@
 {
-  List<ReplicableCommand> toReplicate;
-synchronized (elements) {
-    if (log.isTraceEnabled())     log.trace("flush(): flushing repl queue (num elements={0})",elements.size());
-    toReplicate=new ArrayList<ReplicableCommand>(elements);
-    elements.clear();
-  }
+  List<ReplicableCommand> toReplicate=new LinkedList<ReplicableCommand>();
+  elements.drainTo(toReplicate);
+  if (log.isTraceEnabled())   log.trace("flush(): flushing repl queue (num elements={0})",toReplicate.size());
   int toReplicateSize=toReplicate.size();
   if (toReplicateSize > 0) {
     try {
