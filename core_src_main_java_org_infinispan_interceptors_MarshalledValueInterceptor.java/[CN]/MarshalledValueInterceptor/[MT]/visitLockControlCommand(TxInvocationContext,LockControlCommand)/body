@@ -1,0 +1,15 @@
+{
+  if (command.multipleKeys()) {
+    Collection<Object> rawKeys=command.getKeys();
+    Map<Object,Object> keyToMarshalledKeyMapping=new HashMap<Object,Object>(rawKeys.size());
+    for (    Object k : rawKeys) {
+      if (!isTypeExcluded(k.getClass()))       keyToMarshalledKeyMapping.put(k,createMarshalledValue(k,ctx));
+    }
+    if (!keyToMarshalledKeyMapping.isEmpty())     command.replaceKeys(keyToMarshalledKeyMapping);
+  }
+ else {
+    Object key=command.getSingleKey();
+    if (!isTypeExcluded(key.getClass()))     command.replaceKey(key,createMarshalledValue(key,ctx));
+  }
+  return invokeNextInterceptor(ctx,command);
+}
