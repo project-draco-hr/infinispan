@@ -1,0 +1,16 @@
+{
+  ConnectionFactoryConfig connectionFactoryConfig=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+  if (wrap) {
+    connectionFactoryConfig.setConnectionFactoryClass(SharedConnectionFactory.class.getName());
+  }
+  TableManipulation tm=UnitTestDatabaseManager.buildDefaultTableManipulation();
+  JdbcStringBasedCacheStoreConfig csConfig=new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig,tm);
+  csConfig.setFetchPersistentState(true);
+  csConfig.setKey2StringMapperClass(mapperName);
+  CacheLoaderManagerConfig cacheLoaders=new CacheLoaderManagerConfig();
+  cacheLoaders.setPreload(preload);
+  cacheLoaders.addCacheLoaderConfig(csConfig);
+  Configuration cfg=TestCacheManagerFactory.getDefaultConfiguration(false);
+  cfg.setCacheLoaderManagerConfig(cacheLoaders);
+  return cfg;
+}

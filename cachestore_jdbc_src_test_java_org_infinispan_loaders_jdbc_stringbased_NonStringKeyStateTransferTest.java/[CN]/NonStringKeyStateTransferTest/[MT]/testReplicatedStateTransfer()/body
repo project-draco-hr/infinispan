@@ -1,0 +1,21 @@
+{
+  EmbeddedCacheManager cm1=null, cm2=null;
+  try {
+    Configuration conf=NonStringKeyPreloadTest.createCacheStoreConfig(TwoWayPersonKey2StringMapper.class.getName(),false,true);
+    conf.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+    cm1=TestCacheManagerFactory.createClusteredCacheManager(conf);
+    Cache c1=cm1.getCache();
+    Person mircea=new Person("markus","mircea",30);
+    Person mircea2=new Person("markus2","mircea2",30);
+    c1.put(mircea,"mircea");
+    c1.put(mircea2,"mircea2");
+    cm2=TestCacheManagerFactory.createClusteredCacheManager(conf);
+    Cache c2=cm2.getCache();
+    assertEquals("mircea",c2.get(mircea));
+    assertEquals("mircea2",c2.get(mircea2));
+    c2.get(mircea2);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm1,cm2);
+  }
+}
