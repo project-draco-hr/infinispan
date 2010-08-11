@@ -2,11 +2,19 @@
   super.start();
   if (config.isManageConnectionFactory()) {
     String connectionFactoryClass=config.getConnectionFactoryConfig().getConnectionFactoryClass();
+    if (log.isTraceEnabled())     log.trace("Using managed connection factory: " + connectionFactoryClass);
     ConnectionFactory connectionFactory=ConnectionFactory.getConnectionFactory(connectionFactoryClass);
     connectionFactory.start(config.getConnectionFactoryConfig());
     doConnectionFactoryInitialization(connectionFactory);
   }
   this.key2StringMapper=config.getKey2StringMapper();
+  if (log.isTraceEnabled())   log.trace("Using key2StringMapper: " + key2StringMapper.getClass().getName());
+  if (isUsingPreload()) {
+    enforceTwoWayMapper("preload");
+  }
+  if (isDistributed()) {
+    enforceTwoWayMapper("distribution/rehashing");
+  }
   dmHelper=new DataManipulationHelper(connectionFactory,tableManipulation,marshaller){
     @Override protected String getLoadAllKeysSql(){
       return tableManipulation.getLoadAllKeysStringSql();
@@ -14,26 +22,29 @@
     @Override public void loadAllProcess(    ResultSet rs,    Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
       InputStream inputStream=rs.getBinaryStream(1);
       InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),inputStream);
-      Object key=rs.getObject(2);
+      String keyStr=rs.getString(2);
+      Object key=((TwoWayKey2StringMapper)key2StringMapper).getKeyMapping(keyStr);
       result.add(icv.toInternalCacheEntry(key));
     }
     @Override public void loadAllKeysProcess(    ResultSet rs,    Set<Object> keys,    Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
-      Object k=rs.getObject(1);
-      if (includeKey(k,keysToExclude))       keys.add(k);
+      String keyStr=rs.getString(1);
+      Object key=((TwoWayKey2StringMapper)key2StringMapper).getKeyMapping(keyStr);
+      if (includeKey(key,keysToExclude)) {
+        keys.add(key);
+      }
     }
     @Override public void toStreamProcess(    ResultSet rs,    InputStream is,    ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
       InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),is);
-      Object key=rs.getObject(2);
+      String key=rs.getString(2);
       marshaller.objectToObjectStream(icv.toInternalCacheEntry(key),objectOutput);
     }
     public boolean fromStreamProcess(    Object objFromStream,    PreparedStatement ps,    ObjectInput objectInput) throws SQLException, CacheLoaderException {
       if (objFromStream instanceof InternalCacheEntry) {
         InternalCacheEntry se=(InternalCacheEntry)objFromStream;
-        String key=key2StringMapper.getStringMapping(se.getKey());
         ByteBuffer buffer=JdbcUtil.marshall(getMarshaller(),se.toInternalCacheValue());
         ps.setBinaryStream(1,buffer.getStream(),buffer.getLength());
         ps.setLong(2,se.getExpiryTime());
-        ps.setString(3,key);
+        ps.setString(3,(String)se.getKey());
         return true;
       }
  else {
