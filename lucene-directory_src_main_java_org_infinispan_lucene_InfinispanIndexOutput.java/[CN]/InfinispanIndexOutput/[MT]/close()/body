@@ -1,9 +1,13 @@
 {
-  flush();
+  doFlush();
+  if (transactionRunning) {
+    cache.endBatch(true);
+    transactionRunning=false;
+  }
   positionInBuffer=0;
   filePosition=0;
   buffer=null;
-  if (log.isDebugEnabled()) {
-    log.debug("Closed IndexOutput for file:{0} in index: {1}",fileKey.getFileName(),fileKey.getIndexName());
+  if (trace) {
+    log.trace("Closed IndexOutput for file:{0} in index: {1}",fileKey.getFileName(),fileKey.getIndexName());
   }
 }

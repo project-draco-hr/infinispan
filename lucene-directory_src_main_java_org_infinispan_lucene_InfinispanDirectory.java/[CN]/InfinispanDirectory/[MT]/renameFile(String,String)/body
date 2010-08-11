@@ -12,16 +12,15 @@
     cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey,ob);
   }
  while (true);
-  cache.startBatch();
+  boolean batching=cache.startBatch();
   FileCacheKey fromKey=new FileCacheKey(indexName,from);
   FileMetadata metadata=(FileMetadata)cache.remove(fromKey);
   cache.put(new FileCacheKey(indexName,to),metadata);
   Set<String> fileList=getFileList();
   fileList.remove(from);
   fileList.add(to);
-  createRefCountForNewFile(to);
   cache.put(fileListCacheKey,fileList);
-  cache.endBatch(true);
+  if (batching)   cache.endBatch(true);
   FileReadLockKey fileFromReadLockKey=new FileReadLockKey(indexName,from);
   InfinispanIndexInput.releaseReadLock(fileFromReadLockKey,cache);
   if (log.isTraceEnabled()) {

@@ -1,0 +1,23 @@
+{
+  ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
+  file.touch();
+  resizeFileIfNeeded();
+  if (file.getSize() < filePosition) {
+    file.setSize(filePosition);
+  }
+  byte[] bufferToFlush=buffer;
+  if (isWritingOnLastChunk()) {
+    int newBufferSize=(int)(file.getSize() % bufferSize);
+    if (newBufferSize != 0) {
+      bufferToFlush=new byte[newBufferSize];
+      System.arraycopy(buffer,0,bufferToFlush,0,newBufferSize);
+    }
+  }
+  boolean microbatch=false;
+  if (!transactionRunning) {
+    microbatch=cache.startBatch();
+  }
+  cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key,bufferToFlush);
+  cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey,file);
+  if (microbatch)   cache.endBatch(true);
+}
