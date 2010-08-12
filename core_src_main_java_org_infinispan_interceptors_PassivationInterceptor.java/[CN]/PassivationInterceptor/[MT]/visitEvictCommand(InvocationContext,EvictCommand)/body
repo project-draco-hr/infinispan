@@ -1,10 +1,5 @@
 {
   Object key=command.getKey();
-  notifier.notifyCacheEntryPassivated(key,true,ctx);
-  log.trace("Passivating entry {0}",key);
-  InternalCacheEntry entryForStorage=dataContainer.get(key);
-  cacheStore.store(entryForStorage);
-  notifier.notifyCacheEntryPassivated(key,false,ctx);
-  if (getStatisticsEnabled() && entryForStorage != null)   passivations.getAndIncrement();
+  passivator.passivate(key,dataContainer.get(key),ctx);
   return invokeNextInterceptor(ctx,command);
 }
