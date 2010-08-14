@@ -14,15 +14,11 @@
  while (true);
   boolean batching=cache.startBatch();
   FileCacheKey fromKey=new FileCacheKey(indexName,from);
-  FileMetadata metadata=(FileMetadata)cache.remove(fromKey);
+  FileMetadata metadata=(FileMetadata)cache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
   cache.put(new FileCacheKey(indexName,to),metadata);
-  Set<String> fileList=getFileList();
-  fileList.remove(from);
-  fileList.add(to);
-  cache.put(fileListCacheKey,fileList);
+  fileOps.removeAndAdd(from,to);
   if (batching)   cache.endBatch(true);
-  FileReadLockKey fileFromReadLockKey=new FileReadLockKey(indexName,from);
-  InfinispanIndexInput.releaseReadLock(fileFromReadLockKey,cache);
+  readLocks.deleteOrReleaseReadLock(from);
   if (log.isTraceEnabled()) {
     log.trace("Renamed file from: {0} to: {1} in index {2}",from,to,indexName);
   }

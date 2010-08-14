@@ -1,0 +1,23 @@
+{
+  FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
+  int newValue=0;
+  boolean done=false;
+  Object lockValue=cache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE).get(readLockKey);
+  while (done == false) {
+    if (lockValue == null) {
+      lockValue=cache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey,Integer.valueOf(0));
+      done=(null == lockValue);
+    }
+ else {
+      int refCount=(Integer)lockValue;
+      newValue=refCount - 1;
+      done=cache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey,refCount,newValue);
+      if (!done) {
+        lockValue=cache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE).get(readLockKey);
+      }
+    }
+  }
+  if (newValue == 0) {
+    realFileDelete(readLockKey,cache,chunkSize);
+  }
+}

@@ -8,6 +8,10 @@
     return new SingleChunkIndexInput(cache,fileKey,fileMetadata);
   }
  else {
-    return new InfinispanIndexInput(cache,fileKey,chunkSize,fileMetadata);
+    boolean locked=readLocks.aquireReadLock(name);
+    if (!locked) {
+      throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+    }
+    return new InfinispanIndexInput(cache,fileKey,chunkSize,fileMetadata,readLocks);
   }
 }
