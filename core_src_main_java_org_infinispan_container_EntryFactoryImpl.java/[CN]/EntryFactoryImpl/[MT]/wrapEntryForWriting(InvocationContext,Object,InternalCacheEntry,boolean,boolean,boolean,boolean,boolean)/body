@@ -15,6 +15,11 @@
       }
       mvccEntry.copyForUpdate(container,writeSkewCheck);
     }
+ else     if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+      if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+        mvccEntry=(MVCCEntry)cacheEntry;
+      }
+    }
     if (cacheEntry.isRemoved() && createIfAbsent && undeleteIfNeeded) {
       if (trace)       log.trace("Entry is deleted in current scope.  Need to un-delete.");
       if (mvccEntry != cacheEntry)       mvccEntry=(MVCCEntry)cacheEntry;
