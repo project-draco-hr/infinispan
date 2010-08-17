@@ -1,4 +1,5 @@
 {
+  Set<HashEntry<K,V>> evicted=Collections.emptySet();
   if (currentLIRSize + 1 < lirSizeLimit) {
     currentLIRSize++;
     e.transitionToLIRResident();
@@ -13,16 +14,17 @@
       HashEntry<K,V> first=queue.removeFirst();
       first.transitionHIRResidentToHIRNonResident();
       stack.put(e.hashCode(),e);
+      evicted=new HashSet<HashEntry<K,V>>();
       if (inStack) {
         e.transitionToLIRResident();
-        Set<HashEntry<K,V>> evicted=new HashSet<HashEntry<K,V>>();
         switchBottomostLIRtoHIRAndPrune(evicted);
-        removeFromSegment(evicted);
       }
  else {
         queue.addLast(e);
+        evicted.add(first);
       }
-      segment.remove(first.key,first.hash,null);
+      removeFromSegment(evicted);
     }
   }
+  return evicted;
 }

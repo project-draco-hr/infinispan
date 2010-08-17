@@ -27,7 +27,11 @@
           first=tab[index];
         }
         tab[index]=new HashEntry<K,V>(key,hash,first,value);
-        eviction.onEntryMiss(tab[index]);
+        Set<HashEntry<K,V>> newlyEvicted=eviction.onEntryMiss(tab[index]);
+        if (!newlyEvicted.isEmpty()) {
+          if (evicted != null)           evicted.addAll(newlyEvicted);
+ else           evicted=newlyEvicted;
+        }
       }
  else {
         tab[index]=new HashEntry<K,V>(key,hash,first,value);
