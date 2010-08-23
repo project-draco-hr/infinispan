@@ -1,10 +1,9 @@
 {
-  Object key=command.getKey();
-  Object value=command.getValue();
-  if (key instanceof HRKey) {
-    ctx.setFlags(Flag.SKIP_CACHE_STORE);
-    command.setKey(unwrapp(key));
-    command.setValue(unwrapp(value));
+  try {
+    entryFactory.wrapEntryForWriting(ctx,command.getKey(),true,false,false,false,!command.isPutIfAbsent());
+    return invokeNextInterceptor(ctx,command);
   }
-  return invokeNextInterceptor(ctx,command);
+  finally {
+    doAfterCall(ctx);
+  }
 }
