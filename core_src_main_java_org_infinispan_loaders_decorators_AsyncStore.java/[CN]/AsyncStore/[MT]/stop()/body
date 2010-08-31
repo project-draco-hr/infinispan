@@ -1,18 +1,12 @@
 {
   stopped.set(true);
-  if (executor != null) {
-    for (    Future f : processorFutures)     f.cancel(true);
-    executor.shutdown();
-    try {
-      boolean terminated=executor.isTerminated();
-      while (!terminated) {
-        terminated=executor.awaitTermination(60,TimeUnit.SECONDS);
-      }
-    }
- catch (    InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+  try {
+    changesDeque.put(QUIT_SIGNAL);
+    executor.awaitTermination(asyncStoreConfig.getShutdownTimeout(),TimeUnit.SECONDS);
   }
-  executor=null;
+ catch (  InterruptedException e) {
+    log.error("Interrupted or timeout while waiting for AsyncStore worker threads to push all state to the decorated store",e);
+    Thread.currentThread().interrupt();
+  }
   super.stop();
 }

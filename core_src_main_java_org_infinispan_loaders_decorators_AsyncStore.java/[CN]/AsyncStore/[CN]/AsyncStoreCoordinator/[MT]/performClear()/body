@@ -1,0 +1,23 @@
+{
+  state.clear();
+  clearAllWriteLock.lock();
+  try {
+    state.clear();
+    if (trace)     log.trace("Performed clear operation");
+    int maxRetries=3;
+    int attemptNumber=0;
+    boolean successful=false;
+    do {
+      if (attemptNumber > 0 && log.isDebugEnabled())       log.debug("Retrying clear() due to previous failure. {0} attempts left.",maxRetries - attemptNumber);
+      successful=applyClear();
+      attemptNumber++;
+    }
+ while (!successful && attemptNumber <= maxRetries);
+    if (!successful) {
+      log.error("Clear() operation in async store could not be performed");
+    }
+  }
+  finally {
+    clearAllWriteLock.unlock();
+  }
+}

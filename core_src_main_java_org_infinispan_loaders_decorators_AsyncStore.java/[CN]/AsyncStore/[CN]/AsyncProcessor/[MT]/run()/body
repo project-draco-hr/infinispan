@@ -1,19 +1,21 @@
 {
-  while (!Thread.interrupted() && !stopped.get()) {
+  clearAllReadLock.lock();
+  try {
+    innerRun();
+  }
+ catch (  Throwable t) {
+    runAgainAfterWaiting=false;
+    log.error("Unexpected error",t);
+  }
+ finally {
+    clearAllReadLock.unlock();
+  }
+  if (runAgainAfterWaiting) {
     try {
-      run0();
+      Thread.sleep(10);
     }
  catch (    InterruptedException e) {
-      break;
     }
-  }
-  try {
-    if (trace)     log.trace("Process remaining batch {0}",swap.size());
-    put(swap);
-    if (trace)     log.trace("Process remaining queued {0}",state.size());
-    while (!state.isEmpty())     run0();
-  }
- catch (  InterruptedException e) {
-    if (trace)     log.trace("Remaining interrupted");
+    ensureMoreWorkIsHandled();
   }
 }

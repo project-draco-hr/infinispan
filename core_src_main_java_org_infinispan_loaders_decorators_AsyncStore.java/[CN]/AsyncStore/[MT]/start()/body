@@ -2,16 +2,16 @@
   state=newStateMap();
   log.info("Async cache loader starting {0}",this);
   stopped.set(false);
+  lastAsyncProcessorShutsDownExecutor=false;
   super.start();
   int poolSize=asyncStoreConfig.getThreadPoolSize();
-  executor=Executors.newFixedThreadPool(poolSize,new ThreadFactory(){
+  executor=new ThreadPoolExecutor(poolSize,poolSize,0L,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(poolSize + 1),new ThreadFactory(){
     public Thread newThread(    Runnable r){
       Thread t=new Thread(r,"CoalescedAsyncStore-" + threadId.getAndIncrement());
       t.setDaemon(true);
       return t;
     }
   }
-);
-  processorFutures=new ArrayList<Future>(poolSize);
-  for (int i=0; i < poolSize; i++)   processorFutures.add(executor.submit(createAsyncProcessor()));
+,new ThreadPoolExecutor.DiscardPolicy());
+  startStoreCoordinator();
 }

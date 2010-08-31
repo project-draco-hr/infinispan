@@ -1,6 +1,7 @@
 {
   for (int i=0; i < number; i++)   store.remove(key + i);
-  TestingUtil.sleepRandom(1000);
+  store.stop();
+  store.start();
   InternalCacheEntry[] entries=new InternalCacheEntry[number];
   for (int i=0; i < number; i++) {
     entries[i]=store.load(key + i);
@@ -8,8 +9,7 @@
   for (int i=0; i < number; i++) {
     InternalCacheEntry entry=entries[i];
     while (entry != null) {
-      log.info("Entry still not null {0}",entry);
-      TestingUtil.sleepRandom(1000);
+      TestingUtil.sleepThread(20,"still waiting for key to be removed: " + key + i);
       entry=store.load(key + i);
     }
   }
