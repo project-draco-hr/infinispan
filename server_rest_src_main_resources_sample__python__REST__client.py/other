@@ -1,13 +1,23 @@
 import httplib
 hostname = 'localhost:8080'
-conn = httplib.HTTPConnection(hostname)
-data = 'SOME DATA HERE !'
-conn.request('POST', '/infinispan/rest/Bucket/0', data, {'Content-Type': 'text/plain', })
-response = conn.getresponse()
-print response.status
-import httplib
-conn = httplib.HTTPConnection(hostname)
-conn.request('GET', '/infinispan/rest/Bucket/0')
-response = conn.getresponse()
-print response.status
-print response.read()
+webapp_name = 'infinispan-server-rest'
+cache_name = '___defaultcache'
+key = 'my_key'
+print ('Storing data on server %s under key [%s] over REST' % (hostname, key))
+try:
+    conn = httplib.HTTPConnection(hostname)
+    data = 'This is some test data.'
+    conn.request('POST', ('/%s/rest/%s/%s' % (webapp_name, cache_name, key)), data, {'Content-Type': 'text/plain', })
+    response = conn.getresponse()
+    print ('HTTP status: %s' % response.status)
+except:
+    print ('Unable to connect to the REST server on %s. Is it running?' % hostname)
+print ('Retrieving data from server %s under key [%s]' % (hostname, key))
+try:
+    conn = httplib.HTTPConnection(hostname)
+    conn.request('GET', ('/%s/rest/%s/%s' % (webapp_name, cache_name, key)))
+    response = conn.getresponse()
+    print ('HTTP status: %s' % response.status)
+    print ('Value retrieved: %s' % response.read())
+except:
+    print ('Unable to connect to the REST server on %s.  Is it running?' % hostname)
