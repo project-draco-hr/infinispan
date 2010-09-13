@@ -1,6 +1,5 @@
 {
-  long start=System.currentTimeMillis();
-  boolean trace=log.isTraceEnabled();
+  long start=trace ? System.currentTimeMillis() : 0;
   int replCount=configuration.getNumOwners();
   ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,dmi.getConsistentHash().getCaches(),leaversHandled);
   ConsistentHash newCH=dmi.getConsistentHash();
@@ -35,12 +34,13 @@
  else {
       if (trace)       log.trace("Rehash not enabled, so not pulling state.");
     }
-    if (trace)     log.info("{0} completed leave rehash in {1}!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
  catch (  Exception e) {
     throw new CacheException("Unexpected exception",e);
   }
  finally {
     leavers.removeAll(leaversHandled);
+    if (trace)     log.info("{0} completed leave rehash in {1}!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+ else     log.info("{0} completed leave rehash!",self);
   }
 }
