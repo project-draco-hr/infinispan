@@ -1,0 +1,28 @@
+{
+  int numThreads=25;
+  final CyclicBarrier barrier=new CyclicBarrier(numThreads + 1);
+  List<Future<Void>> futures=new ArrayList<Future<Void>>(numThreads);
+  ExecutorService executorService=Executors.newCachedThreadPool();
+  for (int i=0; i < numThreads; i++) {
+    log.debug("Schedule execution");
+    Future<Void> future=executorService.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        try {
+          barrier.await();
+          cacheManager.getCache("blahblah").put("a","b");
+          return null;
+        }
+  finally {
+          log.debug("Wait for all execution paths to finish");
+          barrier.await();
+        }
+      }
+    }
+);
+    futures.add(future);
+  }
+  barrier.await();
+  barrier.await();
+  log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+  for (  Future<Void> future : futures)   future.get();
+}
