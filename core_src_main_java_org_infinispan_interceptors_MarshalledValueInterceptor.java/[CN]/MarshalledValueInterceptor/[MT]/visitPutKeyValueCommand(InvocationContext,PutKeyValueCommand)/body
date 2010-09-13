@@ -9,8 +9,15 @@
     value=createMarshalledValue(command.getValue(),ctx);
     command.setValue(value);
   }
-  Object retVal=invokeNextInterceptor(ctx,command);
-  compact(key);
-  compact(value);
-  return processRetVal(retVal);
+  boolean isRawComparisonRequired=!ctx.isOriginLocal() && command.getKey() instanceof MarshalledValue;
+  if (isRawComparisonRequired)   ((MarshalledValue)command.getKey()).setEqualityPreferenceForInstance(false);
+  try {
+    Object retVal=invokeNextInterceptor(ctx,command);
+    compact(key);
+    compact(value);
+    return processRetVal(retVal);
+  }
+  finally {
+    if (isRawComparisonRequired)     ((MarshalledValue)command.getKey()).setEqualityPreferenceForInstance(true);
+  }
 }
