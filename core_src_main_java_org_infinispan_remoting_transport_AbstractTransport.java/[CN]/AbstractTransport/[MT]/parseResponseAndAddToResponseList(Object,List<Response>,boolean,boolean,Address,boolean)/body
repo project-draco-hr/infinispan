@@ -1,0 +1,42 @@
+{
+  Log log=getLog();
+  boolean trace=log.isTraceEnabled();
+  boolean invalidResponse=true;
+  if (wasSuspected || !wasReceived) {
+    if (wasSuspected) {
+      throw new SuspectException("Suspected member: " + sender);
+    }
+ else {
+      if (usedResponseFilter)       throw new TimeoutException("Replication timeout for " + sender);
+    }
+  }
+ else {
+    invalidResponse=false;
+    if (value instanceof Response) {
+      Response response=(Response)value;
+      if (response instanceof ExceptionResponse) {
+        Exception e=((ExceptionResponse)value).getException();
+        if (!(e instanceof ReplicationException)) {
+          if (shouldThrowException(e)) {
+            throw e;
+          }
+ else {
+            if (log.isDebugEnabled())             log.debug("Received exception from sender {0}",sender,e);
+          }
+        }
+      }
+      retval.add(response);
+    }
+ else     if (value instanceof Exception) {
+      Exception e=(Exception)value;
+      if (trace)       log.trace("Unexpected exception from " + sender,e);
+      throw e;
+    }
+ else     if (value instanceof Throwable) {
+      Throwable t=(Throwable)value;
+      if (trace)       log.trace("Unexpected throwable from " + sender,t);
+      throw new CacheException("Remote (" + sender + ") failed unexpectedly",t);
+    }
+  }
+  return invalidResponse;
+}

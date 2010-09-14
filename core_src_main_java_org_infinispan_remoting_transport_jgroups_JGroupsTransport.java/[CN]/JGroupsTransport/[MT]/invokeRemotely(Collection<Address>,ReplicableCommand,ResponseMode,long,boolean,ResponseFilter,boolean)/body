@@ -16,39 +16,7 @@
     List<Response> retval=new ArrayList<Response>(rsps.size());
     boolean noValidResponses=true;
     for (    Rsp rsp : rsps.values()) {
-      if (rsp.wasSuspected() || !rsp.wasReceived()) {
-        if (rsp.wasSuspected()) {
-          throw new SuspectException("Suspected member: " + rsp.getSender());
-        }
- else {
-          if (responseFilter == null)           throw new TimeoutException("Replication timeout for " + rsp.getSender());
-        }
-      }
- else {
-        noValidResponses=false;
-        Object value=rsp.getValue();
-        if (value instanceof Response) {
-          Response response=(Response)value;
-          if (response instanceof ExceptionResponse) {
-            Exception e=((ExceptionResponse)value).getException();
-            if (!(e instanceof ReplicationException)) {
-              if (trace)               log.trace("Received exception from " + rsp.getSender(),e);
-              throw e;
-            }
-          }
-          retval.add(response);
-        }
- else         if (value instanceof Exception) {
-          Exception e=(Exception)value;
-          if (trace)           log.trace("Unexpected exception from " + rsp.getSender(),e);
-          throw e;
-        }
- else         if (value instanceof Throwable) {
-          Throwable t=(Throwable)value;
-          if (trace)           log.trace("Unexpected throwable from " + rsp.getSender(),t);
-          throw new CacheException("Remote (" + rsp.getSender() + ") failed unexpectedly",t);
-        }
-      }
+      noValidResponses=parseResponseAndAddToResponseList(rsp.getValue(),retval,rsp.wasSuspected(),rsp.wasReceived(),new JGroupsAddress(rsp.getSender()),responseFilter != null) && noValidResponses;
     }
     if (noValidResponses)     throw new TimeoutException("Timed out waiting for valid responses!");
     return retval;
