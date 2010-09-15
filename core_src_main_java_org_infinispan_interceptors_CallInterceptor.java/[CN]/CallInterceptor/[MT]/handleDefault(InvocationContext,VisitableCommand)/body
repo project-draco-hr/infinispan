@@ -1,17 +1,4 @@
 {
   if (trace)   log.trace("Executing command: " + command + ".");
-  Object retval;
-  try {
-    retval=command.perform(ctx);
-  }
- catch (  Throwable t) {
-    if (ctx.isInTxScope()) {
-      TxInvocationContext txContext=(TxInvocationContext)ctx;
-      if (txContext.isValidRunningTx()) {
-        txContext.getRunningTransaction().setRollbackOnly();
-      }
-    }
-    throw t;
-  }
-  return retval;
+  return command.perform(ctx);
 }

@@ -1,0 +1,10 @@
+{
+  DldGlobalTransaction globalTransaction=(DldGlobalTransaction)ctx.getGlobalTransaction();
+  if (ctx.isOriginLocal()) {
+    globalTransaction.setRemoteLockIntention(command.getKeys());
+    if (configuration.getCacheMode().isDistributed()) {
+      ((DldGlobalTransaction)ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
+    }
+  }
+  return handleDataCommand(ctx,command);
+}

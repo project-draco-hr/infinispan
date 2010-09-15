@@ -1,0 +1,10 @@
+{
+  EmbeddedCacheManager eCm=TestCacheManagerFactory.createCacheManager(getDefaultClusteredConfig(Configuration.CacheMode.LOCAL),true);
+  eCm.getCache().getAdvancedCache().addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor(){
+    @Override public Object visitPutKeyValueCommand(    InvocationContext ctx,    PutKeyValueCommand command) throws Throwable {
+      throw new IllegalStateException("Induce failure!");
+    }
+  }
+,1);
+  return eCm;
+}

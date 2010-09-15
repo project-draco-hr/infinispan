@@ -4,11 +4,13 @@
   FileCacheKey key=new FileCacheKey(indexName,filename);
   boolean batch=cache.startBatch();
   FileMetadata file=(FileMetadata)cache.withFlags(Flag.SKIP_LOCKING).remove(key);
-  for (int i=0; i < file.getNumberOfChunks(); i++) {
-    ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,filename,i);
-    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);
+  if (file != null) {
+    for (int i=0; i < file.getNumberOfChunks(); i++) {
+      ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,filename,i);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);
+    }
+    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(key);
   }
-  cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(key);
   cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(readLockKey);
   if (batch) {
     cache.endBatch(true);

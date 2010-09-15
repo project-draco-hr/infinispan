@@ -1,0 +1,92 @@
+{
+  if (c == null)   return;
+switch (c.getCommandId()) {
+case PutKeyValueCommand.COMMAND_ID:
+    ((PutKeyValueCommand)c).init(notifier);
+  break;
+case PutMapCommand.COMMAND_ID:
+((PutMapCommand)c).init(notifier);
+break;
+case RemoveCommand.COMMAND_ID:
+((RemoveCommand)c).init(notifier);
+break;
+case MultipleRpcCommand.COMMAND_ID:
+MultipleRpcCommand rc=(MultipleRpcCommand)c;
+rc.init(interceptorChain,icc);
+if (rc.getCommands() != null) for (ReplicableCommand nested : rc.getCommands()) {
+initializeReplicableCommand(nested,false);
+}
+break;
+case SingleRpcCommand.COMMAND_ID:
+SingleRpcCommand src=(SingleRpcCommand)c;
+src.init(interceptorChain,icc);
+if (src.getCommand() != null) initializeReplicableCommand(src.getCommand(),false);
+break;
+case InvalidateCommand.COMMAND_ID:
+InvalidateCommand ic=(InvalidateCommand)c;
+ic.init(notifier);
+break;
+case InvalidateL1Command.COMMAND_ID:
+InvalidateL1Command ilc=(InvalidateL1Command)c;
+ilc.init(configuration,distributionManager,notifier,dataContainer);
+break;
+case PrepareCommand.COMMAND_ID:
+PrepareCommand pc=(PrepareCommand)c;
+pc.init(interceptorChain,icc,txTable);
+pc.initialize(notifier);
+if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) {
+initializeReplicableCommand(nested,false);
+}
+pc.markTransactionAsRemote(isRemote);
+if (configuration.isEnableDeadlockDetection() && isRemote) {
+DldGlobalTransaction transaction=(DldGlobalTransaction)pc.getGlobalTransaction();
+transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
+}
+break;
+case CommitCommand.COMMAND_ID:
+CommitCommand commitCommand=(CommitCommand)c;
+commitCommand.init(interceptorChain,icc,txTable);
+commitCommand.markTransactionAsRemote(isRemote);
+break;
+case RollbackCommand.COMMAND_ID:
+RollbackCommand rollbackCommand=(RollbackCommand)c;
+rollbackCommand.init(interceptorChain,icc,txTable);
+rollbackCommand.markTransactionAsRemote(isRemote);
+break;
+case ClearCommand.COMMAND_ID:
+ClearCommand cc=(ClearCommand)c;
+cc.init(notifier);
+break;
+case ClusteredGetCommand.COMMAND_ID:
+ClusteredGetCommand clusteredGetCommand=(ClusteredGetCommand)c;
+clusteredGetCommand.initialize(dataContainer,icc,this,interceptorChain);
+break;
+case LockControlCommand.COMMAND_ID:
+LockControlCommand lcc=(LockControlCommand)c;
+lcc.init(interceptorChain,icc,txTable);
+lcc.markTransactionAsRemote(isRemote);
+if (configuration.isEnableDeadlockDetection() && isRemote) {
+DldGlobalTransaction gtx=(DldGlobalTransaction)lcc.getGlobalTransaction();
+RemoteTransaction transaction=txTable.getRemoteTransaction(gtx);
+if (transaction != null) {
+if (!configuration.getCacheMode().isDistributed()) {
+Set<Object> keys=txTable.getLockedKeysForRemoteTransaction(gtx);
+GlobalTransaction gtx2=transaction.getGlobalTransaction();
+((DldGlobalTransaction)gtx2).setLocksHeldAtOrigin(keys);
+gtx.setLocksHeldAtOrigin(keys);
+}
+ else {
+GlobalTransaction gtx2=transaction.getGlobalTransaction();
+((DldGlobalTransaction)gtx2).setLocksHeldAtOrigin(gtx.getLocksHeldAtOrigin());
+}
+}
+}
+break;
+case RehashControlCommand.COMMAND_ID:
+RehashControlCommand rcc=(RehashControlCommand)c;
+rcc.init(distributionManager,configuration,dataContainer,this);
+break;
+default :
+if (trace) log.trace("Nothing to initialize for command: " + c);
+}
+}

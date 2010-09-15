@@ -1,4 +1,24 @@
 {
-  if (ctx.isOriginLocal())   rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()),command,true,true);
+  if (ctx.isOriginLocal()) {
+    if (configuration.isEagerLockSingleNode()) {
+      Map<Object,List<Address>> toMulticast=dm.locateAll(command.getKeys(),1);
+      List<Address> where;
+      if (toMulticast.size() == 1) {
+        where=toMulticast.values().iterator().next();
+        rpcManager.invokeRemotely(where,command,true,true);
+      }
+ else {
+        where=new ArrayList<Address>();
+        for (        List<Address> values : toMulticast.values()) {
+          where.addAll(values);
+        }
+        rpcManager.invokeRemotely(where,command,true,true);
+      }
+      ((LocalTxInvocationContext)ctx).remoteLocksAcquired(where);
+    }
+ else {
+      rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()),command,true,true);
+    }
+  }
   return invokeNextInterceptor(ctx,command);
 }

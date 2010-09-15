@@ -1,34 +1,11 @@
 {
-  DeadlockDetectingGlobalTransaction globalTransaction=(DeadlockDetectingGlobalTransaction)ctx.getGlobalTransaction();
-  globalTransaction.setProcessingThread(Thread.currentThread());
+  DldGlobalTransaction globalTransaction=(DldGlobalTransaction)ctx.getGlobalTransaction();
   if (ctx.isOriginLocal()) {
-    if (configuration.getCacheMode().isDistributed()) {
-      globalTransaction.setReplicatingTo(new HashSet<Address>(distributionManager.getAffectedNodes(ctx.getAffectedKeys())));
-    }
- else {
-      globalTransaction.setReplicatingTo(null);
-    }
-    if (trace)     log.trace("Deadlock detection information was added to " + globalTransaction);
+    globalTransaction.setRemoteLockIntention(command.getAffectedKeys());
   }
-  try {
-    return invokeNextInterceptor(ctx,command);
+  Object result=invokeNextInterceptor(ctx,command);
+  if (ctx.isOriginLocal()) {
+    globalTransaction.setRemoteLockIntention(Collections.EMPTY_SET);
   }
- catch (  Throwable dde) {
-    if (ctx.isOriginLocal()) {
-      globalTransaction.setMarkedForRollback(true);
-      boolean wasInterrupted=Thread.interrupted();
-      if (trace)       log.trace("Deadlock was detected on the remote side, marking the tx for rollback. Was this thread interrupted? " + wasInterrupted);
-    }
-    throw dde;
-  }
- finally {
-    if (!ctx.isOriginLocal()) {
-      if (!txTable.containRemoteTx(ctx.getGlobalTransaction())) {
-        if (trace) {
-          log.trace("While returning from prepare we determined that remote tx is no longer in the txTable. " + "This means that a rollback was executed in between; releasing locks");
-        }
-        lockManager.releaseLocks(ctx);
-      }
-    }
-  }
+  return result;
 }

@@ -2,8 +2,13 @@
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
   RemoteTxInvocationContext ctxt=icc.createRemoteTxInvocationContext();
   RemoteTransaction transaction=txTable.getRemoteTransaction(globalTx);
-  boolean remoteTxinitiated=transaction != null;
-  if (!remoteTxinitiated) {
+  if (transaction == null) {
+    if (unlock) {
+      if (log.isTraceEnabled()) {
+        log.trace("Unlock for in-existing transaction: " + globalTx + ". Not doing anything.");
+      }
+      return null;
+    }
     transaction=txTable.createRemoteTransaction(globalTx);
   }
   ctxt.setRemoteTransaction(transaction);

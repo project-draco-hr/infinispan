@@ -4,26 +4,28 @@
   if (ctx.isInTxScope()) {
     if (trace)     log.trace("Using early dead lock detection");
     final long start=System.currentTimeMillis();
-    long now;
-    while ((now=System.currentTimeMillis()) < (start + lockTimeout)) {
+    DldGlobalTransaction thisTx=(DldGlobalTransaction)ctx.getLockOwner();
+    thisTx.setLockIntention(key);
+    if (trace)     log.trace("Setting lock intention to: " + key);
+    while (System.currentTimeMillis() < (start + lockTimeout)) {
       if (lockContainer.acquireLock(key,spinDuration,MILLISECONDS) != null) {
+        thisTx.setLockIntention(null);
         if (trace)         log.trace("successfully acquired lock on " + key + ", returning ...");
         return true;
       }
  else {
-        if (trace)         log.trace("Could not acquire lock on '" + key + "' as it is locked by '"+ getOwner(key)+ "', check for dead locks");
         Object owner=getOwner(key);
-        if (!(owner instanceof DeadlockDetectingGlobalTransaction)) {
-          if (trace)           log.trace("Owner is not instance of DeadlockDetectingGlobalTransaction: " + owner + ", continuing ...");
-          if (exposeJmxStats)           overlapWithNotDeadlockAwareLockOwners.incrementAndGet();
+        if (!(owner instanceof DldGlobalTransaction)) {
+          if (trace)           log.trace("Not running DLD as lock owner( " + owner + ") is not a transaction");
+          cannotRunDld.incrementAndGet();
           continue;
         }
-        DeadlockDetectingGlobalTransaction lockOwnerTx=(DeadlockDetectingGlobalTransaction)owner;
-        if (isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
-          return remoteVsRemoteDld(key,ctx,lockTimeout,start,now,lockOwnerTx);
-        }
-        if ((ctx.isOriginLocal() && !lockOwnerTx.isRemote()) || (!isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote())) {
-          localVsLocalDld(ctx,lockOwnerTx);
+        DldGlobalTransaction lockOwnerTx=(DldGlobalTransaction)owner;
+        if (isDeadlockAndIAmLoosing(lockOwnerTx,thisTx,key)) {
+          updateStats(thisTx);
+          String message="Deadlock found and we " + thisTx + " shall not continue. Other tx is "+ lockOwnerTx;
+          if (trace)           log.trace(message);
+          throw new DeadlockDetectedException(message);
         }
       }
     }
