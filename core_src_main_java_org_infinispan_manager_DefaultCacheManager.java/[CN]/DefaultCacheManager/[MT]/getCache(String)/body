@@ -1,7 +1,9 @@
 {
   if (cacheName == null)   throw new NullPointerException("Null arguments not allowed");
-  Cache<K,V> cache=caches.get(cacheName);
-  if (cache != null && cache.getStatus() == ComponentStatus.RUNNING)   return cache;
+  CacheWrapper cw=caches.get(cacheName);
+  if (cw != null) {
+    return cw.getCache();
+  }
   boolean acquired=false;
   try {
     if (cacheNameLockContainer.acquireLock(cacheName,defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS) != null) {

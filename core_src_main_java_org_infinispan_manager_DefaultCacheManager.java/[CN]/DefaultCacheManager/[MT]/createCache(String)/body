@@ -1,14 +1,18 @@
 {
-  Cache existingCache=caches.get(cacheName);
-  if (existingCache != null)   return existingCache;
+  CacheWrapper existingCache=caches.get(cacheName);
+  if (existingCache != null)   return existingCache.getCache();
   Configuration c;
   if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))   c=defaultConfiguration.clone();
  else   c=configurationOverrides.get(cacheName);
   c.setGlobalConfiguration(globalConfiguration);
   c.assertValid();
   Cache cache=new InternalCacheFactory().createCache(c,globalComponentRegistry,cacheName);
-  existingCache=caches.put(cacheName,cache);
-  if (existingCache != null)   throw new IllegalStateException("attempt to initialize the cache twice");
+  CacheWrapper cw=new CacheWrapper(cache);
+  existingCache=caches.putIfAbsent(cacheName,cw);
+  if (existingCache != null) {
+    throw new IllegalStateException("attempt to initialize the cache twice");
+  }
   cache.start();
+  cw.latch.countDown();
   return cache;
 }
