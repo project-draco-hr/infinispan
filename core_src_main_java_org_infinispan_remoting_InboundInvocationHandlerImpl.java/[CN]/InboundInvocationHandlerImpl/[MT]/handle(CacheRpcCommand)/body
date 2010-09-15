@@ -2,8 +2,21 @@
   String cacheName=cmd.getCacheName();
   ComponentRegistry cr=gcr.getNamedComponentRegistry(cacheName);
   if (cr == null) {
-    if (log.isInfoEnabled())     log.info("Cache named {0} does not exist on this cache manager!",cacheName);
-    return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
+    if (isDefined(cacheName)) {
+      log.info("Will trya nd wait for the cache to start");
+      long giveupTime=System.currentTimeMillis() + 30000;
+      while (cr == null && System.currentTimeMillis() < giveupTime) {
+        Thread.sleep(100);
+        cr=gcr.getNamedComponentRegistry(cacheName);
+      }
+    }
+ else {
+      log.info("Cache {0} is not defined.  No point in waiting.",cacheName);
+    }
+    if (cr == null) {
+      if (log.isInfoEnabled())       log.info("Cache named {0} does not exist on this cache manager!",cacheName);
+      return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
+    }
   }
   Configuration localConfig=cr.getComponent(Configuration.class);
   if (!cr.getStatus().allowInvocations()) {
