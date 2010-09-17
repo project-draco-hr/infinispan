@@ -1,0 +1,8 @@
+{
+  Object key=entry.getKey();
+  String cassandraKey=CassandraCacheStore.hashKey(key);
+  addMutation(mutationMap,cassandraKey,config.entryColumnFamily,entryColumnPath.getColumn(),marshall(entry));
+  if (entry.canExpire()) {
+    addMutation(mutationMap,cassandraKey,config.expirationColumnFamily,longToBytes(entry.getExpiryTime()),emptyByteArray);
+  }
+}

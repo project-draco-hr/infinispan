@@ -1,0 +1,18 @@
+{
+  if (trace)   log.trace("remove() " + key);
+  Cassandra.Iface cassandraClient=null;
+  try {
+    cassandraClient=pool.getConnection();
+    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    remove0(key,mutationMap);
+    cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
+    return true;
+  }
+ catch (  Exception e) {
+    log.error("Exception while removing " + key,e);
+    return false;
+  }
+ finally {
+    pool.release(cassandraClient);
+  }
+}

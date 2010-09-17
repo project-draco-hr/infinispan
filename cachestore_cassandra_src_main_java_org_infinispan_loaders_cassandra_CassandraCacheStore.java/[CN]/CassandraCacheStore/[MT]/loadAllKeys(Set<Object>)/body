@@ -1,0 +1,31 @@
+{
+  Cassandra.Iface cassandraClient=null;
+  try {
+    cassandraClient=pool.getConnection();
+    Set<Object> s=new HashSet<Object>();
+    SlicePredicate slicePredicate=new SlicePredicate();
+    slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(),emptyByteArray,false,1));
+    String startKey="";
+    boolean complete=false;
+    while (!complete) {
+      List<KeySlice> keySlices=cassandraClient.get_range_slice(config.keySpace,entryColumnParent,slicePredicate,startKey,"",SLICE_SIZE,ConsistencyLevel.ONE);
+      if (keySlices.size() < SLICE_SIZE) {
+        complete=true;
+      }
+ else {
+        startKey=keySlices.get(keySlices.size() - 1).getKey();
+      }
+      for (      KeySlice keySlice : keySlices) {
+        String key=keySlice.getKey();
+        if (keysToExclude == null || !keysToExclude.contains(key))         s.add(key);
+      }
+    }
+    return s;
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    pool.release(cassandraClient);
+  }
+}

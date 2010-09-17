@@ -1,0 +1,29 @@
+{
+  Cassandra.Iface cassandraClient=null;
+  try {
+    cassandraClient=pool.getConnection();
+    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    for (    Modification m : mods) {
+switch (m.getType()) {
+case STORE:
+        store0(((Store)m).getStoredEntry(),mutationMap);
+      break;
+case CLEAR:
+    clear();
+  break;
+case REMOVE:
+remove0(((Remove)m).getKey(),mutationMap);
+break;
+default :
+throw new AssertionError();
+}
+}
+cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
+}
+ catch (Exception e) {
+throw new CacheLoaderException(e);
+}
+ finally {
+pool.release(cassandraClient);
+}
+}

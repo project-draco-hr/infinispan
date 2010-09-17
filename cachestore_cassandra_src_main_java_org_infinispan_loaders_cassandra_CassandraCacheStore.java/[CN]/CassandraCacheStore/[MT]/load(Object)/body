@@ -1,0 +1,24 @@
+{
+  String hashKey=hashKey(key);
+  Cassandra.Iface cassandraClient=null;
+  try {
+    cassandraClient=pool.getConnection();
+    ColumnOrSuperColumn column=cassandraClient.get(config.keySpace,hashKey,entryColumnPath,ConsistencyLevel.ONE);
+    InternalCacheEntry ice=unmarshall(column.getColumn().getValue(),key);
+    if (ice != null && ice.isExpired()) {
+      remove(key);
+      return null;
+    }
+    return ice;
+  }
+ catch (  NotFoundException nfe) {
+    log.debug("Key '{0}' not found",hashKey);
+    return null;
+  }
+catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    pool.release(cassandraClient);
+  }
+}
