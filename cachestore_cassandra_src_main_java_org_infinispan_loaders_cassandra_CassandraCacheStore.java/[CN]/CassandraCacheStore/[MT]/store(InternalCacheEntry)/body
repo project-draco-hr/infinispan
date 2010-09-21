@@ -1,12 +1,10 @@
 {
   Cassandra.Iface cassandraClient=null;
   try {
-    if (trace)     log.trace("storing " + entry.getKey());
     cassandraClient=pool.getConnection();
-    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>(2);
     store0(entry,mutationMap);
     cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
-    if (trace)     log.trace("stored " + entry.getKey());
   }
  catch (  Exception e) {
     throw new CacheLoaderException(e);
