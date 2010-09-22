@@ -8,7 +8,10 @@
     String startKey="";
     boolean complete=false;
     while (!complete) {
-      List<KeySlice> keySlices=cassandraClient.get_range_slice(config.keySpace,entryColumnParent,slicePredicate,startKey,"",SLICE_SIZE,ConsistencyLevel.ONE);
+      KeyRange keyRange=new KeyRange(SLICE_SIZE);
+      keyRange.setStart_token(startKey);
+      keyRange.setEnd_token("");
+      List<KeySlice> keySlices=cassandraClient.get_range_slices(config.keySpace,entryColumnParent,slicePredicate,keyRange,ConsistencyLevel.ONE);
       if (keySlices.size() < SLICE_SIZE) {
         complete=true;
       }

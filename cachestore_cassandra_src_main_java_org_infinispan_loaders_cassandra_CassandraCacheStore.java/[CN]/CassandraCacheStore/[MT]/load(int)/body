@@ -9,7 +9,10 @@
     boolean complete=false;
     int sliceSize=Math.min(SLICE_SIZE,numEntries);
     while (!complete) {
-      List<KeySlice> keySlices=cassandraClient.get_range_slice(config.keySpace,entryColumnParent,slicePredicate,startKey,"",sliceSize,ConsistencyLevel.ONE);
+      KeyRange keyRange=new KeyRange(sliceSize);
+      keyRange.setStart_token(startKey);
+      keyRange.setEnd_token("");
+      List<KeySlice> keySlices=cassandraClient.get_range_slices(config.keySpace,entryColumnParent,slicePredicate,keyRange,ConsistencyLevel.ONE);
       if (keySlices.size() < sliceSize) {
         complete=true;
       }
