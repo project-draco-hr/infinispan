@@ -1,9 +1,9 @@
 {
-  ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
   file.touch();
   resizeFileIfNeeded();
   byte[] bufferToFlush=buffer;
-  if (isWritingOnLastChunk()) {
+  boolean writingOnLastChunk=isWritingOnLastChunk();
+  if (writingOnLastChunk) {
     int newBufferSize=(int)(file.getSize() % bufferSize);
     if (newBufferSize != 0) {
       bufferToFlush=new byte[newBufferSize];
@@ -14,7 +14,10 @@
   if (!transactionRunning) {
     microbatch=cache.startBatch();
   }
-  cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(key,bufferToFlush);
+  if (!writingOnLastChunk || this.positionInBuffer != 0) {
+    ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
+    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(key,bufferToFlush);
+  }
   cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(fileKey,file);
   registerToFileListIfNeeded();
   if (microbatch)   cache.endBatch(true);
