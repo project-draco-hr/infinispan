@@ -1,3 +1,29 @@
 {
-  log.trace("purgeInternal");
+  if (trace)   log.trace("purgeInternal");
+  Cassandra.Iface cassandraClient=null;
+  try {
+    cassandraClient=pool.getConnection();
+    SlicePredicate predicate=new SlicePredicate();
+    predicate.setSlice_range(new SliceRange(emptyByteArray,longToBytes(System.currentTimeMillis()),false,SLICE_SIZE));
+    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    for (boolean complete=false; !complete; ) {
+      List<ColumnOrSuperColumn> slice=cassandraClient.get_slice(config.keySpace,EXPIRATION_KEY,expirationColumnParent,predicate,ConsistencyLevel.ONE);
+      complete=slice.size() < SLICE_SIZE;
+      for (      ColumnOrSuperColumn crumb : slice) {
+        SuperColumn scol=crumb.getSuper_column();
+        for (Iterator<Column> i=scol.getColumnsIterator(); i.hasNext(); ) {
+          Column col=i.next();
+          remove0(new String(col.getName(),"UTF-8"),mutationMap);
+        }
+        addMutation(mutationMap,EXPIRATION_KEY,config.expirationColumnFamily,scol.getName(),null,null);
+      }
+    }
+    cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    pool.release(cassandraClient);
+  }
 }

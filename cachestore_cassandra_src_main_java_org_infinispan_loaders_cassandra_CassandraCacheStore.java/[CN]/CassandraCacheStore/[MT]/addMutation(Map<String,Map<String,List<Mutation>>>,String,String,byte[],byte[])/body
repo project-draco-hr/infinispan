@@ -1,24 +1,3 @@
 {
-  Map<String,List<Mutation>> keyMutations=mutationMap.get(key);
-  if (keyMutations == null) {
-    keyMutations=new HashMap<String,List<Mutation>>();
-    mutationMap.put(key,keyMutations);
-  }
-  List<Mutation> columnFamilyMutations=keyMutations.get(columnFamily);
-  if (columnFamilyMutations == null) {
-    columnFamilyMutations=new ArrayList<Mutation>();
-    keyMutations.put(columnFamily,columnFamilyMutations);
-  }
-  if (value == null) {
-    Deletion deletion=new Deletion(System.currentTimeMillis());
-    if (column != null) {
-      deletion.setPredicate(new SlicePredicate().setColumn_names(Arrays.asList(new byte[][]{column})));
-    }
-    columnFamilyMutations.add(new Mutation().setDeletion(deletion));
-  }
- else {
-    ColumnOrSuperColumn cosc=new ColumnOrSuperColumn();
-    cosc.setColumn(new Column(column,value,System.currentTimeMillis()));
-    columnFamilyMutations.add(new Mutation().setColumn_or_supercolumn(cosc));
-  }
+  addMutation(mutationMap,key,columnFamily,null,column,value);
 }
