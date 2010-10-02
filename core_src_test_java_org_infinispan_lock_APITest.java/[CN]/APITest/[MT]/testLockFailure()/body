@@ -1,0 +1,10 @@
+{
+  Cache<String,String> cache1=cache(0), cache2=cache(1);
+  cache1.put("k","v");
+  tm(1).begin();
+  cache2.put("k","v2");
+  Transaction t=tm(1).suspend();
+  tm(0).begin();
+  cache1.getAdvancedCache().lock("k");
+  tm(0).rollback();
+}
