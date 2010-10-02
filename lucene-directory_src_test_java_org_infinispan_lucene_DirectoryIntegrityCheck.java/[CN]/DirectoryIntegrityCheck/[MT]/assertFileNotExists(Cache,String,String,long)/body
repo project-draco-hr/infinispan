@@ -1,0 +1,17 @@
+{
+  Set<String> fileList=(Set<String>)cache.get(new FileListCacheKey(indexName));
+  Assert.assertNotNull(fileList);
+  Assert.assertFalse(fileList.contains(fileName));
+  boolean allok=false;
+  while (maxWaitForCondition >= 0 && !allok) {
+    Thread.sleep(10);
+    maxWaitForCondition-=10;
+    allok=true;
+    if (cache.get(new FileCacheKey(indexName,fileName)) != null)     allok=false;
+    for (int i=0; i < 100; i++) {
+      ChunkCacheKey key=new ChunkCacheKey(indexName,fileName,i);
+      if (cache.get(key) != null)       allok=false;
+    }
+  }
+  Assert.assertTrue(allok);
+}
