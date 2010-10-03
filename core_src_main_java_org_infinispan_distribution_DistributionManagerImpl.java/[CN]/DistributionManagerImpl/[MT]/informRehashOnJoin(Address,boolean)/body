@@ -1,23 +1,22 @@
 {
-  log.trace("Informed of a JOIN by {0}.  Starting? {1}",joiner,starting);
+  log.trace("Informed of a JOIN by {0}.  Starting? {1}",a,starting);
   if (!starting) {
     if (consistentHash instanceof UnionConsistentHash) {
       UnionConsistentHash uch=(UnionConsistentHash)consistentHash;
       consistentHash=uch.getNewConsistentHash();
       oldConsistentHash=null;
     }
-    rehashInProgress=false;
+    joiner=null;
   }
  else {
     ConsistentHash chOld=consistentHash;
     if (chOld instanceof UnionConsistentHash)     throw new RuntimeException("Not expecting a union CH!");
     oldConsistentHash=chOld;
-    this.joiner=joiner;
-    rehashInProgress=true;
+    joiner=a;
     ConsistentHash chNew;
     chNew=(ConsistentHash)Util.getInstance(configuration.getConsistentHashClass());
     List<Address> newAddresses=new LinkedList<Address>(chOld.getCaches());
-    newAddresses.add(joiner);
+    newAddresses.add(a);
     chNew.setCaches(newAddresses);
     consistentHash=new UnionConsistentHash(chOld,chNew);
   }

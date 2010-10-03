@@ -1,0 +1,15 @@
+{
+  super();
+  LinkedBlockingQueue<Runnable> rehashQueue=new LinkedBlockingQueue<Runnable>();
+  ThreadFactory tf=new ThreadFactory(){
+    public Thread newThread(    Runnable r){
+      Thread t=new Thread(r);
+      t.setDaemon(true);
+      t.setPriority(Thread.MIN_PRIORITY);
+      t.setName("Rehasher-" + rpcManager.getTransport().getAddress());
+      return t;
+    }
+  }
+;
+  rehashExecutor=new ThreadPoolExecutor(1,1,0L,TimeUnit.MILLISECONDS,rehashQueue,tf);
+}
