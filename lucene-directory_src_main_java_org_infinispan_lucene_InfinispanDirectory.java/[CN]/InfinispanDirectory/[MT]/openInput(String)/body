@@ -1,17 +1,17 @@
 {
   final FileCacheKey fileKey=new FileCacheKey(indexName,name);
-  FileMetadata fileMetadata=(FileMetadata)cache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+  FileMetadata fileMetadata=(FileMetadata)metadataCache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
   if (fileMetadata == null) {
     throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
   }
  else   if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
-    return new SingleChunkIndexInput(cache,fileKey,fileMetadata);
+    return new SingleChunkIndexInput(chunksCache,fileKey,fileMetadata);
   }
  else {
     boolean locked=readLocks.aquireReadLock(name);
     if (!locked) {
       throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
     }
-    return new InfinispanIndexInput(cache,fileKey,fileMetadata,readLocks);
+    return new InfinispanIndexInput(chunksCache,fileKey,fileMetadata,readLocks);
   }
 }

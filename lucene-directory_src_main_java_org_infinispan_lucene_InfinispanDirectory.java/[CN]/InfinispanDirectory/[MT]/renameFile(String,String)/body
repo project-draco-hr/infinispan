@@ -4,20 +4,20 @@
   Object ob;
   do {
     ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i);
-    ob=cache.get(fromChunkKey);
+    ob=chunksCache.get(fromChunkKey);
     if (ob == null) {
       break;
     }
     ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i);
-    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey,ob);
+    chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey,ob);
   }
  while (true);
-  boolean batching=cache.startBatch();
+  boolean batching=metadataCache.startBatch();
   FileCacheKey fromKey=new FileCacheKey(indexName,from);
-  FileMetadata metadata=(FileMetadata)cache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
-  cache.put(new FileCacheKey(indexName,to),metadata);
+  FileMetadata metadata=(FileMetadata)metadataCache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
+  metadataCache.put(new FileCacheKey(indexName,to),metadata);
   fileOps.removeAndAdd(from,to);
-  if (batching)   cache.endBatch(true);
+  if (batching)   metadataCache.endBatch(true);
   readLocks.deleteOrReleaseReadLock(from);
   if (log.isTraceEnabled()) {
     log.trace("Renamed file from: {0} to: {1} in index {2}",from,to,indexName);

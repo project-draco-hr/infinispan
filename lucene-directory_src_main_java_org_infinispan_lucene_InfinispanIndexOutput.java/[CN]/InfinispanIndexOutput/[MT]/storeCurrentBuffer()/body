@@ -9,14 +9,17 @@
       System.arraycopy(buffer,0,bufferToFlush,0,newBufferSize);
     }
   }
-  boolean microbatch=cache.startBatch();
+  boolean microbatch=false;
   if (!writingOnLastChunk || this.positionInBuffer != 0) {
+    if (chunksCache == metadataCache) {
+      microbatch=chunksCache.startBatch();
+    }
     ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
     if (trace)     log.trace("Storing segment chunk: " + key);
-    cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(key,bufferToFlush);
+    chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(key,bufferToFlush);
   }
   file.touch();
-  cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(fileKey,file);
+  metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(fileKey,file);
   registerToFileListIfNeeded();
-  if (microbatch)   cache.endBatch(true);
+  if (microbatch)   chunksCache.endBatch(true);
 }
