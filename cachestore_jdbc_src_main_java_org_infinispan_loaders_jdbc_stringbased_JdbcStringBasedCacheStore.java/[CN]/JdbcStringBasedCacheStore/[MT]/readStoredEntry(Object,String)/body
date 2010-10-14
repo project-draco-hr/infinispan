@@ -1,0 +1,29 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  InternalCacheEntry storedEntry=null;
+  try {
+    String sql=tableManipulation.getSelectRowSql();
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    ps.setString(1,lockingKey);
+    rs=ps.executeQuery();
+    if (rs.next()) {
+      InputStream inputStream=rs.getBinaryStream(2);
+      InternalCacheValue icv=(InternalCacheValue)JdbcUtil.unmarshall(getMarshaller(),inputStream);
+      storedEntry=icv.toInternalCacheEntry(key);
+    }
+  }
+ catch (  SQLException e) {
+    String message="SQL error while fetching stored entry with key:" + key + " lockingKey: "+ lockingKey;
+    log.error(message,e);
+    throw new CacheLoaderException(message,e);
+  }
+ finally {
+    JdbcUtil.safeClose(rs);
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+  return storedEntry;
+}
