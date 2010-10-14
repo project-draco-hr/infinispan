@@ -1,3 +1,19 @@
 {
-  return Immutables.immutableSetWrap(container.keySet());
+  Set<Object> objects=container.keySet();
+  if (noTxModifications(ctx)) {
+    return Immutables.immutableSetWrap(objects);
+  }
+  Set<Object> result=new HashSet<Object>();
+  result.addAll(objects);
+  for (  CacheEntry ce : ctx.getLookedUpEntries().values()) {
+    if (ce.isRemoved()) {
+      result.remove(ce.getKey());
+    }
+ else {
+      if (ce.isCreated()) {
+        result.add(ce.getKey());
+      }
+    }
+  }
+  return Immutables.immutableSetWrap(result);
 }

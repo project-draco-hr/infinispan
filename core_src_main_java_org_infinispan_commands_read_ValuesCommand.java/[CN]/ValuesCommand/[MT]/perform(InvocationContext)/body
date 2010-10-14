@@ -1,3 +1,20 @@
 {
-  return Immutables.immutableCollectionWrap(container.values());
+  if (noTxModifications(ctx)) {
+    return Immutables.immutableCollectionWrap(container.values());
+  }
+  Map result=new HashMap();
+  for (  InternalCacheEntry ice : container.entrySet()) {
+    result.put(ice.getKey(),ice.getValue());
+  }
+  for (  CacheEntry ce : ctx.getLookedUpEntries().values()) {
+    if (ce.isRemoved()) {
+      result.remove(ce.getKey());
+    }
+ else {
+      if (ce.isCreated() || ce.isChanged()) {
+        result.put(ce.getKey(),ce.getValue());
+      }
+    }
+  }
+  return Immutables.immutableCollectionWrap(result.values());
 }
