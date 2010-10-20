@@ -3,7 +3,9 @@
   Set<HashEntry<K,V>> evicted=null;
   try {
     HashEntry<K,V> e=getFirst(hash);
-    while (e != null && (e.hash != hash || !key.equals(e.key)))     e=e.next;
+    while (e != null && (e.hash != hash || !key.equals(e.key))) {
+      e=e.next;
+    }
     boolean replaced=false;
     if (e != null && oldValue.equals(e.value)) {
       replaced=true;
@@ -18,7 +20,7 @@
     unlock();
     if (evicted != null) {
       for (      HashEntry<K,V> he : evicted) {
-        evictionListener.postEvict(he.key,he.value);
+        evictionListener.onEntryEviction(he.key,he.value);
       }
     }
   }
