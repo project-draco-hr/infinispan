@@ -1,16 +1,23 @@
 {
   CacheEntry entry=ctx.lookupEntry(key);
   if (entry == null || entry.isNull()) {
-    if (trace)     log.trace("Entry not found");
+    if (trace) {
+      log.trace("Entry not found");
+    }
     return null;
   }
   if (entry.isRemoved()) {
-    if (trace)     log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+    if (trace) {
+      log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
+    }
     return null;
   }
-  notifier.notifyCacheEntryVisited(key,true,ctx);
-  Object result=returnCacheEntry ? entry : entry.getValue();
-  if (trace)   log.trace("Found value " + result);
-  notifier.notifyCacheEntryVisited(key,false,ctx);
+  final Object value=entry.getValue();
+  notifier.notifyCacheEntryVisited(key,value,true,ctx);
+  final Object result=returnCacheEntry ? entry : value;
+  if (trace) {
+    log.trace("Found value " + result);
+  }
+  notifier.notifyCacheEntryVisited(key,value,false,ctx);
   return result;
 }

@@ -15,9 +15,15 @@
     successful=false;
     return false;
   }
-  notify(ctx,e.getValue(),true);
+  final Object removedValue=e.getValue();
+  notify(ctx,removedValue,true);
   e.setRemoved(true);
   e.setValid(false);
-  notify(ctx,null,false);
-  return value == null ? e.getValue() : true;
+  if (this instanceof EvictCommand) {
+    notify(ctx,removedValue,false);
+  }
+ else {
+    notify(ctx,null,false);
+  }
+  return value == null ? removedValue : true;
 }

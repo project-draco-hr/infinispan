@@ -1,5 +1,5 @@
 {
-  if (!cacheEntryEvictedListeners.isEmpty()) {
+  if (!cacheEntryInvalidatedListeners.isEmpty()) {
     final boolean originLocal=ctx.isOriginLocal();
     InvocationContext contexts=icc.suspend();
     try {
@@ -8,9 +8,12 @@
       e.setOriginLocal(originLocal);
       e.setPre(pre);
       e.setKey(key);
+      e.setValue(value);
       setTx(ctx,e);
-      e.setType(CACHE_ENTRY_EVICTED);
-      for (      ListenerInvocation listener : cacheEntryEvictedListeners)       listener.invoke(e);
+      e.setType(CACHE_ENTRY_INVALIDATED);
+      for (      ListenerInvocation listener : cacheEntryInvalidatedListeners) {
+        listener.invoke(e);
+      }
     }
   finally {
       icc.resume(contexts);

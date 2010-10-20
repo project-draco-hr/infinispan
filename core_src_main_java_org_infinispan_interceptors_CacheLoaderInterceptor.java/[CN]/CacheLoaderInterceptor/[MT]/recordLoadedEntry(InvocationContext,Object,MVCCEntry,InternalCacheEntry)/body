@@ -1,6 +1,8 @@
 {
-  boolean entryExists=(loadedEntry != null);
-  if (log.isTraceEnabled())   log.trace("Entry exists in loader? " + entryExists);
+  boolean entryExists=loadedEntry != null;
+  if (log.isTraceEnabled()) {
+    log.trace("Entry exists in loader? " + entryExists);
+  }
   if (getStatisticsEnabled()) {
     if (entryExists) {
       cacheLoads.incrementAndGet();
@@ -10,13 +12,13 @@
     }
   }
   if (entryExists) {
-    sendNotification(key,true,ctx);
-    entry.setValue(loadedEntry.getValue());
+    final Object value=loadedEntry.getValue();
+    sendNotification(key,value,true,ctx);
+    entry.setValue(value);
     entry.setLifespan(loadedEntry.getLifespan());
     entry.setMaxIdle(loadedEntry.getMaxIdle());
     entry.setValid(true);
-    notifier.notifyCacheEntryLoaded(key,false,ctx);
-    sendNotification(key,false,ctx);
+    sendNotification(key,value,false,ctx);
   }
   return entry;
 }
