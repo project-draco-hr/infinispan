@@ -1,16 +1,17 @@
 {
-  FieldDoc fieldDoc=fieldDocWithTag(n.getBeanClass(),CONFIG_PROPERTY_REF);
-  if (fieldDoc != null) {
-    sb.append("<table class=\"bodyTable\"> ");
-    sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
-    Tag[] tags=fieldDoc.tags(CONFIG_PROPERTY_REF);
-    for (    Tag t : tags) {
-      Map<String,String> m=parseTag(t.text().trim());
-      sb.append("<tr class=\"b\">");
-      sb.append("<td>").append(m.get(CONFIG_REF_NAME_ATT)).append("</td>\n");
-      sb.append("<td>").append(m.get(CONFIG_REF_DESC_ATT)).append("</td>\n");
-      sb.append("</tr>\n");
+  Field field=findField(n.getBeanClass(),"properties");
+  if (field != null) {
+    Map<String,String> description=findDescription(field);
+    if (!description.isEmpty()) {
+      sb.append("<table class=\"bodyTable\"> ");
+      sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
+      for (      Entry<String,String> e : description.entrySet()) {
+        sb.append("<tr class=\"b\">");
+        sb.append("<td>").append(e.getKey()).append("</td>\n");
+        sb.append("<td>").append(e.getValue()).append("</td>\n");
+        sb.append("</tr>\n");
+      }
+      sb.append("</table>\n");
     }
-    sb.append("</table>\n");
   }
 }

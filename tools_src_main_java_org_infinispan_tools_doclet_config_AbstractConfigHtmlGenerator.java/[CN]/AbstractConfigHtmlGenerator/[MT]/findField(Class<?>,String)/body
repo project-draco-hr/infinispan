@@ -1,0 +1,32 @@
+{
+  Field f=null;
+  boolean found=false;
+  Class<?> current=clazz;
+  while (current != null) {
+    try {
+      f=current.getDeclaredField(name);
+      return f;
+    }
+ catch (    NoSuchFieldException e) {
+      current=current.getSuperclass();
+    }
+  }
+  List<Field> anFields=ReflectionUtil.getAnnotatedFields(clazz,ConfigurationDoc.class);
+  for (  Field field : anFields) {
+    if (field.getAnnotation(ConfigurationDoc.class).name().equals(name)) {
+      f=field;
+      found=true;
+      break;
+    }
+  }
+  if (!found) {
+    anFields=ReflectionUtil.getAnnotatedFields(clazz,ConfigurationDocRef.class);
+    for (    Field field : anFields) {
+      if (field.getAnnotation(ConfigurationDocRef.class).name().equals(name)) {
+        f=field;
+        break;
+      }
+    }
+  }
+  return f;
+}

@@ -41,16 +41,18 @@
  else {
       sb.append("</td>\n");
     }
+    Field field=findField(bean,a.getName());
+    if (field == null) {
+      throw new RuntimeException("Null field for " + bean.getName() + " attribute "+ a.getName());
+    }
     if (a.getDefaultValue() != null) {
       debug("annotation-defined default = " + a.getDefaultValue(),2);
       sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
     }
  else {
-      Field field=null;
       Object defaultValue=null;
       try {
-        field=findFieldRecursively(bean,a.getName());
-        defaultValue=fieldValue(field,object);
+        defaultValue=ReflectionUtil.getValue(object,field.getName());
         if (defaultValue != null) {
           sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
           debug("field-defined default = " + defaultValue,2);
@@ -66,15 +68,11 @@
         sb.append("<td>").append("N/A").append("</td>\n");
       }
     }
-    FieldDoc fieldDoc=findFieldDocRecursively(bean,a.getName(),CONFIG_REF);
-    if (fieldDoc != null) {
-      Tag[] tags=fieldDoc.tags(CONFIG_REF);
-      Map<String,String> p=parseTag(tags[0].text().trim());
-      sb.append("<td>").append(p.get(CONFIG_REF_DESC_ATT)).append("\n");
-      String packageDir=fieldDoc.containingPackage().toString().replace(".","/").concat("/");
-      String htmlFile=fieldDoc.containingClass().typeName().concat(".html");
-      String field=fieldDoc.name();
-      sb.append(" (<a href=\"" + packageDir.concat(htmlFile).concat("#").concat(field) + "\">"+ "Javadoc</a>)");
+    String desc=findAttributeDescription(field);
+    if (desc != null) {
+      sb.append("<td>").append(desc).append("\n");
+      String htmlFile=field.getDeclaringClass().getName().replace(".","/").replace("$",".").concat(".html");
+      sb.append(" (<a href=\"" + htmlFile.concat("#").concat(field.getName()) + "\">"+ "Javadoc</a>)");
       sb.append("</td>\n");
     }
     sb.append("</tr>\n");
