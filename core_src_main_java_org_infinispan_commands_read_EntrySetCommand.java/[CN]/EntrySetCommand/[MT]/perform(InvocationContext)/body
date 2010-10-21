@@ -1,3 +1,7 @@
 {
-  return Immutables.immutableSetWrap(container.entrySet());
+  Set<InternalCacheEntry> entries=container.entrySet();
+  if (noTxModifications(ctx)) {
+    return Immutables.immutableSetWrap(entries);
+  }
+  return new FilteredEntrySet(entries,ctx.getLookedUpEntries());
 }

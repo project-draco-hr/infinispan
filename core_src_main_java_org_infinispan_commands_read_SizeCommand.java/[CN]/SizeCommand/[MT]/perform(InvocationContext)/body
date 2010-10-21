@@ -2,5 +2,14 @@
   if (noTxModifications(ctx)) {
     return container.size();
   }
-  return super.getKeySetWithinTransaction(ctx,container).size();
+  int size=container.size();
+  for (  CacheEntry e : ctx.getLookedUpEntries().values()) {
+    if (e.isCreated()) {
+      size++;
+    }
+ else     if (e.isRemoved()) {
+      size--;
+    }
+  }
+  return Math.max(size,0);
 }

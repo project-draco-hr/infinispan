@@ -1,0 +1,40 @@
+{
+  if (atIt1) {
+    boolean found=false;
+    while (it1.hasNext()) {
+      CacheEntry e=it1.next();
+      if (e.isCreated()) {
+        next=InternalEntryFactory.create(e.getKey(),e.getValue());
+        found=true;
+        break;
+      }
+    }
+    if (!found) {
+      atIt1=false;
+    }
+  }
+  if (!atIt1) {
+    boolean found=false;
+    while (it2.hasNext()) {
+      InternalCacheEntry ice=it2.next();
+      Object key=ice.getKey();
+      CacheEntry e=lookedUpEntries.get(key);
+      if (e == null) {
+        next=ice;
+        found=true;
+        break;
+      }
+      if (e.isChanged()) {
+        next=InternalEntryFactory.create(key,e.getValue());
+        found=true;
+        break;
+      }
+      if (e.isRemoved()) {
+        continue;
+      }
+    }
+    if (!found) {
+      next=null;
+    }
+  }
+}
