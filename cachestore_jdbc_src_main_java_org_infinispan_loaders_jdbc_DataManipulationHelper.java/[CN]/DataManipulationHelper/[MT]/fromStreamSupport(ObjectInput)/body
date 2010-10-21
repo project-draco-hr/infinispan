@@ -13,12 +13,18 @@
       readCount++;
       if (readCount % batchSize == 0) {
         ps.executeBatch();
-        if (log.isTraceEnabled())         log.trace("Executing batch " + (readCount / batchSize) + ", batch size is "+ batchSize);
+        if (log.isTraceEnabled()) {
+          log.trace("Executing batch " + readCount / batchSize + ", batch size is " + batchSize);
+        }
       }
       objFromStream=marshaller.objectFromObjectStream(objectInput);
     }
-    if (readCount % batchSize != 0)     ps.executeBatch();
-    if (log.isTraceEnabled())     log.trace("Successfully inserted " + readCount + " buckets into the database, batch size is "+ batchSize);
+    if (readCount % batchSize != 0) {
+      ps.executeBatch();
+    }
+    if (log.isTraceEnabled()) {
+      log.trace("Successfully inserted " + readCount + " buckets into the database, batch size is "+ batchSize);
+    }
   }
  catch (  IOException ex) {
     logAndThrow(ex,"I/O failure while integrating state into store");

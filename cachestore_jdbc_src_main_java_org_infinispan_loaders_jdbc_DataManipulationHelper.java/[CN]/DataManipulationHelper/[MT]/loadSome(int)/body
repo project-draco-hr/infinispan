@@ -4,10 +4,17 @@
   ResultSet rs=null;
   try {
     String sql=tableManipulation.getLoadSomeRowsSql();
-    if (log.isTraceEnabled())     log.trace("Running sql '" + sql);
+    if (log.isTraceEnabled()) {
+      log.trace("Running sql '" + sql);
+    }
     conn=connectionFactory.getConnection();
-    ps=conn.prepareStatement(sql);
-    ps.setInt(1,maxEntries);
+    if (tableManipulation.isVariableLimitSupported()) {
+      ps=conn.prepareStatement(sql);
+      ps.setInt(1,maxEntries);
+    }
+ else {
+      ps=conn.prepareStatement(sql.replace("?",String.valueOf(maxEntries)));
+    }
     rs=ps.executeQuery();
     rs.setFetchSize(tableManipulation.getFetchSize());
     Set<InternalCacheEntry> result=new HashSet<InternalCacheEntry>(maxEntries);
