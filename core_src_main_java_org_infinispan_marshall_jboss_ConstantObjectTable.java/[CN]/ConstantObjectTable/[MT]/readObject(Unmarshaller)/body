@@ -1,4 +1,19 @@
 {
-  ExternalizerAdapter adapter=readers.get(input.readUnsignedByte());
+  int readerIndex=input.readUnsignedByte();
+  ExternalizerAdapter adapter=readers.get(readerIndex);
+  if (adapter == null) {
+    if (!started) {
+      if (log.isTraceEnabled())       log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}",readers);
+      if (Thread.currentThread().isInterrupted())       throw new IOException("Cache manager is shutting down, " + "so type (id=" + readerIndex + ") cannot be resolved. Interruption being pushed up.",new InterruptedException());
+ else       throw new CacheException("Cache manager is either starting up or shutting down but it's not interrupted, " + "so type (id=" + readerIndex + ") cannot be resolved.");
+    }
+ else {
+      if (log.isTraceEnabled()) {
+        log.trace("Unknown type. Input stream has {0} to read",input.available());
+        log.trace("Check contents of read externalizers: {0}",readers);
+      }
+      throw new CacheException("Type of data read is unknown. Id=" + readerIndex + " "+ "is not amongst known reader indexes.");
+    }
+  }
   return adapter.readObject(input);
 }

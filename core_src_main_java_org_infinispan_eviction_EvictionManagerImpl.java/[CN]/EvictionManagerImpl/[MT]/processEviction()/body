@@ -1,40 +1,35 @@
 {
-  try {
-    startLatch.await();
-  }
- catch (  InterruptedException e) {
-    Thread.currentThread().interrupt();
-  }
-  if (!enabled) {
-    return;
-  }
   long start=0;
-  try {
-    if (trace) {
-      log.trace("Purging data container of expired entries");
-      start=System.currentTimeMillis();
-    }
-    dataContainer.purgeExpired();
-    if (trace) {
-      log.trace("Purging data container completed in {0}",Util.prettyPrintTime(System.currentTimeMillis() - start));
-    }
-  }
- catch (  Exception e) {
-    log.warn("Caught exception purging data container!",e);
-  }
-  if (cacheStore != null) {
+  if (!Thread.currentThread().isInterrupted()) {
     try {
       if (trace) {
-        log.trace("Purging cache store of expired entries");
+        log.trace("Purging data container of expired entries");
         start=System.currentTimeMillis();
       }
-      cacheStore.purgeExpired();
+      dataContainer.purgeExpired();
       if (trace) {
-        log.trace("Purging cache store completed in {0}",Util.prettyPrintTime(System.currentTimeMillis() - start));
+        log.trace("Purging data container completed in {0}",Util.prettyPrintTime(System.currentTimeMillis() - start));
       }
     }
  catch (    Exception e) {
-      log.warn("Caught exception purging cache store!",e);
+      log.warn("Caught exception purging data container!",e);
+    }
+  }
+  if (!Thread.currentThread().isInterrupted()) {
+    if (cacheStore != null) {
+      try {
+        if (trace) {
+          log.trace("Purging cache store of expired entries");
+          start=System.currentTimeMillis();
+        }
+        cacheStore.purgeExpired();
+        if (trace) {
+          log.trace("Purging cache store completed in {0}",Util.prettyPrintTime(System.currentTimeMillis() - start));
+        }
+      }
+ catch (      Exception e) {
+        log.warn("Caught exception purging cache store!",e);
+      }
     }
   }
 }

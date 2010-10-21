@@ -1,30 +1,41 @@
 {
   if (trace)   log.trace("purgeInternal()");
-  acquireGlobalLock(false);
-  try {
-    for (    final File bucketFile : root.listFiles()) {
-      if (multiThreadedPurge) {
-        purgerService.execute(new Runnable(){
-          @Override public void run(){
-            Bucket bucket;
-            try {
-              if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())               updateBucket(bucket);
-            }
- catch (            CacheLoaderException e) {
-              log.warn("Problems purging file " + bucketFile,e);
+  if (acquireGlobalLock(false)) {
+    try {
+      for (      final File bucketFile : root.listFiles()) {
+        if (multiThreadedPurge) {
+          purgerService.execute(new Runnable(){
+            @Override public void run(){
+              Bucket bucket;
+              try {
+                if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())                 updateBucket(bucket);
+              }
+ catch (              InterruptedException ie) {
+                if (log.isDebugEnabled())                 log.debug("Interrupted, so finish work.");
+              }
+catch (              CacheLoaderException e) {
+                log.warn("Problems purging file " + bucketFile,e);
+              }
             }
           }
-        }
 );
-      }
+        }
  else {
-        Bucket bucket;
-        if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())         updateBucket(bucket);
+          Bucket bucket;
+          if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())           updateBucket(bucket);
+        }
       }
     }
+ catch (    InterruptedException ie) {
+      if (log.isDebugEnabled())       log.debug("Interrupted, so stop loading and finish with purging.");
+      Thread.currentThread().interrupt();
+    }
+ finally {
+      releaseGlobalLock(false);
+      if (trace)       log.trace("Exit purgeInternal()");
+    }
   }
-  finally {
-    releaseGlobalLock(false);
-    if (trace)     log.trace("Exit purgeInternal()");
+ else {
+    log.warn("Unable to acquire global lock to purge cache store");
   }
 }

@@ -10,8 +10,9 @@
   if (log.isTraceEnabled())   log.trace("Running sql '" + sql + "' on "+ ed+ ". Key string is '"+ lockingKey+ "'");
   Connection connection=null;
   PreparedStatement ps=null;
-  ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),ed.toInternalCacheValue());
+  ByteBuffer byteBuffer=null;
   try {
+    byteBuffer=JdbcUtil.marshall(getMarshaller(),ed.toInternalCacheValue());
     connection=connectionFactory.getConnection();
     ps=connection.prepareStatement(sql);
     ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
@@ -21,6 +22,10 @@
   }
  catch (  SQLException ex) {
     logAndThrow(ex,"Error while storing string key to database; key: '" + lockingKey + "', buffer size of value: "+ byteBuffer.getLength()+ " bytes");
+  }
+catch (  InterruptedException e) {
+    if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to store");
+    Thread.currentThread().interrupt();
   }
  finally {
     JdbcUtil.safeClose(ps);
