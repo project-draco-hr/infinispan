@@ -1,10 +1,10 @@
 {
   Object retVal=invokeNextInterceptor(ctx,command);
   boolean sync=isSynchronous(ctx);
-  if (ctx.isOriginLocal() && ctx.hasModifications()) {
+  if (shouldInvokeRemoteTxCommand(ctx)) {
     List<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
     NotifyingNotifiableFuture<Object> f=null;
-    if (command.isOnePhaseCommit())     f=flushL1Cache(recipients.size(),getKeys(ctx.getModifications()),null);
+    if (command.isOnePhaseCommit())     f=flushL1Cache(recipients.size(),ctx.getLockedKeys(),null);
     rpcManager.invokeRemotely(recipients,command,sync);
     if (f != null)     f.get();
   }
