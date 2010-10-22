@@ -23,6 +23,14 @@
  else {
       source=replaceProperties(config,nf);
     }
+    u.setListener(new Unmarshaller.Listener(){
+      @Override public void beforeUnmarshal(      Object target,      Object parent){
+        if (target instanceof JAXBUnmarshallable) {
+          ((JAXBUnmarshallable)target).willUnmarshall();
+        }
+      }
+    }
+);
     InfinispanConfiguration ic=(InfinispanConfiguration)u.unmarshal(source);
     ic.accept(cbv);
     return ic;
