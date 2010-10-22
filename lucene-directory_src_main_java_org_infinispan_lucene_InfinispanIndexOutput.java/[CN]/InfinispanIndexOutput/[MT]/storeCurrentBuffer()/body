@@ -16,10 +16,10 @@
     }
     ChunkCacheKey key=new ChunkCacheKey(fileKey.getIndexName(),fileKey.getFileName(),currentChunkNumber);
     if (trace)     log.trace("Storing segment chunk: " + key);
-    chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(key,bufferToFlush);
+    chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD,Flag.SKIP_LOCKING).put(key,bufferToFlush);
   }
   file.touch();
-  metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).put(fileKey,file);
+  metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD,Flag.SKIP_LOCKING).put(fileKey,file);
   registerToFileListIfNeeded();
   if (microbatch)   chunksCache.endBatch(true);
 }
