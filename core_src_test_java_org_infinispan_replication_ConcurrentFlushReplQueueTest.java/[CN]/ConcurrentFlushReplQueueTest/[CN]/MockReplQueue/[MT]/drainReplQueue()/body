@@ -1,0 +1,16 @@
+{
+  List<ReplicableCommand> drained=super.drainReplQueue();
+  try {
+    if (drained.size() > 0 && Thread.currentThread().getName().startsWith("Scheduled-")) {
+      secondPutLatch.countDown();
+      intervalFlushLatch.await(5,TimeUnit.SECONDS);
+    }
+ else     if (drained.size() > 0) {
+      removeCompletedLatch.countDown();
+    }
+  }
+ catch (  InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+  return drained;
+}
