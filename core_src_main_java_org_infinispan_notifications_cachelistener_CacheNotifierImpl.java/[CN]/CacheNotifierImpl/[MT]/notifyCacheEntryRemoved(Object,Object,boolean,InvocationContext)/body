@@ -3,17 +3,13 @@
     boolean originLocal=ctx.isOriginLocal();
     InvocationContext contexts=icc.suspend();
     try {
-      EventImpl e=new EventImpl();
-      e.setCache(cache);
+      EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_REMOVED);
       e.setOriginLocal(originLocal);
       e.setValue(value);
       e.setPre(pre);
       e.setKey(key);
       setTx(ctx,e);
-      e.setType(CACHE_ENTRY_REMOVED);
-      for (      ListenerInvocation listener : cacheEntryRemovedListeners) {
-        listener.invoke(e);
-      }
+      for (      ListenerInvocation listener : cacheEntryRemovedListeners)       listener.invoke(e);
     }
   finally {
       icc.resume(contexts);

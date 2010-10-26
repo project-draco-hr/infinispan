@@ -3,14 +3,10 @@
     boolean isOriginLocal=ctx.isOriginLocal();
     InvocationContext contexts=icc.suspend();
     try {
-      EventImpl e=new EventImpl();
-      e.setCache(cache);
+      EventImpl<Object,Object> e=EventImpl.createEvent(cache,TRANSACTION_REGISTERED);
       e.setOriginLocal(isOriginLocal);
       e.setTransactionId(globalTransaction);
-      e.setType(TRANSACTION_REGISTERED);
-      for (      ListenerInvocation listener : transactionRegisteredListeners) {
-        listener.invoke(e);
-      }
+      for (      ListenerInvocation listener : transactionRegisteredListeners)       listener.invoke(e);
     }
   finally {
       icc.resume(contexts);

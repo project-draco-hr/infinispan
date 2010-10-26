@@ -2,16 +2,12 @@
   if (!cacheEntryPassivatedListeners.isEmpty()) {
     InvocationContext contexts=icc.suspend();
     try {
-      EventImpl e=new EventImpl();
-      e.setCache(cache);
+      EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_PASSIVATED);
       e.setPre(pre);
       e.setKey(key);
       e.setValue(value);
       setTx(ctx,e);
-      e.setType(CACHE_ENTRY_PASSIVATED);
-      for (      ListenerInvocation listener : cacheEntryPassivatedListeners) {
-        listener.invoke(e);
-      }
+      for (      ListenerInvocation listener : cacheEntryPassivatedListeners)       listener.invoke(e);
     }
   finally {
       icc.resume(contexts);
