@@ -1,6 +1,6 @@
 {
   boolean isStillRehashingOnJoin=!dm.isJoinComplete();
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (!ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && returnValue == null && ctx.lookupEntry(command.getKey()) == null)   returnValue=remoteGetAndStoreInL1(ctx,command.getKey(),isStillRehashingOnJoin);
+  if (needsRemoteGet(ctx,command.getKey(),returnValue == null))   returnValue=remoteGetAndStoreInL1(ctx,command.getKey(),isStillRehashingOnJoin);
   return returnValue;
 }

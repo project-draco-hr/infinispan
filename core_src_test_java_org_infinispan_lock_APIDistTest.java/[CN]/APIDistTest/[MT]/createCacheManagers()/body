@@ -1,0 +1,21 @@
+{
+  Configuration cfg=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC,true);
+  cfg.setL1CacheEnabled(false);
+  cfg.setLockAcquisitionTimeout(100);
+  cfg.setNumOwners(1);
+  cfg.setSyncCommitPhase(true);
+  cfg.setSyncRollbackPhase(true);
+  cm1=TestCacheManagerFactory.createClusteredCacheManager(cfg);
+  cm2=TestCacheManagerFactory.createClusteredCacheManager(cfg);
+  registerCacheManager(cm1,cm2);
+  cm1.getCache();
+  Cache<String,String> c=cm2.getCache();
+  KeyAffinityService<String> service=KeyAffinityServiceFactory.newKeyAffinityService(c,Executors.newCachedThreadPool(),new KeyGenerator<String>(){
+    final Random r=new Random();
+    @Override public String getKey(){
+      return Integer.toHexString(r.nextInt(2000));
+    }
+  }
+,2);
+  key=service.getKeyForAddress(c.getAdvancedCache().getRpcManager().getAddress());
+}
