@@ -1,0 +1,52 @@
+{
+  int ownerHash=getNormalizedHash(address);
+  Collection<Address> beforeOnWheel=positions.headMap(ownerHash).values();
+  Collection<Address> afterOnWheel=positions.tailMap(ownerHash).values();
+  ArrayList<Address> processSequence=new ArrayList<Address>(afterOnWheel);
+  processSequence.addAll(beforeOnWheel);
+  List<Address> result=new ArrayList<Address>();
+  result.add(processSequence.remove(0));
+  int level=0;
+  while (result.size() < numOwners) {
+    Iterator<Address> addrIt=processSequence.iterator();
+    while (addrIt.hasNext()) {
+      Address a=addrIt.next();
+switch (level) {
+case 0:
+{
+          if (!topologyInfo.isSameSite(address,a)) {
+            result.add(a);
+            addrIt.remove();
+          }
+          break;
+        }
+case 1:
+{
+        if (!topologyInfo.isSameRack(address,a)) {
+          result.add(a);
+          addrIt.remove();
+        }
+        break;
+      }
+case 2:
+{
+      if (!topologyInfo.isSameMachine(address,a)) {
+        result.add(a);
+        addrIt.remove();
+      }
+      break;
+    }
+case 3:
+{
+    result.add(a);
+    addrIt.remove();
+    break;
+  }
+}
+if (result.size() == numOwners) break;
+}
+level++;
+}
+if (result.size() != numOwners) throw new AssertionError("This should not happen!");
+return result;
+}
