@@ -11,12 +11,17 @@
     }
     chOld=retrieveOldCH(trace);
     if (chOld.getCaches().contains(self))     chNew=chOld;
- else     chNew=createConsistentHash(configuration,chOld.getCaches(),self);
+ else {
+      chNew=createConsistentHash(configuration,chOld.getCaches(),dmi.topologyInfo,self);
+    }
     dmi.setConsistentHash(chNew);
     try {
       if (configuration.isRehashEnabled()) {
         transactionLogger.enable();
-        rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START,self),true,true);
+        RehashControlCommand rehashControlCommand=cf.buildRehashControlCommand(JOIN_REHASH_START,self);
+        rehashControlCommand.setNodeTopologyInfo(dmi.topologyInfo.getNodeTopologyInfo(rpcManager.getAddress()));
+        List<Response> responseList=rpcManager.invokeRemotely(null,rehashControlCommand,true,true);
+        updateTopologyInfo(responseList);
         Address myAddress=rpcManager.getTransport().getAddress();
         RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_JOIN,myAddress,null,chOld,chNew,null);
         List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(chNew,configuration.getNumOwners());

@@ -8,6 +8,7 @@
  else {
     Address leaver=MembershipArithmetic.getMemberLeft(oldMembers,newMembers);
     log.info("This is a LEAVE event!  Node {0} has just left",leaver);
+    topologyInfo.removeNodeInfo(leaver);
     try {
       if (!(consistentHash instanceof UnionConsistentHash)) {
         oldConsistentHash=consistentHash;
@@ -15,7 +16,7 @@
  else {
         oldConsistentHash=((UnionConsistentHash)consistentHash).getNewCH();
       }
-      consistentHash=ConsistentHashHelper.removeAddress(consistentHash,leaver,configuration);
+      consistentHash=ConsistentHashHelper.removeAddress(consistentHash,leaver,configuration,topologyInfo);
     }
  catch (    Exception e) {
       log.fatal("Unable to process leaver!!",e);

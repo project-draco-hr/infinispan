@@ -1,0 +1,23 @@
+{
+  log.trace("Informed of a JOIN by {0}.  Starting? {1}",a,starting);
+  if (!starting) {
+    if (consistentHash instanceof UnionConsistentHash) {
+      UnionConsistentHash uch=(UnionConsistentHash)consistentHash;
+      consistentHash=uch.getNewConsistentHash();
+      oldConsistentHash=null;
+    }
+    joiner=null;
+  }
+ else {
+    topologyInfo.addNodeTopologyInfo(a,nodeTopologyInfo);
+    log.trace("Node topology info added({0}).  Topology info is {1}",nodeTopologyInfo,topologyInfo);
+    ConsistentHash chOld=consistentHash;
+    if (chOld instanceof UnionConsistentHash)     throw new RuntimeException("Not expecting a union CH!");
+    oldConsistentHash=chOld;
+    joiner=a;
+    ConsistentHash chNew=ConsistentHashHelper.createConsistentHash(configuration,chOld.getCaches(),topologyInfo,a);
+    consistentHash=new UnionConsistentHash(chOld,chNew);
+  }
+  log.trace("New CH is {0}",consistentHash);
+  return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
+}
