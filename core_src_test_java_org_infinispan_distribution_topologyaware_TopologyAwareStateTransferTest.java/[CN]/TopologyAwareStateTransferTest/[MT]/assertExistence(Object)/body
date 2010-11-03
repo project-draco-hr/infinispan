@@ -1,0 +1,40 @@
+{
+  ConsistentHash hash=cache(a0).getAdvancedCache().getDistributionManager().getConsistentHash();
+  final List<Address> addresses=hash.locate(key,2);
+  System.out.println(key + " should be present on = " + addresses);
+  log.info(key + " should be present on = " + addresses);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      int count=0;
+      for (      Cache c : caches()) {
+        if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
+          System.out.println("It is here = " + address(c));
+          count++;
+        }
+      }
+      System.out.println("count = " + count);
+      return count == 2;
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      for (      Cache c : caches()) {
+        if (addresses.contains(address(c))) {
+          if (!c.getAdvancedCache().getDataContainer().containsKey(key)) {
+            System.out.println(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
+            return false;
+          }
+        }
+ else {
+          if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
+            System.out.println(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+);
+}

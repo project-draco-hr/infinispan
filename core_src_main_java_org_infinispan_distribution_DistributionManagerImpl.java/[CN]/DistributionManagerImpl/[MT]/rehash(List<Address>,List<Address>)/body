@@ -8,7 +8,6 @@
  else {
     Address leaver=MembershipArithmetic.getMemberLeft(oldMembers,newMembers);
     log.info("This is a LEAVE event!  Node {0} has just left",leaver);
-    topologyInfo.removeNodeInfo(leaver);
     try {
       if (!(consistentHash instanceof UnionConsistentHash)) {
         oldConsistentHash=consistentHash;
@@ -22,8 +21,8 @@
       log.fatal("Unable to process leaver!!",e);
       throw new CacheException(e);
     }
-    boolean willReceiveLeaverState=willReceiveLeaverState(leaver);
     List<Address> stateProviders=holdersOfLeaversState(leaver);
+    boolean willReceiveLeaverState=willReceiveLeaverState(stateProviders);
     boolean willSendLeaverState=stateProviders.contains(self);
     if (willReceiveLeaverState || willSendLeaverState) {
       log.info("I {0} am participating in rehash",rpcManager.getTransport().getAddress());
@@ -40,6 +39,7 @@
     }
  else {
       log.info("Not in same subspace, so ignoring leave event");
+      topologyInfo.removeNodeInfo(leaver);
     }
   }
 }

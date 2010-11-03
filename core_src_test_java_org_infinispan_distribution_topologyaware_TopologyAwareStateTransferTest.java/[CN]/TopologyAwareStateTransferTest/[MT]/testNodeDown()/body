@@ -1,0 +1,19 @@
+{
+  EmbeddedCacheManager cm=(EmbeddedCacheManager)cache(a4).getCacheManager();
+  log.info("Here is where ST starts");
+  TestingUtil.killCacheManagers(cm);
+  cacheManagers.remove(cm);
+  BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(a0),cache(a1),cache(a2),cache(a3));
+  log.info("Here is where ST ends");
+  List<Address> addressList=cache(a0).getAdvancedCache().getDistributionManager().getConsistentHash().getCaches();
+  System.out.println("After shutting down " + a4 + " caches are "+ addressList);
+  System.out.println(TestingUtil.printCache(cache(a0)));
+  System.out.println(TestingUtil.printCache(cache(a1)));
+  System.out.println(TestingUtil.printCache(cache(a2)));
+  System.out.println(TestingUtil.printCache(cache(a3)));
+  assertExistence(a0);
+  assertExistence(a1);
+  assertExistence(a2);
+  assertExistence(a3);
+  assertExistence(a4);
+}
