@@ -3,14 +3,13 @@
   EmsConnection conn=getConnection();
   try {
     conn.refresh();
-    EmsBean bean=conn.getBean(context.getResourceKey());
-    EmsAttribute attribute=bean.getAttribute("CacheStatus");
-    if (attribute.getValue().equals(ComponentStatus.RUNNING.toString())) {
+    EmsBean bean=queryCacheBean();
+    if (bean != null && bean.getAttribute("CacheStatus").getValue().equals(ComponentStatus.RUNNING.toString())) {
       bean.refreshAttributes();
-      if (trace)       log.trace("Cache status is running and attributes could be refreshed, so it's up.");
+      if (trace)       log.trace("Cache {0} within {1} cache manager is running and attributes could be refreshed, so it's up.",cacheName,cacheManagerName);
       return AvailabilityType.UP;
     }
-    if (trace)     log.trace("Cache status is anything other than running, so it's down.");
+    if (trace)     log.trace("Cache status for {0} within {1} cache manager is anything other than running, so it's down.",cacheName,cacheManagerName);
     return AvailabilityType.DOWN;
   }
  catch (  Exception e) {

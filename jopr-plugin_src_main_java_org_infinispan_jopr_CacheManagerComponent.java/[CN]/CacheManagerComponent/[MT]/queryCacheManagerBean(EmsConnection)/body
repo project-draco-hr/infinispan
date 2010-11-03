@@ -1,6 +1,10 @@
 {
-  String pattern=context.getPluginConfiguration().getSimpleValue("objectName",null);
+  String pattern=cacheManagerPattern;
   if (log.isTraceEnabled())   log.trace("Pattern to query is {0}",pattern);
   ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(pattern);
-  return conn.queryBeans(queryUtility.getTranslatedQuery()).get(0);
+  List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
+  if (beans.size() > 1) {
+    log.warn("More than one bean returned from applying {0} pattern: {1}",pattern,beans);
+  }
+  return beans.get(0);
 }

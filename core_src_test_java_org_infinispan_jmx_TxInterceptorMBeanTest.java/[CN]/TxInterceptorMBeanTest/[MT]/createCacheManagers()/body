@@ -3,10 +3,12 @@
   globalConfiguration.setExposeGlobalJmxStatistics(true);
   globalConfiguration.setAllowDuplicateDomains(true);
   globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-  globalConfiguration.setJmxDomain("TxInterceptorMBeanTest");
+  globalConfiguration.setJmxDomain(JMX_DOMAIN);
   EmbeddedCacheManager cacheManager1=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
   registerCacheManager(cacheManager1);
-  EmbeddedCacheManager cacheManager2=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration.clone());
+  GlobalConfiguration globalConfiguration2=globalConfiguration.clone();
+  globalConfiguration2.setCacheManagerName("SecondDefaultCacheManager");
+  EmbeddedCacheManager cacheManager2=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
   registerCacheManager(cacheManager2);
   Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
   configuration.setExposeJmxStatistics(true);
@@ -14,7 +16,8 @@
   cacheManager2.defineConfiguration("test",configuration.clone());
   cache1=cacheManager1.getCache("test");
   cache2=cacheManager2.getCache("test");
-  txInterceptor=new ObjectName("TxInterceptorMBeanTest:cache-name=\"test(repl_sync)\",jmx-resource=Transactions");
+  txInterceptor=getCacheObjectName(JMX_DOMAIN,"test(repl_sync)","Transactions");
+  txInterceptor2=getCacheObjectName(JMX_DOMAIN,"test(repl_sync)","Transactions","SecondDefaultCacheManager");
   threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
   tm=TestingUtil.getTransactionManager(cache1);
 }

@@ -1,16 +1,18 @@
 {
   boolean trace=log.isTraceEnabled();
-  if (trace)   log.trace("Discover resources with context: " + discoveryContext);
+  if (trace)   log.trace("Discover resources with context");
   Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
-  EmsConnection conn=discoveryContext.getParentResourceComponent().getConnection();
-  if (trace)   log.trace("Connection to ems server stablished: " + conn);
-  ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(CACHE_QUERY);
+  EmsConnection conn=ctx.getParentResourceComponent().getEmsConnection();
+  if (trace)   log.trace("Connection to ems server established");
+  String pattern=getAllCachesPattern(ctx.getParentResourceContext().getResourceKey());
+  if (trace)   log.trace("Pattern to query is {0}",pattern);
+  ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(pattern);
   List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
   if (trace)   log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: "+ beans);
   for (  EmsBean bean : beans) {
     String name=bean.getAttribute("CacheName").getValue().toString();
     if (trace)     log.trace("Resource name is {0}",name);
-    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(discoveryContext.getResourceType(),bean.getBeanName().getCanonicalName(),name,null,"One cache within Infinispan",discoveryContext.getDefaultPluginConfiguration(),null);
+    DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),name,name,null,"One cache within Infinispan",ctx.getDefaultPluginConfiguration(),null);
     discoveredResources.add(detail);
     log.info("Discovered new ...  " + bean.getBeanName().getCanonicalName());
   }

@@ -1,0 +1,19 @@
+{
+  int index=2;
+  String finalName=jmxDomain;
+  boolean done=false;
+  while (!done) {
+    done=true;
+    try {
+      ObjectName targetName=new ObjectName(finalName + ':' + groupName+ ",*");
+      if (mBeanServer.queryNames(targetName,null).size() > 0) {
+        finalName=jmxDomain + index++;
+        done=false;
+      }
+    }
+ catch (    MalformedObjectNameException e) {
+      throw new CacheException("Unable to check for duplicate names",e);
+    }
+  }
+  return finalName;
+}

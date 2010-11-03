@@ -1,16 +1,13 @@
 {
   boolean trace=log.isTraceEnabled();
   if (trace)   log.trace("Get values metrics");
-  EmsConnection conn=getConnection();
   for (  MeasurementScheduleRequest req : metrics) {
     if (trace)     log.trace("Inspect metric {0}",req);
     String metric=req.getName();
     try {
-      String abbrev=metric.substring(0,metric.indexOf("."));
-      String mbean=myNamePattern + abbrev;
-      EmsBean bean=conn.getBean(mbean);
+      EmsBean bean=queryComponentBean(metric);
       if (bean != null) {
-        if (trace)         log.trace("Retrieved mbean with name {0}",mbean);
+        if (trace)         log.trace("Retrieved mbean with name {0}",bean.getBeanName());
         bean.refreshAttributes();
         String attName=metric.substring(metric.indexOf(".") + 1);
         EmsAttribute att=bean.getAttribute(attName);
@@ -37,9 +34,6 @@
  else {
           log.warn("Attribute {0} not found",attName);
         }
-      }
- else {
-        if (trace)         log.trace("No mbean found with name {0}",mbean);
       }
     }
  catch (    Exception e) {
