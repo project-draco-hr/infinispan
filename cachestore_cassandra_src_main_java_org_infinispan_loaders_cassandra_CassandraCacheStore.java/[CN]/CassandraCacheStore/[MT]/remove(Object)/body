@@ -2,10 +2,10 @@
   if (trace)   log.trace("remove(\"{0}\") ",key);
   Cassandra.Client cassandraClient=null;
   try {
-    cassandraClient=pool.getConnection();
+    cassandraClient=dataSource.getConnection();
     Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
-    remove0(CassandraCacheStore.hashKey(key),mutationMap);
-    cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
+    remove0(hashKey(key),mutationMap);
+    cassandraClient.batch_mutate(config.keySpace,mutationMap,writeConsistencyLevel);
     return true;
   }
  catch (  Exception e) {
@@ -13,6 +13,6 @@
     return false;
   }
  finally {
-    pool.release(cassandraClient);
+    dataSource.releaseConnection(cassandraClient);
   }
 }

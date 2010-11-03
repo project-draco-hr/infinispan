@@ -1,7 +1,7 @@
 {
   Cassandra.Client cassandraClient=null;
   try {
-    cassandraClient=pool.getConnection();
+    cassandraClient=dataSource.getConnection();
     SlicePredicate slicePredicate=new SlicePredicate();
     slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(),emptyByteArray,false,1));
     String startKey="";
@@ -10,7 +10,7 @@
       KeyRange keyRange=new KeyRange(SLICE_SIZE);
       keyRange.setStart_token(startKey);
       keyRange.setEnd_token("");
-      List<KeySlice> keySlices=cassandraClient.get_range_slices(config.keySpace,entryColumnParent,slicePredicate,keyRange,ConsistencyLevel.ONE);
+      List<KeySlice> keySlices=cassandraClient.get_range_slices(config.keySpace,entryColumnParent,slicePredicate,keyRange,readConsistencyLevel);
       if (keySlices.size() < SLICE_SIZE) {
         complete=true;
       }
@@ -29,6 +29,6 @@
     throw new CacheLoaderException(e);
   }
  finally {
-    pool.release(cassandraClient);
+    dataSource.releaseConnection(cassandraClient);
   }
 }

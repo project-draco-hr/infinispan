@@ -1,9 +1,9 @@
 {
-  String hashKey=CassandraCacheStore.hashKey(key);
+  String hashKey=hashKey(key);
   Cassandra.Client cassandraClient=null;
   try {
-    cassandraClient=pool.getConnection();
-    ColumnOrSuperColumn column=cassandraClient.get(config.keySpace,hashKey,entryColumnPath,ConsistencyLevel.ONE);
+    cassandraClient=dataSource.getConnection();
+    ColumnOrSuperColumn column=cassandraClient.get(config.keySpace,hashKey,entryColumnPath,readConsistencyLevel);
     InternalCacheEntry ice=unmarshall(column.getColumn().getValue(),key);
     if (ice != null && ice.isExpired()) {
       remove(key);
@@ -19,6 +19,6 @@ catch (  Exception e) {
     throw new CacheLoaderException(e);
   }
  finally {
-    pool.release(cassandraClient);
+    dataSource.releaseConnection(cassandraClient);
   }
 }

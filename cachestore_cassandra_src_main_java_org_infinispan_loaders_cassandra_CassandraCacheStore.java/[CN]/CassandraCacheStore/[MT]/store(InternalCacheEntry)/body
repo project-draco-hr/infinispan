@@ -1,15 +1,15 @@
 {
   Cassandra.Client cassandraClient=null;
   try {
-    cassandraClient=pool.getConnection();
+    cassandraClient=dataSource.getConnection();
     Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>(2);
     store0(entry,mutationMap);
-    cassandraClient.batch_mutate(config.keySpace,mutationMap,ConsistencyLevel.ONE);
+    cassandraClient.batch_mutate(config.keySpace,mutationMap,writeConsistencyLevel);
   }
  catch (  Exception e) {
     throw new CacheLoaderException(e);
   }
  finally {
-    pool.release(cassandraClient);
+    dataSource.releaseConnection(cassandraClient);
   }
 }
