@@ -1,4 +1,7 @@
 {
+  if (log.isTraceEnabled()) {
+    log.trace("Replication task sending " + command + " to addresses "+ dests);
+  }
   int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
   distributedSync.blockUntilNoJoinsInProgress();
   if (filter != null)   mode=GroupRequest.GET_FIRST;
@@ -23,7 +26,16 @@
     buf=marshallCall();
     if (filter != null) {
       for (      Address a : targets) {
-        Object response=sendMessage(constructMessage(buf,a),opts);
+        Object response;
+        try {
+          response=sendMessage(constructMessage(buf,a),opts);
+          if (log.isTraceEnabled()) {
+            log.trace("Received response: " + response);
+          }
+        }
+ catch (        org.jgroups.TimeoutException e) {
+          throw new TimeoutException("Timeout!",e);
+        }
         filter.isAcceptable(response,a);
         if (!filter.needMoreResponses()) {
           retval=new RspList(Collections.singleton(new Rsp(a,response)));
