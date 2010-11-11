@@ -1,0 +1,19 @@
+{
+  long start=System.currentTimeMillis();
+  boolean timeoutReached=false;
+  boolean receivedAcks=false;
+  leaveAcks.lock();
+  try {
+    while (!timeoutReached) {
+      receivedAcks=leaveRehashAcks.size() > 0 && stateReceivers.containsAll(leaveRehashAcks);
+      if (receivedAcks)       break;
+ else       ackArrived.await(1000,TimeUnit.MILLISECONDS);
+      timeoutReached=(System.currentTimeMillis() - start) > timeout;
+    }
+  }
+  finally {
+    leaveRehashAcks.clear();
+    leaveAcks.unlock();
+  }
+  return !timeoutReached;
+}

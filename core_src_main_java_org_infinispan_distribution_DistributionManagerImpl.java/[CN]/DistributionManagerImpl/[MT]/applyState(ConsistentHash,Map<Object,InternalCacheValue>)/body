@@ -9,4 +9,12 @@
       interceptorChain.invoke(ctx,put);
     }
   }
+  boolean unlocked=false;
+  try {
+    drainLocalTransactionLog();
+    unlocked=true;
+  }
+  finally {
+    if (!unlocked)     transactionLogger.unlockAndDisable();
+  }
 }

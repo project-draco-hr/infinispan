@@ -22,10 +22,11 @@
       throw new CacheException(e);
     }
     List<Address> stateProviders=holdersOfLeaversState(leaver);
-    boolean willReceiveLeaverState=willReceiveLeaverState(stateProviders);
-    boolean willSendLeaverState=stateProviders.contains(self);
-    if (willReceiveLeaverState || willSendLeaverState) {
-      log.info("I {0} am participating in rehash",rpcManager.getTransport().getAddress());
+    List<Address> receiversOfLeaverState=receiversOfLeaverState(stateProviders);
+    boolean willReceiveLeaverState=receiversOfLeaverState.contains(self);
+    boolean willProvideState=stateProviders.contains(self);
+    if (willReceiveLeaverState || willProvideState) {
+      log.info("I {0} am participating in rehash, state providers {1}, state receivers {2}",rpcManager.getTransport().getAddress(),stateProviders,receiversOfLeaverState);
       transactionLogger.enable();
       if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
         if (log.isTraceEnabled()) {
@@ -34,7 +35,7 @@
         leaveTaskFuture.cancel(true);
       }
       leavers.add(leaver);
-      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,leavers,stateProviders,willReceiveLeaverState);
+      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,leavers,stateProviders,receiversOfLeaverState,willReceiveLeaverState);
       leaveTaskFuture=rehashExecutor.submit(task);
     }
  else {
