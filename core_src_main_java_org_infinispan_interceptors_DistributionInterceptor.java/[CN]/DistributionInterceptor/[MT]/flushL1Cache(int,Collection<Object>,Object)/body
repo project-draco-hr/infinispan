@@ -1,10 +1,13 @@
 {
-  if (isL1CacheEnabled && numCallRecipients > 0 && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
+  if (isL1CacheEnabled && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
     if (trace)     log.trace("Invalidating L1 caches");
     InvalidateCommand ic=cf.buildInvalidateFromL1Command(false,keys);
     NotifyingNotifiableFuture<Object> future=new AggregatingNotifyingFutureImpl(retval,2);
     rpcManager.broadcastRpcCommandInFuture(ic,future);
     return future;
+  }
+ else {
+    if (trace)     log.trace("Not performing invalidation! isL1CacheEnabled? {0} numCallRecipients={1}",isL1CacheEnabled,numCallRecipients);
   }
   return null;
 }
