@@ -1,0 +1,16 @@
+{
+  if (configurationPropertiesFile == null || configurationPropertiesFile.trim().length() == 0)   return;
+  InputStream i=new FileLookup().lookupFile(configurationPropertiesFile);
+  if (i != null) {
+    Properties p=new Properties();
+    try {
+      p.load(i);
+    }
+ catch (    IOException ioe) {
+      throw new CacheLoaderException("Unable to read environment properties file " + configurationPropertiesFile,ioe);
+    }
+    for (    String propertyName : p.stringPropertyNames()) {
+      poolProperties.set(propertyName,p.getProperty(propertyName));
+    }
+  }
+}
