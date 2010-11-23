@@ -2,6 +2,9 @@
   boolean localTxScope=ctx.isOriginLocal() && ctx.isInTxScope();
   boolean shouldInvokeOnCluster=false;
   try {
+    if (!ctx.isOriginLocal() && !transport.getMembers().contains(c.getOrigin())) {
+      throw new CacheException("Member " + c.getOrigin() + " no longer in cluster. Forcing tx rollback for tx: "+ c.getGlobalTransaction());
+    }
     if (localTxScope) {
       c.attachGlobalTransaction((GlobalTransaction)ctx.getLockOwner());
     }
