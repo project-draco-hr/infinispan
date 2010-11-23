@@ -1,50 +1,57 @@
 def release():
     global settings
     global uploader
-    global svn_conn
+    global git
     assert_python_minimum_version(2, 5)
     require_settings_file()
     if (len(sys.argv) < 2):
-        helpAndExit()
+        help_and_exit()
     base_dir = os.getcwd()
-    version = validateVersion(sys.argv[1])
-    branch = 'trunk'
+    version = validate_version(sys.argv[1])
+    branch = 'master'
     if (len(sys.argv) > 2):
         branch = sys.argv[2]
-    print ("Releasing Infinispan version %s from branch '%s'" % (version, branch))
-    print 'Please stand by!'
+    prettyprint(("Releasing Infinispan version %s from branch '%s'" % (version, branch)), Levels.INFO)
+    sure = input_with_default('Are you sure you want to continue?', 'N')
+    if (not sure.upper().startswith('Y')):
+        prettyprint('... User Abort!', Levels.WARNING)
+        sys.exit(1)
+    prettyprint('OK, releasing! Please stand by ...', Levels.INFO)
     if settings['dry_run']:
-        print '*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***'
-        print ('Your settings are %s' % settings)
+        prettyprint('*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***', Levels.DEBUG)
+        prettyprint(('Your settings are %s' % settings), Levels.DEBUG)
         uploader = DryRunUploader()
-        svn_conn = DryRunSvnConn()
     else:
         uploader = Uploader()
-        svn_conn = SvnConn()
-    newVersion = ('%s/tags/%s' % (settings[svn_base_key], version))
-    print ('Step 1: Tagging %s in SVN as %s' % (branch, newVersion))
-    tagInSubversion(version, newVersion, branch)
-    print 'Step 1: Complete'
-    workingDir = ((settings[local_tags_dir_key] + '/') + version)
-    print 'Step 2: Updating version number in source files'
-    updateVersions(version, workingDir, base_dir)
-    print 'Step 2: Complete'
-    print 'Step 3: Build and test in Maven2'
-    buildAndTest(workingDir)
-    print 'Step 3: Complete'
+    git = Git(branch, version.upper())
+    prettyprint(('Step 1: Tagging %s in git as %s' % (branch, version)), Levels.INFO)
+    tag_release(version, branch)
+    prettyprint('Step 1: Complete', Levels.INFO)
+    prettyprint('Step 2: Updating version number in source files', Levels.INFO)
+    update_versions(version)
+    prettyprint('Step 2: Complete', Levels.INFO)
+    prettyprint('Step 3: Build and test in Maven2', Levels.INFO)
+    maven_build_distribution()
+    prettyprint('Step 3: Complete', Levels.INFO)
     async_processes = []
-    unzip_archive(workingDir, version)
-    print 'Step 4: Uploading Javadocs'
-    do_task(uploadJavadocs, [workingDir, version], async_processes)
-    print 'Step 4: Complete'
-    print 'Step 5: Uploading to Sourceforge'
-    do_task(uploadArtifactsToSourceforge, [version], async_processes)
-    print 'Step 5: Complete'
-    print 'Step 6: Uploading to configuration XML schema'
-    do_task(uploadSchema, [workingDir, version], async_processes)
-    print 'Step 6: Complete'
+    unzip_archive(version)
+    prettyprint('Step 4: Uploading Javadocs', Levels.INFO)
+    do_task(upload_javadocs, [base_dir, version], async_processes)
+    prettyprint('Step 4: Complete', Levels.INFO)
+    prettyprint('Step 5: Uploading to Sourceforge', Levels.INFO)
+    do_task(upload_artifacts_to_sourceforge, [base_dir, version], async_processes)
+    prettyprint('Step 5: Complete', Levels.INFO)
+    prettyprint('Step 6: Uploading to configuration XML schema', Levels.INFO)
+    do_task(upload_schema, [base_dir, version], async_processes)
+    prettyprint('Step 6: Complete', Levels.INFO)
     for p in async_processes:
         p.start()
     for p in async_processes:
         p.join()
-    print '\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://docspace.corp.redhat.com/docs/DOC-28594'
+    git.tag_for_release()
+    if (not settings['dry_run']):
+        git.push_to_origin()
+        git.cleanup()
+    else:
+        prettyprint(('In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s.' % git.working_branch), Levels.DEBUG)
+    prettyprint('\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://docspace.corp.redhat.com/docs/DOC-28594', Levels.INFO)

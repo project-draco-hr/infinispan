@@ -1,0 +1,30 @@
+def update_versions(version):
+    poms_to_patch = get_poms_to_patch('.')
+    modified_files = []
+    for pom in poms_to_patch:
+        if patch(pom, version):
+            modified_files.append(pom)
+    version_bytes = '{'
+    for ch in version:
+        if (not (ch == '.')):
+            version_bytes += ("'%s', " % ch)
+    version_bytes = version_bytes[:(-2)]
+    version_bytes += '}'
+    version_java = './core/src/main/java/org/infinispan/Version.java'
+    modified_files.append(version_java)
+    f_in = open(version_java)
+    f_out = open((version_java + '.tmp'), 'w')
+    try:
+        for l in f_in:
+            if (l.find('static final byte[] version_id = ') > (-1)):
+                l = re.sub('version_id = .*;', (('version_id = ' + version_bytes) + ';'), l)
+            elif (l.find('public static final String version =') > (-1)):
+                ver_bits = version.split('.')
+                micro_mod = ('%s.%s' % (ver_bits[2], ver_bits[3]))
+                l = re.sub('version\\s*=\\s*major\\s*\\+\\s*"[A-Z0-9\\.\\-]*";', (('version = major + "' + micro_mod) + '";'), l)
+            f_out.write(l)
+    finally:
+        f_in.close()
+        f_out.close()
+    os.rename((version_java + '.tmp'), version_java)
+    git.commit(modified_files)

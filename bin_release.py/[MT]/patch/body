@@ -1,20 +1,24 @@
-def patch(pomFile, version):
+def patch(pom_file, version):
+    'Updates the version in a POM file.  We need to locate //project/parent/version, //project/version and \n  //project/properties/project-version and replace the contents of these with the new version'
     if settings['verbose']:
-        print ('Patching %s' % pomFile)
+        prettyprint(('Patching %s' % pom_file), Levels.DEBUG)
     tree = ElementTree()
-    tree.parse(pomFile)
+    tree.parse(pom_file)
     need_to_write = False
     tags = []
-    tags.append(getParentVersionTag(tree))
-    tags.append(getProjectVersionTag(tree))
-    tags.append(getPropertiesVersionTag(tree))
+    tags.append(get_parent_version_tag(tree))
+    tags.append(get_project_version_tag(tree))
+    tags.append(get_properties_version_tag(tree))
     for tag in tags:
         if (tag != None):
             if settings['verbose']:
-                print ('%s is %s.  Setting to %s' % (str(tag), tag.text, version))
+                prettyprint(('%s is %s.  Setting to %s' % (str(tag), tag.text, version)), Levels.DEBUG)
             tag.text = version
             need_to_write = True
     if need_to_write:
-        writePom(tree, pomFile)
-    elif settings['verbose']:
-        print "File doesn't need updating; nothing replaced!"
+        write_pom(tree, pom_file)
+        return True
+    else:
+        if settings['verbose']:
+            prettyprint("File doesn't need updating; nothing replaced!", Levels.DEBUG)
+        return False
