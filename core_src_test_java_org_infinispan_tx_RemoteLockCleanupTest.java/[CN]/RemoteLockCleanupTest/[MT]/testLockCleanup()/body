@@ -1,0 +1,37 @@
+{
+  final DelayInterceptor interceptor=new DelayInterceptor();
+  advancedCache(0).addInterceptor(interceptor,1);
+  fork(new Runnable(){
+    @Override public void run(){
+      try {
+        tm(1).begin();
+        advancedCache(1).lock("k");
+        tm(1).suspend();
+      }
+ catch (      Exception e) {
+        log.error(e);
+      }
+    }
+  }
+,false);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return interceptor.receivedReplRequest;
+    }
+  }
+);
+  TestingUtil.killCacheManagers(manager(1));
+  BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0));
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return interceptor.lockAcquired;
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return !TestingUtil.extractLockManager(cache(0)).isLocked("k");
+    }
+  }
+);
+}
