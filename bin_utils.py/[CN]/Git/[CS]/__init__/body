@@ -1,5 +1,6 @@
 def __init__(self, branch, tag_name):
-    self.cmd = 'git'
+    if (not self.is_git_directory()):
+        raise Exception(('Attempting to run git outside of a repository. Current directory is %s' % os.path.abspath(os.path.curdir)))
     self.branch = branch
     self.tag = tag_name
     self.verbose = False
@@ -7,3 +8,4 @@ def __init__(self, branch, tag_name):
         self.verbose = True
     rand = ('%x'.upper() % (random.random() * 100000))
     self.working_branch = ('__temp_%s' % rand)
+    self.original_branch = self.current_branch()

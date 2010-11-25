@@ -1,0 +1,11 @@
+def is_upstream_clone(self):
+    r = self.run_git('remote show -n origin')
+    cleaned = map(self.clean, r)
+
+    def push(e):
+        return e.startswith('PushURL:')
+
+    def remove_noise(e):
+        return e.replace('PushURL:', '')
+    push_urls = map(remove_noise, filter(push, cleaned))
+    return ((len(push_urls) == 1) and (push_urls[0] == 'git@github.com:infinispan/infinispan.git'))
