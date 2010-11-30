@@ -3,8 +3,8 @@
   Writer writer=writers.get(clazz);
   if (writer == null && (MARSHALLABLES.contains(clazz.getName()) || JDK_EXTERNALIZERS.containsKey(clazz.getName()))) {
     if (log.isTraceEnabled())     log.trace("Either the marshaller has stopped or hasn't started. Write externalizers are not propery populated: {0}",writers);
-    if (Thread.currentThread().isInterrupted())     throw new IOException("Cache manager is shutting down, " + "so type write externalizer for type=" + clazz.getName() + " cannot be resolved. "+ "Interruption being pushed up.",new InterruptedException());
- else     throw new IllegalStateException("No write externalizer available for: " + clazz.getName() + ", either marshaller is stopped or has not started up yet.");
+    if (Thread.currentThread().isInterrupted())     throw new IOException(String.format("Cache manager is shutting down, so type write externalizer for type=%s cannot be resolved. Interruption being pushed up.",clazz.getName()),new InterruptedException());
+ else     throw new IllegalStateException(String.format("No write externalizer available for: %s, either marshaller is stopped or has not started up yet.",clazz.getName()));
   }
   return writer;
 }

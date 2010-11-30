@@ -1,18 +1,19 @@
 {
   int readerIndex=input.readUnsignedByte();
+  if (readerIndex == Ids.MAX_ID)   readerIndex=generateForeignReaderIndex(UnsignedNumeric.readUnsignedInt(input));
   ExternalizerAdapter adapter=readers.get(readerIndex);
   if (adapter == null) {
     if (!started) {
       if (log.isTraceEnabled())       log.trace("Either the marshaller has stopped or hasn't started. Read externalizers are not propery populated: {0}",readers);
-      if (Thread.currentThread().isInterrupted())       throw new IOException("Cache manager is shutting down, " + "so type (id=" + readerIndex + ") cannot be resolved. Interruption being pushed up.",new InterruptedException());
- else       throw new CacheException("Cache manager is either starting up or shutting down but it's not interrupted, " + "so type (id=" + readerIndex + ") cannot be resolved.");
+      if (Thread.currentThread().isInterrupted())       throw new IOException(String.format("Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",readerIndex),new InterruptedException());
+ else       throw new CacheException(String.format("Cache manager is either starting up or shutting down but it's not interrupted, so type (id=%d) cannot be resolved.",readerIndex));
     }
  else {
       if (log.isTraceEnabled()) {
         log.trace("Unknown type. Input stream has {0} to read",input.available());
         log.trace("Check contents of read externalizers: {0}",readers);
       }
-      throw new CacheException("Type of data read is unknown. Id=" + readerIndex + " "+ "is not amongst known reader indexes.");
+      throw new CacheException(String.format("Type of data read is unknown. Id=%d is not amongst known reader indexes.",readerIndex));
     }
   }
   return adapter.readObject(input);

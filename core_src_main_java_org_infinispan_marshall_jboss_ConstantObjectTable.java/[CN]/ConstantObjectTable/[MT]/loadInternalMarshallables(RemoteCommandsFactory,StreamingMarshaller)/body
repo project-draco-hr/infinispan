@@ -1,0 +1,20 @@
+{
+  for (  String marshallableClass : MARSHALLABLES) {
+    try {
+      Class typeClass=Util.loadClassStrict(marshallableClass);
+      Marshallable marshallable=ReflectionUtil.getAnnotation(typeClass,Marshallable.class);
+      if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
+        Externalizer ext=Util.getInstance(marshallable.externalizer());
+        if (ext instanceof ReplicableCommandExternalizer)         ((ReplicableCommandExternalizer)ext).inject(cmdFactory);
+        if (ext instanceof MarshalledValue.Externalizer)         ((MarshalledValue.Externalizer)ext).inject(ispnMarshaller);
+        int id=checkInternalIdLimit(marshallable.id(),ext);
+        updateExtReadersWriters(new ExternalizerAdapter(id,ext),typeClass);
+      }
+    }
+ catch (    ClassNotFoundException e) {
+      if (!marshallableClass.startsWith("org.infinispan")) {
+        if (log.isDebugEnabled())         log.debug("Unable to load class {0}",e.getMessage());
+      }
+    }
+  }
+}
