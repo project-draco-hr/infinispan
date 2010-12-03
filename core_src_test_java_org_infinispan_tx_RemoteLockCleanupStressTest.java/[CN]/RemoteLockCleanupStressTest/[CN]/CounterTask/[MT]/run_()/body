@@ -1,0 +1,79 @@
+{
+  Cache cache=cm.getCache();
+  TransactionManager tx=cache.getAdvancedCache().getTransactionManager();
+  try {
+    tx.begin();
+  }
+ catch (  Exception ex) {
+    log.debug("Exception starting transaction",ex);
+  }
+  try {
+    log.debug("aquiring lock on cache " + cache.getName() + " key "+ key+ "...");
+    cache.getAdvancedCache().lock(key);
+    Integer val=(Integer)cache.get(key);
+    log.debug("current value : " + val);
+    if (val == null) {
+      val=0;
+    }
+ else {
+      val++;
+    }
+    cache.put(key,val);
+    TestingUtil.sleepRandom(200);
+    log.debug("commit...");
+    tx.commit();
+    log.debug("done commit");
+  }
+ catch (  Exception ex) {
+    try {
+      log.debug("rollback... " + ex.getLocalizedMessage());
+      tx.rollback();
+      log.debug("done rollback");
+    }
+ catch (    Exception rex) {
+      log.debug("Exception rolling back",rex);
+    }
+  }
+ finally {
+    try {
+      log.debug("tx status at the end : ");
+switch (tx.getStatus()) {
+case Status.STATUS_ACTIVE:
+        log.debug("active");
+      break;
+case Status.STATUS_COMMITTED:
+    log.debug("committed");
+  break;
+case Status.STATUS_COMMITTING:
+log.debug("committing");
+break;
+case Status.STATUS_MARKED_ROLLBACK:
+log.debug("makerd rollback");
+break;
+case Status.STATUS_NO_TRANSACTION:
+log.debug("no transaction");
+break;
+case Status.STATUS_PREPARED:
+log.debug("preprared");
+break;
+case Status.STATUS_PREPARING:
+log.debug("preparing");
+break;
+case Status.STATUS_ROLLEDBACK:
+log.debug("rolledback");
+break;
+case Status.STATUS_ROLLING_BACK:
+log.debug("rolling back");
+break;
+case Status.STATUS_UNKNOWN:
+log.debug("unknown");
+break;
+default :
+log.debug(tx.getStatus());
+}
+}
+ catch (Exception ex) {
+log.debug("Exception retrieving transaction status",ex);
+}
+}
+}
