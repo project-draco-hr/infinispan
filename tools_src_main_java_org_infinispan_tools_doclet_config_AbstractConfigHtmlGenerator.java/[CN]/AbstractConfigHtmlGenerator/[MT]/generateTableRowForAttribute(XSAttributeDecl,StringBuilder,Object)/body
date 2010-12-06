@@ -1,0 +1,89 @@
+{
+  sb.append("<tr class=\"b\">");
+  sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
+  sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
+  boolean isRestricted=false;
+  XSRestrictionSimpleType restriction=a.getType().asRestriction();
+  Collection<? extends XSFacet> declaredFacets=restriction.getDeclaredFacets();
+  for (  XSFacet facet : declaredFacets) {
+    if (facet.getName().equalsIgnoreCase("enumeration")) {
+      isRestricted=true;
+      break;
+    }
+  }
+  debug("attribute = " + a.getName() + "(restricted = "+ isRestricted+ ")",1);
+  if (isRestricted) {
+    sb.append("* (");
+    for (    XSFacet facet : declaredFacets) {
+      sb.append(facet.getValue().toString() + '|');
+    }
+    sb.deleteCharAt(sb.length() - 1);
+    sb.append(")</td>\n");
+  }
+ else {
+    sb.append("</td>\n");
+  }
+  Field field=findField(beanClassInstance.getClass(),a.getName());
+  if (field == null) {
+    throw new RuntimeException("Null field for " + beanClassInstance.getClass() + " attribute "+ a.getName());
+  }
+  if (a.getDefaultValue() != null) {
+    debug("annotation-defined default = " + a.getDefaultValue(),2);
+    sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
+  }
+ else {
+    Object defaultValue=null;
+    try {
+      defaultValue=ReflectionUtil.getValue(beanClassInstance,field.getName());
+      if (defaultValue != null) {
+        sb.append("<td>").append(defaultValue.toString()).append("</td>\n");
+        debug("field-defined default = " + defaultValue,2);
+      }
+ else {
+        debug("field-defined default is null!",2);
+        sb.append("<td>").append("null").append("</td>\n");
+      }
+    }
+ catch (    Exception e) {
+      debug("Caught exception, bean is " + beanClassInstance.getClass() + ", looking for field "+ a.getName()+ ", field "+ field,2);
+      e.printStackTrace();
+      sb.append("<td>").append("N/A").append("</td>\n");
+    }
+  }
+  String desc=null;
+  Doc docElement=null;
+  ConfigurationDocRef docRef=null;
+  if (field.isAnnotationPresent(ConfigurationDoc.class)) {
+    desc=field.getAnnotation(ConfigurationDoc.class).desc();
+  }
+ else   if (field.isAnnotationPresent(ConfigurationDocRef.class)) {
+    docRef=field.getAnnotation(ConfigurationDocRef.class);
+    docElement=findDocElement(docRef.bean(),docRef.targetElement());
+    desc=docElement.commentText();
+  }
+  if (desc != null) {
+    sb.append("<td>").append(desc).append("\n");
+    String htmlFile=field.getDeclaringClass().getName().replace(".","/").replace("$",".").concat(".html");
+    if (docRef != null) {
+      htmlFile=docRef.bean().getName().replace(".","/").replace("$",".").concat(".html");
+      if (docElement instanceof MethodDoc) {
+        MethodDoc mDocElement=(MethodDoc)docElement;
+        Parameter[] parameters=mDocElement.parameters();
+        String targetElement=docRef.targetElement();
+        StringBuilder javadocTarget=new StringBuilder(targetElement);
+        javadocTarget.append("(");
+        for (        Parameter parameter : parameters) {
+          javadocTarget.append(parameter.type().qualifiedTypeName()).append(",");
+        }
+        javadocTarget.deleteCharAt(javadocTarget.length() - 1);
+        javadocTarget.append(")");
+        sb.append(" (<a href=\"" + htmlFile.concat("#").concat(javadocTarget.toString()) + "\">"+ "Javadoc</a>)");
+      }
+    }
+ else {
+      sb.append(" (<a href=\"" + htmlFile.concat("#").concat(field.getName()) + "\">"+ "Javadoc</a>)");
+    }
+    sb.append("</td>\n");
+  }
+  sb.append("</tr>\n");
+}
