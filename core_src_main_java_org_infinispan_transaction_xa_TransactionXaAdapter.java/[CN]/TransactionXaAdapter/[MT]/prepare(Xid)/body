@@ -1,16 +1,23 @@
 {
-  checkMarkedForRollback();
+  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  validateNotMarkedForRollback(localTransaction);
   if (configuration.isOnePhaseCommit()) {
-    if (trace)     log.trace("Received prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
+    if (trace)     log.trace("Received prepare for tx: {0}. Skipping call as 1PC will be used.",xid);
     return XA_OK;
   }
-  PrepareCommand prepareCommand=commandsFactory.buildPrepareCommand(globalTx,modifications,configuration.isOnePhaseCommit());
+  PrepareCommand prepareCommand=commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),configuration.isOnePhaseCommit());
   if (trace)   log.trace("Sending prepare command through the chain: " + prepareCommand);
   LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-  ctx.setXaCache(this);
+  ctx.setLocalTransaction(localTransaction);
   try {
     invoker.invoke(ctx,prepareCommand);
-    return XA_OK;
+    if (localTransaction.isReadOnly()) {
+      if (trace)       log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
+      return XA_RDONLY;
+    }
+ else {
+      return XA_OK;
+    }
   }
  catch (  Throwable e) {
     log.error("Error while processing PrepareCommand",e);

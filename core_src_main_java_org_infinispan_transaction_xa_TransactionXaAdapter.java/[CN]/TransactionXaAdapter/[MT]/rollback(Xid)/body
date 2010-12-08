@@ -1,8 +1,9 @@
 {
-  if (trace)   log.trace("rollback transaction: " + globalTx);
-  RollbackCommand rollbackCommand=commandsFactory.buildRollbackCommand(globalTx);
+  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  if (trace)   log.trace("rollback transaction {0} ",localTransaction.getGlobalTransaction());
+  RollbackCommand rollbackCommand=commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
   LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-  ctx.setXaCache(this);
+  ctx.setLocalTransaction(localTransaction);
   try {
     invoker.invoke(ctx,rollbackCommand);
   }
@@ -11,8 +12,6 @@
     throw new XAException(XAException.XA_HEURHAZ);
   }
  finally {
-    txTable.removeLocalTransaction(transaction);
-    icc.suspend();
-    this.modifications=null;
+    cleanup(localTransaction);
   }
 }

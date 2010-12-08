@@ -1,0 +1,12 @@
+{
+  LocalTransaction current=localTransactions.get(transaction);
+  if (current == null) {
+    Address localAddress=rpcManager != null ? rpcManager.getTransport().getAddress() : null;
+    GlobalTransaction tx=gtf.newGlobalTransaction(localAddress,false);
+    if (trace)     log.trace("Created a new GlobalTransaction {0}",tx);
+    current=new LocalTransaction(transaction,tx);
+    localTransactions.put(transaction,current);
+    notifier.notifyTransactionRegistered(tx,ctx);
+  }
+  return current;
+}

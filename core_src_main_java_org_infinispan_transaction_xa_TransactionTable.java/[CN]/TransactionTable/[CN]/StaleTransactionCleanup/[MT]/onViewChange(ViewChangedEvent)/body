@@ -4,9 +4,9 @@
     if (trace)     log.trace("Saw {0} leavers - kicking off a lock breaking task",leavers.size());
     cleanTxForWhichTheOwnerLeft(leavers);
     if (configuration.isUseEagerLocking() && configuration.isEagerLockSingleNode() && configuration.getCacheMode().isDistributed()) {
-      for (      TransactionXaAdapter xaAdapter : localTransactions.values()) {
-        if (xaAdapter.hasRemoteLocksAcquired(leavers)) {
-          xaAdapter.markForRollback();
+      for (      LocalTransaction localTx : localTransactions.values()) {
+        if (localTx.hasRemoteLocksAcquired(leavers)) {
+          localTx.markForRollback();
         }
       }
     }

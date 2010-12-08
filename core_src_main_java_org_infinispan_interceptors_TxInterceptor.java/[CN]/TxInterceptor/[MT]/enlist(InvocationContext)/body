@@ -3,5 +3,15 @@
   if (transaction == null)   throw new IllegalStateException("This should only be called in an tx scope");
   int status=transaction.getStatus();
   if (isNotValid(status))   throw new IllegalStateException("Transaction " + transaction + " is not in a valid state to be invoking cache operations on.");
-  return txTable.getOrCreateXaAdapter(transaction,ctx);
+  LocalTransaction localTransaction=txTable.getOrCreateLocalTransaction(transaction,ctx);
+  if (!localTransaction.isEnlisted()) {
+    try {
+      transaction.enlistResource(new TransactionXaAdapter(localTransaction,txTable,commandsFactory,configuration,invoker,icc));
+    }
+ catch (    Exception e) {
+      log.error("Failed to enlist TransactionXaAdapter to transaction");
+      throw new CacheException(e);
+    }
+  }
+  return localTransaction;
 }

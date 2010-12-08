@@ -1,13 +1,13 @@
 {
-  if (isOnePhase)   prepare(xid);
-  if (trace)   log.trace("committing transaction: " + globalTx);
+  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  if (trace)   log.trace("committing transaction {0}" + localTransaction.getGlobalTransaction());
   try {
     LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-    ctx.setXaCache(this);
-    if (configuration.isOnePhaseCommit()) {
-      checkMarkedForRollback();
+    ctx.setLocalTransaction(localTransaction);
+    if (configuration.isOnePhaseCommit() || isOnePhase) {
+      validateNotMarkedForRollback(localTransaction);
       if (trace)       log.trace("Doing an 1PC prepare call on the interceptor chain");
-      PrepareCommand command=commandsFactory.buildPrepareCommand(globalTx,modifications,true);
+      PrepareCommand command=commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),true);
       try {
         invoker.invoke(ctx,command);
       }
@@ -17,7 +17,7 @@
       }
     }
  else {
-      CommitCommand commitCommand=commandsFactory.buildCommitCommand(globalTx);
+      CommitCommand commitCommand=commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
       try {
         invoker.invoke(ctx,commitCommand);
       }
@@ -28,8 +28,6 @@
     }
   }
   finally {
-    txTable.removeLocalTransaction(transaction);
-    icc.suspend();
-    this.modifications=null;
+    cleanup(localTransaction);
   }
 }

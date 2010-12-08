@@ -1,15 +1,15 @@
 {
-  TransactionXaAdapter xaAdapter=null;
+  LocalTransaction localTransaction=null;
   boolean shouldAddMod=false;
   if (shouldEnlist(ctx)) {
-    xaAdapter=enlist(ctx);
+    localTransaction=enlist(ctx);
     LocalTxInvocationContext localTxContext=(LocalTxInvocationContext)ctx;
     if (localModeNotForced(ctx))     shouldAddMod=true;
-    localTxContext.setXaCache(xaAdapter);
+    localTxContext.setLocalTransaction(localTransaction);
   }
   Object rv;
   rv=invokeNextInterceptor(ctx,command);
   if (!ctx.isInTxScope())   transactionLog.logNoTxWrite(command);
-  if (command.isSuccessful() && shouldAddMod)   xaAdapter.addModification(command);
+  if (command.isSuccessful() && shouldAddMod)   localTransaction.addModification(command);
   return rv;
 }
