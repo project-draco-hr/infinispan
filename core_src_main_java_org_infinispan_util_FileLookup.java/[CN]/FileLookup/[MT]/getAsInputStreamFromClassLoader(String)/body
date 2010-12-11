@@ -1,8 +1,19 @@
 {
   ClassLoader cl=Thread.currentThread().getContextClassLoader();
-  InputStream is=cl == null ? null : cl.getResourceAsStream(filename);
+  InputStream is;
+  try {
+    is=cl == null ? null : cl.getResourceAsStream(filename);
+  }
+ catch (  RuntimeException re) {
+    is=null;
+  }
   if (is == null) {
-    is=getClass().getClassLoader().getResourceAsStream(filename);
+    try {
+      is=getClass().getClassLoader().getResourceAsStream(filename);
+    }
+ catch (    RuntimeException re) {
+      is=null;
+    }
   }
   return is;
 }

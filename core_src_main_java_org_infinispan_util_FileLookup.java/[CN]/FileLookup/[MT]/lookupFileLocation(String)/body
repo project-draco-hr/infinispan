@@ -1,8 +1,19 @@
 {
   ClassLoader cl=Thread.currentThread().getContextClassLoader();
-  URL u=cl == null ? null : cl.getResource(filename);
+  URL u;
+  try {
+    u=cl == null ? null : cl.getResource(filename);
+  }
+ catch (  RuntimeException re) {
+    u=null;
+  }
   if (u == null) {
-    u=getClass().getClassLoader().getResource(filename);
+    try {
+      u=getClass().getClassLoader().getResource(filename);
+    }
+ catch (    RuntimeException re) {
+      u=null;
+    }
   }
   if (u == null) {
     File f=new File(filename);
