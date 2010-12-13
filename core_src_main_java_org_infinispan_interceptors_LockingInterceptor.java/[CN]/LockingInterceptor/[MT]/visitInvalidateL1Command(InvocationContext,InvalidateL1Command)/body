@@ -1,0 +1,28 @@
+{
+  Object keys[]=command.getKeys();
+  try {
+    if (keys != null && keys.length >= 1) {
+      ArrayList<Object> keysCopy=new ArrayList<Object>(Arrays.asList(keys));
+      for (      Object key : command.getKeys()) {
+        ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+        try {
+          entryFactory.wrapEntryForWriting(ctx,key,false,true,false,false,false);
+        }
+ catch (        TimeoutException te) {
+          log.warn("Could not lock key {0} in order to invalidate from L1 at node {1}, skipping....",key,transport.getAddress());
+          keysCopy.remove(key);
+          if (keysCopy.isEmpty())           return null;
+        }
+      }
+      command.setKeys(keysCopy.toArray());
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    return cleanLocksAndRethrow(ctx,te);
+  }
+ finally {
+    command.setKeys(keys);
+    doAfterCall(ctx);
+  }
+}

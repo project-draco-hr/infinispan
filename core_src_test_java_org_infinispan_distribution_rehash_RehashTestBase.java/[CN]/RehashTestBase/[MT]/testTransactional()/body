@@ -1,6 +1,7 @@
 {
   final List<MagicKey> keys=init();
   final CountDownLatch l=new CountDownLatch(1);
+  final AtomicBoolean rollback=new AtomicBoolean(false);
   Thread th=new Thread("Updater"){
     @Override public void run(){
       try {
@@ -22,6 +23,7 @@
         t1.commit();
       }
  catch (      Exception e) {
+        rollback.set(true);
         throw new RuntimeException(e);
       }
     }
@@ -34,9 +36,11 @@
   th.join();
   log.info("Rehash complete");
   additionalWait();
-  assertOnAllCachesAndOwnership(keys.get(0),"transactionally_replaced");
-  assertOnAllCachesAndOwnership(keys.get(1),"v" + 2);
-  assertOnAllCachesAndOwnership(keys.get(2),"v" + 3);
-  assertOnAllCachesAndOwnership(keys.get(3),"v" + 4);
-  assertProperConsistentHashOnAllCaches();
+  if (!rollback.get()) {
+    assertOnAllCachesAndOwnership(keys.get(0),"transactionally_replaced");
+    assertOnAllCachesAndOwnership(keys.get(1),"v" + 2);
+    assertOnAllCachesAndOwnership(keys.get(2),"v" + 3);
+    assertOnAllCachesAndOwnership(keys.get(3),"v" + 4);
+    assertProperConsistentHashOnAllCaches();
+  }
 }
