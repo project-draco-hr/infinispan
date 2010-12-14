@@ -1,18 +1,6 @@
 {
-  for (  String tmpExtClassName : TMP_EXTERNALIZERS) {
-    try {
-      Class<? extends Externalizer> tmpExtClass=Util.loadClassStrict(tmpExtClassName);
-      internalExternalizers.add(tmpExtClass);
-    }
- catch (    ClassNotFoundException e) {
-      if (!tmpExtClassName.startsWith("org.infinispan")) {
-        if (log.isDebugEnabled())         log.debug("Unable to load class {0}",e.getMessage());
-      }
-    }
-  }
-  for (  Class<? extends Externalizer> extClass : internalExternalizers) {
-    Marshalls marshalls=ReflectionUtil.getAnnotation(extClass,Marshalls.class);
-    Externalizer ext=Util.getInstance(extClass);
+  for (  Externalizer ext : internalExternalizers) {
+    Marshalls marshalls=ReflectionUtil.getAnnotation(ext.getClass(),Marshalls.class);
     if (ext instanceof ReplicableCommandExternalizer)     ((ReplicableCommandExternalizer)ext).inject(cmdFactory);
     if (ext instanceof MarshalledValue.Externalizer)     ((MarshalledValue.Externalizer)ext).inject(ispnMarshaller);
     int id=checkInternalIdLimit(marshalls.id(),ext);
