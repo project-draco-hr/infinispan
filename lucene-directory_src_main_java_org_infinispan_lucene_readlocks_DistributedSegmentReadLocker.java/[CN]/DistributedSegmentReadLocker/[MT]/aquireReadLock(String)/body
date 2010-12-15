@@ -1,30 +1,3 @@
 {
-  FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
-  Object lockValue=locksCache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE).get(readLockKey);
-  boolean done=false;
-  while (done == false) {
-    if (lockValue != null) {
-      int refCount=(Integer)lockValue;
-      if (refCount == 0) {
-        return false;
-      }
-      Integer newValue=Integer.valueOf(refCount + 1);
-      done=locksCache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey,lockValue,newValue);
-      if (!done) {
-        lockValue=locksCache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE).get(readLockKey);
-      }
-    }
- else {
-      lockValue=locksCache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey,Integer.valueOf(2));
-      done=(null == lockValue);
-      if (done) {
-        final FileCacheKey fileKey=new FileCacheKey(indexName,filename);
-        if (metadataCache.get(fileKey) == null) {
-          locksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD).removeAsync(readLockKey);
-          return false;
-        }
-      }
-    }
-  }
-  return true;
+  return acquireReadLock(filename);
 }
