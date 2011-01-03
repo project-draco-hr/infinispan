@@ -1,4 +1,14 @@
 {
+  if (sfi instanceof MutableSearchFactory) {
+    try {
+      Field delegateField=MutableSearchFactory.class.getDeclaredField("delegate");
+      delegateField.setAccessible(true);
+      sfi=(SearchFactoryImplementor)delegateField.get(sfi);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Cannot test running state of the search factory",e);
+    }
+  }
   if (sfi instanceof ImmutableSearchFactory) {
     try {
       Field status=ImmutableSearchFactory.class.getDeclaredField("stopped");
@@ -8,19 +18,6 @@
     }
  catch (    Exception e) {
       throw new RuntimeException("Cannot test running state of the search factory",e);
-    }
-  }
- else {
-    if (sfi instanceof MutableSearchFactory) {
-      try {
-        Field delegateField=MutableSearchFactory.class.getDeclaredField("stopped");
-        delegateField.setAccessible(true);
-        SearchFactoryImplementor delegate=(SearchFactoryImplementor)delegateField.get(sfi);
-        return isStopped(delegate);
-      }
- catch (      Exception e) {
-        throw new RuntimeException("Cannot test running state of the search factory",e);
-      }
     }
   }
   throw new RuntimeException("Cannot test running state of the search factory as it is neither a MutableSearchFactory nor an ImmutableSearchFactory");
