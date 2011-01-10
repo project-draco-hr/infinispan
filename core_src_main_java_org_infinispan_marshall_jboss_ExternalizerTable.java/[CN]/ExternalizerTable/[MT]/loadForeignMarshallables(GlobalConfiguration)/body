@@ -4,11 +4,10 @@
   List<ExternalizerConfig> configs=type.getExternalizerConfigs();
   for (  ExternalizerConfig config : configs) {
     Externalizer ext=config.getExternalizer() != null ? config.getExternalizer() : (Externalizer)Util.getInstance(config.getExternalizerClass());
-    Marshalls marshalls=ReflectionUtil.getAnnotation(ext.getClass(),Marshalls.class);
-    int id=marshalls.id();
-    if ((config.getId() == null || config.getId() == Integer.MAX_VALUE) && id == Integer.MAX_VALUE)     throw new ConfigurationException(String.format("No externalizer identifier set for externalizer %s",ext.getClass().getName()));
+    Integer id=ext.getId();
+    if (config.getId() == null && id == null)     throw new ConfigurationException(String.format("No externalizer identifier set for externalizer %s",ext.getClass().getName()));
  else     if (config.getId() != null)     id=config.getId();
     id=checkForeignIdLimit(id,ext);
-    updateExtReadersWritersWithTypes(marshalls,new ForeignExternalizerAdapter(id,ext),generateForeignReaderIndex(id));
+    updateExtReadersWritersWithTypes(new ForeignExternalizerAdapter(id,ext),generateForeignReaderIndex(id));
   }
 }
