@@ -1,0 +1,25 @@
+{
+  Cache<String,GridFile.Metadata> cache=null;
+  MapReduceTask<String,GridFile.Metadata,Long,Long> task=new MapReduceTask<String,GridFile.Metadata,Long,Long>(cache);
+  Long result=task.mappedWith(new Mapper<String,GridFile.Metadata,Long>(){
+    @Override public Long map(    String key,    GridFile.Metadata value){
+      return (long)value.getLength();
+    }
+  }
+).reducedWith(new Reducer<Long,Long>(){
+    @Override public Long reduce(    Long mapResult,    Long previouslyReduced){
+      return previouslyReduced == null ? mapResult : mapResult + previouslyReduced;
+    }
+  }
+).collate(new Collator<Long>(){
+    private Long result=0L;
+    @Override public Long collate(){
+      return result;
+    }
+    @Override public void reducedResultReceived(    Address remoteNode,    Long remoteResult){
+      result+=remoteResult;
+    }
+  }
+);
+  System.out.println("Total filesystem size is " + result + " bytes");
+}
