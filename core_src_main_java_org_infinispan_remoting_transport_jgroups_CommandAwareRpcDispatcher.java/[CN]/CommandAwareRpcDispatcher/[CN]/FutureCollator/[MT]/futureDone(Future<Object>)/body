@@ -1,20 +1,30 @@
 {
-  try {
-    Object response=objectFuture.get();
-    Address a=futures.get(objectFuture);
-    filter.isAcceptable(response,a);
-    if (!filter.needMoreResponses()) {
 synchronized (this) {
-        retval=new RspList(Collections.singleton(new Rsp(a,response)));
-        this.notify();
+    Address sender=futures.get(objectFuture);
+    try {
+      if (retval == null) {
+        Object response=objectFuture.get();
+        filter.isAcceptable(response,sender);
+        if (!filter.needMoreResponses())         retval=new RspList(Collections.singleton(new Rsp(sender,response)));
+        if (log.isTraceEnabled())         log.trace("Received response: {0} from {1}",response,sender);
+      }
+ else {
+        if (log.isDebugEnabled())         log.debug("Skipping response from {0} since a valid response for this request has already been received",sender);
       }
     }
-    if (log.isTraceEnabled())     log.trace("Received response: {0} from {1}",response,a);
-  }
- catch (  InterruptedException e) {
-    Thread.currentThread().interrupt();
-  }
-catch (  ExecutionException e) {
-    if (e.getCause() instanceof org.jgroups.TimeoutException)     throw new TimeoutException("Timeout!",e);
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+catch (    ExecutionException e) {
+      if (e.getCause() instanceof org.jgroups.TimeoutException)       exception=new TimeoutException("Timeout!",e);
+ else       if (e.getCause() instanceof Exception)       exception=(Exception)e.getCause();
+ else       log.info("Caught a Throwable.",e.getCause());
+      if (log.isDebugEnabled())       log.debug("Caught exception {0} from sender {1}.  Will skip this response.",exception.getClass().getName(),sender);
+      if (trace)       log.trace("Exception caught: ",exception);
+    }
+ finally {
+      expectedResponses--;
+      this.notify();
+    }
   }
 }

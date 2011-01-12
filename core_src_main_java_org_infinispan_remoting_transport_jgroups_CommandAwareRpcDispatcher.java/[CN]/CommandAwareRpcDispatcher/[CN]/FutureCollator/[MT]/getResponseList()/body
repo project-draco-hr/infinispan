@@ -1,8 +1,9 @@
 {
+  long giveupTime=System.currentTimeMillis() + timeout;
 synchronized (this) {
-    while (true) {
-      if (this.retval == null)       this.wait();
- else       return this.retval;
-    }
+    while (giveupTime > System.currentTimeMillis() && expectedResponses > 0 && retval == null)     this.wait(timeout);
   }
+  if (retval != null)   return retval;
+ else   if (exception != null)   throw exception;
+ else   throw new TimeoutException(format("TImed out waiting for %s for valid responses from either of %s",Util.prettyPrintTime(timeout),futures.values()));
 }
