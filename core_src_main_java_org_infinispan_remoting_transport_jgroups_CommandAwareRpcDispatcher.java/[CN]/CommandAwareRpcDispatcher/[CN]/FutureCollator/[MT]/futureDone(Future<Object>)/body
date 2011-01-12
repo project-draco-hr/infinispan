@@ -1,0 +1,20 @@
+{
+  try {
+    Object response=objectFuture.get();
+    Address a=futures.get(objectFuture);
+    filter.isAcceptable(response,a);
+    if (!filter.needMoreResponses()) {
+synchronized (this) {
+        retval=new RspList(Collections.singleton(new Rsp(a,response)));
+        this.notify();
+      }
+    }
+    if (log.isTraceEnabled())     log.trace("Received response: {0} from {1}",response,a);
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+catch (  ExecutionException e) {
+    if (e.getCause() instanceof org.jgroups.TimeoutException)     throw new TimeoutException("Timeout!",e);
+  }
+}

@@ -25,23 +25,12 @@
     if (targets.isEmpty())     return new RspList();
     buf=marshallCall();
     if (filter != null) {
+      FutureCollator futureCollator=new FutureCollator(filter);
       for (      Address a : targets) {
-        Object response;
-        try {
-          response=sendMessage(constructMessage(buf,a),opts);
-          if (log.isTraceEnabled()) {
-            log.trace("Received response: " + response);
-          }
-        }
- catch (        org.jgroups.TimeoutException e) {
-          throw new TimeoutException("Timeout!",e);
-        }
-        filter.isAcceptable(response,a);
-        if (!filter.needMoreResponses()) {
-          retval=new RspList(Collections.singleton(new Rsp(a,response)));
-          break;
-        }
+        NotifyingFuture<Object> f=sendMessageWithFuture(constructMessage(buf,a),opts);
+        futureCollator.watchFuture(f,a);
       }
+      retval=futureCollator.getResponseList();
     }
  else     if (mode == GroupRequest.GET_ALL) {
       Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(targets.size());
@@ -61,7 +50,7 @@
     }
   }
   if (mode != GroupRequest.GET_NONE) {
-    if (trace)     log.trace("responses: {0}",retval);
+    if (trace)     log.trace("Responses: {0}",retval);
     if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
     if (supportReplay) {
       boolean replay=false;
