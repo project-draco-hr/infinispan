@@ -1,17 +1,3 @@
 {
-  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
-  if (trace)   log.trace("rollback transaction {0} ",localTransaction.getGlobalTransaction());
-  RollbackCommand rollbackCommand=commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-  LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-  ctx.setLocalTransaction(localTransaction);
-  try {
-    invoker.invoke(ctx,rollbackCommand);
-  }
- catch (  Throwable e) {
-    log.error("Exception while rollback",e);
-    throw new XAException(XAException.XA_HEURHAZ);
-  }
- finally {
-    cleanup(localTransaction);
-  }
+  TransactionXaAdapter.rollbackImpl(xid,commandsFactory,icc,invoker,txTable);
 }
