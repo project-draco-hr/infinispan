@@ -2,7 +2,11 @@
   super.start();
   storeName=config.getStore();
   if (cache != null)   storeName+="_" + cache.getName();
-  Map m=new ConcurrentHashMap();
-  Map existing=stores.putIfAbsent(storeName,m);
+  Map<Object,InternalCacheEntry> m=new ConcurrentHashMap<Object,InternalCacheEntry>();
+  Map<Object,InternalCacheEntry> existing=stores.putIfAbsent(storeName,m);
   store=existing == null ? m : existing;
+  Map<String,Integer> s=newStatsMap();
+  Map<String,Integer> existingStats=storeStats.putIfAbsent(storeName,s);
+  stats=existingStats == null ? s : existingStats;
+  record("start");
 }
