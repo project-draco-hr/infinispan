@@ -8,8 +8,12 @@
   cache1.put("delay",new StateTransferFunctionalTest.DelayTransfer());
   TestingUtil.blockUntilViewsReceived(60000,cache1,cache2);
   verifyInitialData(cache2);
-  final CacheContainer cm3=createCacheManager();
-  final CacheContainer cm4=createCacheManager();
+  final EmbeddedCacheManager cm3=createCacheManager();
+  MergedViewListener l3=new MergedViewListener();
+  cm3.addListener(l3);
+  final EmbeddedCacheManager cm4=createCacheManager();
+  MergedViewListener l4=new MergedViewListener();
+  cm4.addListener(l4);
   Thread t1=new Thread(new Runnable(){
     public void run(){
       cm3.getCache(cacheName);
@@ -31,7 +35,11 @@
   cache3=cm3.getCache(cacheName);
   cache4=cm4.getCache(cacheName);
   TestingUtil.blockUntilViewsReceived(120000,cache1,cache2,cache3,cache4);
-  verifyInitialData(cache3);
-  verifyInitialData(cache4);
+  if (!l3.merged) {
+    verifyInitialData(cache3);
+  }
+  if (!l4.merged) {
+    verifyInitialData(cache4);
+  }
   logTestEnd(m);
 }
