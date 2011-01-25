@@ -3,18 +3,18 @@
   JMXComponent parentComponent=ctx.getParentResourceComponent();
   EmsConnection conn=parentComponent.getEmsConnection();
   if (conn != null) {
-    if (trace)     log.trace("Connection to ems server established: {0}",conn);
+    if (trace)     log.trace("Connection to ems server established: %s",conn);
     ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(objectName);
     List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-    if (trace)     log.trace("Querying [{0}] returned beans: {1}",queryUtility.getTranslatedQuery(),beans);
+    if (trace)     log.trace("Querying [%s] returned beans: %s",queryUtility.getTranslatedQuery(),beans);
     Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
     for (    EmsBean bean : beans) {
       String managerName=bean.getBeanName().getCanonicalName();
       String resourceName=bean.getAttribute("Name").getValue().toString();
       String version=bean.getAttribute("Version").getValue().toString();
-      if (trace)       log.trace("Add resource with version '{1}' and type {2}",version,ctx.getResourceType());
+      if (trace)       log.trace("Add resource with version '%s' and type %s",version,ctx.getResourceType());
       DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",null,null);
-      log.info("Discovered Infinispan instance with key {0} and name {1}",resourceName,managerName);
+      log.info("Discovered Infinispan instance with key %s and name %s",resourceName,managerName);
       discoveredResources.add(detail);
     }
     return discoveredResources;
