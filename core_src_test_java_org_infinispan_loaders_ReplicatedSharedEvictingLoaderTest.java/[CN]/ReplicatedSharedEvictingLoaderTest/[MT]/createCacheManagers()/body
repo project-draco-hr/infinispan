@@ -1,0 +1,11 @@
+{
+  Configuration c=new Configuration();
+  c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
+  clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg("ReplicatedSharedEvictingLoaderTest"));
+  clmc.setShared(true);
+  clmc.setPassivation(true);
+  c.setCacheLoaderManagerConfig(clmc);
+  createCluster(c,2);
+  TestingUtil.blockUntilViewsReceived(100000,cache(0),cache(1));
+}
