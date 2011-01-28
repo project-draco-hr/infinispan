@@ -1,0 +1,10 @@
+{
+  final DefaultCacheManager cacheManager=new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(),new Configuration(),true);
+  Configuration customConfiguration=new Configuration();
+  customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
+  Configuration definedConfiguration=cacheManager.defineConfiguration("aCache",customConfiguration);
+  assertTrue(definedConfiguration.getTransactionManagerLookup() instanceof TxManagerLookupA);
+  TransactionManager activeTransactionManager=cacheManager.getCache("aCache").getAdvancedCache().getTransactionManager();
+  assertNotNull(activeTransactionManager);
+  assertTrue(activeTransactionManager instanceof TmA);
+}
