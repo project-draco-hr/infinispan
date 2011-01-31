@@ -1,30 +1,37 @@
 {
 synchronized (this) {
-    Address sender=futures.get(objectFuture);
-    try {
-      if (retval == null) {
-        Object response=objectFuture.get();
-        filter.isAcceptable(response,sender);
-        if (!filter.needMoreResponses())         retval=new RspList(Collections.singleton(new Rsp(sender,response)));
-        if (log.isTraceEnabled())         log.trace("Received response: %s from %s",response,sender);
-      }
+    SenderContainer sc=futures.get(objectFuture);
+    if (sc.processed) {
+      if (trace)       log.trace("Not processing callback; already processed callback for sender %s",sc.address);
+    }
  else {
-        if (log.isDebugEnabled())         log.debug("Skipping response from %s since a valid response for this request has already been received",sender);
+      sc.processed=true;
+      Address sender=sc.address;
+      try {
+        if (retval == null) {
+          Object response=objectFuture.get();
+          if (trace)           log.trace("Received response: %s from %s",response,sender);
+          filter.isAcceptable(response,sender);
+          if (!filter.needMoreResponses())           retval=new RspList(Collections.singleton(new Rsp(sender,response)));
+        }
+ else {
+          if (log.isDebugEnabled())           log.debug("Skipping response from %s since a valid response for this request has already been received",sender);
+        }
       }
-    }
- catch (    InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-catch (    ExecutionException e) {
-      if (e.getCause() instanceof org.jgroups.TimeoutException)       exception=new TimeoutException("Timeout!",e);
- else       if (e.getCause() instanceof Exception)       exception=(Exception)e.getCause();
- else       log.info("Caught a Throwable.",e.getCause());
-      if (log.isDebugEnabled())       log.debug("Caught exception %s from sender %s.  Will skip this response.",exception.getClass().getName(),sender);
-      if (trace)       log.trace("Exception caught: ",exception);
-    }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+catch (      ExecutionException e) {
+        if (e.getCause() instanceof org.jgroups.TimeoutException)         exception=new TimeoutException("Timeout!",e);
+ else         if (e.getCause() instanceof Exception)         exception=(Exception)e.getCause();
+ else         log.info("Caught a Throwable.",e.getCause());
+        if (log.isDebugEnabled())         log.debug("Caught exception %s from sender %s.  Will skip this response.",exception.getClass().getName(),sender);
+        if (trace)         log.trace("Exception caught: ",exception);
+      }
  finally {
-      expectedResponses--;
-      this.notify();
+        expectedResponses--;
+        this.notify();
+      }
     }
   }
 }
