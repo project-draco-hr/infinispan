@@ -13,8 +13,13 @@
  else {
         CacheEntry ce=ctx.lookupEntry(key);
         if (ce == null || ce.isNull() || ce.isLockPlaceholder()) {
-          if (ce != null && ce.isChanged())           ce.setValue(ice.getValue());
- else           ctx.putLookedUpEntry(key,ice);
+          if (ce != null && ce.isChanged()) {
+            ce.setValue(ice.getValue());
+          }
+ else {
+            if (isWrite)             entryFactory.wrapEntryForWriting(ctx,ice,true,false,ctx.hasLockedKey(key),false,false);
+ else             ctx.putLookedUpEntry(key,ice);
+          }
         }
       }
     }
