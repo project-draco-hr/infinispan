@@ -1,0 +1,25 @@
+{
+  GlobalConfiguration globalConfiguration=GlobalConfiguration.getClusteredDefault();
+  globalConfiguration.setExposeGlobalJmxStatistics(true);
+  globalConfiguration.setAllowDuplicateDomains(true);
+  globalConfiguration.setJmxDomain(JMX_DOMAIN);
+  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  CacheContainer cacheManager1=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+  cacheManager1.start();
+  GlobalConfiguration globalConfiguration2=GlobalConfiguration.getClusteredDefault();
+  globalConfiguration2.setExposeGlobalJmxStatistics(true);
+  globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+  globalConfiguration2.setJmxDomain(JMX_DOMAIN);
+  globalConfiguration2.setAllowDuplicateDomains(true);
+  CacheContainer cacheManager2=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+  cacheManager2.start();
+  registerCacheManager(cacheManager1,cacheManager2);
+  name1=getCacheManagerObjectName(JMX_DOMAIN);
+  name2=getCacheManagerObjectName(JMX_DOMAIN2);
+  server=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  Configuration config=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+  config.setExposeJmxStatistics(true);
+  defineConfigurationOnAllManagers("mycache",config);
+  manager(0).getCache("mycache");
+  manager(1).getCache("mycache");
+}
