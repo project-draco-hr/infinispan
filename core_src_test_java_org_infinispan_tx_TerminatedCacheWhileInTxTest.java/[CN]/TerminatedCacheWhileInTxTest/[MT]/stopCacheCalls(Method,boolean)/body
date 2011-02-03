@@ -1,0 +1,47 @@
+{
+  final Cache cache=cacheManager.getCache("cache-" + m.getName());
+  final ExecutorService executorService=Executors.newCachedThreadPool();
+  final CyclicBarrier barrier=new CyclicBarrier(2);
+  final CountDownLatch latch=new CountDownLatch(1);
+  final TransactionManager tm=TestingUtil.getTransactionManager(cache);
+  Callable<Void> waitAfterModCallable=new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      log.debug("Wait for all executions paths to be ready to perform calls.");
+      tm.begin();
+      cache.put(k(m,1),v(m,1));
+      log.debug("Cache modified, wait for cache to be stopped.");
+      barrier.await();
+      latch.await(10,TimeUnit.SECONDS);
+      tm.commit();
+      return null;
+    }
+  }
+;
+  Future waitAfterModFuture=executorService.submit(waitAfterModCallable);
+  barrier.await();
+  Future callStoppingCacheFuture=null;
+  if (withCallStoppingCache) {
+    Callable<Void> callStoppingCache=new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        log.debug("Wait very briefly and then make call.");
+        Thread.sleep(1000);
+        cache.put(k(m,2),v(m,2));
+        return null;
+      }
+    }
+;
+    callStoppingCacheFuture=executorService.submit(callStoppingCache);
+  }
+  cache.stop();
+  latch.countDown();
+  log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+  waitAfterModFuture.get();
+  if (callStoppingCacheFuture != null) {
+    try {
+      callStoppingCacheFuture.get();
+    }
+ catch (    ExecutionException e) {
+      throw e.getCause();
+    }
+  }
+}
