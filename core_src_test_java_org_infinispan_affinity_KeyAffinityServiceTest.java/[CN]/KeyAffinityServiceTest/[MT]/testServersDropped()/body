@@ -1,15 +1,15 @@
 {
   log.info("*** Here it is");
-  caches.get(4).getCacheManager().stop();
-  caches.remove(4);
+  caches.get(2).getCacheManager().stop();
+  caches.remove(2);
   waitForClusterToResize();
-  for (int i=0; i < 10; i++) {
-    if (keyAffinityService.getAddress2KeysMapping().keySet().size() == 3) {
-      break;
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return keyAffinityService.getAddress2KeysMapping().keySet().size() == 2;
     }
-    Thread.sleep(500);
   }
-  assertEquals(4,keyAffinityService.getAddress2KeysMapping().keySet().size());
+);
+  assertEquals(2,keyAffinityService.getAddress2KeysMapping().keySet().size());
   assertEventualFullCapacity();
   assertKeyAffinityCorrectness();
 }
