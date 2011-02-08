@@ -2,6 +2,11 @@
   final List<MagicKey> keys=init();
   final CountDownLatch l=new CountDownLatch(1);
   final AtomicBoolean rollback=new AtomicBoolean(false);
+  StateTransferFunctionalTest.MergedViewListener mergedViewListener=new StateTransferFunctionalTest.MergedViewListener();
+  cacheManagers.get(0).addListener(mergedViewListener);
+  cacheManagers.get(1).addListener(mergedViewListener);
+  cacheManagers.get(2).addListener(mergedViewListener);
+  cacheManagers.get(3).addListener(mergedViewListener);
   Thread th=new Thread("Updater"){
     @Override public void run(){
       try {
@@ -41,11 +46,13 @@
     assertOnAllCaches(keys.get(1),"v" + 2);
     assertOnAllCaches(keys.get(2),"v" + 3);
     assertOnAllCaches(keys.get(3),"v" + 4);
-    RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
-    assertOwnershipAndNonOwnership(keys.get(0));
-    assertOwnershipAndNonOwnership(keys.get(1));
-    assertOwnershipAndNonOwnership(keys.get(2));
-    assertOwnershipAndNonOwnership(keys.get(3));
+    if (!mergedViewListener.merged) {
+      RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
+      assertOwnershipAndNonOwnership(keys.get(0));
+      assertOwnershipAndNonOwnership(keys.get(1));
+      assertOwnershipAndNonOwnership(keys.get(2));
+      assertOwnershipAndNonOwnership(keys.get(3));
+    }
     assertProperConsistentHashOnAllCaches();
   }
 }
