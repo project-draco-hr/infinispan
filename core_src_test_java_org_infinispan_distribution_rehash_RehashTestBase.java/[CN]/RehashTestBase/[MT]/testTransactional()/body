@@ -37,10 +37,15 @@
   log.info("Rehash complete");
   additionalWait();
   if (!rollback.get()) {
-    assertOnAllCachesAndOwnership(keys.get(0),"transactionally_replaced");
-    assertOnAllCachesAndOwnership(keys.get(1),"v" + 2);
-    assertOnAllCachesAndOwnership(keys.get(2),"v" + 3);
-    assertOnAllCachesAndOwnership(keys.get(3),"v" + 4);
+    assertOnAllCaches(keys.get(0),"transactionally_replaced");
+    assertOnAllCaches(keys.get(1),"v" + 2);
+    assertOnAllCaches(keys.get(2),"v" + 3);
+    assertOnAllCaches(keys.get(3),"v" + 4);
+    RehashWaiter.waitForInitRehashToComplete(new ArrayList<Cache>(caches));
+    assertOwnershipAndNonOwnership(keys.get(0));
+    assertOwnershipAndNonOwnership(keys.get(1));
+    assertOwnershipAndNonOwnership(keys.get(2));
+    assertOwnershipAndNonOwnership(keys.get(3));
     assertProperConsistentHashOnAllCaches();
   }
 }
