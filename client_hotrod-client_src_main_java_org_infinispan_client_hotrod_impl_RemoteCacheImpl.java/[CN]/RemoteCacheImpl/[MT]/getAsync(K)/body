@@ -1,0 +1,14 @@
+{
+  assertRemoteCacheManagerIsStarted();
+  final NotifyingFutureImpl<V> result=new NotifyingFutureImpl<V>();
+  Future future=executorService.submit(new Callable(){
+    @Override public Object call() throws Exception {
+      V toReturn=get(key);
+      result.notifyFutureCompletion();
+      return toReturn;
+    }
+  }
+);
+  result.setExecuting(future);
+  return result;
+}

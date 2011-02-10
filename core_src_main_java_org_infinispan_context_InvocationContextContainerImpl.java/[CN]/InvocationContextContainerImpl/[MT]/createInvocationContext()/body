@@ -1,29 +1,3 @@
 {
-  Transaction tx=getRunningTx();
-  InvocationContext existing=icTl.get();
-  if (tx != null) {
-    LocalTxInvocationContext localContext;
-    if ((existing == null) || !(existing instanceof LocalTxInvocationContext)) {
-      localContext=new LocalTxInvocationContext();
-      icTl.set(localContext);
-    }
- else {
-      localContext=(LocalTxInvocationContext)existing;
-    }
-    LocalTransaction localTransaction=transactionTable.getLocalTransaction(tx);
-    localContext.setLocalTransaction(localTransaction);
-    return localContext;
-  }
- else {
-    NonTxInvocationContext nonTxContext;
-    if ((existing == null) || !(existing instanceof NonTxInvocationContext)) {
-      nonTxContext=new NonTxInvocationContext();
-      icTl.set(nonTxContext);
-    }
- else {
-      nonTxContext=(NonTxInvocationContext)existing;
-    }
-    nonTxContext.setOriginLocal(true);
-    return nonTxContext;
-  }
+  return createInvocationContext(getRunningTx());
 }
