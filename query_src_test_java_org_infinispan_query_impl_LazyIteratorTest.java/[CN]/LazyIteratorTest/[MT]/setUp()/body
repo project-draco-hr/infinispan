@@ -9,19 +9,14 @@
 ).anyTimes();
   SearchFactoryImplementor searchFactory=createMock(SearchFactoryImplementor.class);
   DocumentExtractor extractor=org.easymock.classextension.EasyMock.createMock(DocumentExtractor.class);
-  try {
-    org.easymock.classextension.EasyMock.expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>(){
-      public EntityInfo answer() throws Throwable {
-        int index=(Integer)getCurrentArguments()[0];
-        String keyString=keyList.get(index);
-        return new EntityInfo(Person.class,keyString,null);
-      }
+  org.easymock.classextension.EasyMock.expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>(){
+    public EntityInfo answer() throws Throwable {
+      int index=(Integer)getCurrentArguments()[0];
+      String keyString=keyList.get(index);
+      return new EntityInfo(Person.class,keyString,keyString,new String[0]);
     }
+  }
 ).anyTimes();
-  }
- catch (  IOException e) {
-    e.printStackTrace();
-  }
   IndexSearcher searcher=org.easymock.classextension.EasyMock.createMock(IndexSearcher.class);
   EasyMock.replay(cache,searchFactory);
   org.easymock.classextension.EasyMock.replay(searcher,extractor);
