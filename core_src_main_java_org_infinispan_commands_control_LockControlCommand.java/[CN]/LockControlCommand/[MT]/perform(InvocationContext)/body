@@ -12,5 +12,9 @@
     transaction=txTable.createRemoteTransaction(globalTx);
   }
   ctxt.setRemoteTransaction(transaction);
-  return invoker.invoke(ctxt,this);
+  TxInvocationContext ctx=ctxt;
+  if (flags != null && !flags.isEmpty()) {
+    ctx=new TransactionalInvocationContextFlagsOverride(ctxt,flags);
+  }
+  return invoker.invoke(ctx,this);
 }

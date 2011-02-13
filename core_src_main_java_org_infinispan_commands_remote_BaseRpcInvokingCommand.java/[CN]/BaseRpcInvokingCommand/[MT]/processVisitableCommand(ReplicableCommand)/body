@@ -1,7 +1,13 @@
 {
   if (cacheCommand instanceof VisitableCommand) {
-    InvocationContext ctx=icc.createRemoteInvocationContext();
     VisitableCommand vc=(VisitableCommand)cacheCommand;
+    final InvocationContext ctx;
+    if (vc instanceof FlagAffectedCommand) {
+      ctx=icc.createRemoteInvocationContextForCommand(vc);
+    }
+ else {
+      ctx=icc.createRemoteInvocationContext();
+    }
     if (vc.shouldInvoke(ctx)) {
       if (trace)       log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to "+ ctx.isOriginLocal()+ ".");
       return interceptorChain.invoke(ctx,vc);
