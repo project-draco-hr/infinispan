@@ -1,0 +1,34 @@
+{
+  final String key=k(m), value=v(m);
+  final Cache nonOwnerCache=getNonOwners(key,1)[0];
+  final Cache ownerCache=getOwners(key,1)[0];
+  final TransactionManager tmNonOwner=getTransactionManager(nonOwnerCache);
+  final CountDownLatch commitLatch=new CountDownLatch(1);
+  tmNonOwner.begin();
+  final Transaction tx=tmNonOwner.getTransaction();
+  Callable<Void> commitCallable=new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      tmNonOwner.resume(tx);
+      commitLatch.await();
+      tmNonOwner.commit();
+      return null;
+    }
+  }
+;
+  Future commitFuture=Executors.newSingleThreadExecutor().submit(commitCallable);
+  nonOwnerCache.put(key,value);
+  commitLatch.countDown();
+  commitFuture.get();
+  Callable<Void> getCallable=new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      TransactionManager tmOwner=getTransactionManager(ownerCache);
+      tmOwner.begin();
+      assertEquals(value,ownerCache.get(key));
+      tmOwner.commit();
+      return null;
+    }
+  }
+;
+  Future getFuture=Executors.newSingleThreadExecutor().submit(getCallable);
+  getFuture.get();
+}
