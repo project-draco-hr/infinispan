@@ -1,8 +1,18 @@
 {
-  storeCurrentBuffer();
-  positionInBuffer=0;
-  filePosition=0;
+  boolean microbatch=chunksCache.startBatch();
+  if (currentChunkNumber == 0) {
+    storeCurrentBuffer(true);
+  }
+ else {
+    storeBufferAsChunk(this.firstChunkBuffer,0);
+    storeCurrentBuffer(true);
+  }
   buffer=null;
+  firstChunkBuffer=null;
+  file.touch();
+  metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD,Flag.SKIP_LOCKING).put(fileKey,file);
+  fileOps.addFileName(this.fileKey.getFileName());
+  if (microbatch)   chunksCache.endBatch(true);
   if (trace) {
     log.trace("Closed IndexOutput for file:%s in index: %s",fileKey.getFileName(),fileKey.getIndexName());
   }

@@ -5,8 +5,13 @@
     if (pos > file.getSize())     throw new IOException(fileKey.getFileName() + ": seeking past end of file");
   }
   if (requestedChunkNumber != currentChunkNumber) {
-    storeCurrentBuffer();
-    buffer=getChunkById(chunksCache,fileKey,requestedChunkNumber,bufferSize,file);
+    storeCurrentBuffer(false);
+    if (requestedChunkNumber != 0) {
+      buffer=getChunkById(chunksCache,fileKey,requestedChunkNumber,bufferSize,file);
+    }
+ else {
+      buffer=firstChunkBuffer;
+    }
     currentChunkNumber=requestedChunkNumber;
   }
   positionInBuffer=getPositionInBuffer(pos,bufferSize);

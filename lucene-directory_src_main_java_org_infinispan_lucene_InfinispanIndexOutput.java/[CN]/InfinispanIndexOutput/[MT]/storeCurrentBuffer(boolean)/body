@@ -1,0 +1,18 @@
+{
+  if (currentChunkNumber == 0 && !isClose) {
+    return;
+  }
+  resizeFileIfNeeded();
+  byte[] bufferToFlush=buffer;
+  boolean writingOnLastChunk=isWritingOnLastChunk();
+  if (writingOnLastChunk) {
+    int newBufferSize=(int)(file.getSize() % bufferSize);
+    if (newBufferSize != 0) {
+      bufferToFlush=new byte[newBufferSize];
+      System.arraycopy(buffer,0,bufferToFlush,0,newBufferSize);
+    }
+  }
+  if (!writingOnLastChunk || this.positionInBuffer != 0) {
+    storeBufferAsChunk(bufferToFlush,currentChunkNumber);
+  }
+}
