@@ -1,10 +1,10 @@
 {
-  boolean isMappedToLocalNode=false;
-  if (ctx.isOriginLocal() && !(isMappedToLocalNode=dm.isLocal(key)) && isNotInL1(key)) {
+  DistributionManager.IsLocalRes local=dm.isLocal(key);
+  if (ctx.isOriginLocal() && !local.isLocal() && isNotInL1(key)) {
     return realRemoteGet(ctx,key,true,isWrite);
   }
  else {
-    if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
+    if (local.isLocal() && (local.isRehashing() || !dm.isJoinComplete())) {
       if (trace)       log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
       return realRemoteGet(ctx,key,false,isWrite);
     }

@@ -1,3 +1,28 @@
 {
-  return consistentHash == null || consistentHash.isKeyLocalToAddress(self,key,getReplCount());
+  chSwitchLock.readLock().lock();
+  try {
+    if (consistentHash == null) {
+      return LOCAL_NO_REHASHING;
+    }
+    boolean local=consistentHash.isKeyLocalToAddress(self,key,getReplCount());
+    if (isRehashInProgress()) {
+      if (local) {
+        return LOCAL_WITH_REHASHING;
+      }
+ else {
+        return NOT_LOCAL_WITH_REHASHING;
+      }
+    }
+ else {
+      if (local) {
+        return LOCAL_NO_REHASHING;
+      }
+ else {
+        return NOT_LOCAL_NO_REHASHING;
+      }
+    }
+  }
+  finally {
+    chSwitchLock.readLock().unlock();
+  }
 }

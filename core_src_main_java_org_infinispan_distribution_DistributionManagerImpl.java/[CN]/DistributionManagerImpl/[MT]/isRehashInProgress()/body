@@ -1,3 +1,12 @@
 {
-  return !leavers.isEmpty() || rehashInProgress;
+  chSwitchLock.readLock().lock();
+  boolean nodeLeaving;
+  try {
+    nodeLeaving=!leavers.isEmpty();
+    if (log.isTraceEnabled())     log.trace("Node leaving? %s RehashInProgress? %s Leavers = %s",nodeLeaving,rehashInProgress,leavers);
+  }
+  finally {
+    chSwitchLock.readLock().unlock();
+  }
+  return nodeLeaving || rehashInProgress;
 }

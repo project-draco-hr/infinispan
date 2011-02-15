@@ -15,7 +15,7 @@
  else {
         oldConsistentHash=((UnionConsistentHash)consistentHash).getNewCH();
       }
-      consistentHash=ConsistentHashHelper.removeAddress(consistentHash,leaver,configuration,topologyInfo);
+      addLeaverAndUpdatedConsistentHash(leaver);
     }
  catch (    Exception e) {
       log.fatal("Unable to process leaver!!",e);
@@ -34,13 +34,13 @@
         }
         leaveTaskFuture.cancel(true);
       }
-      leavers.add(leaver);
-      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,leavers,stateProviders,receiversOfLeaverState,willReceiveLeaverState);
+      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,this,stateProviders,receiversOfLeaverState,willReceiveLeaverState);
       leaveTaskFuture=rehashExecutor.submit(task);
     }
  else {
       log.info("Not in same subspace, so ignoring leave event");
       topologyInfo.removeNodeInfo(leaver);
+      removeLeaver(leaver);
     }
   }
 }
