@@ -1,13 +1,14 @@
 {
   if (!(isCacheReady() && isLocalCall()))   return null;
-  ClusteredGetCommand clusteredGetCommand=new ClusteredGetCommand(key,cache.getName(),Collections.EMPTY_SET);
-  List<Response> response=doRemoteCall(clusteredGetCommand);
+  ClusteredGetCommand clusteredGetCommand=new ClusteredGetCommand(key,cache.getName());
+  Collection<Response> response=doRemoteCall(clusteredGetCommand);
   if (response.isEmpty())   return null;
   if (response.size() > 1)   throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
-  Response firstResponse=response.get(0);
-  if (firstResponse.isSuccessful() && firstResponse instanceof SuccessfulResponse) {
-    InternalCacheValue value=(InternalCacheValue)((SuccessfulResponse)firstResponse).getResponseValue();
-    return value.toInternalCacheEntry(key);
+  for (  Response r : response) {
+    if (r.isSuccessful() && r instanceof SuccessfulResponse) {
+      InternalCacheValue value=(InternalCacheValue)((SuccessfulResponse)r).getResponseValue();
+      return value.toInternalCacheEntry(key);
+    }
   }
   String message="Unknown response from remote cache: " + response;
   log.error(message);

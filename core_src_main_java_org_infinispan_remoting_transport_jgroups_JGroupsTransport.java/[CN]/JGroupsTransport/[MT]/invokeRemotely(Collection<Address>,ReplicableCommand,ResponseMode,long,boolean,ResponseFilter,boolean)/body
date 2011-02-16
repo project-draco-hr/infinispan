@@ -1,7 +1,7 @@
 {
   if (recipients != null && recipients.isEmpty()) {
     log.trace("Destination list is empty: no need to send message");
-    return Collections.emptyList();
+    return Collections.emptyMap();
   }
   if (trace)   log.trace("dests=%s, command=%s, mode=%s, timeout=%s",recipients,rpcCommand,mode,timeout);
   flushTracker.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
@@ -11,9 +11,9 @@
   if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode)   usePriorityQueue=true;
   try {
     RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,recipients != null,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling,recipients == null || recipients.size() == members.size());
-    if (mode.isAsynchronous())     return Collections.emptyList();
-    if (rsps == null)     return Collections.emptyList();
-    List<Response> retval=new ArrayList<Response>(rsps.size());
+    if (mode.isAsynchronous())     return Collections.emptyMap();
+    if (rsps == null)     return Collections.emptyMap();
+    Map<Address,Response> retval=new HashMap<Address,Response>(rsps.size());
     boolean noValidResponses=true;
     for (    Rsp rsp : rsps.values()) {
       noValidResponses=parseResponseAndAddToResponseList(rsp.getValue(),retval,rsp.wasSuspected(),rsp.wasReceived(),new JGroupsAddress(rsp.getSender()),responseFilter != null) && noValidResponses;
