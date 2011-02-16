@@ -1,9 +1,9 @@
 {
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,ctx.getFlags());
   ResponseFilter filter=new ClusteredGetResponseValidityFilter(locate(key));
-  Collection<Response> responses=rpcManager.invokeRemotely(locate(key),get,ResponseMode.SYNCHRONOUS,configuration.getSyncReplTimeout(),false,filter).values();
+  Map<Address,Response> responses=rpcManager.invokeRemotely(locate(key),get,ResponseMode.SYNCHRONOUS,configuration.getSyncReplTimeout(),false,filter);
   if (!responses.isEmpty()) {
-    for (    Response r : responses) {
+    for (    Response r : responses.values()) {
       if (r instanceof SuccessfulResponse) {
         InternalCacheValue cacheValue=(InternalCacheValue)((SuccessfulResponse)r).getResponseValue();
         return cacheValue.toInternalCacheEntry(key);

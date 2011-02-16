@@ -1,19 +1,14 @@
 {
   if (enabled) {
-    loggingLock.readLock().lock();
-    try {
-      if (enabled) {
-        try {
-          commandQueue.put(command);
-        }
- catch (        InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-        return true;
+    waitForModsLatch();
+    if (enabled) {
+      try {
+        commandQueue.put(command);
       }
-    }
-  finally {
-      loggingLock.readLock().unlock();
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      return true;
     }
   }
   return false;

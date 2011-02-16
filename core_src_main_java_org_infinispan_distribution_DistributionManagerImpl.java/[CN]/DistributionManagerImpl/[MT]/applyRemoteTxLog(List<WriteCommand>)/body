@@ -1,3 +1,13 @@
 {
-  apply(txLogCommands);
+  for (  WriteCommand cmd : commands) {
+    try {
+      cf.initializeReplicableCommand(cmd,true);
+      InvocationContext ctx=icc.createInvocationContext();
+      ctx.setFlags(SKIP_REMOTE_LOOKUP,CACHE_MODE_LOCAL,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING);
+      interceptorChain.invoke(ctx,cmd);
+    }
+ catch (    Exception e) {
+      log.warn("Caught exception replaying %s",e,cmd);
+    }
+  }
 }

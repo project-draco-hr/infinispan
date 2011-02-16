@@ -1,0 +1,21 @@
+{
+  Configuration localConfig=cmd.getConfiguration();
+  ComponentRegistry cr=cmd.getComponentRegistry();
+  if (localConfig.getCacheMode().isDistributed()) {
+    DistributionManager dm=cr.getComponent(DistributionManager.class);
+    if (dm.isJoinComplete())     return JoinHandle.OK;
+ else {
+      if (dm.isInFinalJoinPhase() && !(cmd instanceof ClusteredGetCommand))       return JoinHandle.QUEUE;
+ else       return JoinHandle.IGNORE;
+    }
+  }
+ else {
+    long giveupTime=System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
+    while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)     LockSupport.parkNanos(MILLISECONDS.toNanos(100));
+    if (!cr.getStatus().allowInvocations()) {
+      log.info("Cache named [%s] exists but isn't in a state to handle invocations.  Its state is %s.",cmd.getCacheName(),cr.getStatus());
+      return JoinHandle.IGNORE;
+    }
+    return JoinHandle.OK;
+  }
+}

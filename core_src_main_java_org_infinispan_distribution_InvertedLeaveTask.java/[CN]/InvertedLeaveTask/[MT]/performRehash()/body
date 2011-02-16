@@ -1,36 +1,35 @@
 {
-  long start=trace ? System.currentTimeMillis() : 0;
+  long start=currentTimeMillis();
   int replCount=configuration.getNumOwners();
-  ConsistentHash newCH=dmi.getConsistentHash();
-  ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,newCH.getCaches(),leaversHandled,dmi.topologyInfo);
+  ConsistentHash newCH=this.distributionManager.getConsistentHash();
+  ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,newCH.getCaches(),leaversHandled,this.distributionManager.topologyInfo);
   try {
     log.debug("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s",configuration.isRehashEnabled(),isReceiver,isSender,self);
+    if (isReceiver)     this.distributionManager.getTransactionLogger().blockNewTransactions();
     if (configuration.isRehashEnabled()) {
       if (isReceiver) {
+        providers.remove(self);
         try {
           RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_LEAVE,self,null,oldCH,newCH,leaversHandled);
           log.debug("I %s am pulling state from %s",self,providers);
-          Collection<Response> resps=rpcManager.invokeRemotely(providers,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true).values();
-          log.debug("I %s received response %s ",self,resps);
-          for (          Response r : resps) {
-            if (r instanceof SuccessfulResponse) {
-              Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
-              log.debug("I %s am applying state %s ",self,state);
-              dmi.applyState(newCH,state);
-            }
+          Set<Future<Void>> stateRetrievalProcesses=new HashSet<Future<Void>>(providers.size());
+          for (          Address stateProvider : providers) {
+            stateRetrievalProcesses.add(statePullExecutor.submit(new LeaveStateGrabber(stateProvider,cmd,newCH)));
           }
+          log.trace("State retrieval being processed.");
+          for (          Future<Void> f : stateRetrievalProcesses)           f.get();
+          log.trace("State retrieval from %s completed.",providers);
         }
   finally {
+          log.trace("Informing %s that state has been applied.",providers);
           RehashControlCommand c=cf.buildRehashControlCommand(LEAVE_REHASH_END,self);
-          rpcManager.invokeRemotely(providers,c,ASYNCHRONOUS,configuration.getRehashRpcTimeout(),false);
+          rpcManager.invokeRemotely(providers,c,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
         }
       }
       if (isSender) {
         Set<Address> recCopy=new HashSet<Address>(receivers);
-        if (isReceiver) {
-          recCopy.remove(self);
-        }
-        dmi.awaitLeaveRehashAcks(recCopy,configuration.getStateRetrievalTimeout());
+        recCopy.remove(self);
+        this.distributionManager.awaitLeaveRehashAcks(recCopy,configuration.getStateRetrievalTimeout());
         processAndDrainTxLog(oldCH,newCH,replCount);
         invalidateInvalidHolders(leaversHandled,oldCH,newCH);
       }
@@ -40,10 +39,8 @@
     throw new CacheException("Unexpected exception",e);
   }
  finally {
-    distributionManager.removeLeavers(leaversHandled);
-    if (trace)     log.info("Completed leave rehash on node %s in %s",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
- else     log.info("Completed leave rehash on node %s",self);
-    for (    Address addr : leaversHandled)     dmi.topologyInfo.removeNodeInfo(addr);
-    dmi.rehashInProgress=false;
+    for (    Address addr : leaversHandled)     this.distributionManager.markLeaverAsHandled(addr);
+    if (isReceiver)     this.distributionManager.getTransactionLogger().unblockNewTransactions();
+    log.info("Completed leave rehash on node %s in %s - leavers now are %s",self,prettyPrintTime(currentTimeMillis() - start),this.distributionManager.leavers);
   }
 }

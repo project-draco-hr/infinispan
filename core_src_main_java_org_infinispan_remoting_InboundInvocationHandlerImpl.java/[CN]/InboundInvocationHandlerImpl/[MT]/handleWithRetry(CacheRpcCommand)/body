@@ -1,0 +1,55 @@
+{
+  boolean unlock=false;
+  String cacheName=cmd.getCacheName();
+  try {
+    boolean isClusteredGet=cmd instanceof ClusteredGetCommand;
+    if (isClusteredGet || cmd instanceof RehashControlCommand) {
+      try {
+        if (isClusteredGet) {
+          distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
+          unlock=true;
+        }
+        return handleWithWaitForBlocks(cmd,distributedSyncTimeout);
+      }
+ catch (      TimeoutException te) {
+        log.info("Quietly ignoring clustered get call %s since unable to acquire processing lock, even after %s",cmd,Util.prettyPrintTime(distributedSyncTimeout));
+        return RequestIgnoredResponse.INSTANCE;
+      }
+    }
+ else {
+      boolean unlockRQLock;
+      getRetryQueue(cacheName).retryQueueLock.lock();
+      unlockRQLock=true;
+      try {
+        if (enqueueing(cacheName)) {
+          return enqueueCommand(cmd);
+        }
+ else {
+          try {
+            getRetryQueue(cacheName).retryQueueLock.unlock();
+            unlockRQLock=false;
+switch (howToHandle(cmd)) {
+case OK:
+              distributedSync.acquireProcessingLock(false,timeBeforeWeEnqueueCallForRetry,MILLISECONDS);
+            unlock=true;
+          return handleWithWaitForBlocks(cmd,distributedSyncTimeout);
+case QUEUE:
+        return enqueueCommand(cmd);
+default :
+      return RequestIgnoredResponse.INSTANCE;
+  }
+}
+ catch (TimeoutException te) {
+  return enqueueCommand(cmd);
+}
+}
+}
+  finally {
+if (unlockRQLock) getRetryQueue(cacheName).retryQueueLock.unlock();
+}
+}
+}
+  finally {
+if (unlock) distributedSync.releaseProcessingLock(false);
+}
+}

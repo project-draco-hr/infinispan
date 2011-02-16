@@ -1,23 +1,5 @@
 {
   if (cmd == null)   throw new NullPointerException("Unable to execute a null command!  Message was " + req);
   if (trace)   log.trace("Attempting to execute command: %s [sender=%s]",cmd,req.getSrc());
-  boolean unlock=false;
-  try {
-    distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
-    unlock=true;
-    DistributedSync.SyncResponse sr=distributedSync.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
-    boolean replayIgnored=sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
-    Response resp=inboundInvocationHandler.handle(cmd);
-    if (resp == null || resp.isValid()) {
-      if (replayIgnored)       resp=new ExtendedResponse(resp,true);
-    }
- else {
-      newCacheStarting.set(true);
-      if (trace)       log.trace("Unable to execute command, got invalid response");
-    }
-    return resp;
-  }
-  finally {
-    if (unlock)     distributedSync.releaseProcessingLock(false);
-  }
+  return inboundInvocationHandler.handle(cmd);
 }

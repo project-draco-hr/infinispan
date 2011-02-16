@@ -1,0 +1,31 @@
+{
+  boolean running=true;
+  while (running) {
+    CacheRpcCommand c=null;
+    boolean unlock=false;
+    try {
+      c=queue.take();
+      waitForStart(c);
+      distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
+      unlock=true;
+      handleInternal(c);
+      retryQueueLock.lock();
+      if (queue.isEmpty()) {
+        enqueueing=false;
+        enqueuedBlocker.open();
+      }
+      retryQueueLock.unlock();
+    }
+ catch (    InterruptedException e) {
+      enqueueing=false;
+      enqueuedBlocker.open();
+      running=false;
+    }
+catch (    Throwable throwable) {
+      log.warn("Caught exception when handling command %s",throwable,c);
+    }
+ finally {
+      if (unlock)       distributedSync.releaseProcessingLock(false);
+    }
+  }
+}

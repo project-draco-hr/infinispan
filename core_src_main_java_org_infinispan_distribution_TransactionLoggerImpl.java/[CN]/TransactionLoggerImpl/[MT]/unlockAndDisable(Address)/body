@@ -1,0 +1,18 @@
+{
+  boolean unlock=true;
+  try {
+    if (!lockedFor.equals(writeLockOwner)) {
+      unlock=false;
+      throw new IllegalMonitorStateException("Compare-and-set for owner " + lockedFor + " failed - was "+ writeLockOwner);
+    }
+    enabled=false;
+    uncommittedPrepares.clear();
+    writeLockOwner=null;
+  }
+ catch (  IllegalMonitorStateException imse) {
+    log.warn("Unable to stop transaction logging!",imse);
+  }
+ finally {
+    if (unlock)     modsLatch.open();
+  }
+}

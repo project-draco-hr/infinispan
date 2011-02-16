@@ -1,36 +1,26 @@
 {
-  long start=trace ? System.currentTimeMillis() : 0;
-  if (log.isDebugEnabled())   log.debug("Commencing rehash on node: " + getMyAddress() + ". Before start, dmi.joinComplete = "+ dmi.isJoinComplete());
-  TransactionLogger transactionLogger=dmi.getTransactionLogger();
-  boolean unlocked=false;
-  ConsistentHash chOld;
-  ConsistentHash chNew;
+  long start=System.currentTimeMillis();
+  if (log.isDebugEnabled())   log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
+  ConsistentHash chOld, chNew;
   try {
-    if (dmi.isJoinComplete()) {
-      throw new IllegalStateException("Join cannot be complete without rehash to finish (node " + getMyAddress() + " )");
+    if (distributionManager.isJoinComplete()) {
+      throw new IllegalStateException("Join on " + getMyAddress() + " cannot be complete without rehash to finishing");
     }
-    chOld=retrieveOldCH(trace);
+    chOld=retrieveOldConsistentHash();
     if (chOld.getCaches().contains(self))     chNew=chOld;
- else {
-      chNew=createConsistentHash(configuration,chOld.getCaches(),dmi.topologyInfo,self);
-    }
-    dmi.setConsistentHash(chNew);
+ else     chNew=createConsistentHash(configuration,chOld.getCaches(),distributionManager.getTopologyInfo(),self);
+    distributionManager.setConsistentHash(chNew);
     try {
       if (configuration.isRehashEnabled()) {
-        transactionLogger.enable();
         broadcastNewCh();
         Address myAddress=rpcManager.getTransport().getAddress();
         RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_JOIN,myAddress,null,chOld,chNew,null);
         List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(chNew,configuration.getNumOwners());
-        Collection<Response> resps=rpcManager.invokeRemotely(addressesWhoMaySendStuff,cmd,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true).values();
-        for (        Response r : resps) {
-          if (r instanceof SuccessfulResponse) {
-            Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
-            dmi.applyState(chNew,state);
-          }
+        Set<Future<Void>> stateRetrievalProcesses=new HashSet<Future<Void>>(addressesWhoMaySendStuff.size());
+        for (        Address stateProvider : addressesWhoMaySendStuff) {
+          stateRetrievalProcesses.add(statePullExecutor.submit(new JoinStateGrabber(stateProvider,cmd,chNew)));
         }
-        dmi.drainLocalTransactionLog();
-        unlocked=true;
+        for (        Future<Void> f : stateRetrievalProcesses)         f.get();
       }
  else {
         broadcastNewCh();
@@ -38,10 +28,11 @@
       }
     }
   finally {
-      rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,true);
-      if (configuration.isRehashEnabled()) {
-        invalidateInvalidHolders(chOld,chNew);
-      }
+      distributionManager.setJoinComplete(true);
+      distributionManager.setRehashInProgress(false);
+      inboundInvocationHandler.blockTillNoLongerRetrying(cf.getCacheName());
+      rpcManager.broadcastRpcCommandInFuture(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,new NotifyingFutureImpl(null));
+      if (configuration.isRehashEnabled())       invalidateInvalidHolders(chOld,chNew);
     }
   }
  catch (  Exception e) {
@@ -49,9 +40,6 @@
     throw new CacheException("Unexpected exception",e);
   }
  finally {
-    if (!unlocked)     transactionLogger.unlockAndDisable();
-    dmi.setJoinComplete(true);
-    if (trace)     log.info("%s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
- else     log.info("%s completed join rehash!",self);
+    log.info("%s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
 }

@@ -1,5 +1,5 @@
 {
-  if (getLog().isDebugEnabled())   getLog().debug("Invalidating entries that have migrated across");
+  if (log.isDebugEnabled())   log.debug("Invalidating entries that have migrated across");
   Map<Address,Set<Object>> invalidations=new HashMap<Address,Set<Object>>();
   for (  Object key : dataContainer.keySet()) {
     Collection<Address> invalidHolders=getInvalidHolders(key,chOld,chNew);
@@ -13,12 +13,8 @@
     }
   }
   invalidations.keySet().removeAll(doNotInvalidate);
-  Set<Future> futures=new HashSet<Future>();
   for (  Map.Entry<Address,Set<Object>> e : invalidations.entrySet()) {
     InvalidateCommand ic=cf.buildInvalidateFromL1Command(true,e.getValue().toArray());
-    NotifyingNotifiableFuture f=new NotifyingFutureImpl(null);
-    rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()),ic,true,f);
-    futures.add(f);
+    rpcManager.invokeRemotely(Collections.singletonList(e.getKey()),ic,false);
   }
-  for (  Future f : futures)   f.get();
 }

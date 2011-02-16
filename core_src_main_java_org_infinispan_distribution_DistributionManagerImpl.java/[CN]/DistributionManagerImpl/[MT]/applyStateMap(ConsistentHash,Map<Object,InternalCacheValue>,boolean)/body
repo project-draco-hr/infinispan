@@ -1,0 +1,24 @@
+{
+  Map<Object,InternalCacheValue> retry=withRetry ? new HashMap<Object,InternalCacheValue>() : null;
+  for (  Map.Entry<Object,InternalCacheValue> e : state.entrySet()) {
+    if (consistentHash.locate(e.getKey(),configuration.getNumOwners()).contains(self)) {
+      InternalCacheValue v=e.getValue();
+      InvocationContext ctx=icc.createInvocationContext();
+      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING);
+      try {
+        PutKeyValueCommand put=cf.buildPutKeyValueCommand(e.getKey(),v.getValue(),v.getLifespan(),v.getMaxIdle(),ctx.getFlags());
+        interceptorChain.invoke(ctx,put);
+      }
+ catch (      Exception ee) {
+        if (withRetry) {
+          if (trace)           log.trace("Problem %s encountered when applying state for key %s. Adding entry to retry queue.",ee.getMessage(),e.getKey());
+          retry.put(e.getKey(),e.getValue());
+        }
+ else {
+          log.warn("Problem %s encountered when applying state for key %s!",ee.getMessage(),e.getKey());
+        }
+      }
+    }
+  }
+  return retry;
+}

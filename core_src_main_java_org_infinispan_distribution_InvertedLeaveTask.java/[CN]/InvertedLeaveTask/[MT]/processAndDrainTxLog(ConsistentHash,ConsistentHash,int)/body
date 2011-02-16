@@ -1,7 +1,7 @@
 {
   List<WriteCommand> c;
   int i=0;
-  TransactionLogger transactionLogger=dmi.getTransactionLogger();
+  TransactionLogger transactionLogger=this.distributionManager.getTransactionLogger();
   if (trace)   log.trace("Processing transaction log iteratively: " + transactionLogger);
   while (transactionLogger.shouldDrainWithoutLock()) {
     if (trace)     log.trace("Processing transaction log, iteration %s",i++);
@@ -10,7 +10,7 @@
     apply(oldCH,newCH,replCount,c);
   }
   if (trace)   log.trace("Processing transaction log: final drain and lock");
-  c=transactionLogger.drainAndLock();
+  c=transactionLogger.drainAndLock(null);
   if (trace)   log.trace("Found %s modifications",c.size());
   apply(oldCH,newCH,replCount,c);
   if (trace)   log.trace("Handling pending prepares");
@@ -39,5 +39,5 @@ catch (    ExecutionException e) {
     }
   }
   if (trace)   log.trace("Finished pushing pending prepares; unlocking and disabling transaction logging");
-  transactionLogger.unlockAndDisable();
+  transactionLogger.unlockAndDisable(null);
 }

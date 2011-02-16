@@ -1,0 +1,12 @@
+{
+  if (trace)   log.trace("Applying the following keys: %s",state.keySet());
+  int retryCount=3;
+  Map<Object,InternalCacheValue> pendingApplications=state;
+  for (int i=0; i < retryCount; i++) {
+    pendingApplications=applyStateMap(consistentHash,pendingApplications,true);
+    if (pendingApplications.isEmpty())     break;
+  }
+  if (!pendingApplications.isEmpty())   applyStateMap(consistentHash,pendingApplications,false);
+  if (!forLeave)   drainLocalTransactionLog(tlog);
+  if (trace)   log.trace("%s has completed applying state",self);
+}

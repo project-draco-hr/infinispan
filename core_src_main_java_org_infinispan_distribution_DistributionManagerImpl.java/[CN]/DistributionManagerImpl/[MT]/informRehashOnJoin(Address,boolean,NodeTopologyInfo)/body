@@ -1,5 +1,5 @@
 {
-  log.trace("Informed of a JOIN by %s.  Starting? %s",a,starting);
+  if (trace)   log.trace("Informed of a JOIN by %s.  Starting? %s",a,starting);
   if (!starting) {
     if (consistentHash instanceof UnionConsistentHash) {
       UnionConsistentHash uch=(UnionConsistentHash)consistentHash;
@@ -10,7 +10,7 @@
   }
  else {
     topologyInfo.addNodeTopologyInfo(a,nodeTopologyInfo);
-    log.trace("Node topology info added(%s).  Topology info is %s",nodeTopologyInfo,topologyInfo);
+    if (trace)     log.trace("Node topology info added(%s).  Topology info is %s",nodeTopologyInfo,topologyInfo);
     ConsistentHash chOld=consistentHash;
     if (chOld instanceof UnionConsistentHash)     throw new RuntimeException("Not expecting a union CH!");
     oldConsistentHash=chOld;
@@ -18,6 +18,6 @@
     ConsistentHash chNew=ConsistentHashHelper.createConsistentHash(configuration,chOld.getCaches(),topologyInfo,a);
     consistentHash=new UnionConsistentHash(chOld,chNew);
   }
-  log.trace("New CH is %s",consistentHash);
+  if (trace)   log.trace("New CH is %s",consistentHash);
   return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
 }

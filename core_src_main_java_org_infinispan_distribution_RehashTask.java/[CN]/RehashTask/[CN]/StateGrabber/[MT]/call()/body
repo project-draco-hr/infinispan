@@ -1,0 +1,10 @@
+{
+  Map<Address,Response> resps=rpcManager.invokeRemotely(Collections.singleton(stateProvider),command,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
+  for (  Response r : resps.values()) {
+    if (r instanceof SuccessfulResponse) {
+      Map<Object,InternalCacheValue> state=getStateFromResponse((SuccessfulResponse)r);
+      distributionManager.applyState(newConsistentHash,state,new RemoteTransactionLoggerImpl(cf,stateProvider,rpcManager),isForLeave());
+    }
+  }
+  return null;
+}

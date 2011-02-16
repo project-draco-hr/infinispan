@@ -1,5 +1,5 @@
 {
-  log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
+  if (trace)   log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
   boolean started;
   if (e.isNeedsToRejoin()) {
     try {
@@ -11,9 +11,9 @@
   }
  else {
     try {
-      started=startLatch.await(2,TimeUnit.MINUTES);
+      started=startLatch.await(5,TimeUnit.MINUTES);
       if (started)       rehash(e.getNewMembers(),e.getOldMembers());
- else       log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
+ else       log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
     }
  catch (    InterruptedException ie) {
       log.warn("View change interrupted; not rehashing!");

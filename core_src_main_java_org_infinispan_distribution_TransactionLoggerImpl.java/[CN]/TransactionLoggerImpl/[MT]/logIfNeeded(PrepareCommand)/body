@@ -1,20 +1,9 @@
 {
-  if (command.isOnePhaseCommit()) {
+  if (enabled) {
+    waitForModsLatch();
     if (enabled) {
-      loggingLock.readLock().lock();
-      try {
-        if (enabled) {
-          if (trace)           log.trace("Logging 1PC prepare for tx %s",command.getGlobalTransaction());
-          logModificationsInTransaction(command);
-        }
-      }
-  finally {
-        loggingLock.readLock().unlock();
-      }
+      if (command.isOnePhaseCommit())       logModificationsInTransaction(command);
+ else       uncommittedPrepares.put(command.getGlobalTransaction(),command);
     }
-  }
- else {
-    if (trace)     log.trace("Logging 2PC prepare for tx %s",command.getGlobalTransaction());
-    uncommittedPrepares.put(command.getGlobalTransaction(),command);
   }
 }

@@ -1,9 +1,12 @@
 {
   long giveupTime=System.currentTimeMillis() + timeout;
+  boolean notTimedOut=true;
 synchronized (this) {
-    while (giveupTime > System.currentTimeMillis() && expectedResponses > 0 && retval == null)     this.wait(timeout);
+    notTimedOut=giveupTime > System.currentTimeMillis();
+    while (notTimedOut && expectedResponses > 0 && retval == null)     this.wait(timeout);
   }
   if (retval != null)   return retval;
  else   if (exception != null)   throw exception;
+ else   if (notTimedOut)   throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s",futures.values()));
  else   throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.",Util.prettyPrintTime(timeout),futures.values()));
 }

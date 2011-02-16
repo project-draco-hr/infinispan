@@ -13,7 +13,7 @@
         oldConsistentHash=consistentHash;
       }
  else {
-        oldConsistentHash=((UnionConsistentHash)consistentHash).getNewCH();
+        oldConsistentHash=((UnionConsistentHash)consistentHash).getNewConsistentHash();
       }
       addLeaverAndUpdatedConsistentHash(leaver);
     }
@@ -29,12 +29,10 @@
       log.info("I %s am participating in rehash, state providers %s, state receivers %s",rpcManager.getTransport().getAddress(),stateProviders,receiversOfLeaverState);
       transactionLogger.enable();
       if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
-        if (log.isTraceEnabled()) {
-          log.trace("Canceling running leave task!");
-        }
+        if (trace)         log.trace("Canceling running leave task!");
         leaveTaskFuture.cancel(true);
       }
-      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,this,stateProviders,receiversOfLeaverState,willReceiveLeaverState);
+      InvertedLeaveTask task=new InvertedLeaveTask(this,rpcManager,configuration,cf,dataContainer,stateProviders,receiversOfLeaverState,willReceiveLeaverState);
       leaveTaskFuture=rehashExecutor.submit(task);
     }
  else {

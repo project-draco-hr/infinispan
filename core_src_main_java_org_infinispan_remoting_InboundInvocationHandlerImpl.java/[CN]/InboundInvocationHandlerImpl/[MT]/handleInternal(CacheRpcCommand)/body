@@ -1,0 +1,13 @@
+{
+  ComponentRegistry cr=cmd.getComponentRegistry();
+  CommandsFactory commandsFactory=cr.getLocalComponent(CommandsFactory.class);
+  commandsFactory.initializeReplicableCommand(cmd,true);
+  try {
+    log.trace("Calling perform() on %s",cmd);
+    Object retval=cmd.perform(null);
+    return cr.getComponent(ResponseGenerator.class).getResponse(cmd,retval);
+  }
+ catch (  Exception e) {
+    return new ExceptionResponse(e);
+  }
+}

@@ -2,19 +2,18 @@
   List<Address> result=new ArrayList<Address>();
   for (  Address addr : oldConsistentHash.getCaches()) {
     List<Address> backups=oldConsistentHash.getBackupsForNode(addr,getReplCount());
-    log.trace("Backups for %s are %s",addr,backups);
     if (addr.equals(leaver)) {
       if (backups.size() > 1) {
         Address mainBackup=backups.get(1);
         result.add(mainBackup);
-        log.trace("Leaver's (%s) main backup(%s) is looking for another backup as well.",leaver,mainBackup);
+        if (trace)         log.trace("Leaver %s main backup %s is looking for another backup as well.",leaver,mainBackup);
       }
     }
  else     if (backups.contains(leaver)) {
-      log.trace("%s is looking for a new backup to replace %s",addr,leaver);
+      if (trace)       log.trace("%s is looking for a new backup to replace leaver %s",addr,leaver);
       result.add(addr);
     }
   }
-  log.trace("Nodes that need new backups are: %s",result);
+  if (trace)   log.trace("Nodes that need new backups are: %s",result);
   return result;
 }

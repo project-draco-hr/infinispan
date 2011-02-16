@@ -11,32 +11,13 @@
           cr=gcr.getNamedComponentRegistry(cacheName);
         }
       }
- else {
-        log.info("Cache %s is not defined.  No point in waiting.",cacheName);
-      }
     }
     if (cr == null) {
       if (log.isInfoEnabled())       log.info("Cache named %s does not exist on this cache manager!",cacheName);
       return new ExceptionResponse(new NamedCacheNotFoundException(cacheName));
     }
   }
-  Configuration localConfig=cr.getComponent(Configuration.class);
-  if (!cr.getStatus().allowInvocations()) {
-    long giveupTime=System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
-    while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime)     Thread.sleep(100);
-    if (!cr.getStatus().allowInvocations()) {
-      log.warn("Cache named [%s] exists but isn't in a state to handle invocations.  Its state is %s.",cacheName,cr.getStatus());
-      return RequestIgnoredResponse.INSTANCE;
-    }
-  }
-  CommandsFactory commandsFactory=cr.getLocalComponent(CommandsFactory.class);
-  commandsFactory.initializeReplicableCommand(cmd,true);
-  try {
-    log.trace("Calling perform() on %s",cmd);
-    Object retval=cmd.perform(null);
-    return cr.getComponent(ResponseGenerator.class).getResponse(cmd,retval);
-  }
- catch (  Exception e) {
-    return new ExceptionResponse(e);
-  }
+  final Configuration localConfig=cr.getComponent(Configuration.class);
+  cmd.injectComponents(localConfig,cr);
+  return handleWithRetry(cmd);
 }
