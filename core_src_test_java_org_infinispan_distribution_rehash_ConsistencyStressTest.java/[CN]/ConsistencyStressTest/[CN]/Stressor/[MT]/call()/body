@@ -1,0 +1,53 @@
+{
+  for (int iterationId=0; iterationId < NUM_ITERATIONS; iterationId++) {
+    if (iterationId % 500 == 0)     log.info("  >> Stressor %s Worker %s Iteration %s",cacheId,workerId,iterationId);
+    boolean txError=false;
+    Exception exception=null;
+    String key=keyFor(cacheId,workerId,iterationId);
+    try {
+      tm.begin();
+      cache.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key,"value");
+      tm.commit();
+    }
+ catch (    HeuristicRollbackException e) {
+      txError=true;
+      exception=e;
+    }
+catch (    RollbackException e) {
+      txError=true;
+      exception=e;
+    }
+catch (    SystemException e) {
+      txError=true;
+      exception=e;
+    }
+catch (    HeuristicMixedException e) {
+      txError=true;
+      exception=e;
+    }
+catch (    NotSupportedException e) {
+      txError=true;
+      exception=e;
+    }
+catch (    TimeoutException e) {
+      txError=true;
+      exception=e;
+    }
+    if (txError) {
+      try {
+        tm.rollback();
+      }
+ catch (      Exception exc) {
+        log.error("  >> Rollback failed");
+      }
+      if (IGNORE_TX_FAILURES) {
+        keysToIgnore.add(key);
+        log.error("  >> Saw a %s when trying to process key %s",exception.getClass().getSimpleName(),key);
+      }
+ else {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+  return null;
+}

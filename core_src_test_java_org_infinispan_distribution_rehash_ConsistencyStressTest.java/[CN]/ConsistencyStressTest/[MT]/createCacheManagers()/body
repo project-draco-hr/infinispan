@@ -1,0 +1,19 @@
+{
+  Configuration c=new Configuration();
+  c.setIsolationLevel(IsolationLevel.READ_COMMITTED);
+  c.setLockAcquisitionTimeout(60000);
+  c.setUseLockStriping(false);
+  c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
+  c.setL1CacheEnabled(false);
+  c.setSyncReplTimeout(30000);
+  c.setUseEagerLocking(true);
+  c.setEagerLockSingleNode(true);
+  c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+  c.setSyncCommitPhase(true);
+  c.setSyncRollbackPhase(true);
+  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
+  gc.setDistributedSyncTimeout(60000);
+  List<EmbeddedCacheManager> cacheManagers=new LinkedList<EmbeddedCacheManager>();
+  for (int i=0; i < NUM_NODES; i++)   cacheManagers.add(createCacheManager(gc,c,true));
+  registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
+}
