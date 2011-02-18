@@ -1,2 +1,28 @@
 {
+  final Cache cache1=cache(0,"replSync");
+  final Cache cache2=cache(1,"replSync");
+  cache1.putForExternalRead(key,value);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+    }
+  }
+);
+  cache1.remove(key);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache1.isEmpty() && cache2.isEmpty();
+    }
+  }
+);
+  cache1.put(key,value);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+    }
+  }
+);
+  cache1.putForExternalRead(key,value2);
+  assertEquals("PFER should have been a no-op",value,cache1.get(key));
+  assertEquals("PFER should have been a no-op",value,cache2.get(key));
 }

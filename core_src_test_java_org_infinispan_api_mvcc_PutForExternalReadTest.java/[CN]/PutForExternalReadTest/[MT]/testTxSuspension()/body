@@ -1,23 +1,29 @@
 {
-  Cache cache1=cache(0,"replSync");
-  Cache cache2=cache(1,"replSync");
-  TransactionManager tm1=TestingUtil.getTransactionManager(cache1);
-  TransactionManager tm2=TestingUtil.getTransactionManager(cache2);
-  ReplListener replListener1=replListener(cache1);
-  ReplListener replListener2=replListener(cache2);
-  replListener2.expect(PutKeyValueCommand.class);
+  final Cache cache1=cache(0,"replSync");
+  final Cache cache2=cache(1,"replSync");
   cache1.put(key + "0",value);
-  replListener2.waitForRpc();
-  replListener2.expect(PutKeyValueCommand.class);
-  tm1.begin();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache2.get(key + "0"));
+    }
+  }
+);
+  tm(0,"replSync").begin();
   cache1.get(key + "0");
   cache1.putForExternalRead(key,value);
-  Transaction t=tm1.suspend();
-  replListener2.waitForRpc();
-  assertEquals("PFER should have completed",value,cache1.get(key));
-  assertEquals("PFER should have completed",value,cache2.get(key));
-  tm1.resume(t);
-  tm1.commit();
-  assertEquals("tx should have completed",value,cache1.get(key + "0"));
-  assertEquals("tx should have completed",value,cache2.get(key + "0"));
+  Transaction t=tm(0,"replSync").suspend();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
+    }
+  }
+);
+  tm(0,"replSync").resume(t);
+  tm(0,"replSync").commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0"));
+    }
+  }
+);
 }
