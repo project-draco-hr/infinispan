@@ -4,7 +4,7 @@
   if (shouldInvokeRemoteTxCommand(ctx)) {
     List<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
     NotifyingNotifiableFuture<Object> f=null;
-    if (command.isOnePhaseCommit())     f=flushL1Cache(recipients.size(),ctx.getLockedKeys(),null);
+    if (isL1CacheEnabled && command.isOnePhaseCommit())     f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
     rpcManager.invokeRemotely(recipients,command,sync);
     ((LocalTxInvocationContext)ctx).remoteLocksAcquired(recipients);
     if (f != null)     f.get();

@@ -9,7 +9,10 @@
         syncCommitPhase=true;
       }
     }
-    NotifyingNotifiableFuture<Object> f=flushL1Cache(recipients.size(),ctx.getLockedKeys(),null);
+    NotifyingNotifiableFuture<Object> f=null;
+    if (isL1CacheEnabled) {
+      f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
+    }
     Map<Address,Response> responses=rpcManager.invokeRemotely(recipients,command,syncCommitPhase,true);
     if (!responses.isEmpty()) {
       List<Address> resendTo=new LinkedList<Address>();

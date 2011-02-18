@@ -1,0 +1,20 @@
+{
+  boolean notifyRehashStarted=false;
+  if (cmd instanceof RehashControlCommand) {
+    RehashControlCommand rcc=(RehashControlCommand)cmd;
+switch (rcc.getType()) {
+case JOIN_REQ:
+      txsReady.await();
+    break;
+case PULL_STATE_JOIN:
+  notifyRehashStarted=true;
+break;
+case JOIN_REHASH_END:
+joinEnded.countDown();
+break;
+}
+}
+Response r=delegate.handle(cmd,origin);
+if (notifyRehashStarted) rehashStarted.countDown();
+return r;
+}

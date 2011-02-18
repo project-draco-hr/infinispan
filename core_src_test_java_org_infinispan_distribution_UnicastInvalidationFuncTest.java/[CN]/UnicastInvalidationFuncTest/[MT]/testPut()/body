@@ -1,0 +1,23 @@
+{
+  initAndTest();
+  Cache<Object,String> nonOwner=getFirstNonOwner(KEY1);
+  Cache<Object,String> owner=getOwners(KEY1)[0];
+  Cache<Object,String> secondNonOwner=getSecondNonOwner(KEY1);
+  Collection<ReplListener> listeners=new ArrayList<ReplListener>();
+  nonOwner.put(KEY1,"foo");
+  Assert.assertEquals(nonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(),"foo");
+  Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(),"foo");
+  secondNonOwner.get(KEY1);
+  ReplListener rl=new ReplListener(nonOwner);
+  rl.expect(InvalidateL1Command.class);
+  listeners.add(rl);
+  rl=new ReplListener(secondNonOwner);
+  rl.expect(InvalidateL1Command.class);
+  listeners.add(rl);
+  owner.put(KEY1,"bar");
+  for (  ReplListener r : listeners) {
+    r.waitForRpc();
+  }
+  Assert.assertNull(secondNonOwner.getAdvancedCache().getDataContainer().get(KEY1));
+  Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
+}
