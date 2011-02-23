@@ -18,7 +18,6 @@
   if (receivedOpCode != opRespCode) {
     if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
       checkForErrorsInResponseStatus(transport.readByte(),messageId,transport);
-      throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
     }
     throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opRespCode) + " and received "+ Integer.toHexString(receivedOpCode));
   }
@@ -26,10 +25,6 @@
     log.trace("Received operation code is: " + receivedOpCode);
   }
   short status=transport.readByte();
-  checkForErrorsInResponseStatus(status,messageId,transport);
-  short topologyChangeByte=transport.readByte();
-  if (topologyChangeByte == 1) {
-    readNewTopologyAndHash(transport,topologyId);
-  }
+  readNewTopologyIfPresent(transport);
   return status;
 }
