@@ -1,0 +1,25 @@
+{
+  DummyTransaction t0=RecoveryTestUtil.beginAndSuspendTx(cache(0));
+  DummyTransaction t1=RecoveryTestUtil.beginAndSuspendTx(cache(1));
+  RecoveryTestUtil.assertPrepared(0,t0,t1);
+  RecoveryTestUtil.prepareTransaction(t0);
+  RecoveryTestUtil.assertPrepared(1,t0);
+  RecoveryTestUtil.assertPrepared(0,t1);
+  RecoveryTestUtil.prepareTransaction(t1);
+  RecoveryTestUtil.assertPrepared(1,t0);
+  RecoveryTestUtil.assertPrepared(1,t1);
+  RecoveryTestUtil.commitTransaction(t0);
+  RecoveryTestUtil.assertPrepared(0,t0);
+  RecoveryTestUtil.assertPrepared(1,t1);
+  RecoveryTestUtil.commitTransaction(t1);
+  RecoveryTestUtil.assertPrepared(0,t0);
+  RecoveryTestUtil.assertPrepared(0,t1);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      boolean noPrepTxOnFirstNode=cache(0,getRecoveryCacheName()).size() == 0;
+      boolean noPrepTxOnSecondNode=cache(1,getRecoveryCacheName()).size() == 0;
+      return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
+    }
+  }
+);
+}

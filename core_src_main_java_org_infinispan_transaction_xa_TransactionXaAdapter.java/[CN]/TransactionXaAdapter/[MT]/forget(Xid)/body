@@ -1,3 +1,11 @@
 {
-  if (trace)   log.trace("forget called");
+  Xid xid=convertXid(externalXid);
+  if (trace)   log.trace("forget called for xid %s",xid);
+  try {
+    recoveryManager.removeRecoveryInformation(null,xid,true);
+  }
+ catch (  Exception e) {
+    log.warn("Exception removing recovery information: ",e);
+    throw new XAException(XAException.XAER_RMERR);
+  }
 }

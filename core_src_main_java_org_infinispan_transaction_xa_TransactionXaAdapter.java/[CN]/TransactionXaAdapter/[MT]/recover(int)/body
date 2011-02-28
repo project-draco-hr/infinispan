@@ -1,4 +1,19 @@
 {
-  if (trace)   log.trace("recover called: " + i);
-  return null;
+  if (!configuration.isTransactionRecoveryEnabled()) {
+    log.warn("Recovery call will be ignored as recovery is disabled. More on recovery: http://community.jboss.org/docs/DOC-16646");
+    return RecoveryManager.RecoveryIterator.NOTHING;
+  }
+  if (trace)   log.trace("recover called: " + flag);
+  if (isFlag(flag,TMSTARTRSCAN)) {
+    recoveryIterator=recoveryManager.getPreparedTransactionsFromCluster();
+    if (trace)     log.trace("Fetched a new recovery iterator: %s",recoveryIterator);
+  }
+  if (isFlag(flag,TMENDRSCAN)) {
+    if (log.isTraceEnabled())     log.trace("Flushing the iterator");
+    return recoveryIterator.all();
+  }
+ else {
+    if (!isFlag(flag,TMSTARTRSCAN) && !isFlag(flag,TMNOFLAGS))     throw new IllegalArgumentException("TMNOFLAGS this flag must be used when no other flags are specified." + " Received " + flag);
+    return recoveryIterator.hasNext() ? recoveryIterator.next() : RecoveryManager.RecoveryIterator.NOTHING;
+  }
 }

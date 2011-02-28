@@ -1,0 +1,26 @@
+{
+  Set<GlobalTransaction> toKill=new HashSet<GlobalTransaction>();
+  for (  GlobalTransaction gt : remoteTransactions.keySet()) {
+    if (leavers.contains(gt.getAddress()))     toKill.add(gt);
+  }
+  if (trace) {
+    if (toKill.isEmpty())     log.trace("No global transactions pertain to originator(s) %s who have left the cluster.",leavers);
+ else     log.trace("%s global transactions pertain to leavers list %s and need to be killed",toKill.size(),leavers);
+  }
+  for (  GlobalTransaction gtx : toKill) {
+    if (trace)     log.trace("Killing %s",gtx);
+    RollbackCommand rc=new RollbackCommand(gtx);
+    rc.init(invoker,icc,TransactionTable.this);
+    try {
+      rc.perform(null);
+      if (trace)       log.trace("Rollback of %s complete.",gtx);
+    }
+ catch (    Throwable e) {
+      log.warn("Unable to roll back gtx " + gtx,e);
+    }
+ finally {
+      removeRemoteTransaction(gtx);
+    }
+  }
+  if (trace)   log.trace("Completed cleaning stale locks.");
+}

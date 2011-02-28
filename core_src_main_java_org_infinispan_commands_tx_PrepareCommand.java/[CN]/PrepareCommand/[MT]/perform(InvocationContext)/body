@@ -1,8 +1,8 @@
 {
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
   RemoteTransaction remoteTransaction=txTable.getRemoteTransaction(globalTx);
-  boolean remoteTxinitiated=remoteTransaction != null;
-  if (!remoteTxinitiated) {
+  boolean remoteTxInitiated=remoteTransaction != null;
+  if (!remoteTxInitiated) {
     remoteTransaction=txTable.createRemoteTransaction(globalTx,modifications);
   }
  else {
@@ -12,12 +12,5 @@
   ctx.setRemoteTransaction(remoteTransaction);
   if (trace)   log.trace("Invoking remotely originated prepare: " + this + " with invocation context: "+ ctx);
   notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(),ctx);
-  try {
-    return invoker.invoke(ctx,this);
-  }
-  finally {
-    if (this.isOnePhaseCommit()) {
-      txTable.removeRemoteTransaction(globalTx);
-    }
-  }
+  return invoker.invoke(ctx,this);
 }

@@ -1,0 +1,25 @@
+{
+  PreparedTxIterator iterator=new PreparedTxIterator();
+  iterator.add(txTable.getLocalPreparedXids());
+  if (notOnlyMeInTheCluster() && broadcastForPreparedTx) {
+    boolean success=true;
+    Map<Address,Response> responses=getAllPreparedTxFromCluster();
+    for (    Map.Entry<Address,Response> rEntry : responses.entrySet()) {
+      Response thisResponse=rEntry.getValue();
+      if (isSuccessful(thisResponse)) {
+        List<Xid> responseValue=(List<Xid>)((SuccessfulResponse)thisResponse).getResponseValue();
+        if (log.isTraceEnabled()) {
+          log.trace("Received Xid lists %s from node %s",responseValue,rEntry.getKey());
+        }
+        iterator.add(responseValue);
+      }
+ else {
+        log.warn("Missing the list of prepared transactions from node %s. Received response is %s",rEntry.getKey(),rEntry.getValue());
+        success=false;
+      }
+    }
+    this.broadcastForPreparedTx=!success;
+    if (!broadcastForPreparedTx)     log.info("Finished broadcasting for remote prepared transactions. " + "Returning only local values from now on.");
+  }
+  return iterator;
+}

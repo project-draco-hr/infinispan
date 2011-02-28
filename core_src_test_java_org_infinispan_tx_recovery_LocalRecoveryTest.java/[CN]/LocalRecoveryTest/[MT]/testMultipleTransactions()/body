@@ -1,0 +1,24 @@
+{
+  DummyTransaction suspend1=beginTx();
+  DummyTransaction suspend2=beginTx();
+  DummyTransaction suspend3=beginTx();
+  DummyTransaction suspend4=beginTx();
+  assertPrepared(0,suspend1,suspend2,suspend3,suspend4);
+  prepareTransaction(suspend1);
+  assertPrepared(1,suspend1,suspend2,suspend3,suspend4);
+  prepareTransaction(suspend2);
+  assertPrepared(2,suspend1,suspend2,suspend3,suspend4);
+  prepareTransaction(suspend3);
+  assertPrepared(3,suspend1,suspend2,suspend3,suspend4);
+  prepareTransaction(suspend4);
+  assertPrepared(4,suspend1,suspend2,suspend3,suspend4);
+  commitTransaction(suspend1);
+  assertPrepared(3,suspend1,suspend2,suspend3,suspend4);
+  commitTransaction(suspend2);
+  assertPrepared(2,suspend1,suspend2,suspend3,suspend4);
+  commitTransaction(suspend3);
+  assertPrepared(1,suspend1,suspend2,suspend3,suspend4);
+  commitTransaction(suspend4);
+  assertPrepared(0,suspend1,suspend2,suspend3,suspend4);
+  assertEquals(0,TestingUtil.getTransactionTable(cache).getLocalTxCount());
+}

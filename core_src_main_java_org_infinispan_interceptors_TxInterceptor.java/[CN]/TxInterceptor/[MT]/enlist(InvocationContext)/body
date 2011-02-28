@@ -6,14 +6,14 @@
   LocalTransaction localTransaction=txTable.getOrCreateLocalTransaction(transaction,ctx);
   if (!localTransaction.isEnlisted()) {
     try {
-      transaction.enlistResource(new TransactionXaAdapter(localTransaction,txTable,commandsFactory,configuration,invoker,icc));
+      transaction.enlistResource(new TransactionXaAdapter(localTransaction,txTable,commandsFactory,configuration,invoker,icc,recoveryManager));
     }
  catch (    Exception e) {
       Xid xid=localTransaction.getXid();
       if (xid != null && !ctx.getLockedKeys().isEmpty()) {
         log.debug("Attempting a rollback to clear stale resources!");
         try {
-          TransactionXaAdapter.rollbackImpl(xid,commandsFactory,icc,invoker,txTable);
+          TransactionXaAdapter.rollbackImpl(xid,commandsFactory,icc,invoker,txTable,recoveryManager);
         }
  catch (        XAException xae) {
           log.debug("Caught exception attempting to clean up " + xid,xae);

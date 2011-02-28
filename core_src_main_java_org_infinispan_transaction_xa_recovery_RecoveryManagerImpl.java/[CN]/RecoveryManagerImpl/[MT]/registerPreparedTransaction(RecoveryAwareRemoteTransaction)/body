@@ -1,0 +1,8 @@
+{
+  Xid xid=((XidAware)remoteTransaction.getGlobalTransaction()).getXid();
+  RemoteTransaction previous=preparedTransactions.put(new RecoveryInfoKey(xid,cacheName),remoteTransaction);
+  if (previous != null) {
+    log.error("There's already a prepared transaction with this xid: %s. New transaction is %s. Are there two " + "different transactions having same Xid in the cluster?",previous,remoteTransaction);
+    throw new IllegalStateException("Are there two different transactions having same Xid in the cluster?");
+  }
+}
