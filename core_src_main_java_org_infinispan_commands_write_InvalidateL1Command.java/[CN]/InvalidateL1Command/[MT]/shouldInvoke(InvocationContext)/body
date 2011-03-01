@@ -1,9 +1,8 @@
 {
-  if (ctx.isOriginLocal() || (forRehash && config.isL1OnRehash()))   return true;
-  boolean invoke=false;
+  if (ctx.isOriginLocal() || forRehash)   return true;
   for (  Object k : getKeys()) {
-    invoke=invoke || !dm.getLocality(k).isLocal();
-    if (invoke)     return true;
+    DataLocality locality=dm.getLocality(k);
+    if (!locality.isLocal() || locality.isUncertain())     return true;
   }
-  return invoke;
+  return false;
 }

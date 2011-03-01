@@ -1,16 +1,21 @@
 {
-  if (forRehash && config.isL1OnRehash()) {
-    for (    Object k : getKeys()) {
-      InternalCacheEntry ice=dataContainer.get(k);
-      if (ice != null) {
-        if (log.isTraceEnabled())         log.trace("Not removing, instead putting entry into L1.");
-        dataContainer.put(k,ice.getValue(),config.getL1Lifespan(),config.getExpirationMaxIdle());
+  for (  Object k : getKeys()) {
+    InternalCacheEntry ice=dataContainer.get(k);
+    if (ice != null) {
+      DataLocality locality=dm.getLocality(k);
+      while (locality.isUncertain() && dm.isRehashInProgress()) {
+        LockSupport.parkNanos(MILLISECONDS.toNanos(50));
+        locality=dm.getLocality(k);
       }
-    }
-  }
+      if (!locality.isLocal()) {
+        if (forRehash && config.isL1OnRehash()) {
+          if (log.isTraceEnabled())           log.trace("Not removing, instead putting entry into L1.");
+          dataContainer.put(k,ice.getValue(),config.getL1Lifespan(),config.getExpirationMaxIdle());
+        }
  else {
-    for (    Object k : getKeys()) {
-      if (!dm.getLocality(k).isLocal())       invalidate(ctx,k);
+          invalidate(ctx,k);
+        }
+      }
     }
   }
   return null;
