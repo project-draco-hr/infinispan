@@ -1,0 +1,12 @@
+{
+  String storeName=storePrefix + m.getName();
+  Configuration c=new Configuration();
+  Configuration.LoadersConfig loaders=c.configureLoaders();
+  if (isStoreShared)   loaders=loaders.shared(true);
+  loaders.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(storeName));
+  if (isClustered) {
+    c.configureClustering().mode(Configuration.CacheMode.REPL_SYNC);
+    return TestCacheManagerFactory.createClusteredCacheManager(c);
+  }
+  return TestCacheManagerFactory.createCacheManager(c);
+}

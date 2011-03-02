@@ -1,0 +1,16 @@
+{
+  RemoveCacheCommand cmd=new RemoveCacheCommand(this,globalComponentRegistry);
+  cmd.injectComponents(null,globalComponentRegistry.getNamedComponentRegistry(cacheName));
+  cmd.setCacheName(cacheName);
+  Transport transport=getTransport();
+  try {
+    if (transport != null) {
+      Configuration c=getConfiguration(cacheName);
+      transport.invokeRemotely(null,cmd,ResponseMode.SYNCHRONOUS,c.getSyncReplTimeout(),false,null,false);
+    }
+    cmd.perform(null);
+  }
+ catch (  Throwable t) {
+    throw new CacheException("Error removing cache",t);
+  }
+}
