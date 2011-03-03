@@ -3,5 +3,9 @@
   registerCacheManager(TestCacheManagerFactory.createCacheManager(config,true));
   registerCacheManager(TestCacheManagerFactory.createCacheManager(config,true));
   TestingUtil.blockUntilViewsReceived(10000,cache(0),cache(1));
-  crm0=BaseDldTest.replaceRpcManager(cache(0));
+  Cache<?,?> cache=cache(0);
+  RpcManager rpcManager=TestingUtil.extractComponent(cache,RpcManager.class);
+  controlledRpcManager=new ControlledRpcManager(rpcManager);
+  TestingUtil.replaceComponent(cache,RpcManager.class,controlledRpcManager,true);
+  controlledRpcManager.setFail(true);
 }
