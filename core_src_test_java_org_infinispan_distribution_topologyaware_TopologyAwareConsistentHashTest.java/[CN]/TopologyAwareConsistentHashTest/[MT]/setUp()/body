@@ -1,16 +1,16 @@
 {
   ti=new TopologyInfo();
   ch=new TopologyAwareConsistentHash(new MurmurHash3());
-  addresses=new ArrayList<Address>();
+  addresses=new HashSet<Address>();
   for (int i=0; i < 10; i++) {
     addresses.add(new TestAddress(i * 100));
   }
   ch.setCaches(addresses);
-  addresses=new ArrayList(ch.getCaches());
-  for (int i=0; i < addresses.size(); i++) {
-    TestingUtil.replaceField(addresses.get(i),"a" + i,this,TopologyAwareConsistentHashTest.class);
-  }
-  addresses.clear();
+  Set<Address> tmp=ch.getCaches();
+  int i=0;
+  testAddresses=new Address[tmp.size()];
+  for (  Address a : tmp)   testAddresses[i++]=a;
   ch=new TopologyAwareConsistentHash(new MurmurHash3());
   ch.setTopologyInfo(ti);
+  addresses.clear();
 }
