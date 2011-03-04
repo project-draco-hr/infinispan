@@ -2,5 +2,13 @@
   Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
   configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
   configuration.setLockAcquisitionTimeout(5000);
-  createClusteredCaches(2,"replicatinExceptionTest",configuration);
+  createClusteredCaches(2,"syncReplCache",configuration);
+  Configuration replAsync=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+  defineConfigurationOnAllManagers("asyncReplCache",replAsync);
+  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+  replQueue.setUseReplQueue(true);
+  defineConfigurationOnAllManagers("replQueueCache",replQueue);
+  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+  asyncMarshall.setUseAsyncMarshalling(true);
+  defineConfigurationOnAllManagers("asyncMarshallCache",asyncMarshall);
 }

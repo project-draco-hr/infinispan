@@ -1,3 +1,23 @@
 {
-  return (o instanceof Serializable);
+  Class clazz=o.getClass();
+  Object isClassMarshallable=isMarshallableMap.get(clazz);
+  if (isClassMarshallable != null) {
+    return (Boolean)isClassMarshallable;
+  }
+ else {
+    if (isMarshallableCandidate(o)) {
+      boolean isMarshallable=true;
+      try {
+        objectToBuffer(o);
+      }
+ catch (      Exception e) {
+        isMarshallable=false;
+      }
+ finally {
+        isMarshallableMap.putIfAbsent(clazz,isMarshallable);
+        return isMarshallable;
+      }
+    }
+    return false;
+  }
 }

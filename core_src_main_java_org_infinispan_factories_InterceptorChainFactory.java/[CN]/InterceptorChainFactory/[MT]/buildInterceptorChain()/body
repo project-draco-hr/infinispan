@@ -3,6 +3,7 @@
   CommandInterceptor first=invocationBatching ? createInterceptor(BatchingInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
   InterceptorChain interceptorChain=new InterceptorChain(first);
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
+  if (configuration.isUseLazyDeserialization() || configuration.isUseAsyncMarshalling() || configuration.isUseReplQueue()|| hasAsyncStore())   interceptorChain.appendIntereceptor(createInterceptor(IsMarshallableInterceptor.class));
   if (invocationBatching)   interceptorChain.appendIntereceptor(createInterceptor(InvocationContextInterceptor.class));
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
   if (configuration.getCacheMode().isDistributed())   interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
