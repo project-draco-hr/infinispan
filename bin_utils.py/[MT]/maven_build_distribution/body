@@ -1,4 +1,4 @@
-def maven_build_distribution():
+def maven_build_distribution(version):
     'Builds the distribution in the current working dir'
     mvn_commands = [['install', '-Pjmxdoc'], ['install', '-Pconfigdoc'], ['deploy', '-Pdistribution']]
     for c in mvn_commands:
@@ -9,3 +9,10 @@ def maven_build_distribution():
             c.insert(0, '-q')
         c.insert(0, 'mvn')
         subprocess.check_call(c)
+    print 'Verifying build'
+    fn = ('core/target/classes/schema/infinispan-config-%s.%s.xsd' % ('5', '0'))
+    if os.path.isfile(fn):
+        f = open(fn)
+        xsd = f.read()
+        f.close()
+        xsd.find('urn:infinispan:config:5.0')
