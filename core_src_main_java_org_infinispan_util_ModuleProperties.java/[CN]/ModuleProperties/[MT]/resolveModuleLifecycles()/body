@@ -1,17 +1,24 @@
 {
-  List<ModuleLifecycle> lifecycles=new ArrayList<ModuleLifecycle>();
-  Map<String,ModuleProperties> p=ModuleProperties.loadModuleProperties();
-  for (  Map.Entry<String,ModuleProperties> m : p.entrySet()) {
-    try {
-      String lifecycleClassName=m.getValue().getLifecycleClassName();
-      Class<?> loadClass=Util.loadClassStrict(lifecycleClassName);
-      Object proxy=Proxies.newCatchThrowableProxy((ModuleLifecycle)loadClass.newInstance());
-      ModuleLifecycle ml=(ModuleLifecycle)proxy;
-      lifecycles.add(ml);
+  try {
+    List<ModuleLifecycle> lifecycles=new ArrayList<ModuleLifecycle>();
+    Map<String,ModuleProperties> p=ModuleProperties.getModuleProperties();
+    for (    Map.Entry<String,ModuleProperties> m : p.entrySet()) {
+      try {
+        String lifecycleClassName=m.getValue().getLifecycleClassName();
+        if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
+          Class<?> loadClass=Util.loadClassStrict(lifecycleClassName);
+          Object proxy=Proxies.newCatchThrowableProxy(loadClass.newInstance());
+          ModuleLifecycle ml=(ModuleLifecycle)proxy;
+          lifecycles.add(ml);
+        }
+      }
+ catch (      Exception e) {
+        log.warn("Module " + m.getKey() + " loaded, but could not be initialized ",e);
+      }
     }
- catch (    Exception e) {
-      log.warn("Module " + m.getKey() + " loaded, but could not be initialized ",e);
-    }
+    return lifecycles;
   }
-  return lifecycles;
+ catch (  Exception e) {
+    return Collections.emptyList();
+  }
 }

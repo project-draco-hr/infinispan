@@ -9,6 +9,11 @@
     registerComponent(this,ComponentRegistry.class);
     registerComponent(configuration,Configuration.class);
     registerComponent(new BootstrapFactory(cache,configuration,this),BootstrapFactory.class);
+    Map<Byte,ModuleCommandInitializer> initializers=ModuleProperties.moduleCommandInitializers();
+    if (initializers != null && !initializers.isEmpty()) {
+      registerComponent(initializers,KnownComponentNames.MODULE_COMMAND_INITIALIZERS);
+      for (      ModuleCommandInitializer mci : initializers.values())       registerComponent(mci,mci.getClass());
+    }
   }
  catch (  Exception e) {
     throw new CacheException("Unable to construct a ComponentRegistry!",e);
