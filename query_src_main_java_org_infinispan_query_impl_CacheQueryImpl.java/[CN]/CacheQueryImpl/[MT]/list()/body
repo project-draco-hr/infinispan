@@ -1,30 +1,7 @@
 {
-  IndexSearcher searcher=buildSearcher(searchFactory);
-  if (searcher == null)   return emptyList();
-  try {
-    QueryHits queryHits=getQueryHits(searcher,calculateTopDocsRetrievalSize());
-    int first=first();
-    int max=max(first,queryHits.totalHits);
-    int size=max - first + 1 < 0 ? 0 : max - first + 1;
-    DocumentExtractor extractor=buildDocumentExtractor(queryHits);
-    List<String> keysForCache=new ArrayList<String>(size);
-    for (int index=first; index <= max; index++) {
-      String cacheKey=extractor.extract(index).id.toString();
-      keysForCache.add(cacheKey);
-    }
-    List<Object> listToReturn=new ArrayList<Object>(size);
-    for (    String key : keysForCache)     listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
-    if (resultTransformer == null) {
-      return listToReturn;
-    }
- else {
-      return resultTransformer.transformList(listToReturn);
-    }
-  }
- catch (  IOException e) {
-    throw new SearchException("Unable to query Lucene index",e);
-  }
- finally {
-    IndexSearcherCloser.closeSearcher(searcher,searchFactory.getReaderProvider());
-  }
+  hSearchQuery.getTimeoutManager().start();
+  final List<EntityInfo> entityInfos=hSearchQuery.queryEntityInfos();
+  CacheLoader loader=getLoader();
+  List list=loader.load(entityInfos.toArray(new EntityInfo[entityInfos.size()]));
+  return list;
 }

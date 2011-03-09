@@ -7,18 +7,20 @@
     }
   }
 ).anyTimes();
-  SearchFactoryImplementor searchFactory=createMock(SearchFactoryImplementor.class);
-  DocumentExtractor extractor=org.easymock.classextension.EasyMock.createMock(DocumentExtractor.class);
-  org.easymock.classextension.EasyMock.expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>(){
+  extractor=createStrictMock(DocumentExtractor.class);
+  HSQuery hsQuery=createMock(HSQuery.class);
+  expect(hsQuery.queryDocumentExtractor()).andReturn(extractor).once();
+  expect(hsQuery.queryResultSize()).andReturn(dummyDataMap.size()).once();
+  expect(extractor.extract(anyInt())).andAnswer(new IAnswer<EntityInfo>(){
     public EntityInfo answer() throws Throwable {
       int index=(Integer)getCurrentArguments()[0];
       String keyString=keyList.get(index);
-      return new EntityInfo(Person.class,keyString,keyString,new String[0]);
+      return new EntityInfoImpl(Person.class,keyString,keyString,new String[0]);
     }
   }
 ).anyTimes();
-  IndexSearcher searcher=org.easymock.classextension.EasyMock.createMock(IndexSearcher.class);
-  EasyMock.replay(cache,searchFactory);
-  org.easymock.classextension.EasyMock.replay(searcher,extractor);
-  iterator=new LazyIterator(extractor,cache,searcher,searchFactory,0,9,fetchSize);
+  extractor.close();
+  expectLastCall().once();
+  EasyMock.replay(cache,extractor,hsQuery);
+  iterator=new LazyIterator(hsQuery,cache,fetchSize);
 }
