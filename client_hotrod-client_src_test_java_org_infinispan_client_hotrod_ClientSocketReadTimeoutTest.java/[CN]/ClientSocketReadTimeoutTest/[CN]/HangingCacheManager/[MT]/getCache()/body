@@ -1,0 +1,14 @@
+{
+  String threadName=Thread.currentThread().getName();
+  if (threadName.startsWith("HotRodServerWorker")) {
+    try {
+      latch.await(180,TimeUnit.SECONDS);
+      return delegate.getCache();
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new CacheException(e);
+    }
+  }
+  return delegate.getCache();
+}
