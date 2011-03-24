@@ -2,11 +2,12 @@
   Object returnValue=invokeNextInterceptor(ctx,command);
   if (shouldModifyIndexes(ctx)) {
     if (trace)     log.trace("shouldModifyIndexes() is true and we can clear the indexes");
-    Set<Class<?>> classes=searchFactory.getDocumentBuildersIndexedEntities().keySet();
-    for (    Class c : classes) {
+    for (    Class c : this.knownClasses.keySet()) {
+      DirectoryProvider[] providers=this.searchFactory.getDirectoryProviders(c);
       Serializable id=null;
-      if (log.isDebugEnabled())       log.debug("Clearing indexes for class: - " + c);
-      searchFactory.getWorker().performWork(new Work<Object>(c,id,WorkType.PURGE_ALL),new TransactionalEventTransactionContext(transactionManager));
+      if (providers != null && providers.length > 0) {
+        searchFactory.getWorker().performWork(new Work<Object>(c,id,WorkType.PURGE_ALL),new TransactionalEventTransactionContext(transactionManager));
+      }
     }
   }
   return returnValue;

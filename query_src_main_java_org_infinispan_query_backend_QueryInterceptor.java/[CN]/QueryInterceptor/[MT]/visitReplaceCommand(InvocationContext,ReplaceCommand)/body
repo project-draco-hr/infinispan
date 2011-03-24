@@ -2,9 +2,13 @@
   Object valueReplaced=invokeNextInterceptor(ctx,command);
   if (valueReplaced != null && shouldModifyIndexes(ctx)) {
     Object[] parameters=command.getParameters();
+    Object p1=extractValue(parameters[1]);
+    Object p2=extractValue(parameters[2]);
+    updateKnownTypesIfNeeded(p1);
+    updateKnownTypesIfNeeded(p2);
     Object key=extractValue(command.getKey());
-    removeFromIndexes(extractValue(parameters[1]),key);
-    addToIndexes(extractValue(parameters[2]),key);
+    removeFromIndexes(p1,key);
+    addToIndexes(p2,key);
   }
   return valueReplaced;
 }

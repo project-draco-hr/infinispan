@@ -2,15 +2,16 @@
   Object toReturn=invokeNextInterceptor(ctx,command);
   if (shouldModifyIndexes(ctx)) {
     Object key=command.getKey();
-    Object value=command.getValue();
+    Object value=extractValue(command.getValue());
+    updateKnownTypesIfNeeded(value);
     CacheEntry entry=ctx.lookupEntry(key);
     if (entry.isCreated()) {
       log.debug("Entry is created");
-      addToIndexes(extractValue(value),extractValue(key));
+      addToIndexes(value,extractValue(key));
     }
  else {
       log.debug("Entry is changed");
-      updateIndexes(extractValue(value),extractValue(key));
+      updateIndexes(value,extractValue(key));
     }
   }
   return toReturn;

@@ -1,7 +1,12 @@
 {
-  String config=TestingUtil.INFINISPAN_START_TAG + "   <default>\n" + "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  String config=TestingUtil.INFINISPAN_START_TAG + "   <default>\n" + "      <indexing enabled=\"true\" indexLocalOnly=\"true\">\n"+ "         <properties>\n"+ "            <property name=\"hibernate.search.default.directory_provider\" value=\"ram\" />\n"+ "         </properties>\n"+ "      </indexing>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
   InputStream is=new ByteArrayInputStream(config.getBytes());
-  cacheManager=TestCacheManagerFactory.fromStream(is);
+  try {
+    cacheManager=TestCacheManagerFactory.fromStream(is);
+  }
+  finally {
+    is.close();
+  }
   cache=cacheManager.getCache();
   return cacheManager;
 }

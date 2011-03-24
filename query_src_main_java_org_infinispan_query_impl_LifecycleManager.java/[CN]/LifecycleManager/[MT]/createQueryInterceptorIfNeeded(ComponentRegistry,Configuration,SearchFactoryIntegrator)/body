@@ -1,0 +1,13 @@
+{
+  QueryInterceptor queryInterceptor=cr.getComponent(QueryInterceptor.class);
+  if (queryInterceptor == null) {
+    queryInterceptor=buildQueryInterceptor(cfg,searchFactory);
+    cr.registerComponent(queryInterceptor,QueryInterceptor.class);
+    if (cfg.getCacheMode().isDistributed()) {
+      cfg.getCustomInterceptors().add(new CustomInterceptorConfig(queryInterceptor,false,false,-1,DistLockingInterceptor.class.getName(),""));
+    }
+ else {
+      cfg.getCustomInterceptors().add(new CustomInterceptorConfig(queryInterceptor,false,false,-1,LockingInterceptor.class.getName(),""));
+    }
+  }
+}

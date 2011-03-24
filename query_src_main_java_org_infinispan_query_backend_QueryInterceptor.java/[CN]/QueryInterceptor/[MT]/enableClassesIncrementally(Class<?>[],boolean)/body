@@ -1,0 +1,33 @@
+{
+  ArrayList<Class> toAdd=null;
+  for (  Class type : classes) {
+    if (knownClasses.contains(type) == false) {
+      if (toAdd == null)       toAdd=new ArrayList<Class>(classes.length);
+      toAdd.add(type);
+    }
+  }
+  if (toAdd == null) {
+    return;
+  }
+  if (locked) {
+    Set<Class> existingClasses=knownClasses.keySet();
+    int index=existingClasses.size();
+    Class[] all=(Class[])existingClasses.toArray(new Class[existingClasses.size() + toAdd.size()]);
+    for (    Class toAddClass : toAdd) {
+      all[index++]=toAddClass;
+    }
+    searchFactory.addClasses(all);
+    for (    Class type : toAdd) {
+      knownClasses.put(type,type);
+    }
+  }
+ else {
+    mutating.lock();
+    try {
+      enableClassesIncrementally(classes,true);
+    }
+  finally {
+      mutating.unlock();
+    }
+  }
+}
