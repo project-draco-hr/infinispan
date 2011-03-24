@@ -2,11 +2,13 @@
   long start=System.currentTimeMillis();
   if (log.isDebugEnabled())   log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
   ConsistentHash chOld, chNew;
+  boolean cleanup=false;
   try {
     if (distributionManager.isJoinComplete()) {
       throw new IllegalStateException("Join on " + getMyAddress() + " cannot be complete without rehash to finishing");
     }
     chOld=retrieveOldConsistentHash();
+    cleanup=true;
     if (chOld.getCaches().contains(self))     chNew=chOld;
  else     chNew=createConsistentHash(configuration,chOld.getCaches(),distributionManager.getTopologyInfo(),self);
     distributionManager.setConsistentHash(chNew);
@@ -36,7 +38,8 @@
     }
   }
  catch (  Exception e) {
-    log.error("Caught exception!",e);
+    log.error("Caught exception!  Aborting join.",e);
+    broadcastAbort(cleanup);
     throw new CacheException("Unexpected exception",e);
   }
  finally {
