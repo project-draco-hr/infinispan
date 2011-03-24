@@ -1,8 +1,11 @@
 {
-  if (configuration.isTransactionRecoveryEnabled()) {
-    return (T)new RecoveryEnabledTransactionTable();
-  }
+  if (!configuration.isUseSynchronizationForTransactions()) {
+    if (configuration.isTransactionRecoveryEnabled()) {
+      return (T)new RecoveryAwareTransactionTable();
+    }
  else {
-    return (T)new TransactionTable();
+      return (T)new XaTransactionTable();
+    }
   }
+ else   return (T)new TransactionTable();
 }

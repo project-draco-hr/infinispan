@@ -1,0 +1,22 @@
+{
+  LocalXaTransaction localTransaction=(LocalXaTransaction)ltx;
+  if (!localTransaction.isEnlisted()) {
+    try {
+      transaction.enlistResource(new TransactionXaAdapter(localTransaction,this,configuration,icc,recoveryManager,txCoordinator));
+    }
+ catch (    Exception e) {
+      Xid xid=localTransaction.getXid();
+      if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {
+        log.debug("Attempting a rollback to clear stale resources!");
+        try {
+          txCoordinator.rollback(localTransaction);
+        }
+ catch (        XAException xae) {
+          log.debug("Caught exception attempting to clean up " + xid,xae);
+        }
+      }
+      log.error("Failed to enlist TransactionXaAdapter to transaction",e);
+      throw new CacheException(e);
+    }
+  }
+}

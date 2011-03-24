@@ -1,34 +1,10 @@
 {
   Xid xid=convertXid(externalXid);
-  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
   if (trace)   log.trace("Committing transaction %s",localTransaction.getGlobalTransaction());
   try {
-    LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-    ctx.setLocalTransaction(localTransaction);
-    if (configuration.isOnePhaseCommit() || isOnePhase) {
-      validateNotMarkedForRollback(localTransaction);
-      if (trace)       log.trace("Doing an 1PC prepare call on the interceptor chain");
-      PrepareCommand command=commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),true);
-      try {
-        invoker.invoke(ctx,command);
-        forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction);
-      }
- catch (      Throwable e) {
-        log.error("Error while processing 1PC PrepareCommand",e);
-        throw new XAException(XAException.XAER_RMERR);
-      }
-    }
- else {
-      CommitCommand commitCommand=commandsFactory.buildCommitCommand(localTransaction.getGlobalTransaction());
-      try {
-        invoker.invoke(ctx,commitCommand);
-        forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction);
-      }
- catch (      Throwable e) {
-        log.error("Error while processing 1PC PrepareCommand",e);
-        throw new XAException(XAException.XAER_RMERR);
-      }
-    }
+    txCoordinator.commit(localTransaction,isOnePhase);
+    forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction);
   }
   finally {
     cleanupImpl(localTransaction,txTable,icc);

@@ -1,3 +1,6 @@
 {
-  rollbackImpl(convertXid(externalXid),commandsFactory,icc,invoker,txTable,recoveryManager);
+  Xid xid=convertXid(externalXid);
+  LocalXaTransaction localTransaction1=getLocalTransactionAndValidateImpl(xid,txTable);
+  txCoordinator.rollback(localTransaction1);
+  forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction1);
 }

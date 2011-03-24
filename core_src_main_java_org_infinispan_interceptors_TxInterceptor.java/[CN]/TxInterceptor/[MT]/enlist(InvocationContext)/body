@@ -4,24 +4,6 @@
   int status=transaction.getStatus();
   if (isNotValid(status))   throw new IllegalStateException("Transaction " + transaction + " is not in a valid state to be invoking cache operations on.");
   LocalTransaction localTransaction=txTable.getOrCreateLocalTransaction(transaction,ctx);
-  if (!localTransaction.isEnlisted()) {
-    try {
-      transaction.enlistResource(new TransactionXaAdapter(localTransaction,txTable,commandsFactory,configuration,invoker,icc,recoveryManager));
-    }
- catch (    Exception e) {
-      Xid xid=localTransaction.getXid();
-      if (xid != null && !ctx.getLockedKeys().isEmpty()) {
-        log.debug("Attempting a rollback to clear stale resources!");
-        try {
-          TransactionXaAdapter.rollbackImpl(xid,commandsFactory,icc,invoker,txTable,recoveryManager);
-        }
- catch (        XAException xae) {
-          log.debug("Caught exception attempting to clean up " + xid,xae);
-        }
-      }
-      log.error("Failed to enlist TransactionXaAdapter to transaction");
-      throw new CacheException(e);
-    }
-  }
+  txTable.enlist(transaction,localTransaction);
   return localTransaction;
 }

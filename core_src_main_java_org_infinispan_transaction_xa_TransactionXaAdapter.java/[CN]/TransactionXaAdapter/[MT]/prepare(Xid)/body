@@ -1,29 +1,5 @@
 {
   Xid xid=convertXid(externalXid);
-  LocalTransaction localTransaction=getLocalTransactionAndValidate(xid);
-  validateNotMarkedForRollback(localTransaction);
-  if (configuration.isOnePhaseCommit()) {
-    if (trace)     log.trace("Received prepare for tx: %s. Skipping call as 1PC will be used.",xid);
-    return XA_OK;
-  }
-  PrepareCommand prepareCommand=commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),configuration.isOnePhaseCommit());
-  if (trace)   log.trace("Sending prepare command through the chain: " + prepareCommand);
-  LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-  ctx.setLocalTransaction(localTransaction);
-  try {
-    invoker.invoke(ctx,prepareCommand);
-    if (localTransaction.isReadOnly()) {
-      if (trace)       log.trace("Readonly transaction: " + localTransaction.getGlobalTransaction());
-      commit(xid,false);
-      return XA_RDONLY;
-    }
- else {
-      txTable.localTransactionPrepared(localTransaction);
-      return XA_OK;
-    }
-  }
- catch (  Throwable e) {
-    log.error("Error while processing PrepareCommand",e);
-    throw new XAException(XAException.XAER_RMERR);
-  }
+  LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  return txCoordinator.prepare(localTransaction);
 }

@@ -4,8 +4,13 @@
     RecoveryAwareRemoteTransaction rt=entry.getValue();
     RecoveryInfoKey cacheNamePair=entry.getKey();
     if (cacheNamePair.sameCacheName(cacheName) && rt.isInDoubt()) {
-      result.add(((XidAware)rt.getGlobalTransaction()).getXid());
+      XidAware globalTransaction=(XidAware)rt.getGlobalTransaction();
+      if (log.isTraceEnabled()) {
+        log.trace("Found in doubt transaction: %s",globalTransaction);
+      }
+      result.add(globalTransaction.getXid());
     }
   }
+  if (log.isTraceEnabled())   log.trace("Returning %s ",result);
   return result;
 }
