@@ -1,20 +1,13 @@
 {
   long start=System.currentTimeMillis();
   if (log.isDebugEnabled())   log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
-  ConsistentHash chOld, chNew;
   boolean cleanup=false;
   try {
-    if (distributionManager.isJoinComplete()) {
-      throw new IllegalStateException("Join on " + getMyAddress() + " cannot be complete without rehash to finishing");
-    }
-    chOld=retrieveOldConsistentHash();
-    cleanup=true;
-    if (chOld.getCaches().contains(self))     chNew=chOld;
- else     chNew=createConsistentHash(configuration,chOld.getCaches(),distributionManager.getTopologyInfo(),self);
+    cleanup=getPermissionToJoin();
     distributionManager.setConsistentHash(chNew);
     try {
       if (configuration.isRehashEnabled()) {
-        broadcastNewCh();
+        broadcastNewConsistentHash();
         Address myAddress=rpcManager.getTransport().getAddress();
         RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_JOIN,myAddress,null,chOld,chNew,null);
         List<Address> addressesWhoMaySendStuff=getAddressesWhoMaySendStuff(chNew,configuration.getNumOwners());
@@ -25,7 +18,7 @@
         for (        Future<Void> f : stateRetrievalProcesses)         f.get();
       }
  else {
-        broadcastNewCh();
+        broadcastNewConsistentHash();
         if (trace)         log.trace("Rehash not enabled, so not pulling state.");
       }
     }
@@ -33,7 +26,7 @@
       distributionManager.setJoinComplete(true);
       distributionManager.setRehashInProgress(false);
       inboundInvocationHandler.blockTillNoLongerRetrying(cf.getCacheName());
-      rpcManager.broadcastRpcCommandInFuture(cf.buildRehashControlCommand(JOIN_REHASH_END,self),true,new NotifyingFutureImpl(null));
+      signalJoinRehashEnd();
       if (configuration.isRehashEnabled())       invalidateInvalidHolders(chOld,chNew);
     }
   }

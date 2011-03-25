@@ -1,16 +1,6 @@
 {
-  if (trace)   log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
-  boolean started;
-  if (e.isNeedsToRejoin()) {
-    try {
-      joinComplete=false;
-      join();
-    }
- catch (    Exception e1) {
-      log.fatal("Unable to recover from a partition merge!",e1);
-    }
-  }
- else {
+  if (!e.isMergeView()) {
+    boolean started;
     try {
       started=startLatch.await(5,TimeUnit.MINUTES);
       if (started)       rehash(e.getNewMembers(),e.getOldMembers());
