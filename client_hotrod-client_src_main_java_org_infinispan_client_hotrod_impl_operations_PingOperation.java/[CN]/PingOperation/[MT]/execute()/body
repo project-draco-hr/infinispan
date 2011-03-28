@@ -1,20 +1,22 @@
 {
-  boolean success;
   try {
     long messageId=writeHeader(transport,HotRodConstants.PING_REQUEST);
     short respStatus=readHeaderAndValidate(transport,messageId,HotRodConstants.PING_RESPONSE);
     if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
       if (log.isTraceEnabled())       log.trace("Successfully validated transport: " + transport);
-      success=true;
+      return PingResult.SUCCESS;
     }
  else {
       if (log.isTraceEnabled())       log.trace("Unknown response status: " + respStatus);
-      success=false;
+      return PingResult.FAIL;
     }
   }
- catch (  Exception e) {
-    if (log.isTraceEnabled())     log.trace("Failed to validate transport: " + transport,e);
-    success=false;
+ catch (  HotRodClientException e) {
+    if (e.getMessage().contains("CacheNotFoundException"))     return PingResult.CACHE_DOES_NOT_EXIST;
+ else     return PingResult.FAIL;
   }
-  return success;
+catch (  Exception e) {
+    if (log.isTraceEnabled())     log.trace("Failed to validate transport: " + transport,e);
+    return PingResult.FAIL;
+  }
 }
