@@ -2,12 +2,16 @@
   ClassLoader toUse=defaultCl;
   Thread current=Thread.currentThread();
   ClassLoader old=current.getContextClassLoader();
-  if (old != null)   toUse=old;
-  try {
-    current.setContextClassLoader(toUse);
-    out.writeObject(obj);
-  }
+  if (old == null) {
+    try {
+      current.setContextClassLoader(toUse);
+      out.writeObject(obj);
+    }
   finally {
-    current.setContextClassLoader(old);
+      current.setContextClassLoader(old);
+    }
+  }
+ else {
+    out.writeObject(obj);
   }
 }
