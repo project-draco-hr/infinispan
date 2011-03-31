@@ -23,7 +23,7 @@ case 'T':
 int indexOfSecondDelimiter=s.indexOf(":",2);
 String keyClassName=s.substring(2,indexOfSecondDelimiter);
 String keyAsString=s.substring(indexOfSecondDelimiter + 1);
-Transformer t;
+Transformer t=null;
 Class keyClass=null;
 try {
 keyClass=Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
@@ -31,7 +31,9 @@ keyClass=Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
  catch (ClassNotFoundException e) {
 log.error("Could not locate class " + keyClass,e);
 }
+if (keyClass != null) {
 t=getTransformer(keyClass);
+}
 if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
 return t.fromString(keyAsString);
 }
