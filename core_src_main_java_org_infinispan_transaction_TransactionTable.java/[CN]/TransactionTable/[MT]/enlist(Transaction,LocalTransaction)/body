@@ -1,11 +1,13 @@
 {
-  SynchronizationAdapter sync=new SynchronizationAdapter(localTransaction,txCoordinator);
-  try {
-    transaction.registerSynchronization(sync);
+  if (!localTransaction.isEnlisted()) {
+    SynchronizationAdapter sync=new SynchronizationAdapter(localTransaction,txCoordinator);
+    try {
+      transaction.registerSynchronization(sync);
+    }
+ catch (    Exception e) {
+      log.warn("Failed synchronization registration",e);
+      throw new CacheException(e);
+    }
+    ((SyncLocalTransaction)localTransaction).setEnlisted(true);
   }
- catch (  Exception e) {
-    log.warn("Failed synchronization registration",e);
-    throw new CacheException(e);
-  }
-  ((SyncLocalTransaction)localTransaction).setEnlisted(true);
 }
