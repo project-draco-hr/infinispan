@@ -2,8 +2,10 @@
   long giveupTime=System.currentTimeMillis() + timeout;
   boolean notTimedOut=true;
 synchronized (this) {
-    notTimedOut=giveupTime > System.currentTimeMillis();
-    while (notTimedOut && expectedResponses > 0 && retval == null)     this.wait(timeout);
+    while (notTimedOut && expectedResponses > 0 && retval == null) {
+      notTimedOut=giveupTime > System.currentTimeMillis();
+      this.wait(timeout);
+    }
   }
   if (retval != null)   return retval;
  else   if (exception != null)   throw exception;
