@@ -1,0 +1,15 @@
+{
+  QueryBuilder queryBuilder=qf.buildQueryBuilderForClass(Car.class).get();
+  FacetingRequest request=queryBuilder.facet().name(facetName).onField(indexFieldName).discrete().createFacetingRequest();
+  Query luceneQuery=queryBuilder.all().createQuery();
+  CacheQuery query=qf.getQuery(luceneQuery);
+  query.getFacetManager().enableFaceting(request);
+  List<Facet> facetList=query.getFacetManager().getFacets(facetName);
+  assertEquals("Wrong number of facets",2,facetList.size());
+  assertEquals("4000",facetList.get(0).getValue());
+  assertEquals(2,facetList.get(0).getCount());
+  assertEquals(indexFieldName,facetList.get(0).getFieldName());
+  assertEquals("2341",facetList.get(1).getValue());
+  assertEquals(1,facetList.get(1).getCount());
+  assertEquals(indexFieldName,facetList.get(1).getFieldName());
+}
