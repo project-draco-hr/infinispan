@@ -1,11 +1,11 @@
 {
-  this.key=key;
-  this.value=value;
-  try {
-    trace("::putAsync::send contains: " + send.peek());
-    send.put(PUT_ASYNC);
+  if (future != null) {
+    future.get();
   }
- catch (  InterruptedException e) {
-    throw new IllegalStateException(e);
+  return executor.submit(new Callable<Object>(){
+    public Object call() throws Exception {
+      return remoteCache.put(key,value);
+    }
   }
+);
 }
