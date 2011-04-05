@@ -1,0 +1,15 @@
+{
+  RecoveryManagerImpl rm1=(RecoveryManagerImpl)advancedCache(1).getComponentRegistry().getComponent(RecoveryManager.class);
+  TransactionTable tt1=advancedCache(1).getComponentRegistry().getComponent(TransactionTable.class);
+  assertEquals(rm1.getPreparedTransactions().size(),0);
+  assertEquals(tt1.getRemoteTxCount(),0);
+  DummyTransaction t0=beginAndSuspendTx(cache(0));
+  assertEquals(rm1.getPreparedTransactions().size(),0);
+  assertEquals(tt1.getRemoteTxCount(),0);
+  prepareTransaction(t0);
+  assertEquals(rm1.getPreparedTransactions().size(),1);
+  assertEquals(tt1.getRemoteTxCount(),0);
+  commitTransaction(t0);
+  assertEquals(tt1.getRemoteTxCount(),0);
+  assertEquals(rm1.getPreparedTransactions().size(),1);
+}
