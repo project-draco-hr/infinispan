@@ -1,0 +1,21 @@
+{
+  if (task == null)   throw new NullPointerException();
+  if (inputKeysSpecified(input)) {
+    Map<Address,List<K>> nodesKeysMap=mapKeysToNodes(input);
+    Address me=rpc.getAddress();
+    DistributedExecuteCommand<T> c=factory.buildDistributedExecuteCommand(task,me,Arrays.asList(input));
+    DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
+    ArrayList<Address> nodes=new ArrayList<Address>(nodesKeysMap.keySet());
+    boolean invokeOnSelf=(nodes.size() == 1 && nodes.get(0).equals(me));
+    if (invokeOnSelf) {
+      invokeLocally(f);
+    }
+ else {
+      sendForRemoteExecution(randomClusterMemberExcludingSelf(nodes),f);
+    }
+    return f;
+  }
+ else {
+    return submit(task);
+  }
+}

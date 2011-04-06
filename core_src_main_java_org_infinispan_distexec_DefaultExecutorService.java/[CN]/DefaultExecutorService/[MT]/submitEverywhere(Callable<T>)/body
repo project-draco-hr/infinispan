@@ -1,0 +1,18 @@
+{
+  if (task == null)   throw new NullPointerException();
+  List<Future<T>> futures=new ArrayList<Future<T>>();
+  List<Address> members=rpc.getTransport().getMembers();
+  Address me=rpc.getAddress();
+  for (  Address address : members) {
+    DistributedExecuteCommand<T> c=factory.buildDistributedExecuteCommand(task,me,null);
+    DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
+    futures.add(f);
+    if (address.equals(me)) {
+      invokeLocally(f);
+    }
+ else {
+      sendForRemoteExecution(address,f);
+    }
+  }
+  return futures;
+}

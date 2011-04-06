@@ -1,0 +1,30 @@
+{
+  log.debug("Sending %s to self",future);
+  try {
+    Callable<Object> call=new Callable<Object>(){
+      @Override public Object call() throws Exception {
+        Map<Address,Response> results=new HashMap<Address,Response>();
+        Object result=null;
+        future.getCommand().init(cache);
+        try {
+          result=future.getCommand().perform(null);
+          results.put(rpc.getAddress(),new SuccessfulResponse(result));
+        }
+ catch (        Throwable e) {
+          result=e;
+        }
+ finally {
+          future.notifyDone();
+        }
+        return results;
+      }
+    }
+;
+    final FutureTask<Object> task=new FutureTask<Object>(call);
+    future.setNetworkFuture((Future<T>)task);
+    task.run();
+  }
+ catch (  Throwable e1) {
+    log.warn("Falied local execution ",e1);
+  }
+}

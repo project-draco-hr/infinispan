@@ -1,0 +1,18 @@
+{
+  if (!isShutdown.get()) {
+    DistributedRunnableFuture<Object> cmd=null;
+    if (command instanceof DistributedRunnableFuture<?>) {
+      cmd=(DistributedRunnableFuture<Object>)command;
+    }
+ else     if (command instanceof Serializable) {
+      cmd=(DistributedRunnableFuture<Object>)newTaskFor(command,null);
+    }
+ else {
+      throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
+    }
+    sendForRemoteExecution(randomClusterMemberOtherThanSelf(),cmd);
+  }
+ else {
+    throw new RejectedExecutionException();
+  }
+}

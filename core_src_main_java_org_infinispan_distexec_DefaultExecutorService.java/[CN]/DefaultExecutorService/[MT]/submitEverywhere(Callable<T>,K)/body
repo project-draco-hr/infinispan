@@ -1,0 +1,24 @@
+{
+  if (task == null)   throw new NullPointerException();
+  if (inputKeysSpecified(input)) {
+    List<Future<T>> futures=new ArrayList<Future<T>>();
+    Address me=rpc.getAddress();
+    Map<Address,List<K>> nodesKeysMap=mapKeysToNodes(input);
+    for (    Entry<Address,List<K>> e : nodesKeysMap.entrySet()) {
+      Address target=e.getKey();
+      DistributedExecuteCommand<T> c=factory.buildDistributedExecuteCommand(task,me,e.getValue());
+      DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
+      futures.add(f);
+      if (target.equals(me)) {
+        invokeLocally(f);
+      }
+ else {
+        sendForRemoteExecution(target,f);
+      }
+    }
+    return futures;
+  }
+ else {
+    return submitEverywhere(task);
+  }
+}
