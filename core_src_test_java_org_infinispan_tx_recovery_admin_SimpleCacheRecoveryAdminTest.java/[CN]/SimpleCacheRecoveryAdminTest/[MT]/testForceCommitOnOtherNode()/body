@@ -1,0 +1,12 @@
+{
+  String inDoubt=showInDoubtTransactions(0);
+  assertInDoubtTxCount(inDoubt,1);
+  assertInDoubtTxCount(showInDoubtTransactions(1),1);
+  List<Long> ids=getInternalIds(inDoubt);
+  assertEquals(1,ids.size());
+  assertEquals(0,cache(0,"test").keySet().size());
+  assertEquals(0,cache(1,"test").keySet().size());
+  if (log.isTraceEnabled())   log.trace("Before forcing commit!");
+  String result=invokeForceWithId("forceCommit",0,ids.get(0));
+  checkResponse(result,1);
+}

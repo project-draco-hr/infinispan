@@ -1,0 +1,8 @@
+{
+  Xid xid=((RecoverableTransactionIdentifier)globalTx).getXid();
+  RecoveryAwareRemoteTransaction remoteTransaction=(RecoveryAwareRemoteTransaction)txTable.getRemoteTransaction(globalTx);
+  boolean remotePrepared=remoteTransaction != null && remoteTransaction.isPrepared();
+  boolean result=inDoubtTransactions.get(new RecoveryInfoKey(xid,cacheName)) != null || txTable.getLocalPreparedXids().contains(xid) || remotePrepared;
+  if (log.isTraceEnabled())   log.trace("Is tx %s prepared? %s",xid,result);
+  return result;
+}

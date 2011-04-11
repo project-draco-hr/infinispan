@@ -1,4 +1,12 @@
 {
-  recoveryManager.nodesLeft(leavers);
+  Iterator<Map.Entry<GlobalTransaction,RemoteTransaction>> it=remoteTransactions.entrySet().iterator();
+  while (it.hasNext()) {
+    RecoveryAwareRemoteTransaction recTx=(RecoveryAwareRemoteTransaction)it.next().getValue();
+    recTx.computeOrphan(leavers);
+    if (recTx.isInDoubt()) {
+      recoveryManager.registerInDoubtTransaction(recTx);
+      it.remove();
+    }
+  }
   super.updateStateOnNodesLeaving(leavers);
 }

@@ -33,7 +33,7 @@ break;
 case PrepareCommand.COMMAND_ID:
 PrepareCommand pc=(PrepareCommand)c;
 pc.init(interceptorChain,icc,txTable);
-pc.initialize(notifier);
+pc.initialize(notifier,recoveryManager);
 if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) {
 initializeReplicableCommand(nested,false);
 }
@@ -101,6 +101,14 @@ break;
 case DistributedExecuteCommand.COMMAND_ID:
 DistributedExecuteCommand dec=(DistributedExecuteCommand)c;
 dec.init(cache);
+break;
+case GetInDoubtTxInfoCommand.COMMAND_ID:
+GetInDoubtTxInfoCommand gidTxInfoCommand=(GetInDoubtTxInfoCommand)c;
+gidTxInfoCommand.init(recoveryManager);
+break;
+case CompleteTransactionCommand.COMMAND_ID:
+CompleteTransactionCommand ccc=(CompleteTransactionCommand)c;
+ccc.init(recoveryManager);
 break;
 default :
 ModuleCommandInitializer mci=moduleCommandInitializers.get(c.getCommandId());

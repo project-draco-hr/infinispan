@@ -1,5 +1,9 @@
 {
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
+  if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
+    log.trace("The transaction %s is already prepared. Skipping prepare call.",globalTx);
+    return null;
+  }
   RemoteTransaction remoteTransaction=txTable.getRemoteTransaction(globalTx);
   boolean remoteTxInitiated=remoteTransaction != null;
   if (!remoteTxInitiated) {

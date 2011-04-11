@@ -1,6 +1,11 @@
 {
-  Configuration configuration=configure();
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC,true);
+  configuration.fluent().locking().useLockStriping(false);
+  configuration.fluent().transaction().transactionManagerLookupClass(DummyTransactionManagerLookup.class).recovery();
+  configuration.fluent().clustering().hash().rehashEnabled(false);
   createCluster(configuration,false,2);
   waitForClusterToForm();
-  amendRecoveryManager(this.cache(0));
+  ComponentRegistry componentRegistry=this.cache(0).getAdvancedCache().getComponentRegistry();
+  XaTransactionTable txTable=(XaTransactionTable)componentRegistry.getComponent(TransactionTable.class);
+  txTable.setRecoveryManager(new RecoveryManagerDelegate(txTable.getRecoveryManager()));
 }

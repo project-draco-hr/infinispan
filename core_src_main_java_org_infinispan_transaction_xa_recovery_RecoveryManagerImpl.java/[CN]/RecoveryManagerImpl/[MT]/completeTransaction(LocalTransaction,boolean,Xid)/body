@@ -1,0 +1,23 @@
+{
+  if (commit) {
+    try {
+      txCoordinator.prepare(localTx);
+      txCoordinator.commit(localTx,false);
+    }
+ catch (    XAException e) {
+      log.warn("Could not commit local tx " + localTx,e);
+      return "Could not commit transaction " + xid + " : "+ e.getMessage();
+    }
+  }
+ else {
+    try {
+      txCoordinator.rollback(localTx);
+    }
+ catch (    XAException e) {
+      log.warn("Could not rollback local tx " + localTx,e);
+      return "Could not commit transaction " + xid + " : "+ e.getMessage();
+    }
+  }
+  removeRecoveryInformationFromCluster(null,xid,false);
+  return commit ? "Commit successful!" : "Rollback successful";
+}

@@ -1,0 +1,13 @@
+{
+  long internalId=-1;
+  for (  RemoteTransaction rt : tt(1).getRemoteTransactions()) {
+    RecoverableTransactionIdentifier a=(RecoverableTransactionIdentifier)rt.getGlobalTransaction();
+    if (a.getXid().equals(tx.getXid())) {
+      internalId=a.getInternalId();
+    }
+  }
+  if (internalId == -1)   throw new IllegalStateException();
+  log.trace("About to forget... %s",internalId);
+  recoveryOps(cacheIndex).forget(internalId);
+  assertEquals(tt(1).getRemoteTxCount(),0);
+}

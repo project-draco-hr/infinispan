@@ -1,0 +1,28 @@
+{
+  LocalXaTransaction localTransaction=txTable.getLocalTransaction(xid);
+  if (localTransaction != null) {
+    localTransaction.clearRemoteLocksAcquired();
+    return completeTransaction(localTransaction,commit,xid);
+  }
+ else {
+    RecoveryAwareTransaction tx=getPreparedTransaction(xid);
+    if (tx instanceof LocalTransaction) {
+      LocalTransaction ltx=(LocalTransaction)tx;
+      ltx.markForRollback(false);
+      if (log.isTraceEnabled())       log.trace("About to complete local transaction %s",xid);
+      return completeTransaction(ltx,commit,xid);
+    }
+ else {
+      if (tx == null)       return "Could not find transaction " + xid;
+      GlobalTransaction globalTransaction=tx.getGlobalTransaction();
+      globalTransaction.setAddress(rpcManager.getAddress());
+      globalTransaction.setRemote(false);
+      RecoveryAwareLocalTransaction localTx=(RecoveryAwareLocalTransaction)txFactory.newLocalTransaction(null,globalTransaction);
+      localTx.setModifications(tx.getModifications());
+      localTx.setXid(xid);
+      localTx.setAffectedKeys(((RecoveryAwareRemoteTransaction)tx).getAffectedKeys());
+      localTx.setLookedUpEntries(tx.getLookedUpEntries());
+      return completeTransaction(localTx,commit,xid);
+    }
+  }
+}

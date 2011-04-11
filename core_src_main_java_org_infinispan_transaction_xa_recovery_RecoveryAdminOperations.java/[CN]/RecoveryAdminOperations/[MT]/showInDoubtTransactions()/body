@@ -1,0 +1,25 @@
+{
+  Set<RecoveryManager.InDoubtTxInfo> info=getRecoveryInfoFromCluster();
+  if (log.isTraceEnabled()) {
+    log.trace("Found in doubt transactions: %s",info.size());
+  }
+  StringBuilder result=new StringBuilder();
+  for (  RecoveryManager.InDoubtTxInfo i : info) {
+    result.append("xid = [").append(i.getXid()).append("], ").append(SEPARAOR).append("internalId = ").append(i.getInternalId()).append(SEPARAOR);
+    result.append("status = [ ");
+    for (    Integer status : i.getStatus()) {
+      if (status == Status.STATUS_PREPARED) {
+        result.append("_PREPARED_");
+      }
+ else       if (status == Status.STATUS_COMMITTED) {
+        result.append("_COMMITTED_");
+      }
+ else       if (status == Status.STATUS_ROLLEDBACK) {
+        result.append("_ROLLEDBACK_");
+      }
+    }
+    result.append(" ]");
+    result.append('\n');
+  }
+  return result.toString();
+}

@@ -1,0 +1,12 @@
+{
+  List<Long> internalIds=getInternalIds(recoveryOps(index).showInDoubtTransactions());
+  assertEquals(internalIds.size(),1);
+  assertEquals(cache(0).get(key),null);
+  assertEquals(cache(1).get(key),null);
+  log.trace("About to force commit!");
+  isSuccess(recoveryOps(index).forceCommit(internalIds.get(0)));
+  assertEquals(cache(0).get(key),"newValue");
+  assertEquals(cache(1).get(key),"newValue");
+  assertCleanup(0);
+  assertCleanup(1);
+}

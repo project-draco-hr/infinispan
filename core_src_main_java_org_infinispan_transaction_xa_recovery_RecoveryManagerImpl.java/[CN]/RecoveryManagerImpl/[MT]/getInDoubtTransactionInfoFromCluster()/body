@@ -1,0 +1,41 @@
+{
+  Map<Xid,InDoubtTxInfoImpl> result=new HashMap<Xid,InDoubtTxInfoImpl>();
+  if (rpcManager != null) {
+    GetInDoubtTxInfoCommand inDoubtTxInfoCommand=commandFactory.buildGetInDoubtTxInfoCommand();
+    Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(null,inDoubtTxInfoCommand,true,false);
+    for (    Map.Entry<Address,Response> re : addressResponseMap.entrySet()) {
+      Response r=re.getValue();
+      if (!isSuccessful(r)) {
+        throw new CacheException("Could not fetch in doubt transactions: " + r);
+      }
+      Set<InDoubtTxInfoImpl> infoInDoubtSet=(Set<InDoubtTxInfoImpl>)((SuccessfulResponse)r).getResponseValue();
+      for (      InDoubtTxInfoImpl infoInDoubt : infoInDoubtSet) {
+        InDoubtTxInfoImpl inDoubtTxInfo=result.get(infoInDoubt.getXid());
+        if (inDoubtTxInfo == null) {
+          inDoubtTxInfo=infoInDoubt;
+          result.put(infoInDoubt.getXid(),inDoubtTxInfo);
+        }
+ else {
+          inDoubtTxInfo.addStatus(infoInDoubt.getStatus());
+        }
+        inDoubtTxInfo.addOwner(re.getKey());
+      }
+    }
+  }
+  Set<InDoubtTxInfo> onThisNode=getInDoubtTransactionInfo();
+  Iterator<InDoubtTxInfo> iterator=onThisNode.iterator();
+  while (iterator.hasNext()) {
+    InDoubtTxInfo info=iterator.next();
+    InDoubtTxInfoImpl inDoubtTxInfo=result.get(info.getXid());
+    if (inDoubtTxInfo != null) {
+      inDoubtTxInfo.setLocal(true);
+      iterator.remove();
+    }
+ else {
+      ((InDoubtTxInfoImpl)info).setLocal(true);
+    }
+  }
+  HashSet<InDoubtTxInfo> value=new HashSet<InDoubtTxInfo>(result.values());
+  value.addAll(onThisNode);
+  return value;
+}

@@ -1,0 +1,10 @@
+{
+  DummyTransaction dummyTransaction1=beginAndSuspendTx(this.cache(3));
+  prepareTransaction(dummyTransaction1);
+  manager(3).stop();
+  TestingUtil.blockUntilViewsReceived(60000,cache(0),cache(1),cache(2));
+  DummyTransaction dummyTransaction=beginAndSuspendTx(this.cache(0));
+  Xid[] recover=dummyTransaction.firstEnlistedResource().recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN);
+  assertEquals(recover.length,1);
+  assertEquals(dummyTransaction1.getXid(),recover[0]);
+}

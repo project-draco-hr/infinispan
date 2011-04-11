@@ -1,0 +1,26 @@
+{
+  List<Xid> txs=getInDoubtTransactions();
+  Set<RecoveryAwareLocalTransaction> localTxs=txTable.getLocalTxThatFailedToComplete();
+  if (log.isTraceEnabled())   log.trace("Local transactions that failed to complete is %s",localTxs);
+  Set<InDoubtTxInfo> result=new HashSet<InDoubtTxInfo>();
+  for (  RecoveryAwareLocalTransaction r : localTxs) {
+    long internalId=((RecoverableTransactionIdentifier)r.getGlobalTransaction()).getInternalId();
+    result.add(new InDoubtTxInfoImpl(r.getXid(),internalId));
+  }
+  for (  Xid xid : txs) {
+    RecoveryAwareTransaction pTx=getPreparedTransaction(xid);
+    if (pTx == null)     continue;
+    RecoverableTransactionIdentifier gtx=(RecoverableTransactionIdentifier)pTx.getGlobalTransaction();
+    int status;
+    if (pTx instanceof RecoveryAwareRemoteTransaction) {
+      status=((RecoveryAwareRemoteTransaction)pTx).getStatus();
+    }
+ else {
+      status=Status.STATUS_PREPARED;
+    }
+    InDoubtTxInfoImpl infoInDoubt=new InDoubtTxInfoImpl(xid,gtx.getInternalId(),status);
+    result.add(infoInDoubt);
+  }
+  if (log.isTraceEnabled())   log.trace("The set of in-doubt txs from this node is %s",result);
+  return result;
+}

@@ -1,0 +1,17 @@
+{
+  assertEquals(TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld(),0);
+  final TransactionTable tt=TestingUtil.extractComponent(cache(managerIndex),TransactionTable.class);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0);
+    }
+  }
+);
+  final RecoveryManager rm=TestingUtil.extractComponent(cache(managerIndex),RecoveryManager.class);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return rm.getInDoubtTransactions().isEmpty() && rm.getPreparedTransactionsFromCluster().all().length == 0;
+    }
+  }
+);
+}
