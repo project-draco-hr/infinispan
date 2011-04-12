@@ -1,8 +1,9 @@
 {
   super();
-  this.cache=cache;
-  this.rpc=cache.getAdvancedCache().getRpcManager();
-  ComponentRegistry registry=cache.getAdvancedCache().getComponentRegistry();
-  this.invoker=registry.getComponent(InterceptorChain.class);
-  this.factory=registry.getComponent(CommandsFactory.class);
+  if (masterCacheNode == null)   throw new NullPointerException("Can not use " + masterCacheNode + " cache for DefaultExecutorService");
+  ensureProperCacheState(masterCacheNode.getAdvancedCache());
+  this.cache=masterCacheNode.getAdvancedCache();
+  this.rpc=cache.getRpcManager();
+  this.invoker=cache.getComponentRegistry().getComponent(InterceptorChain.class);
+  this.factory=cache.getComponentRegistry().getComponent(CommandsFactory.class);
 }
