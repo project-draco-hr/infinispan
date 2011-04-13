@@ -1,11 +1,13 @@
 {
   cacheManager=TestCacheManagerFactory.createLocalCacheManager();
   cache=cacheManager.getCache();
+  cache.getAdvancedCache().addInterceptor(new ConstantDelayTransportInterceptor(100),0);
   hotRodServer=TestHelper.startHotRodServer(cacheManager);
   Properties hotrodClientConf=new Properties();
   hotrodClientConf.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer.getPort());
-  hotrodClientConf.put("timeBetweenEvictionRunsMillis","3000");
-  hotrodClientConf.put("minEvictableIdleTimeMillis","1000");
+  hotrodClientConf.put("timeBetweenEvictionRunsMillis","500");
+  hotrodClientConf.put("minEvictableIdleTimeMillis","100");
+  hotrodClientConf.put("numTestsPerEvictionRun","10");
   hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup","true");
   remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
   remoteCache=remoteCacheManager.getCache();
