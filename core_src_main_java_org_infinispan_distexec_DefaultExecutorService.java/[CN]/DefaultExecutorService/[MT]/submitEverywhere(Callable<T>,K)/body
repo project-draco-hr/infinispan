@@ -6,15 +6,16 @@
     Map<Address,List<K>> nodesKeysMap=mapKeysToNodes(input);
     for (    Entry<Address,List<K>> e : nodesKeysMap.entrySet()) {
       Address target=e.getKey();
-      DistributedExecuteCommand<T> c=factory.buildDistributedExecuteCommand(task,me,e.getValue());
-      DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
-      futures.add(f);
+      DistributedExecuteCommand<T> c=null;
       if (target.equals(me)) {
-        invokeLocally(f);
+        c=factory.buildDistributedExecuteCommand(clone(task),me,e.getValue());
       }
  else {
-        sendForRemoteExecution(target,f);
+        c=factory.buildDistributedExecuteCommand(task,me,e.getValue());
       }
+      DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
+      futures.add(f);
+      executeFuture(target,f);
     }
     return futures;
   }

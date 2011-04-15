@@ -3,16 +3,17 @@
   List<Future<T>> futures=new ArrayList<Future<T>>();
   List<Address> members=rpc.getTransport().getMembers();
   Address me=rpc.getAddress();
-  for (  Address address : members) {
-    DistributedExecuteCommand<T> c=factory.buildDistributedExecuteCommand(task,me,null);
-    DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
-    futures.add(f);
-    if (address.equals(me)) {
-      invokeLocally(f);
+  for (  Address target : members) {
+    DistributedExecuteCommand<T> c=null;
+    if (target.equals(me)) {
+      c=factory.buildDistributedExecuteCommand(clone(task),me,null);
     }
  else {
-      sendForRemoteExecution(address,f);
+      c=factory.buildDistributedExecuteCommand(task,me,null);
     }
+    DistributedRunnableFuture<T> f=new DistributedRunnableFuture<T>(c);
+    futures.add(f);
+    executeFuture(target,f);
   }
   return futures;
 }
