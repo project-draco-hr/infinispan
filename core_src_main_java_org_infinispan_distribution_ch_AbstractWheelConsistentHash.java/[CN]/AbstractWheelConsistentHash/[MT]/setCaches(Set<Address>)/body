@@ -2,11 +2,20 @@
   caches=new LinkedHashSet<Address>(newCaches.size());
   positions=new TreeMap<Integer,Address>();
   addressToHashIds=new HashMap<Address,Integer>();
+  if (trace)   log.trace("Adding %s nodes to cluster",newCaches.size());
   for (  Address a : newCaches) {
-    int positionIndex=Math.abs(hashFunction.hash(a)) % HASH_SPACE;
-    while (positions.containsKey(positionIndex))     positionIndex=positionIndex + 1 % HASH_SPACE;
-    positions.put(positionIndex,a);
-    if (!addressToHashIds.containsKey(a))     addressToHashIds.put(a,positionIndex);
+    if (isVirtualNodesEnabled()) {
+      if (trace)       log.trace("Adding %s virtual nodes for real node %s",numVirtualNodes,a);
+      for (int i=0; i < numVirtualNodes; i++) {
+        Address va=new VirtualAddress(a,i);
+        if (trace)         log.trace("Adding virtual node %s",va);
+        addNode(va);
+      }
+    }
+ else {
+      if (trace)       log.trace("Adding node %s",a);
+      addNode(a);
+    }
   }
   caches.addAll(positions.values());
 }

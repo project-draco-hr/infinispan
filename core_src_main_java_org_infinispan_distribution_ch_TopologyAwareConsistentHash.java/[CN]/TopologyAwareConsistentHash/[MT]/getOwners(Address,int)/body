@@ -1,44 +1,50 @@
 {
+  Address realAddress=getRealAddress(address);
   int ownerHash=getNormalizedHash(address);
   Collection<Address> beforeOnWheel=positions.headMap(ownerHash).values();
   Collection<Address> afterOnWheel=positions.tailMap(ownerHash).values();
   ArrayList<Address> processSequence=new ArrayList<Address>(afterOnWheel);
   processSequence.addAll(beforeOnWheel);
   List<Address> result=new ArrayList<Address>();
-  result.add(processSequence.remove(0));
+  result.add(getRealAddress(processSequence.remove(0)));
   int level=0;
   while (result.size() < numOwners) {
     Iterator<Address> addrIt=processSequence.iterator();
     while (addrIt.hasNext()) {
       Address a=addrIt.next();
+      Address ra=getRealAddress(a);
 switch (level) {
 case 0:
 {
-          if (!topologyInfo.isSameSite(address,a)) {
-            result.add(a);
+          if (!topologyInfo.isSameSite(realAddress,ra)) {
+            if (trace)             log.trace("Owner (different site) identified as %s",a);
+            result.add(ra);
             addrIt.remove();
           }
           break;
         }
 case 1:
 {
-        if (!topologyInfo.isSameRack(address,a)) {
-          result.add(a);
+        if (!topologyInfo.isSameRack(realAddress,ra)) {
+          if (trace)           log.trace("Owner (different rack) identified as %s",a);
+          result.add(ra);
           addrIt.remove();
         }
         break;
       }
 case 2:
 {
-      if (!topologyInfo.isSameMachine(address,a)) {
-        result.add(a);
+      if (!topologyInfo.isSameMachine(realAddress,ra)) {
+        if (trace)         log.trace("Owner (different machine) identified as %s",a);
+        result.add(ra);
         addrIt.remove();
       }
       break;
     }
 case 3:
 {
-    result.add(a);
+    if (trace)     log.trace("Owner (same machine) identified as %s",a);
+    result.add(ra);
     addrIt.remove();
     break;
   }
