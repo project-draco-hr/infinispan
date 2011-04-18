@@ -4,19 +4,5 @@
   }
  else {
     if (trace)     log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
-    if (useReadCommitted) {
-      Map<Object,CacheEntry> lookedUpEntries=ctx.getLookedUpEntries();
-      if (lookedUpEntries != null && !lookedUpEntries.isEmpty()) {
-        List<Object> keysToRemove=new ArrayList<Object>(lookedUpEntries.size());
-        for (        Map.Entry<Object,CacheEntry> e : lookedUpEntries.entrySet()) {
-          if (!lockManager.possiblyLocked(e.getValue()) && !possiblyLockedInContext(ctx,e.getKey()))           keysToRemove.add(e.getKey());
-        }
-        if (!keysToRemove.isEmpty()) {
-          if (trace)           log.trace("Removing keys %s since they have not been modified.  Context currently contains %s keys",keysToRemove,ctx.getLookedUpEntries().size());
-          for (          Object key : keysToRemove)           ctx.removeLookedUpEntry(key);
-          if (trace)           log.trace("After removal, context contains %s keys",ctx.getLookedUpEntries().size());
-        }
-      }
-    }
   }
 }
