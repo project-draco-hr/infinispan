@@ -1,15 +1,15 @@
 {
-  int numThreads=25;
-  final CyclicBarrier barrier=new CyclicBarrier(numThreads + 1);
-  List<Future<Void>> futures=new ArrayList<Future<Void>>(numThreads);
-  ExecutorService executorService=Executors.newCachedThreadPool();
-  for (int i=0; i < numThreads; i++) {
+  final CyclicBarrier barrier=new CyclicBarrier(NUM_THREADS + 1);
+  List<Future<Void>> futures=new ArrayList<Future<Void>>(NUM_THREADS);
+  ExecutorService executorService=Executors.newFixedThreadPool(NUM_THREADS);
+  for (int i=0; i < NUM_THREADS; i++) {
     log.debug("Schedule execution");
+    final String name="cache" + (i % NUM_CACHES);
     Future<Void> future=executorService.submit(new Callable<Void>(){
       @Override public Void call() throws Exception {
         try {
           barrier.await();
-          cacheManager.getCache("blahblah").put("a","b");
+          cacheManager.getCache(name).put("a","b");
           return null;
         }
   finally {

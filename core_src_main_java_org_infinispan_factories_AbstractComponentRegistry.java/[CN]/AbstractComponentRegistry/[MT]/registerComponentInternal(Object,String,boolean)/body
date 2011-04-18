@@ -1,0 +1,28 @@
+{
+  if (component == null)   throw new NullPointerException("Cannot register a null component under name [" + name + "]");
+  Component old=componentLookup.get(name);
+  if (old != null) {
+    if (old.instance.equals(component)) {
+      getLog().trace("Attempting to register a component equal to one that already exists under the same name (%s).  Not doing anything.",name);
+      return;
+    }
+  }
+  Component c;
+  if (old != null) {
+    getLog().trace("Replacing old component %s with new instance %s",old,component);
+    old.instance=component;
+    old.methodsScanned=false;
+    c=old;
+  }
+ else {
+    c=new Component();
+    c.name=name;
+    c.instance=component;
+    componentLookup.put(name,c);
+  }
+  c.nonVolatile=nonVolatile;
+  addComponentDependencies(c);
+  c.injectDependencies();
+  if (old == null)   getLog().trace("Registering component %s under name %s",c,name);
+  if (state == ComponentStatus.RUNNING)   populateLifeCycleMethods(c);
+}

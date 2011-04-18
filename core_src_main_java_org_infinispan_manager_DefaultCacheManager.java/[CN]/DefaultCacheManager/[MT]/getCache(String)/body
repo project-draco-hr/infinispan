@@ -7,7 +7,7 @@
   }
   boolean acquired=false;
   try {
-    if (cacheNameLockContainer.acquireLock(cacheName,defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS) != null) {
+    if (cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS)) {
       acquired=true;
       return createCache(cacheName);
     }
@@ -20,6 +20,6 @@
     throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName,e);
   }
  finally {
-    if (acquired)     cacheNameLockContainer.releaseLock(cacheName);
+    if (acquired)     cacheCreateLock.unlock();
   }
 }
