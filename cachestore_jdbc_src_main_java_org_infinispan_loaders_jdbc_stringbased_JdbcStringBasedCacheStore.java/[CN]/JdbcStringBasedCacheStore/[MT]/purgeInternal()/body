@@ -7,10 +7,11 @@
     ps=conn.prepareStatement(sql);
     ps.setLong(1,System.currentTimeMillis());
     int result=ps.executeUpdate();
-    if (log.isTraceEnabled())     log.trace("Successfully purged " + result + " rows.");
+    if (log.isTraceEnabled())     log.tracef("Successfully purged %d rows.",result);
   }
  catch (  SQLException ex) {
-    logAndThrow(ex,"Failed purging JdbcBinaryCacheStore");
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing string based JDBC store",ex);
   }
  finally {
     JdbcUtil.safeClose(ps);

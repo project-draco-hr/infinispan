@@ -13,27 +13,28 @@
     while (rs.next()) {
       String key=rs.getString(2);
       if (immediateLockForWriting(key)) {
-        if (log.isTraceEnabled())         log.trace("Adding bucket keyed " + key + " for purging.");
+        if (log.isTraceEnabled())         log.tracef("Adding bucket keyed %s for purging.",key);
         InputStream binaryStream=rs.getBinaryStream(1);
         Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
         bucket.setBucketName(key);
         expiredBuckets.add(bucket);
       }
  else {
-        if (log.isTraceEnabled())         log.trace("Could not acquire write lock for " + key + ", this won't be purged even though it has expired elements");
+        if (log.isTraceEnabled())         log.tracef("Could not acquire write lock for %s, this won't be purged even though it has expired elements",key);
       }
     }
   }
  catch (  SQLException ex) {
     releaseLocks(expiredBuckets);
     connectionFactory.releaseConnection(conn);
-    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore",ex);
   }
  finally {
     JdbcUtil.safeClose(ps);
     JdbcUtil.safeClose(rs);
   }
-  if (log.isTraceEnabled())   log.trace("Found following buckets: " + expiredBuckets + " which are about to be expired");
+  if (log.isTraceEnabled())   log.tracef("Found following buckets: %s which are about to be expired",expiredBuckets);
   if (expiredBuckets.isEmpty())   return;
   Set<Bucket> emptyBuckets=new HashSet<Bucket>();
   try {
@@ -53,7 +54,7 @@
         updateCount++;
         if (updateCount % batchSize == 0) {
           ps.executeBatch();
-          if (log.isTraceEnabled())           log.trace("Flushing batch, update count is: " + updateCount);
+          if (log.isTraceEnabled())           log.tracef("Flushing batch, update count is: %d",updateCount);
         }
       }
  else {
@@ -62,15 +63,16 @@
       }
     }
     if (updateCount % batchSize != 0) {
-      if (log.isTraceEnabled())       log.trace("Flushing batch, update count is: " + updateCount);
+      if (log.isTraceEnabled())       log.tracef("Flushing batch, update count is: %d",updateCount);
       ps.executeBatch();
     }
-    if (log.isTraceEnabled())     log.trace("Updated " + updateCount + " buckets.");
+    if (log.isTraceEnabled())     log.tracef("Updated %d buckets.",updateCount);
   }
  catch (  SQLException ex) {
     releaseLocks(emptyBuckets);
     connectionFactory.releaseConnection(conn);
-    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore",ex);
   }
 catch (  InterruptedException ie) {
     if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to purge expired entries");
@@ -80,7 +82,7 @@ catch (  InterruptedException ie) {
     releaseLocks(expiredBuckets);
     JdbcUtil.safeClose(ps);
   }
-  if (log.isTraceEnabled())   log.trace("About to remove empty buckets " + emptyBuckets);
+  if (log.isTraceEnabled())   log.tracef("About to remove empty buckets %s",emptyBuckets);
   if (emptyBuckets.isEmpty())   return;
   try {
     String sql=tableManipulation.getDeleteRowSql();
@@ -91,17 +93,18 @@ catch (  InterruptedException ie) {
       ps.addBatch();
       deletionCount++;
       if (deletionCount % batchSize == 0) {
-        if (log.isTraceEnabled())         log.trace("Flushing deletion batch, total deletion count so far is " + deletionCount);
+        if (log.isTraceEnabled())         log.tracef("Flushing deletion batch, total deletion count so far is %d",deletionCount);
         ps.executeBatch();
       }
     }
     if (deletionCount % batchSize != 0) {
       int[] batchResult=ps.executeBatch();
-      if (log.isTraceEnabled())       log.trace("Flushed the batch and received following results: " + Arrays.toString(batchResult));
+      if (log.isTraceEnabled())       log.tracef("Flushed the batch and received following results: %s",Arrays.toString(batchResult));
     }
   }
  catch (  SQLException ex) {
-    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing JdbcBinaryCacheStore",ex);
   }
  finally {
     releaseLocks(emptyBuckets);

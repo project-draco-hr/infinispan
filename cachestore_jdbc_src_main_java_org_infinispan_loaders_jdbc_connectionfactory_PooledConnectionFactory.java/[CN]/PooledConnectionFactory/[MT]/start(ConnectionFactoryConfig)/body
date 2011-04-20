@@ -6,14 +6,13 @@
     pooledDataSource.setDriverClass(config.getDriverClass());
   }
  catch (  PropertyVetoException e) {
-    String message="Error while instatianting JDBC driver: '" + config.getDriverClass();
-    log.error(message,e);
-    throw new CacheLoaderException(message,e);
+    log.errorInstantiatingJdbcDriver(config.getDriverClass(),e);
+    throw new CacheLoaderException(String.format("Error while instatianting JDBC driver: '%s'",config.getDriverClass()),e);
   }
   pooledDataSource.setJdbcUrl(config.getConnectionUrl());
   pooledDataSource.setUser(config.getUserName());
   pooledDataSource.setPassword(config.getPassword());
   if (log.isTraceEnabled()) {
-    log.trace("Started connection factory with config: " + config);
+    log.tracef("Started connection factory with config: %s",config);
   }
 }

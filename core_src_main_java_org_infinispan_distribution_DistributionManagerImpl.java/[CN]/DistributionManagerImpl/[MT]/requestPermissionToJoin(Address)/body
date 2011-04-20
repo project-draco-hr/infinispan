@@ -1,7 +1,7 @@
 {
   try {
     if (!startLatch.await(5,TimeUnit.MINUTES)) {
-      log.warn("DistributionManager not started after waiting up to 5 minutes!  Not rehashing!");
+      log.distributionManagerNotStarted();
       return null;
     }
   }
@@ -9,11 +9,11 @@
     Thread.currentThread().interrupt();
   }
   if (joiner.compareAndSet(null,a)) {
-    if (trace)     log.trace("Allowing %s to join",a);
+    if (trace)     log.tracef("Allowing %s to join",a);
     return new HashSet<Address>(consistentHash.getCaches());
   }
  else {
-    if (trace)     log.trace("Not alowing %s to join since there is a join already in progress for node %s",a,joiner.get());
+    if (trace)     log.tracef("Not alowing %s to join since there is a join already in progress for node %s",a,joiner.get());
     return null;
   }
 }

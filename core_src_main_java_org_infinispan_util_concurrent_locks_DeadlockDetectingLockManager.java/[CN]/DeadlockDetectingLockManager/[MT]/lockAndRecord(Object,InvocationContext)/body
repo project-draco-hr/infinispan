@@ -1,29 +1,29 @@
 {
   long lockTimeout=getLockAcquisitionTimeout(ctx);
-  if (trace)   log.trace("Attempting to lock %s with acquisition timeout of %s millis",key,lockTimeout);
+  if (trace)   log.tracef("Attempting to lock %s with acquisition timeout of %s millis",key,lockTimeout);
   if (ctx.isInTxScope()) {
     if (trace)     log.trace("Using early dead lock detection");
     final long start=System.currentTimeMillis();
     DldGlobalTransaction thisTx=(DldGlobalTransaction)ctx.getLockOwner();
     thisTx.setLockIntention(key);
-    if (trace)     log.trace("Setting lock intention to: " + key);
+    if (trace)     log.tracef("Setting lock intention to: %s",key);
     while (System.currentTimeMillis() < (start + lockTimeout)) {
       if (lockContainer.acquireLock(key,spinDuration,MILLISECONDS) != null) {
         thisTx.setLockIntention(null);
-        if (trace)         log.trace("successfully acquired lock on " + key + ", returning ...");
+        if (trace)         log.tracef("successfully acquired lock on %s, returning ...",key);
         return true;
       }
  else {
         Object owner=getOwner(key);
         if (!(owner instanceof DldGlobalTransaction)) {
-          if (trace)           log.trace("Not running DLD as lock owner( " + owner + ") is not a transaction");
+          if (trace)           log.tracef("Not running DLD as lock owner(%s) is not a transaction",owner);
           cannotRunDld.incrementAndGet();
           continue;
         }
         DldGlobalTransaction lockOwnerTx=(DldGlobalTransaction)owner;
         if (isDeadlockAndIAmLoosing(lockOwnerTx,thisTx,key)) {
           updateStats(thisTx);
-          String message="Deadlock found and we " + thisTx + " shall not continue. Other tx is "+ lockOwnerTx;
+          String message=String.format("Deadlock found and we %s shall not continue. Other tx is %s",thisTx,lockOwnerTx);
           if (trace)           log.trace(message);
           throw new DeadlockDetectedException(message);
         }

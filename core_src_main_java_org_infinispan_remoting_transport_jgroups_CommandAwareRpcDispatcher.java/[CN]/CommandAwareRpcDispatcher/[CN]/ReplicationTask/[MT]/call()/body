@@ -1,5 +1,5 @@
 {
-  if (trace)   log.trace("Replication task sending %s to addresses %s",command,dests);
+  if (trace)   log.tracef("Replication task sending %s to addresses %s",command,dests);
   int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
   if (filter != null)   mode=GroupRequest.GET_FIRST;
   RspList retval=null;
@@ -47,7 +47,7 @@
     }
   }
   if (mode != GroupRequest.GET_NONE) {
-    if (trace)     log.trace("Responses: %s",retval);
+    if (trace)     log.tracef("Responses: %s",retval);
     if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
     if (supportReplay) {
       boolean replay=false;
@@ -66,7 +66,7 @@
       if (replay && !ignorers.isEmpty()) {
         Message msg=constructMessage(buf,null);
         msg.setFlag(Message.DONT_BUNDLE);
-        if (trace)         log.trace("Replaying message to ignoring senders: " + ignorers);
+        if (trace)         log.tracef("Replaying message to ignoring senders: %s",ignorers);
         RequestOptions opts=new RequestOptions();
         opts.setMode(GroupRequest.GET_ALL);
         opts.setTimeout(timeout);

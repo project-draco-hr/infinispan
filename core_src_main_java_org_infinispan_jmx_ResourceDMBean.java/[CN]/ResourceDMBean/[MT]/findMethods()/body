@@ -7,7 +7,7 @@
     if (attr != null) {
       String methodName=method.getName();
       if (!methodName.startsWith("get") && !methodName.startsWith("set") && !methodName.startsWith("is")) {
-        if (log.isWarnEnabled())         log.warn("method name " + methodName + " doesn't start with \"get\", \"set\", or \"is\""+ ", but is annotated with @ManagedAttribute: will be ignored");
+        log.ignoringManagedAttribute(methodName);
       }
  else {
         MBeanAttributeInfo info=null;
@@ -31,16 +31,14 @@
             }
           }
  else {
-            if (log.isWarnEnabled()) {
-              log.warn("Method " + method.getName() + " must have a valid return type and zero parameters");
-            }
+            log.invalidManagedAttributeMethod(method.getName());
             continue;
           }
         }
         AttributeEntry ae=atts.get(attributeName);
         if (!writeAttribute) {
           if (ae instanceof FieldAttributeEntry && ae.getInfo().isReadable()) {
-            log.warn("not adding annotated method " + method + " since we already have read attribute");
+            log.readManagedAttributeAlreadyPresent(method);
           }
  else           if (ae instanceof MethodAttributeEntry) {
             MethodAttributeEntry mae=(MethodAttributeEntry)ae;
@@ -55,7 +53,7 @@
  else {
           if (ae instanceof FieldAttributeEntry) {
             if (ae.getInfo().isWritable()) {
-              log.warn("Not adding annotated method " + methodName + " since we already have writable attribute");
+              log.writeManagedAttributeAlreadyPresent(methodName);
             }
  else {
               Field f=((FieldAttributeEntry)ae).getField();

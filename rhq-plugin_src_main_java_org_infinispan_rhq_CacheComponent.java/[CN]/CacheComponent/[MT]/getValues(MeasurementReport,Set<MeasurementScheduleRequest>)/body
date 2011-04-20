@@ -2,12 +2,12 @@
   boolean trace=log.isTraceEnabled();
   if (trace)   log.trace("Get values metrics");
   for (  MeasurementScheduleRequest req : metrics) {
-    if (trace)     log.trace("Inspect metric %s",req);
+    if (trace)     log.tracef("Inspect metric %s",req);
     String metric=req.getName();
     try {
       EmsBean bean=queryComponentBean(metric);
       if (bean != null) {
-        if (trace)         log.trace("Retrieved mbean with name %s",bean.getBeanName());
+        if (trace)         log.tracef("Retrieved mbean with name %s",bean.getBeanName());
         bean.refreshAttributes();
         String attName=metric.substring(metric.indexOf(".") + 1);
         EmsAttribute att=bean.getAttribute(attName);
@@ -21,23 +21,23 @@
               if (res != null)               report.addData(res);
             }
  else {
-              if (log.isDebugEnabled())               log.debug("Metric (%s) has null value, do not add to report",req.getName());
+              if (log.isDebugEnabled())               log.debugf("Metric (%s) has null value, do not add to report",req.getName());
             }
           }
  else           if (type == DataType.TRAIT) {
             String value=(String)o;
-            if (trace)             log.trace("Metric (%s) is trait with value %s",req.getName(),value);
+            if (trace)             log.tracef("Metric (%s) is trait with value %s",req.getName(),value);
             MeasurementDataTrait res=new MeasurementDataTrait(req,value);
             report.addData(res);
           }
         }
  else {
-          log.warn("Attribute %s not found",attName);
+          log.attributeNotFound(attName);
         }
       }
     }
  catch (    Exception e) {
-      log.warn("getValues failed for " + metric + " : ",e);
+      log.getValuesFailed(metric,e);
     }
   }
 }

@@ -5,7 +5,7 @@
   try {
     String sql=filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
     if (log.isTraceEnabled()) {
-      log.trace("Running sql '" + sql);
+      log.tracef("Running sql %s",sql);
     }
     connection=connectionFactory.getConnection();
     ps=connection.prepareStatement(sql);
@@ -21,10 +21,12 @@
     marshaller.objectToObjectStream(streamDelimiter,objectOutput);
   }
  catch (  SQLException e) {
-    logAndThrow(e,"SQL Error while storing string keys to database");
+    log.sqlFailureStoringKeys(e);
+    throw new CacheLoaderException("SQL Error while storing string keys to database",e);
   }
 catch (  IOException e) {
-    logAndThrow(e,"I/O Error while storing string keys to database");
+    log.ioErrorStoringKeys(e);
+    throw new CacheLoaderException("I/O Error while storing string keys to database",e);
   }
  finally {
     JdbcUtil.safeClose(rs);

@@ -15,10 +15,10 @@
         for (        Address member : members) {
           if (!member.equals(t.getAddress())) {
             try {
-              if (log.isInfoEnabled())               log.info("Trying to fetch state from %s",member);
+              if (log.isInfoEnabled())               log.tryingToFetchState(member);
               currentStateTransferSource=member;
               if (t.retrieveState(cacheName,member,timeout)) {
-                if (log.isInfoEnabled())                 log.info("Successfully retrieved and applied state from %s",member);
+                if (log.isInfoEnabled())                 log.successfullyAppliedState(member);
                 success=true;
                 break outer;
               }
@@ -32,7 +32,7 @@
           }
         }
         if (!success) {
-          if (log.isWarnEnabled())           log.warn("Could not find available peer for state, backing off and retrying");
+          log.couldNotFindPeerForState();
           try {
             Thread.sleep(wait*=waitTimeIncreaseFactor);
           }

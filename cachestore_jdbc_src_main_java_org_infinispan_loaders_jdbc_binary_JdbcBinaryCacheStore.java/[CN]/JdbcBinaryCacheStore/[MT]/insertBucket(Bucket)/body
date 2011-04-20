@@ -4,7 +4,7 @@
   try {
     String sql=tableManipulation.getInsertRowSql();
     if (log.isTraceEnabled()) {
-      log.trace("Running insertBucket. Sql: '" + sql + "', on bucket: "+ bucket);
+      log.tracef("Running insertBucket. Sql: '%s', on bucket: %s",sql,bucket);
     }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
@@ -18,7 +18,8 @@
     }
   }
  catch (  SQLException ex) {
-    logAndThrow(ex,"sql failure while inserting bucket: " + bucket);
+    log.sqlFailureInsertingBucket(bucket,ex);
+    throw new CacheLoaderException(String.format("Sql failure while inserting bucket: %s",bucket),ex);
   }
 catch (  InterruptedException ie) {
     if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to insert a bucket");

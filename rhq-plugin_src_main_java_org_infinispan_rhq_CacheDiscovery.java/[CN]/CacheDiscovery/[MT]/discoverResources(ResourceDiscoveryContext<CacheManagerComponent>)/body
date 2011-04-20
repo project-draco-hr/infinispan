@@ -5,13 +5,13 @@
   EmsConnection conn=ctx.getParentResourceComponent().getEmsConnection();
   if (trace)   log.trace("Connection to ems server established");
   String pattern=getAllCachesPattern(ctx.getParentResourceContext().getResourceKey());
-  if (trace)   log.trace("Pattern to query is %s",pattern);
+  if (trace)   log.tracef("Pattern to query is %s",pattern);
   ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(pattern);
   List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-  if (trace)   log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: "+ beans);
+  if (trace)   log.tracef("Querying [%s] returned beans: %s",queryUtility.getTranslatedQuery(),beans);
   for (  EmsBean bean : beans) {
     String name=bean.getAttribute("CacheName").getValue().toString();
-    if (trace)     log.trace("Resource name is %s",name);
+    if (trace)     log.tracef("Resource name is %s",name);
     DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),name,name,null,"One cache within Infinispan",ctx.getDefaultPluginConfiguration(),null);
     discoveredResources.add(detail);
     log.info("Discovered new ...  " + bean.getBeanName().getCanonicalName());

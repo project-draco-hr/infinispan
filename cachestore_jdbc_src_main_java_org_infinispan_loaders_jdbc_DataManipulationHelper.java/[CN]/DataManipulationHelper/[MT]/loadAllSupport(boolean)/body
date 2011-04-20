@@ -5,7 +5,7 @@
   try {
     String sql=filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
     if (log.isTraceEnabled()) {
-      log.trace("Running sql '" + sql);
+      log.tracef("Running sql %s",sql);
     }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
@@ -21,9 +21,8 @@
     return result;
   }
  catch (  SQLException e) {
-    String message="SQL error while fetching all StoredEntries";
-    log.error(message,e);
-    throw new CacheLoaderException(message,e);
+    log.sqlFailureFetchingAllStoredEntries(e);
+    throw new CacheLoaderException("SQL error while fetching all StoredEntries",e);
   }
  finally {
     JdbcUtil.safeClose(rs);

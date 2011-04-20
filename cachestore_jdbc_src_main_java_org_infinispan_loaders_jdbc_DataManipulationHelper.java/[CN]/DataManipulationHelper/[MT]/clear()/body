@@ -7,11 +7,12 @@
     ps=conn.prepareStatement(sql);
     int result=ps.executeUpdate();
     if (log.isTraceEnabled()) {
-      log.trace("Successfully removed " + result + " rows.");
+      log.tracef("Successfully removed %d rows.",result);
     }
   }
  catch (  SQLException ex) {
-    logAndThrow(ex,"Failed clearing JdbcBinaryCacheStore");
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing cache store",ex);
   }
  finally {
     JdbcUtil.safeClose(ps);

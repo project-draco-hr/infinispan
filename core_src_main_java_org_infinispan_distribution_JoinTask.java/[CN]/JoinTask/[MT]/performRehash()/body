@@ -1,6 +1,6 @@
 {
   long start=System.currentTimeMillis();
-  if (log.isDebugEnabled())   log.debug("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
+  if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
   boolean cleanup=false;
   boolean aborted=false;
   try {
@@ -24,7 +24,7 @@
     }
   }
  catch (  Exception e) {
-    log.error("Caught exception!  Aborting join.",e);
+    log.abortingJoin(e);
     broadcastAbort(cleanup);
     aborted=true;
     throw new CacheException("Unexpected exception",e);
@@ -36,10 +36,10 @@
     if (!aborted) {
       signalJoinRehashEnd();
       if (configuration.isRehashEnabled())       invalidateInvalidHolders(chOld,chNew);
-      log.info("%s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+      log.joinRehashCompleted(self,Util.prettyPrintTime(System.currentTimeMillis() - start));
     }
  else {
-      log.info("%s aborted join rehash after %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+      log.joinRehashAborted(self,Util.prettyPrintTime(System.currentTimeMillis() - start));
     }
   }
 }

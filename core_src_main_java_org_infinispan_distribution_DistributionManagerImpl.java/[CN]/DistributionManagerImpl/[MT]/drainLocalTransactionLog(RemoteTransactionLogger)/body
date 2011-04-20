@@ -2,24 +2,24 @@
   List<WriteCommand> c;
   while (tlog.shouldDrainWithoutLock()) {
     c=tlog.drain();
-    if (trace)     log.trace("Draining %s entries from transaction log",c.size());
+    if (trace)     log.tracef("Draining %s entries from transaction log",c.size());
     applyRemoteTxLog(c);
   }
   boolean unlock=acquireDistSyncLock();
   try {
     this.enteredFinalJoinPhase=true;
     c=tlog.drainAndLock(null);
-    if (trace)     log.trace("Locked and draining %s entries from transaction log",c.size());
+    if (trace)     log.tracef("Locked and draining %s entries from transaction log",c.size());
     applyRemoteTxLog(c);
     Collection<PrepareCommand> pendingPrepares=tlog.getPendingPrepares();
-    if (trace)     log.trace("Applying %s pending prepares",pendingPrepares.size());
+    if (trace)     log.tracef("Applying %s pending prepares",pendingPrepares.size());
     for (    PrepareCommand pc : pendingPrepares) {
       cf.initializeReplicableCommand(pc,true);
       try {
         pc.perform(null);
       }
  catch (      Throwable throwable) {
-        log.warn("Unable to apply prepare " + pc,throwable);
+        log.unableToApplyPrepare(pc,throwable);
       }
     }
   }

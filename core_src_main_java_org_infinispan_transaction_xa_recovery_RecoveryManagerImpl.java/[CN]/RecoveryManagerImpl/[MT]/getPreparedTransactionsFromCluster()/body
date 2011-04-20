@@ -10,17 +10,17 @@
       if (isSuccessful(thisResponse)) {
         List<Xid> responseValue=(List<Xid>)((SuccessfulResponse)thisResponse).getResponseValue();
         if (log.isTraceEnabled()) {
-          log.trace("Received Xid lists %s from node %s",responseValue,rEntry.getKey());
+          log.tracef("Received Xid lists %s from node %s",responseValue,rEntry.getKey());
         }
         iterator.add(responseValue);
       }
  else {
-        log.warn("Missing the list of prepared transactions from node %s. Received response is %s",rEntry.getKey(),rEntry.getValue());
+        log.missingListPreparedTransactions(rEntry.getKey(),rEntry.getValue());
         success=false;
       }
     }
     this.broadcastForPreparedTx=!success;
-    if (!broadcastForPreparedTx)     log.info("Finished broadcasting for remote prepared transactions. " + "Returning only local values from now on.");
+    if (!broadcastForPreparedTx)     log.debug("Finished broadcasting for remote prepared transactions. Returning only local values from now on.");
   }
   return iterator;
 }

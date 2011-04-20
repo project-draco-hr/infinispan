@@ -11,14 +11,14 @@
       if (ctx.isOriginLocal()) {
         List<Address> rec=recipientGenerator.generateRecipients();
         int numCallRecipients=rec == null ? 0 : rec.size();
-        if (trace)         log.trace("Invoking command %s on hosts %s",command,rec);
+        if (trace)         log.tracef("Invoking command %s on hosts %s",command,rec);
         boolean useFuture=ctx.isUseFutureReturnType();
         if (isL1CacheEnabled && !skipL1Invalidation)         if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
-          if (trace)           log.trace("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s",command.getAffectedKeys(),dm.getAffectedNodes(command.getAffectedKeys()));
+          if (trace)           log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s",command.getAffectedKeys(),dm.getAffectedNodes(command.getAffectedKeys()));
           future=l1Manager.flushCache(recipientGenerator.getKeys(),returnValue,null);
         }
  else {
-          if (trace)           log.trace("Not performing invalidation! numCallRecipients=%s",numCallRecipients);
+          if (trace)           log.tracef("Not performing invalidation! numCallRecipients=%s",numCallRecipients);
         }
         if (!isSingleOwnerAndLocal(recipientGenerator)) {
           if (useFuture) {
@@ -35,16 +35,16 @@
         }
         if (future != null && sync) {
           future.get();
-          if (trace)           log.trace("Finished invalidating keys %s ",recipientGenerator.getKeys());
+          if (trace)           log.tracef("Finished invalidating keys %s ",recipientGenerator.getKeys());
         }
       }
  else {
         if (isL1CacheEnabled && !skipL1Invalidation) {
-          if (trace)           log.trace("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote",command.getAffectedKeys());
+          if (trace)           log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote",command.getAffectedKeys());
           future=l1Manager.flushCache(recipientGenerator.getKeys(),returnValue,ctx.getOrigin());
           if (sync) {
             future.get();
-            if (trace)             log.trace("Finished invalidating keys %s ",recipientGenerator.getKeys());
+            if (trace)             log.tracef("Finished invalidating keys %s ",recipientGenerator.getKeys());
           }
         }
       }

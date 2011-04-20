@@ -1,15 +1,15 @@
 {
   List<ReplicableCommand> toReplicate=drainReplQueue();
-  if (log.isTraceEnabled())   log.trace("flush(): flushing repl queue (num elements=%s)",toReplicate.size());
+  if (log.isTraceEnabled())   log.tracef("flush(): flushing repl queue (num elements=%s)",toReplicate.size());
   int toReplicateSize=toReplicate.size();
   if (toReplicateSize > 0) {
     try {
-      log.trace("Flushing %s elements",toReplicateSize);
+      log.tracef("Flushing %s elements",toReplicateSize);
       MultipleRpcCommand multipleRpcCommand=commandsFactory.buildReplicateCommand(toReplicate);
       rpcManager.invokeRemotely(null,multipleRpcCommand,ResponseMode.getAsyncResponseMode(configuration),configuration.getSyncReplTimeout());
     }
  catch (    Throwable t) {
-      log.error("failed replicating " + toReplicate.size() + " elements in replication queue",t);
+      log.failedReplicatingQueue(toReplicate.size(),t);
     }
   }
   return toReplicateSize;

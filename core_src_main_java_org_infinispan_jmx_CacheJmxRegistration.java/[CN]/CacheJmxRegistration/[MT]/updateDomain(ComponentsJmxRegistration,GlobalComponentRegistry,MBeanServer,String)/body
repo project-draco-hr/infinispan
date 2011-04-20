@@ -6,9 +6,8 @@
 synchronized (managerJmxReg) {
       if (managerJmxReg.jmxDomain == null) {
         if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
-          String message="There's already an cache manager instance registered under '" + gc.getJmxDomain() + "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable "+ "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
-          if (log.isErrorEnabled())           log.error(message);
-          throw new JmxDomainConflictException(message);
+          log.cacheManagerAlreadyRegistered(gc.getJmxDomain());
+          throw new JmxDomainConflictException(String.format("Domain already registered %s",gc.getJmxDomain()));
         }
         managerJmxReg.jmxDomain=tmpJmxDomain;
       }

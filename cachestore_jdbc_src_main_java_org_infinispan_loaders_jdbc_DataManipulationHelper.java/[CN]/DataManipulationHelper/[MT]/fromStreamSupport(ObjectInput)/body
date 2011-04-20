@@ -14,7 +14,7 @@
       if (readCount % batchSize == 0) {
         ps.executeBatch();
         if (log.isTraceEnabled()) {
-          log.trace("Executing batch " + readCount / batchSize + ", batch size is " + batchSize);
+          log.tracef("Executing batch %s, batch size is %d",readCount / batchSize,batchSize);
         }
       }
       objFromStream=marshaller.objectFromObjectStream(objectInput);
@@ -23,17 +23,20 @@
       ps.executeBatch();
     }
     if (log.isTraceEnabled()) {
-      log.trace("Successfully inserted " + readCount + " buckets into the database, batch size is "+ batchSize);
+      log.tracef("Successfully inserted %d buckets into the database, batch size is %d",readCount,batchSize);
     }
   }
  catch (  IOException ex) {
-    logAndThrow(ex,"I/O failure while integrating state into store");
+    log.ioErrorIntegratingState(ex);
+    throw new CacheLoaderException("I/O failure while integrating state into store",ex);
   }
 catch (  SQLException e) {
-    logAndThrow(e,"SQL failure while integrating state into store");
+    log.sqlFailureIntegratingState(e);
+    throw new CacheLoaderException("SQL failure while integrating state into store",e);
   }
 catch (  ClassNotFoundException e) {
-    logAndThrow(e,"Unexpected failure while integrating state into store");
+    log.classNotFoundIntegratingState(e);
+    throw new CacheLoaderException("Unexpected failure while integrating state into store",e);
   }
 catch (  InterruptedException ie) {
     if (log.isTraceEnabled())     log.trace("Interrupted while reading from stream");

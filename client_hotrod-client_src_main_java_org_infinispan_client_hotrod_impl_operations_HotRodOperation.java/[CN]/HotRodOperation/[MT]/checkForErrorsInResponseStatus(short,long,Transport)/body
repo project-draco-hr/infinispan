@@ -1,6 +1,6 @@
 {
   final boolean isTrace=log.isTraceEnabled();
-  if (isTrace)   log.trace("Received operation status: %#x",status);
+  if (isTrace)   log.tracef("Received operation status: %#x",status);
 switch ((int)status) {
 case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
 case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
@@ -12,10 +12,10 @@ case HotRodConstants.UNKNOWN_VERSION_STATUS:
       readNewTopologyIfPresent(transport);
       String msgFromServer=transport.readString();
       if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
-        log.trace("Server-side timeout performing operation: %s",msgFromServer);
+        log.tracef("Server-side timeout performing operation: %s",msgFromServer);
       }
  else {
-        log.warn("Error received from the server: %s",msgFromServer);
+        log.errorFromServer(msgFromServer);
       }
       throw new HotRodClientException(msgFromServer,messageId,status);
     }

@@ -1,13 +1,13 @@
 {
   boolean join=oldMembers.size() < newMembers.size();
-  log.info("Detected a view change.  Member list changed from %s to %s",oldMembers,newMembers);
+  log.viewChangeDetected(oldMembers,newMembers);
   if (join) {
     Address joiner=MembershipArithmetic.getMemberJoined(oldMembers,newMembers);
-    log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
+    log.joinEvent(joiner);
   }
  else {
     Address leaver=MembershipArithmetic.getMemberLeft(oldMembers,newMembers);
-    log.info("This is a LEAVE event!  Node %s has just left",leaver);
+    log.leaveEvent(leaver);
     try {
       if (!(consistentHash instanceof UnionConsistentHash)) {
         oldConsistentHash=consistentHash;
@@ -18,7 +18,7 @@
       addLeaverAndUpdatedConsistentHash(leaver);
     }
  catch (    Exception e) {
-      log.fatal("Unable to process leaver!!",e);
+      log.unableToProcessLeaver(e);
       throw new CacheException(e);
     }
     List<Address> stateProviders=holdersOfLeaversState(leaver);
@@ -26,7 +26,7 @@
     boolean willReceiveLeaverState=receiversOfLeaverState.contains(self);
     boolean willProvideState=stateProviders.contains(self);
     if (willReceiveLeaverState || willProvideState) {
-      log.info("I %s am participating in rehash, state providers %s, state receivers %s",rpcManager.getTransport().getAddress(),stateProviders,receiversOfLeaverState);
+      log.participatingInRehash(rpcManager.getTransport().getAddress(),stateProviders,receiversOfLeaverState);
       transactionLogger.enable();
       if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
         if (trace)         log.trace("Canceling running leave task!");

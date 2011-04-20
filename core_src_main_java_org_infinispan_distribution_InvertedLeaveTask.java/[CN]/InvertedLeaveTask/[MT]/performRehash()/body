@@ -4,24 +4,24 @@
   ConsistentHash newCH=this.distributionManager.getConsistentHash();
   ConsistentHash oldCH=ConsistentHashHelper.createConsistentHash(configuration,newCH.getCaches(),leaversHandled,this.distributionManager.topologyInfo);
   try {
-    log.debug("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s",configuration.isRehashEnabled(),isReceiver,isSender,self);
+    log.debugf("Starting leave rehash[enabled=%s,isReceiver=%s,isSender=%s] on node %s",configuration.isRehashEnabled(),isReceiver,isSender,self);
     if (isReceiver)     this.distributionManager.getTransactionLogger().blockNewTransactions();
     if (configuration.isRehashEnabled()) {
       if (isReceiver) {
         providers.remove(self);
         try {
           RehashControlCommand cmd=cf.buildRehashControlCommand(PULL_STATE_LEAVE,self,null,oldCH,newCH,leaversHandled);
-          log.debug("I %s am pulling state from %s",self,providers);
+          log.debugf("I %s am pulling state from %s",self,providers);
           Set<Future<Void>> stateRetrievalProcesses=new HashSet<Future<Void>>(providers.size());
           for (          Address stateProvider : providers) {
             stateRetrievalProcesses.add(statePullExecutor.submit(new LeaveStateGrabber(stateProvider,cmd,newCH)));
           }
           log.trace("State retrieval being processed.");
           for (          Future<Void> f : stateRetrievalProcesses)           f.get();
-          log.trace("State retrieval from %s completed.",providers);
+          log.tracef("State retrieval from %s completed.",providers);
         }
   finally {
-          log.trace("Informing %s that state has been applied.",providers);
+          log.tracef("Informing %s that state has been applied.",providers);
           RehashControlCommand c=cf.buildRehashControlCommand(LEAVE_REHASH_END,self);
           rpcManager.invokeRemotely(providers,c,SYNCHRONOUS,configuration.getRehashRpcTimeout(),true);
         }
@@ -41,6 +41,6 @@
  finally {
     for (    Address addr : leaversHandled)     this.distributionManager.markLeaverAsHandled(addr);
     if (isReceiver)     this.distributionManager.getTransactionLogger().unblockNewTransactions();
-    log.info("Completed leave rehash on node %s in %s - leavers now are %s",self,prettyPrintTime(currentTimeMillis() - start),this.distributionManager.leavers);
+    log.completedLeaveRehash(self,prettyPrintTime(currentTimeMillis() - start),this.distributionManager.leavers);
   }
 }

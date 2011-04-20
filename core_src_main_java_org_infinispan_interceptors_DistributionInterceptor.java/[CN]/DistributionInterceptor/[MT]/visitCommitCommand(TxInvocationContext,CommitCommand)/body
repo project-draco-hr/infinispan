@@ -20,7 +20,7 @@
         if (needToResendPrepare(r.getValue()))         resendTo.add(r.getKey());
       }
       if (!resendTo.isEmpty()) {
-        log.debug("Need to resend prepares for %s to %s",command.getGlobalTransaction(),resendTo);
+        log.debugf("Need to resend prepares for %s to %s",command.getGlobalTransaction(),resendTo);
         PrepareCommand pc=cf.buildPrepareCommand(command.getGlobalTransaction(),ctx.getModifications(),true);
         rpcManager.invokeRemotely(resendTo,pc,true,true);
       }
@@ -30,7 +30,7 @@
         f.get();
       }
  catch (      Exception e) {
-        if (log.isInfoEnabled())         log.info("Failed invalidating remote cache: ",e);
+        if (log.isInfoEnabled())         log.failedInvalidatingRemoteCache(e);
       }
     }
   }

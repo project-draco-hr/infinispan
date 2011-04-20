@@ -6,23 +6,23 @@
   int hashSpace=transport.readVInt();
   int clusterSize=transport.readVInt();
   if (log.isTraceEnabled()) {
-    log.trace("Topology change request: newTopologyId=%d, numKeyOwners=%d, " + "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",newTopologyId,numKeyOwners,hashFunctionVersion,hashSpace,clusterSize);
+    log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " + "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",newTopologyId,numKeyOwners,hashFunctionVersion,hashSpace,clusterSize);
   }
   LinkedHashMap<InetSocketAddress,Integer> servers2HashCode=new LinkedHashMap<InetSocketAddress,Integer>();
   for (int i=0; i < clusterSize; i++) {
     String host=transport.readString();
     int port=transport.readUnsignedShort();
     if (log.isTraceEnabled()) {
-      log.trace("Server read: %s:%d",host,port);
+      log.tracef("Server read: %s:%d",host,port);
     }
     int hashCode=transport.read4ByteInt();
     servers2HashCode.put(new InetSocketAddress(host,port),hashCode);
     if (log.isTraceEnabled()) {
-      log.trace("Hash code is: %d",hashCode);
+      log.tracef("Hash code is: %d",hashCode);
     }
   }
   if (log.isInfoEnabled()) {
-    log.info("New topology: %s",servers2HashCode);
+    log.newTopology(servers2HashCode);
   }
   transport.getTransportFactory().updateServers(servers2HashCode.keySet());
   if (hashFunctionVersion == 0) {

@@ -5,7 +5,7 @@
   try {
     String sql=tableManipulation.getSelectRowSql();
     if (log.isTraceEnabled()) {
-      log.trace("Running loadBucket. Sql: '" + sql + "', on key: "+ keyHashCode);
+      log.tracef("Running loadBucket. Sql: '%s', on key: %s",sql,keyHashCode);
     }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
@@ -19,9 +19,8 @@
     return bucket;
   }
  catch (  SQLException e) {
-    String message="sql failure while loading key: " + keyHashCode;
-    log.error(message,e);
-    throw new CacheLoaderException(message,e);
+    log.sqlFailureLoadingKey(keyHashCode,e);
+    throw new CacheLoaderException(String.format("Sql failure while loading key: %s",keyHashCode),e);
   }
  finally {
     JdbcUtil.safeClose(rs);

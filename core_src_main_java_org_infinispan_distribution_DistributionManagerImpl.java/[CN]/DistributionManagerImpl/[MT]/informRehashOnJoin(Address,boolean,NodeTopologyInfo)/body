@@ -1,9 +1,9 @@
 {
   if (!joinComplete) {
-    log.info("DistributionManager not yet joined the cluster.  Cannot do anything about other concurrent joiners.");
+    log.distributionManagerNotJoined();
     return null;
   }
-  if (trace)   log.trace("Informed of a JOIN by %s.  Starting? %s",a,starting);
+  if (trace)   log.tracef("Informed of a JOIN by %s.  Starting? %s",a,starting);
   if (!starting) {
     if (consistentHash instanceof UnionConsistentHash) {
       UnionConsistentHash uch=(UnionConsistentHash)consistentHash;
@@ -14,7 +14,7 @@
   }
  else {
     topologyInfo.addNodeTopologyInfo(a,nodeTopologyInfo);
-    if (trace)     log.trace("Node topology info added(%s).  Topology info is %s",nodeTopologyInfo,topologyInfo);
+    if (trace)     log.tracef("Node topology info added(%s).  Topology info is %s",nodeTopologyInfo,topologyInfo);
     ConsistentHash chOld=consistentHash;
     if (chOld instanceof UnionConsistentHash)     throw new RuntimeException("Not expecting an instance of UnionConsistentHash!");
     oldConsistentHash=chOld;
@@ -22,6 +22,6 @@
     ConsistentHash chNew=ConsistentHashHelper.createConsistentHash(configuration,chOld.getCaches(),topologyInfo,a);
     consistentHash=new UnionConsistentHash(chOld,chNew);
   }
-  if (trace)   log.trace("New ConsistentHash is %s",consistentHash);
+  if (trace)   log.tracef("New ConsistentHash is %s",consistentHash);
   return topologyInfo.getNodeTopologyInfo(rpcManager.getAddress());
 }

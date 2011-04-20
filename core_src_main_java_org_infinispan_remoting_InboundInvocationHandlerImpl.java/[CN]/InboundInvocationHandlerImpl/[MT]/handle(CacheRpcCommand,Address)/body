@@ -5,7 +5,7 @@
   if (cr == null) {
     if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
       if (isDefined(cacheName)) {
-        log.info("Will try and wait for the cache to start");
+        log.waitForCacheToStart();
         long giveupTime=System.currentTimeMillis() + 30000;
         while (cr == null && System.currentTimeMillis() < giveupTime) {
           Thread.sleep(100);
@@ -14,7 +14,7 @@
       }
     }
     if (cr == null) {
-      if (log.isInfoEnabled())       log.info("Cache named %s does not exist on this cache manager!",cacheName);
+      if (log.isInfoEnabled())       log.namedCacheDoesNotExist(cacheName);
       return new ExceptionResponse(new NamedCacheNotFoundException(cacheName,"Cannot process command " + cmd + " on node "+ transport.getAddress()));
     }
   }

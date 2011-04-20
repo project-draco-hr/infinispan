@@ -4,7 +4,7 @@
   try {
     String sql=tableManipulation.getUpdateRowSql();
     if (log.isTraceEnabled()) {
-      log.trace("Running updateBucket. Sql: '" + sql + "', on bucket: "+ bucket);
+      log.tracef("Running updateBucket. Sql: '%s', on bucket: %s",sql,bucket);
     }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
@@ -18,7 +18,8 @@
     }
   }
  catch (  SQLException e) {
-    logAndThrow(e,"sql failure while updating bucket: " + bucket);
+    log.sqlFailureUpdatingBucket(bucket,e);
+    throw new CacheLoaderException(String.format("Sql failure while updating bucket: %s",bucket),e);
   }
 catch (  InterruptedException ie) {
     if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to update a bucket");

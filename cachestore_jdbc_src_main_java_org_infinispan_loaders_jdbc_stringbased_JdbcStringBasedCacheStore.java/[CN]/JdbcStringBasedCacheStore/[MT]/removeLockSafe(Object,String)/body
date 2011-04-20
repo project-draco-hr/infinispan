@@ -3,16 +3,15 @@
   PreparedStatement ps=null;
   try {
     String sql=tableManipulation.getDeleteRowSql();
-    if (log.isTraceEnabled())     log.trace("Running sql '" + sql + "' on "+ keyStr);
+    if (log.isTraceEnabled())     log.tracef("Running sql '%s' on %s",sql,keyStr);
     connection=connectionFactory.getConnection();
     ps=connection.prepareStatement(sql);
     ps.setString(1,keyStr);
     return ps.executeUpdate() == 1;
   }
  catch (  SQLException ex) {
-    String message="Error while storing string keys to database";
-    log.error(message,ex);
-    throw new CacheLoaderException(message,ex);
+    log.sqlFailureRemovingKeys(ex);
+    throw new CacheLoaderException("Error while removing string keys from database",ex);
   }
  finally {
     JdbcUtil.safeClose(ps);

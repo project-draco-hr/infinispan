@@ -5,16 +5,15 @@
     ctx=new InitialContext();
     dataSource=(DataSource)ctx.lookup(datasourceName);
     if (trace) {
-      log.trace("Datasource lookup for " + datasourceName + " succeeded: "+ dataSource);
+      log.tracef("Datasource lookup for %s succeeded: %b",datasourceName,dataSource);
     }
     if (dataSource == null) {
-      String msg="Could not find a connection in jndi under the name '" + datasourceName + "'";
-      log.error(msg);
-      throw new CacheLoaderException(msg);
+      log.connectionInJndiNotFound(datasourceName);
+      throw new CacheLoaderException(String.format("Could not find a connection in jndi under the name '%s'",datasourceName));
     }
   }
  catch (  NamingException e) {
-    log.error("Could not lookup connection with datasource " + datasourceName,e);
+    log.namingExceptionLookingUpConnection(datasourceName,e);
     throw new CacheLoaderException(e);
   }
  finally {
@@ -23,7 +22,7 @@
         ctx.close();
       }
  catch (      NamingException e) {
-        log.warn("Failed to close naming context.",e);
+        log.failedClosingNamingCtx(e);
       }
     }
   }

@@ -5,27 +5,27 @@ synchronized (this) {
     Set<InetSocketAddress> failedServers=new HashSet<InetSocketAddress>(servers);
     failedServers.removeAll(newServers);
     if (log.isTraceEnabled()) {
-      log.trace("Current list: " + servers);
-      log.trace("New list: " + newServers);
-      log.trace("Added servers: " + addedServers);
-      log.trace("Removed servers: " + failedServers);
+      log.tracef("Current list: %s",servers);
+      log.tracef("New list: ",newServers);
+      log.tracef("Added servers: ",addedServers);
+      log.tracef("Removed servers: ",failedServers);
     }
     if (failedServers.isEmpty() && newServers.isEmpty()) {
-      log.info("Same list of servers, not changing the pool");
+      log.debug("Same list of servers, not changing the pool");
       return;
     }
     for (    InetSocketAddress server : newServers) {
-      log.info("New server added(" + server + "), adding to the pool.");
+      log.newServerAdded(server);
       try {
         connectionPool.addObject(server);
       }
  catch (      Exception e) {
-        log.warn("Failed adding new server " + server,e);
+        log.failedAddingNewServer(server,e);
       }
     }
     balancer.setServers(newServers);
     for (    InetSocketAddress server : failedServers) {
-      log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
+      log.removingServer(server);
       connectionPool.clear(server);
     }
     servers.clear();
