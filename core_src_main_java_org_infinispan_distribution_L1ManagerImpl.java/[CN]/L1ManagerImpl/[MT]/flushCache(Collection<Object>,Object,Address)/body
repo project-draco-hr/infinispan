@@ -3,28 +3,31 @@
   NotifyingNotifiableFuture<Object> future=new AggregatingNotifyingFutureImpl(retval,2);
   Collection<Address> invalidationAddresses=buildInvalidationAddressList(keys,origin);
   int nodes=invalidationAddresses.size();
-  boolean multicast=isUseMulticast(nodes);
-  if (trace)   log.trace("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s",nodes,threshold,multicast);
-  if (multicast) {
-    if (trace)     log.trace("Invalidating keys %s via multicast",keys);
-    InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
-    try {
-      rpcManager.broadcastRpcCommandInFuture(ic,future);
-    }
-  finally {
-      cleanupRequestors(keys);
-    }
-  }
- else {
-    try {
+  if (nodes > 0) {
+    boolean multicast=isUseMulticast(nodes);
+    if (trace)     log.trace("There are %s nodes involved in invalidation. Threshold is: %s; using multicast: %s",nodes,threshold,multicast);
+    if (multicast) {
+      if (trace)       log.trace("Invalidating keys %s via multicast",keys);
       InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
-      if (trace)       log.trace("Keys %s needs invalidation on %s",keys,invalidationAddresses);
-      rpcManager.invokeRemotelyInFuture(invalidationAddresses,ic,future);
-      return future;
-    }
+      try {
+        rpcManager.broadcastRpcCommandInFuture(ic,future);
+      }
   finally {
-      cleanupRequestors(keys);
+        cleanupRequestors(keys);
+      }
+    }
+ else {
+      try {
+        InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
+        if (trace)         log.trace("Keys %s needs invalidation on %s",keys,invalidationAddresses);
+        rpcManager.invokeRemotelyInFuture(invalidationAddresses,ic,future);
+        return future;
+      }
+  finally {
+        cleanupRequestors(keys);
+      }
     }
   }
+ else   if (trace)   log.trace("No L1 caches to invalidate");
   return future;
 }
