@@ -1,5 +1,14 @@
 {
-  ClassLoader cl=Thread.currentThread().getContextClassLoader();
-  if (cl == null)   cl=ClassLoader.getSystemClassLoader();
-  return cl.loadClass(classname);
+  ClassLoader[] cls=new ClassLoader[]{Thread.currentThread().getContextClassLoader(),Util.class.getClassLoader(),ClassLoader.getSystemClassLoader()};
+  ClassNotFoundException e=null;
+  for (  ClassLoader cl : cls) {
+    if (cl == null)     continue;
+    try {
+      return cl.loadClass(classname);
+    }
+ catch (    ClassNotFoundException ce) {
+      e=ce;
+    }
+  }
+  throw e != null ? e : new ClassNotFoundException(classname);
 }
