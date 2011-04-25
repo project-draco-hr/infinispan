@@ -1,9 +1,25 @@
 {
-synchronized (key) {
-    if (!requestors.containsKey(key)) {
-      requestors.put(key,new HashSet<Address>());
+  Collection<Address> as=requestors.get(key);
+  if (as == null) {
+synchronized (requestors) {
+      as=requestors.get(key);
+      if (as == null) {
+        as=new ConcurrentHashSet<Address>();
+        requestors.put(key,as);
+      }
     }
-    if (trace)     log.trace("Key %s will be L1 cached by requestor %s so storing requestor for later invalidation",key,origin);
-    requestors.get(key).add(origin);
+  }
+  as.add(origin);
+  if (requestors.get(key) != as) {
+synchronized (requestors) {
+      if (requestors.containsKey(key)) {
+        requestors.get(key).add(origin);
+      }
+ else {
+        as=new ConcurrentHashSet<Address>();
+        as.add(origin);
+        requestors.put(key,as);
+      }
+    }
   }
 }
