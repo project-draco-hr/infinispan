@@ -1,10 +1,12 @@
 {
-  ConsistentHash hash=hashFactory.newConsistentHash(hashFunctionVersion);
-  if (hash == null) {
-    log.noHasHFunctionConfigured(hashFunctionVersion);
-  }
+synchronized (lock) {
+    ConsistentHash hash=hashFactory.newConsistentHash(hashFunctionVersion);
+    if (hash == null) {
+      log.noHasHFunctionConfigured(hashFunctionVersion);
+    }
  else {
-    hash.init(servers2HashCode,numKeyOwners,hashSpace);
+      hash.init(servers2HashCode,numKeyOwners,hashSpace);
+    }
+    consistentHash=hash;
   }
-  consistentHash=hash;
 }

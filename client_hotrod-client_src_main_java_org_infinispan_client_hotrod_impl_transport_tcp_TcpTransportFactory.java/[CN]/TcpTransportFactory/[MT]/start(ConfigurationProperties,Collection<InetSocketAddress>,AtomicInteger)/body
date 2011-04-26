@@ -1,12 +1,14 @@
 {
-  hashFactory.init(cfg);
-  boolean pingOnStartup=cfg.getPingOnStartup();
-  servers=staticConfiguredServers;
-  String balancerClass=cfg.getRequestBalancingStrategy();
-  balancer=(RequestBalancingStrategy)Util.getInstance(balancerClass);
-  tcpNoDelay=cfg.getTcpNoDelay();
-  soTimeout=cfg.getSoTimeout();
-  PropsKeyedObjectPoolFactory poolFactory=new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this,topologyId,pingOnStartup),cfg.getProperties());
-  createAndPreparePool(staticConfiguredServers,poolFactory);
-  balancer.setServers(servers);
+synchronized (lock) {
+    hashFactory.init(cfg);
+    boolean pingOnStartup=cfg.getPingOnStartup();
+    servers=Collections.unmodifiableCollection(new ArrayList(staticConfiguredServers));
+    String balancerClass=cfg.getRequestBalancingStrategy();
+    balancer=(RequestBalancingStrategy)Util.getInstance(balancerClass);
+    tcpNoDelay=cfg.getTcpNoDelay();
+    soTimeout=cfg.getSoTimeout();
+    PropsKeyedObjectPoolFactory poolFactory=new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this,topologyId,pingOnStartup),cfg.getProperties());
+    createAndPreparePool(staticConfiguredServers,poolFactory);
+    balancer.setServers(servers);
+  }
 }

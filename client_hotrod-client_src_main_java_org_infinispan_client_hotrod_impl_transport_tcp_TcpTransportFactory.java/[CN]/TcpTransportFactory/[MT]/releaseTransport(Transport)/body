@@ -1,11 +1,12 @@
 {
+  KeyedObjectPool pool=getConnectionPool();
   TcpTransport tcpTransport=(TcpTransport)transport;
   if (!tcpTransport.isValid()) {
     try {
       if (log.isTraceEnabled()) {
         log.tracef("Dropping connection as it is no longer valid: %s",tcpTransport);
       }
-      connectionPool.invalidateObject(tcpTransport.getServerAddress(),tcpTransport);
+      pool.invalidateObject(tcpTransport.getServerAddress(),tcpTransport);
     }
  catch (    Exception e) {
       log.couldNoInvalidateConnection(tcpTransport,e);
@@ -13,7 +14,7 @@
   }
  else {
     try {
-      connectionPool.returnObject(tcpTransport.getServerAddress(),tcpTransport);
+      pool.returnObject(tcpTransport.getServerAddress(),tcpTransport);
     }
  catch (    Exception e) {
       log.couldNotReleaseConnection(tcpTransport,e);

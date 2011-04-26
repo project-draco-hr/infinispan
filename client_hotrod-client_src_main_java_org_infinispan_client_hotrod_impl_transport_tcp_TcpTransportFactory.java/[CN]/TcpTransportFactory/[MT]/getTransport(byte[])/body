@@ -1,15 +1,17 @@
 {
   InetSocketAddress server;
-  if (consistentHash != null) {
-    server=consistentHash.getServer(key);
-    if (log.isTraceEnabled()) {
-      log.tracef("Using consistent hash for determining the server: %s",server);
+synchronized (lock) {
+    if (consistentHash != null) {
+      server=consistentHash.getServer(key);
+      if (log.isTraceEnabled()) {
+        log.tracef("Using consistent hash for determining the server: " + server);
+      }
     }
-  }
  else {
-    server=balancer.nextServer();
-    if (log.isTraceEnabled()) {
-      log.tracef("Using the balancer for determining the server: %s",server);
+      server=balancer.nextServer();
+      if (log.isTraceEnabled()) {
+        log.tracef("Using the balancer for determining the server: %s",server);
+      }
     }
   }
   return borrowTransportFromPool(server);

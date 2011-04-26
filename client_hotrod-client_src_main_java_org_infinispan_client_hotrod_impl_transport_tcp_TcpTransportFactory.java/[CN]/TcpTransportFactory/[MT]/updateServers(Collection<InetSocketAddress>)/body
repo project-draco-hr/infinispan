@@ -1,5 +1,5 @@
 {
-synchronized (this) {
+synchronized (lock) {
     Set<InetSocketAddress> addedServers=new HashSet<InetSocketAddress>(newServers);
     addedServers.removeAll(servers);
     Set<InetSocketAddress> failedServers=new HashSet<InetSocketAddress>(servers);
@@ -28,7 +28,6 @@ synchronized (this) {
       log.removingServer(server);
       connectionPool.clear(server);
     }
-    servers.clear();
-    servers.addAll(newServers);
+    servers=Collections.unmodifiableList(new ArrayList(newServers));
   }
 }

@@ -2,10 +2,12 @@
   if (Thread.currentThread().isInterrupted()) {
     return -1;
   }
-  if (connectionPool.getMaxActive() > 0) {
-    return connectionPool.getMaxActive() * servers.size();
-  }
+synchronized (lock) {
+    if (connectionPool.getMaxActive() > 0) {
+      return connectionPool.getMaxActive() * servers.size();
+    }
  else {
-    return 10 * servers.size();
+      return 10 * servers.size();
+    }
   }
 }
