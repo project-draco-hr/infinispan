@@ -1,0 +1,25 @@
+{
+  Set<Object> keys=new HashSet<Object>();
+  for (int i=0; i < 100; i++) {
+    Object keyForAddress=kaf.getKeyForAddress(address(1));
+    if (keys.add(keyForAddress)) {
+      cache(0).put(keyForAddress,oldValue(keyForAddress));
+    }
+  }
+  tm(0).begin();
+  for (  Object o : keys) {
+    cache(0).put(o,o);
+  }
+  Transaction suspend=tm(0).suspend();
+  addNewClusterMember();
+  for (  Object o : keys) {
+    List<Address> owners=advancedCache(2).getDistributionManager().getConsistentHash().locate(o,2);
+    boolean mainOwnerChanged=owners.get(0).equals(address(2));
+    if (mainOwnerChanged) {
+      System.out.println("Found local! " + o);
+      log.infof("Found local! %s",o);
+      testCommitFailsAndOldValues(o,suspend);
+      return;
+    }
+  }
+}
