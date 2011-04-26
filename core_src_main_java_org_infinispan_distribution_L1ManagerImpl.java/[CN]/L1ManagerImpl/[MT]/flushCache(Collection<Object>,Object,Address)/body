@@ -9,23 +9,13 @@
     if (multicast) {
       if (trace)       log.tracef("Invalidating keys %s via multicast",keys);
       InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
-      try {
-        rpcManager.broadcastRpcCommandInFuture(ic,future);
-      }
-  finally {
-        cleanupRequestors(keys);
-      }
+      rpcManager.broadcastRpcCommandInFuture(ic,future);
     }
  else {
-      try {
-        InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
-        if (trace)         log.tracef("Keys %s needs invalidation on %s",keys,invalidationAddresses);
-        rpcManager.invokeRemotelyInFuture(invalidationAddresses,ic,future);
-        return future;
-      }
-  finally {
-        cleanupRequestors(keys);
-      }
+      InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(false,keys);
+      if (trace)       log.tracef("Keys %s needs invalidation on %s",keys,invalidationAddresses);
+      rpcManager.invokeRemotelyInFuture(invalidationAddresses,ic,future);
+      return future;
     }
   }
  else   if (trace)   log.trace("No L1 caches to invalidate");
