@@ -1,7 +1,15 @@
 {
-  RecoveryAwareDldGlobalTransaction xidGtx=super.readObject(input);
+  RecoveryAwareDldGlobalTransaction globalTransaction=super.readObject(input);
+  globalTransaction.setCoinToss(input.readLong());
+  Object locksAtOriginObj=input.readObject();
+  if (locksAtOriginObj == null) {
+    globalTransaction.setLocksHeldAtOrigin(emptySet());
+  }
+ else {
+    globalTransaction.setLocksHeldAtOrigin((Set<Object>)locksAtOriginObj);
+  }
   Xid xid=(Xid)input.readObject();
-  xidGtx.setXid(xid);
-  xidGtx.setInternalId(input.readLong());
-  return xidGtx;
+  globalTransaction.setXid(xid);
+  globalTransaction.setInternalId(input.readLong());
+  return globalTransaction;
 }
