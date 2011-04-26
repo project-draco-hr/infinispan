@@ -1,12 +1,10 @@
 {
   Collection<Address> as=requestors.get(key);
   if (as == null) {
-synchronized (requestors) {
-      as=requestors.get(key);
-      if (as == null) {
-        as=new ConcurrentHashSet<Address>();
-        requestors.put(key,as);
-      }
+    as=new ConcurrentHashSet<Address>();
+    Collection<Address> previousAs=requestors.putIfAbsent(key,as);
+    if (previousAs != null) {
+      as=previousAs;
     }
   }
   as.add(origin);
