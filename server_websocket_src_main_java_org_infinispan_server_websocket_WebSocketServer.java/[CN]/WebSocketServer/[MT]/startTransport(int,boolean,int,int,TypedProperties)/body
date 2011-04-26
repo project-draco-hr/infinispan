@@ -1,8 +1,8 @@
 {
   InetSocketAddress address=new InetSocketAddress(getHost(),getPort());
-  Executor masterExecutor=masterThreads() == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(masterThreads());
-  Executor workerExecutor=workerThreads() == 0 ? Executors.newCachedThreadPool() : Executors.newFixedThreadPool(workerThreads());
-  NioServerSocketChannelFactory factory=workerThreads() == 0 ? new NioServerSocketChannelFactory(masterExecutor,workerExecutor) : new NioServerSocketChannelFactory(masterExecutor,workerExecutor,workerThreads());
+  Executor masterExecutor=Executors.newCachedThreadPool();
+  Executor workerExecutor=Executors.newCachedThreadPool();
+  NioServerSocketChannelFactory factory=new NioServerSocketChannelFactory(masterExecutor,workerExecutor,workerThreads());
   ServerBootstrap bootstrap=new ServerBootstrap(factory);
   bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager()));
   bootstrap.setOption("child.tcpNoDelay",tcpNoDelay);
