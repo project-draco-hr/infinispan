@@ -1,0 +1,27 @@
+{
+  String defaultTransportConfigFile="tcp.xml";
+  String transportFile=findConfigFile(transportConfigFile,defaultTransportConfigFile);
+  if (transportFile == null)   throw new IllegalArgumentException("Could not find " + transportConfigFile + " nor "+ defaultTransportConfigFile+ " configuration files. Check your classpath!");
+  String configFile=findConfigFile(ispnConfigFile,null);
+  boolean useDeclarativeConfig=configFile != null;
+  if (useDeclarativeConfig) {
+    InfinispanConfiguration c=InfinispanConfiguration.newInfinispanConfiguration(configFile);
+    GlobalConfiguration gc=c.parseGlobalConfiguration();
+    log.info("Using %s and %s configuration files to create CacheManager ",configFile,transportFile);
+    gc.fluent().transport().addProperty("configurationFile",transportFile);
+    cacheManager=new DefaultCacheManager(gc,c.parseDefaultConfiguration());
+  }
+ else {
+    GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
+    log.info("Using %s transport configuration file to create CacheManager ",transportFile);
+    gc.fluent().transport().addProperty("configurationFile",transportFile);
+    Configuration cfg=new Configuration();
+    FluentConfiguration c=cfg.fluent();
+    c.clustering().mode(CacheMode.DIST_SYNC).stateRetrieval().fetchInMemoryState(false);
+    c.clustering().sync().replTimeout(30000L);
+    c.transaction().syncCommitPhase(true).syncRollbackPhase(true);
+    cacheManager=new DefaultCacheManager(gc,cfg);
+  }
+  Runtime.getRuntime().addShutdownHook(new ShutdownHook(cacheManager));
+  cacheManager.start();
+}

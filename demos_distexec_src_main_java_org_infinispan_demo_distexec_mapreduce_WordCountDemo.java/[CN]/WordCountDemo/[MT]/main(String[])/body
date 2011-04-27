@@ -1,0 +1,63 @@
+{
+  SimpleJSAP jsap=new SimpleJSAP("WordCountDemo","Count words in Infinispan cache usin MapReduceTask ",new Parameter[]{new FlaggedOption("configFile",JSAP.STRING_PARSER,DEFAULT_CONFIG_FILE,JSAP.NOT_REQUIRED,'c',"configFile","Infinispan transport config file"),new FlaggedOption("nodeType",JSAP.STRING_PARSER,"slave",JSAP.REQUIRED,'t',"nodeType","Node type as either master or slave"),new FlaggedOption("textFile",JSAP.STRING_PARSER,null,JSAP.NOT_REQUIRED,'f',"textFile","Input text file to distribute onto grid"),new FlaggedOption("ispnConfigFile",JSAP.STRING_PARSER,null,JSAP.NOT_REQUIRED,'i',"ispnConfigFile","Infinispan cache configuration file"),new FlaggedOption("kthWord",JSAP.INTEGER_PARSER,"15",JSAP.NOT_REQUIRED,'k',"kthWord","Kth most frequent word")});
+  JSAPResult config=jsap.parse(args);
+  if (!config.success() || jsap.messagePrinted()) {
+    Iterator<?> messageIterator=config.getErrorMessageIterator();
+    while (messageIterator.hasNext()) {
+      System.err.println(messageIterator.next());
+    }
+    System.err.println(jsap.getHelp());
+    return;
+  }
+  String nodeType=config.getString("nodeType");
+  boolean isMaster=nodeType != null && nodeType.equals("master");
+  String transportConfig=config.getString("configFile");
+  String ispnConfigFile=config.getString("ispnConfigFile");
+  int kthWord=config.getInt("kthWord");
+  System.out.println("Starting Infinispan node using transport config file " + transportConfig);
+  if (ispnConfigFile != null)   System.out.println("Starting Infinispan node using Infinispan config file " + ispnConfigFile);
+  String textFile=config.getString("textFile");
+  BufferedReader bufferedReader=null;
+  if (textFile != null) {
+    FileLookup fl=new FileLookup();
+    InputStream lookupFile=fl.lookupFile(textFile);
+    if (lookupFile == null) {
+      System.err.println("Intended input text file " + textFile + " not found. Make sure it is on classpath");
+      return;
+    }
+    bufferedReader=new BufferedReader(new FileReader(textFile));
+  }
+  CacheBuilder cb=new CacheBuilder(ispnConfigFile,transportConfig);
+  EmbeddedCacheManager cacheManager=cb.getCacheManager();
+  Cache<String,String> cache=cacheManager.getCache();
+  int chunkSize=10;
+  int chunkId=0;
+  if (bufferedReader != null) {
+    CharBuffer cbuf=CharBuffer.allocate(1024 * chunkSize);
+    while (bufferedReader.read(cbuf) >= 0) {
+      Buffer buffer=cbuf.flip();
+      String textChunk=buffer.toString();
+      cache.put(textFile + (chunkId++),textChunk);
+      cbuf.clear();
+    }
+  }
+  Transport transport=cache.getAdvancedCache().getRpcManager().getTransport();
+  int numServers=transport.getMembers().size();
+  if (isMaster) {
+    System.out.println("Member " + transport.getAddress() + " joined as master and its view is "+ transport.getMembers()+ ", starting MapReduceTask across "+ numServers+ " machines");
+    long start=System.currentTimeMillis();
+    MapReduceTask<String,String,String,Integer> t=new MapReduceTask<String,String,String,Integer>(cache);
+    t.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
+    Entry<String,Integer> kthMostFrequentEntry=t.execute(new KFrequentWordCollator(kthWord));
+    if (kthMostFrequentEntry != null) {
+      System.out.println("Kth(where k=" + kthWord + ") most frequent word is "+ kthMostFrequentEntry.getKey()+ " occurring "+ kthMostFrequentEntry.getValue()+ " times. Found in "+ (System.currentTimeMillis() - start)+ " ms");
+    }
+ else {
+      System.out.println("Kth(where k=" + kthWord + ") most frequent word is too large for this data set. Try smaller k");
+    }
+    cacheManager.stop();
+  }
+ else {
+    System.out.println("Member " + transport.getAddress() + " joined as slave and its view is "+ transport.getMembers()+ ", waiting....");
+  }
+}
