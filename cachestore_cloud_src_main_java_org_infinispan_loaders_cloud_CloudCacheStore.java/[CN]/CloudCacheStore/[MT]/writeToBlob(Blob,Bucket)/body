@@ -3,8 +3,12 @@
   for (  InternalCacheEntry e : bucket.getEntries().values()) {
     long t=e.getExpiryTime();
     if (t != -1) {
-      if (earliestExpiryTime == -1)       earliestExpiryTime=t;
- else       earliestExpiryTime=Math.min(earliestExpiryTime,t);
+      if (earliestExpiryTime == -1) {
+        earliestExpiryTime=t;
+      }
+ else {
+        earliestExpiryTime=Math.min(earliestExpiryTime,t);
+      }
     }
   }
   try {
@@ -13,7 +17,9 @@
       final byte[] compress=compress(payloadBuffer,blob);
       blob.setPayload(compress);
     }
- else     blob.setPayload(payloadBuffer);
+ else {
+      blob.setPayload(payloadBuffer);
+    }
     if (earliestExpiryTime > -1) {
       Map<String,String> md=Collections.singletonMap(EARLIEST_EXPIRY_TIME,String.valueOf(earliestExpiryTime));
       blob.getMetadata().setUserMetadata(md);
@@ -23,7 +29,9 @@
     throw new CacheLoaderException(e);
   }
 catch (  InterruptedException ie) {
-    if (log.isTraceEnabled())     log.trace("Interrupted while writing blob");
+    if (log.isTraceEnabled()) {
+      log.trace("Interrupted while writing blob");
+    }
     Thread.currentThread().interrupt();
   }
 }

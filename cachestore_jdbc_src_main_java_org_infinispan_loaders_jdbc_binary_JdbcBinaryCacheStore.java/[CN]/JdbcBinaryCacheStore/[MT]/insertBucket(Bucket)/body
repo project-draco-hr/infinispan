@@ -11,7 +11,7 @@
     ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),bucket);
     ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
     ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-    ps.setString(3,bucket.getBucketName());
+    ps.setString(3,bucket.getBucketIdAsString());
     int insertedRows=ps.executeUpdate();
     if (insertedRows != 1) {
       throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
@@ -22,7 +22,9 @@
     throw new CacheLoaderException(String.format("Sql failure while inserting bucket: %s",bucket),ex);
   }
 catch (  InterruptedException ie) {
-    if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to insert a bucket");
+    if (log.isTraceEnabled()) {
+      log.trace("Interrupted while marshalling to insert a bucket");
+    }
     Thread.currentThread().interrupt();
   }
  finally {

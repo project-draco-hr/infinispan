@@ -11,7 +11,7 @@
     ByteBuffer buffer=JdbcUtil.marshall(getMarshaller(),bucket);
     ps.setBinaryStream(1,buffer.getStream(),buffer.getLength());
     ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-    ps.setString(3,bucket.getBucketName());
+    ps.setString(3,bucket.getBucketIdAsString());
     int updatedRows=ps.executeUpdate();
     if (updatedRows != 1) {
       throw new CacheLoaderException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
@@ -22,7 +22,9 @@
     throw new CacheLoaderException(String.format("Sql failure while updating bucket: %s",bucket),e);
   }
 catch (  InterruptedException ie) {
-    if (log.isTraceEnabled())     log.trace("Interrupted while marshalling to update a bucket");
+    if (log.isTraceEnabled()) {
+      log.trace("Interrupted while marshalling to update a bucket");
+    }
     Thread.currentThread().interrupt();
   }
  finally {

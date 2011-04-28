@@ -1,5 +1,7 @@
 {
-  if (trace)   log.trace("purgeInternal()");
+  if (trace) {
+    log.trace("purgeInternal()");
+  }
   if (acquireGlobalLock(false)) {
     try {
       for (      final File bucketFile : root.listFiles()) {
@@ -8,10 +10,14 @@
             @Override public void run(){
               Bucket bucket;
               try {
-                if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())                 updateBucket(bucket);
+                if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
+                  updateBucket(bucket);
+                }
               }
  catch (              InterruptedException ie) {
-                if (log.isDebugEnabled())                 log.debug("Interrupted, so finish work.");
+                if (log.isDebugEnabled()) {
+                  log.debug("Interrupted, so finish work.");
+                }
               }
 catch (              CacheLoaderException e) {
                 log.problemsPurgingFile(bucketFile,e);
@@ -22,17 +28,23 @@ catch (              CacheLoaderException e) {
         }
  else {
           Bucket bucket;
-          if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())           updateBucket(bucket);
+          if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
+            updateBucket(bucket);
+          }
         }
       }
     }
  catch (    InterruptedException ie) {
-      if (log.isDebugEnabled())       log.debug("Interrupted, so stop loading and finish with purging.");
+      if (log.isDebugEnabled()) {
+        log.debug("Interrupted, so stop loading and finish with purging.");
+      }
       Thread.currentThread().interrupt();
     }
  finally {
       releaseGlobalLock(false);
-      if (trace)       log.trace("Exit purgeInternal()");
+      if (trace) {
+        log.trace("Exit purgeInternal()");
+      }
     }
   }
  else {
