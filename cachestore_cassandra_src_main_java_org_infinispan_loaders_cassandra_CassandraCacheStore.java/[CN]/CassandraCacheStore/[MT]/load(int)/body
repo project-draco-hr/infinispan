@@ -4,14 +4,14 @@
     cassandraClient=dataSource.getConnection();
     Set<InternalCacheEntry> s=new HashSet<InternalCacheEntry>();
     SlicePredicate slicePredicate=new SlicePredicate();
-    slicePredicate.setSlice_range(new SliceRange(entryColumnPath.getColumn(),emptyByteArray,false,1));
+    slicePredicate.setSlice_range(new SliceRange(ByteBuffer.wrap(entryColumnPath.getColumn()),ByteBufferUtil.EMPTY_BYTE_BUFFER,false,1));
     String startKey="";
     int sliceSize=Math.min(SLICE_SIZE,numEntries);
     for (boolean complete=false; !complete; ) {
       KeyRange keyRange=new KeyRange(sliceSize);
       keyRange.setStart_token(startKey);
       keyRange.setEnd_token("");
-      List<KeySlice> keySlices=cassandraClient.get_range_slices(config.keySpace,entryColumnParent,slicePredicate,keyRange,readConsistencyLevel);
+      List<KeySlice> keySlices=cassandraClient.get_range_slices(entryColumnParent,slicePredicate,keyRange,readConsistencyLevel);
       for (      KeySlice keySlice : keySlices) {
         Object key=unhashKey(keySlice.getKey());
         if (key == null)         continue;
@@ -37,7 +37,7 @@
           complete=true;
         }
  else {
-          startKey=keySlices.get(keySlices.size() - 1).getKey();
+          startKey=new String(keySlices.get(keySlices.size() - 1).getKey(),UTF8Charset);
         }
       }
     }

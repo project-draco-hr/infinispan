@@ -2,7 +2,7 @@
   Cassandra.Client cassandraClient=null;
   try {
     cassandraClient=dataSource.getConnection();
-    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    Map<ByteBuffer,Map<String,List<Mutation>>> mutationMap=new HashMap<ByteBuffer,Map<String,List<Mutation>>>();
     for (    Modification m : mods) {
 switch (m.getType()) {
 case STORE:
@@ -12,13 +12,13 @@ case CLEAR:
     clear();
   break;
 case REMOVE:
-remove0(hashKey(((Remove)m).getKey()),mutationMap);
+remove0(ByteBufferUtil.bytes(hashKey(((Remove)m).getKey())),mutationMap);
 break;
 default :
 throw new AssertionError();
 }
 }
-cassandraClient.batch_mutate(config.keySpace,mutationMap,writeConsistencyLevel);
+cassandraClient.batch_mutate(mutationMap,writeConsistencyLevel);
 }
  catch (Exception e) {
 throw new CacheLoaderException(e);

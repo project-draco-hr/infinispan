@@ -4,21 +4,21 @@
   try {
     cassandraClient=dataSource.getConnection();
     SlicePredicate predicate=new SlicePredicate();
-    predicate.setSlice_range(new SliceRange(emptyByteArray,longToBytes(System.currentTimeMillis()),false,SLICE_SIZE));
-    Map<String,Map<String,List<Mutation>>> mutationMap=new HashMap<String,Map<String,List<Mutation>>>();
+    predicate.setSlice_range(new SliceRange(ByteBufferUtil.EMPTY_BYTE_BUFFER,ByteBufferUtil.bytes(System.currentTimeMillis()),false,SLICE_SIZE));
+    Map<ByteBuffer,Map<String,List<Mutation>>> mutationMap=new HashMap<ByteBuffer,Map<String,List<Mutation>>>();
     for (boolean complete=false; !complete; ) {
-      List<ColumnOrSuperColumn> slice=cassandraClient.get_slice(config.keySpace,expirationKey,expirationColumnParent,predicate,readConsistencyLevel);
+      List<ColumnOrSuperColumn> slice=cassandraClient.get_slice(expirationKey,expirationColumnParent,predicate,readConsistencyLevel);
       complete=slice.size() < SLICE_SIZE;
       for (      ColumnOrSuperColumn crumb : slice) {
         SuperColumn scol=crumb.getSuper_column();
         for (Iterator<Column> i=scol.getColumnsIterator(); i.hasNext(); ) {
           Column col=i.next();
-          remove0(new String(col.getName(),"UTF-8"),mutationMap);
+          remove0(ByteBuffer.wrap(col.getName()),mutationMap);
         }
-        addMutation(mutationMap,expirationKey,config.expirationColumnFamily,scol.getName(),null,null);
+        addMutation(mutationMap,expirationKey,config.expirationColumnFamily,ByteBuffer.wrap(scol.getName()),null,null);
       }
     }
-    cassandraClient.batch_mutate(config.keySpace,mutationMap,writeConsistencyLevel);
+    cassandraClient.batch_mutate(mutationMap,writeConsistencyLevel);
   }
  catch (  Exception e) {
     throw new CacheLoaderException(e);

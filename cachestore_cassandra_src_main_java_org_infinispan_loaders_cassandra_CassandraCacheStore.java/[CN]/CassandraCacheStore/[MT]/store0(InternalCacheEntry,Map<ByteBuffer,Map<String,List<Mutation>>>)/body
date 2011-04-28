@@ -1,0 +1,15 @@
+{
+  Object key=entry.getKey();
+  if (trace)   log.tracef("store(\"%s\") ",key);
+  String cassandraKey=hashKey(key);
+  try {
+    addMutation(mutationMap,ByteBufferUtil.bytes(cassandraKey),config.entryColumnFamily,ByteBuffer.wrap(entryColumnPath.getColumn()),ByteBuffer.wrap(marshall(entry)));
+    if (entry.canExpire()) {
+      addExpiryEntry(cassandraKey,entry.getExpiryTime(),mutationMap);
+    }
+  }
+ catch (  InterruptedException ie) {
+    if (trace)     log.trace("Interrupted while trying to marshall entry");
+    Thread.currentThread().interrupt();
+  }
+}

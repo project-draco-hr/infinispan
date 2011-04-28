@@ -3,11 +3,11 @@
     dataSource=new DataSource(config.getPoolProperties());
     readConsistencyLevel=ConsistencyLevel.valueOf(config.readConsistencyLevel);
     writeConsistencyLevel=ConsistencyLevel.valueOf(config.writeConsistencyLevel);
-    entryColumnPath=new ColumnPath(config.entryColumnFamily).setColumn(ENTRY_COLUMN_NAME.getBytes("UTF-8"));
+    entryColumnPath=new ColumnPath(config.entryColumnFamily).setColumn(ENTRY_COLUMN_NAME.getBytes(UTF8Charset));
     entryColumnParent=new ColumnParent(config.entryColumnFamily);
     entryKeyPrefix=ENTRY_KEY_PREFIX + (config.isSharedKeyspace() ? cacheName + "_" : "");
     expirationColumnParent=new ColumnParent(config.expirationColumnFamily);
-    expirationKey=EXPIRATION_KEY + (config.isSharedKeyspace() ? "_" + cacheName : "");
+    expirationKey=ByteBufferUtil.bytes(EXPIRATION_KEY + (config.isSharedKeyspace() ? "_" + cacheName : ""));
     keyMapper=(TwoWayKey2StringMapper)Util.getInstance(config.getKeyMapper());
   }
  catch (  Exception e) {
