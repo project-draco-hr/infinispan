@@ -1,0 +1,14 @@
+{
+  final MBeanServerLookup expectedMBeanServerLookup=new MBeanServerLookup(){
+    @Override public MBeanServer getMBeanServer(    final Properties properties){
+      return null;
+    }
+  }
+;
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  objectUnderTest.setMBeanServerLookupClass(expectedMBeanServerLookup.getClass().getName());
+  objectUnderTest.afterPropertiesSet();
+  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
+  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",expectedMBeanServerLookup.getClass().getName(),embeddedCacheManager.getGlobalConfiguration().getMBeanServerLookup());
+  embeddedCacheManager.stop();
+}

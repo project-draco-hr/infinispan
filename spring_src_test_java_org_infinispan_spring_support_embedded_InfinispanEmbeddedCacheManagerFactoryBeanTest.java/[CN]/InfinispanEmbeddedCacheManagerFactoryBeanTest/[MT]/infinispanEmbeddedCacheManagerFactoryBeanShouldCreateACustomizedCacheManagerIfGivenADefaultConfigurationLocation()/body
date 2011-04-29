@@ -1,0 +1,12 @@
+{
+  final Resource infinispanConfig=new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,getClass());
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  objectUnderTest.setConfigurationFileLocation(infinispanConfig);
+  objectUnderTest.afterPropertiesSet();
+  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
+  assertNotNull("getObject() should have returned a valid EmbeddedCacheManager, configured using the configuration file " + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",embeddedCacheManager);
+  final Cache<Object,Object> cacheDefinedInCustomConfiguration=embeddedCacheManager.getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
+  final Configuration configuration=cacheDefinedInCustomConfiguration.getConfiguration();
+  assertEquals("The cache named [" + CACHE_NAME_FROM_CONFIGURATION_FILE + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("+ CACHE_NAME_FROM_CONFIGURATION_FILE+ ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "+ "the configuration file when instantiating EmbeddedCacheManager.",CacheMode.REPL_ASYNC,configuration.getCacheMode());
+  embeddedCacheManager.stop();
+}

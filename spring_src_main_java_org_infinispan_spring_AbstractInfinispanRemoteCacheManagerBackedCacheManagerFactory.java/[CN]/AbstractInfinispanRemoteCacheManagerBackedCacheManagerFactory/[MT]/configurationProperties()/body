@@ -1,0 +1,20 @@
+{
+  final Properties answer;
+  if (this.configurationProperties != null) {
+    answer=this.configurationPropertiesOverrides.override(this.configurationProperties);
+    this.logger.debug("Using user-defined properties [" + this.configurationProperties + "] for configuring RemoteCacheManager");
+  }
+ else   if (this.configurationPropertiesFileLocation != null) {
+    answer=loadPropertiesFromFile(this.configurationPropertiesFileLocation);
+    this.logger.debug("Loading properties from file [" + this.configurationProperties + "] for configuring RemoteCacheManager");
+  }
+ else   if (!this.configurationPropertiesOverrides.isEmpty()) {
+    answer=this.configurationPropertiesOverrides.override(new Properties());
+    this.logger.debug("Using explicitly set configuration settings [" + answer + "] for configuring RemoteCacheManager");
+  }
+ else {
+    this.logger.debug("No configuration properties. RemoteCacheManager will use default configuration.");
+    answer=new RemoteCacheManager().getProperties();
+  }
+  return answer;
+}
