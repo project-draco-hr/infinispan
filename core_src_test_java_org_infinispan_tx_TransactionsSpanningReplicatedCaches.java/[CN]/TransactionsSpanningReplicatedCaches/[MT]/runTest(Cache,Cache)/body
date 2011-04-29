@@ -1,0 +1,17 @@
+{
+  assertFalse(cache1.containsKey("a"));
+  assertFalse(cache2.containsKey("b"));
+  TransactionManager tm=TestingUtil.getTransactionManager(cache1);
+  tm.begin();
+  cache1.put("a","value1");
+  cache2.put("b","value2");
+  tm.commit();
+  assertEquals("value1",cache1.get("a"));
+  assertEquals("value2",cache2.get("b"));
+  tm.begin();
+  cache1.remove("a");
+  cache2.remove("b");
+  tm.commit();
+  assertFalse(cache1.containsKey("a"));
+  assertFalse(cache2.containsKey("b"));
+}
