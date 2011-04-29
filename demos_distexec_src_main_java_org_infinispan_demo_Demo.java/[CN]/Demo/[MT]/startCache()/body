@@ -1,0 +1,11 @@
+{
+  CacheBuilder cb=new CacheBuilder(cfgFile);
+  EmbeddedCacheManager cacheManager=cb.getCacheManager();
+  Configuration cacheCfg=cacheManager.getDefaultConfiguration().clone().fluent().clustering().l1().disable().mode(Configuration.CacheMode.DIST_SYNC).hash().numOwners(1).build();
+  cacheManager.defineConfiguration("wordcount",cacheCfg);
+  Cache<String,String> cache=cacheManager.getCache();
+  Transport transport=cache.getAdvancedCache().getRpcManager().getTransport();
+  if (isMaster)   System.out.printf("Node %s joined as master. View is %s.%n",transport.getAddress(),transport.getMembers());
+ else   System.out.printf("Node %s joined as slave. View is %s.%n",transport.getAddress(),transport.getMembers());
+  return cache;
+}

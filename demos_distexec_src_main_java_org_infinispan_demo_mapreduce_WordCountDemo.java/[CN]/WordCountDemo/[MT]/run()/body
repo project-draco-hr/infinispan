@@ -1,0 +1,22 @@
+{
+  Cache<String,String> cache=startCache();
+  if (textFile != null)   loadData(cache);
+  try {
+    if (isMaster) {
+      long start=System.currentTimeMillis();
+      MapReduceTask<String,String,String,Integer> mapReduceTask=new MapReduceTask<String,String,String,Integer>(cache);
+      List<Entry<String,Integer>> topList=mapReduceTask.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer()).execute(new WordCountCollator(numPopularWords));
+      System.out.printf(" ---- RESULTS: Top %s words in %s ---- %n%n",numPopularWords,textFile);
+      int z=0;
+      for (      Entry<String,Integer> e : topList)       System.out.printf("  %s) %s [ %,d occurences ]%n",++z,e.getKey(),e.getValue());
+      System.out.printf("%nCompleted in %s%n%n",Util.prettyPrintTime(System.currentTimeMillis() - start));
+    }
+ else {
+      System.out.println("Slave node waiting for Map/Reduce tasks.  Ctrl-C to exit.");
+      LockSupport.park();
+    }
+  }
+  finally {
+    cache.getCacheManager().stop();
+  }
+}
