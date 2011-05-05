@@ -1,22 +1,35 @@
 {
-  Cache defaultCache=null;
-  for (  Map.Entry<String,CacheWrapper> entry : caches.entrySet()) {
-    if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
-      defaultCache=entry.getValue().cache;
-    }
+  if (!stopping) {
+synchronized (this) {
+      if (!stopping) {
+        stopping=true;
+        Cache defaultCache=null;
+        for (        Map.Entry<String,CacheWrapper> entry : caches.entrySet()) {
+          if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
+            defaultCache=entry.getValue().cache;
+          }
  else {
-      Cache c=entry.getValue().cache;
-      if (c != null) {
-        unregisterCacheMBean(c);
-        c.stop();
+            Cache c=entry.getValue().cache;
+            if (c != null) {
+              unregisterCacheMBean(c);
+              c.stop();
+            }
+          }
+        }
+        if (defaultCache != null) {
+          unregisterCacheMBean(defaultCache);
+          defaultCache.stop();
+        }
+        globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+        globalComponentRegistry.stop();
+        reflectionCache.stop();
+      }
+ else {
+        if (log.isTraceEnabled())         log.trace("Ignore call to stop as the cache manager is stopping");
       }
     }
   }
-  if (defaultCache != null) {
-    unregisterCacheMBean(defaultCache);
-    defaultCache.stop();
+ else {
+    if (log.isTraceEnabled())     log.trace("Ignore call to stop as the cache manager is stopping");
   }
-  globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-  globalComponentRegistry.stop();
-  reflectionCache.stop();
 }
