@@ -1,0 +1,42 @@
+{
+  String[] included=new String[]{PERSON,PERSON_EXT};
+  ClassLoader tccl=Thread.currentThread().getContextClassLoader();
+  ClassLoader cherryPickCl=new CherryPickClassLoader(included,null,tccl);
+  Thread.currentThread().setContextClassLoader(cherryPickCl);
+  ClassPool pool=ClassPool.getDefault();
+  CtClass ct=pool.get(PERSON);
+  try {
+    ct.addField(CtField.make("public String name;",ct));
+    Class clazz=ct.toClass();
+    if (isNewExternalizer) {
+      CtClass extCt=pool.get(PERSON_EXT);
+      CtMethod writeObjMeth=extCt.getMethod("writeObject","(Ljava/io/ObjectOutput;Ljava/lang/Object;)V");
+      writeObjMeth.setBody("{\n" + "$1.writeInt(((" + PERSON + ") $2).age);\n"+ "$1.writeObject((("+ PERSON+ ") $2).name);\n"+ "}\n");
+      CtMethod readObjMeth=extCt.getMethod("readObject","(Ljava/io/ObjectInput;)Ljava/lang/Object;");
+      readObjMeth.setBody("{\n" + PERSON + " o = new "+ PERSON+ "();\n"+ "o.age = $1.readInt();\n"+ "try {\n"+ "   o.name = (String) $1.readObject();\n"+ "} catch(java.io.OptionalDataException e) {}\n"+ "return o;\n"+ "}\n");
+      extCt.toClass();
+    }
+    Object oldFromWire=unmarshall(bytes,method);
+    Field age=clazz.getDeclaredField("age");
+    assertEquals(23,age.get(oldFromWire));
+    Field name=clazz.getDeclaredField("name");
+    assertNull(name.get(oldFromWire));
+    if (isNewExternalizer) {
+      Object newObj=clazz.newInstance();
+      age=clazz.getDeclaredField("age");
+      age.set(newObj,34);
+      name=clazz.getDeclaredField("name");
+      name.set(newObj,"Galder");
+      bytes=marshall(newObj,method);
+      Object newFromWire=unmarshall(bytes,method);
+      age=clazz.getDeclaredField("age");
+      assertEquals(34,age.get(newFromWire));
+      name=clazz.getDeclaredField("name");
+      assertEquals("Galder",name.get(newFromWire));
+    }
+  }
+  finally {
+    ct.detach();
+    Thread.currentThread().setContextClassLoader(tccl);
+  }
+}

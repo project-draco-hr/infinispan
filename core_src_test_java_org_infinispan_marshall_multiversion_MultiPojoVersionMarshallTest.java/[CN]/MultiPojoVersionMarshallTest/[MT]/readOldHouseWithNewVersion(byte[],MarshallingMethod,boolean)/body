@@ -1,0 +1,36 @@
+{
+  String[] included=new String[]{HOUSE,HOUSE_EXT};
+  ClassLoader tccl=Thread.currentThread().getContextClassLoader();
+  ClassLoader cherryPickCl=new CherryPickClassLoader(included,null,tccl);
+  Thread.currentThread().setContextClassLoader(cherryPickCl);
+  ClassPool pool=ClassPool.getDefault();
+  CtClass ct=pool.get(HOUSE);
+  try {
+    ct.removeField(ct.getField("number"));
+    Class clazz=ct.toClass();
+    if (isNewExternalizer) {
+      CtClass extCt=pool.get(HOUSE_EXT);
+      CtMethod writeObjMeth=extCt.getMethod("writeObject","(Ljava/io/ObjectOutput;Ljava/lang/Object;)V");
+      writeObjMeth.setBody("{\n" + "$1.writeInt(0);\n" + "$1.writeObject(((" + HOUSE + ") $2).street);\n"+ "}\n");
+      CtMethod readObjMeth=extCt.getMethod("readObject","(Ljava/io/ObjectInput;)Ljava/lang/Object;");
+      readObjMeth.setBody("{\n" + HOUSE + " o = new "+ HOUSE+ "();\n"+ "try {\n"+ "   $1.readInt();\n"+ "} catch(java.io.OptionalDataException e) {}\n"+ "o.street = (String) $1.readObject();\n"+ "return o;\n"+ "}\n");
+      extCt.toClass();
+    }
+    Object oldFromWire=unmarshall(bytes,method);
+    Field street=clazz.getDeclaredField("street");
+    assertEquals("Rue du Seyon",street.get(oldFromWire));
+    if (isNewExternalizer) {
+      Object newObj=clazz.newInstance();
+      street=clazz.getDeclaredField("street");
+      street.set(newObj,"Fir Close");
+      bytes=marshall(newObj,method);
+      Object newFromWire=unmarshall(bytes,method);
+      street=clazz.getDeclaredField("street");
+      assertEquals("Fir Close",street.get(newFromWire));
+    }
+  }
+  finally {
+    ct.detach();
+    Thread.currentThread().setContextClassLoader(tccl);
+  }
+}

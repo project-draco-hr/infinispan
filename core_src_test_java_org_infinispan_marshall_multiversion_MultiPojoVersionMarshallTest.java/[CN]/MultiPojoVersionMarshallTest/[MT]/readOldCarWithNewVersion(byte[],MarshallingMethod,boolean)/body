@@ -1,0 +1,42 @@
+{
+  String[] included=new String[]{CAR,CAR_EXT};
+  ClassLoader tccl=Thread.currentThread().getContextClassLoader();
+  ClassLoader cherryPickCl=new CherryPickClassLoader(included,null,tccl);
+  Thread.currentThread().setContextClassLoader(cherryPickCl);
+  ClassPool pool=ClassPool.getDefault();
+  CtClass carCt=pool.get(CAR);
+  try {
+    carCt.addField(CtField.make("public int year;",carCt));
+    Class carClass=carCt.toClass();
+    if (isNewExternalizer) {
+      CtClass carExtCt=pool.get(CAR_EXT);
+      CtMethod writeObjMeth=carExtCt.getMethod("writeObject","(Ljava/io/ObjectOutput;Ljava/lang/Object;)V");
+      writeObjMeth.setBody("{\n" + "$1.writeObject(((" + CAR + ") $2).plateNumber);\n"+ "$1.writeInt((("+ CAR+ ") $2).year);\n"+ "}\n");
+      CtMethod readObjMeth=carExtCt.getMethod("readObject","(Ljava/io/ObjectInput;)Ljava/lang/Object;");
+      readObjMeth.setBody("{\n" + CAR + " o = new "+ CAR+ "();\n"+ "o.plateNumber = (String) $1.readObject();\n"+ "int b1 = $1.read();\n"+ "System.out.println(b1);\n"+ "if (b1 != -1) {\n"+ "   byte b2 = $1.readByte();\n"+ "   byte b3 = $1.readByte();\n"+ "   byte b4 = $1.readByte();\n"+ "   o.year = ((0xFF & b1) << 24) | ((0xFF & b2) << 16) |\n"+ "            ((0xFF & b3) << 8) | (0xFF & b4);\n"+ "}\n"+ "return o;\n"+ "}\n");
+      carExtCt.toClass();
+    }
+    Object oldCarFromWire=unmarshall(oldCarbytes,method);
+    Field plateField=carClass.getDeclaredField("plateNumber");
+    assertEquals("E 1660",plateField.get(oldCarFromWire));
+    Field yearField=carClass.getDeclaredField("year");
+    assertEquals(0,yearField.get(oldCarFromWire));
+    if (isNewExternalizer) {
+      Object newCar=carClass.newInstance();
+      plateField=carClass.getDeclaredField("plateNumber");
+      plateField.set(newCar,"CH 8271");
+      yearField=carClass.getDeclaredField("year");
+      yearField.set(newCar,2001);
+      byte[] bytes=marshall(newCar,method);
+      Object readNewCar=unmarshall(bytes,method);
+      plateField=carClass.getDeclaredField("plateNumber");
+      assertEquals("CH 8271",plateField.get(readNewCar));
+      yearField=carClass.getDeclaredField("year");
+      assertEquals(2001,yearField.get(readNewCar));
+    }
+  }
+  finally {
+    carCt.detach();
+    Thread.currentThread().setContextClassLoader(tccl);
+  }
+}
