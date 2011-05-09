@@ -1,14 +1,15 @@
 {
-  List<Address> chosen=new ArrayList<Address>();
-  members.remove(rpc.getAddress());
+  if (members == null || members.isEmpty())   throw new IllegalArgumentException("Invalid member list " + members);
   if (members.size() < numNeeded) {
     log.cannotSelectRandomMembers(numNeeded,members);
     numNeeded=members.size();
   }
+  List<Address> membersCopy=new ArrayList<Address>(members);
+  List<Address> chosen=new ArrayList<Address>();
   Random r=new Random();
-  while (members != null && !members.isEmpty() && numNeeded >= chosen.size()) {
-    int count=members.size();
-    Address address=members.remove(r.nextInt(count));
+  while (!membersCopy.isEmpty() && numNeeded >= chosen.size()) {
+    int count=membersCopy.size();
+    Address address=membersCopy.remove(r.nextInt(count));
     chosen.add(address);
   }
   return chosen;
