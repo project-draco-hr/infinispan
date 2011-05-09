@@ -1,0 +1,13 @@
+{
+  this.log.infof("Storing book [%s]",bookToStore);
+  if (bookToStore.getId() == null) {
+    final Number newBookId=this.bookInsert.executeAndReturnKey(createParameterSourceFor(bookToStore));
+    bookToStore.setId(newBookId.intValue());
+    this.log.infof("Book [%s] persisted for the first time",bookToStore);
+  }
+ else {
+    this.jdbcTemplate.update("UPDATE books SET isbn = :isbn, author = :author, title = :title WHERE id = :id",createParameterSourceFor(bookToStore));
+    this.log.infof("Book [%s] updated",bookToStore);
+  }
+  return bookToStore;
+}
