@@ -11,4 +11,12 @@
     }
   }
   channel.setOpt(Channel.LOCAL,false);
+  if (configuration.hasTopologyInfo()) {
+    ((JChannel)channel).setAddressGenerator(new AddressGenerator(){
+      public org.jgroups.Address generateAddress(){
+        return TopologyUUID.randomUUID(channel.getName(),configuration.getSiteId(),configuration.getRackId(),configuration.getMachineId());
+      }
+    }
+);
+  }
 }

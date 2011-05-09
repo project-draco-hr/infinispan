@@ -8,7 +8,7 @@
   List<Address> result=new ArrayList<Address>();
   result.add(getRealAddress(processSequence.remove(0)));
   int level=0;
-  while (result.size() < numOwners) {
+  while (result.size() < numOwners && level <= 3) {
     Iterator<Address> addrIt=processSequence.iterator();
     while (addrIt.hasNext()) {
       Address a=addrIt.next();
@@ -16,7 +16,7 @@
 switch (level) {
 case 0:
 {
-          if (!topologyInfo.isSameSite(realAddress,ra)) {
+          if (!isSameSite(realAddress,ra)) {
             if (trace)             log.tracef("Owner (different site) identified as %s",a);
             result.add(ra);
             addrIt.remove();
@@ -25,7 +25,7 @@ case 0:
         }
 case 1:
 {
-        if (!topologyInfo.isSameRack(realAddress,ra)) {
+        if (!isSameRack(realAddress,ra)) {
           if (trace)           log.tracef("Owner (different rack) identified as %s",a);
           result.add(ra);
           addrIt.remove();
@@ -34,7 +34,7 @@ case 1:
       }
 case 2:
 {
-      if (!topologyInfo.isSameMachine(realAddress,ra)) {
+      if (!isSameMachine(realAddress,ra)) {
         if (trace)         log.tracef("Owner (different machine) identified as %s",a);
         result.add(ra);
         addrIt.remove();
@@ -53,6 +53,5 @@ if (result.size() == numOwners) break;
 }
 level++;
 }
-if (result.size() != numOwners) throw new AssertionError("This should not happen!");
 return result;
 }

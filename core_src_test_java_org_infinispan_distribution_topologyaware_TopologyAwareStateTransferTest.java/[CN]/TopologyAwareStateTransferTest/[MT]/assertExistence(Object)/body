@@ -1,18 +1,17 @@
 {
   ConsistentHash hash=cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash();
   final List<Address> addresses=hash.locate(key,2);
-  System.out.println(key + " should be present on = " + addresses);
-  log.info(key + " should be present on = " + addresses);
+  log.debug(key + " should be present on = " + addresses);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       int count=0;
       for (      Cache c : caches()) {
         if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-          System.out.println("It is here = " + address(c));
+          log.debug("It is here = " + address(c));
           count++;
         }
       }
-      System.out.println("count = " + count);
+      log.debug("count = " + count);
       return count == 2;
     }
   }
@@ -22,13 +21,13 @@
       for (      Cache c : caches()) {
         if (addresses.contains(address(c))) {
           if (!c.getAdvancedCache().getDataContainer().containsKey(key)) {
-            System.out.println(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
+            log.debug(key + " not present on " + c.getAdvancedCache().getRpcManager().getAddress());
             return false;
           }
         }
  else {
           if (c.getAdvancedCache().getDataContainer().containsKey(key)) {
-            System.out.println(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
+            log.debug(key + " present on " + c.getAdvancedCache().getRpcManager().getAddress());
             return false;
           }
         }

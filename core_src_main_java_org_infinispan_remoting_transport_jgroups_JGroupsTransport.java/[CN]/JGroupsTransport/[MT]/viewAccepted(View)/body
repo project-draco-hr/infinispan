@@ -1,14 +1,17 @@
 {
   Vector<org.jgroups.Address> newMembers=newView.getMembers();
   List<Address> oldMembers=null;
-  Notify notify=null;
-  if (newView instanceof MergeView) {
-    if (log.isInfoEnabled())     log.receivedMergedView(newView);
-    if (notifier != null)     notify=new NotifyMerge();
-  }
+  boolean hasNotifier=notifier != null;
+  Notify n=null;
+  if (hasNotifier) {
+    if (newView instanceof MergeView) {
+      if (log.isInfoEnabled())       if (log.isInfoEnabled())       log.receivedMergedView(newView);
+      n=new NotifyMerge();
+    }
  else {
-    if (log.isInfoEnabled())     log.receivedClusterView(newView);
-    if (notifier != null)     notify=new NotifyViewChange();
+      if (log.isInfoEnabled())       if (log.isInfoEnabled())       log.receivedClusterView(newView);
+      n=new NotifyViewChange();
+    }
   }
 synchronized (membersListLock) {
     boolean needNotification=false;
@@ -18,7 +21,7 @@ synchronized (membersListLock) {
       needNotification=true;
     }
     coordinator=(members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
-    if (needNotification && notify != null)     notify.emitNotification(oldMembers,newView);
+    if (needNotification && n != null)     n.emitNotification(oldMembers,newView);
     membersListLock.notifyAll();
   }
 }
