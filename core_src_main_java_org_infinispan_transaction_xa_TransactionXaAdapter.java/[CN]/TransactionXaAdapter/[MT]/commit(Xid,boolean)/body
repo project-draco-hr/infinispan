@@ -2,6 +2,25 @@
   Xid xid=convertXid(externalXid);
   LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
   if (trace)   log.tracef("Committing transaction %s. One phase? %s",localTransaction.getGlobalTransaction(),isOnePhase);
-  txCoordinator.commit(localTransaction,isOnePhase);
+  if (isOnePhase && !configuration.isOnePhaseCommit()) {
+    try {
+      txCoordinator.prepare(localTransaction);
+      txCoordinator.commit(localTransaction,false);
+    }
+ catch (    XAException e) {
+      if (trace)       log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.",localTransaction);
+      try {
+        rollback(xid);
+        throw new XAException(XAException.XA_HEURRB);
+      }
+ catch (      XAException e1) {
+        log.couldNotRollbackPrepared1PcTransaction(localTransaction,e1);
+        throw new XAException(XAException.XAER_RMERR);
+      }
+    }
+  }
+ else {
+    txCoordinator.commit(localTransaction,configuration.isOnePhaseCommit());
+  }
   forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction);
 }

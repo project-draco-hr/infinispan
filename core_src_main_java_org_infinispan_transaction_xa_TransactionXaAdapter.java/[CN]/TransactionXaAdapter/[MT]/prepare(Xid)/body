@@ -1,5 +1,11 @@
 {
   Xid xid=convertXid(externalXid);
   LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
-  return txCoordinator.prepare(localTransaction);
+  if (!configuration.isOnePhaseCommit()) {
+    return txCoordinator.prepare(localTransaction);
+  }
+ else {
+    if (trace)     log.tracef("Skipping prepare as we're configured to run 1PC. Xid=%s",externalXid);
+    return XA_OK;
+  }
 }
