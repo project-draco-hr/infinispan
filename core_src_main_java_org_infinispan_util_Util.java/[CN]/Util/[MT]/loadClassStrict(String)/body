@@ -1,6 +1,7 @@
 {
   ClassLoader[] cls=new ClassLoader[]{Thread.currentThread().getContextClassLoader(),Util.class.getClassLoader(),ClassLoader.getSystemClassLoader()};
   ClassNotFoundException e=null;
+  NoClassDefFoundError ne=null;
   for (  ClassLoader cl : cls) {
     if (cl == null)     continue;
     try {
@@ -9,6 +10,11 @@
  catch (    ClassNotFoundException ce) {
       e=ce;
     }
+catch (    NoClassDefFoundError ce) {
+      ne=ce;
+    }
   }
-  throw e != null ? e : new ClassNotFoundException(classname);
+  if (e != null)   throw e;
+ else   if (ne != null)   throw new ClassNotFoundException(classname,ne);
+ else   throw new ClassNotFoundException(classname);
 }
