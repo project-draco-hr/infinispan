@@ -3,13 +3,13 @@
   CommandInterceptor first=invocationBatching ? createInterceptor(BatchingInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
   InterceptorChain interceptorChain=new InterceptorChain(first);
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
-  if (configuration.isStoreAsBinary() || configuration.isUseAsyncMarshalling() || configuration.isUseReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
+  if (isUsingMarshalledValues(configuration) || configuration.isUseAsyncMarshalling() || configuration.isUseReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
   if (invocationBatching)   interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
   if (configuration.getCacheMode().isDistributed())   interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
  else   interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
   if (configuration.isUseEagerLocking())   interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
-  if (configuration.isStoreAsBinary())   interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
+  if (isUsingMarshalledValues(configuration))   interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
   interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
   if (configuration.isEnableDeadlockDetection()) {
     interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));

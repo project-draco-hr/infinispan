@@ -1,11 +1,16 @@
 {
   Collection values=(Collection)invokeNextInterceptor(ctx,command);
-  Collection copy=new ArrayList();
-  for (  Object value : values) {
-    if (value instanceof MarshalledValue) {
-      value=((MarshalledValue)value).get();
+  if (wrapValues) {
+    Collection copy=new ArrayList();
+    for (    Object value : values) {
+      if (value instanceof MarshalledValue) {
+        value=((MarshalledValue)value).get();
+      }
+      copy.add(value);
     }
-    copy.add(value);
+    return Immutables.immutableCollectionWrap(copy);
   }
-  return Immutables.immutableCollectionWrap(copy);
+ else {
+    return Immutables.immutableCollectionWrap(values);
+  }
 }
