@@ -2,16 +2,30 @@
   if (this == o)   return true;
   if (o == null || getClass() != o.getClass())   return false;
   MarshalledValue that=(MarshalledValue)o;
-  if (raw != null && that.raw != null)   return Arrays.equals(raw,that.raw);
-  if (instance != null && that.instance != null)   return instance.equals(that.instance);
-  if (equalityPreferenceForInstance && that.equalityPreferenceForInstance) {
-    if (instance == null)     deserialize();
-    if (that.instance == null)     that.deserialize();
-    return instance.equals(that.instance);
+  final boolean preferInstanceEquality=equalityPreferenceForInstance && that.equalityPreferenceForInstance;
+  Object thisInstance=this.instance;
+  Object thatInstance=that.instance;
+  if (preferInstanceEquality && thisInstance != null && thatInstance != null)   return thisInstance.equals(thatInstance);
+  byte[] thisRaw=this.raw;
+  byte[] thatRaw=that.raw;
+  if (thisRaw != null && thatRaw != null)   return Arrays.equals(thisRaw,thatRaw);
+  if (thisInstance != null && thatInstance != null)   return thisInstance.equals(thatInstance);
+  if (preferInstanceEquality) {
+    if (thisInstance == null) {
+      thisInstance=this.deserialize();
+    }
+    if (thatInstance == null) {
+      thatInstance=that.deserialize();
+    }
+    return thisInstance.equals(thatInstance);
   }
  else {
-    if (raw == null)     serialize();
-    if (that.raw == null)     that.serialize();
-    return Arrays.equals(raw,that.raw);
+    if (thisRaw == null) {
+      thisRaw=this.serialize();
+    }
+    if (thatRaw == null) {
+      thatRaw=that.serialize();
+    }
+    return Arrays.equals(thisRaw,thatRaw);
   }
 }
