@@ -1,10 +1,15 @@
 {
   Map<Object,InternalCacheValue> retry=withRetry ? new HashMap<Object,InternalCacheValue>() : null;
+  Address myself=self;
+  if (myself == null) {
+    myself=rpcManager.getTransport().getAddress();
+    self=myself;
+  }
   for (  Map.Entry<Object,InternalCacheValue> e : state.entrySet()) {
-    if (consistentHash.locate(e.getKey(),configuration.getNumOwners()).contains(self)) {
+    if (consistentHash.locate(e.getKey(),configuration.getNumOwners()).contains(myself)) {
       InternalCacheValue v=e.getValue();
       InvocationContext ctx=icc.createInvocationContext();
-      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING);
+      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
       try {
         PutKeyValueCommand put=cf.buildPutKeyValueCommand(e.getKey(),v.getValue(),v.getLifespan(),v.getMaxIdle(),ctx.getFlags());
         interceptorChain.invoke(ctx,put);

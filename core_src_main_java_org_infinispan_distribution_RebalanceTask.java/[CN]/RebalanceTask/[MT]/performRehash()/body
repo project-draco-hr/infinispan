@@ -1,0 +1,81 @@
+{
+  long start=System.currentTimeMillis();
+  if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
+  ConsistentHash chOld, chNew;
+  try {
+    chOld=distributionManager.getConsistentHash();
+    List<Address> newMembers=rpcManager.getTransport().getMembers();
+    chNew=createConsistentHash(configuration,newMembers);
+    distributionManager.setConsistentHash(chNew);
+    if (log.isTraceEnabled()) {
+      log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
+    }
+    if (configuration.isRehashEnabled()) {
+      List<Object> removedKeys=new ArrayList<Object>();
+      NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,newMembers.size());
+      try {
+        distributionManager.getTransactionLogger().blockNewTransactions();
+        int numOwners=configuration.getNumOwners();
+        final Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
+        for (        InternalCacheEntry ice : dataContainer) {
+          rebalance(ice.getKey(),ice,numOwners,chOld,chNew,null,states,removedKeys);
+        }
+        CacheStore cacheStore=distributionManager.getCacheStoreForRehashing();
+        if (cacheStore != null) {
+          for (          Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+            rebalance(key,null,numOwners,chOld,chNew,cacheStore,states,removedKeys);
+          }
+        }
+ else {
+          if (trace)           log.trace("Shared cache store or fetching of persistent state disabled");
+        }
+        for (        Map.Entry<Address,Map<Object,InternalCacheValue>> entry : states.entrySet()) {
+          final Address target=entry.getKey();
+          Map<Object,InternalCacheValue> state=entry.getValue();
+          if (trace)           log.tracef("pushing %d keys to %s",state.size(),target);
+          final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE,self,state,chOld,chNew);
+          rpcManager.invokeRemotelyInFuture(Collections.singleton(target),cmd,false,stateTransferFuture,configuration.getRehashRpcTimeout());
+        }
+      }
+  finally {
+        distributionManager.getTransactionLogger().unblockNewTransactions();
+      }
+      try {
+        stateTransferFuture.get();
+      }
+ catch (      ExecutionException e) {
+        log.error("Error transferring state to node after rehash:",e);
+      }
+      try {
+        InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,removedKeys);
+        InvocationContext ctx=icc.createNonTxInvocationContext();
+        invalidateCmd.perform(ctx);
+      }
+ catch (      Throwable t) {
+        log.error("Error invalidating from L1",t);
+      }
+      if (trace) {
+        if (removedKeys.size() > 0)         log.tracef("removed %d keys",removedKeys.size());
+        log.tracef("data container has now %d keys",dataContainer.size());
+      }
+    }
+ else {
+      if (trace)       log.trace("Rehash not enabled, so not pushing state");
+    }
+    Transport t=rpcManager.getTransport();
+    if (t.isCoordinator()) {
+      distributionManager.markNodePushCompleted(t.getViewId(),t.getAddress());
+    }
+ else {
+      final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,viewId);
+      rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()),cmd,false);
+    }
+  }
+ catch (  Exception e) {
+    log.error("failure in rebalancing",e);
+    throw new CacheException("Unexpected exception",e);
+  }
+ finally {
+    log.debugf("%s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+  }
+}

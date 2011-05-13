@@ -1,26 +1,20 @@
 {
-  chSwitchLock.readLock().lock();
-  try {
-    if (consistentHash == null)     return DataLocality.LOCAL;
-    boolean local=consistentHash.isKeyLocalToAddress(self,key,getReplCount());
-    if (isRehashInProgress()) {
-      if (local) {
-        return DataLocality.LOCAL_UNCERTAIN;
-      }
- else {
-        return DataLocality.NOT_LOCAL_UNCERTAIN;
-      }
+  if (consistentHash == null)   return DataLocality.LOCAL;
+  boolean local=consistentHash.isKeyLocalToAddress(self,key,getReplCount());
+  if (isRehashInProgress()) {
+    if (local) {
+      return DataLocality.LOCAL_UNCERTAIN;
     }
  else {
-      if (local) {
-        return DataLocality.LOCAL;
-      }
- else {
-        return DataLocality.NOT_LOCAL;
-      }
+      return DataLocality.NOT_LOCAL_UNCERTAIN;
     }
   }
-  finally {
-    chSwitchLock.readLock().unlock();
+ else {
+    if (local) {
+      return DataLocality.LOCAL;
+    }
+ else {
+      return DataLocality.NOT_LOCAL;
+    }
   }
 }

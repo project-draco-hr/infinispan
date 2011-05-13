@@ -1,13 +1,24 @@
 {
-  if (!e.isMergeView()) {
-    boolean started;
-    try {
-      started=startLatch.await(5,TimeUnit.MINUTES);
-      if (started)       rehash(e.getNewMembers(),e.getOldMembers());
- else       log.distributionManagerNotStarted();
-    }
- catch (    InterruptedException ie) {
-      log.viewChangeInterrupted();
+  if (trace)   log.tracef("New view received: type=%s, members: %s. Starting the RebalanceTask",e.getType(),e.getNewMembers());
+  rehashInProgress=true;
+  lastViewId=e.getViewId();
+  if (rpcManager.getTransport().isCoordinator()) {
+synchronized (pushConfirmationsLock) {
+      for (      Address newNode : e.getNewMembers()) {
+        if (!pushConfirmations.containsKey(newNode)) {
+          if (trace)           log.tracef("Coordinator: adding new node %s",newNode);
+          pushConfirmations.put(newNode,-1);
+        }
+      }
+      for (      Address oldNode : e.getOldMembers()) {
+        if (!e.getNewMembers().contains(oldNode)) {
+          if (trace)           log.tracef("Coordinator: removing node %s",oldNode);
+          pushConfirmations.remove(oldNode);
+        }
+      }
+      if (trace)       log.tracef("Coordinator: push confirmations list updated: %s",pushConfirmations);
     }
   }
+  RebalanceTask rebalanceTask=new RebalanceTask(rpcManager,cf,configuration,dataContainer,DistributionManagerImpl.this,inboundInvocationHandler,icc,e.getViewId());
+  rehashExecutor.submit(rebalanceTask);
 }

@@ -1,34 +1,13 @@
 {
 switch (type) {
-case JOIN_REQ:
-    return distributionManager.requestPermissionToJoin(sender);
-case JOIN_REHASH_START:
-  return distributionManager.informRehashOnJoin(sender,true);
-case JOIN_REHASH_END:
-distributionManager.informRehashOnJoin(sender,false);
+case APPLY_STATE:
+    distributionManager.applyState(newCH,state,sender);
+  return null;
+case NODE_PUSH_COMPLETED:
+distributionManager.markNodePushCompleted(viewId,sender);
 return null;
-case LEAVE_REHASH_END:
-distributionManager.informRehashOnLeave(sender);
-return null;
-case PULL_STATE_JOIN:
-return pullStateForJoin();
-case PULL_STATE_LEAVE:
-return pullStateForLeave();
-case LEAVE_DRAIN_TX:
-distributionManager.applyRemoteTxLog(txLogCommands);
-return null;
-case LEAVE_DRAIN_TX_PREPARES:
-for (PrepareCommand pc : pendingPrepares) pc.perform(null);
-return null;
-case JOIN_TX_LOG_REQ:
-return drainTxLog();
-case JOIN_TX_FINAL_LOG_REQ:
-return lockAndDrainTxLog();
-case JOIN_TX_LOG_CLOSE:
-unlockAndCloseTxLog();
-return null;
-case JOIN_ABORT:
-distributionManager.abortJoin(sender);
+case REHASH_COMPLETED:
+distributionManager.markRehashCompleted(viewId);
 return null;
 }
 throw new CacheException("Unknown rehash control command type " + type);

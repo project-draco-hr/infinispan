@@ -2,14 +2,13 @@
   boolean notifyRehashStarted=false;
   if (cmd instanceof RehashControlCommand) {
     RehashControlCommand rcc=(RehashControlCommand)cmd;
+    log.debugf("Intercepted command: %s",cmd);
 switch (rcc.getType()) {
-case JOIN_REQ:
+case APPLY_STATE:
       txsReady.await();
-    break;
-case PULL_STATE_JOIN:
-  notifyRehashStarted=true;
-break;
-case JOIN_REHASH_END:
+    notifyRehashStarted=true;
+  break;
+case NODE_PUSH_COMPLETED:
 joinEnded.countDown();
 break;
 }

@@ -1,0 +1,11 @@
+{
+  if (trace)   log.tracef("Applying new state from %s: received %d keys",sender,state.size());
+  int retryCount=3;
+  Map<Object,InternalCacheValue> pendingApplications=state;
+  for (int i=0; i < retryCount; i++) {
+    pendingApplications=applyStateMap(consistentHash,pendingApplications,true);
+    if (pendingApplications.isEmpty())     break;
+  }
+  if (!pendingApplications.isEmpty())   applyStateMap(consistentHash,pendingApplications,false);
+  if (trace)   log.tracef("After applying state data container has %d keys",dataContainer.size());
+}
