@@ -14,6 +14,10 @@ case HotRodConstants.UNKNOWN_VERSION_STATUS:
       if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
         log.tracef("Server-side timeout performing operation: %s",msgFromServer);
       }
+      if (msgFromServer.contains("SuspectException")) {
+        if (isTrace)         log.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",messageId,msgFromServer);
+        throw new RemoteNodeSuspecException(msgFromServer,messageId,status);
+      }
  else {
         log.errorFromServer(msgFromServer);
       }
