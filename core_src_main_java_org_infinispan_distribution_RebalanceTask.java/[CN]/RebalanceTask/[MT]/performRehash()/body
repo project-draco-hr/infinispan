@@ -6,11 +6,16 @@
     chOld=distributionManager.getConsistentHash();
     List<Address> newMembers=rpcManager.getTransport().getMembers();
     chNew=createConsistentHash(configuration,newMembers);
+    notifier.notifyTopologyChanged(chOld,chNew,true);
     distributionManager.setConsistentHash(chNew);
+    notifier.notifyTopologyChanged(chOld,chNew,false);
     if (log.isTraceEnabled()) {
       log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
     }
     if (configuration.isRehashEnabled()) {
+      Collection<Address> oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
+      Collection<Address> newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
+      notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
       List<Object> removedKeys=new ArrayList<Object>();
       NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,newMembers.size());
       try {
@@ -46,6 +51,7 @@
  catch (      ExecutionException e) {
         log.error("Error transferring state to node after rehash:",e);
       }
+      notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
       try {
         InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,removedKeys);
         InvocationContext ctx=icc.createNonTxInvocationContext();
@@ -67,7 +73,7 @@
       distributionManager.markNodePushCompleted(t.getViewId(),t.getAddress());
     }
  else {
-      final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,viewId);
+      final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,newViewId);
       rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()),cmd,false);
     }
   }
