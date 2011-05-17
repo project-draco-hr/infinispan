@@ -1,6 +1,16 @@
 {
   super.init(config,cache,m);
-  concurrencyLevel=cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
+  Configuration cacheCfg=cache.getConfiguration();
+  concurrencyLevel=cache == null || cacheCfg == null ? 16 : cacheCfg.getConcurrencyLevel();
+  int cacheStopTimeout=cacheCfg.getCacheStopTimeout();
+  Long configuredAsyncStopTimeout=asyncStoreConfig.getShutdownTimeout();
+  if (configuredAsyncStopTimeout >= cacheStopTimeout) {
+    shutdownTimeout=Math.round(cacheStopTimeout * 0.90);
+    log.asyncStoreShutdownTimeoutTooHigh(configuredAsyncStopTimeout,cacheStopTimeout,shutdownTimeout);
+  }
+ else {
+    shutdownTimeout=configuredAsyncStopTimeout;
+  }
   lockContainer=new ReleaseAllLockContainer(concurrencyLevel);
   transactions=new ConcurrentHashMap<GlobalTransaction,List<? extends Modification>>(64,0.75f,concurrencyLevel);
 }
