@@ -1,13 +1,14 @@
 {
-  final SyncForkSupport syncForkSupport=new SyncForkSupport(r);
-  Thread t=new Thread(syncForkSupport);
+  final Thread t=new Thread(r,"TestThread-" + r.hashCode());
+  spawnedThreads.add(t);
   t.start();
   if (sync) {
     eventually(new Condition(){
       @Override public boolean isSatisfied() throws Exception {
-        return syncForkSupport.done;
+        return t.getState().equals(Thread.State.TERMINATED);
       }
     }
 );
   }
+  return t;
 }

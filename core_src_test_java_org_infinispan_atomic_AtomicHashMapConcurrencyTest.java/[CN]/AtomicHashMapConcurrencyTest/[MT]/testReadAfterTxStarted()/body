@@ -1,2 +1,34 @@
 {
+  AtomicMap<Integer,String> atomicMap=AtomicMapLookup.getAtomicMap(cache,KEY);
+  atomicMap.put(1,"existing");
+  tm.begin();
+  atomicMap.put(1,"newVal");
+  final ValueFuture responseBeforeCommit=new ValueFuture();
+  final ValueFuture responseAfterCommit=new ValueFuture();
+  final CountDownLatch commitLatch=new CountDownLatch(1);
+  Thread ot=fork(new Runnable(){
+    @Override public void run(){
+      try {
+        tm.begin();
+        try {
+          AtomicMap<Integer,String> otMap=AtomicMapLookup.getAtomicMap(cache,KEY);
+          responseBeforeCommit.set(otMap.get(1));
+          commitLatch.await();
+          responseAfterCommit.set(otMap.get(1));
+        }
+  finally {
+          tm.rollback();
+        }
+      }
+ catch (      Exception e) {
+        log.error("Unexpected error performing transaction",e);
+      }
+    }
+  }
+,false);
+  assertEquals(responseBeforeCommit.get(),"existing");
+  tm.commit();
+  commitLatch.countDown();
+  assertEquals(atomicMap.get(1),"newVal");
+  assertEquals(responseAfterCommit.get(),"newVal");
 }
