@@ -44,7 +44,13 @@
       }
  else       if (createIfAbsent) {
         if (trace)         log.trace("Creating new entry.");
-        notifier.notifyCacheEntryCreated(key,true,ctx);
+        try {
+          notifier.notifyCacheEntryCreated(key,true,ctx);
+        }
+ catch (        CacheException e) {
+          releaseLock(key);
+          throw e;
+        }
         mvccEntry=createWrappedEntry(key,null,true,false,-1);
         mvccEntry.setCreated(true);
         ctx.putLookedUpEntry(key,mvccEntry);
