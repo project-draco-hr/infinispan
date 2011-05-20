@@ -1,11 +1,5 @@
 {
-  Configuration config=new Configuration();
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  config.setCacheLoaderManagerConfig(clmc);
-  clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
   sdi=new SlowDownInterceptor();
-  CustomInterceptorConfig cic=new CustomInterceptorConfig(sdi);
-  cic.setAfterInterceptor(CacheLoaderInterceptor.class);
-  config.setCustomInterceptors(Collections.singletonList(cic));
+  Configuration config=new Configuration().fluent().loaders().addCacheLoader(new DummyInMemoryCacheStore.Cfg()).customInterceptors().add(sdi).after(CacheLoaderInterceptor.class).build();
   return TestCacheManagerFactory.createCacheManager(config);
 }

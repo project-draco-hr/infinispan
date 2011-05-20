@@ -1,11 +1,8 @@
 {
   if (enabled) {
-    if (!getLatch.await(60000,TimeUnit.MILLISECONDS))     throw new TimeoutException("Didn't see get after 60 seconds!");
+    evictLatch.countDown();
+    log.trace("Wait for get to finish...");
+    if (!getLatch.await(60000,TimeUnit.MILLISECONDS))     throw new TimeoutException("Didn't see evict after 60 seconds!");
   }
-  try {
-    return invokeNextInterceptor(ctx,command);
-  }
-  finally {
-    if (enabled)     evictLatch.countDown();
-  }
+  return invokeNextInterceptor(ctx,command);
 }
