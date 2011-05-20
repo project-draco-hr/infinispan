@@ -1,14 +1,10 @@
 {
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
-  configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-  configuration.setLockAcquisitionTimeout(5000);
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).build();
   createClusteredCaches(2,"syncReplCache",configuration);
   Configuration replAsync=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
   defineConfigurationOnAllManagers("asyncReplCache",replAsync);
-  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
-  replQueue.setUseReplQueue(true);
+  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().useReplQueue(true).build();
   defineConfigurationOnAllManagers("replQueueCache",replQueue);
-  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
-  asyncMarshall.setUseAsyncMarshalling(true);
+  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().asyncMarshalling(true).build();
   defineConfigurationOnAllManagers("asyncMarshallCache",asyncMarshall);
 }
