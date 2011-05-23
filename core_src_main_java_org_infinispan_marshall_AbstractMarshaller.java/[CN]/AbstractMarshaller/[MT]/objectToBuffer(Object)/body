@@ -1,3 +1,12 @@
 {
-  return objectToBuffer(obj,DEFAULT_BUF_SIZE);
+  BufferSizePredictor sizePredictor=bufferSizePredictorTL.get();
+  int estimatedSize=sizePredictor.nextSize(obj);
+  ByteBuffer byteBuffer=objectToBuffer(obj,estimatedSize);
+  int length=byteBuffer.getLength();
+  if (estimatedSize > (length * 4)) {
+    byte[] buffer=trimBuffer(byteBuffer);
+    byteBuffer=new ByteBuffer(buffer,0,buffer.length);
+  }
+  sizePredictor.recordSize(length);
+  return byteBuffer;
 }
