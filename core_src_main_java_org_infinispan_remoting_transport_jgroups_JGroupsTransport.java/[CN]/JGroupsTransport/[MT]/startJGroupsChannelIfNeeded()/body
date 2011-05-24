@@ -1,10 +1,21 @@
 {
   if (startChannel) {
     try {
-      channel.connect(configuration.getClusterName());
+      String clusterName=configuration.getClusterName();
+      channel.connect(clusterName);
+      globalStatsEnabled=configuration.isExposeGlobalJmxStatistics();
+      if (globalStatsEnabled) {
+        String groupName=String.format("type=channel,cluster=%s",clusterName);
+        mbeanServer=JmxUtil.lookupMBeanServer(configuration);
+        domain=JmxUtil.buildJmxDomain(configuration,mbeanServer,groupName);
+        JmxConfigurator.registerChannel((JChannel)channel,mbeanServer,domain,clusterName,true);
+      }
     }
  catch (    ChannelException e) {
       throw new CacheException("Unable to start JGroups Channel",e);
+    }
+catch (    Exception e) {
+      throw new CacheException("Channel connected, but unable to register MBeans",e);
     }
   }
   address=fromJGroupsAddress(channel.getAddress());
