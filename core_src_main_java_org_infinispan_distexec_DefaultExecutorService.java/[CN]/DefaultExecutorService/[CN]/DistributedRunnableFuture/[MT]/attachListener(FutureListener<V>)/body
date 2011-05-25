@@ -1,3 +1,11 @@
 {
-  return this;
+  listenerLock.readLock().lock();
+  try {
+    if (!callCompleted)     listeners.add(listener);
+    if (callCompleted)     listener.futureDone(this);
+    return this;
+  }
+  finally {
+    listenerLock.readLock().unlock();
+  }
 }
