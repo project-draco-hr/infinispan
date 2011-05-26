@@ -4,9 +4,10 @@ synchronized (DummyTransactionManager.class) {
       if (instance == null) {
         instance=new DummyTransactionManager();
         utx=new DummyUserTransaction(instance);
+        Properties p=new Properties();
+        Context ctx=null;
         try {
-          Properties p=new Properties();
-          Context ctx=new InitialContext(p);
+          ctx=new InitialContext(p);
           ctx.bind("java:/TransactionManager",instance);
           ctx.bind("UserTransaction",utx);
         }
@@ -15,6 +16,9 @@ synchronized (DummyTransactionManager.class) {
         }
 catch (        NamingException e) {
           log.debug("binding of DummyTransactionManager failed",e);
+        }
+ finally {
+          Util.close(ctx);
         }
       }
     }

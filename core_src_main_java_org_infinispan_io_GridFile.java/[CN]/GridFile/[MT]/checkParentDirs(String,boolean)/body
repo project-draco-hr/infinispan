@@ -12,13 +12,10 @@
     }
     sb.append(tmp);
     String comp=sb.toString();
-    if (exists(comp)) {
-      if (isFile(comp))       throw new IOException("cannot create " + path + " as component "+ comp+ " is a file");
-    }
- else {
-      if (create_if_absent)       metadataCache.put(comp,new Metadata(0,System.currentTimeMillis(),chunk_size,Metadata.DIR));
- else       return false;
-    }
+    Metadata val=exists(comp);
+    if (val != null && val.isFile())     throw new IOException(String.format("cannot create %s as component %s is a file",path,comp));
+ else     if (create_if_absent)     metadataCache.put(comp,new Metadata(0,System.currentTimeMillis(),chunk_size,Metadata.DIR));
+ else     return false;
   }
   return true;
 }

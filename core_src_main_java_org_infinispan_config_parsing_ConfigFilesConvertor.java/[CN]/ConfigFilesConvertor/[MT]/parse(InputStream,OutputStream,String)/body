@@ -3,16 +3,25 @@
   if (xsltInStream == null) {
     throw new IllegalStateException("Cold not find xslt file! : " + xsltFile);
   }
-  Document document=getInputDocument(is);
-  Transformer transformer=getTransformer(xsltInStream);
-  DOMSource source=new DOMSource(document);
-  ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-  StreamResult result=new StreamResult(byteArrayOutputStream);
-  transformer.transform(source,result);
-  InputStream indentation=new FileLookup().lookupFile("xslt/indent.xslt");
-  transformer=getTransformer(indentation);
-  StreamResult finalResult=new StreamResult(os);
-  StreamSource rawResult=new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
-  transformer.transform(rawResult,finalResult);
-  xsltInStream.close();
+  try {
+    Document document=getInputDocument(is);
+    Transformer transformer=getTransformer(xsltInStream);
+    DOMSource source=new DOMSource(document);
+    ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+    StreamResult result=new StreamResult(byteArrayOutputStream);
+    transformer.transform(source,result);
+    InputStream indentation=new FileLookup().lookupFile("xslt/indent.xslt");
+    try {
+      transformer=getTransformer(indentation);
+      StreamResult finalResult=new StreamResult(os);
+      StreamSource rawResult=new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+      transformer.transform(rawResult,finalResult);
+    }
+  finally {
+      Util.close(indentation);
+    }
+  }
+  finally {
+    Util.close(xsltInStream);
+  }
 }

@@ -8,24 +8,28 @@
       int numBytes=objectInput.readInt();
       FileOutputStream fos=new FileOutputStream(root.getAbsolutePath() + File.separator + fName);
       BufferedOutputStream bos=new BufferedOutputStream(fos,streamBufferSize);
-      while (numBytes > totalBytesRead) {
-        if (numBytes - totalBytesRead > streamBufferSize) {
-          bytesRead=objectInput.read(buffer,0,streamBufferSize);
-        }
+      try {
+        while (numBytes > totalBytesRead) {
+          if (numBytes - totalBytesRead > streamBufferSize) {
+            bytesRead=objectInput.read(buffer,0,streamBufferSize);
+          }
  else {
-          bytesRead=objectInput.read(buffer,0,numBytes - totalBytesRead);
+            bytesRead=objectInput.read(buffer,0,numBytes - totalBytesRead);
+          }
+          if (bytesRead == -1) {
+            break;
+          }
+          totalBytesRead+=bytesRead;
+          bos.write(buffer,0,bytesRead);
         }
-        if (bytesRead == -1) {
-          break;
-        }
-        totalBytesRead+=bytesRead;
-        bos.write(buffer,0,bytesRead);
+        bos.flush();
+        fos.flush();
+        totalBytesRead=0;
       }
-      bos.flush();
-      safeClose(bos);
-      fos.flush();
-      safeClose(fos);
-      totalBytesRead=0;
+  finally {
+        safeClose(bos);
+        safeClose(fos);
+      }
     }
   }
  catch (  IOException e) {

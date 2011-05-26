@@ -1,6 +1,9 @@
 {
   try {
-    socket.close();
+    if (socketInputStream != null)     socketInputStream.close();
+    if (socketOutputStream != null)     socketOutputStream.close();
+    if (socketChannel != null)     socketChannel.close();
+    if (socket != null)     socket.close();
     if (trace) {
       log.tracef("Successfully closed socket: %s",socket);
     }
@@ -8,5 +11,7 @@
  catch (  IOException e) {
     invalid=true;
     log.errorClosingSocket(this,e);
+    Util.close(socketInputStream,socketOutputStream,socketChannel);
+    Util.close(socket);
   }
 }

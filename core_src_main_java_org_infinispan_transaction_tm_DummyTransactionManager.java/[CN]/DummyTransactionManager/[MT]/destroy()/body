@@ -1,13 +1,17 @@
 {
   if (instance == null)   return;
+  Properties p=new Properties();
+  Context ctx=null;
   try {
-    Properties p=new Properties();
-    Context ctx=new InitialContext(p);
+    ctx=new InitialContext(p);
     ctx.unbind("java:/TransactionManager");
     ctx.unbind("UserTransaction");
   }
  catch (  NamingException e) {
     log.unbindingDummyTmFailed(e);
+  }
+ finally {
+    Util.close(ctx);
   }
   instance.setTransaction(null);
   instance=null;

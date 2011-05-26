@@ -1,0 +1,29 @@
+{
+  byte[] rawValue=raw;
+  if (rawValue == null) {
+    try {
+      ExposedByteArrayOutputStream baos=new ExposedByteArrayOutputStream(128);
+      ObjectOutput out=marshaller.startObjectOutput(baos,true);
+      try {
+        marshaller.objectToObjectStream(instance,out);
+      }
+  finally {
+        marshaller.finishObjectOutput(out);
+      }
+      final byte[] buf=baos.getRawBuffer();
+      final int length=baos.size();
+      if (buf.length == length) {
+        rawValue=buf;
+      }
+ else {
+        rawValue=new byte[length];
+        System.arraycopy(buf,0,rawValue,0,length);
+      }
+      raw=rawValue;
+    }
+ catch (    Exception e) {
+      throw new CacheException("Unable to marshall value " + instance,e);
+    }
+  }
+  return rawValue;
+}

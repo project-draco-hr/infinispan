@@ -1,12 +1,15 @@
 {
   System.out.println("Parsing [" + fileName + "]");
   Smooks smooks=new Smooks("config-samples/ec2-demo/smooks-config.xml");
+  FileInputStream inputStream=null;
   try {
     JavaResult result=new JavaResult();
-    smooks.filterSource(new StreamSource(new FileInputStream(fileName.trim())),result);
+    inputStream=new FileInputStream(fileName.trim());
+    smooks.filterSource(new StreamSource(inputStream),result);
     return (List<Nucleotide_Protein_Element>)result.getBean("customerList");
   }
   finally {
     smooks.close();
+    Util.close(inputStream);
   }
 }

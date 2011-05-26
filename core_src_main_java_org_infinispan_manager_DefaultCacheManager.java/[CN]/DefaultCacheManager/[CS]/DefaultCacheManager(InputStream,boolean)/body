@@ -1,6 +1,7 @@
 {
+  InputStream schemaInputStream=InfinispanConfiguration.findSchemaInputStream();
   try {
-    InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationStream,InfinispanConfiguration.findSchemaInputStream(),new ConfigurationValidatingVisitor());
+    InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationStream,schemaInputStream,new ConfigurationValidatingVisitor());
     globalConfiguration=configuration.parseGlobalConfiguration();
     defaultConfiguration=configuration.parseDefaultConfiguration();
     for (    Map.Entry<String,Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
@@ -16,6 +17,9 @@
   }
 catch (  RuntimeException re) {
     throw new ConfigurationException(re);
+  }
+ finally {
+    Util.close(schemaInputStream);
   }
   if (start)   start();
 }
