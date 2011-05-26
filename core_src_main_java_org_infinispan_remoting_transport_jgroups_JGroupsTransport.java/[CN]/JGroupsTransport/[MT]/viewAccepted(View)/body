@@ -13,15 +13,13 @@
       n=new NotifyViewChange();
     }
   }
-synchronized (membersListLock) {
-    boolean needNotification=false;
-    if (newMembers != null) {
-      oldMembers=members;
-      members=fromJGroupsAddressList(newMembers);
-      needNotification=true;
-    }
-    coordinator=(members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
-    if (needNotification && n != null)     n.emitNotification(oldMembers,newView);
-    membersListLock.notifyAll();
+  boolean needNotification=false;
+  if (newMembers != null) {
+    oldMembers=members;
+    members=fromJGroupsAddressList(newMembers);
+    needNotification=true;
   }
+  coordinator=(members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
+  if (needNotification && n != null)   n.emitNotification(oldMembers,newView);
+  channelConnectedLatch.countDown();
 }

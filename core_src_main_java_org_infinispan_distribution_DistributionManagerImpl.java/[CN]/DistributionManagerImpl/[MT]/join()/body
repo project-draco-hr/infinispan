@@ -1,10 +1,10 @@
 {
   Transport t=rpcManager.getTransport();
   List<Address> members=t.getMembers();
-  consistentHash=createConsistentHash(configuration,members);
   self=t.getAddress();
-  rehashInProgress=true;
   lastViewId=t.getViewId();
+  consistentHash=ConsistentHashHelper.createConsistentHash(configuration,members);
+  joinStartedLatch.countDown();
   if (t.isCoordinator()) {
     markNodePushCompleted(t.getViewId(),t.getAddress());
   }
