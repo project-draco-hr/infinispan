@@ -2,8 +2,13 @@
   Blob blob=blobStore.getBlob(containerName,blobName);
   try {
     Bucket bucket=readFromBlob(blob,blobName);
-    if (bucket.removeExpiredEntries()) {
-      updateBucket(bucket);
+    if (bucket != null) {
+      if (bucket.removeExpiredEntries()) {
+        updateBucket(bucket);
+      }
+    }
+ else {
+      throw new CacheLoaderException("Blob not found: " + blobName);
     }
   }
  catch (  CacheLoaderException e) {
