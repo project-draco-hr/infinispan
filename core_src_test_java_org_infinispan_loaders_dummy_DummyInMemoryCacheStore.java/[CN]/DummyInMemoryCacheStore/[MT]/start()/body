@@ -1,12 +1,22 @@
 {
   super.start();
-  storeName=config.getStore();
-  if (cache != null)   storeName+="_" + cache.getName();
-  Map<Object,InternalCacheEntry> m=new ConcurrentHashMap<Object,InternalCacheEntry>();
-  Map<Object,InternalCacheEntry> existing=stores.putIfAbsent(storeName,m);
-  store=existing == null ? m : existing;
-  Map<String,Integer> s=newStatsMap();
-  Map<String,Integer> existingStats=storeStats.putIfAbsent(storeName,s);
-  stats=existingStats == null ? s : existingStats;
+  if (store != null)   return;
+  store=new ConcurrentHashMap<Object,InternalCacheEntry>();
+  stats=newStatsMap();
+  if (storeName != null) {
+    if (cache != null)     storeName+="_" + cache.getName();
+    Map<Object,InternalCacheEntry> existing=stores.putIfAbsent(storeName,store);
+    if (existing != null) {
+      store=existing;
+      log.debugf("Reusing in-memory cache store %s",storeName);
+    }
+ else {
+      log.debugf("Creating new in-memory cache store %s",storeName);
+    }
+    Map<String,Integer> existingStats=storeStats.putIfAbsent(storeName,stats);
+    if (existing != null) {
+      stats=existingStats;
+    }
+  }
   record("start");
 }

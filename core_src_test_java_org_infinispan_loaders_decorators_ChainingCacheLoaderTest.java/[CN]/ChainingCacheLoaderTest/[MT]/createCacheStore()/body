@@ -1,12 +1,12 @@
 {
   ChainingCacheStore store=new ChainingCacheStore();
-  CacheStoreConfig cfg;
+  CacheStoreConfig cfg=new DummyInMemoryCacheStore.Cfg().storeName("ChainingCacheLoaderTest_instance1").purgeOnStartup(false).fetchPersistentState(false);
   store1=new DummyInMemoryCacheStore();
-  store1.init((cfg=new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance1",false)),null,new TestObjectStreamMarshaller());
+  store1.init(cfg,null,new TestObjectStreamMarshaller());
   store.addCacheLoader(store1,cfg);
   store2=new DummyInMemoryCacheStore();
-  store2.init((cfg=new DummyInMemoryCacheStore.Cfg("ChainingCacheLoaderTest_instance2",false)),null,new TestObjectStreamMarshaller());
-  cfg.setFetchPersistentState(true);
+  cfg=new DummyInMemoryCacheStore.Cfg().storeName("ChainingCacheLoaderTest_instance2").purgeOnStartup(false).fetchPersistentState(true);
+  store2.init(cfg,null,new TestObjectStreamMarshaller());
   store.addCacheLoader(store2,cfg);
   stores=new DummyInMemoryCacheStore[]{store1,store2};
   store.start();
