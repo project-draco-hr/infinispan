@@ -1,14 +1,7 @@
 {
   final List<Address> leavers=MembershipArithmetic.getMembersLeft(vce.getOldMembers(),vce.getNewMembers());
   if (!leavers.isEmpty()) {
-    if (trace)     log.tracef("Saw %s leavers - kicking off a lock breaking task",leavers.size());
+    if (trace)     log.tracef("Saw %d leavers - kicking off a lock breaking task",leavers.size());
     cleanTxForWhichTheOwnerLeft(leavers);
-    if (configuration.isEagerLockingSingleNodeInUse()) {
-      for (      LocalTransaction localTx : localTransactions.values()) {
-        if (localTx.hasRemoteLocksAcquired(leavers)) {
-          localTx.markForRollback(true);
-        }
-      }
-    }
   }
 }

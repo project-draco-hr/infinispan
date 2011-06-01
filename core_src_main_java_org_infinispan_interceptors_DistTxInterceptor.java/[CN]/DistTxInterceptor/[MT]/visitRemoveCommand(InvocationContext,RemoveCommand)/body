@@ -1,5 +1,9 @@
 {
-  Object o=super.visitRemoveCommand(ctx,command);
-  if (!ctx.isInTxScope() && command.isSuccessful())   dm.getTransactionLogger().logIfNeeded(command);
-  return o;
+  if (!ctx.isInTxScope())   dm.getTransactionLogger().beforeCommand(command);
+  try {
+    return super.visitRemoveCommand(ctx,command);
+  }
+  finally {
+    if (!ctx.isInTxScope())     dm.getTransactionLogger().afterCommand(command);
+  }
 }

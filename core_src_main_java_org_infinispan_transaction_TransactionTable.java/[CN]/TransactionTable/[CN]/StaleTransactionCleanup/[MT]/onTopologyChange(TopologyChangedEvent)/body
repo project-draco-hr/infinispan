@@ -1,0 +1,32 @@
+{
+  if (tce.isPre())   return;
+  final ConsistentHash chNew=tce.getConsistentHashAtEnd();
+  final Set<Address> oldMembers=tce.getConsistentHashAtStart().getCaches();
+  final Set<Address> newMembers=tce.getConsistentHashAtEnd().getCaches();
+  final Set<Address> leavers=MembershipArithmetic.getMembersLeft(oldMembers,newMembers);
+  if (!leavers.isEmpty()) {
+    if (configuration.isEagerLockingSingleNodeInUse()) {
+      for (      LocalTransaction localTx : localTransactions.values()) {
+        if (localTx.hasRemoteLocksAcquired(leavers)) {
+          localTx.markForRollback(true);
+          if (trace)           log.tracef("Marked local transaction for rollback, as it had acquired " + "locks on a node that has left the cluster: %s",localTx);
+        }
+      }
+    }
+  }
+  final Set<Address> joiners=MembershipArithmetic.getMembersJoined(oldMembers,newMembers);
+  if (!joiners.isEmpty()) {
+    if (configuration.isEagerLockingSingleNodeInUse()) {
+      for (      LocalTransaction localTx : localTransactions.values()) {
+        for (        Object k : localTx.getAffectedKeys()) {
+          Address newMainOwner=chNew.locate(k,1).get(0);
+          if (joiners.contains(newMainOwner)) {
+            localTx.markForRollback(true);
+            if (trace)             log.tracef("Marked local transaction for rollback, as the main data " + "owner has changed %s",localTx);
+            break;
+          }
+        }
+      }
+    }
+  }
+}

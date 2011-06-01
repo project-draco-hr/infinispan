@@ -1,5 +1,9 @@
 {
-  Object rv=super.visitRollbackCommand(ctx,cmd);
-  dm.getTransactionLogger().logIfNeeded(cmd);
-  return rv;
+  dm.getTransactionLogger().beforeCommand(cmd);
+  try {
+    return super.visitRollbackCommand(ctx,cmd);
+  }
+  finally {
+    dm.getTransactionLogger().afterCommand(cmd);
+  }
 }

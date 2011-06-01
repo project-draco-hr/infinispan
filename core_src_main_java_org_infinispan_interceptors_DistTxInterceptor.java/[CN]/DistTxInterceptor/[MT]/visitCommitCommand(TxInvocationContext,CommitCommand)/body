@@ -1,6 +1,9 @@
 {
-  dm.getTransactionLogger().logModificationsIfNeeded(cmd,ctx);
-  Object rv=super.visitCommitCommand(ctx,cmd);
-  dm.getTransactionLogger().logIfNeeded(cmd,ctx);
-  return rv;
+  dm.getTransactionLogger().beforeCommand(cmd,ctx);
+  try {
+    return super.visitCommitCommand(ctx,cmd);
+  }
+  finally {
+    dm.getTransactionLogger().afterCommand(cmd,ctx);
+  }
 }

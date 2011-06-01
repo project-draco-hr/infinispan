@@ -1,6 +1,8 @@
 {
   if (distributionManager != null && distributionManager.isAffectedByRehash(key))   return null;
-  GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key,flags);
+  Set<Flag> commandFlags=EnumSet.of(Flag.SKIP_REMOTE_LOOKUP);
+  if (this.flags != null)   commandFlags.addAll(this.flags);
+  GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key,commandFlags);
   command.setReturnCacheEntry(true);
   InvocationContext invocationContext=icc.createRemoteInvocationContextForCommand(command,getOrigin());
   CacheEntry cacheEntry=(CacheEntry)invoker.invoke(invocationContext,command);

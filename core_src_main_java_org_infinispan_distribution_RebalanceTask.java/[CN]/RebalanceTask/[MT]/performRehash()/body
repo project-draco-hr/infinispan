@@ -3,23 +3,24 @@
   if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
   ConsistentHash chOld, chNew;
   try {
-    chOld=distributionManager.getConsistentHash();
-    List<Address> newMembers=rpcManager.getTransport().getMembers();
-    chNew=createConsistentHash(configuration,newMembers);
-    notifier.notifyTopologyChanged(chOld,chNew,true);
-    distributionManager.setConsistentHash(chNew);
-    notifier.notifyTopologyChanged(chOld,chNew,false);
-    if (log.isTraceEnabled()) {
-      log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
-    }
-    if (configuration.isRehashEnabled()) {
-      Collection<Address> oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
-      Collection<Address> newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
-      notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
-      List<Object> removedKeys=new ArrayList<Object>();
-      NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,newMembers.size());
-      try {
-        distributionManager.getTransactionLogger().blockNewTransactions();
+    distributionManager.getTransactionLogger().blockNewTransactions();
+    boolean needToUnblockTransactions=true;
+    try {
+      chOld=distributionManager.getConsistentHash();
+      List<Address> newMembers=rpcManager.getTransport().getMembers();
+      chNew=createConsistentHash(configuration,newMembers);
+      notifier.notifyTopologyChanged(chOld,chNew,true);
+      distributionManager.setConsistentHash(chNew);
+      notifier.notifyTopologyChanged(chOld,chNew,false);
+      if (log.isTraceEnabled()) {
+        log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
+      }
+      if (configuration.isRehashEnabled()) {
+        Collection<Address> oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
+        Collection<Address> newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
+        notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
+        List<Object> removedKeys=new ArrayList<Object>();
+        NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,newMembers.size());
         int numOwners=configuration.getNumOwners();
         final Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
         for (        InternalCacheEntry ice : dataContainer) {
@@ -41,32 +42,36 @@
           final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE,self,state,chOld,chNew);
           rpcManager.invokeRemotelyInFuture(Collections.singleton(target),cmd,false,stateTransferFuture,configuration.getRehashRpcTimeout());
         }
-      }
-  finally {
+        needToUnblockTransactions=false;
         distributionManager.getTransactionLogger().unblockNewTransactions();
+        try {
+          stateTransferFuture.get();
+        }
+ catch (        ExecutionException e) {
+          log.errorTransferringState(e);
+        }
+        notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
+        try {
+          InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,removedKeys);
+          InvocationContext ctx=icc.createNonTxInvocationContext();
+          invalidateCmd.perform(ctx);
+        }
+ catch (        Throwable t) {
+          log.failedToInvalidateKeys(t);
+        }
+        if (trace) {
+          if (removedKeys.size() > 0)           log.tracef("removed %d keys",removedKeys.size());
+          log.tracef("data container has now %d keys",dataContainer.size());
+        }
       }
-      try {
-        stateTransferFuture.get();
-      }
- catch (      ExecutionException e) {
-        log.error("Error transferring state to node after rehash:",e);
-      }
-      notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
-      try {
-        InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,removedKeys);
-        InvocationContext ctx=icc.createNonTxInvocationContext();
-        invalidateCmd.perform(ctx);
-      }
- catch (      Throwable t) {
-        log.error("Error invalidating from L1",t);
-      }
-      if (trace) {
-        if (removedKeys.size() > 0)         log.tracef("removed %d keys",removedKeys.size());
-        log.tracef("data container has now %d keys",dataContainer.size());
+ else {
+        if (trace)         log.trace("Rehash not enabled, so not pushing state");
       }
     }
- else {
-      if (trace)       log.trace("Rehash not enabled, so not pushing state");
+  finally {
+      if (needToUnblockTransactions) {
+        distributionManager.getTransactionLogger().unblockNewTransactions();
+      }
     }
     Transport t=rpcManager.getTransport();
     if (t.isCoordinator()) {
@@ -77,11 +82,7 @@
       rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()),cmd,false);
     }
   }
- catch (  Exception e) {
-    log.error("failure in rebalancing",e);
-    throw new CacheException("Unexpected exception",e);
-  }
- finally {
-    log.debugf("%s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+  finally {
+    log.debugf("Node %s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
 }
