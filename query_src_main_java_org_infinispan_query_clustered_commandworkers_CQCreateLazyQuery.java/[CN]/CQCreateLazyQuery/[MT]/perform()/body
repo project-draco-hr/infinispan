@@ -1,0 +1,12 @@
+{
+  query.setSearchFactoryImplementor((SearchFactoryImplementor)getSearchFactory());
+  QueryHits queryHits=query.getQueryHits();
+  DocumentExtractor extractor=query.queryDocumentExtractor(queryHits);
+  int resultSize=query.queryResultSize();
+  QueryBox box=getQueryBox();
+  box.put(lazyQueryId,extractor);
+  TopDocs topDocs=queryHits.getTopDocs();
+  QueryResponse queryResponse=new QueryResponse(topDocs,box.getMyId(),resultSize);
+  queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
+  return queryResponse;
+}

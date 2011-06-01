@@ -1,0 +1,20 @@
+{
+  Map<Class<?>,DocumentBuilderIndexedEntity<?>> builders=searchFactoryImplementor.getDocumentBuildersIndexedEntities();
+  Set<FieldCacheCollectorFactory> allCollectors=new HashSet<FieldCacheCollectorFactory>();
+  FieldCacheCollectorFactory anyImplementation=null;
+  for (  Class<?> clazz : classesAndSubclasses) {
+    DocumentBuilderIndexedEntity<?> docBuilder=builders.get(clazz);
+    FieldCacheCollectorFactory fieldCacheCollectionFactory=docBuilder.getIdFieldCacheCollectionFactory();
+    if (fieldCacheCollectionFactory == null) {
+      return null;
+    }
+    anyImplementation=fieldCacheCollectionFactory;
+    allCollectors.add(fieldCacheCollectionFactory);
+  }
+  if (allCollectors.size() != 1) {
+    return null;
+  }
+ else {
+    return anyImplementation;
+  }
+}

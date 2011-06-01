@@ -1,0 +1,24 @@
+{
+  UUID lazyItId=UUID.randomUUID();
+  ClusteredQueryCommand command=ClusteredQueryCommand.createLazyIterator((ISPNQuery)hSearchQuery,cache,lazyItId);
+  ClusteredQueryInvoker invoker=new ClusteredQueryInvoker(cache);
+  HashMap<UUID,ClusteredTopDocs> topDocsResponses=null;
+  int resultSize=0;
+  try {
+    List<Object> responses=invoker.broadcast(command);
+    topDocsResponses=new HashMap<UUID,ClusteredTopDocs>();
+    for (    Object response : responses) {
+      QueryResponse queryResponse=(QueryResponse)response;
+      ClusteredTopDocs topDocs=new ClusteredTopDocs(queryResponse.getTopDocs(),queryResponse.getNodeUUID());
+      resultSize+=queryResponse.getResultSize();
+      topDocs.setNodeAddress(queryResponse.getAddress());
+      topDocsResponses.put(queryResponse.getNodeUUID(),topDocs);
+    }
+  }
+ catch (  Exception e) {
+    log.error("Could not broadcast distributed query",e);
+  }
+  this.resultSize=resultSize;
+  DistributedLazyIterator it=new DistributedLazyIterator(sort,fetchSize,resultSize,lazyItId,topDocsResponses,cache);
+  return it;
+}

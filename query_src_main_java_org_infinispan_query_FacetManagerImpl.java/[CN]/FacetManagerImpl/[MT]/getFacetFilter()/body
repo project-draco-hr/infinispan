@@ -1,0 +1,15 @@
+{
+  if (facetFilter == null) {
+    BooleanQuery boolQuery=new BooleanQuery();
+    for (    FacetSelectionImpl selection : facetSelection.values()) {
+      if (!selection.getFacetList().isEmpty()) {
+        Query selectionGroupQuery=createSelectionGroupQuery(selection);
+        boolQuery.add(selectionGroupQuery,BooleanClause.Occur.MUST);
+      }
+    }
+    if (boolQuery.getClauses().length > 0) {
+      this.facetFilter=new QueryWrapperFilter(boolQuery);
+    }
+  }
+  return facetFilter;
+}

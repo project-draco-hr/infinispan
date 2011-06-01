@@ -1,0 +1,40 @@
+{
+  FilterKey key=null;
+  if (!cacheInstance(def.getCacheMode())) {
+    return key;
+  }
+  if (def.getKeyMethod() == null) {
+    key=new FilterKey(){
+      public int hashCode(){
+        return getImpl().hashCode();
+      }
+      public boolean equals(      Object obj){
+        if (!(obj instanceof FilterKey)) {
+          return false;
+        }
+        FilterKey that=(FilterKey)obj;
+        return this.getImpl().equals(that.getImpl());
+      }
+    }
+;
+  }
+ else {
+    try {
+      key=(FilterKey)def.getKeyMethod().invoke(instance);
+    }
+ catch (    IllegalAccessException e) {
+      throw new SearchException("Unable to access @Key method: " + def.getImpl().getName() + "."+ def.getKeyMethod().getName());
+    }
+catch (    InvocationTargetException e) {
+      throw new SearchException("Unable to access @Key method: " + def.getImpl().getName() + "."+ def.getKeyMethod().getName());
+    }
+catch (    ClassCastException e) {
+      throw new SearchException("@Key method does not return FilterKey: " + def.getImpl().getName() + "."+ def.getKeyMethod().getName());
+    }
+  }
+  key.setImpl(def.getImpl());
+  StandardFilterKey wrapperKey=new StandardFilterKey();
+  wrapperKey.addParameter(def.getName());
+  wrapperKey.addParameter(key);
+  return wrapperKey;
+}

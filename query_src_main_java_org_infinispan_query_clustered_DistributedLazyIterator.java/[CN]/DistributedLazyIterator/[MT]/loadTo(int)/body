@@ -1,0 +1,23 @@
+{
+  int fetched=0;
+  while (orderedValues.size() <= index || fetched < fetchSize) {
+    ClusteredFieldDoc scoreDoc=(ClusteredFieldDoc)hq.pop();
+    if (scoreDoc == null) {
+      return;
+    }
+    ClusteredTopDocs topDoc=topDocsResponses.get(scoreDoc.getNodeUuid());
+    ClusteredFieldDoc score=topDoc.getNext();
+    if (score != null) {
+      hq.add(score);
+    }
+    ClusteredQueryInvoker invoker=new ClusteredQueryInvoker(cache);
+    try {
+      Object value=invoker.getValue(scoreDoc.index,topDoc.getNodeAddress(),queryId);
+      orderedValues.add(value);
+    }
+ catch (    Exception e) {
+      log.error("Error while trying to remoting fetch next value: " + e.getMessage());
+    }
+    fetched++;
+  }
+}

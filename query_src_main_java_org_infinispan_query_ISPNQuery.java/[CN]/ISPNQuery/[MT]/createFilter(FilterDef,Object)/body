@@ -1,0 +1,27 @@
+{
+  Filter filter;
+  if (def.getFactoryMethod() != null) {
+    try {
+      filter=(Filter)def.getFactoryMethod().invoke(instance);
+    }
+ catch (    IllegalAccessException e) {
+      throw new SearchException("Unable to access @Factory method: " + def.getImpl().getName() + "."+ def.getFactoryMethod().getName(),e);
+    }
+catch (    InvocationTargetException e) {
+      throw new SearchException("Unable to access @Factory method: " + def.getImpl().getName() + "."+ def.getFactoryMethod().getName(),e);
+    }
+catch (    ClassCastException e) {
+      throw new SearchException("@Key method does not return a org.apache.lucene.search.Filter class: " + def.getImpl().getName() + "."+ def.getFactoryMethod().getName(),e);
+    }
+  }
+ else {
+    try {
+      filter=(Filter)instance;
+    }
+ catch (    ClassCastException e) {
+      throw new SearchException("Filter implementation does not implement the Filter interface: " + def.getImpl().getName() + ". "+ (def.getFactoryMethod() != null ? def.getFactoryMethod().getName() : ""),e);
+    }
+  }
+  filter=addCachingWrapperFilter(filter,def);
+  return filter;
+}

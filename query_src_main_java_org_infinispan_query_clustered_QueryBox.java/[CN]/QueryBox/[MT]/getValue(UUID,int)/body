@@ -1,0 +1,17 @@
+{
+  touch(queryUuid);
+  DocumentExtractor extractor=queries.get(queryUuid);
+  if (extractor == null) {
+    throw new IllegalStateException("Query not found!");
+  }
+  String bufferDocumentId;
+  try {
+    bufferDocumentId=(String)extractor.extract(docIndex).getId();
+  }
+ catch (  IOException e) {
+    log.error("Error",e);
+    return null;
+  }
+  Object value=cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId,cache.getClassLoader()));
+  return value;
+}

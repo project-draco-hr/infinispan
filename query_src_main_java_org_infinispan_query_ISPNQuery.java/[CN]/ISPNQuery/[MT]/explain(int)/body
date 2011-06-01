@@ -1,0 +1,19 @@
+{
+  Explanation explanation=null;
+  IndexSearcherWithPayload searcher=buildSearcher(searchFactoryImplementor,true);
+  if (searcher == null) {
+    throw new SearchException("Unable to build explanation for document id:" + documentId + ". no index found");
+  }
+  try {
+    org.apache.lucene.search.Query filteredQuery=filterQueryByClasses(luceneQuery);
+    buildFilters();
+    explanation=searcher.getSearcher().explain(filteredQuery,documentId);
+  }
+ catch (  IOException e) {
+    throw new SearchException("Unable to query Lucene index and build explanation",e);
+  }
+ finally {
+    closeSearcher(searcher);
+  }
+  return explanation;
+}
