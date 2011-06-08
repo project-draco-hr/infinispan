@@ -1,26 +1,12 @@
 {
-  boolean shouldSkipLocking=ctx.hasFlag(Flag.SKIP_LOCKING);
-  if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
-    if (lockManager.lockAndRecord(key,ctx)) {
-      return true;
-    }
- else {
-      Object owner=lockManager.getOwner(key);
-      if (key instanceof MarshalledValue) {
-        key=((MarshalledValue)key).get();
-      }
-      throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key ["+ key+ "] for requestor ["+ ctx.getLockOwner()+ "]! Lock held by ["+ owner+ "]");
-    }
+  if (lockManager.lockAndRecord(key,ctx)) {
+    return true;
   }
  else {
-    if (trace) {
-      if (shouldSkipLocking) {
-        log.trace("SKIP_LOCKING flag used!");
-      }
- else {
-        log.trace("Already own lock for entry");
-      }
+    Object owner=lockManager.getOwner(key);
+    if (key instanceof MarshalledValue) {
+      key=((MarshalledValue)key).get();
     }
+    throw new TimeoutException("Unable to acquire lock after [" + configuration.getLockAcquisitionTimeout() + "] on key ["+ key+ "] for requestor ["+ ctx.getLockOwner()+ "]! Lock held by ["+ owner+ "]");
   }
-  return false;
 }
