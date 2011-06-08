@@ -6,7 +6,13 @@
   if (enabled && interval > 0) {
     scheduledFuture=scheduledExecutor.scheduleWithFixedDelay(new Runnable(){
       public void run(){
-        flush();
+        NDC.push(configuration.getName());
+        try {
+          flush();
+        }
+  finally {
+          NDC.pop();
+        }
       }
     }
 ,interval,interval,TimeUnit.MILLISECONDS);

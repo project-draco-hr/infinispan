@@ -1,22 +1,28 @@
 {
-  while (true) {
-    try {
-      Modification take=changesDeque.take();
-      if (take == QUIT_SIGNAL) {
-        lastAsyncProcessorShutsDownExecutor=true;
-        ensureMoreWorkIsHandled();
+  NDC.push(cacheName);
+  try {
+    while (true) {
+      try {
+        Modification take=changesDeque.take();
+        if (take == QUIT_SIGNAL) {
+          lastAsyncProcessorShutsDownExecutor=true;
+          ensureMoreWorkIsHandled();
+          return;
+        }
+ else {
+          handleSafely(take);
+        }
+      }
+ catch (      InterruptedException e) {
+        log.asyncStoreCoordinatorInterrupted(e);
         return;
       }
- else {
-        handleSafely(take);
+catch (      Throwable t) {
+        log.unexpectedErrorInAsyncStoreCoordinator(t);
       }
     }
- catch (    InterruptedException e) {
-      log.asyncStoreCoordinatorInterrupted(e);
-      return;
-    }
-catch (    Throwable t) {
-      log.unexpectedErrorInAsyncStoreCoordinator(t);
-    }
+  }
+  finally {
+    NDC.pop();
   }
 }

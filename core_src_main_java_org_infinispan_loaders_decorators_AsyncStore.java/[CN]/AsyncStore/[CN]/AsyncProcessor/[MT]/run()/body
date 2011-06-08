@@ -1,21 +1,27 @@
 {
-  clearAllReadLock.lock();
+  NDC.push(cacheName);
   try {
-    innerRun();
-  }
- catch (  Throwable t) {
-    runAgainAfterWaiting=false;
-    log.unexpectedErrorInAsyncProcessor(t);
-  }
- finally {
-    clearAllReadLock.unlock();
-  }
-  if (runAgainAfterWaiting) {
+    clearAllReadLock.lock();
     try {
-      Thread.sleep(10);
+      innerRun();
     }
- catch (    InterruptedException e) {
+ catch (    Throwable t) {
+      runAgainAfterWaiting=false;
+      log.unexpectedErrorInAsyncProcessor(t);
     }
-    ensureMoreWorkIsHandled();
+ finally {
+      clearAllReadLock.unlock();
+    }
+    if (runAgainAfterWaiting) {
+      try {
+        Thread.sleep(10);
+      }
+ catch (      InterruptedException e) {
+      }
+      ensureMoreWorkIsHandled();
+    }
+  }
+  finally {
+    NDC.pop();
   }
 }

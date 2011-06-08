@@ -7,30 +7,36 @@
  else   if (stoppingAndNotAllowed(status,ctx)) {
     throw new IllegalStateException(String.format("%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " + "Either restart it or recreate the cache container.",getCacheNamePrefix()));
   }
-  if (trace)   log.tracef("Invoked with command %s and InvocationContext [%s]",command,ctx);
-  if (ctx == null)   throw new IllegalStateException("Null context not allowed!!");
-  if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-    suppressExceptions=true;
-  }
+  NDC.push(componentRegistry.getCacheName());
   try {
-    return invokeNextInterceptor(ctx,command);
-  }
- catch (  Throwable th) {
-    if (suppressExceptions) {
-      log.trace("Exception while executing code, failing silently...",th);
-      return null;
+    if (trace)     log.tracef("Invoked with command %s and InvocationContext [%s]",command,ctx);
+    if (ctx == null)     throw new IllegalStateException("Null context not allowed!!");
+    if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+      suppressExceptions=true;
     }
- else {
-      log.executionError(th);
-      if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-        if (trace)         log.trace("Transaction marked for rollback as exception was received.");
-        markTxForRollbackAndRethrow(ctx,th);
-        throw new IllegalStateException("This should not be reached");
+    try {
+      return invokeNextInterceptor(ctx,command);
+    }
+ catch (    Throwable th) {
+      if (suppressExceptions) {
+        log.trace("Exception while executing code, failing silently...",th);
+        return null;
       }
-      throw th;
+ else {
+        log.executionError(th);
+        if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+          if (trace)           log.trace("Transaction marked for rollback as exception was received.");
+          markTxForRollbackAndRethrow(ctx,th);
+          throw new IllegalStateException("This should not be reached");
+        }
+        throw th;
+      }
+    }
+ finally {
+      ctx.reset();
     }
   }
- finally {
-    ctx.reset();
+  finally {
+    NDC.pop();
   }
 }
