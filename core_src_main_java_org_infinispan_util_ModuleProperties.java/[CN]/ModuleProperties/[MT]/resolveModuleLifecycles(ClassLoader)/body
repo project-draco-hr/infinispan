@@ -1,0 +1,24 @@
+{
+  try {
+    List<ModuleLifecycle> lifecycles=new ArrayList<ModuleLifecycle>();
+    Map<String,ModuleProperties> p=ModuleProperties.getModuleProperties(cl);
+    for (    Map.Entry<String,ModuleProperties> m : p.entrySet()) {
+      try {
+        String lifecycleClassName=m.getValue().getLifecycleClassName();
+        if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
+          Class<?> loadClass=Util.loadClassStrict(lifecycleClassName,cl);
+          Object proxy=Proxies.newCatchThrowableProxy(loadClass.newInstance());
+          ModuleLifecycle ml=(ModuleLifecycle)proxy;
+          lifecycles.add(ml);
+        }
+      }
+ catch (      Exception e) {
+        log.couldNotInitializeModule(m.getKey(),e);
+      }
+    }
+    return lifecycles;
+  }
+ catch (  Exception e) {
+    return Collections.emptyList();
+  }
+}

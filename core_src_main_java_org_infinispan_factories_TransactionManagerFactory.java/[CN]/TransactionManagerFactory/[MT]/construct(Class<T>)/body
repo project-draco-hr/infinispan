@@ -3,11 +3,12 @@
   TransactionManagerLookup lookup=configuration.getTransactionManagerLookup();
   if (lookup == null) {
     if (configuration.getTransactionManagerLookupClass() != null) {
-      lookup=(TransactionManagerLookup)Util.getInstance(configuration.getTransactionManagerLookupClass(),Thread.currentThread().getContextClassLoader());
+      lookup=(TransactionManagerLookup)Util.getInstance(configuration.getTransactionManagerLookupClass(),configuration.getClassLoader());
     }
   }
   try {
     if (lookup != null) {
+      componentRegistry.wireDependencies(lookup);
       transactionManager=lookup.getTransactionManager();
     }
   }
