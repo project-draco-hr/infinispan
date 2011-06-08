@@ -1,12 +1,23 @@
 {
   if (!localTransaction.isEnlisted()) {
     SynchronizationAdapter sync=new SynchronizationAdapter(localTransaction,txCoordinator);
-    try {
-      transaction.registerSynchronization(sync);
+    if (transactionSynchronizationRegistry != null) {
+      try {
+        transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
+      }
+ catch (      Exception e) {
+        log.failedSynchronizationRegistration(e);
+        throw new CacheException(e);
+      }
     }
- catch (    Exception e) {
-      log.failedSynchronizationRegistration(e);
-      throw new CacheException(e);
+ else {
+      try {
+        transaction.registerSynchronization(sync);
+      }
+ catch (      Exception e) {
+        log.failedSynchronizationRegistration(e);
+        throw new CacheException(e);
+      }
     }
     ((SyncLocalTransaction)localTransaction).setEnlisted(true);
   }
