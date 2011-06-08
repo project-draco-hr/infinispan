@@ -1,5 +1,6 @@
 {
   try {
+    if (!config.autoCreateKeyspace)     config.poolProperties.setKeySpace(config.keySpace);
     dataSource=new DataSource(config.getPoolProperties());
     readConsistencyLevel=ConsistencyLevel.valueOf(config.readConsistencyLevel);
     writeConsistencyLevel=ConsistencyLevel.valueOf(config.writeConsistencyLevel);
@@ -12,6 +13,12 @@
   }
  catch (  Exception e) {
     throw new ConfigurationException(e);
+  }
+  if (config.autoCreateKeyspace) {
+    log.debug("automatically create keyspace");
+    createKeySpace();
+    dataSource.close();
+    dataSource.setKeySpace(config.keySpace);
   }
   log.debug("cleaning up expired entries...");
   purgeInternal();

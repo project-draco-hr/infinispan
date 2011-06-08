@@ -1,0 +1,37 @@
+{
+  Cassandra.Client cassandraClient=null;
+  try {
+    cassandraClient=dataSource.getConnection();
+    try {
+      cassandraClient.describe_keyspace(config.keySpace);
+      return;
+    }
+ catch (    NotFoundException e) {
+      KsDef keySpace=new KsDef();
+      keySpace.setName(config.keySpace);
+      keySpace.setStrategy_class(SimpleStrategy.class.getName());
+      Map<String,String> strategy_options=new HashMap<String,String>();
+      strategy_options.put("replication_factor","1");
+      keySpace.setStrategy_options(strategy_options);
+      CfDef entryCF=new CfDef();
+      entryCF.setName(config.entryColumnFamily);
+      entryCF.setKeyspace(config.keySpace);
+      entryCF.setComparator_type("BytesType");
+      keySpace.addToCf_defs(entryCF);
+      CfDef expirationCF=new CfDef();
+      expirationCF.setName(config.expirationColumnFamily);
+      expirationCF.setKeyspace(config.keySpace);
+      expirationCF.setColumn_type("Super");
+      expirationCF.setComparator_type("LongType");
+      expirationCF.setSubcomparator_type("BytesType");
+      keySpace.addToCf_defs(expirationCF);
+      cassandraClient.system_add_keyspace(keySpace);
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException("Could not create keyspace/column families",e);
+  }
+ finally {
+    dataSource.releaseConnection(cassandraClient);
+  }
+}

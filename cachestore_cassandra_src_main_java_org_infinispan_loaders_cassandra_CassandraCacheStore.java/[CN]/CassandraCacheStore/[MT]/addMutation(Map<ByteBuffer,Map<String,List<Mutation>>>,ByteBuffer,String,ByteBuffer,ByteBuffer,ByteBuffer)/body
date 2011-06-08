@@ -10,12 +10,13 @@
     keyMutations.put(columnFamily,columnFamilyMutations);
   }
   if (value == null) {
-    Deletion deletion=new Deletion(microTimestamp());
+    Deletion deletion=new Deletion();
+    deletion.setTimestamp(microTimestamp());
     if (superColumn != null) {
       deletion.setSuper_column(superColumn);
     }
-    if (column != null) {
-      deletion.setPredicate(new SlicePredicate().setColumn_names(Collections.singletonList(column)));
+    if (columnName != null) {
+      deletion.setPredicate(new SlicePredicate().setColumn_names(Collections.singletonList(columnName)));
     }
     columnFamilyMutations.add(new Mutation().setDeletion(deletion));
   }
@@ -23,11 +24,17 @@
     ColumnOrSuperColumn cosc=new ColumnOrSuperColumn();
     if (superColumn != null) {
       List<Column> columns=new ArrayList<Column>();
-      columns.add(new Column(column,value,microTimestamp()));
+      Column col=new Column(columnName);
+      col.setValue(value);
+      col.setTimestamp(microTimestamp());
+      columns.add(col);
       cosc.setSuper_column(new SuperColumn(superColumn,columns));
     }
  else {
-      cosc.setColumn(new Column(column,value,microTimestamp()));
+      Column col=new Column(columnName);
+      col.setValue(value);
+      col.setTimestamp(microTimestamp());
+      cosc.setColumn(col);
     }
     columnFamilyMutations.add(new Mutation().setColumn_or_supercolumn(cosc));
   }
