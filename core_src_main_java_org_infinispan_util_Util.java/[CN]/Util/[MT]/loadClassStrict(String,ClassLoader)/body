@@ -1,11 +1,11 @@
 {
-  ClassLoader[] cls=new ClassLoader[]{Thread.currentThread().getContextClassLoader(),Util.class.getClassLoader(),ClassLoader.getSystemClassLoader()};
+  ClassLoader[] cls=new ClassLoader[]{userClassLoader,Util.class.getClassLoader(),ClassLoader.getSystemClassLoader()};
   ClassNotFoundException e=null;
   NoClassDefFoundError ne=null;
   for (  ClassLoader cl : cls) {
     if (cl == null)     continue;
     try {
-      return cl.loadClass(classname);
+      return (Class<T>)Class.forName(classname,true,cl);
     }
  catch (    ClassNotFoundException ce) {
       e=ce;
@@ -16,5 +16,5 @@ catch (    NoClassDefFoundError ce) {
   }
   if (e != null)   throw e;
  else   if (ne != null)   throw new ClassNotFoundException(classname,ne);
- else   throw new ClassNotFoundException(classname);
+ else   throw new IllegalStateException();
 }
