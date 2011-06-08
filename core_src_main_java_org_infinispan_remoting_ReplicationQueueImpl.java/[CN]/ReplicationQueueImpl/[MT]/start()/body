@@ -1,17 +1,18 @@
 {
   long interval=configuration.getReplQueueInterval();
-  log.tracef("Starting replication queue, with interval %s and maxElements %s",interval,maxElements);
+  trace=log.isTraceEnabled();
+  if (trace)   log.tracef("Starting replication queue, with interval %d and maxElements %s",interval,maxElements);
   this.maxElements=configuration.getReplQueueMaxElements();
   enabled=configuration.isUseReplQueue();
   if (enabled && interval > 0) {
     scheduledFuture=scheduledExecutor.scheduleWithFixedDelay(new Runnable(){
       public void run(){
-        NDC.push(configuration.getName());
+        LogFactory.pushNDC(configuration.getName(),trace);
         try {
           flush();
         }
   finally {
-          NDC.pop();
+          LogFactory.popNDC(trace);
         }
       }
     }

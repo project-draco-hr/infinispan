@@ -7,7 +7,7 @@
  else   if (stoppingAndNotAllowed(status,ctx)) {
     throw new IllegalStateException(String.format("%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " + "Either restart it or recreate the cache container.",getCacheNamePrefix()));
   }
-  NDC.push(componentRegistry.getCacheName());
+  LogFactory.pushNDC(componentRegistry.getCacheName(),trace);
   try {
     if (trace)     log.tracef("Invoked with command %s and InvocationContext [%s]",command,ctx);
     if (ctx == null)     throw new IllegalStateException("Null context not allowed!!");
@@ -37,6 +37,6 @@
     }
   }
   finally {
-    NDC.pop();
+    LogFactory.popNDC(trace);
   }
 }
