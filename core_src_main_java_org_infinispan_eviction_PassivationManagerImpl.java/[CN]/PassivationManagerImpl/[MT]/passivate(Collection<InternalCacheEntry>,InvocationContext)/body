@@ -1,8 +1,8 @@
 {
   if (enabled) {
-    notifier.notifyCacheEntriesPassivated(nakedEntries,true,ctx);
-    for (    Map.Entry<Object,InternalCacheEntry> entry : entries.entrySet()) {
+    for (    InternalCacheEntry entry : entries) {
       Object key=entry.getKey();
+      notifier.notifyCacheEntryPassivated(key,entry.getValue(),true,ctx);
       boolean locked=false;
       try {
         locked=acquireLock(ctx,key);
@@ -12,10 +12,11 @@
       }
       try {
         if (trace)         log.tracef("Passivating entry %s",key);
-        cacheStore.store(entry.getValue());
+        cacheStore.store(entry);
         if (statsEnabled && entry.getValue() != null) {
           passivations.getAndIncrement();
         }
+        notifier.notifyCacheEntryPassivated(key,null,false,ctx);
       }
  catch (      CacheLoaderException e) {
         log.unableToPassivateEntry(key,e);
@@ -26,6 +27,5 @@
         }
       }
     }
-    notifier.notifyCacheEntriesPassivated(nakedEntries,false,ctx);
   }
 }
