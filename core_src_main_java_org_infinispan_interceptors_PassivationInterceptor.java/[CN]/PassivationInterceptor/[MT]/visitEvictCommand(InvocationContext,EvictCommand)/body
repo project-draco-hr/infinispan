@@ -1,5 +1,8 @@
 {
   Object key=command.getKey();
-  passivator.passivate(key,dataContainer.get(key),ctx);
+  InternalCacheEntry value=dataContainer.get(key);
+  Map<Object,InternalCacheEntry> entries=Collections.singletonMap(key,value);
+  Map<Object,Object> nakedEntries=Collections.singletonMap(key,value == null ? null : value.getValue());
+  passivator.passivate(entries,nakedEntries,ctx);
   return invokeNextInterceptor(ctx,command);
 }

@@ -1,0 +1,31 @@
+{
+  if (enabled) {
+    notifier.notifyCacheEntriesPassivated(nakedEntries,true,ctx);
+    for (    Map.Entry<Object,InternalCacheEntry> entry : entries.entrySet()) {
+      Object key=entry.getKey();
+      boolean locked=false;
+      try {
+        locked=acquireLock(ctx,key);
+      }
+ catch (      Exception e) {
+        log.couldNotAcquireLockForEviction(key,e);
+      }
+      try {
+        if (trace)         log.tracef("Passivating entry %s",key);
+        cacheStore.store(entry.getValue());
+        if (statsEnabled && entry.getValue() != null) {
+          passivations.getAndIncrement();
+        }
+      }
+ catch (      CacheLoaderException e) {
+        log.unableToPassivateEntry(key,e);
+      }
+ finally {
+        if (locked) {
+          lockManager.unlock(key);
+        }
+      }
+    }
+    notifier.notifyCacheEntriesPassivated(nakedEntries,false,ctx);
+  }
+}
