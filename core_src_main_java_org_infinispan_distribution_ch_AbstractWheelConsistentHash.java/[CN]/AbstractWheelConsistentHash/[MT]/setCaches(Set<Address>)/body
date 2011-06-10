@@ -1,22 +1,29 @@
 {
   if (newCaches.size() == 0 || newCaches.contains(null))   throw new IllegalArgumentException("Invalid cache list for consistent hash: " + newCaches);
-  caches=new LinkedHashSet<Address>(newCaches.size());
-  positions=new TreeMap<Integer,Address>();
-  addressToHashIds=new HashMap<Address,Integer>();
-  if (trace)   log.tracef("Adding %s nodes to cluster",newCaches.size());
+  if (trace)   log.tracef("Adding %d nodes to cluster",newCaches.size());
+  if (newCaches.size() * numVirtualNodes > HASH_SPACE)   throw new IllegalArgumentException("Too many nodes: " + newCaches.size() + " * "+ numVirtualNodes+ " exceeds the available hash space");
+  TreeMap<Integer,Address> positions=new TreeMap<Integer,Address>();
   for (  Address a : newCaches) {
-    if (isVirtualNodesEnabled()) {
-      if (trace)       log.tracef("Adding %s virtual nodes for real node %s",numVirtualNodes,a);
-      for (int i=0; i < numVirtualNodes; i++) {
-        Address va=createVirtualAddress(a,i);
-        if (trace)         log.tracef("Adding virtual node %s",va);
-        addNode(va);
+    if (trace)     log.tracef("Adding node %s",a);
+    addNode(positions,a,getNormalizedHash(a));
+  }
+  if (isVirtualNodesEnabled()) {
+    for (    Address a : newCaches) {
+      if (trace)       log.tracef("Adding %d virtual nodes for real node %s",numVirtualNodes - 1,a);
+      for (int i=1; i < numVirtualNodes; i++) {
+        Address va=new VirtualAddress(a,i);
+        addNode(positions,a,getNormalizedHash(va));
       }
     }
- else {
-      if (trace)       log.tracef("Adding node %s",a);
-      addNode(a);
-    }
   }
-  caches.addAll(positions.values());
+  caches=new LinkedHashSet<Address>(newCaches.size());
+  positionKeys=new int[positions.size()];
+  positionValues=new Address[positions.size()];
+  int i=0;
+  for (  Map.Entry<Integer,Address> position : positions.entrySet()) {
+    caches.add(position.getValue());
+    positionKeys[i]=position.getKey();
+    positionValues[i]=position.getValue();
+    i++;
+  }
 }

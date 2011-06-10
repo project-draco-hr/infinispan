@@ -1,0 +1,14 @@
+{
+  int actualReplCount=Math.min(replCount,caches.size());
+  int normalizedHash=getNormalizedHash(getGrouping(key));
+  List<Address> owners=new ArrayList<Address>(replCount);
+  for (Iterator<Map.Entry<Integer,Address>> it=getPositionsIterator(normalizedHash); it.hasNext(); ) {
+    Address a=it.next().getValue();
+    if (!(isVirtualNodesEnabled() && owners.contains(a))) {
+      if (a == target)       return null;
+      owners.add(a);
+      if (owners.size() >= actualReplCount)       return owners;
+    }
+  }
+  return owners;
+}
