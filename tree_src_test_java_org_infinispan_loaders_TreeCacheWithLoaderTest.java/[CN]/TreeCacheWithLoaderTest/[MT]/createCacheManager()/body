@@ -1,9 +1,5 @@
 {
-  Configuration c=getDefaultStandaloneConfig(true);
-  c.setInvocationBatchingEnabled(true);
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-  c.setCacheLoaderManagerConfig(clmc);
+  Configuration c=getDefaultStandaloneConfig(true).fluent().invocationBatching().loaders().addCacheLoader(new DummyInMemoryCacheStore.Cfg(getClass().getName())).build();
   EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(c,true);
   cache=new TreeCacheImpl<String,String>(cm.getCache());
   CacheLoaderManager m=TestingUtil.extractComponent(cache.getCache(),CacheLoaderManager.class);
