@@ -1,0 +1,15 @@
+{
+  boolean shared=cacheLoaderManagerConfig.isShared();
+  if (!shared) {
+    for (    CacheLoaderConfig loaderConfig : cacheLoaderManagerConfig.getCacheLoaderConfigs()) {
+      if (loaderConfig instanceof CacheStoreConfig) {
+        CacheStoreConfig storeConfig=(CacheStoreConfig)loaderConfig;
+        Boolean fetchPersistentState=storeConfig.isFetchPersistentState();
+        Boolean purgeOnStartup=storeConfig.isPurgeOnStartup();
+        if (!fetchPersistentState && !purgeOnStartup) {
+          log.staleEntriesWithoutFetchPersistentStateOrPurgeOnStartup();
+        }
+      }
+    }
+  }
+}
