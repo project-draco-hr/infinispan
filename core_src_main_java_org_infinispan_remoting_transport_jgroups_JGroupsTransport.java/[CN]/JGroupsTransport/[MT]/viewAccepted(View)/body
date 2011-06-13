@@ -1,9 +1,17 @@
 {
+  log.debugf("New view accepted: %s",newView);
   Vector<org.jgroups.Address> newMembers=newView.getMembers();
-  List<Address> oldMembers=null;
+  if (newMembers == null || newMembers.isEmpty()) {
+    log.debugf("Received null or empty member list from JGroups channel: " + newView);
+    return;
+  }
+  List<Address> oldMembers=members;
+  members=fromJGroupsAddressList(newMembers);
+  coordinator=members.get(0).equals(getAddress());
+  channelConnectedLatch.countDown();
   boolean hasNotifier=notifier != null;
-  Notify n=null;
   if (hasNotifier) {
+    Notify n=null;
     if (newView instanceof MergeView) {
       if (log.isInfoEnabled())       if (log.isInfoEnabled())       log.receivedMergedView(newView);
       n=new NotifyMerge();
@@ -12,14 +20,6 @@
       if (log.isInfoEnabled())       if (log.isInfoEnabled())       log.receivedClusterView(newView);
       n=new NotifyViewChange();
     }
+    n.emitNotification(oldMembers,newView);
   }
-  boolean needNotification=false;
-  if (newMembers != null) {
-    oldMembers=members;
-    members=fromJGroupsAddressList(newMembers);
-    needNotification=true;
-  }
-  coordinator=(members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
-  channelConnectedLatch.countDown();
-  if (needNotification && n != null)   n.emitNotification(oldMembers,newView);
 }
