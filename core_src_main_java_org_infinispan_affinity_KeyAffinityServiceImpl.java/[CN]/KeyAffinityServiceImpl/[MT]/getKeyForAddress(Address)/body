@@ -4,12 +4,17 @@
   }
   if (address == null)   throw new NullPointerException("Null address not supported!");
   BlockingQueue queue=address2key.get(address);
-  if (queue == null)   return null;
+  if (queue == null)   throw new IllegalStateException("Address " + address + " is no longer in the cluster");
   try {
     maxNumberInvariant.readLock().lock();
     Object result;
     try {
-      result=queue.take();
+      result=queue.poll();
+      if (result == null) {
+        keyProducerStartLatch.open();
+        if (!address.equals(getAddressForKey(address)))         throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+        result=queue.take();
+      }
     }
   finally {
       maxNumberInvariant.readLock().unlock();
