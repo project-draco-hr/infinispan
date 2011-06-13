@@ -15,4 +15,15 @@
     throw new ConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
   }
   streamBufferSize=config.getStreamBufferSize();
+switch (config.getFsyncMode()) {
+case DEFAULT:
+    fileSync=new BufferedFileSync();
+  break;
+case PER_WRITE:
+fileSync=new PerWriteFileSync();
+break;
+case PERIODIC:
+fileSync=new PeriodicFileSync(config.getFsyncInterval());
+break;
+}
 }

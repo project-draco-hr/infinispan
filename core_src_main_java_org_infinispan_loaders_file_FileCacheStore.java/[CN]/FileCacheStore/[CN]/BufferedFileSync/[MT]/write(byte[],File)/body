@@ -1,0 +1,15 @@
+{
+  String path=f.getPath();
+  FileChannel channel=streams.get(path);
+  if (channel == null) {
+    channel=createChannel(f);
+    streams.putIfAbsent(path,channel);
+  }
+ else   if (!f.exists()) {
+    f.createNewFile();
+    FileChannel oldChannel=channel;
+    channel=createChannel(f);
+    streams.replace(path,oldChannel,channel);
+  }
+  channel.write(ByteBuffer.wrap(bytes));
+}

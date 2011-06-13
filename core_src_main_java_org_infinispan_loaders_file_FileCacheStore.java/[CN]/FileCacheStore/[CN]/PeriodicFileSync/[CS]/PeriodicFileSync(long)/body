@@ -1,0 +1,19 @@
+{
+  executor.scheduleWithFixedDelay(new Runnable(){
+    @Override public void run(){
+      for (      Map.Entry<String,FileChannel> entry : streams.entrySet()) {
+        if (trace)         log.tracef("Flushing channel in %s",entry.getKey());
+        FileChannel channel=entry.getValue();
+        try {
+          channel.force(true);
+        }
+ catch (        IOException e) {
+          if (trace)           log.tracef(e,"Error flushing output stream for %s",entry.getKey());
+          flushErrors.putIfAbsent(entry.getKey(),e);
+          Util.close(channel);
+        }
+      }
+    }
+  }
+,interval,interval,TimeUnit.MILLISECONDS);
+}

@@ -1,20 +1,17 @@
 {
   File f=new File(root,b.getBucketIdAsString());
   if (f.exists()) {
-    if (!deleteFile(f)) {
+    if (!purgeFile(f)) {
       log.problemsRemovingFile(f);
     }
   }
- else   if (log.isTraceEnabled()) {
+ else   if (trace) {
     log.tracef("Successfully deleted file: '%s'",f.getName());
   }
   if (!b.getEntries().isEmpty()) {
-    FileOutputStream fos=null;
     try {
       byte[] bytes=marshaller.objectToByteBuffer(b);
-      fos=new FileOutputStream(f);
-      fos.write(bytes);
-      fos.flush();
+      fileSync.write(bytes,f);
     }
  catch (    IOException ex) {
       log.errorSavingBucket(b,ex);
@@ -25,9 +22,6 @@ catch (    InterruptedException ie) {
         log.trace("Interrupted while marshalling a bucket");
       }
       Thread.currentThread().interrupt();
-    }
- finally {
-      safeClose(fos);
     }
   }
 }
