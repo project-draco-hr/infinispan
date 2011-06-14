@@ -1,5 +1,4 @@
 {
-  if (!rpcManager.getTransport().isCoordinator())   throw new IllegalStateException("Only the coordinator should handle node push completed events");
   if (trace)   log.tracef("Coordinator: received push completed notification for %s, view id %s",node,viewId);
   if (viewId < lastViewId) {
     if (log.isTraceEnabled())     log.tracef("Coordinator: Ignoring old push completed confirmation for view %d, last view is %d",viewId,lastViewId);
@@ -20,7 +19,7 @@ synchronized (pushConfirmationsLock) {
         return;
       }
     }
-    if (trace)     log.tracef("Coordinator: sending rehash completed notification for view %s",viewId);
+    if (trace)     log.tracef("Coordinator: sending rehash completed notification for view %d, lastView %d, notifications received: %s",viewId,lastViewId,pushConfirmations);
     final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.REHASH_COMPLETED,getSelf(),viewId);
     rpcManager.broadcastRpcCommand(cmd,false);
     markRehashCompleted(viewId);

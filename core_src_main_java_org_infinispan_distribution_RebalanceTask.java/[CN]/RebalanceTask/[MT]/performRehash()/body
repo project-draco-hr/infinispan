@@ -19,17 +19,17 @@
         Collection<Address> oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
         Collection<Address> newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
         notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
-        List<Object> removedKeys=new ArrayList<Object>();
+        List<Object> keysToRemove=new ArrayList<Object>();
         NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,newMembers.size());
         int numOwners=configuration.getNumOwners();
         final Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
         for (        InternalCacheEntry ice : dataContainer) {
-          rebalance(ice.getKey(),ice,numOwners,chOld,chNew,null,states,removedKeys);
+          rebalance(ice.getKey(),ice,numOwners,chOld,chNew,null,states,keysToRemove);
         }
         CacheStore cacheStore=distributionManager.getCacheStoreForRehashing();
         if (cacheStore != null) {
           for (          Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-            rebalance(key,null,numOwners,chOld,chNew,cacheStore,states,removedKeys);
+            rebalance(key,null,numOwners,chOld,chNew,cacheStore,states,keysToRemove);
           }
         }
  else {
@@ -38,7 +38,7 @@
         for (        Map.Entry<Address,Map<Object,InternalCacheValue>> entry : states.entrySet()) {
           final Address target=entry.getKey();
           Map<Object,InternalCacheValue> state=entry.getValue();
-          if (trace)           log.tracef("pushing %d keys to %s",state.size(),target);
+          if (trace)           log.tracef("%s pushing to %s keys %s",self,target,state.keySet());
           final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE,self,newViewId,state,chOld,chNew);
           rpcManager.invokeRemotelyInFuture(Collections.singleton(target),cmd,false,stateTransferFuture,configuration.getRehashRpcTimeout());
         }
@@ -52,15 +52,16 @@
         }
         notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
         try {
-          InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,removedKeys);
+          InvalidateCommand invalidateCmd=cf.buildInvalidateFromL1Command(true,keysToRemove);
           InvocationContext ctx=icc.createNonTxInvocationContext();
-          invalidateCmd.perform(ctx);
+          ctx.setFlags(Flag.SKIP_LOCKING);
+          interceptorChain.invoke(ctx,invalidateCmd);
         }
  catch (        Throwable t) {
           log.failedToInvalidateKeys(t);
         }
         if (trace) {
-          if (removedKeys.size() > 0)           log.tracef("removed %d keys",removedKeys.size());
+          if (keysToRemove.size() > 0)           log.tracef("%s removed keys %s",self,keysToRemove);
           log.tracef("data container has now %d keys",dataContainer.size());
         }
       }
@@ -79,7 +80,7 @@
     }
  else {
       final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,newViewId);
-      rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()),cmd,false);
+      rpcManager.invokeRemotely(Collections.singleton(t.getCoordinator()),cmd,ResponseMode.SYNCHRONOUS,configuration.getRehashRpcTimeout());
     }
   }
   finally {

@@ -1,16 +1,17 @@
 {
-  List<Address> oldServers=chOld.locate(key,numOwners);
-  List<Address> newServers=chNew.locate(key,numOwners);
-  if (oldServers.equals(newServers))   return;
-  Address oldOwner=null;
-  for (int i=oldServers.size() - 1; i >= 0; i--) {
-    Address tmp=oldServers.get(i);
-    if (newServers.contains(tmp)) {
-      oldOwner=tmp;
+  List<Address> oldOwners=chOld.locate(key,numOwners);
+  List<Address> newOwners=chNew.locate(key,numOwners);
+  if (oldOwners.equals(newOwners))   return;
+  if (trace)   log.tracef("Rebalancing key %s from %s to %s",key,oldOwners,newOwners);
+  Address pushingOwner=null;
+  for (int i=oldOwners.size() - 1; i >= 0; i--) {
+    Address server=oldOwners.get(i);
+    if (newOwners.contains(server)) {
+      pushingOwner=server;
       break;
     }
   }
-  if (self.equals(oldOwner)) {
+  if (self.equals(pushingOwner)) {
     if (value == null) {
       try {
         value=cacheStore.load(key);
@@ -19,8 +20,8 @@
         log.failedLoadingValueFromCacheStore(key);
       }
     }
-    for (    Address server : newServers) {
-      if (!oldServers.contains(server)) {
+    for (    Address server : newOwners) {
+      if (!oldOwners.contains(server)) {
         Map<Object,InternalCacheValue> map=states.get(server);
         if (map == null) {
           map=new HashMap<Object,InternalCacheValue>();
@@ -30,7 +31,7 @@
       }
     }
   }
-  if (oldServers.contains(self) && !newServers.contains(self)) {
-    removedKeys.add(key);
+  if (oldOwners.contains(self) && !newOwners.contains(self)) {
+    keysToRemove.add(key);
   }
 }

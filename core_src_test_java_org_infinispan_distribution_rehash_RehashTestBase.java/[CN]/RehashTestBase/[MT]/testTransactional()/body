@@ -42,16 +42,15 @@
   log.info("Rehash complete");
   additionalWait();
   if (!rollback.get()) {
+    RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
+    assertOwnershipAndNonOwnership(keys.get(0),true);
+    assertOwnershipAndNonOwnership(keys.get(1),l1OnRehash);
+    assertOwnershipAndNonOwnership(keys.get(2),l1OnRehash);
+    assertOwnershipAndNonOwnership(keys.get(3),l1OnRehash);
     assertOnAllCaches(keys.get(0),"transactionally_replaced");
     assertOnAllCaches(keys.get(1),"v" + 2);
     assertOnAllCaches(keys.get(2),"v" + 3);
     assertOnAllCaches(keys.get(3),"v" + 4);
-    if (!mergedViewListener.merged) {
-      RehashWaiter.waitForRehashToComplete(new ArrayList<Cache>(caches));
-      assertOwnershipAndNonOwnership(keys.get(0));
-      assertOwnershipAndNonOwnership(keys.get(1));
-      assertOwnershipAndNonOwnership(keys.get(3));
-    }
     assertProperConsistentHashOnAllCaches();
   }
 }

@@ -1,11 +1,8 @@
 {
   List<MagicKey> keys=init();
   performRehashEvent();
-  int joinerPos=waitForRehashCompletion();
-  TestingUtil.sleepThread(30000);
-  Cache<Object,String> cacheToCheckForInvalidation=joinerPos + 1 == caches.size() ? caches.get(0) : caches.get(joinerPos + 1);
-  MagicKey rehashedKey=keys.get(joinerPos == 1 ? 0 : 1);
-  if (l1OnRehash)   assertIsInL1(cacheToCheckForInvalidation,rehashedKey);
- else   assertIsNotInL1(cacheToCheckForInvalidation,rehashedKey);
-  assertIsInContainerImmortal(joiner,rehashedKey);
+  int joinerPos=waitForJoinCompletion();
+  for (  MagicKey key : keys) {
+    assertOwnershipAndNonOwnership(key,l1OnRehash);
+  }
 }
