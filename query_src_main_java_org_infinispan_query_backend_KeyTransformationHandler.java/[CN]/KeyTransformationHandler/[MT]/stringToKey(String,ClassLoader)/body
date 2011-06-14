@@ -1,0 +1,41 @@
+{
+  char type=s.charAt(0);
+switch (type) {
+case 'S':
+    return s.substring(2);
+case 'I':
+  return Integer.parseInt(s.substring(2));
+case 'Y':
+return Byte.parseByte(s.substring(2));
+case 'L':
+return Long.parseLong(s.substring(2));
+case 'X':
+return Short.parseShort(s.substring(2));
+case 'D':
+return Double.parseDouble(s.substring(2));
+case 'F':
+return Float.parseFloat(s.substring(2));
+case 'B':
+return Boolean.parseBoolean(s.substring(2));
+case 'C':
+return s.charAt(2);
+case 'T':
+int indexOfSecondDelimiter=s.indexOf(":",2);
+String keyClassName=s.substring(2,indexOfSecondDelimiter);
+String keyAsString=s.substring(indexOfSecondDelimiter + 1);
+Transformer t=null;
+Class keyClass=null;
+try {
+keyClass=Util.loadClassStrict(keyClassName,classLoader);
+}
+ catch (ClassNotFoundException e) {
+log.keyClassNotFound(keyClassName,e);
+}
+if (keyClass != null) {
+t=getTransformer(keyClass);
+}
+if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
+return t.fromString(keyAsString);
+}
+throw new CacheException("Unknown type metadata " + type);
+}

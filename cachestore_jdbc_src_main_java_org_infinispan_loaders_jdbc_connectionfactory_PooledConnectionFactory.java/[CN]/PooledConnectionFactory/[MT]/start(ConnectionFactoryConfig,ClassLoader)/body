@@ -1,0 +1,18 @@
+{
+  logFileOverride(classLoader);
+  pooledDataSource=new ComboPooledDataSource();
+  pooledDataSource.setProperties(new Properties());
+  try {
+    pooledDataSource.setDriverClass(config.getDriverClass());
+  }
+ catch (  PropertyVetoException e) {
+    log.errorInstantiatingJdbcDriver(config.getDriverClass(),e);
+    throw new CacheLoaderException(String.format("Error while instatianting JDBC driver: '%s'",config.getDriverClass()),e);
+  }
+  pooledDataSource.setJdbcUrl(config.getConnectionUrl());
+  pooledDataSource.setUser(config.getUserName());
+  pooledDataSource.setPassword(config.getPassword());
+  if (log.isTraceEnabled()) {
+    log.tracef("Started connection factory with config: %s",config);
+  }
+}
