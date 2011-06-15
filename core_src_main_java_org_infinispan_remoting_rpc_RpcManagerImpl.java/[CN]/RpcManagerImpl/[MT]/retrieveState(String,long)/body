@@ -17,16 +17,22 @@
             try {
               if (log.isInfoEnabled())               log.tryingToFetchState(member);
               currentStateTransferSource=member;
+              mimicPartialFlushViaRPC(currentStateTransferSource,true);
               if (t.retrieveState(cacheName,member,timeout)) {
                 if (log.isInfoEnabled())                 log.successfullyAppliedState(member);
                 success=true;
                 break outer;
               }
             }
- catch (            StateTransferException e) {
-              if (log.isDebugEnabled())               log.debug("Error while fetching state from member " + member,e);
+ catch (            Exception ex) {
+              if (log.isDebugEnabled())               log.debug("Error while fetching state from member " + member,ex);
             }
  finally {
+              try {
+                mimicPartialFlushViaRPC(currentStateTransferSource,false);
+              }
+ catch (              Exception ignored) {
+              }
               currentStateTransferSource=null;
             }
           }

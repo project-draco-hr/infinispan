@@ -2,35 +2,25 @@
   if (trace)   log.trace("Integrating transaction log");
   processCommitLog(oi);
   stateSender=rpcManager.getCurrentStateTransferSource();
-  mimicPartialFlushViaRPC(stateSender,true);
-  needToUnblockRPC=true;
-  try {
-    if (trace)     log.trace("Retrieving/Applying post-flush commits");
-    processCommitLog(oi);
-    if (trace)     log.trace("Retrieving/Applying pending prepares");
-    Object object=marshaller.objectFromObjectStream(oi);
-    while (object instanceof PrepareCommand) {
-      PrepareCommand command=(PrepareCommand)object;
-      if (!transactionLog.hasPendingPrepare(command)) {
-        if (trace)         log.tracef("Applying pending prepare %s",command);
-        commandsFactory.initializeReplicableCommand(command,false);
-        RemoteTxInvocationContext ctx=invocationContextContainer.createRemoteTxInvocationContext(null);
-        RemoteTransaction transaction=txTable.createRemoteTransaction(command.getGlobalTransaction(),command.getModifications());
-        ctx.setRemoteTransaction(transaction);
-        ctx.setFlags(CACHE_MODE_LOCAL,Flag.SKIP_CACHE_STATUS_CHECK);
-        interceptorChain.invoke(ctx,command);
-      }
- else {
-        if (trace)         log.tracef("Prepare %s not in tx log; not applying",command);
-      }
-      object=marshaller.objectFromObjectStream(oi);
+  if (trace)   log.trace("Retrieving/Applying post-flush commits");
+  processCommitLog(oi);
+  if (trace)   log.trace("Retrieving/Applying pending prepares");
+  Object object=marshaller.objectFromObjectStream(oi);
+  while (object instanceof PrepareCommand) {
+    PrepareCommand command=(PrepareCommand)object;
+    if (!transactionLog.hasPendingPrepare(command)) {
+      if (trace)       log.tracef("Applying pending prepare %s",command);
+      commandsFactory.initializeReplicableCommand(command,false);
+      RemoteTxInvocationContext ctx=invocationContextContainer.createRemoteTxInvocationContext(null);
+      RemoteTransaction transaction=txTable.createRemoteTransaction(command.getGlobalTransaction(),command.getModifications());
+      ctx.setRemoteTransaction(transaction);
+      ctx.setFlags(CACHE_MODE_LOCAL,Flag.SKIP_CACHE_STATUS_CHECK);
+      interceptorChain.invoke(ctx,command);
     }
-    assertDelimited(object);
+ else {
+      if (trace)       log.tracef("Prepare %s not in tx log; not applying",command);
+    }
+    object=marshaller.objectFromObjectStream(oi);
   }
- catch (  Exception e) {
-    if (trace)     log.trace("Stopping RPC block");
-    mimicPartialFlushViaRPC(stateSender,false);
-    needToUnblockRPC=false;
-    throw e;
-  }
+  assertDelimited(object);
 }
