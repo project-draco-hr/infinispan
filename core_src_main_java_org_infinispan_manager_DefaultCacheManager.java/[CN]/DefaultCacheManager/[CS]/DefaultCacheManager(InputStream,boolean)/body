@@ -1,8 +1,9 @@
 {
   InputStream schemaInputStream=InfinispanConfiguration.findSchemaInputStream();
   try {
-    InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationStream,schemaInputStream,getConfigurationVisitors());
+    InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationStream,schemaInputStream);
     globalConfiguration=configuration.parseGlobalConfiguration();
+    globalConfiguration.accept(configurationValidator);
     defaultConfiguration=configuration.parseDefaultConfiguration();
     for (    Map.Entry<String,Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
       Configuration c=defaultConfiguration.clone();

@@ -1,11 +1,12 @@
 {
   try {
-    InfinispanConfiguration gconfiguration=InfinispanConfiguration.newInfinispanConfiguration(globalConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),getConfigurationVisitors(),Thread.currentThread().getContextClassLoader());
+    InfinispanConfiguration gconfiguration=InfinispanConfiguration.newInfinispanConfiguration(globalConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
     globalConfiguration=gconfiguration.parseGlobalConfiguration();
-    InfinispanConfiguration dconfiguration=InfinispanConfiguration.newInfinispanConfiguration(defaultConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),getConfigurationVisitors(),Thread.currentThread().getContextClassLoader());
+    globalConfiguration.accept(configurationValidator);
+    InfinispanConfiguration dconfiguration=InfinispanConfiguration.newInfinispanConfiguration(defaultConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
     defaultConfiguration=dconfiguration.parseDefaultConfiguration();
     if (namedCacheFile != null) {
-      InfinispanConfiguration NCconfiguration=InfinispanConfiguration.newInfinispanConfiguration(namedCacheFile,InfinispanConfiguration.resolveSchemaPath(),getConfigurationVisitors(),Thread.currentThread().getContextClassLoader());
+      InfinispanConfiguration NCconfiguration=InfinispanConfiguration.newInfinispanConfiguration(namedCacheFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
       for (      Map.Entry<String,Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
         Configuration c=defaultConfiguration.clone();
         c.applyOverrides(entry.getValue());
