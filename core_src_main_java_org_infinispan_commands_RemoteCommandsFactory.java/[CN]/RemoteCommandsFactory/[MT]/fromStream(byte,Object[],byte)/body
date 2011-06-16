@@ -1,11 +1,12 @@
 {
   ReplicableCommand command;
+  if (type == 0) {
 switch (id) {
 case PutKeyValueCommand.COMMAND_ID:
-    command=new PutKeyValueCommand();
-  break;
+      command=new PutKeyValueCommand();
+    break;
 case LockControlCommand.COMMAND_ID:
-command=new LockControlCommand();
+  command=new LockControlCommand();
 break;
 case PutMapCommand.COMMAND_ID:
 command=new PutMapCommand();
@@ -75,6 +76,10 @@ case CompleteTransactionCommand.COMMAND_ID:
 command=new CompleteTransactionCommand();
 break;
 default :
+throw new CacheException("Unknown command id " + id + "!");
+}
+}
+ else {
 ModuleCommandFactory mcf=commandFactories.get(id);
 if (mcf != null) return mcf.fromStream(id,parameters);
  else throw new CacheException("Unknown command id " + id + "!");
