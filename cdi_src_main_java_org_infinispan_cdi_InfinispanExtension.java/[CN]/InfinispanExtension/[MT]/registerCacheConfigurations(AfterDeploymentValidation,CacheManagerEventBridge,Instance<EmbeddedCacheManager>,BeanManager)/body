@@ -1,0 +1,19 @@
+{
+  CreationalContext<Configuration> ctx=beanManager.createCreationalContext(null);
+  Instance<EmbeddedCacheManager> defaultCacheManager=cacheContainers.select(new AnnotationLiteral<Default>(){
+  }
+);
+  for (  ConfigurationHolder oneConfigurationHolder : configurations) {
+    String cacheName=oneConfigurationHolder.getName();
+    Configuration configuration=oneConfigurationHolder.getProducer().produce(ctx);
+    Set<Annotation> qualifiers=oneConfigurationHolder.getQualifiers();
+    Instance<EmbeddedCacheManager> cacheManager=cacheContainers.select(qualifiers.toArray(new Annotation[qualifiers.size()]));
+    if (cacheManager.isUnsatisfied()) {
+      cacheManager=defaultCacheManager;
+    }
+    if (!cacheName.isEmpty() && configuration != null) {
+      cacheManager.get().defineConfiguration(cacheName,configuration);
+    }
+    eventBridge.registerObservers(qualifiers,cacheName,cacheManager.get());
+  }
+}

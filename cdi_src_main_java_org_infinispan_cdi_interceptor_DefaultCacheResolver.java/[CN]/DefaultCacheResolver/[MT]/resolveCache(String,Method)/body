@@ -1,0 +1,14 @@
+{
+  assertNotNull(cacheName,"cacheName parameter cannot be null");
+  assertNotNull(method,"method parameter cannot be null");
+  if (cacheName.isEmpty() && (method.isAnnotationPresent(CacheRemoveAll.class) || method.isAnnotationPresent(CacheRemoveEntry.class))) {
+    throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll or "+ "CacheRemoveEntry doesn't specify a cache name");
+  }
+  String name=cacheName.isEmpty() ? getDefaultMethodCacheName(method) : cacheName;
+  for (  EmbeddedCacheManager oneCacheManager : cacheManagers) {
+    if (oneCacheManager.getCacheNames().contains(name)) {
+      return oneCacheManager.getCache(name);
+    }
+  }
+  return defaultCacheManager.getCache(name);
+}
