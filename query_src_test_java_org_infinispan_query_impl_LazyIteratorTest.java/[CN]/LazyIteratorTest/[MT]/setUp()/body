@@ -1,5 +1,5 @@
 {
-  cache=createMock(Cache.class);
+  cache=createMock(AdvancedCache.class);
   expect(cache.get(anyObject())).andAnswer(new IAnswer<Person>(){
     public Person answer() throws Throwable {
       String key=getCurrentArguments()[0].toString();
@@ -7,6 +7,7 @@
     }
   }
 ).anyTimes();
+  expect(cache.getClassLoader()).andReturn(Thread.currentThread().getContextClassLoader()).anyTimes();
   extractor=createStrictMock(DocumentExtractor.class);
   HSQuery hsQuery=createMock(HSQuery.class);
   expect(hsQuery.queryDocumentExtractor()).andReturn(extractor).once();
@@ -22,5 +23,5 @@
   extractor.close();
   expectLastCall().once();
   EasyMock.replay(cache,extractor,hsQuery);
-  iterator=new LazyIterator(hsQuery,cache.getAdvancedCache(),fetchSize);
+  iterator=new LazyIterator(hsQuery,cache,fetchSize);
 }
