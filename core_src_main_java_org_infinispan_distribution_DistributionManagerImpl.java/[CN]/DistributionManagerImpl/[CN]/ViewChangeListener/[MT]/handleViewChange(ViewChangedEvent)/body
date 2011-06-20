@@ -1,21 +1,26 @@
 {
   if (trace)   log.tracef("New view received: %d, type=%s, members: %s. Starting the RebalanceTask",e.getViewId(),e.getType(),e.getNewMembers());
   rehashInProgress=true;
+synchronized (rehashInProgressMonitor) {
+    rehashInProgressMonitor.notifyAll();
+  }
   lastViewId=e.getViewId();
-synchronized (pushConfirmationsLock) {
-    for (    Address newNode : e.getNewMembers()) {
-      if (!pushConfirmations.containsKey(newNode)) {
-        if (trace)         log.tracef("Coordinator: adding new node %s",newNode);
-        pushConfirmations.put(newNode,-1);
+  if (DistributionManagerImpl.this.getRpcManager().getTransport().isCoordinator()) {
+synchronized (pushConfirmations) {
+      for (      Address newNode : e.getNewMembers()) {
+        if (!pushConfirmations.containsKey(newNode)) {
+          if (trace)           log.tracef("Coordinator: adding new node %s",newNode);
+          pushConfirmations.put(newNode,-1);
+        }
       }
-    }
-    for (    Address oldNode : e.getOldMembers()) {
-      if (!e.getNewMembers().contains(oldNode)) {
-        if (trace)         log.tracef("Coordinator: removing node %s",oldNode);
-        pushConfirmations.remove(oldNode);
+      for (      Address oldNode : e.getOldMembers()) {
+        if (!e.getNewMembers().contains(oldNode)) {
+          if (trace)           log.tracef("Coordinator: removing node %s",oldNode);
+          pushConfirmations.remove(oldNode);
+        }
       }
+      if (trace)       log.tracef("Coordinator: push confirmations list updated: %s",pushConfirmations);
     }
-    if (trace)     log.tracef("Coordinator: push confirmations list updated: %s",pushConfirmations);
   }
   RebalanceTask rebalanceTask=new RebalanceTask(rpcManager,cf,configuration,dataContainer,DistributionManagerImpl.this,icc,cacheNotifier,interceptorChain,e.getViewId());
   rehashExecutor.submit(rebalanceTask);

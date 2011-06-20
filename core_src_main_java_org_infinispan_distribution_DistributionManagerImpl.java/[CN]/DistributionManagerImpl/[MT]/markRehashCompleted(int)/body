@@ -1,4 +1,5 @@
 {
+  waitForJoinToStart();
   if (viewId < lastViewId) {
     if (trace)     log.tracef("Ignoring old rehash completed confirmation for view %d, last view is %d",viewId,lastViewId);
     return;
@@ -8,5 +9,8 @@
   }
   if (trace)   log.tracef("Rehash completed on node %s, data container has %d keys",getSelf(),dataContainer.size());
   rehashInProgress=false;
+synchronized (rehashInProgressMonitor) {
+    rehashInProgressMonitor.notifyAll();
+  }
   joinCompletedLatch.countDown();
 }

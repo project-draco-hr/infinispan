@@ -1,0 +1,18 @@
+{
+  NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,states.size());
+  for (  Map.Entry<Address,Map<Object,InternalCacheValue>> entry : states.entrySet()) {
+    final Address target=entry.getKey();
+    Map<Object,InternalCacheValue> state=entry.getValue();
+    if (trace)     log.tracef("%s pushing to %s keys %s",self,target,state.keySet());
+    final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.APPLY_STATE,self,newViewId,state,chOld,chNew);
+    rpcManager.invokeRemotelyInFuture(Collections.singleton(target),cmd,false,stateTransferFuture,configuration.getRehashRpcTimeout());
+  }
+  try {
+    stateTransferFuture.get();
+  }
+ catch (  ExecutionException e) {
+    log.errorTransferringState(e);
+    throw e;
+  }
+  log.debugf("Node finished pushing data for rehash %d",newViewId);
+}

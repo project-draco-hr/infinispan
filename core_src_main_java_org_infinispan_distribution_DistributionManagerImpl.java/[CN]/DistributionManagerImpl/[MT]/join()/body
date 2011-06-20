@@ -1,15 +1,14 @@
 {
+  if (trace)   log.trace("starting distribution manager on " + getMyAddress());
+  notifier.addListener(listener);
   Transport t=rpcManager.getTransport();
   List<Address> members=t.getMembers();
   self=t.getAddress();
   lastViewId=t.getViewId();
   consistentHash=ConsistentHashHelper.createConsistentHash(configuration,members);
+synchronized (pushConfirmations) {
+    pushConfirmations.put(t.getAddress(),-1);
+  }
   joinStartedLatch.countDown();
-  if (t.isCoordinator()) {
-    markNodePushCompleted(t.getViewId(),t.getAddress());
-  }
- else {
-    final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,t.getViewId());
-    rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()),cmd,true);
-  }
+  notifyCoordinatorPushCompleted(t.getViewId());
 }

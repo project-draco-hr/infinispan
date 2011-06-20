@@ -1,0 +1,17 @@
+{
+  waitForJoinToStart();
+  ConsistentHash latestCH=consistentHash;
+  if (viewId < lastViewId) {
+    log.debugf("Rejecting state pushed by node %s for old rehash %d (last view id is %d)",sender,viewId,lastViewId);
+    latestCH=getConsistentHash();
+  }
+  if (trace)   log.tracef("Applying new state from %s: received %d keys",sender,state.size());
+  int retryCount=3;
+  Map<Object,InternalCacheValue> pendingApplications=state;
+  for (int i=0; i < retryCount; i++) {
+    pendingApplications=applyStateMap(latestCH,pendingApplications,true);
+    if (pendingApplications.isEmpty())     break;
+  }
+  if (!pendingApplications.isEmpty())   applyStateMap(latestCH,pendingApplications,false);
+  if (trace)   log.tracef("After applying state data container has %d keys",dataContainer.size());
+}
