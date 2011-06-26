@@ -3,7 +3,10 @@
   List<PrioritizedMethod> startMethods=new ArrayList<PrioritizedMethod>(componentLookup.size());
   for (  Component c : componentLookup.values())   startMethods.addAll(c.startMethods);
   Collections.sort(startMethods);
-  for (  PrioritizedMethod em : startMethods)   em.invoke();
+  for (  PrioritizedMethod em : startMethods) {
+    if (getLog().isTraceEnabled())     getLog().tracef("Invoking stop method %s on component %s",em.method,em.component.getName());
+    em.invoke();
+  }
   addShutdownHook();
   getLog().version(Version.printVersion());
   state=ComponentStatus.RUNNING;
