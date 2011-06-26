@@ -1,5 +1,14 @@
 {
   FileChannel channel=streams.get(f.getPath());
+  if (channel == null) {
+    channel=createChannel(f);
+    String path=f.getPath();
+    FileChannel existingChannel=streams.putIfAbsent(path,channel);
+    if (existingChannel != null) {
+      Util.close(channel);
+      channel=existingChannel;
+    }
+  }
   channel.truncate(0);
   channel.position(0);
 }
