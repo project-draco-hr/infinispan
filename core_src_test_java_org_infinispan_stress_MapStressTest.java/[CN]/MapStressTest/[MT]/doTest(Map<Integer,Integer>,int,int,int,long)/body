@@ -6,13 +6,18 @@
     Thread getter=new Thread(){
       public void run(){
         waitForStart();
-        long start=System.nanoTime();
+        long startMilis=System.currentTimeMillis();
         int runs=0;
-        while (runs < readOps.size()) {
+        int totalRuns=0;
+        while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
           map.get(readOps.get(runs));
           runs++;
+          totalRuns++;
+          if (runs >= readOps.size()) {
+            runs=0;
+          }
         }
-        perf.put("GET" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+        perf.put("GET" + Thread.currentThread().getId(),opsPerMS(System.currentTimeMillis() - startMilis,totalRuns));
       }
     }
 ;
@@ -22,13 +27,18 @@
     Thread putter=new Thread(){
       public void run(){
         waitForStart();
-        long start=System.nanoTime();
         int runs=0;
-        while (runs < writeOps.size()) {
+        int totalRuns=0;
+        long startMilis=System.currentTimeMillis();
+        while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
           map.put(writeOps.get(runs),runs);
           runs++;
+          totalRuns++;
+          if (runs >= writeOps.size()) {
+            runs=0;
+          }
         }
-        perf.put("PUT" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+        perf.put("PUT" + Thread.currentThread().getId(),opsPerMS(System.currentTimeMillis() - startMilis,totalRuns));
       }
     }
 ;
@@ -38,13 +48,18 @@
     Thread remover=new Thread(){
       public void run(){
         waitForStart();
-        long start=System.nanoTime();
         int runs=0;
-        while (runs < removeOps.size()) {
+        int totalRuns=0;
+        long startMilis=System.currentTimeMillis();
+        while ((System.currentTimeMillis() - startMilis) <= runningTimeout) {
           map.remove(removeOps.get(runs));
           runs++;
+          totalRuns++;
+          if (runs >= removeOps.size()) {
+            runs=0;
+          }
         }
-        perf.put("REM" + Thread.currentThread().getId(),opsPerMS(System.nanoTime() - start,runs));
+        perf.put("REM" + Thread.currentThread().getId(),opsPerMS(System.currentTimeMillis() - startMilis,totalRuns));
       }
     }
 ;
@@ -52,9 +67,7 @@
   }
   for (  Thread t : threads)   t.start();
   latch.countDown();
-  Thread.sleep(RUN_TIME_MILLIS);
   for (  Thread t : threads)   t.join();
-  System.out.println("Size = " + map.size());
   int puts=0, gets=0, removes=0;
   for (  Entry<String,String> p : perf.entrySet()) {
     if (p.getKey().startsWith("PUT")) {
@@ -71,4 +84,5 @@
   System.out.println("Average get ops/ms " + (gets / numReaders));
   System.out.println("Average put ops/ms " + (puts / numWriters));
   System.out.println("Average remove ops/ms " + (removes / numRemovers));
+  System.out.println("Size = " + map.size());
 }
