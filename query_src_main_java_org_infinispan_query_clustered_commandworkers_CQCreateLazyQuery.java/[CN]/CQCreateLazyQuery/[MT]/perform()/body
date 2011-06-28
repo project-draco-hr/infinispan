@@ -1,11 +1,10 @@
 {
-  query.setSearchFactoryImplementor((SearchFactoryImplementor)getSearchFactory());
-  QueryHits queryHits=query.getQueryHits();
-  DocumentExtractor extractor=query.queryDocumentExtractor(queryHits);
+  query.afterDeserialise((SearchFactoryImplementor)getSearchFactory());
+  DocumentExtractor extractor=query.queryDocumentExtractor();
   int resultSize=query.queryResultSize();
   QueryBox box=getQueryBox();
   box.put(lazyQueryId,extractor);
-  TopDocs topDocs=queryHits.getTopDocs();
+  TopDocs topDocs=extractor.getTopDocs();
   QueryResponse queryResponse=new QueryResponse(topDocs,box.getMyId(),resultSize);
   queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
   return queryResponse;
