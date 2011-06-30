@@ -1,0 +1,20 @@
+{
+  Map dataIn=new HashMap();
+  dataIn.put(1,v(m,1));
+  dataIn.put(2,v(m,2));
+  cache.putAll(dataIn);
+  TransactionManager tm=cache.getAdvancedCache().getTransactionManager();
+  tm.begin();
+  try {
+    Map txDataIn=new HashMap();
+    txDataIn.put(3,v(m,3));
+    Map allEntriesIn=new HashMap(dataIn);
+    allEntriesIn.putAll(txDataIn);
+    cache.putAll(txDataIn);
+    Set entries=cache.entrySet();
+    assertEquals(allEntriesIn.entrySet(),entries);
+  }
+  finally {
+    tm.commit();
+  }
+}

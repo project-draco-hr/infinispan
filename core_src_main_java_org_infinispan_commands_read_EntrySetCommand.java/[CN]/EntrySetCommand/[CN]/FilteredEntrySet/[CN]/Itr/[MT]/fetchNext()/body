@@ -4,7 +4,7 @@
     while (it1.hasNext()) {
       CacheEntry e=it1.next();
       if (e.isCreated()) {
-        next=InternalEntryFactory.create(e.getKey(),e.getValue());
+        next=immutableInternalCacheEntry(InternalEntryFactory.create(e.getKey(),e.getValue()));
         found=true;
         break;
       }
@@ -25,11 +25,11 @@
         break;
       }
       if (e.isChanged()) {
-        next=InternalEntryFactory.create(key,e.getValue());
+        next=immutableInternalCacheEntry(InternalEntryFactory.create(key,e.getValue()));
         found=true;
         break;
       }
-      if (e.isRemoved()) {
+      if (e.isRemoved() || ice.isExpired()) {
         continue;
       }
     }
