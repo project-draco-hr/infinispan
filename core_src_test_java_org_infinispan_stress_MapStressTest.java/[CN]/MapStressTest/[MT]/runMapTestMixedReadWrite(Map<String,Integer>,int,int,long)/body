@@ -1,0 +1,13 @@
+{
+  latch=new CountDownLatch(1);
+  final TotalStats perf=new TotalStats();
+  List<Thread> threads=new LinkedList<Thread>();
+  for (int i=0; i < numThreads; i++) {
+    Thread thread=new WorkerThread(runningTimeout,perf,readWriteOperation(map,readToWriteRatio));
+    threads.add(thread);
+  }
+  for (  Thread t : threads)   t.start();
+  latch.countDown();
+  for (  Thread t : threads)   t.join();
+  return perf;
+}

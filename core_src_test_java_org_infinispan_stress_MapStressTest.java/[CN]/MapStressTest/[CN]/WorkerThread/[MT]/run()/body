@@ -1,0 +1,18 @@
+{
+  waitForStart();
+  long startMilis=System.currentTimeMillis();
+  long endMillis=startMilis + runningTimeout;
+  int keyIndex=RANDOM.nextInt(keys.size());
+  long runs=0;
+  long missCount=0;
+  while ((runs & 0x3FFF) != 0 || System.currentTimeMillis() < endMillis) {
+    boolean hit=op.call(keys.get(keyIndex),runs);
+    if (!hit)     missCount++;
+    keyIndex++;
+    runs++;
+    if (keyIndex >= keys.size()) {
+      keyIndex=0;
+    }
+  }
+  perf.addStats(op.getName(),runs,System.currentTimeMillis() - startMilis,missCount);
+}
