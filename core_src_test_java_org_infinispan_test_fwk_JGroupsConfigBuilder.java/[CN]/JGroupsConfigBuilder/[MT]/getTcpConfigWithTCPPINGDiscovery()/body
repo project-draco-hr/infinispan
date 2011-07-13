@@ -1,21 +1,11 @@
 {
-  Matcher m=TCP_START_PORT.matcher(tcpConfig);
-  String result;
-  String newStartPort;
-  if (m.find()) {
-    newStartPort=threadTcpStartPort.get();
-    result=m.replaceFirst("bind_port=" + newStartPort);
-  }
- else {
-    System.out.println("Config is:" + tcpConfig);
-    Thread.dumpStack();
-    throw new IllegalStateException();
-  }
-  if (result.indexOf("TCPGOSSIP") < 0) {
-    m=TCP_INITIAL_HOST.matcher(result);
+  String newStartPort=threadTcpStartPort.get();
+  String cfg=replaceTcpStartPort(tcpConfig,newStartPort);
+  if (cfg.indexOf("TCPGOSSIP") < 0) {
+    Matcher m=TCP_INITIAL_HOST.matcher(cfg);
     if (m.find()) {
-      result=m.replaceFirst("initial_hosts=" + bind_addr + "["+ newStartPort+ "]");
+      cfg=m.replaceFirst("initial_hosts=" + bind_addr + "["+ newStartPort+ "]");
     }
   }
-  return result;
+  return cfg;
 }
