@@ -7,12 +7,12 @@
     Map ret=all.putIfAbsent(key,discoveries);
     if (ret != null)     discoveries=ret;
   }
-  Message msg=createGetMbrsReqMsg(clusterName,returnViewsOnly);
   if (!discoveries.containsKey(local_addr)) {
     discoveries.put(local_addr,this);
     if (log.isTraceEnabled())     log.trace(String.format("Add discovery for %s to cache.  The cache now contains: %s",local_addr,discoveries));
   }
   if (discard == null || !discard.isDiscardAll()) {
+    Message msg=createGetMbrsReqMsg(clusterName,returnViewsOnly);
     if (!discoveries.isEmpty()) {
       for (      Discovery discovery : discoveries.values()) {
         if (discovery != this) {
@@ -20,5 +20,11 @@
         }
       }
     }
+ else {
+      log.debug("No other nodes yet, so skip sending get-members request");
+    }
+  }
+ else   if (discard != null && discard.isDiscardAll()) {
+    log.debug("Not sending discovery because DISCARD is on");
   }
 }
