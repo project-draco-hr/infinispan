@@ -1,0 +1,12 @@
+{
+  dataContainer.clear();
+  Flag[] flags=skipCacheStore ? new Flag[]{CACHE_MODE_LOCAL,SKIP_CACHE_STORE} : new Flag[]{CACHE_MODE_LOCAL,SKIP_SHARED_CACHE_STORE};
+  try {
+    Set<InternalCacheEntry> set=(Set<InternalCacheEntry>)marshaller.objectFromObjectStream(i);
+    for (    InternalCacheEntry se : set)     cache.withFlags(flags).put(se.getKey(),se.getValue(),se.getLifespan(),MILLISECONDS,se.getMaxIdle(),MILLISECONDS);
+  }
+ catch (  Exception e) {
+    dataContainer.clear();
+    throw new StateTransferException(e);
+  }
+}
