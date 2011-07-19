@@ -1,16 +1,18 @@
 {
   long start=System.currentTimeMillis();
-  if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, distributionManager.joinComplete = %s",getMyAddress(),distributionManager.isJoinComplete());
+  if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, data container had %d entries",getMyAddress(),dataContainer.size());
   ConsistentHash chOld, chNew;
   try {
-    distributionManager.getTransactionLogger().blockNewTransactions();
-    chOld=distributionManager.getConsistentHash();
+    if (rehashInterrupted) {
+      log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
+    }
+ else {
+      distributionManager.getTransactionLogger().blockNewTransactions();
+    }
     List<Address> newMembers=rpcManager.getTransport().getMembers();
     chNew=createConsistentHash(configuration,newMembers);
-    notifier.notifyTopologyChanged(chOld,chNew,true);
-    distributionManager.setConsistentHash(chNew);
-    notifier.notifyTopologyChanged(chOld,chNew,false);
-    if (log.isTraceEnabled()) {
+    chOld=distributionManager.setConsistentHash(chNew);
+    if (trace) {
       log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
     }
     if (configuration.isRehashEnabled()) {
@@ -40,18 +42,24 @@
     }
   }
   finally {
+    boolean pendingRehash=false;
     try {
       distributionManager.notifyCoordinatorPushCompleted(newViewId);
-      distributionManager.waitForRehashToComplete(newViewId);
+      pendingRehash=!distributionManager.waitForRehashToComplete(newViewId);
     }
   finally {
-      try {
-        distributionManager.getTransactionLogger().unblockNewTransactions();
+      if (pendingRehash) {
+        log.debugf("Another rehash is pending, keeping the transactions blocked");
       }
- catch (      Exception e) {
-        log.debug("Unblocking transactions failed",e);
+ else {
+        try {
+          distributionManager.getTransactionLogger().unblockNewTransactions();
+        }
+ catch (        Exception e) {
+          log.debug("Unblocking transactions failed",e);
+        }
       }
     }
-    log.debugf("Node %s completed join rehash in %s!",self,Util.prettyPrintTime(System.currentTimeMillis() - start));
+    log.debugf("Node %s completed rehash for view %d in %s!",self,newViewId,Util.prettyPrintTime(System.currentTimeMillis() - start));
   }
 }

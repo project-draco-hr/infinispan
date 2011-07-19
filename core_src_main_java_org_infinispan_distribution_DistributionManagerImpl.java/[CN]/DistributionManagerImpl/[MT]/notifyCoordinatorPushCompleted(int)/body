@@ -1,10 +1,13 @@
 {
   Transport t=rpcManager.getTransport();
   if (t.isCoordinator()) {
+    if (trace)     log.tracef("Node %s is the coordinator, marking push for %d as complete directly",self,viewId);
     markNodePushCompleted(viewId,self);
   }
  else {
     final RehashControlCommand cmd=cf.buildRehashControlCommand(RehashControlCommand.Type.NODE_PUSH_COMPLETED,self,viewId);
-    rpcManager.invokeRemotely(Collections.singleton(rpcManager.getTransport().getCoordinator()),cmd,true);
+    Address coordinator=rpcManager.getTransport().getCoordinator();
+    if (trace)     log.tracef("Node %s is not the coordinator, sending request to mark push for %d as complete to %s",self,viewId,coordinator);
+    rpcManager.invokeRemotely(Collections.singleton(coordinator),cmd,true);
   }
 }
