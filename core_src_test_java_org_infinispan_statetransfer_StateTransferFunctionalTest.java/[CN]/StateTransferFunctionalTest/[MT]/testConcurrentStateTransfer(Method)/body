@@ -4,19 +4,16 @@
   Cache<Object,Object> cache1, cache2, cache3, cache4;
   cache1=createCacheManager().getCache(cacheName);
   writeInitialData(cache1);
-  cache2=createCacheManager().getCache(cacheName);
+  JoiningNode node2=new JoiningNode();
+  cache2=node2.getCache(cacheName);
   cache1.put("delay",new StateTransferFunctionalTest.DelayTransfer());
-  TestingUtil.blockUntilViewsReceived(60000,cache1,cache2);
-  verifyInitialData(cache2);
-  final EmbeddedCacheManager cm3=createCacheManager();
-  MergedViewListener l3=new MergedViewListener();
-  cm3.addListener(l3);
-  final EmbeddedCacheManager cm4=createCacheManager();
-  MergedViewListener l4=new MergedViewListener();
-  cm4.addListener(l4);
+  node2.waitForJoin(60000,cache1,cache2);
+  node2.verifyStateTransfer(cache2);
+  final JoiningNode node3=new JoiningNode();
+  final JoiningNode node4=new JoiningNode();
   Thread t1=new Thread(new Runnable(){
     public void run(){
-      cm3.getCache(cacheName);
+      node3.getCache(cacheName);
     }
   }
 );
@@ -24,7 +21,7 @@
   t1.start();
   Thread t2=new Thread(new Runnable(){
     public void run(){
-      cm4.getCache(cacheName);
+      node4.getCache(cacheName);
     }
   }
 );
@@ -32,14 +29,11 @@
   t2.start();
   t1.join();
   t2.join();
-  cache3=cm3.getCache(cacheName);
-  cache4=cm4.getCache(cacheName);
-  TestingUtil.blockUntilViewsReceived(120000,cache1,cache2,cache3,cache4);
-  if (!l3.merged) {
-    verifyInitialData(cache3);
-  }
-  if (!l4.merged) {
-    verifyInitialData(cache4);
-  }
+  cache3=node3.getCache(cacheName);
+  cache4=node4.getCache(cacheName);
+  node3.waitForJoin(120000,cache1,cache2,cache3,cache4);
+  node4.waitForJoin(120000,cache1,cache2,cache3,cache4);
+  node3.verifyStateTransfer(cache3);
+  node4.verifyStateTransfer(cache4);
   logTestEnd(m);
 }
