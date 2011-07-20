@@ -9,8 +9,11 @@
   }
  catch (  Throwable e) {
     log.errorRollingBack(e);
-    txTable.failureCompletingTransaction(ctx.getTransaction());
-    throw new XAException(XAException.XA_HEURHAZ);
+    final Transaction transaction=ctx.getTransaction();
+    if (transaction != null) {
+      txTable.failureCompletingTransaction(transaction);
+    }
+    throw new XAException(XAException.XAER_RMERR);
   }
  finally {
     icc.suspend();
