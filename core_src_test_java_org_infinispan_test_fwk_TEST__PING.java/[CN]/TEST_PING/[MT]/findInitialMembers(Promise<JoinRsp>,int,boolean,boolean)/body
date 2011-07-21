@@ -1,0 +1,34 @@
+{
+  Map<Address,TEST_PING> discoveries=registerInDiscoveries();
+  boolean discardEnabled=isDiscardEnabled(this);
+  if (!discardEnabled) {
+    if (!discoveries.isEmpty()) {
+      LinkedList<PingData> rsps=new LinkedList<PingData>();
+      for (      TEST_PING discovery : discoveries.values()) {
+        boolean traceEnabled=log.isTraceEnabled();
+        if (discovery != this) {
+          boolean remoteDiscardEnabled=isDiscardEnabled(discovery);
+          if (!remoteDiscardEnabled) {
+            addPingRsp(returnViewsOnly,rsps,discovery);
+          }
+ else {
+            if (traceEnabled)             log.trace("Skipping sending response cos DISCARD is on");
+            return Collections.emptyList();
+          }
+        }
+ else {
+          if (traceEnabled)           log.trace("Skipping sending discovery to self");
+        }
+      }
+      return rsps;
+    }
+ else {
+      log.debug("No other nodes yet, so skip sending get-members request");
+      return Collections.emptyList();
+    }
+  }
+ else {
+    log.debug("Not sending discovery because DISCARD is on");
+    return Collections.emptyList();
+  }
+}
