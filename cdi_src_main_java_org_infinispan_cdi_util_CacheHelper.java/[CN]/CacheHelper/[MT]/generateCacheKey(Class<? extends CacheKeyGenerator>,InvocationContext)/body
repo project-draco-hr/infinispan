@@ -1,14 +1,20 @@
 {
   assertNotNull(cacheKeyGeneratorClass,"cacheKeyGeneratorClass parameter cannot be null");
   assertNotNull(context,"context parameter cannot be null");
-  try {
-    CacheKeyGenerator cacheKeyGenerator=cacheKeyGeneratorClass.newInstance();
-    return cacheKeyGenerator.generateCacheKey(context);
+  CacheKeyGenerator cacheKeyGenerator;
+  if (cacheKeyGeneratorClass.equals(CacheKeyGenerator.class)) {
+    cacheKeyGenerator=new DefaultCacheKeyGenerator();
   }
- catch (  InstantiationException e) {
-    throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'",e);
+ else {
+    try {
+      cacheKeyGenerator=cacheKeyGeneratorClass.newInstance();
+    }
+ catch (    InstantiationException e) {
+      throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'",e);
+    }
+catch (    IllegalAccessException e) {
+      throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'",e);
+    }
   }
-catch (  IllegalAccessException e) {
-    throw new CacheException("Cannot instantiate CacheKeyGenerator named '" + cacheKeyGeneratorClass + "'",e);
-  }
+  return cacheKeyGenerator.generateCacheKey(context);
 }

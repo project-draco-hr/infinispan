@@ -2,6 +2,9 @@
   final Method method=context.getMethod();
   final CacheRemoveEntry cacheRemoveEntry=method.getAnnotation(CacheRemoveEntry.class);
   final String cacheName=cacheRemoveEntry.cacheName();
+  if (cacheName.trim().isEmpty()) {
+    throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveEntry "+ "doesn't specify a cache name");
+  }
   final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheName,method);
   final CacheKey cacheKey=generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(),context);
   if (!cacheRemoveEntry.afterInvocation()) {
