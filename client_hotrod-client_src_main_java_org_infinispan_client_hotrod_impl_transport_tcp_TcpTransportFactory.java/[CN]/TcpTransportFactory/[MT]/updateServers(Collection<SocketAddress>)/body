@@ -1,0 +1,33 @@
+{
+synchronized (lock) {
+    Set<SocketAddress> addedServers=new HashSet<SocketAddress>(newServers);
+    addedServers.removeAll(servers);
+    Set<SocketAddress> failedServers=new HashSet<SocketAddress>(servers);
+    failedServers.removeAll(newServers);
+    if (log.isTraceEnabled()) {
+      log.tracef("Current list: %s",servers);
+      log.tracef("New list: ",newServers);
+      log.tracef("Added servers: ",addedServers);
+      log.tracef("Removed servers: ",failedServers);
+    }
+    if (failedServers.isEmpty() && newServers.isEmpty()) {
+      log.debug("Same list of servers, not changing the pool");
+      return;
+    }
+    for (    SocketAddress server : newServers) {
+      log.newServerAdded(server);
+      try {
+        connectionPool.addObject(server);
+      }
+ catch (      Exception e) {
+        log.failedAddingNewServer(server,e);
+      }
+    }
+    balancer.setServers(newServers);
+    for (    SocketAddress server : failedServers) {
+      log.removingServer(server);
+      connectionPool.clear(server);
+    }
+    servers=Collections.unmodifiableList(new ArrayList(newServers));
+  }
+}
