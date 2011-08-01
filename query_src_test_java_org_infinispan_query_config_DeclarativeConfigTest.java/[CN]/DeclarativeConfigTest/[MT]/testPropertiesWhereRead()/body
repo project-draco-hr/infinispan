@@ -1,7 +1,10 @@
 {
   SearchFactoryIntegrator searchFactory=TestQueryHelperFactory.extractSearchFactory(cache);
-  DirectoryProvider[] directoryProviders=searchFactory.getDirectoryProviders(Person.class);
-  assertEquals(1,directoryProviders.length);
-  assertNotNull(directoryProviders[0]);
-  assertTrue(directoryProviders[0] instanceof RAMDirectoryProvider);
+  EntityIndexBinder<Person> indexBindingForEntity=searchFactory.getIndexBindingForEntity(Person.class);
+  IndexManager[] managers=indexBindingForEntity.getIndexManagers();
+  assertEquals(1,managers.length);
+  assertNotNull(managers[0]);
+  assertTrue(managers[0] instanceof DirectoryBasedIndexManager);
+  DirectoryBasedIndexManager dbim=(DirectoryBasedIndexManager)managers[0];
+  assertTrue(dbim.getDirectoryProvider() instanceof RAMDirectoryProvider);
 }
