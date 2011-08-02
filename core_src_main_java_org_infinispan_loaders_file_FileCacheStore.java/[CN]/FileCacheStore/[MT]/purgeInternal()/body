@@ -1,55 +1,56 @@
 {
-  if (trace) {
-    log.trace("purgeInternal()");
-  }
-  if (acquireGlobalLock(false)) {
-    try {
-      File[] files=root.listFiles();
-      if (files == null)       throw new CacheLoaderException("Root not directory or IO error occurred");
-      for (      final File bucketFile : files) {
-        if (multiThreadedPurge) {
-          purgerService.execute(new Runnable(){
-            @Override public void run(){
-              Bucket bucket;
-              try {
-                if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
-                  updateBucket(bucket);
-                }
-              }
- catch (              InterruptedException ie) {
-                if (log.isDebugEnabled()) {
-                  log.debug("Interrupted, so finish work.");
-                }
-              }
-catch (              CacheLoaderException e) {
-                log.problemsPurgingFile(bucketFile,e);
+  if (trace)   log.trace("purgeInternal()");
+  try {
+    File[] files=root.listFiles();
+    if (files == null)     throw new CacheLoaderException("Root not directory or IO error occurred");
+    for (    final File bucketFile : files) {
+      if (multiThreadedPurge) {
+        purgerService.execute(new Runnable(){
+          @Override public void run(){
+            Integer bucketKey=Integer.valueOf(bucketFile.getName());
+            try {
+              lockForReading(bucketKey);
+              Bucket bucket=loadBucket(bucketFile);
+              if (bucket != null) {
+                if (bucket.removeExpiredEntries())                 lockForWriting(bucketKey);
+                updateBucket(bucket);
               }
             }
+ catch (            InterruptedException ie) {
+              if (log.isDebugEnabled()) {
+                log.debug("Interrupted, so finish work.");
+              }
+            }
+catch (            CacheLoaderException e) {
+              log.problemsPurgingFile(bucketFile,e);
+            }
+ finally {
+              unlock(bucketKey);
+            }
           }
-);
         }
+);
+      }
  else {
-          Bucket bucket;
-          if ((bucket=loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) {
+        Integer bucketKey=Integer.valueOf(bucketFile.getName());
+        try {
+          lockForReading(bucketKey);
+          Bucket bucket=loadBucket(bucketFile);
+          if (bucket != null) {
+            if (bucket.removeExpiredEntries())             lockForWriting(bucketKey);
             updateBucket(bucket);
           }
         }
-      }
-    }
- catch (    InterruptedException ie) {
-      if (log.isDebugEnabled()) {
-        log.debug("Interrupted, so stop loading and finish with purging.");
-      }
-      Thread.currentThread().interrupt();
-    }
- finally {
-      releaseGlobalLock(false);
-      if (trace) {
-        log.trace("Exit purgeInternal()");
+  finally {
+          unlock(bucketKey);
+        }
       }
     }
   }
- else {
-    log.unableToAcquireLockToPurgeStore();
+ catch (  InterruptedException ie) {
+    if (log.isDebugEnabled()) {
+      log.debug("Interrupted, so stop loading and finish with purging.");
+    }
+    Thread.currentThread().interrupt();
   }
 }
