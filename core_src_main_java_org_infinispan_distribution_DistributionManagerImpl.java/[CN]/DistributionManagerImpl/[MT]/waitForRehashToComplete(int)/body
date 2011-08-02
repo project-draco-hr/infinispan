@@ -1,11 +1,11 @@
 {
   long endTime=System.currentTimeMillis() + configuration.getRehashRpcTimeout();
 synchronized (rehashInProgressMonitor) {
-    while (rehashInProgress && lastViewId == viewId && System.currentTimeMillis() < endTime) {
+    while (!receivedRehashCompletedNotification && lastViewId == viewId && System.currentTimeMillis() < endTime) {
       rehashInProgressMonitor.wait(configuration.getRehashRpcTimeout());
     }
   }
-  if (rehashInProgress) {
+  if (!receivedRehashCompletedNotification) {
     if (lastViewId != viewId) {
       log.debug("Received a new view while waiting for cluster-wide rehash to finish");
       return false;

@@ -1,25 +1,26 @@
 {
   long start=System.currentTimeMillis();
-  if (log.isDebugEnabled())   log.debugf("Commencing rehash on node: %s. Before start, data container had %d entries",getMyAddress(),dataContainer.size());
-  ConsistentHash chOld, chNew;
+  if (log.isDebugEnabled())   log.debugf("Commencing rehash %d on node: %s. Before start, data container had %d entries",newViewId,getMyAddress(),dataContainer.size());
+  Collection<Address> oldCacheSet=Collections.emptySet(), newCacheSet=Collections.emptySet();
+  List<Object> keysToRemove=new ArrayList<Object>();
+  boolean anotherRehashIsPending=false;
   try {
-    if (rehashInterrupted) {
+    if (previousRehashWasInterrupted) {
       log.tracef("Rehash is still in progress, not blocking transactions as they should already be blocked");
     }
  else {
       distributionManager.getTransactionLogger().blockNewTransactions();
     }
     List<Address> newMembers=rpcManager.getTransport().getMembers();
-    chNew=createConsistentHash(configuration,newMembers);
-    chOld=distributionManager.setConsistentHash(chNew);
+    ConsistentHash chNew=ConsistentHashHelper.createConsistentHash(configuration,newMembers);
+    ConsistentHash chOld=distributionManager.setConsistentHash(chNew);
     if (trace) {
-      log.tracef("Rebalancing\nchOld = %s\nchNew = %s",chOld,chNew);
+      log.tracef("Rebalancing: chOld = %s, chNew = %s",chOld,chNew);
     }
     if (configuration.isRehashEnabled()) {
-      Collection<Address> oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
-      Collection<Address> newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
+      oldCacheSet=Immutables.immutableCollectionWrap(chOld.getCaches());
+      newCacheSet=Immutables.immutableCollectionWrap(chNew.getCaches());
       notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
-      List<Object> keysToRemove=new ArrayList<Object>();
       int numOwners=configuration.getNumOwners();
       final Map<Address,Map<Object,InternalCacheValue>> states=new HashMap<Address,Map<Object,InternalCacheValue>>();
       for (      InternalCacheEntry ice : dataContainer) {
@@ -35,20 +36,22 @@
         if (trace)         log.trace("No cache store or cache store is shared, not rebalancing stored keys");
       }
       pushState(chOld,chNew,states);
-      invalidateKeys(oldCacheSet,newCacheSet,keysToRemove);
     }
  else {
       if (trace)       log.trace("Rehash not enabled, so not pushing state");
     }
   }
   finally {
-    boolean pendingRehash=false;
     try {
       distributionManager.notifyCoordinatorPushCompleted(newViewId);
-      pendingRehash=!distributionManager.waitForRehashToComplete(newViewId);
+      anotherRehashIsPending=!distributionManager.waitForRehashToComplete(newViewId);
+      if (!anotherRehashIsPending && configuration.isRehashEnabled()) {
+        invalidateKeys(keysToRemove);
+        notifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
+      }
     }
   finally {
-      if (pendingRehash) {
+      if (anotherRehashIsPending) {
         log.debugf("Another rehash is pending, keeping the transactions blocked");
       }
  else {
@@ -58,6 +61,7 @@
  catch (        Exception e) {
           log.debug("Unblocking transactions failed",e);
         }
+        distributionManager.markRehashTaskCompleted();
       }
     }
     log.debugf("Node %s completed rehash for view %d in %s!",self,newViewId,Util.prettyPrintTime(System.currentTimeMillis() - start));
