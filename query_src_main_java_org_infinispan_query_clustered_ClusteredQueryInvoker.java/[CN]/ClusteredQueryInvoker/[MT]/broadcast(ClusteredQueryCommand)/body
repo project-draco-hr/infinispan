@@ -1,6 +1,17 @@
 {
-  FutureTask<Object> localResponse=localInvoke(clusteredQuery);
-  List<Object> objects=cast(rpcManager.invokeRemotely(null,clusteredQuery,ResponseMode.SYNCHRONOUS,10000));
-  objects.add(localResponse.get());
+  Future<QueryResponse> localResponse=localInvoke(clusteredQuery);
+  Map<Address,Response> responses=rpcManager.invokeRemotely(null,clusteredQuery,ResponseMode.SYNCHRONOUS,10000);
+  List<QueryResponse> objects=cast(responses);
+  final QueryResponse localReturnValue;
+  try {
+    localReturnValue=localResponse.get();
+  }
+ catch (  InterruptedException e1) {
+    throw new SearchException("interrupted while searching locally",e1);
+  }
+catch (  ExecutionException e1) {
+    throw new SearchException("Exception while searching locally",e1);
+  }
+  objects.add(localReturnValue);
   return objects;
 }
