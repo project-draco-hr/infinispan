@@ -13,12 +13,15 @@
   if (props != null)   XmlConfigHelper.setValues(clc,props,false,true);
   if (clc instanceof CacheStoreConfig) {
     CacheStoreConfig csc=(CacheStoreConfig)clc;
-    csc.setFetchPersistentState(storeConfig.isFetchPersistentState());
-    csc.setIgnoreModifications(storeConfig.isIgnoreModifications());
-    csc.setPurgeOnStartup(storeConfig.isPurgeOnStartup());
-    csc.setPurgeSynchronously(storeConfig.isPurgeSynchronously());
-    csc.setSingletonStoreConfig(storeConfig.getSingletonStoreConfig());
-    csc.setAsyncStoreConfig(storeConfig.getAsyncStoreConfig());
+    csc.fetchPersistentState(storeConfig.isFetchPersistentState()).ignoreModifications(storeConfig.isIgnoreModifications()).purgeOnStartup(storeConfig.isPurgeOnStartup()).purgeSynchronously(storeConfig.isPurgeSynchronously()).purgerThreads(storeConfig.getPurgerThreads());
+    SingletonStoreConfig singletonStoreConfig=storeConfig.getSingletonStoreConfig();
+    if (singletonStoreConfig != null) {
+      csc.singletonStore().enabled(singletonStoreConfig.isSingletonStoreEnabled()).pushStateTimeout(singletonStoreConfig.getPushStateTimeout());
+    }
+    AsyncStoreConfig asyncStoreConfig=storeConfig.getAsyncStoreConfig();
+    if (asyncStoreConfig != null && asyncStoreConfig.isEnabled()) {
+      csc.asyncStore().flushLockTimeout(asyncStoreConfig.getFlushLockTimeout()).shutdownTimeout(asyncStoreConfig.getShutdownTimeout()).threadPoolSize(asyncStoreConfig.getThreadPoolSize());
+    }
   }
   return clc;
 }
