@@ -1,7 +1,10 @@
 {
-  if (!ctx.hasFlag(Flag.SKIP_LOCKING))   txLock.readLock().lock();
+  if (!ctx.hasFlag(Flag.SKIP_LOCKING)) {
+    if (!acquireLockForTx(ctx))     return false;
+  }
   if (loggingEnabled) {
     GlobalTransaction gtx;
     if (!uncommittedPrepares.containsKey(gtx=ctx.getGlobalTransaction()))     uncommittedPrepares.put(gtx,cf.buildPrepareCommand(gtx,ctx.getModifications(),false));
   }
+  return true;
 }

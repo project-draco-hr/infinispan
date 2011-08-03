@@ -1,5 +1,7 @@
 {
-  dm.getTransactionLogger().beforeCommand(ctx,cmd);
+  if (!dm.getTransactionLogger().beforeCommand(ctx,cmd)) {
+    throw new RehashInProgressException("Timed out waiting for the transaction lock");
+  }
   try {
     return super.visitRollbackCommand(ctx,cmd);
   }

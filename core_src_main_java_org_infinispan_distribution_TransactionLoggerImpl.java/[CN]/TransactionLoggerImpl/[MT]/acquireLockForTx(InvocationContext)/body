@@ -1,0 +1,12 @@
+{
+  if (txLockLatch.await(0,TimeUnit.MILLISECONDS)) {
+    if (!txLock.readLock().tryLock())     throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
+    return true;
+  }
+  if (!ctx.isOriginLocal())   return false;
+  boolean hasAcquiredLocks=ctx.getLockedKeys().size() > 0;
+  long timeout=hasAcquiredLocks ? lockTimeout / 100 : lockTimeout;
+  if (!txLockLatch.await(timeout,TimeUnit.MILLISECONDS))   return false;
+  if (!txLock.readLock().tryLock())   throw new IllegalStateException("Transaction latch open but transaction lock locked exclusively");
+  return true;
+}

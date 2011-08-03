@@ -1,13 +1,14 @@
 {
   try {
     abortIfRemoteTransactionInvalid(ctx,command);
-    return invokeNextInterceptor(ctx,command);
+    Object result=invokeNextInterceptor(ctx,command);
+    if (command.isOnePhaseCommit()) {
+      cleanupLocks(ctx,true);
+    }
+    return result;
   }
  catch (  Throwable te) {
     cleanupLocks(ctx,false);
     throw te;
-  }
- finally {
-    if (command.isOnePhaseCommit())     cleanupLocks(ctx,true);
   }
 }
