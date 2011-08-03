@@ -1,0 +1,15 @@
+{
+  try {
+    for (    Object key : command.getMap().keySet()) {
+      if (cll.localNodeIsOwner(key))       lockForPut(ctx,key,true);
+ else       wrapForRead(ctx,key);
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    return cleanLocksAndRethrow(ctx,te);
+  }
+ finally {
+    commit(ctx);
+  }
+}

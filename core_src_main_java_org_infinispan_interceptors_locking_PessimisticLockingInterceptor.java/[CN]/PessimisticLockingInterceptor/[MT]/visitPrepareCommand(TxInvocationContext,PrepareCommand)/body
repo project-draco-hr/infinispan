@@ -1,0 +1,13 @@
+{
+  try {
+    abortIfRemoteTransactionInvalid(ctx,command);
+    for (    WriteCommand c : command.getModifications()) {
+      invokeNextInterceptor(ctx,c);
+    }
+    return invokeNextAndCommitIf1Pc(ctx,command);
+  }
+ catch (  Throwable t) {
+    lockManager.releaseLocks(ctx);
+    throw t;
+  }
+}

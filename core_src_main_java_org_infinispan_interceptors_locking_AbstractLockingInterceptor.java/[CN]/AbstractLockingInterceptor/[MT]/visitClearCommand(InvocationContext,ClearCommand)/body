@@ -1,0 +1,17 @@
+{
+  try {
+    lockForClear(ctx);
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    return cleanLocksAndRethrow(ctx,te);
+  }
+ finally {
+    if (!ctx.isInTxScope()) {
+      cleanupLocks(ctx,true);
+    }
+ else {
+      if (trace)       log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
+    }
+  }
+}

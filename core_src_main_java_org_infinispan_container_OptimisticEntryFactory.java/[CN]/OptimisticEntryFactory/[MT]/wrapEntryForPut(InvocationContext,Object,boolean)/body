@@ -1,0 +1,15 @@
+{
+  CacheEntry cacheEntry=getFromContext(ctx,key);
+  MVCCEntry mvccEntry;
+  if (cacheEntry != null && cacheEntry.isNull())   cacheEntry=null;
+  if (cacheEntry != null) {
+    mvccEntry=wrapMvccEntryForPut(ctx,key,cacheEntry);
+    mvccEntry.undelete(undeleteIfNeeded);
+  }
+ else {
+    InternalCacheEntry ice=getFromContainer(key);
+    mvccEntry=ice != null ? wrapMvccEntryForPut(ctx,key,ice) : newMvccEntryForPut(ctx,key);
+  }
+  mvccEntry.copyForUpdate(container,writeSkewCheck);
+  return mvccEntry;
+}

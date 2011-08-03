@@ -2,15 +2,6 @@
   long lockTimeout=getLockAcquisitionTimeout(ctx);
   if (trace)   log.tracef("Attempting to lock %s with acquisition timeout of %s millis",key,lockTimeout);
   if (lockContainer.acquireLock(key,lockTimeout,MILLISECONDS) != null) {
-    if (ctx instanceof TxInvocationContext) {
-      TxInvocationContext tctx=(TxInvocationContext)ctx;
-      if (!tctx.isTransactionValid()) {
-        Transaction tx=tctx.getTransaction();
-        log.debugf("Successfully acquired lock, but the transaction %s is no longer valid!  Releasing lock.",tx);
-        lockContainer.releaseLock(key);
-        throw new IllegalStateException("Transaction " + tx + " appears to no longer be valid!");
-      }
-    }
     if (trace)     log.tracef("Successfully acquired lock %s!",key);
     return true;
   }

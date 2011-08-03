@@ -1,0 +1,20 @@
+{
+  if (!ctx.isInTxScope()) {
+    transactionManager.begin();
+    InvocationContext txContext=icc.createInvocationContext();
+    txContext.setFlags(ctx.getFlags());
+    try {
+      final Object result=invokeNextInterceptor(txContext,command);
+      transactionManager.commit();
+      return result;
+    }
+ catch (    Throwable t) {
+      log.couldNotCompleteInjectedTransaction(t);
+      tryToRollback();
+      throw t;
+    }
+  }
+ else {
+    return invokeNextInterceptor(ctx,command);
+  }
+}

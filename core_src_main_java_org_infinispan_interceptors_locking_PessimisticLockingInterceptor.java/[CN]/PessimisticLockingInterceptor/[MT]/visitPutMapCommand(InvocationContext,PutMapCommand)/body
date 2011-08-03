@@ -1,0 +1,19 @@
+{
+  try {
+    if (ctx.isOriginLocal()) {
+      acquireRemoteIfNeeded(ctx,command.getMap().keySet());
+      for (      Object key : command.getMap().keySet()) {
+        if (cll.localNodeIsOwner(key))         lockForPut(ctx,key,true);
+      }
+    }
+ else {
+      for (      Object key : command.getMap().keySet()) {
+        lockForPut(ctx,key,true);
+      }
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    return cleanLocksAndRethrow(ctx,te);
+  }
+}

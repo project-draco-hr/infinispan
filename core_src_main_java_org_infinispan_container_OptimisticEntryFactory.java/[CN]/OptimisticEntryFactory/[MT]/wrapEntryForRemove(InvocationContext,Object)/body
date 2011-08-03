@@ -1,0 +1,25 @@
+{
+  CacheEntry cacheEntry=getFromContext(ctx,key);
+  MVCCEntry mvccEntry=null;
+  if (cacheEntry != null) {
+    if (cacheEntry instanceof MVCCEntry && !(cacheEntry instanceof NullMarkerEntry)) {
+      mvccEntry=(MVCCEntry)cacheEntry;
+    }
+ else {
+      mvccEntry=wrapMvccEntryForRemove(ctx,key,cacheEntry);
+    }
+  }
+ else {
+    InternalCacheEntry ice=getFromContainer(key);
+    if (ice != null) {
+      mvccEntry=wrapMvccEntryForPut(ctx,key,ice);
+    }
+  }
+  if (mvccEntry == null) {
+    ctx.putLookedUpEntry(key,null);
+  }
+ else {
+    mvccEntry.copyForUpdate(container,writeSkewCheck);
+  }
+  return mvccEntry;
+}

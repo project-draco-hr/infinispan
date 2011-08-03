@@ -1,14 +1,26 @@
 {
   boolean invocationBatching=configuration.isInvocationBatchingEnabled();
-  CommandInterceptor first=invocationBatching ? createInterceptor(BatchingInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+  boolean autoCommit=configuration.isTransactionAutoCommit() && configuration.isTransactionalCache();
+  CommandInterceptor first;
+  if (invocationBatching) {
+    first=createInterceptor(BatchingInterceptor.class);
+  }
+ else {
+    first=autoCommit ? createInterceptor(AutoCommitInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+  }
   InterceptorChain interceptorChain=new InterceptorChain(first);
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   if (isUsingMarshalledValues(configuration) || configuration.isUseAsyncMarshalling() || configuration.isUseReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
-  if (invocationBatching)   interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
+  if (invocationBatching) {
+    if (autoCommit)     interceptorChain.appendInterceptor(createInterceptor(AutoCommitInterceptor.class));
+    interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
+  }
+ else   if (autoCommit) {
+    interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
+  }
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
   if (configuration.getCacheMode().isDistributed())   interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
  else   interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
-  if (configuration.isUseEagerLocking())   interceptorChain.appendInterceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
   if (isUsingMarshalledValues(configuration))   interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
   interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
   if (configuration.isEnableDeadlockDetection()) {
@@ -32,8 +44,17 @@ default :
 }
 }
 }
-if (configuration.getCacheMode().isDistributed()) interceptorChain.appendInterceptor(createInterceptor(DistLockingInterceptor.class));
- else interceptorChain.appendInterceptor(createInterceptor(LockingInterceptor.class));
+if (configuration.isTransactionalCache()) {
+if (configuration.getTransactionLockingMode() == LockingMode.PESSIMISTIC) {
+interceptorChain.appendInterceptor(createInterceptor(PessimisticLockingInterceptor.class));
+}
+ else {
+interceptorChain.appendInterceptor(createInterceptor(OptimisticLockingInterceptor.class));
+}
+}
+ else {
+interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
+}
 switch (configuration.getCacheMode()) {
 case REPL_SYNC:
 case REPL_ASYNC:

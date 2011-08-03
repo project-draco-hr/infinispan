@@ -1,9 +1,21 @@
 {
   if (componentType.isInterface()) {
     Class componentImpl;
-    if (componentType.equals(StreamingMarshaller.class)) {
+    if (componentType.equals(ClusteringDependentLogic.class)) {
+      if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered()) {
+        return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
+      }
+ else {
+        return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+      }
+    }
+ else     if (componentType.equals(StreamingMarshaller.class)) {
       VersionAwareMarshaller versionAwareMarshaller=getInstance(VersionAwareMarshaller.class);
       return componentType.cast(versionAwareMarshaller);
+    }
+ else     if (componentType.equals(EntryFactory.class)) {
+      final boolean isOptimistic=configuration.getTransactionLockingMode().equals(LockingMode.OPTIMISTIC);
+      return isOptimistic ? componentType.cast(getInstance(OptimisticEntryFactory.class)) : componentType.cast(getInstance(EntryFactoryImpl.class));
     }
  else {
       componentImpl=loadClass(componentType.getName() + "Impl",configuration.getClassLoader());
