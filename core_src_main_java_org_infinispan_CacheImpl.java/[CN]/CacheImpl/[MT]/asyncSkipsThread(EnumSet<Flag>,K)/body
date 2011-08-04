@@ -1,0 +1,14 @@
+{
+  boolean isSkipLoader=isSkipLoader(flags);
+  if (!isSkipLoader) {
+    return false;
+  }
+  CacheMode cacheMode=config.getCacheMode();
+  if (!cacheMode.isDistributed()) {
+    return true;
+  }
+ else   if (flags != null && (flags.contains(Flag.SKIP_REMOTE_LOOKUP) || flags.contains(Flag.CACHE_MODE_LOCAL))) {
+    return true;
+  }
+  return distributionManager.getLocality(key).isLocal();
+}
