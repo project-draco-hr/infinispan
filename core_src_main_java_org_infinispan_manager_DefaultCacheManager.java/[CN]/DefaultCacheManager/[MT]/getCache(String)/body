@@ -5,21 +5,8 @@
   if (cw != null) {
     return cw.getCache();
   }
-  boolean acquired=false;
-  try {
-    if (cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS)) {
-      acquired=true;
-      return createCache(cacheName);
-    }
- else {
-      throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
-    }
+  if (caches.size() > 0) {
+    log.shouldBeUsingStartCache(cacheName);
   }
- catch (  InterruptedException e) {
-    Thread.currentThread().interrupt();
-    throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName,e);
-  }
- finally {
-    if (acquired)     cacheCreateLock.unlock();
-  }
+  return createCache(cacheName);
 }

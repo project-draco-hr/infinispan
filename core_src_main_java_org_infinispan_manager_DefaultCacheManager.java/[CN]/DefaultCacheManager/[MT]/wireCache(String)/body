@@ -1,0 +1,31 @@
+{
+  boolean acquired=false;
+  try {
+    if (!cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS)) {
+      throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
+    }
+    acquired=true;
+    CacheWrapper existingCache=caches.get(cacheName);
+    if (existingCache != null)     return null;
+    Configuration c=getConfiguration(cacheName);
+    setConfigurationName(cacheName,c);
+    c.setGlobalConfiguration(globalConfiguration);
+    c.accept(configurationValidator);
+    c.assertValid();
+    Cache cache=new InternalCacheFactory().createCache(c,globalComponentRegistry,cacheName,reflectionCache);
+    CacheWrapper cw=new CacheWrapper(cache);
+    existingCache=caches.put(cacheName,cw);
+    if (existingCache != null) {
+      throw new IllegalStateException("attempt to initialize the cache twice");
+    }
+    globalComponentRegistry.start();
+    return cache;
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    throw new CacheException("Interrupted while trying to get lock on cache with cache name " + cacheName,e);
+  }
+ finally {
+    if (acquired)     cacheCreateLock.unlock();
+  }
+}

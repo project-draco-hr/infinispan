@@ -2,28 +2,17 @@
   boolean trace=log.isTraceEnabled();
   LogFactory.pushNDC(cacheName,trace);
   try {
-    CacheWrapper existingCache=caches.get(cacheName);
-    if (existingCache != null)     return existingCache.getCache();
-    Configuration c=getConfiguration(cacheName);
-    setConfigurationName(cacheName,c);
-    c.setGlobalConfiguration(globalConfiguration);
-    c.accept(configurationValidator);
-    c.assertValid();
-    Cache cache=new InternalCacheFactory().createCache(c,globalComponentRegistry,cacheName,reflectionCache);
-    CacheWrapper cw=new CacheWrapper(cache);
+    Cache cache=wireCache(cacheName);
+    if (cache == null)     return caches.get(cacheName).getCache();
     try {
-      existingCache=caches.putIfAbsent(cacheName,cw);
-      if (existingCache != null) {
-        throw new IllegalStateException("attempt to initialize the cache twice");
-      }
       cache.start();
     }
   finally {
-      cw.latch.countDown();
+      caches.get(cacheName).latch.countDown();
     }
     return cache;
   }
   finally {
-    LogFactory.popNDC(log.isTraceEnabled());
+    LogFactory.popNDC(trace);
   }
 }
