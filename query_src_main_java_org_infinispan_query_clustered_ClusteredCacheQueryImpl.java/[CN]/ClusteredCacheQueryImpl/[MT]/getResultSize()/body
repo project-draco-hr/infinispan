@@ -1,5 +1,12 @@
 {
   if (resultSize == null) {
+    ClusteredQueryCommand command=ClusteredQueryCommand.getResultSize(hSearchQuery,cache);
+    ClusteredQueryInvoker invoker=new ClusteredQueryInvoker(cache,asyncExecutor);
+    List<QueryResponse> responses=invoker.broadcast(command);
+    resultSize=0;
+    for (    QueryResponse response : responses) {
+      resultSize+=response.getResultSize();
+    }
   }
   return resultSize;
 }
