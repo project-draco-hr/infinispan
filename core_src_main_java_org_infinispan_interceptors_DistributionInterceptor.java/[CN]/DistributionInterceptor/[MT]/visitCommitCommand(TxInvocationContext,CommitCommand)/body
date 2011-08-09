@@ -1,39 +1,12 @@
 {
   if (shouldInvokeRemoteTxCommand(ctx)) {
+    allowRehashToComplete(ctx);
     Collection<Address> preparedOn=((LocalTxInvocationContext)ctx).getRemoteLocksAcquired();
     NotifyingNotifiableFuture<Object> f=null;
     if (isL1CacheEnabled) {
       f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
     }
-    for (int i=0; i < 3; i++) {
-      boolean needToWaitForRehash=false;
-      Collection<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
-      boolean syncCommitPhase=configuration.isSyncCommitPhase();
-      for (      Address a : preparedOn) {
-        if (!recipients.contains(a)) {
-          syncCommitPhase=true;
-        }
-      }
-      try {
-        Map<Address,Response> responses=rpcManager.invokeRemotely(recipients,command,syncCommitPhase,true);
-        if (!responses.isEmpty()) {
-          List<Address> resendTo=new LinkedList<Address>();
-          for (          Map.Entry<Address,Response> r : responses.entrySet()) {
-            if (needToResendPrepare(r.getValue()))             resendTo.add(r.getKey());
-          }
-          if (!resendTo.isEmpty()) {
-            log.debugf("Need to resend prepares for %s to %s",command.getGlobalTransaction(),resendTo);
-            PrepareCommand pc=cf.buildPrepareCommand(command.getGlobalTransaction(),ctx.getModifications(),true);
-            rpcManager.invokeRemotely(resendTo,pc,true,true);
-          }
-        }
-        break;
-      }
- catch (      RehashInProgressException e) {
-        stateTransferLock.waitForStateTransferToEnd(ctx,command);
-        log.tracef("Rehashing completed, retrying the commit on the remote nodes %s",rpcManager.getAddress());
-      }
-    }
+    sendCommitCommand(ctx,command,preparedOn,3);
     if (f != null && configuration.isSyncCommitPhase()) {
       try {
         f.get();
