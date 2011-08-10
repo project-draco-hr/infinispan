@@ -1,0 +1,10 @@
+{
+  Cache<Object,Object> cache1=cache(0,"replSync");
+  Cache<Object,Object> cache2=cache(1,"replSync");
+  TransactionManager tm1=TestingUtil.getTransactionManager(cache1);
+  if (transactional)   tm1.begin();
+  String k=k(m);
+  cache1.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).putForExternalRead(k,v(m));
+  assertFalse(cache2.containsKey(k));
+  if (transactional)   tm1.commit();
+}
