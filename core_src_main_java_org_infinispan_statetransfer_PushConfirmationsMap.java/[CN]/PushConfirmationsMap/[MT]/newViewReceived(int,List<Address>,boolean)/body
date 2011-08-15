@@ -1,0 +1,38 @@
+{
+  lock.lock();
+  try {
+    if (viewId < lastViewId) {
+      log.tracef("Got a new view %d after a push confirmation message for that view, ignoring it. Last view is %d",viewId,lastViewId);
+      return;
+    }
+ else     if (viewId > lastViewId) {
+      lastViewId=viewId;
+      membersCount=members != null ? members.size() : Integer.MAX_VALUE;
+      actualConfirmationsCount=0;
+      log.tracef("Received new view %d, confirmed %d of %d",viewId,actualConfirmationsCount,membersCount);
+    }
+ else     if (viewId == lastViewId && membersCount == Integer.MAX_VALUE) {
+      log.tracef("Received proper members list for cluster view %d %s",viewId,members);
+      membersCount=members.size();
+    }
+    if (members != null) {
+      if (isMerge) {
+        for (        Address member : members) {
+          if (!joinConfirmations.containsKey(member)) {
+            joinConfirmations.put(member,viewId);
+          }
+        }
+      }
+ else {
+        joinConfirmations.keySet().retainAll(members);
+      }
+      pushConfirmations.keySet().retainAll(members);
+      log.tracef("Updated confirmed members are %s, push confirmations map is %s",joinConfirmations,pushConfirmations);
+    }
+    clusterConfirmedJoin.signalAll();
+    clusterCompletedPush.signalAll();
+  }
+  finally {
+    lock.unlock();
+  }
+}

@@ -1,0 +1,60 @@
+{
+  if (!stateTransferManager.startStateTransfer(newViewId,members,initialView))   return;
+  long start=System.currentTimeMillis();
+  if (log.isDebugEnabled())   log.debugf("Commencing state transfer %d on node: %s. Before start, data container had %d entries",newViewId,self,dataContainer.size());
+  boolean unblockTransactions=true;
+  try {
+    stateTransferLock.blockNewTransactions();
+    Set<Address> joiners=MembershipArithmetic.getMembersJoined(chOld.getCaches(),chNew.getCaches());
+    if (joiners.isEmpty()) {
+      log.tracef("No joiners in view %s, skipping replication",newViewId);
+      return;
+    }
+    log.tracef("Replicating: chOld = %s, chNew = %s",chOld,chNew);
+    if (configuration.isStateTransferEnabled() && !initialView) {
+      final Collection<InternalCacheEntry> state=new ArrayList<InternalCacheEntry>();
+      for (      InternalCacheEntry ice : dataContainer) {
+        replicate(ice.getKey(),ice,chOld,chNew,null,state);
+      }
+      CacheStore cacheStore=stateTransferManager.getCacheStoreForStateTransfer();
+      if (cacheStore != null) {
+        for (        Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+          replicate(key,null,chOld,chNew,cacheStore,state);
+        }
+      }
+ else {
+        if (trace)         log.trace("No cache store or cache store is shared, not replicating stored keys");
+      }
+      final Map<Address,Collection<InternalCacheEntry>> states=new HashMap<Address,Collection<InternalCacheEntry>>();
+      for (      Address joiner : joiners) {
+        states.put(joiner,state);
+      }
+      pushState(states);
+    }
+ else {
+      if (!initialView)       log.trace("State transfer not enabled, so not pushing state");
+    }
+    stateTransferManager.signalPushCompleted(newViewId);
+  }
+ catch (  PendingStateTransferException e) {
+    log.debugf("Another rehash is pending, keeping the transactions blocked");
+    unblockTransactions=false;
+  }
+catch (  SuspectException e) {
+    log.debugf("A member left during rehash, keeping the transactions blocked");
+    unblockTransactions=false;
+  }
+ finally {
+    boolean isLastView=stateTransferManager.isLastViewId(newViewId);
+    if (unblockTransactions && isLastView) {
+      try {
+        stateTransferLock.unblockNewTransactions();
+      }
+ catch (      Exception e) {
+        log.errorUnblockingTransactions(e);
+      }
+      stateTransferManager.endStateTransfer();
+    }
+  }
+  log.debugf("Node %s completed rehash for view %d in %s!",self,newViewId,Util.prettyPrintTime(System.currentTimeMillis() - start));
+}

@@ -1,0 +1,25 @@
+{
+  try {
+    tm.begin();
+    return performWork();
+  }
+ catch (  Exception e) {
+    log.warn("error during perform work " + key,e);
+    tm.setRollbackOnly();
+    throw e;
+  }
+ finally {
+    int status=-1;
+    try {
+      status=tm.getStatus();
+    }
+ catch (    Exception e) {
+    }
+    if (status == Status.STATUS_ACTIVE) {
+      tm.commit();
+    }
+ else {
+      tm.rollback();
+    }
+  }
+}

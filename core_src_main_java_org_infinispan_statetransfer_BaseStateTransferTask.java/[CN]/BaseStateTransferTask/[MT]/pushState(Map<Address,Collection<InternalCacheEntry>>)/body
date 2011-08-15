@@ -1,0 +1,16 @@
+{
+  NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,states.size());
+  for (  Map.Entry<Address,Collection<InternalCacheEntry>> entry : states.entrySet()) {
+    final Address target=entry.getKey();
+    Collection<InternalCacheEntry> state=entry.getValue();
+    stateTransferManager.pushStateToNode(stateTransferFuture,newViewId,target,state);
+  }
+  try {
+    stateTransferFuture.get();
+  }
+ catch (  ExecutionException e) {
+    log.errorTransferringState(e);
+    throw e;
+  }
+  log.debugf("Node finished pushing data for rehash %d.",newViewId);
+}

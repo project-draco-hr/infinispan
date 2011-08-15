@@ -4,24 +4,19 @@
     return Collections.emptyMap();
   }
   if (trace)   log.tracef("dests=%s, command=%s, mode=%s, timeout=%s",recipients,rpcCommand,mode,timeout);
-  flushTracker.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
-  boolean unlock=true;
-  flushTracker.blockUntilReleased(distributedSyncTimeout,MILLISECONDS);
+  if (recipients != null && !getMembers().containsAll(recipients)) {
+    throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
+  }
   boolean asyncMarshalling=mode == ResponseMode.ASYNCHRONOUS;
   if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode)   usePriorityQueue=true;
-  try {
-    RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,recipients != null,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling,recipients == null || recipients.size() == members.size());
-    if (mode.isAsynchronous())     return Collections.emptyMap();
-    if (rsps == null)     return Collections.emptyMap();
-    Map<Address,Response> retval=new HashMap<Address,Response>(rsps.size());
-    boolean noValidResponses=true;
-    for (    Rsp rsp : rsps.values()) {
-      noValidResponses=parseResponseAndAddToResponseList(rsp.getValue(),retval,rsp.wasSuspected(),rsp.wasReceived(),fromJGroupsAddress(rsp.getSender()),responseFilter != null) && noValidResponses;
-    }
-    if (noValidResponses)     throw new TimeoutException("Timed out waiting for valid responses!");
-    return retval;
+  RspList rsps=dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients),rpcCommand,toJGroupsMode(mode),timeout,recipients != null,usePriorityQueue,toJGroupsFilter(responseFilter),supportReplay,asyncMarshalling,recipients == null || recipients.size() == members.size());
+  if (mode.isAsynchronous())   return Collections.emptyMap();
+  if (rsps == null)   return Collections.emptyMap();
+  Map<Address,Response> retval=new HashMap<Address,Response>(rsps.size());
+  boolean noValidResponses=true;
+  for (  Rsp rsp : rsps.values()) {
+    noValidResponses=parseResponseAndAddToResponseList(rsp.getValue(),retval,rsp.wasSuspected(),rsp.wasReceived(),fromJGroupsAddress(rsp.getSender()),responseFilter != null) && noValidResponses;
   }
-  finally {
-    if (unlock)     flushTracker.releaseProcessingLock(false);
-  }
+  if (noValidResponses)   throw new TimeoutException("Timed out waiting for valid responses!");
+  return retval;
 }

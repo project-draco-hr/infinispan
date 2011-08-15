@@ -5,8 +5,6 @@
     try {
       c=queue.take();
       waitForStart(c);
-      distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
-      unlock=true;
       handleInternal(c);
       retryQueueLock.lock();
       if (queue.isEmpty()) {
@@ -22,9 +20,6 @@
     }
 catch (    Throwable throwable) {
       log.exceptionHandlingCommand(c,throwable);
-    }
- finally {
-      if (unlock)       distributedSync.releaseProcessingLock(false);
     }
   }
 }

@@ -1,0 +1,22 @@
+{
+  lock.lock();
+  try {
+    confirmJoin(sender,viewId);
+    if (viewId < lastViewId) {
+      log.debugf("Ignoring outdated push confirmation from %s for old view id %d (last view id is %d)",sender,viewId,lastViewId);
+      return;
+    }
+    if (viewId > lastViewId) {
+      newViewReceived(viewId,null,false);
+    }
+    pushConfirmations.put(sender,viewId);
+    actualConfirmationsCount++;
+    log.tracef("Received push confirmation from %s for view %d, confirmed %d of %d, confirmations map is %s",sender,viewId,actualConfirmationsCount,membersCount,pushConfirmations);
+    if (actualConfirmationsCount == membersCount) {
+      clusterCompletedPush.signalAll();
+    }
+  }
+  finally {
+    lock.unlock();
+  }
+}

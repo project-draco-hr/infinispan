@@ -1,42 +1,35 @@
 {
   boolean unlock=false;
   String cacheName=cmd.getCacheName();
-  try {
-    boolean isRehashCommand=cmd instanceof RehashControlCommand;
-    boolean isClusteredGetCommand=cmd instanceof ClusteredGetCommand;
-    boolean isDistributedExecuteCommand=cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
-    boolean needRetry=!(isRehashCommand || isDistributedExecuteCommand);
-    if (!needRetry) {
-      try {
-        if (!isRehashCommand) {
-          distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
-          unlock=true;
-          waitForStart(cmd);
-        }
-        return handleWithWaitForBlocks(cmd,distributedSyncTimeout);
+  boolean isRehashCommand=cmd instanceof StateTransferControlCommand;
+  boolean isClusteredGetCommand=cmd instanceof ClusteredGetCommand;
+  boolean isDistributedExecuteCommand=cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
+  boolean needRetry=!(isRehashCommand || isDistributedExecuteCommand);
+  if (!needRetry) {
+    try {
+      if (!isRehashCommand) {
+        waitForStart(cmd);
       }
- catch (      TimeoutException te) {
-        log.ignoreClusterGetCall(cmd,Util.prettyPrintTime(distributedSyncTimeout));
-        return RequestIgnoredResponse.INSTANCE;
-      }
+      return handleWithWaitForBlocks(cmd);
+    }
+ catch (    TimeoutException te) {
+      return RequestIgnoredResponse.INSTANCE;
+    }
+  }
+ else {
+    boolean unlockRQLock;
+    getRetryQueue(cacheName).retryQueueLock.lock();
+    unlockRQLock=true;
+    if (enqueueing(cacheName)) {
+      return enqueueCommand(cmd);
     }
  else {
-      boolean unlockRQLock;
-      getRetryQueue(cacheName).retryQueueLock.lock();
-      unlockRQLock=true;
       try {
-        if (enqueueing(cacheName)) {
-          return enqueueCommand(cmd);
-        }
- else {
-          try {
-            getRetryQueue(cacheName).retryQueueLock.unlock();
-            unlockRQLock=false;
+        getRetryQueue(cacheName).retryQueueLock.unlock();
+        unlockRQLock=false;
 switch (howToHandle(cmd)) {
 case OK:
-              distributedSync.acquireProcessingLock(false,timeBeforeWeEnqueueCallForRetry,MILLISECONDS);
-            unlock=true;
-          return handleWithWaitForBlocks(cmd,distributedSyncTimeout);
+          return handleWithWaitForBlocks(cmd);
 case QUEUE:
         return enqueueCommand(cmd);
 default :
@@ -46,14 +39,9 @@ default :
  catch (TimeoutException te) {
   return enqueueCommand(cmd);
 }
+ finally {
+  if (unlockRQLock)   getRetryQueue(cacheName).retryQueueLock.unlock();
 }
 }
-  finally {
-if (unlockRQLock) getRetryQueue(cacheName).retryQueueLock.unlock();
-}
-}
-}
-  finally {
-if (unlock) distributedSync.releaseProcessingLock(false);
 }
 }

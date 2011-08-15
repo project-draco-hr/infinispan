@@ -1,34 +1,26 @@
 {
   retryQueueLock.lock();
   boolean unlock=false;
-  try {
-    if (enqueueing) {
-      log.tracef("Enqueueing command %s since we are enqueueing.",command);
-      queue.add(command);
-      return RequestIgnoredResponse.INSTANCE;
-    }
+  if (enqueueing) {
+    log.tracef("Enqueueing command %s since we are enqueueing.",command);
+    queue.add(command);
+    return RequestIgnoredResponse.INSTANCE;
+  }
  else {
-      try {
-        if (howToHandle(command) == JoinHandle.QUEUE) {
-          enqueueing=true;
-          enqueuedBlocker.close();
-          return enqueue(command);
-        }
- else {
-          distributedSync.acquireProcessingLock(false,timeBeforeWeEnqueueCallForRetry,MILLISECONDS);
-          unlock=true;
-          return handleWithWaitForBlocks(command,distributedSyncTimeout);
-        }
-      }
- catch (      TimeoutException te) {
+    try {
+      if (howToHandle(command) == JoinHandle.QUEUE) {
         enqueueing=true;
         enqueuedBlocker.close();
         return enqueue(command);
       }
+ else {
+        return handleWithWaitForBlocks(command);
+      }
     }
-  }
-  finally {
-    if (unlock)     distributedSync.releaseProcessingLock(false);
-    retryQueueLock.unlock();
+ catch (    TimeoutException te) {
+      enqueueing=true;
+      enqueuedBlocker.close();
+      return enqueue(command);
+    }
   }
 }

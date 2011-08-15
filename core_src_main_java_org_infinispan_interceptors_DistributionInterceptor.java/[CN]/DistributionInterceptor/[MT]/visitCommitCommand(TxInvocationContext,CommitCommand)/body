@@ -30,9 +30,7 @@
         break;
       }
  catch (      RehashInProgressException e) {
-        dm.getTransactionLogger().suspendTransactionLock(ctx);
-        log.tracef("Released the transaction lock temporarily, allow rehashing to proceed on %s",rpcManager.getAddress());
-        dm.getTransactionLogger().resumeTransactionLock(ctx);
+        stateTransferLock.waitForStateTransferToEnd(ctx,command);
         log.tracef("Rehashing completed, retrying the commit on the remote nodes %s",rpcManager.getAddress());
       }
     }
