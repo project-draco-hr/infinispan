@@ -9,10 +9,8 @@
   for (  MeasurementScheduleRequest req : metrics) {
     DataType type=req.getDataType();
     if (type == DataType.MEASUREMENT) {
-      String tmp=(String)bean.getAttribute(req.getName()).getValue();
-      Double val=Double.valueOf(tmp);
-      if (trace)       log.tracef("Metric (%s) is measurement with value %s",req.getName(),val);
-      MeasurementDataNumeric res=new MeasurementDataNumeric(req,val);
+      EmsAttribute att=bean.getAttribute(req.getName());
+      MeasurementDataNumeric res=constructNumericMeasure(att.getTypeClass(),att.getValue(),req);
       report.addData(res);
     }
  else     if (type == DataType.TRAIT) {
