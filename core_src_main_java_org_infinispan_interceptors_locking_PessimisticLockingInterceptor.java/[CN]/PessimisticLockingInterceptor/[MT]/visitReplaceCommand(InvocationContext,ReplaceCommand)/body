@@ -1,12 +1,12 @@
 {
   try {
-    if (ctx.isOriginLocal()) {
-      acquireRemoteIfNeeded(ctx,Collections.singleton(command.getKey()));
-      if (cll.localNodeIsOwner(command.getKey()))       lockForReplace(ctx,command);
+    assertNoRemoteContext(ctx);
+    acquireRemoteIfNeeded(ctx,Collections.singleton(command.getKey()));
+    if (cll.localNodeIsOwner(command.getKey())) {
+      lockKey(ctx,command.getKey());
     }
- else {
-      lockForReplace(ctx,command);
-    }
+    entryFactory.wrapEntryForReplace(ctx,command.getKey());
+    invokeNextInterceptor(ctx,command);
     return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable te) {

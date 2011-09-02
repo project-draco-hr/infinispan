@@ -1,19 +1,22 @@
 {
-  CreationalContext<Configuration> ctx=beanManager.createCreationalContext(null);
-  Instance<EmbeddedCacheManager> defaultCacheManager=cacheContainers.select(new AnnotationLiteral<Default>(){
+  final CreationalContext<Configuration> ctx=beanManager.createCreationalContext(null);
+  final EmbeddedCacheManager defaultCacheManager=cacheManagers.select(new AnnotationLiteral<Default>(){
   }
-);
+).get();
   for (  ConfigurationHolder oneConfigurationHolder : configurations) {
-    String cacheName=oneConfigurationHolder.getName();
-    Configuration configuration=oneConfigurationHolder.getProducer().produce(ctx);
-    Set<Annotation> qualifiers=oneConfigurationHolder.getQualifiers();
-    Instance<EmbeddedCacheManager> cacheManager=cacheContainers.select(qualifiers.toArray(new Annotation[qualifiers.size()]));
-    if (cacheManager.isUnsatisfied()) {
-      cacheManager=defaultCacheManager;
+    final String cacheName=oneConfigurationHolder.getName();
+    final Configuration cacheConfiguration=oneConfigurationHolder.getProducer().produce(ctx);
+    final Set<Annotation> cacheQualifiers=oneConfigurationHolder.getQualifiers();
+    final Instance<EmbeddedCacheManager> specificCacheManager=cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
+    final EmbeddedCacheManager cacheManager=specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
+    if (!cacheName.trim().isEmpty()) {
+      if (cacheConfiguration != null) {
+        cacheManager.defineConfiguration(cacheName,cacheConfiguration);
+      }
+ else       if (!cacheManager.getCacheNames().contains(cacheName)) {
+        cacheManager.defineConfiguration(cacheName,cacheManager.getDefaultConfiguration().clone());
+      }
     }
-    if (!cacheName.isEmpty() && configuration != null) {
-      cacheManager.get().defineConfiguration(cacheName,configuration);
-    }
-    eventBridge.registerObservers(qualifiers,cacheName,cacheManager.get());
+    eventBridge.registerObservers(cacheQualifiers,cacheName,cacheManager);
   }
 }

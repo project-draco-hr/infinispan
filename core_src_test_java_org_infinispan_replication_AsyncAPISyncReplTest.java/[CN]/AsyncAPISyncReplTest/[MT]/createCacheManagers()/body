@@ -1,6 +1,7 @@
 {
-  Configuration c=getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC,true);
-  List<Cache<Key,String>> l=createClusteredCaches(2,getClass().getSimpleName(),c);
-  c1=l.get(0);
-  c2=l.get(1);
+  Configuration c=getConfig(true);
+  createClusteredCaches(2,c);
+  c=getConfig(false);
+  c.fluent().transactionManagerLookup(null).transactionManagerLookupClass(null);
+  defineConfigurationOnAllManagers("noTx",c);
 }

@@ -1,10 +1,14 @@
 {
+  boolean notWrapped=false;
   for (  Object key : command.getMap().keySet()) {
     if (cll.localNodeIsOwner(key)) {
       lockKey(ctx,key);
-      if (!ctx.isOriginLocal())       entryFactory.wrapEntryForPut(ctx,key,true);
+      if (notWrapped(ctx,key)) {
+        entryFactory.wrapEntryForPut(ctx,key,true);
+        notWrapped=true;
+      }
     }
   }
-  if (!ctx.isOriginLocal())   invokeNextInterceptor(ctx,command);
+  if (notWrapped)   invokeNextInterceptor(ctx,command);
   return null;
 }

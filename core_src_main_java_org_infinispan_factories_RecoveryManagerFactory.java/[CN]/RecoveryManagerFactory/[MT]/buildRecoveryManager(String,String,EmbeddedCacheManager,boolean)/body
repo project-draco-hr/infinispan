@@ -2,8 +2,9 @@
   if (log.isTraceEnabled())   log.tracef("About to obtain a reference to the recovery cache: %s",recoveryCacheName);
   Cache recoveryCache=cm.getCache(recoveryCacheName);
   String txLookup=recoveryCache.getConfiguration().getTransactionManagerLookupClass();
-  if (!isDefault && txLookup.equals(configuration.getTransactionManagerLookupClass())) {
-    throw new ConfigurationException("Same transaction manager lookup(" + txLookup + " used by both recovery cache ("+ recoveryCacheName+ ") and main cache("+ cacheName+ "). This is not allowed!");
+  final TransactionManagerLookup tml=recoveryCache.getConfiguration().getTransactionManagerLookup();
+  if (txLookup != null || tml != null) {
+    throw new ConfigurationException("The recovery cache shouldn't be transactional.");
   }
   if (log.isTraceEnabled())   log.tracef("Obtained a reference to the recovery cache: %s",recoveryCacheName);
   return new RecoveryManagerImpl(recoveryCache,cacheName);

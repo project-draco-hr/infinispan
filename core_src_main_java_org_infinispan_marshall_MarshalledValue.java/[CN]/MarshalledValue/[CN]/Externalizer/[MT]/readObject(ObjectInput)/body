@@ -3,5 +3,14 @@
   byte[] raw=new byte[length];
   input.readFully(raw);
   int hc=input.readInt();
+  String cacheName=input.readUTF();
+  StreamingMarshaller marshaller;
+  if (cacheName.equals(GLOBAL_MARSHALLER_MARKER)) {
+    marshaller=gcr.getComponent(StreamingMarshaller.class,KnownComponentNames.GLOBAL_MARSHALLER);
+  }
+ else {
+    ComponentRegistry registry=gcr.getNamedComponentRegistry(cacheName);
+    marshaller=registry.getComponent(StreamingMarshaller.class,KnownComponentNames.CACHE_MARSHALLER);
+  }
   return new MarshalledValue(raw,hc,marshaller);
 }

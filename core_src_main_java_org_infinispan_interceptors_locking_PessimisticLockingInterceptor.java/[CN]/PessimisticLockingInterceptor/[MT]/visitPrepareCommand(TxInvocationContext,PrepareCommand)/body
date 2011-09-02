@@ -1,8 +1,10 @@
 {
   try {
     abortIfRemoteTransactionInvalid(ctx,command);
-    for (    WriteCommand c : command.getModifications()) {
-      invokeNextInterceptor(ctx,c);
+    if (!ctx.isOriginLocal()) {
+      for (      WriteCommand c : command.getModifications()) {
+        c.acceptVisitor(ctx,entryWrappingVisitor);
+      }
     }
     return invokeNextAndCommitIf1Pc(ctx,command);
   }

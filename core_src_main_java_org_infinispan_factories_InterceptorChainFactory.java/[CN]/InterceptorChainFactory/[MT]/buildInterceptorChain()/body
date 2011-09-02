@@ -19,13 +19,12 @@
     interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
   }
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
-  if (configuration.getCacheMode().isDistributed())   interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
- else   interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
+  if (configuration.isTransactionalCache()) {
+    if (configuration.getCacheMode().isDistributed())     interceptorChain.appendInterceptor(createInterceptor(DistTxInterceptor.class));
+ else     interceptorChain.appendInterceptor(createInterceptor(TxInterceptor.class));
+  }
   if (isUsingMarshalledValues(configuration))   interceptorChain.appendInterceptor(createInterceptor(MarshalledValueInterceptor.class));
   interceptorChain.appendInterceptor(createInterceptor(NotificationInterceptor.class));
-  if (configuration.isEnableDeadlockDetection()) {
-    interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
-  }
   if (configuration.isUsingCacheLoaders()) {
     if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
       interceptorChain.appendInterceptor(createInterceptor(ActivationInterceptor.class));
@@ -54,6 +53,9 @@ interceptorChain.appendInterceptor(createInterceptor(OptimisticLockingIntercepto
 }
  else {
 interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
+}
+if (configuration.isEnableDeadlockDetection()) {
+interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingInterceptor.class));
 }
 switch (configuration.getCacheMode()) {
 case REPL_SYNC:

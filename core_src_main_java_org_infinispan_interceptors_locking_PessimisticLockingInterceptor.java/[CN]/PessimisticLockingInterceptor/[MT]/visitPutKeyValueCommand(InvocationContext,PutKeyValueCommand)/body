@@ -1,13 +1,10 @@
 {
   try {
-    if (ctx.isOriginLocal()) {
-      acquireRemoteIfNeeded(ctx,Collections.singleton(command.getKey()));
-      if (cll.localNodeIsOwner(command.getKey())) {
-        lockForPut(ctx,command.getKey(),!command.isPutIfAbsent());
-      }
-    }
- else {
-      lockForPut(ctx,command.getKey(),!command.isPutIfAbsent());
+    assertNoRemoteContext(ctx);
+    acquireRemoteIfNeeded(ctx,Collections.singleton(command.getKey()));
+    entryFactory.wrapEntryForPut(ctx,command.getKey(),!command.isPutIfAbsent());
+    if (cll.localNodeIsOwner(command.getKey())) {
+      lockKey(ctx,command.getKey());
     }
     return invokeNextInterceptor(ctx,command);
   }

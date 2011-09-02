@@ -2,7 +2,7 @@
   if (componentType.isInterface()) {
     Class componentImpl;
     if (componentType.equals(ClusteringDependentLogic.class)) {
-      if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered()) {
+      if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
         return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
       }
  else {
@@ -15,7 +15,7 @@
     }
  else     if (componentType.equals(EntryFactory.class)) {
       final boolean isOptimistic=configuration.getTransactionLockingMode().equals(LockingMode.OPTIMISTIC);
-      return isOptimistic ? componentType.cast(getInstance(OptimisticEntryFactory.class)) : componentType.cast(getInstance(EntryFactoryImpl.class));
+      return componentType.cast(getInstance(OptimisticEntryFactory.class));
     }
  else {
       componentImpl=loadClass(componentType.getName() + "Impl",configuration.getClassLoader());

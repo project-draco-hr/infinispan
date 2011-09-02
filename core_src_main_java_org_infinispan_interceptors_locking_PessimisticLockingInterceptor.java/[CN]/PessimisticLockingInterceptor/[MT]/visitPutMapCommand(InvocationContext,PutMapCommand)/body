@@ -2,14 +2,12 @@
   try {
     if (ctx.isOriginLocal()) {
       acquireRemoteIfNeeded(ctx,command.getMap().keySet());
-      for (      Object key : command.getMap().keySet()) {
-        if (cll.localNodeIsOwner(key))         lockForPut(ctx,key,true);
-      }
     }
- else {
-      for (      Object key : command.getMap().keySet()) {
-        lockForPut(ctx,key,true);
+    for (    Object key : command.getMap().keySet()) {
+      if (cll.localNodeIsOwner(key)) {
+        lockKey(ctx,key);
       }
+      entryFactory.wrapEntryForPut(ctx,key,true);
     }
     return invokeNextInterceptor(ctx,command);
   }

@@ -1,8 +1,12 @@
 {
+  boolean notWrapped=false;
   for (  Object key : dataContainer.keySet()) {
     lockKey(ctx,key);
-    if (!ctx.isOriginLocal())     entryFactory.wrapEntryForClear(ctx,key);
+    if (notWrapped(ctx,key)) {
+      entryFactory.wrapEntryForClear(ctx,key);
+      notWrapped=true;
+    }
   }
-  if (!ctx.isOriginLocal())   invokeNextInterceptor(ctx,command);
+  if (notWrapped)   invokeNextInterceptor(ctx,command);
   return null;
 }

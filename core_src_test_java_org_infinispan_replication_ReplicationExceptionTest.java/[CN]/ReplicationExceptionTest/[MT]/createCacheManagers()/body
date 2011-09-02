@@ -1,10 +1,15 @@
 {
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).build();
+  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
   createClusteredCaches(2,"syncReplCache",configuration);
+  waitForClusterToForm("syncReplCache");
+  Configuration noTx=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,false).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).build();
+  defineConfigurationOnAllManagers("syncReplCacheNoTx",noTx);
   Configuration replAsync=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
   defineConfigurationOnAllManagers("asyncReplCache",replAsync);
-  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().useReplQueue(true).build();
+  Configuration replAsyncNoTx=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,false);
+  defineConfigurationOnAllManagers("asyncReplCacheNoTx",replAsyncNoTx);
+  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().useReplQueue(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
   defineConfigurationOnAllManagers("replQueueCache",replQueue);
-  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().asyncMarshalling(true).build();
+  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().asyncMarshalling(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
   defineConfigurationOnAllManagers("asyncMarshallCache",asyncMarshall);
 }
