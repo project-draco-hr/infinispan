@@ -1,5 +1,10 @@
 {
-  if (trace)   log.debug("Blocking new transactions");
-  txLockLatch.close();
-  txLock.writeLock().lockInterruptibly();
+  if (!txLock.isWriteLockedByCurrentThread()) {
+    if (trace)     log.debug("Blocking new transactions");
+    txLockLatch.close();
+    txLock.writeLock().lockInterruptibly();
+  }
+ else {
+    if (trace)     log.debug("New transactions were not unblocked by the previous rehash");
+  }
 }
