@@ -1,0 +1,19 @@
+{
+  Object keys[]=command.getKeys();
+  if (keys != null && keys.length >= 1) {
+    ArrayList<Object> keysCopy=new ArrayList<Object>(Arrays.asList(keys));
+    for (    Object key : command.getKeys()) {
+      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      try {
+        entryFactory.wrapEntryForWriting(ctx,key,false,true,false,false,false);
+      }
+ catch (      TimeoutException te) {
+        log.unableToLockToInvalidate(key,transport.getAddress());
+        keysCopy.remove(key);
+        if (keysCopy.isEmpty())         return null;
+      }
+    }
+    command.setKeys(keysCopy.toArray());
+  }
+  return invokeNextInterceptor(ctx,command);
+}
