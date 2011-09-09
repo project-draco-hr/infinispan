@@ -1,15 +1,6 @@
 {
-  ReversibleOrderedSet<Map.Entry<Object,CacheEntry>> entries=ctx.getLookedUpEntries().entrySet();
-  if (!entries.isEmpty()) {
-    Iterator<Map.Entry<Object,CacheEntry>> it=entries.reverseIterator();
-    while (it.hasNext()) {
-      Map.Entry<Object,CacheEntry> e=it.next();
-      CacheEntry entry=e.getValue();
-      if (possiblyLocked(entry)) {
-        Object k=e.getKey();
-        if (trace)         log.tracef("Attempting to unlock %s",k);
-        lockContainer.releaseLock(k);
-      }
-    }
+  for (  Object k : ctx.getLockedKeys()) {
+    if (trace)     log.tracef("Attempting to unlock %s",k);
+    lockContainer.releaseLock(k);
   }
 }
