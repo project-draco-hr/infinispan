@@ -1,0 +1,28 @@
+{
+  byte type=input.readByte();
+  byte methodId=(byte)input.readShort();
+  String cacheName=input.readUTF();
+  ComponentRegistry registry=gcr.getNamedComponentRegistry(cacheName);
+  StreamingMarshaller marshaller;
+  if (registry == null) {
+    marshaller=gcr.getComponent(StreamingMarshaller.class,KnownComponentNames.GLOBAL_MARSHALLER);
+  }
+ else {
+    marshaller=registry.getComponent(StreamingMarshaller.class,KnownComponentNames.CACHE_MARSHALLER);
+  }
+  byte[] paramsRaw=new byte[UnsignedNumeric.readUnsignedInt(input)];
+  input.readFully(paramsRaw);
+  ByteArrayInputStream is=new ByteArrayInputStream(paramsRaw,0,paramsRaw.length);
+  ObjectInput paramsInput=marshaller.startObjectInput(is,true);
+  if (paramsInput instanceof ExtendedRiverUnmarshaller)   ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
+  try {
+    Object[] args=commandExt.readParameters(paramsInput);
+    return commandExt.cmdFactory.fromStream(methodId,args,type,cacheName);
+  }
+ catch (  IOException e) {
+    throw e;
+  }
+ finally {
+    marshaller.finishObjectInput(paramsInput);
+  }
+}

@@ -1,19 +1,4 @@
 {
-  Collection<Class<? extends ReplicableCommand>> moduleCommands=getModuleCommands();
-  if (moduleCommands.contains(command.getClass()))   output.writeByte(1);
- else   output.writeByte(0);
-  output.writeShort(command.getCommandId());
-  Object[] args=command.getParameters();
-  int numArgs=(args == null ? 0 : args.length);
-  UnsignedNumeric.writeUnsignedInt(output,numArgs);
-  for (int i=0; i < numArgs; i++) {
-    Object arg=args[i];
-    if (arg instanceof DeltaAware) {
-      DeltaAware dw=(DeltaAware)arg;
-      output.writeObject(dw.delta());
-    }
- else {
-      output.writeObject(arg);
-    }
-  }
+  writeCommandHeader(output,command);
+  writeCommandParameters(output,command);
 }

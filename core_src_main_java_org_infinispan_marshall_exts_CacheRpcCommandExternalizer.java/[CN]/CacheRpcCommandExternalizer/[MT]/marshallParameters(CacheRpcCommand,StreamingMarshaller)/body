@@ -1,0 +1,13 @@
+{
+  BufferSizePredictor sizePredictor=BufferSizePredictorFactory.getBufferSizePredictor();
+  int estimatedSize=sizePredictor.nextSize(cmd);
+  ExposedByteArrayOutputStream baos=new ExposedByteArrayOutputStream(estimatedSize);
+  ObjectOutput output=marshaller.startObjectOutput(baos,true);
+  try {
+    commandExt.writeCommandParameters(output,cmd);
+  }
+  finally {
+    marshaller.finishObjectOutput(output);
+  }
+  return baos;
+}

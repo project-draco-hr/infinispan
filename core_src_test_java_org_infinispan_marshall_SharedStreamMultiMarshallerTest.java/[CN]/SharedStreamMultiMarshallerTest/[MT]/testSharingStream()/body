@@ -1,0 +1,51 @@
+{
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager();
+  cm.getCache();
+  JGroupsAddress address=new JGroupsAddress(new IpAddress(12345));
+  PutKeyValueCommand cmd=new PutKeyValueCommand("k","v",false,null,0,0,Collections.<Flag>emptySet());
+  try {
+    StreamingMarshaller globalMarshal=extractGlobalMarshaller(cm);
+    ExposedByteArrayOutputStream baos=new ExposedByteArrayOutputStream(1024);
+    ObjectOutput globalOO=globalMarshal.startObjectOutput(baos,false);
+    try {
+      globalOO.writeObject(address);
+      globalOO.flush();
+      globalOO.writeInt(baos.size());
+      globalOO.flush();
+      StreamingMarshaller cacheMarshaller=extractCacheMarshaller(cm.getCache());
+      ObjectOutput cacheOO=cacheMarshaller.startObjectOutput(baos,true);
+      try {
+        cacheOO.writeObject(cmd);
+      }
+  finally {
+        cacheMarshaller.finishObjectOutput(cacheOO);
+      }
+    }
+  finally {
+      globalMarshal.finishObjectOutput(globalOO);
+    }
+    byte[] bytes=new byte[baos.size()];
+    System.arraycopy(baos.getRawBuffer(),0,bytes,0,bytes.length);
+    ByteArrayInputStream bais=new ByteArrayInputStream(bytes);
+    ObjectInput globalOI=globalMarshal.startObjectInput(bais,false);
+    try {
+      assertEquals(address,globalOI.readObject());
+      int offset=globalOI.readInt();
+      StreamingMarshaller cacheMarshaller=extractCacheMarshaller(cm.getCache());
+      bais=new ByteArrayInputStream(bytes,offset + 4,bytes.length);
+      ObjectInput cacheOI=cacheMarshaller.startObjectInput(bais,true);
+      try {
+        assertEquals(cmd,cacheOI.readObject());
+      }
+  finally {
+        cacheMarshaller.finishObjectInput(cacheOI);
+      }
+    }
+  finally {
+      globalMarshal.finishObjectInput(globalOI);
+    }
+  }
+  finally {
+    cm.stop();
+  }
+}

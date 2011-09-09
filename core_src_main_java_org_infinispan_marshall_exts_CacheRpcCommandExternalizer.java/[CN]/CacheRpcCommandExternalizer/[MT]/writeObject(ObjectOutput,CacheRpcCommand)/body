@@ -1,0 +1,10 @@
+{
+  commandExt.writeCommandHeader(output,command);
+  String cacheName=command.getCacheName();
+  output.writeUTF(cacheName);
+  ComponentRegistry registry=gcr.getNamedComponentRegistry(cacheName);
+  StreamingMarshaller marshaller=registry.getComponent(StreamingMarshaller.class,KnownComponentNames.CACHE_MARSHALLER);
+  ExposedByteArrayOutputStream os=marshallParameters(command,marshaller);
+  UnsignedNumeric.writeUnsignedInt(output,os.size());
+  output.write(os.getRawBuffer(),0,os.size());
+}
