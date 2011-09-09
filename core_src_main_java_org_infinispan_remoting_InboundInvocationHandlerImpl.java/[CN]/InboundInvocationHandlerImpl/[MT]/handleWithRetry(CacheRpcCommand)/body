@@ -5,12 +5,13 @@
     boolean isRehashCommand=cmd instanceof RehashControlCommand;
     boolean isClusteredGetCommand=cmd instanceof ClusteredGetCommand;
     boolean isDistributedExecuteCommand=cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
-    boolean needRetry=!(isRehashCommand || isClusteredGetCommand || isDistributedExecuteCommand);
+    boolean needRetry=!(isRehashCommand || isDistributedExecuteCommand);
     if (!needRetry) {
       try {
         if (!isRehashCommand) {
           distributedSync.acquireProcessingLock(false,distributedSyncTimeout,MILLISECONDS);
           unlock=true;
+          waitForStart(cmd);
         }
         return handleWithWaitForBlocks(cmd,distributedSyncTimeout);
       }
