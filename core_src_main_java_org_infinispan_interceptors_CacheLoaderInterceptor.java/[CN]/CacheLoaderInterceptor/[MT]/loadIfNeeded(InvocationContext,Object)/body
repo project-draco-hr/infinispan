@@ -4,7 +4,7 @@
   }
   CacheEntry e=entryFactory.wrapEntryForReading(ctx,key);
   if (e == null || e.isNull()) {
-    boolean keyLocked=entryFactory.acquireLock(ctx,key);
+    boolean keyLocked=lockManager.acquireLock(ctx,key);
     boolean unlockOnWayOut=false;
     try {
       if (dataContainer.containsKey(key)) {
@@ -15,7 +15,7 @@
     }
   finally {
       if (keyLocked && unlockOnWayOut) {
-        entryFactory.releaseLock(key);
+        lockManager.unlock(key);
       }
     }
     InternalCacheEntry loaded=loader.load(key);
@@ -24,11 +24,12 @@
         log.trace("No need to load.  Key doesn't exist in the loader.");
       }
       if (keyLocked) {
-        entryFactory.releaseLock(key);
+        lockManager.unlock(key);
       }
       return false;
     }
-    MVCCEntry n=entryFactory.wrapEntryForWriting(ctx,key,true,false,keyLocked,false,true);
+    if (!keyLocked)     lockManager.lockAndRecord(key,ctx);
+    MVCCEntry n=entryFactory.wrapEntryForPut(ctx,key,null,false);
     recordLoadedEntry(ctx,key,n,loaded);
     return true;
   }
