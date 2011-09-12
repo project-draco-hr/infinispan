@@ -1,14 +1,21 @@
 {
-  if (firstInChain.getClass() == clazz) {
-    firstInChain=firstInChain.getNext();
-  }
-  CommandInterceptor it=firstInChain.getNext();
-  CommandInterceptor prevIt=firstInChain;
-  while (it != null) {
-    if (it.getClass() == clazz) {
-      prevIt.setNext(it.getNext());
+  final ReentrantLock lock=this.lock;
+  lock.lock();
+  try {
+    if (isFirstInChain(clazz)) {
+      firstInChain=firstInChain.getNext();
     }
-    prevIt=it;
-    it=it.getNext();
+    CommandInterceptor it=firstInChain.getNext();
+    CommandInterceptor prevIt=firstInChain;
+    while (it != null) {
+      if (it.getClass() == clazz) {
+        prevIt.setNext(it.getNext());
+      }
+      prevIt=it;
+      it=it.getNext();
+    }
+  }
+  finally {
+    lock.unlock();
   }
 }

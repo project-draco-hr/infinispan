@@ -1,18 +1,25 @@
 {
-  if (firstInChain == null)   return;
-  if (position == 0) {
-    firstInChain=firstInChain.getNext();
-    return;
-  }
-  CommandInterceptor it=firstInChain;
-  int index=0;
-  while (it != null) {
-    if (++index == position) {
-      if (it.getNext() == null)       return;
-      it.setNext(it.getNext().getNext());
+  final ReentrantLock lock=this.lock;
+  lock.lock();
+  try {
+    if (firstInChain == null)     return;
+    if (position == 0) {
+      firstInChain=firstInChain.getNext();
       return;
     }
-    it=it.getNext();
+    CommandInterceptor it=firstInChain;
+    int index=0;
+    while (it != null) {
+      if (++index == position) {
+        if (it.getNext() == null)         return;
+        it.setNext(it.getNext().getNext());
+        return;
+      }
+      it=it.getNext();
+    }
+    throw new IllegalArgumentException("Invalid position: " + position + " !");
   }
-  throw new IllegalArgumentException("Invalid position: " + position + " !");
+  finally {
+    lock.unlock();
+  }
 }

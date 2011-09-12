@@ -1,12 +1,19 @@
 {
-  CommandInterceptor it=firstInChain;
-  while (it != null) {
-    if (it.getClass().equals(afterInterceptor)) {
-      toAdd.setNext(it.getNext());
-      it.setNext(toAdd);
-      return true;
+  final ReentrantLock lock=this.lock;
+  lock.lock();
+  try {
+    CommandInterceptor it=firstInChain;
+    while (it != null) {
+      if (it.getClass().equals(afterInterceptor)) {
+        toAdd.setNext(it.getNext());
+        it.setNext(toAdd);
+        return true;
+      }
+      it=it.getNext();
     }
-    it=it.getNext();
+    return false;
   }
-  return false;
+  finally {
+    lock.unlock();
+  }
 }
