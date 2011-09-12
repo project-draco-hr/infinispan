@@ -1,10 +1,9 @@
 {
-  TransactionManager tm=TestingUtil.extractComponent(cache,TransactionManager.class);
+  DummyTransactionManager tm=(DummyTransactionManager)TestingUtil.extractComponent(cache,TransactionManager.class);
   tm.begin();
   cache.put("key","value");
+  tm.getTransaction().runPrepare();
   assertAttributeValue("NumberOfLocksHeld",1);
-  cache.put("key2","value2");
-  assertAttributeValue("NumberOfLocksHeld",2);
-  tm.commit();
+  tm.getTransaction().runCommitTx();
   assertAttributeValue("NumberOfLocksHeld",0);
 }

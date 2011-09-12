@@ -1,8 +1,9 @@
 {
-  TransactionManager tm=TestingUtil.extractComponent(cache,TransactionManager.class);
+  DummyTransactionManager tm=(DummyTransactionManager)TestingUtil.extractComponent(cache,TransactionManager.class);
   int initialAvailable=getAttrValue("NumberOfLocksAvailable");
   tm.begin();
   cache.put("key","value");
+  tm.getTransaction().runPrepare();
   assertAttributeValue("NumberOfLocksHeld",1);
   assertAttributeValue("NumberOfLocksAvailable",initialAvailable - 1);
   tm.rollback();
