@@ -1,8 +1,15 @@
 {
-  if (defaultCacheConfig.getTransactionManagerLookup() != null || defaultCacheConfig.getTransactionManagerLookupClass() != null) {
-    log.error("You have passed in a default configuration which has transactional elements set.  If you wish to use transactions, use the TestCacheManagerFactory.createCacheManager(Configuration defaultCacheConfig, boolean transactional) method.");
+  GlobalConfiguration globalConfiguration;
+  if (defaultCacheConfig.getCacheMode().isClustered()) {
+    globalConfiguration=GlobalConfiguration.getClusteredDefault();
+    amendTransport(globalConfiguration);
   }
-  defaultCacheConfig.setTransactionManagerLookup(null);
-  defaultCacheConfig.setTransactionManagerLookupClass(null);
-  return createCacheManager(defaultCacheConfig,false);
+ else {
+    globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
+  }
+  amendMarshaller(globalConfiguration);
+  minimizeThreads(globalConfiguration);
+  updateTransactionSupport(defaultCacheConfig);
+  defaultCacheConfig.fluent().cacheStopTimeout(1000);
+  return newDefaultCacheManager(true,globalConfiguration,defaultCacheConfig,false);
 }
