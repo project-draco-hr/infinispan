@@ -1,0 +1,13 @@
+{
+  if (lockAndRecord(key,ctx)) {
+    ctx.registerLockedKey(key);
+    return true;
+  }
+ else {
+    Object owner=getOwner(key);
+    if (key instanceof MarshalledValue) {
+      key=((MarshalledValue)key).get();
+    }
+    throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key ["+ key+ "] for requestor ["+ ctx.getLockOwner()+ "]! Lock held by ["+ owner+ "]");
+  }
+}

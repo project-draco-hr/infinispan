@@ -1,22 +1,16 @@
 {
-  CacheEntry cacheEntry;
-  if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
-    if (trace)     log.trace("Forcing lock on reading");
-    return wrapEntryForWriting(ctx,key,false,false,false,false,false);
-  }
- else   if ((cacheEntry=ctx.lookupEntry(key)) == null) {
-    if (trace)     log.tracef("Key %s is not in context, fetching from container.",key);
-    cacheEntry=container.get(key);
-    if (useRepeatableRead && ctx.isInTxScope()) {
+  CacheEntry cacheEntry=getFromContext(ctx,key);
+  if (cacheEntry == null) {
+    cacheEntry=getFromContainer(key);
+    if (useRepeatableRead) {
       MVCCEntry mvccEntry=cacheEntry == null ? createWrappedEntry(key,null,false,false,-1) : createWrappedEntry(key,cacheEntry.getValue(),false,false,cacheEntry.getLifespan());
       if (mvccEntry != null)       ctx.putLookedUpEntry(key,mvccEntry);
       return mvccEntry;
     }
-    if (cacheEntry != null)     ctx.putLookedUpEntry(key,cacheEntry);
+ else     if (cacheEntry != null) {
+      ctx.putLookedUpEntry(key,cacheEntry);
+    }
     return cacheEntry;
   }
- else {
-    if (trace)     log.trace("Key is already in context");
-    return cacheEntry;
-  }
+  return cacheEntry;
 }

@@ -1,3 +1,14 @@
 {
-  for (  Cache c : caches())   assertEquals(c.get(key),newValue);
+  for (  Cache c : caches()) {
+    Object actual=null;
+    try {
+      TestingUtil.getTransactionManager(c).begin();
+      actual=c.get(key);
+      TestingUtil.getTransactionManager(c).commit();
+    }
+ catch (    Exception e) {
+      e.printStackTrace();
+    }
+    assertEquals(actual,newValue);
+  }
 }

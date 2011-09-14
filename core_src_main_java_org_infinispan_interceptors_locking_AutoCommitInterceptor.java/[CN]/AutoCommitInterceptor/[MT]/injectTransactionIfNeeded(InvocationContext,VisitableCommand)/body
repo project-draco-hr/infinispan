@@ -1,0 +1,22 @@
+{
+  if (!ctx.isInTxScope()) {
+    if (ctx.isUseFutureReturnType())     throw new IllegalStateException("Future calls cannot run in auto-commit mode.");
+    transactionManager.begin();
+    InvocationContext txContext=icc.createInvocationContext();
+    txContext.setClassLoader(ctx.getClassLoader());
+    txContext.setFlags(ctx.getFlags());
+    try {
+      final Object result=invokeNextInterceptor(txContext,command);
+      transactionManager.commit();
+      return result;
+    }
+ catch (    Throwable t) {
+      log.couldNotCompleteInjectedTransaction(t);
+      tryToRollback();
+      throw t;
+    }
+  }
+ else {
+    return invokeNextInterceptor(ctx,command);
+  }
+}

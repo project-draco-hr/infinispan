@@ -1,0 +1,18 @@
+{
+  expectTransactionBoundaries(true);
+  mockNotifier.notifyCacheEntryCreated(anyObject(),anyBoolean(),isA(InvocationContext.class));
+  expectLastCall().anyTimes();
+  mockNotifier.notifyCacheEntryModified(anyObject(),anyObject(),anyBoolean(),isA(InvocationContext.class));
+  expectLastCall().anyTimes();
+  replay(mockNotifier);
+  try {
+    tm.begin();
+    cache.putAll(data);
+    tm.commit();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+  verify(mockNotifier);
+  reset(mockNotifier);
+}

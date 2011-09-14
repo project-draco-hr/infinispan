@@ -5,7 +5,8 @@
   assertPrepared(0,dummyTm().getTransaction());
   xaRes.prepare(xaRes.getLocalTransaction().getXid());
   assertPrepared(1,dummyTm().getTransaction());
+  final DummyTransaction suspend=(DummyTransaction)dummyTm().suspend();
   xaRes.commit(xaRes.getLocalTransaction().getXid(),false);
-  assertPrepared(0,dummyTm().getTransaction());
+  assertPrepared(0,suspend);
   assertEquals(0,TestingUtil.getTransactionTable(cache).getLocalTxCount());
 }

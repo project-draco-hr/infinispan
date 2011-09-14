@@ -1,0 +1,15 @@
+{
+  assertNonTransactional(ctx);
+  try {
+    for (    Object key : command.getMap().keySet()) {
+      lockKey(ctx,key);
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    throw cleanLocksAndRethrow(ctx,te);
+  }
+ finally {
+    lockManager.unlock(ctx);
+  }
+}

@@ -3,7 +3,8 @@
   Configuration defaultCfg=new Configuration();
   defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
   defaultCfg.setLockAcquisitionTimeout(200);
-  cm=TestCacheManagerFactory.createCacheManager(defaultCfg,true);
+  defaultCfg.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+  cm=TestCacheManagerFactory.createCacheManager(defaultCfg);
   tl.cache=cm.getCache();
   tl.lockManager=TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
   tl.icc=TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);

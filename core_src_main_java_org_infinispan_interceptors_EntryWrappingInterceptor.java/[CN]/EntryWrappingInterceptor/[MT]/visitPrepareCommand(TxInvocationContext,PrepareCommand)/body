@@ -1,0 +1,12 @@
+{
+  if (!ctx.isOriginLocal()) {
+    for (    WriteCommand c : command.getModifications()) {
+      c.acceptVisitor(ctx,entryWrappingVisitor);
+    }
+  }
+  Object result=invokeNextInterceptor(ctx,command);
+  if (command.isOnePhaseCommit()) {
+    commitContextEntries(ctx);
+  }
+  return result;
+}

@@ -7,7 +7,7 @@
         if (trace)         log.tracef("Caching remotely retrieved entry for key %s in L1",key);
         long lifespan=ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(),configuration.getL1Lifespan());
         PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),lifespan,-1,ctx.getFlags());
-        entryFactory.wrapEntryForWriting(ctx,key,true,false,ctx.hasLockedKey(key),false,false);
+        lockAndWrap(ctx,key,ice);
         invokeNextInterceptor(ctx,put);
       }
  else {
@@ -17,7 +17,7 @@
             ce.setValue(ice.getValue());
           }
  else {
-            if (isWrite)             entryFactory.wrapEntryForWriting(ctx,ice,true,false,ctx.hasLockedKey(key),false,false);
+            if (isWrite)             lockAndWrap(ctx,key,ice);
  else             ctx.putLookedUpEntry(key,ice);
           }
         }
