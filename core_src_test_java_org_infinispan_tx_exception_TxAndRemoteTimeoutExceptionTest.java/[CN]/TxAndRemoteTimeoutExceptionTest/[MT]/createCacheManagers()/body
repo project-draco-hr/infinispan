@@ -1,6 +1,7 @@
 {
   Configuration defaultConfig=getDefaultConfig();
   defaultConfig.setLockAcquisitionTimeout(500);
+  defaultConfig.fluent().transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
   defaultConfig.setUseLockStriping(false);
   addClusterEnabledCacheManager(defaultConfig);
   addClusterEnabledCacheManager(defaultConfig);
@@ -9,6 +10,5 @@
   txTable0=TestingUtil.getTransactionTable(cache(0));
   txTable1=TestingUtil.getTransactionTable(cache(1));
   tm=cache(0).getAdvancedCache().getTransactionManager();
-  cache(1).getAdvancedCache().addInterceptor(txStatus,0);
   TestingUtil.blockUntilViewReceived(cache(0),2,10000);
 }
