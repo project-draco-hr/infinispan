@@ -1,15 +1,11 @@
 {
-  final Method method=context.getMethod();
-  final CacheRemoveAll cacheRemoveAll=method.getAnnotation(CacheRemoveAll.class);
-  final String cacheName=cacheRemoveAll.cacheName();
-  if (cacheName.trim().isEmpty()) {
-    throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll "+ "doesn't specify a cache name");
-  }
-  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheName,method);
+  final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheRemoveAll cacheRemoveAll=cacheKeyInvocationContext.getCacheAnnotation();
+  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
   if (!cacheRemoveAll.afterInvocation()) {
     cache.clear();
   }
-  final Object result=context.proceed();
+  final Object result=invocationContext.proceed();
   if (cacheRemoveAll.afterInvocation()) {
     cache.clear();
   }

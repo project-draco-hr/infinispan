@@ -1,18 +1,18 @@
 {
-  final Method method=context.getMethod();
-  final CacheResult cacheResult=method.getAnnotation(CacheResult.class);
-  final String cacheName=cacheResult.cacheName().trim().isEmpty() ? getDefaultMethodCacheName(method) : cacheResult.cacheName();
-  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheName,context.getMethod());
-  final CacheKey cacheKey=generateCacheKey(cacheResult.cacheKeyGenerator(),context);
-  Object methodResult=null;
+  final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheKeyGenerator cacheKeyGenerator=cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+  final CacheResult cacheResult=cacheKeyInvocationContext.getCacheAnnotation();
+  final CacheKey cacheKey=cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext)cacheKeyInvocationContext);
+  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
+  Object result=null;
   if (!cacheResult.skipGet()) {
-    methodResult=cache.get(cacheKey);
+    result=cache.get(cacheKey);
   }
-  if (methodResult == null) {
-    methodResult=context.proceed();
-    if (methodResult != null) {
-      cache.put(cacheKey,methodResult);
+  if (result == null) {
+    result=invocationContext.proceed();
+    if (result != null) {
+      cache.put(cacheKey,result);
     }
   }
-  return methodResult;
+  return result;
 }

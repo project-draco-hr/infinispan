@@ -1,16 +1,13 @@
 {
-  final Method method=context.getMethod();
-  final CacheRemoveEntry cacheRemoveEntry=method.getAnnotation(CacheRemoveEntry.class);
-  final String cacheName=cacheRemoveEntry.cacheName();
-  if (cacheName.trim().isEmpty()) {
-    throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveEntry "+ "doesn't specify a cache name");
-  }
-  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheName,method);
-  final CacheKey cacheKey=generateCacheKey(cacheRemoveEntry.cacheKeyGenerator(),context);
+  final CacheKeyInvocationContext<CacheRemoveEntry> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheKeyGenerator cacheKeyGenerator=cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
+  final CacheRemoveEntry cacheRemoveEntry=cacheKeyInvocationContext.getCacheAnnotation();
+  final CacheKey cacheKey=cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext)cacheKeyInvocationContext);
   if (!cacheRemoveEntry.afterInvocation()) {
     cache.remove(cacheKey);
   }
-  final Object result=context.proceed();
+  final Object result=invocationContext.proceed();
   if (cacheRemoveEntry.afterInvocation()) {
     cache.remove(cacheKey);
   }

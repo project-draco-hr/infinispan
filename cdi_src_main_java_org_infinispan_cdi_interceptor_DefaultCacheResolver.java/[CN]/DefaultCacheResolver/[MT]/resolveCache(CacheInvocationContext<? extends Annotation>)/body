@@ -1,0 +1,13 @@
+{
+  assertNotNull(cacheInvocationContext,"cacheInvocationContext parameter cannot be null");
+  final String cacheName=cacheInvocationContext.getCacheName();
+  if (cacheName.trim().isEmpty()) {
+    return defaultCacheManager.getCache();
+  }
+  for (  EmbeddedCacheManager oneCacheManager : cacheManagers) {
+    if (oneCacheManager.getCacheNames().contains(cacheName)) {
+      return oneCacheManager.getCache(cacheName);
+    }
+  }
+  return defaultCacheManager.getCache(cacheName);
+}
