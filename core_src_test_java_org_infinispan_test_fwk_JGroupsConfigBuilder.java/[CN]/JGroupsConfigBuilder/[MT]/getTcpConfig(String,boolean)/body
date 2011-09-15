@@ -1,15 +1,12 @@
 {
-  String config=new String(tcpConfig);
-  if (!withFD)   config=removeFailureDetectionTcp(config);
-  if (config.contains("TCPPING")) {
-    return getTcpConfigWithTCPPINGDiscovery(config);
-  }
-  if (config.contains("TEST_PING")) {
-    String cfg=replaceTcpStartPort(config,threadTcpStartPort.get());
-    if (fullTestName == null)     return cfg;
- else     return getTestPingDiscovery(fullTestName,cfg);
+  JGroupsProtocolCfg jgroupsCfg=getJGroupsProtocolCfg(tcpConfigurator.getProtocolStack());
+  if (!withFD)   removeFailureDetectionTcp(jgroupsCfg);
+  if (jgroupsCfg.containsProtocol(TEST_PING)) {
+    replaceTcpStartPort(jgroupsCfg);
+    if (fullTestName == null)     return jgroupsCfg.toString();
+ else     return getTestPingDiscovery(fullTestName,jgroupsCfg);
   }
  else {
-    return replaceMCastAddressAndPort(config);
+    return replaceMCastAddressAndPort(jgroupsCfg);
   }
 }
