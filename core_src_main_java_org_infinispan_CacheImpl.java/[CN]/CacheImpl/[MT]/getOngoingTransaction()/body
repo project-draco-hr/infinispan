@@ -1,6 +1,13 @@
 {
   try {
-    return transactionManager != null ? transactionManager.getTransaction() : null;
+    Transaction transaction=null;
+    if (transactionManager != null) {
+      transaction=transactionManager.getTransaction();
+      if (transaction == null && config.isInvocationBatchingEnabled()) {
+        transaction=batchContainer.getBatchTransaction();
+      }
+    }
+    return transaction;
   }
  catch (  SystemException e) {
     throw new CacheException("Unable to get transaction",e);

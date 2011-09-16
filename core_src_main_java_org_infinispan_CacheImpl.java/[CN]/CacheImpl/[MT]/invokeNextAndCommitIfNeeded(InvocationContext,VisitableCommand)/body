@@ -1,0 +1,23 @@
+{
+  final boolean txInjected=ctx.isInTxScope() && ((TxInvocationContext)ctx).isTransactionInjected();
+  Object result;
+  try {
+    result=invoker.invoke(ctx,command);
+    if (txInjected) {
+      if (log.isTraceEnabled())       log.tracef("Committing transaction as it was injected: %s",getOngoingTransaction());
+      try {
+        transactionManager.commit();
+      }
+ catch (      Throwable e) {
+        log.couldNotCompleteInjectedTransaction(e);
+        tryRollback();
+        throw new CacheException("Could not commit injected transactions",e);
+      }
+    }
+  }
+ catch (  RuntimeException e) {
+    if (txInjected)     tryRollback();
+    throw e;
+  }
+  return result;
+}

@@ -1,2 +1,10 @@
 {
+  Cache<String,String> cache=null;
+  cache=createCache(true,"testBatchVisibility");
+  log.info("Here it starts...");
+  cache.startBatch();
+  cache.put("k","v");
+  assertEquals(getOnDifferentThread(cache,"k"),null,"Other thread should not see batch update till batch completes!");
+  cache.endBatch(true);
+  assertEquals("v",getOnDifferentThread(cache,"k"));
 }

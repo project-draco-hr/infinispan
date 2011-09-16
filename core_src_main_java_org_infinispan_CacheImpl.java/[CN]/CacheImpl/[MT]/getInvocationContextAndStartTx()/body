@@ -1,0 +1,26 @@
+{
+  InvocationContext invocationContext;
+  boolean txInjected=false;
+  if (config.isTransactionalCache()) {
+    Transaction transaction=getOngoingTransaction();
+    if (transaction == null && config.isTransactionAutoCommit()) {
+      try {
+        transactionManager.begin();
+        transaction=transactionManager.getTransaction();
+        txInjected=true;
+      }
+ catch (      Exception e) {
+        throw new CacheException("Could not start transaction",e);
+      }
+    }
+    invocationContext=getInvocationContext(transaction);
+  }
+ else {
+    invocationContext=getInvocationContextForWrite();
+  }
+  if (txInjected) {
+    ((TxInvocationContext)invocationContext).setTransactionInjected(true);
+    if (log.isTraceEnabled())     log.tracef("Marked tx as injected.");
+  }
+  return invocationContext;
+}

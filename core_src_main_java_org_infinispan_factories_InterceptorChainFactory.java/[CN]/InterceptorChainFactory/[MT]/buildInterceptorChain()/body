@@ -1,21 +1,16 @@
 {
   boolean invocationBatching=configuration.isInvocationBatchingEnabled();
-  boolean autoCommit=configuration.isTransactionAutoCommit() && configuration.isTransactionalCache();
   CommandInterceptor first;
   if (invocationBatching) {
     first=createInterceptor(BatchingInterceptor.class);
   }
  else {
-    first=autoCommit ? createInterceptor(AutoCommitInterceptor.class) : createInterceptor(InvocationContextInterceptor.class);
+    first=createInterceptor(InvocationContextInterceptor.class);
   }
   InterceptorChain interceptorChain=new InterceptorChain(first);
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   if (isUsingMarshalledValues(configuration) || configuration.isUseAsyncMarshalling() || configuration.isUseReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(IsMarshallableInterceptor.class));
   if (invocationBatching) {
-    if (autoCommit)     interceptorChain.appendInterceptor(createInterceptor(AutoCommitInterceptor.class));
-    interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
-  }
- else   if (autoCommit) {
     interceptorChain.appendInterceptor(createInterceptor(InvocationContextInterceptor.class));
   }
   if (configuration.isExposeJmxStatistics())   interceptorChain.appendInterceptor(createInterceptor(CacheMgmtInterceptor.class));
