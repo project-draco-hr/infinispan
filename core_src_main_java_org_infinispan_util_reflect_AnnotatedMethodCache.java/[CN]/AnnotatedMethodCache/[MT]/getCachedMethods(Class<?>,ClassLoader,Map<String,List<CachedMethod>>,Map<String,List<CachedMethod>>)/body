@@ -1,0 +1,26 @@
+{
+  String className=clazz.getName();
+  List<CachedMethod> l=richMethodCache.get(className);
+  if (l == null) {
+synchronized (AnnotatedMethodCache.class) {
+      l=richMethodCache.get(className);
+      if (l == null) {
+        l=basicMethodCache.get(className);
+        if (l != null) {
+          for (          Map.Entry<String,List<CachedMethod>> e : basicMethodCache.entrySet()) {
+            if (match(clazz,e.getKey(),classLoader))             l.addAll(e.getValue());
+          }
+        }
+ else {
+          l=new LinkedList<CachedMethod>();
+          for (          Map.Entry<String,List<CachedMethod>> e : basicMethodCache.entrySet()) {
+            if (match(clazz,e.getKey(),classLoader))             l.addAll(e.getValue());
+          }
+          if (l.isEmpty())           l=Collections.emptyList();
+        }
+        richMethodCache.put(className,l);
+      }
+    }
+  }
+  return l;
+}

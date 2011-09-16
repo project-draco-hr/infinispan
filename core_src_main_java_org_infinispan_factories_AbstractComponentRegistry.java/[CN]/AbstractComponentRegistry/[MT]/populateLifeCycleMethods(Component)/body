@@ -3,20 +3,19 @@
     c.methodsScanned=true;
     c.startMethods.clear();
     c.stopMethods.clear();
-    List<Method> methods=getAllMethodsViaReflection(c.instance.getClass(),Start.class);
-    for (    Method m : methods) {
+    Class<?> componentClass=c.instance.getClass();
+    for (    CachedMethod m : AnnotatedMethodCache.getStartMethods(componentClass,getClass().getClassLoader())) {
       PrioritizedMethod em=new PrioritizedMethod();
       em.component=c;
       em.method=m;
-      em.priority=m.getAnnotation(Start.class).priority();
+      em.priority=getAnnotationValue(m.getMethodAnnotation().value("priority"));
       c.startMethods.add(em);
     }
-    methods=getAllMethodsViaReflection(c.instance.getClass(),Stop.class);
-    for (    Method m : methods) {
+    for (    CachedMethod m : AnnotatedMethodCache.getStopMethods(componentClass,getClass().getClassLoader())) {
       PrioritizedMethod em=new PrioritizedMethod();
       em.component=c;
       em.method=m;
-      em.priority=m.getAnnotation(Stop.class).priority();
+      em.priority=getAnnotationValue(m.getMethodAnnotation().value("priority"));
       c.stopMethods.add(em);
     }
   }
