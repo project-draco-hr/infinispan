@@ -1,11 +1,10 @@
 {
   DataLocality locality=dm.getLocality(key);
-  boolean isMappedToLocalNode=locality.isLocal();
-  if (ctx.isOriginLocal() && !isMappedToLocalNode && isNotInL1(key)) {
+  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
     return realRemoteGet(ctx,key,true,isWrite);
   }
  else {
-    if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
+    if (locality.isUncertain()) {
       if (trace)       log.tracef("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere",key,rpcManager.getAddress());
       return realRemoteGet(ctx,key,false,isWrite);
     }
