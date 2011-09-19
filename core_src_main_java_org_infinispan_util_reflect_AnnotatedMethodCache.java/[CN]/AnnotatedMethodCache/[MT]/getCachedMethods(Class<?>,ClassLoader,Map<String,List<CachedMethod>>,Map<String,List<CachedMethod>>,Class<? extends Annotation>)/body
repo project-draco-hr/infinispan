@@ -16,6 +16,10 @@ synchronized (AnnotatedMethodCache.class) {
           for (          Map.Entry<String,List<CachedMethod>> e : basicMethodCache.entrySet()) {
             if (match(clazz,e.getKey(),classLoader))             l.addAll(e.getValue());
           }
+          for (          Method m : ReflectionUtil.getAllMethodsShallow(clazz,annotation)) {
+            CachedMethod cm=new CachedMethod(m);
+            if (!l.contains(cm))             l.add(cm);
+          }
         }
         richMethodCache.put(className,l);
       }
