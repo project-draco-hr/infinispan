@@ -5,23 +5,25 @@
     if (!discardEnabled) {
       if (!discoveries.isEmpty()) {
         LinkedList<PingData> rsps=new LinkedList<PingData>();
-        for (        TEST_PING discovery : discoveries.values()) {
-          boolean traceEnabled=log.isTraceEnabled();
-          if (discovery != this) {
-            boolean remoteDiscardEnabled=isDiscardEnabled(discovery);
-            if (!remoteDiscardEnabled && !discovery.stopped) {
-              addPingRsp(rsps,discovery);
-            }
- else             if (discovery.stopped) {
-              log.debug(String.format("%s is stopped, so no ping responses will be received",discovery.getLocalAddr()));
+synchronized (discoveries) {
+          for (          TEST_PING discovery : discoveries.values()) {
+            boolean traceEnabled=log.isTraceEnabled();
+            if (discovery != this) {
+              boolean remoteDiscardEnabled=isDiscardEnabled(discovery);
+              if (!remoteDiscardEnabled && !discovery.stopped) {
+                addPingRsp(rsps,discovery);
+              }
+ else               if (discovery.stopped) {
+                log.debug(String.format("%s is stopped, so no ping responses will be received",discovery.getLocalAddr()));
+              }
+ else {
+                if (traceEnabled)                 log.trace("Skipping sending response cos DISCARD is on");
+                return Collections.emptyList();
+              }
             }
  else {
-              if (traceEnabled)               log.trace("Skipping sending response cos DISCARD is on");
-              return Collections.emptyList();
+              if (traceEnabled)               log.trace("Skipping sending discovery to self");
             }
-          }
- else {
-            if (traceEnabled)             log.trace("Skipping sending discovery to self");
           }
         }
         return rsps;
