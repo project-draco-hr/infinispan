@@ -1,32 +1,3 @@
 {
-  final Transaction tx=getOngoingTransaction();
-  final NotifyingNotifiableFuture f=new DeferredReturnFuture();
-  final EnumSet<Flag> flags=flagHolder.get() == null ? null : flagHolder.get().flags;
-  if (asyncSkipsThread(flags,key)) {
-    return wrapInFuture(get(key));
-  }
- else {
-    final EnumSet<Flag> appliedFlags;
-    if (flags == null) {
-      appliedFlags=null;
-    }
- else {
-      appliedFlags=flags.clone();
-      flags.clear();
-    }
-    Callable<V> c=new Callable<V>(){
-      @Override public V call() throws Exception {
-        assertKeyNotNull(key);
-        InvocationContext ctx=getInvocationContext(tx);
-        if (appliedFlags != null)         ctx.setFlags(appliedFlags);
-        GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key,appliedFlags);
-        Object ret=invoker.invoke(ctx,command);
-        f.notifyDone();
-        return (V)ret;
-      }
-    }
-;
-    f.setNetworkFuture(asyncExecutor.submit(c));
-    return f;
-  }
+  return getAsync(key,null,null);
 }
