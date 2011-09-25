@@ -1,26 +1,30 @@
 {
   retryQueueLock.lock();
-  boolean unlock=false;
-  if (enqueueing) {
-    log.tracef("Enqueueing command %s since we are enqueueing.",command);
-    queue.add(command);
-    return RequestIgnoredResponse.INSTANCE;
-  }
+  try {
+    if (enqueueing) {
+      log.tracef("Enqueueing command %s since we are enqueueing.",command);
+      queue.add(command);
+      return RequestIgnoredResponse.INSTANCE;
+    }
  else {
-    try {
-      if (howToHandle(command) == JoinHandle.QUEUE) {
+      try {
+        if (howToHandle(command) == JoinHandle.QUEUE) {
+          enqueueing=true;
+          enqueuedBlocker.close();
+          return enqueue(command);
+        }
+ else {
+          return handleWithWaitForBlocks(command);
+        }
+      }
+ catch (      TimeoutException te) {
         enqueueing=true;
         enqueuedBlocker.close();
         return enqueue(command);
       }
- else {
-        return handleWithWaitForBlocks(command);
-      }
     }
- catch (    TimeoutException te) {
-      enqueueing=true;
-      enqueuedBlocker.close();
-      return enqueue(command);
-    }
+  }
+  finally {
+    retryQueueLock.unlock();
   }
 }
