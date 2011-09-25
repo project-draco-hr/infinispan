@@ -8,10 +8,14 @@
         purgerService.execute(new Runnable(){
           @Override public void run(){
             Integer bucketKey=Integer.valueOf(bucketFile.getName());
+            boolean lockAcquired=false;
             try {
               Bucket bucket=loadBucket(bucketFile);
               if (bucket != null) {
-                if (bucket.removeExpiredEntries())                 lockForWriting(bucketKey);
+                if (bucket.removeExpiredEntries()) {
+                  lockForWriting(bucketKey);
+                  lockAcquired=true;
+                }
                 updateBucket(bucket);
               }
             }
@@ -24,7 +28,7 @@ catch (            CacheLoaderException e) {
               log.problemsPurgingFile(bucketFile,e);
             }
  finally {
-              unlock(bucketKey);
+              if (lockAcquired)               unlock(bucketKey);
             }
           }
         }
@@ -32,15 +36,21 @@ catch (            CacheLoaderException e) {
       }
  else {
         Integer bucketKey=Integer.valueOf(bucketFile.getName());
+        boolean lockAcquired=false;
         try {
           Bucket bucket=loadBucket(bucketFile);
           if (bucket != null) {
-            if (bucket.removeExpiredEntries())             lockForWriting(bucketKey);
+            if (bucket.removeExpiredEntries()) {
+              lockForWriting(bucketKey);
+              lockAcquired=true;
+            }
             updateBucket(bucket);
           }
         }
   finally {
-          unlock(bucketKey);
+          if (lockAcquired) {
+            unlock(bucketKey);
+          }
         }
       }
     }
