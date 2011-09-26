@@ -1,0 +1,20 @@
+{
+  cache.put(k,"value");
+  assertNotLocked(cache,k);
+  InvocationContextContainerImpl icc=(InvocationContextContainerImpl)TestingUtil.extractComponent(cache,InvocationContextContainer.class);
+  InvocationContext ctx=icc.getInvocationContext(true);
+  LockManager lockManager=TestingUtil.extractComponent(cache,LockManager.class);
+  lockManager.lockAndRecord(k,ctx);
+  ctx.putLookedUpEntry(k,null);
+  assertLocked(cache,k);
+  final CountDownLatch txStartedLatch=new CountDownLatch(1);
+  TxThread transactionThread=new TxThread(cache,txStartedLatch);
+  transactionThread.start();
+  txStartedLatch.countDown();
+  Thread.sleep(500);
+  transactionThread.tm.resume(transactionThread.tx);
+  transactionThread.tm.rollback();
+  lockManager.releaseLocks(ctx);
+  transactionThread.join();
+  assertNotLocked(cache,k);
+}
