@@ -1,0 +1,41 @@
+{
+  outer:   while (isRunning()) {
+    if (shouldRecoverViews) {
+      recoverViews();
+      shouldRecoverViews=false;
+    }
+    lock.lock();
+    try {
+      condition.await(viewChangeCooldown,TimeUnit.MILLISECONDS);
+      log.tracef("Woke up, shouldRecoverViews=%s",shouldRecoverViews);
+    }
+ catch (    InterruptedException e) {
+      break;
+    }
+ finally {
+      lock.unlock();
+    }
+    if (isCoordinator && isRunning()) {
+      for (      CacheViewInfo cacheViewInfo : viewsInfo.values()) {
+        List<Address> leavers=MembershipArithmetic.getMembersLeft(cacheViewInfo.getCommittedView().getMembers(),members);
+        if (!leavers.isEmpty()) {
+          handleLeavers(leavers,cacheViewInfo.getCacheName());
+        }
+        if (!isRunning())         return;
+        if (shouldRecoverViews) {
+          continue outer;
+        }
+        try {
+          PendingCacheViewChanges pendingChanges=cacheViewInfo.getPendingChanges();
+          CacheView pendingView=pendingChanges.createPendingView(cacheViewInfo.getCommittedView());
+          if (pendingView != null) {
+            cacheViewInstallerExecutor.submit(new ViewInstallationTask(cacheViewInfo.getCacheName(),pendingView));
+          }
+        }
+ catch (        RuntimeException e) {
+          log.errorTriggeringViewInstallation(e,cacheViewInfo.getCacheName());
+        }
+      }
+    }
+  }
+}

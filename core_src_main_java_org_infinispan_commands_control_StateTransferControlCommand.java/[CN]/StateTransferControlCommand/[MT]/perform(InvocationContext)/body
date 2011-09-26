@@ -3,19 +3,18 @@
   stateTransferManager.waitForJoinToStart();
   try {
 switch (type) {
-case REQUEST_JOIN:
-      stateTransferManager.requestJoin(sender,viewId);
-    return null;
 case APPLY_STATE:
-  stateTransferManager.applyState(state,sender,viewId);
-return null;
-case PUSH_COMPLETED:
-stateTransferManager.nodeCompletedPush(sender,viewId);
-return null;
+      stateTransferManager.applyState(state,sender,viewId);
+    return null;
+default :
+  throw new CacheException("Unknown rehash control command type " + type);
 }
 }
-  finally {
+ catch (Throwable t) {
+log.exceptionHandlingCommand(this,t);
+return null;
+}
+ finally {
 LogFactory.popNDC(log.isTraceEnabled());
 }
-throw new CacheException("Unknown rehash control command type " + type);
 }

@@ -1,0 +1,21 @@
+{
+  boolean success=false;
+  try {
+    clusterPrepareView(cacheName,newView);
+    success=true;
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+ finally {
+    if (!isRunning())     return false;
+    if (success) {
+      clusterCommitView(cacheName,newView.getViewId(),newView.getMembers(),true);
+    }
+ else {
+      int committedViewId=viewsInfo.get(cacheName).getCommittedView().getViewId();
+      clusterRollbackView(cacheName,committedViewId,newView.getMembers(),true);
+    }
+  }
+  return success;
+}

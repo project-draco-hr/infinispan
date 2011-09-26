@@ -1,0 +1,18 @@
+{
+  final CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
+  final CacheView committedView=cacheViewInfo.getCommittedView();
+  final CacheViewControlCommand cmd=new CacheViewControlCommand(cacheName,CacheViewControlCommand.Type.PREPARE_VIEW,self,pendingView.getViewId(),pendingView.getMembers(),committedView.getViewId(),committedView.getMembers());
+  final List<Address> targets=pendingView.getMembers();
+  targets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
+  Future<Map<Address,Response>> future=asyncTransportExecutor.submit(new Callable<Map<Address,Response>>(){
+    @Override public Map<Address,Response> call() throws Exception {
+      Map<Address,Response> rspList=transport.invokeRemotely(targets,cmd,ResponseMode.SYNCHRONOUS,timeout,false,null,false);
+      return rspList;
+    }
+  }
+);
+  handlePrepareView(cacheName,pendingView,committedView);
+  Map<Address,Response> rspList=future.get(timeout,TimeUnit.MILLISECONDS);
+  checkRemoteResponse(cacheName,cmd,rspList);
+  return pendingView;
+}

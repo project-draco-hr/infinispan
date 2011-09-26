@@ -1,0 +1,19 @@
+{
+  CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
+  if (cacheViewInfo == null) {
+    log.tracef("Ignoring view rollback for unknown cache %s",cacheName);
+    return;
+  }
+  boolean isLocal=cacheViewInfo.getCommittedView().getMembers().contains(self);
+  if (isLocal || isCoordinator) {
+    log.debugf("%s: Rolling back to cache view %d, new view id is %d",cacheName,committedViewId,newViewId);
+    cacheViewInfo.rollbackView(newViewId,committedViewId);
+    cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
+    if (isLocal && cacheViewInfo.getListener() != null) {
+      cacheViewInfo.getListener().rollbackView(committedViewId);
+    }
+  }
+ else {
+    log.debugf("%s: We don't have a pending view, ignoring rollback",cacheName);
+  }
+}

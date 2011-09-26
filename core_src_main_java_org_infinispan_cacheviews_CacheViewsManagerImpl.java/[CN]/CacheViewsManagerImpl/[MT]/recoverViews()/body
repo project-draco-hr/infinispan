@@ -1,0 +1,74 @@
+{
+  final Map<Address,Map<String,CacheView>> recoveryInfo;
+  try {
+    log.debugf("Node %s is the new coordinator, recovering cache views",self);
+    recoveryInfo=new HashMap<Address,Map<String,CacheView>>();
+    recoveryInfo.put(self,handleRecoverViews());
+    CacheViewControlCommand cmd=new CacheViewControlCommand(DUMMY_CACHE_NAME_FOR_GLOBAL_COMMANDS,CacheViewControlCommand.Type.RECOVER_VIEW,self);
+    Map<Address,Response> rspList=transport.invokeRemotely(null,cmd,ResponseMode.SYNCHRONOUS,timeout,true,null,false);
+    checkRemoteResponse(null,cmd,rspList);
+    for (    Map.Entry<Address,Response> e : rspList.entrySet()) {
+      SuccessfulResponse value=(SuccessfulResponse)e.getValue();
+      recoveryInfo.put(e.getKey(),(Map<String,CacheView>)value.getResponseValue());
+    }
+    Set<String> cacheNames=new HashSet<String>();
+    for (    Map<String,CacheView> m : recoveryInfo.values()) {
+      cacheNames.addAll(m.keySet());
+    }
+    for (    final String cacheName : cacheNames) {
+      List<Address> recoveredMembers=new ArrayList(recoveryInfo.size());
+      for (      Map.Entry<Address,Map<String,CacheView>> e : recoveryInfo.entrySet()) {
+        if (e.getValue().containsKey(cacheName)) {
+          recoveredMembers.add(e.getKey());
+        }
+      }
+      Collections.sort(recoveredMembers,new Comparator<Address>(){
+        @Override public int compare(        Address o1,        Address o2){
+          return recoveryInfo.get(o2).get(cacheName).getViewId() - recoveryInfo.get(o1).get(cacheName).getViewId();
+        }
+      }
+);
+      log.tracef("%s: Recovered members (including joiners) are %s",cacheName,recoveredMembers);
+      CacheViewInfo cacheViewInfo=getCacheViewInfo(cacheName);
+      if (recoveredMembers.size() > 0) {
+        int highestViewId=recoveryInfo.get(recoveredMembers.get(0)).get(cacheName).getViewId();
+        cacheViewInfo.getPendingChanges().updateLatestViewId(highestViewId + 1);
+      }
+      int partitionCount=0;
+      List<Address> membersToProcess=new LinkedList<Address>(recoveredMembers);
+      List<Address> committedMembers=new ArrayList<Address>(recoveredMembers.size());
+      while (!membersToProcess.isEmpty()) {
+        Address node=membersToProcess.get(0);
+        CacheView committedView=recoveryInfo.get(node).get(cacheName);
+        final List<Address> partitionMembers=new ArrayList<Address>(committedView.getMembers());
+        partitionMembers.retainAll(membersToProcess);
+        membersToProcess.removeAll(committedView.getMembers());
+        if (partitionMembers.isEmpty())         continue;
+        int minViewId=Integer.MAX_VALUE, maxViewId=Integer.MIN_VALUE;
+        for (        Address partitionMember : partitionMembers) {
+          CacheView pmCommittedView=recoveryInfo.get(partitionMember).get(cacheName);
+          int pmViewId=pmCommittedView.getViewId();
+          if (pmViewId < minViewId)           minViewId=pmViewId;
+          if (maxViewId < pmViewId)           maxViewId=pmViewId;
+        }
+        if (minViewId != maxViewId) {
+          log.debugf("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " + "committing the view",partitionCount,partitionMembers,maxViewId,minViewId);
+          clusterCommitView(cacheName,maxViewId,partitionMembers,false);
+        }
+ else {
+          log.debugf("Found partition %d (%s) that has committed view id %d, sending a rollback command " + "to clear any pending prepare",partitionCount,partitionMembers,maxViewId);
+          clusterRollbackView(cacheName,maxViewId,partitionMembers,false);
+        }
+        committedMembers.addAll(partitionMembers);
+        partitionCount++;
+      }
+      List<Address> joiners=new ArrayList<Address>(recoveredMembers);
+      joiners.removeAll(committedMembers);
+      cacheViewInfo.getPendingChanges().requestCoordChange(committedMembers,joiners);
+    }
+  }
+ catch (  Exception e) {
+    log.error("Error recovering views from the cluster members",e);
+    return;
+  }
+}

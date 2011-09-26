@@ -1,47 +1,10 @@
 {
-  boolean unlock=false;
-  String cacheName=cmd.getCacheName();
-  boolean isRehashCommand=cmd instanceof StateTransferControlCommand;
-  boolean isClusteredGetCommand=cmd instanceof ClusteredGetCommand;
-  boolean isDistributedExecuteCommand=cmd instanceof SingleRpcCommand && ((SingleRpcCommand)cmd).getCommand() instanceof DistributedExecuteCommand;
-  boolean needRetry=!(isRehashCommand || isDistributedExecuteCommand);
-  if (!needRetry) {
-    try {
-      if (!isRehashCommand) {
-        waitForStart(cmd);
-      }
-      return handleWithWaitForBlocks(cmd);
-    }
- catch (    TimeoutException te) {
-      return RequestIgnoredResponse.INSTANCE;
+  boolean isStateTransferCommand=cmd instanceof StateTransferControlCommand;
+  if (!isStateTransferCommand) {
+    if (!hasJoinStarted(cmd.getComponentRegistry())) {
+      log.cacheCanNotHandleInvocations(cmd.getCacheName());
+      return new ExceptionResponse(new NamedCacheNotFoundException(cmd.getCacheName(),"Cache has not been started joined the cluster on node " + transport.getAddress()));
     }
   }
- else {
-    boolean unlockRQLock;
-    getRetryQueue(cacheName).retryQueueLock.lock();
-    unlockRQLock=true;
-    if (enqueueing(cacheName)) {
-      return enqueueCommand(cmd);
-    }
- else {
-      try {
-        getRetryQueue(cacheName).retryQueueLock.unlock();
-        unlockRQLock=false;
-switch (howToHandle(cmd)) {
-case OK:
-          return handleWithWaitForBlocks(cmd);
-case QUEUE:
-        return enqueueCommand(cmd);
-default :
-      return RequestIgnoredResponse.INSTANCE;
-  }
-}
- catch (TimeoutException te) {
-  return enqueueCommand(cmd);
-}
- finally {
-  if (unlockRQLock)   getRetryQueue(cacheName).retryQueueLock.unlock();
-}
-}
-}
+  return handleWithWaitForBlocks(cmd);
 }

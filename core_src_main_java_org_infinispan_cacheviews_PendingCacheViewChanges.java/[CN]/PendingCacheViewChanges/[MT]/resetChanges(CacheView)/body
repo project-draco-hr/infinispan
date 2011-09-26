@@ -1,0 +1,20 @@
+{
+synchronized (lock) {
+    if (log.isDebugEnabled()) {
+      List<Address> bothJoinerAndLeavers=new ArrayList<Address>(joiners);
+      bothJoinerAndLeavers.retainAll(leavers);
+      for (      Address node : bothJoinerAndLeavers) {
+        if (committedView.getMembers().contains(node)) {
+          log.debugf("Node %s should not be a member in view %s, left and then joined before the view was installed");
+        }
+      }
+    }
+    leavers.retainAll(committedView.getMembers());
+    joiners.removeAll(committedView.getMembers());
+    membersAfterCoordChange=null;
+    viewInstallationInProgress=false;
+    if (committedView.getViewId() > lastViewId) {
+      lastViewId=committedView.getViewId();
+    }
+  }
+}

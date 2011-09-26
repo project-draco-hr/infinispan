@@ -1,0 +1,19 @@
+{
+  CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
+  if (cacheViewInfo == null) {
+    log.tracef("Ignoring view commit for unknown cache %s",cacheName);
+    return;
+  }
+  boolean isLocal=cacheViewInfo.getPendingView() != null && cacheViewInfo.getPendingView().getMembers().contains(self);
+  if (isLocal || isCoordinator) {
+    log.debugf("%s: Committing cache view %d",cacheName,viewId);
+    cacheViewInfo.commitView(viewId);
+    cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
+    if (isLocal && cacheViewInfo.getListener() != null) {
+      cacheViewInfo.getListener().commitView(viewId);
+    }
+  }
+ else {
+    log.debugf("%s: We don't have a pending view, ignoring commit",cacheName);
+  }
+}

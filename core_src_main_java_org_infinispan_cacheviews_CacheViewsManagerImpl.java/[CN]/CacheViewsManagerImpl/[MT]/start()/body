@@ -1,0 +1,16 @@
+{
+  if (transport == null)   return;
+  self=transport.getAddress();
+  running=true;
+  ThreadFactory tfViewInstaller=new ThreadFactory(){
+    private volatile AtomicInteger count=new AtomicInteger(0);
+    @Override public Thread newThread(    Runnable r){
+      return new Thread(r,"CacheViewInstaller-" + count.incrementAndGet() + ","+ self);
+    }
+  }
+;
+  cacheViewInstallerExecutor=Executors.newCachedThreadPool(tfViewInstaller);
+  viewTriggerThread=new ViewTriggerThread();
+  cacheManagerNotifier.addListener(listener);
+  handleNewView(transport.getMembers(),false,true);
+}

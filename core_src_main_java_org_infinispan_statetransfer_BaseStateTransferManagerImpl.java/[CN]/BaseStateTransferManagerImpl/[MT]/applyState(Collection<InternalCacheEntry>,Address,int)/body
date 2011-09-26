@@ -1,7 +1,11 @@
 {
   waitForStateTransferToStart(viewId);
-  if (viewId < newViewId) {
-    log.debugf("Rejecting state pushed by node %s for old rehash %d (last view id we know is %d)",sender,viewId,newViewId);
+  if (newView == oldView) {
+    log.remoteStateRejected(sender,viewId,oldView.getViewId());
+    return;
+  }
+  if (viewId != newView.getViewId()) {
+    log.debugf("Rejecting state pushed by node %s for rehash %d (last view id we know is %d)",sender,viewId,newView.getViewId());
     return;
   }
   log.debugf("Applying new state from %s: received %d keys",sender,state.size());

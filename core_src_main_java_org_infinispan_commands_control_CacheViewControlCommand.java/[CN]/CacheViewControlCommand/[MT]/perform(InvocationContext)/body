@@ -1,0 +1,33 @@
+{
+  LogFactory.pushNDC(cacheName,log.isTraceEnabled());
+  try {
+switch (type) {
+case REQUEST_JOIN:
+      cacheViewsManager.handleRequestJoin(sender,cacheName);
+    return null;
+case REQUEST_LEAVE:
+  cacheViewsManager.handleRequestLeave(sender,cacheName);
+return null;
+case PREPARE_VIEW:
+cacheViewsManager.handlePrepareView(cacheName,new CacheView(newViewId,newMembers),new CacheView(oldViewId,oldMembers));
+return null;
+case COMMIT_VIEW:
+cacheViewsManager.handleCommitView(cacheName,newViewId);
+return null;
+case ROLLBACK_VIEW:
+cacheViewsManager.handleRollbackView(cacheName,newViewId,oldViewId);
+return null;
+case RECOVER_VIEW:
+return cacheViewsManager.handleRecoverViews();
+default :
+throw new CacheException("Unknown cache views control command type " + type);
+}
+}
+ catch (Throwable t) {
+log.exceptionHandlingCommand(this,t);
+throw t;
+}
+ finally {
+LogFactory.popNDC(log.isTraceEnabled());
+}
+}

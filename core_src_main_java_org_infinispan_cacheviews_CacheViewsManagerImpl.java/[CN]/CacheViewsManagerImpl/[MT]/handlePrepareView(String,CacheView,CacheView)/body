@@ -1,0 +1,17 @@
+{
+  CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
+  if (cacheViewInfo == null) {
+    throw new IllegalStateException(String.format("Received prepare request for cache %s, which is not running",cacheName));
+  }
+  CacheView lastCommittedView=cacheViewInfo.getCommittedView();
+  boolean isLocal=pendingView.getMembers().contains(self);
+  if (isLocal || isCoordinator) {
+    if (lastCommittedView.getViewId() > 0 && lastCommittedView.getViewId() != committedView.getViewId()) {
+      log.infof("Our last committed view (%s) is not the same as the coordinator's last committed view (%s). This is normal during a merge",lastCommittedView,committedView);
+    }
+    cacheViewInfo.prepareView(pendingView);
+  }
+  if (isLocal && cacheViewInfo.getListener() != null) {
+    cacheViewInfo.getListener().prepareView(pendingView,lastCommittedView);
+  }
+}

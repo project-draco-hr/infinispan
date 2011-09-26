@@ -1,0 +1,21 @@
+{
+synchronized (lock) {
+    if (viewInstallationInProgress) {
+      log.tracef("Cannot prepare a new view, there is another view installation in progress");
+      return null;
+    }
+    if (leavers.size() == 0 && joiners.size() == 0 && membersAfterCoordChange == null) {
+      log.tracef("Cannot prepare a new view, we have no joiners or leavers");
+      return null;
+    }
+    Collection<Address> baseMembers=membersAfterCoordChange != null ? membersAfterCoordChange : committedView.getMembers();
+    List<Address> members=new ArrayList<Address>(baseMembers);
+    members.addAll(joiners);
+    members.removeAll(leavers);
+    viewInstallationInProgress=true;
+    lastViewId++;
+    CacheView pendingView=new CacheView(lastViewId,members);
+    log.tracef("%s: created new view %s",cacheName,pendingView);
+    return pendingView;
+  }
+}

@@ -1,0 +1,18 @@
+{
+  final CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
+  final int newViewId=cacheViewInfo.getPendingChanges().getRollbackViewId();
+  final List<Address> validTargets=new ArrayList<Address>(targets);
+  validTargets.removeAll(cacheViewInfo.getPendingChanges().getLeavers());
+  log.tracef("%s: Rolling back to cache view %d on %s, new view id is %d",cacheName,committedViewId,validTargets,newViewId);
+  try {
+    final CacheViewControlCommand cmd=new CacheViewControlCommand(cacheName,CacheViewControlCommand.Type.ROLLBACK_VIEW,self,newViewId,null,committedViewId,null);
+    Map<Address,Response> rspList=transport.invokeRemotely(validTargets,cmd,ResponseMode.SYNCHRONOUS,timeout,false,null,false);
+    checkRemoteResponse(cacheName,cmd,rspList);
+  }
+ catch (  Exception e) {
+    log.cacheViewRollbackFailure(e,cacheName,committedViewId);
+  }
+  if (includeCoordinator || validTargets.contains(self)) {
+    handleRollbackView(cacheName,newViewId,committedViewId);
+  }
+}

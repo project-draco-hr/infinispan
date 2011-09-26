@@ -1,22 +1,19 @@
 {
   cmd.setOrigin(origin);
+  if (cmd instanceof CacheViewControlCommand) {
+    ((CacheViewControlCommand)cmd).init(cacheViewsManager);
+    try {
+      return new SuccessfulResponse(cmd.perform(null));
+    }
+ catch (    Exception e) {
+      return new ExceptionResponse(e);
+    }
+  }
   String cacheName=cmd.getCacheName();
   ComponentRegistry cr=gcr.getNamedComponentRegistry(cacheName);
   if (cr == null) {
-    if (embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer()) {
-      if (isDefined(cacheName)) {
-        log.waitForCacheToStart(cacheName);
-        long giveupTime=System.currentTimeMillis() + 30000;
-        while (cr == null && System.currentTimeMillis() < giveupTime && !stopping) {
-          Thread.sleep(100);
-          cr=gcr.getNamedComponentRegistry(cacheName);
-        }
-      }
-    }
-    if (cr == null) {
-      if (log.isInfoEnabled())       log.namedCacheDoesNotExist(cacheName);
-      return new ExceptionResponse(new NamedCacheNotFoundException(cacheName,"Cannot process command " + cmd + " on node "+ transport.getAddress()));
-    }
+    log.namedCacheDoesNotExist(cacheName);
+    return new ExceptionResponse(new NamedCacheNotFoundException(cacheName,"Cache has not been started on node " + transport.getAddress()));
   }
   final Configuration localConfig=cr.getComponent(Configuration.class);
   cmd.injectComponents(localConfig,cr);

@@ -1,0 +1,12 @@
+{
+  log.tracef("%s: Preparing view %s",cacheName,newView);
+synchronized (lock) {
+    if (pendingView != null) {
+      throw new IllegalStateException(String.format("Cannot prepare new view %s on cache %s, we are currently preparing view %s",newView,cacheName,pendingView));
+    }
+    if (committedView.getViewId() > newView.getViewId()) {
+      throw new IllegalStateException(String.format("Cannot prepare new view %s on cache %s, we have already committed view %s",newView,cacheName,committedView));
+    }
+    this.pendingView=newView;
+  }
+}
