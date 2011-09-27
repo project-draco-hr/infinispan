@@ -1,5 +1,5 @@
 {
-  final boolean microbatch=chunksCache.startBatch();
+  final boolean microbatch=chunksCacheLockSkipping.startBatch();
   if (currentChunkNumber == 0) {
     storeCurrentBuffer(true);
   }
@@ -12,7 +12,7 @@
   file.touch();
   metadataCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD,Flag.SKIP_LOCKING).put(fileKey,file);
   fileOps.addFileName(this.fileKey.getFileName());
-  if (microbatch)   chunksCache.endBatch(true);
+  if (microbatch)   chunksCacheLockSkipping.endBatch(true);
   if (trace) {
     log.tracef("Closed IndexOutput for file:%s in index: %s",fileKey.getFileName(),fileKey.getIndexName());
   }
