@@ -1,0 +1,19 @@
+{
+  this.invocationContext=invocationContext;
+  this.methodMetaData=methodMetaData;
+  final Object[] parameters=invocationContext.getParameters();
+  final List<ParameterMetaData> parametersMetaData=methodMetaData.getParameters();
+  this.allParameters=new CacheInvocationParameter[parameters.length];
+  for (int i=0; i < parameters.length; i++) {
+    this.allParameters[i]=new CacheInvocationParameterImpl(parametersMetaData.get(i),parameters[i]);
+  }
+  final List<ParameterMetaData> keyParametersMetaData=methodMetaData.getKeyParameters();
+  int i=0;
+  this.keyParameters=new CacheInvocationParameter[keyParametersMetaData.size()];
+  for (  ParameterMetaData oneKeyParameterMetaData : keyParametersMetaData) {
+    this.keyParameters[i]=allParameters[oneKeyParameterMetaData.getPosition()];
+    i++;
+  }
+  final ParameterMetaData valueParameterMetaData=methodMetaData.getValueParameter();
+  this.valueParameter=valueParameterMetaData != null ? allParameters[valueParameterMetaData.getPosition()] : null;
+}

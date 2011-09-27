@@ -1,11 +1,14 @@
 {
+  log.debugf("drainReplQueue called");
   List<ReplicableCommand> drained=super.drainReplQueue();
   try {
     if (drained.size() > 0 && Thread.currentThread().getName().startsWith("Scheduled-")) {
+      log.debugf("Drained the put command on the replication thread: %s",drained);
       secondPutLatch.countDown();
       intervalFlushLatch.await(5,TimeUnit.SECONDS);
     }
  else     if (drained.size() > 0) {
+      log.debugf("Drained the put+remove commands on the main thread: %s",drained);
       removeCompletedLatch.countDown();
     }
   }

@@ -1,0 +1,13 @@
+{
+  log.tracef("Received new cluster view: %d %s",viewId,members);
+  if (initialView) {
+    pushConfirmations.initialViewReceived(viewId,members);
+  }
+ else {
+    pushConfirmations.newViewReceived(viewId,members,mergeView);
+  }
+  newViewId=viewId;
+  chNew=createConsistentHash(members);
+  BaseStateTransferTask task=createStateTransferTask(viewId,members,initialView);
+  rehashExecutor.submit(task);
+}

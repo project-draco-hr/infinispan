@@ -2,9 +2,11 @@
   HotRodServer server=null;
   int maxTries=5;
   int currentTries=0;
+  Integer port=uniquePort.get();
+  ChannelException lastException=null;
   while (server == null && currentTries < maxTries) {
     try {
-      server=HotRodTestingUtil.startHotRodServer(cacheManager,uniquePort.incrementAndGet());
+      server=HotRodTestingUtil.startHotRodServer(cacheManager,port++);
     }
  catch (    ChannelException e) {
       if (!(e.getCause() instanceof BindException)) {
@@ -13,8 +15,10 @@
  else {
         log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
         currentTries++;
+        lastException=e;
       }
     }
   }
+  if (server == null && lastException != null)   throw lastException;
   return server;
 }

@@ -1,0 +1,16 @@
+{
+  List<Address> oldOwners=chOld.locate(key,1);
+  Address pushingOwner=oldOwners.size() > 0 ? oldOwners.get(0) : null;
+  if (trace)   log.tracef("Replicating key %s, pushing owner is %s",key,pushingOwner);
+  if (self.equals(pushingOwner)) {
+    if (value == null) {
+      try {
+        value=cacheStore.load(key);
+      }
+ catch (      CacheLoaderException e) {
+        log.failedLoadingValueFromCacheStore(key);
+      }
+    }
+    if (value != null)     state.add(value);
+  }
+}

@@ -1,0 +1,14 @@
+{
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  cache2.getAdvancedCache().addInterceptorAfter(new ErrorInducingInterceptor(),OptimisticLockingInterceptor.class);
+  try {
+    cache1.put(failureType,1);
+  }
+ catch (  CacheException e) {
+    throw e.getCause();
+  }
+ finally {
+    cache2.getAdvancedCache().removeInterceptor(ErrorInducingInterceptor.class);
+  }
+}

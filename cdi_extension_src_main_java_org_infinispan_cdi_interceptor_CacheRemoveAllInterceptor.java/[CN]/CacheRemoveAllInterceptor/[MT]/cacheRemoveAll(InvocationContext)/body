@@ -1,0 +1,13 @@
+{
+  final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheRemoveAll cacheRemoveAll=cacheKeyInvocationContext.getCacheAnnotation();
+  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
+  if (!cacheRemoveAll.afterInvocation()) {
+    cache.clear();
+  }
+  final Object result=invocationContext.proceed();
+  if (cacheRemoveAll.afterInvocation()) {
+    cache.clear();
+  }
+  return result;
+}

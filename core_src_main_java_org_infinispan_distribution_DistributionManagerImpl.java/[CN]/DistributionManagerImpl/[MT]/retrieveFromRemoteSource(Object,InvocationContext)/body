@@ -1,7 +1,8 @@
 {
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,ctx.getFlags());
   List<Address> targets=locate(key);
-  targets.remove(getSelf());
+  targets.remove(getAddress());
+  targets.retainAll(rpcManager.getTransport().getMembers());
   ResponseFilter filter=new ClusteredGetResponseValidityFilter(targets);
   Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,ResponseMode.SYNCHRONOUS,configuration.getSyncReplTimeout(),false,filter);
   if (!responses.isEmpty()) {

@@ -1,0 +1,41 @@
+{
+  Collection<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
+  boolean syncCommitPhase=configuration.isSyncCommitPhase();
+  for (  Address a : preparedOn) {
+    if (!recipients.contains(a)) {
+      syncCommitPhase=true;
+    }
+  }
+  try {
+    Map<Address,Response> responses=rpcManager.invokeRemotely(recipients,command,syncCommitPhase,true);
+    if (!responses.isEmpty()) {
+      List<Address> resendTo=new LinkedList<Address>();
+      for (      Map.Entry<Address,Response> r : responses.entrySet()) {
+        if (needToResendPrepare(r.getValue()))         resendTo.add(r.getKey());
+      }
+      if (!resendTo.isEmpty()) {
+        log.debugf("Need to resend prepares for %s to %s",command.getGlobalTransaction(),resendTo);
+        PrepareCommand pc=cf.buildPrepareCommand(command.getGlobalTransaction(),ctx.getModifications(),true);
+        rpcManager.invokeRemotely(resendTo,pc,true,true);
+      }
+    }
+  }
+ catch (  RehashInProgressException e) {
+    allowRehashToComplete(ctx);
+    if (retries > 0) {
+      sendCommitCommand(ctx,command,preparedOn,retries - 1);
+    }
+ else {
+      throw e;
+    }
+  }
+catch (  SuspectException e) {
+    allowRehashToComplete(ctx);
+    if (retries > 0) {
+      sendCommitCommand(ctx,command,preparedOn,retries - 1);
+    }
+ else {
+      throw e;
+    }
+  }
+}

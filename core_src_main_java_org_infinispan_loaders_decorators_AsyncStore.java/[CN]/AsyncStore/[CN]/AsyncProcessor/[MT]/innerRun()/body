@@ -8,9 +8,9 @@
       state=newStateMap();
       for (      Object key : swap.keySet()) {
         if (trace)         log.tracef("Going to process mod key: %s",key);
-        boolean acquired=false;
+        boolean acquired;
         try {
-          acquired=lockContainer.acquireLock(key,0,TimeUnit.NANOSECONDS) != null;
+          acquired=lockContainer.acquireLock(null,key,0,TimeUnit.NANOSECONDS) != null;
         }
  catch (        InterruptedException e) {
           log.interruptedAcquiringLock(0,e);
@@ -34,7 +34,7 @@
       stateMapLock.unlock();
     }
     if (swap.isEmpty()) {
-      if (lastAsyncProcessorShutsDownExecutor && runAgainAfterWaiting == false) {
+      if (lastAsyncProcessorShutsDownExecutor && !runAgainAfterWaiting) {
         executor.shutdown();
       }
       return;

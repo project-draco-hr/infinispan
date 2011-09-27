@@ -1,6 +1,5 @@
 {
   retryQueueLock.lock();
-  boolean unlock=false;
   try {
     if (enqueueing) {
       log.tracef("Enqueueing command %s since we are enqueueing.",command);
@@ -15,9 +14,7 @@
           return enqueue(command);
         }
  else {
-          distributedSync.acquireProcessingLock(false,timeBeforeWeEnqueueCallForRetry,MILLISECONDS);
-          unlock=true;
-          return handleWithWaitForBlocks(command,distributedSyncTimeout);
+          return handleWithWaitForBlocks(command);
         }
       }
  catch (      TimeoutException te) {
@@ -28,7 +25,6 @@
     }
   }
   finally {
-    if (unlock)     distributedSync.releaseProcessingLock(false);
     retryQueueLock.unlock();
   }
 }

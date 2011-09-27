@@ -1,45 +1,33 @@
 {
   if (!entries.isEmpty()) {
     if (!cacheEntriesEvictedListeners.isEmpty()) {
-      InvocationContext contexts=icc.suspend();
-      try {
-        EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
-        Map<Object,Object> evictedKeysAndValues=transformCollectionToMap(entries,new InfinispanCollections.MapMakerFunction<Object,Object,InternalCacheEntry>(){
-          public Map.Entry<Object,Object> transform(          final InternalCacheEntry input){
-            return new Map.Entry<Object,Object>(){
-              @Override public Object getKey(){
-                return input.getKey();
-              }
-              @Override public Object getValue(){
-                return input.getValue();
-              }
-              @Override public Object setValue(              Object value){
-                throw new UnsupportedOperationException();
-              }
+      EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+      Map<Object,Object> evictedKeysAndValues=transformCollectionToMap(entries,new InfinispanCollections.MapMakerFunction<Object,Object,InternalCacheEntry>(){
+        public Map.Entry<Object,Object> transform(        final InternalCacheEntry input){
+          return new Map.Entry<Object,Object>(){
+            @Override public Object getKey(){
+              return input.getKey();
             }
-;
+            @Override public Object getValue(){
+              return input.getValue();
+            }
+            @Override public Object setValue(            Object value){
+              throw new UnsupportedOperationException();
+            }
           }
+;
         }
+      }
 );
-        e.setEntries(evictedKeysAndValues);
-        for (        ListenerInvocation listener : cacheEntriesEvictedListeners)         listener.invoke(e);
-      }
-  finally {
-        icc.resume(contexts);
-      }
+      e.setEntries(evictedKeysAndValues);
+      for (      ListenerInvocation listener : cacheEntriesEvictedListeners)       listener.invoke(e);
     }
     if (!cacheEntryEvictedListeners.isEmpty()) {
-      InvocationContext contexts=icc.suspend();
       for (      InternalCacheEntry ice : entries) {
-        try {
-          EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
-          e.setKey(ice.getKey());
-          e.setValue(ice.getValue());
-          for (          ListenerInvocation listener : cacheEntryEvictedListeners)           listener.invoke(e);
-        }
-  finally {
-          icc.resume(contexts);
-        }
+        EventImpl<Object,Object> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+        e.setKey(ice.getKey());
+        e.setValue(ice.getValue());
+        for (        ListenerInvocation listener : cacheEntryEvictedListeners)         listener.invoke(e);
       }
     }
   }

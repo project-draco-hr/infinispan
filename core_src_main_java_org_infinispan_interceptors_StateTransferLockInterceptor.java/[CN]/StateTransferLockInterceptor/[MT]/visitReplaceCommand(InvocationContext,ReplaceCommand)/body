@@ -1,0 +1,11 @@
+{
+  if (!stateTransferLock.acquireForCommand(ctx,command)) {
+    throw new RehashInProgressException("Timed out waiting for the transaction lock");
+  }
+  try {
+    return super.visitReplaceCommand(ctx,command);
+  }
+  finally {
+    stateTransferLock.releaseForCommand(ctx,command);
+  }
+}

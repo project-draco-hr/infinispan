@@ -1,0 +1,14 @@
+{
+  assertNotNull(beanManager,"beanManager parameter cannot be null");
+  Class<? extends CacheKeyGenerator> cacheKeyGeneratorClass=DefaultCacheKeyGenerator.class;
+  if (!CacheKeyGenerator.class.equals(methodCacheKeyGeneratorClass)) {
+    cacheKeyGeneratorClass=methodCacheKeyGeneratorClass;
+  }
+ else   if (cacheDefaultsAnnotation != null && !CacheKeyGenerator.class.equals(cacheDefaultsAnnotation.cacheKeyGenerator())) {
+    cacheKeyGeneratorClass=cacheDefaultsAnnotation.cacheKeyGenerator();
+  }
+  final CreationalContext<?> creationalContext=beanManager.createCreationalContext(null);
+  final Set<Bean<?>> beans=beanManager.getBeans(cacheKeyGeneratorClass);
+  final Bean<?> bean=beanManager.resolve(beans);
+  return (CacheKeyGenerator)beanManager.getReference(bean,CacheKeyGenerator.class,creationalContext);
+}

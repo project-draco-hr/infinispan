@@ -1,0 +1,18 @@
+{
+  final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheKeyGenerator cacheKeyGenerator=cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
+  final CacheResult cacheResult=cacheKeyInvocationContext.getCacheAnnotation();
+  final CacheKey cacheKey=cacheKeyGenerator.generateCacheKey((CacheKeyInvocationContext)cacheKeyInvocationContext);
+  final Cache<CacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
+  Object result=null;
+  if (!cacheResult.skipGet()) {
+    result=cache.get(cacheKey);
+  }
+  if (result == null) {
+    result=invocationContext.proceed();
+    if (result != null) {
+      cache.put(cacheKey,result);
+    }
+  }
+  return result;
+}

@@ -1,0 +1,28 @@
+{
+  Cache<Object,Object> cache=cm.getCache();
+  String cacheName=EmbeddedCacheManager.DEFAULT_CACHE_NAME;
+  ImmortalCacheEntry entry1=(ImmortalCacheEntry)InternalEntryFactory.create("key","value",System.currentTimeMillis() - 1000,-1,System.currentTimeMillis(),-1);
+  Collection<InternalCacheEntry> state=new ArrayList<InternalCacheEntry>();
+  state.add(entry1);
+  Address a1=new JGroupsAddress(UUID.randomUUID());
+  Address a2=new JGroupsAddress(UUID.randomUUID());
+  Address a3=new JGroupsAddress(UUID.randomUUID());
+  Set<Address> oldAddresses=new LinkedHashSet();
+  oldAddresses.add(a1);
+  oldAddresses.add(a2);
+  DefaultConsistentHash oldCh=new DefaultConsistentHash(new MurmurHash3());
+  oldCh.setCaches(oldAddresses);
+  Set<Address> newAddresses=new LinkedHashSet();
+  newAddresses.add(a1);
+  newAddresses.add(a2);
+  newAddresses.add(a3);
+  DefaultConsistentHash newCh=new DefaultConsistentHash(new MurmurHash2());
+  newCh.setCaches(newAddresses);
+  StateTransferControlCommand c14=new StateTransferControlCommand(cacheName,StateTransferControlCommand.Type.APPLY_STATE,a1,99,state);
+  byte[] bytes=marshaller.objectToByteBuffer(c14);
+  marshaller.objectFromByteBuffer(bytes);
+  bytes=marshaller.objectToByteBuffer(c14);
+  marshaller.objectFromByteBuffer(bytes);
+  bytes=marshaller.objectToByteBuffer(c14);
+  marshaller.objectFromByteBuffer(bytes);
+}

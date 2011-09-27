@@ -1,0 +1,16 @@
+{
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  ErrorInducingListener listener=new ErrorInducingListener(throwError);
+  cache2.addListener(listener);
+  try {
+    cache1.put(failureType,1);
+  }
+ catch (  CacheException e) {
+    if (throwError && e.getCause() instanceof InvocationTargetException)     throw e.getCause().getCause();
+ else     throw e.getCause();
+  }
+ finally {
+    cache2.removeListener(listener);
+  }
+}

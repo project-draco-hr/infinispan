@@ -1,0 +1,32 @@
+{
+  EmbeddedCacheManager cacheManager=buildCacheManager();
+  cacheManagers.addLast(cacheManager);
+  cacheManager.getCache("serviceGroup");
+  new AddNodeTask().run();
+  new AddNodeTask().run();
+  new AddNodeTask().run();
+  Thread.sleep(3000);
+  log.info("Start testing");
+  ThreadPoolExecutor executor=(ThreadPoolExecutor)Executors.newFixedThreadPool(TEST_THREADS);
+  executor.prestartAllCoreThreads();
+  for (int i=0; i < TEST_LOOPS; i++) {
+    executor.submit(new SimulateTask());
+  }
+  for (int i=0; i < 10; i++) {
+    try {
+      Thread.sleep(3000);
+      if (i != 1) {
+        new AddNodeTask().run();
+      }
+ else {
+        new RemoveNodeTask().run();
+      }
+    }
+ catch (    RuntimeException e) {
+      log.warn("Error during add/remove node",e);
+    }
+  }
+  log.info("Rehash phase is completed...");
+  executor.shutdown();
+  executor.awaitTermination(1,TimeUnit.DAYS);
+}

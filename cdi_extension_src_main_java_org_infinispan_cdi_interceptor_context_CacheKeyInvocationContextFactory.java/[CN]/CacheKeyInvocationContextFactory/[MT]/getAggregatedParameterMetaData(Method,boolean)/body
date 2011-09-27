@@ -1,0 +1,37 @@
+{
+  final Class<?>[] parameterTypes=method.getParameterTypes();
+  final Annotation[][] parameterAnnotations=method.getParameterAnnotations();
+  final List<ParameterMetaData> parameters=new ArrayList<ParameterMetaData>();
+  final List<ParameterMetaData> keyParameters=new ArrayList<ParameterMetaData>();
+  ParameterMetaData valueParameter=null;
+  for (int i=0; i < parameterTypes.length; i++) {
+    final Set<Annotation> annotations=asSet(parameterAnnotations[i]);
+    final ParameterMetaData parameterMetaData=new ParameterMetaData(parameterTypes[i],i,annotations);
+    for (    Annotation oneAnnotation : annotations) {
+      final Class<?> type=oneAnnotation.annotationType();
+      if (CacheKeyParam.class.equals(type)) {
+        keyParameters.add(parameterMetaData);
+      }
+ else       if (cacheValueAllowed && CacheValue.class.equals(type)) {
+        if (valueParameter != null) {
+          throw new CacheException("Method named '" + method.getName() + "' must have only one parameter "+ "annotated with @CacheValue");
+        }
+        valueParameter=parameterMetaData;
+      }
+    }
+    parameters.add(parameterMetaData);
+  }
+  if (cacheValueAllowed && valueParameter == null) {
+    if (parameters.size() > 1) {
+      throw new CacheException("Method named '" + method.getName() + "' must have at least one parameter "+ "annotated with @CacheValue");
+    }
+    valueParameter=parameters.get(0);
+  }
+  if (keyParameters.isEmpty()) {
+    keyParameters.addAll(parameters);
+  }
+  if (valueParameter != null && keyParameters.size() > 1) {
+    keyParameters.remove(valueParameter);
+  }
+  return new AggregatedParameterMetaData(parameters,keyParameters,valueParameter);
+}

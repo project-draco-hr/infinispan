@@ -1,14 +1,14 @@
 {
   joinerManagers=new CopyOnWriteArrayList<EmbeddedCacheManager>();
-  joiners=new CopyOnWriteArrayList<Cache<Object,String>>(new Cache[numJoiners]);
-  for (int i=0; i < numJoiners; i++) {
-    EmbeddedCacheManager joinerManager=addClusterEnabledCacheManager(true);
+  joiners=new CopyOnWriteArrayList<Cache<Object,String>>(new Cache[NUM_JOINERS]);
+  for (int i=0; i < NUM_JOINERS; i++) {
+    EmbeddedCacheManager joinerManager=addClusterEnabledCacheManager(new TransportFlags().withFD(true));
     joinerManager.defineConfiguration(cacheName,configuration);
     joinerManagers.add(joinerManager);
     joiners.set(i,null);
   }
-  Thread[] threads=new Thread[numJoiners];
-  for (int i=0; i < numJoiners; i++) {
+  Thread[] threads=new Thread[NUM_JOINERS];
+  for (int i=0; i < NUM_JOINERS; i++) {
     final int ii=i;
     threads[i]=new Thread(new Runnable(){
       public void run(){
@@ -19,10 +19,10 @@
     }
 ,"ConcurrentJoinTest-Worker-" + i);
   }
-  for (int i=0; i < numJoiners; i++) {
+  for (int i=0; i < NUM_JOINERS; i++) {
     threads[i].start();
   }
-  for (int i=0; i < numJoiners; i++) {
+  for (int i=0; i < NUM_JOINERS; i++) {
     try {
       threads[i].join();
     }

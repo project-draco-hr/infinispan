@@ -1,0 +1,18 @@
+{
+  try {
+    Thread.sleep(random.nextInt(MAX_INTERVAL_BETWEEN_TASK));
+  }
+ catch (  InterruptedException ex) {
+  }
+  TestKey key=new TestKey(random.nextInt(KEY_RANGE));
+  try {
+    log.info("Submitting a task " + key);
+    EmbeddedCacheManager cacheManager=cacheManagers.get(random.nextInt(cacheManagers.size()));
+    DistributedExecutorService ispnExecutor=new DefaultExecutorService(cacheManager.getCache("serviceGroup"));
+    Future<String> z=ispnExecutor.submit(new TransactionTask(),key);
+    log.info("Task result=" + z.get());
+  }
+ catch (  Exception ex) {
+    log.warn("error during executing task " + key,ex);
+  }
+}

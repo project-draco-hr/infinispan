@@ -7,9 +7,11 @@
     String marshallerName=config.getMarshaller();
     setMarshaller((Marshaller)getInstance(marshallerName,classLoader));
   }
-  String asyncExecutorClass=config.getAsyncExecutorFactory();
-  ExecutorFactory executorFactory=(ExecutorFactory)getInstance(asyncExecutorClass,classLoader);
-  asyncExecutorService=executorFactory.getExecutor(config.getProperties());
+  if (asyncExecutorService == null) {
+    String asyncExecutorClass=config.getAsyncExecutorFactory();
+    ExecutorFactory executorFactory=(ExecutorFactory)getInstance(asyncExecutorClass,classLoader);
+    asyncExecutorService=executorFactory.getExecutor(config.getProperties());
+  }
   forceReturnValueDefault=config.getForceReturnValues();
 synchronized (cacheName2RemoteCache) {
     for (    RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {

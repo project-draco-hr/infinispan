@@ -1,0 +1,22 @@
+{
+  log.tracef("Waiting for all the members of the cluster to confirm pushing state for view %d, received confirmations %s",viewId,pushConfirmations);
+  lock.lock();
+  try {
+    if (viewId == lastViewId && actualConfirmationsCount < membersCount) {
+      clusterCompletedPush.await(timeout,TimeUnit.MILLISECONDS);
+    }
+    if (actualConfirmationsCount == membersCount) {
+      log.tracef("Push confirmed by all cluster members");
+      return true;
+    }
+    if (viewId < lastViewId) {
+      log.tracef("Received new view %d while waiting for push confirmations for view %d",lastViewId,viewId);
+      return false;
+    }
+    log.stateTransferTimeoutWaitingForPushConfirmations(viewId,pushConfirmations);
+    throw new TimeoutException("Timed out waiting for all cluster members to confirm pushing data");
+  }
+  finally {
+    lock.unlock();
+  }
+}

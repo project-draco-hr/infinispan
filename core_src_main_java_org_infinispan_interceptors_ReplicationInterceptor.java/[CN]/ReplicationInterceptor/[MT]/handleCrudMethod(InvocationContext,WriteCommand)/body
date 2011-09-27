@@ -2,6 +2,7 @@
   final Object returnValue=invokeNextInterceptor(ctx,command);
   populateCommandFlags(command,ctx);
   if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal()&& !ctx.isInTxScope()) {
+    allowStateTransferToComplete(ctx);
     if (ctx.isUseFutureReturnType()) {
       NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl(returnValue);
       rpcManager.broadcastRpcCommandInFuture(command,future);

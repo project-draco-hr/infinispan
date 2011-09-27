@@ -1,8 +1,8 @@
 {
   if (trace)   log.tracef("Replication task sending %s to addresses %s",command,dests);
-  int mode=supportReplay ? GroupRequest.GET_ALL : this.mode;
-  if (filter != null)   mode=GroupRequest.GET_FIRST;
-  RspList retval=null;
+  ResponseMode mode=supportReplay ? ResponseMode.GET_ALL : this.mode;
+  if (filter != null)   mode=ResponseMode.GET_FIRST;
+  RspList<Object> retval=null;
   Buffer buf;
   if (broadcast || FORCE_MCAST) {
     RequestOptions opts=new RequestOptions();
@@ -29,7 +29,7 @@
       }
       retval=futureCollator.getResponseList();
     }
- else     if (mode == GroupRequest.GET_ALL) {
+ else     if (mode == ResponseMode.GET_ALL) {
       Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(targets.size());
       for (      Address dest : targets)       futures.put(dest,sendMessageWithFuture(constructMessage(buf,dest),opts));
       retval=new RspList();
@@ -42,17 +42,17 @@
         }
       }
     }
- else     if (mode == GroupRequest.GET_NONE) {
+ else     if (mode == ResponseMode.GET_NONE) {
       for (      Address dest : targets)       sendMessage(constructMessage(buf,dest),opts);
     }
   }
-  if (mode != GroupRequest.GET_NONE) {
+  if (mode != ResponseMode.GET_NONE) {
     if (trace)     log.tracef("Responses: %s",retval);
     if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
     if (supportReplay) {
       boolean replay=false;
       Vector<Address> ignorers=new Vector<Address>();
-      for (      Map.Entry<Address,Rsp> entry : retval.entrySet()) {
+      for (      Map.Entry<Address,Rsp<Object>> entry : retval.entrySet()) {
         Object value=entry.getValue().getValue();
         if (value instanceof RequestIgnoredResponse) {
           ignorers.add(entry.getKey());
@@ -68,7 +68,7 @@
         msg.setFlag(Message.DONT_BUNDLE);
         if (trace)         log.tracef("Replaying message to ignoring senders: %s",ignorers);
         RequestOptions opts=new RequestOptions();
-        opts.setMode(GroupRequest.GET_ALL);
+        opts.setMode(ResponseMode.GET_ALL);
         opts.setTimeout(timeout);
         opts.setAnycasting(anycasting);
         opts.setRspFilter(filter);
