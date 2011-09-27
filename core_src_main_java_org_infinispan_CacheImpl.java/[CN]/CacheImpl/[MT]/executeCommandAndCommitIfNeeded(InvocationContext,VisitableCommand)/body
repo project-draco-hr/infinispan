@@ -1,0 +1,23 @@
+{
+  final boolean txInjected=ctx.isInTxScope() && ((TxInvocationContext)ctx).isImplicitTransaction();
+  Object result;
+  try {
+    result=invoker.invoke(ctx,command);
+  }
+ catch (  RuntimeException e) {
+    if (txInjected)     tryRollback();
+    throw e;
+  }
+  if (txInjected) {
+    if (trace)     log.tracef("Committing transaction as it was implicit: %s",getOngoingTransaction());
+    try {
+      transactionManager.commit();
+    }
+ catch (    Throwable e) {
+      log.couldNotCompleteInjectedTransaction(e);
+      tryRollback();
+      throw new CacheException("Could not commit implicit transaction",e);
+    }
+  }
+  return result;
+}

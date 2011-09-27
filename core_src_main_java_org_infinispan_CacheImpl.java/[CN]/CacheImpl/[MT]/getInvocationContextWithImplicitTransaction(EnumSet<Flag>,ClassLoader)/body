@@ -1,0 +1,27 @@
+{
+  InvocationContext invocationContext;
+  boolean txInjected=false;
+  if (config.isTransactionalCache()) {
+    Transaction transaction=getOngoingTransaction();
+    if (transaction == null && config.isTransactionAutoCommit()) {
+      try {
+        transactionManager.begin();
+        transaction=transactionManager.getTransaction();
+        txInjected=true;
+        if (trace)         log.trace("Implicit transaction started!");
+      }
+ catch (      Exception e) {
+        throw new CacheException("Could not start transaction",e);
+      }
+    }
+    invocationContext=getInvocationContext(transaction,explicitFlags,explicitClassLoader);
+  }
+ else {
+    invocationContext=getInvocationContextForWrite(explicitFlags,explicitClassLoader);
+  }
+  if (txInjected) {
+    ((TxInvocationContext)invocationContext).setImplicitTransaction(true);
+    if (trace)     log.tracef("Marked tx as implicit.");
+  }
+  return invocationContext;
+}
