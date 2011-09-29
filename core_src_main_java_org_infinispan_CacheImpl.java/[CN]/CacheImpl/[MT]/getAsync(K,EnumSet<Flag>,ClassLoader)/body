@@ -2,7 +2,7 @@
   final Transaction tx=getOngoingTransaction();
   final NotifyingNotifiableFuture f=new DeferredReturnFuture();
   if (asyncSkipsThread(explicitFlags,key)) {
-    return wrapInFuture(get(key));
+    return wrapInFuture(get(key,explicitFlags,explicitClassLoader));
   }
  else {
     final EnumSet<Flag> appliedFlags;
@@ -16,7 +16,7 @@
     Callable<V> c=new Callable<V>(){
       @Override public V call() throws Exception {
         assertKeyNotNull(key);
-        InvocationContext ctx=getInvocationContext(tx,appliedFlags,explicitClassLoader);
+        InvocationContext ctx=getInvocationContextForRead(tx,appliedFlags,explicitClassLoader);
         GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key,appliedFlags);
         Object ret=invoker.invoke(ctx,command);
         f.notifyDone();
