@@ -1,0 +1,14 @@
+{
+  ChannelBuffer buf=cumulation.get();
+  if (buf == null) {
+    ChannelBufferFactory factory=ctx.getChannel().getConfig().getBufferFactory();
+    buf=new UnsafeDynamicChannelBuffer(factory);
+    if (cumulation.compareAndSet(null,buf)) {
+      replayable=new ReplayingDecoderBuffer(buf);
+    }
+ else {
+      buf=cumulation.get();
+    }
+  }
+  return buf;
+}

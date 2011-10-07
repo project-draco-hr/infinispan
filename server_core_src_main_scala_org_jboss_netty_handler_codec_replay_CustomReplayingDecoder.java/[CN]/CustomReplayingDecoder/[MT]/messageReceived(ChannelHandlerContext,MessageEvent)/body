@@ -1,0 +1,15 @@
+{
+  Object m=e.getMessage();
+  if (!(m instanceof ChannelBuffer)) {
+    ctx.sendUpstream(e);
+    return;
+  }
+  ChannelBuffer input=(ChannelBuffer)m;
+  if (!input.readable()) {
+    return;
+  }
+  ChannelBuffer cumulation=cumulation(ctx);
+  cumulation.discardReadBytes();
+  cumulation.writeBytes(input);
+  callDecode(ctx,e.getChannel(),cumulation,e.getRemoteAddress());
+}
