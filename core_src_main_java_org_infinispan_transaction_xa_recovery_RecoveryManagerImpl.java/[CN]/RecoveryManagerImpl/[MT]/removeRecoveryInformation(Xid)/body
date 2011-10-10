@@ -1,7 +1,8 @@
 {
   RecoveryAwareTransaction remove=inDoubtTransactions.remove(new RecoveryInfoKey(xid,cacheName));
-  if (remove != null) {
-    if (log.isTraceEnabled())     log.tracef("removed in doubt xid: %s",xid);
+  log.tracef("removed in doubt xid: %s",xid);
+  if (remove == null) {
+    return (RecoveryAwareTransaction)txTable.removeRemoteTransaction(xid);
   }
-  txTable.removeCompletedRemoteTransactions(xid);
+  return remove;
 }

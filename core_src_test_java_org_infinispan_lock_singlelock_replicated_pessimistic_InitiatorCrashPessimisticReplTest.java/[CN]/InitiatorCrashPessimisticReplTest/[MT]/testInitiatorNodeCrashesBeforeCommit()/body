@@ -1,0 +1,22 @@
+{
+  TxControlInterceptor txControlInterceptor=new TxControlInterceptor();
+  txControlInterceptor.prepareProgress.countDown();
+  advancedCache(1).addInterceptor(txControlInterceptor,1);
+  beginAndCommitTx("k",1);
+  txControlInterceptor.preparedReceived.await();
+  assertLocked(cache(0),"k");
+  assertNotLocked(cache(1),"k");
+  assertNotLocked(cache(2),"k");
+  checkTxCount(0,0,1);
+  checkTxCount(1,1,0);
+  checkTxCount(2,0,1);
+  killMember(1);
+  cacheManagers.remove(1);
+  assertNotLocked("k");
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return checkTxCount(0,0,0) && checkTxCount(1,0,0);
+    }
+  }
+);
+}

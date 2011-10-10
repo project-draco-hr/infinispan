@@ -1,0 +1,11 @@
+{
+  lock.lock();
+  try {
+    final boolean potentiallyLocked=hasLockOrIsLockBackup(key);
+    log.tracef("Transaction gtx=%s potentially locks key %s? %s",tx,key,potentiallyLocked);
+    return !potentiallyLocked || condition.await(lockAcquisitionTimeout,TimeUnit.MILLISECONDS);
+  }
+  finally {
+    lock.unlock();
+  }
+}

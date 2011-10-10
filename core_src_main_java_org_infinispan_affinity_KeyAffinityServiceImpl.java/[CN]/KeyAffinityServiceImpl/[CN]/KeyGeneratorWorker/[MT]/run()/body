@@ -1,17 +1,20 @@
 {
   this.runner=Thread.currentThread();
-  isAlive=true;
-  while (true) {
-    if (waitToBeWakenUp())     break;
-    isActive=true;
-    if (log.isTraceEnabled()) {
-      log.trace("KeyGeneratorWorker marked as ACTIVE");
-    }
-    generateKeys();
-    isActive=false;
-    if (log.isTraceEnabled()) {
-      log.trace("KeyGeneratorWorker marked as INACTIVE");
+  try {
+    while (true) {
+      if (waitToBeWakenUp())       break;
+      isActive=true;
+      if (log.isTraceEnabled()) {
+        log.trace("KeyGeneratorWorker marked as ACTIVE");
+      }
+      generateKeys();
+      isActive=false;
+      if (log.isTraceEnabled()) {
+        log.trace("KeyGeneratorWorker marked as INACTIVE");
+      }
     }
   }
-  isAlive=false;
+  finally {
+    isStopped=true;
+  }
 }

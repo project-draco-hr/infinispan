@@ -8,7 +8,18 @@
     localTxContext.setLocalTransaction(localTransaction);
   }
   Object rv;
-  rv=invokeNextInterceptor(ctx,command);
+  try {
+    rv=invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable throwable) {
+    if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+      TxInvocationContext txCtx=(TxInvocationContext)ctx;
+      txCtx.getTransaction().setRollbackOnly();
+      final LocalTransaction cacheTransaction=(LocalTransaction)txCtx.getCacheTransaction();
+      txTable.removeLocalTransaction(cacheTransaction);
+    }
+    throw throwable;
+  }
   if (!ctx.isInTxScope())   transactionLog.logNoTxWrite(command);
   if (command.isSuccessful() && shouldAddMod)   localTransaction.addModification(command);
   return rv;

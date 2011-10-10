@@ -1,8 +1,10 @@
 {
-  final Thread t=new Thread(r,"TestThread-" + r.hashCode());
+  final String name="ForkThread-" + getClass().getSimpleName() + "-"+ r.hashCode();
+  log.tracef("About to start thread '%s' as child of thread '%s'",name,Thread.currentThread().getName());
+  final Thread t=new Thread(new RunnableWrapper(r),name);
   spawnedThreads.add(t);
   t.start();
-  if (sync) {
+  if (waitForCompletion) {
     eventually(new Condition(){
       @Override public boolean isSatisfied() throws Exception {
         return t.getState().equals(Thread.State.TERMINATED);

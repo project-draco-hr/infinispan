@@ -1,26 +1,6 @@
 {
-  notifier.removeListener(listener);
-  cm.removeListener(listener);
-  lockBreakingService.shutdownNow();
-  if (trace)   log.tracef("Wait for on-going transactions to finish for %d seconds.",TimeUnit.MILLISECONDS.toSeconds(configuration.getCacheStopTimeout()));
-  long failTime=System.currentTimeMillis() + configuration.getCacheStopTimeout();
-  boolean txsOnGoing=areTxsOnGoing();
-  while (txsOnGoing && System.currentTimeMillis() < failTime) {
-    try {
-      Thread.sleep(100);
-      txsOnGoing=areTxsOnGoing();
-    }
- catch (    InterruptedException e) {
-      Thread.currentThread().interrupt();
-      if (trace) {
-        log.tracef("Interrupted waiting for on-going transactions to finish. localTransactions=%s, remoteTransactions%s",localTransactions,remoteTransactions);
-      }
-    }
-  }
-  if (txsOnGoing) {
-    log.unfinishedTransactionsRemain(localTransactions,remoteTransactions);
-  }
- else {
-    if (trace)     log.trace("All transactions terminated");
-  }
+  notifier.removeListener(cleanupService);
+  cm.removeListener(cleanupService);
+  cm.removeListener(this);
+  shutDownGracefully();
 }

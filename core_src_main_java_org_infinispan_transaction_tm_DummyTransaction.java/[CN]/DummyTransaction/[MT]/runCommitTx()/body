@@ -1,18 +1,30 @@
 {
-  DummyTransaction transaction=tm_.getTransaction();
-  if (transaction.getPrepareStatus() == XAResource.XA_RDONLY) {
-    log.debug("This is a read-only tx");
-  }
+  try {
+    status=Status.STATUS_COMMITTING;
+    DummyTransaction transaction=tm_.getTransaction();
+    if (transaction.getPrepareStatus() == XAResource.XA_RDONLY) {
+      log.debug("This is a read-only tx");
+    }
  else {
-    Collection<XAResource> resources=transaction.getEnlistedResources();
-    for (    XAResource res : resources) {
-      try {
-        res.commit(xid,false);
-      }
- catch (      XAException e) {
-        log.errorCommittingTx(e);
-        throw new HeuristicMixedException(e.getMessage());
+      Collection<XAResource> resources=transaction.getEnlistedResources();
+      for (      XAResource res : resources) {
+        try {
+          res.commit(xid,false);
+        }
+ catch (        XAException e) {
+          log.errorCommittingTx(e);
+          throw new HeuristicMixedException(e.getMessage());
+        }
       }
     }
+    status=Status.STATUS_COMMITTED;
+  }
+ catch (  HeuristicMixedException e) {
+    status=Status.STATUS_UNKNOWN;
+    throw e;
+  }
+ finally {
+    notifyAfterCompletion(status);
+    tm_.setTransaction(null);
   }
 }

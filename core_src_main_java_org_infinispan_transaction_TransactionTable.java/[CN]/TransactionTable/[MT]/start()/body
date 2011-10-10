@@ -1,13 +1,10 @@
 {
-  ThreadFactory tf=new ThreadFactory(){
-    public Thread newThread(    Runnable r){
-      Thread th=new Thread(r,"LockBreakingService," + configuration.getName() + ","+ rpcManager.getTransport().getAddress());
-      th.setDaemon(true);
-      return th;
-    }
+  cleanupService.start(configuration,rpcManager,invoker);
+  cm.addListener(cleanupService);
+  cm.addListener(this);
+  notifier.addListener(cleanupService);
+  if (!isStandaloneCache()) {
+    minTxViewId=getCurrentViewId();
+    log.debugf("Min view id set to %s",minTxViewId);
   }
-;
-  lockBreakingService=new ThreadPoolExecutor(1,1,0L,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(),tf,new ThreadPoolExecutor.CallerRunsPolicy());
-  cm.addListener(listener);
-  notifier.addListener(listener);
 }

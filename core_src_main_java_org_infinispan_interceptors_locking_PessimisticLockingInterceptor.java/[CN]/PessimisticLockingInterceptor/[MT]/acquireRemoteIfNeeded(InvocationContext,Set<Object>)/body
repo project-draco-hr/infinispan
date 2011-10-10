@@ -1,6 +1,13 @@
 {
-  if (!ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-    LockControlCommand lcc=cf.buildLockControlCommand(keys,true,ctx.getFlags());
-    visitLockControlCommand((TxInvocationContext)ctx,lcc);
+  if (ctx.isOriginLocal() && !ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+    final TxInvocationContext txContext=(TxInvocationContext)ctx;
+    LocalTransaction localTransaction=(LocalTransaction)txContext.getCacheTransaction();
+    if (localTransaction.getAffectedKeys().containsAll(keys)) {
+      log.tracef("We already have lock for keys %s, skip remote lock acquisition",keys);
+    }
+ else {
+      LockControlCommand lcc=cf.buildLockControlCommand(keys,true,ctx.getFlags(),txContext.getGlobalTransaction());
+      invokeNextInterceptor(ctx,lcc);
+    }
   }
 }

@@ -1,7 +1,7 @@
 {
   Xid remoteTransactionXid=txTable.getRemoteTransactionXid(internalId);
   if (remoteTransactionXid != null) {
-    removeRecoveryInformation(remoteTransactionXid);
+    return removeRecoveryInformation(remoteTransactionXid);
   }
  else {
     for (    RecoveryAwareRemoteTransaction raRemoteTx : inDoubtTransactions.values()) {
@@ -10,9 +10,10 @@
         Xid xid=globalTransaction.getXid();
         if (log.isTraceEnabled())         log.tracef("Found transaction xid %s that maps internal id %s",xid,internalId);
         removeRecoveryInformation(xid);
-        return;
+        return raRemoteTx;
       }
     }
   }
   if (log.isTraceEnabled())   log.tracef("Could not find tx to map to internal id %s",internalId);
+  return null;
 }

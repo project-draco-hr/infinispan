@@ -1,7 +1,11 @@
 {
-  boolean existed=remoteTransactions.remove(txId) != null;
-  if (trace) {
-    log.tracef("Removed %s from transaction table. Transaction existed? %b",txId,existed);
+  RemoteTransaction result;
+synchronized (minViewIdInvariant) {
+    result=remoteTransactions.remove(txId);
+    if (result == null)     return null;
+    recalculateMinViewIdIfNeeded(result);
   }
-  return existed;
+  log.tracef("Removed %s from transaction table. Transaction %s",txId,result);
+  result.notifyOnTransactionFinished();
+  return result;
 }

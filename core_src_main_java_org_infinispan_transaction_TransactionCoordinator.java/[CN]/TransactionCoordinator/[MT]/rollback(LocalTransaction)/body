@@ -1,15 +1,10 @@
 {
-  if (trace)   log.tracef("rollback transaction %s ",localTransaction.getGlobalTransaction());
-  RollbackCommand rollbackCommand=commandsFactory.buildRollbackCommand(localTransaction.getGlobalTransaction());
-  LocalTxInvocationContext ctx=icc.createTxInvocationContext();
-  ctx.setLocalTransaction(localTransaction);
   try {
-    invoker.invoke(ctx,rollbackCommand);
-    txTable.removeLocalTransaction(localTransaction);
+    rollbackInternal(localTransaction);
   }
  catch (  Throwable e) {
     log.errorRollingBack(e);
-    final Transaction transaction=ctx.getTransaction();
+    final Transaction transaction=localTransaction.getTransaction();
     if (transaction != null) {
       txTable.failureCompletingTransaction(transaction);
     }

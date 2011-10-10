@@ -1,4 +1,11 @@
 {
+  boolean successfulInit=notifyBeforeCompletion();
+  if (successfulInit) {
+    status=Status.STATUS_PREPARING;
+  }
+ else {
+    status=Status.STATUS_ROLLING_BACK;
+  }
   DummyTransaction transaction=tm_.getTransaction();
   Collection<XAResource> resources=transaction.getEnlistedResources();
   for (  XAResource res : resources) {
@@ -8,6 +15,7 @@
     }
  catch (    XAException e) {
       log.trace("The resource wants to rollback!",e);
+      status=Status.STATUS_ROLLING_BACK;
       return false;
     }
 catch (    Throwable th) {
@@ -15,5 +23,6 @@ catch (    Throwable th) {
       throw new SystemException(th.getMessage());
     }
   }
+  status=Status.STATUS_PREPARED;
   return true;
 }

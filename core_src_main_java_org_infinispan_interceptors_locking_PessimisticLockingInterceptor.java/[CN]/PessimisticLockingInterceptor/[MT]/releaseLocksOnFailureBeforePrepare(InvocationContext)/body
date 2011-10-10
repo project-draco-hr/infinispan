@@ -1,0 +1,9 @@
+{
+  lockManager.unlockAll(ctx);
+  if (ctx.isOriginLocal() && rpcManager != null) {
+    final TxInvocationContext txContext=(TxInvocationContext)ctx;
+    TxCompletionNotificationCommand command=cf.buildTxCompletionNotificationCommand(null,txContext.getGlobalTransaction());
+    final LocalTransaction cacheTransaction=(LocalTransaction)txContext.getCacheTransaction();
+    rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(),command,true);
+  }
+}

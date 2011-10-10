@@ -1,0 +1,15 @@
+{
+  log.errorProcessing1pcPrepareCommand(e);
+  if (trace)   log.tracef("Couldn't commit 1PC transaction %s, trying to rollback.",localTransaction);
+  try {
+    rollbackInternal(localTransaction);
+  }
+ catch (  Throwable e1) {
+    log.couldNotRollbackPrepared1PcTransaction(localTransaction,e1);
+    throw new XAException(XAException.XAER_RMERR);
+  }
+ finally {
+    txTable.failureCompletingTransaction(localTransaction.getTransaction());
+  }
+  throw new XAException(XAException.XA_HEURRB);
+}

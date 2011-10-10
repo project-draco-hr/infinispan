@@ -1,0 +1,16 @@
+{
+  Iterator<RemoteTransaction> it=getRemoteTransactions().iterator();
+  while (it.hasNext()) {
+    RemoteTransaction next=it.next();
+    RecoverableTransactionIdentifier gtx=(RecoverableTransactionIdentifier)next.getGlobalTransaction();
+    if (xid.equals(gtx.getXid())) {
+synchronized (minViewIdInvariant) {
+        it.remove();
+        recalculateMinViewIdIfNeeded(next);
+        next.notifyOnTransactionFinished();
+      }
+      return next;
+    }
+  }
+  return null;
+}

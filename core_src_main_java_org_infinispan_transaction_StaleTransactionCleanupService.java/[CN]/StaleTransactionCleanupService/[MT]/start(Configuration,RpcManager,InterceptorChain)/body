@@ -1,0 +1,12 @@
+{
+  this.invoker=interceptorChain;
+  ThreadFactory tf=new ThreadFactory(){
+    public Thread newThread(    Runnable r){
+      Thread th=new Thread(r,"LockBreakingService," + configuration.getName() + ","+ rpcManager.getTransport().getAddress());
+      th.setDaemon(true);
+      return th;
+    }
+  }
+;
+  lockBreakingService=new ThreadPoolExecutor(1,1,0L,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(),tf,new ThreadPoolExecutor.CallerRunsPolicy());
+}

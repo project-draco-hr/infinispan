@@ -1,0 +1,18 @@
+{
+  log.tracef("Processing completed transaction %s",gtx);
+  RemoteTransaction remoteTx=null;
+  if (recoveryManager != null) {
+    if (xid != null) {
+      remoteTx=(RemoteTransaction)recoveryManager.removeRecoveryInformation(xid);
+    }
+ else {
+      remoteTx=(RemoteTransaction)recoveryManager.removeRecoveryInformation(internalId);
+    }
+  }
+  if (remoteTx == null && gtx != null) {
+    remoteTx=txTable.removeRemoteTransaction(gtx);
+  }
+  if (remoteTx == null)   return null;
+  lockManager.unlock(remoteTx.getLockedKeys(),remoteTx.getGlobalTransaction());
+  return null;
+}

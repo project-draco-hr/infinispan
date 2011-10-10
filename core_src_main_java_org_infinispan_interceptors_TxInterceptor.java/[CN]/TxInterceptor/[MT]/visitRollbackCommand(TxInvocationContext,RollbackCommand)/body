@@ -1,6 +1,8 @@
 {
   if (this.statisticsEnabled)   rollbacks.incrementAndGet();
   transactionLog.rollback(command.getGlobalTransaction());
-  markCompleted(ctx,command.getGlobalTransaction(),false);
+  if (!ctx.isOriginLocal()) {
+    txTable.remoteTransactionRollback(command.getGlobalTransaction());
+  }
   return invokeNextInterceptor(ctx,command);
 }

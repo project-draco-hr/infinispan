@@ -8,12 +8,9 @@
     PrepareCommand command=commandsFactory.buildPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),true);
     try {
       invoker.invoke(ctx,command);
-      txTable.removeLocalTransaction(localTransaction);
     }
  catch (    Throwable e) {
-      txTable.failureCompletingTransaction(ctx.getTransaction());
-      log.errorProcessing1pcPrepareCommand(e);
-      throw new XAException(XAException.XAER_RMERR);
+      handleCommitFailure(e,localTransaction);
     }
   }
  else {
@@ -23,9 +20,7 @@
       txTable.removeLocalTransaction(localTransaction);
     }
  catch (    Throwable e) {
-      txTable.failureCompletingTransaction(ctx.getTransaction());
-      log.errorProcessing1pcPrepareCommand(e);
-      throw new XAException(XAException.XAER_RMERR);
+      handleCommitFailure(e,localTransaction);
     }
   }
 }

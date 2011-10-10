@@ -1,31 +1,11 @@
 {
   try {
-    boolean successfulInit=notifyBeforeCompletion();
-    if (successfulInit) {
-      status=Status.STATUS_PREPARING;
-    }
-    if (!successfulInit || !runPrepare()) {
-      status=Status.STATUS_ROLLING_BACK;
-    }
- else {
-      status=Status.STATUS_PREPARED;
-    }
+    runPrepare();
     if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
       runRollback();
       throw new RollbackException("Exception rolled back, status is: " + status);
     }
-    try {
-      status=Status.STATUS_COMMITTING;
-      runCommitTx();
-      status=Status.STATUS_COMMITTED;
-    }
- catch (    HeuristicMixedException e) {
-      status=Status.STATUS_UNKNOWN;
-      throw e;
-    }
- finally {
-      notifyAfterCompletion(status);
-    }
+    runCommitTx();
   }
   finally {
     tm_.setTransaction(null);

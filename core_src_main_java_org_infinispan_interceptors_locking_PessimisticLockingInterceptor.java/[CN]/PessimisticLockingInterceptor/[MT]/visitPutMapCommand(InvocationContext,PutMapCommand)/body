@@ -1,17 +1,13 @@
 {
   try {
-    if (ctx.isOriginLocal()) {
-      acquireRemoteIfNeeded(ctx,command.getMap().keySet());
-    }
+    acquireRemoteIfNeeded(ctx,command.getMap().keySet());
     for (    Object key : command.getMap().keySet()) {
-      if (cll.localNodeIsOwner(key)) {
-        lockKey(ctx,key);
-      }
-      entryFactory.wrapEntryForPut(ctx,key,null,true);
+      lockAndRegisterBackupLock((TxInvocationContext)ctx,key);
     }
     return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable te) {
-    throw cleanLocksAndRethrow(ctx,te);
+    releaseLocksOnFailureBeforePrepare(ctx);
+    throw te;
   }
 }

@@ -1,0 +1,31 @@
+{
+  if (!ctx.isInTxScope())   throw new IllegalStateException("Locks should only be acquired within the scope of a transaction!");
+  if (ctx.isOriginLocal()) {
+    final boolean isSingleKeyAndLocal=!command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
+    if (!isSingleKeyAndLocal || command.multipleKeys()) {
+      LocalTransaction localTx=(LocalTransaction)ctx.getCacheTransaction();
+      if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
+        invokeNextInterceptor(ctx,command);
+      }
+ else {
+        log.tracef("Already own locks on keys: %s, skipping remote call",command.getKeys());
+      }
+    }
+  }
+  try {
+    abortIfRemoteTransactionInvalid(ctx,command);
+    if (command.isUnlock()) {
+      if (ctx.isOriginLocal())       throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
+      releaseLocksOnFailureBeforePrepare(ctx);
+      return false;
+    }
+    for (    Object key : command.getKeys()) {
+      lockAndRegisterBackupLock(ctx,key);
+    }
+    return true;
+  }
+ catch (  Throwable te) {
+    releaseLocksOnFailureBeforePrepare(ctx);
+    throw te;
+  }
+}

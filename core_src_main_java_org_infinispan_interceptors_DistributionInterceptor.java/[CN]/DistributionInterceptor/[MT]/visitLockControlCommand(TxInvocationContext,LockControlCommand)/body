@@ -2,24 +2,9 @@
   if (ctx.isOriginLocal()) {
     int newCacheViewId=-1;
     stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
-    if (configuration.isEagerLockSingleNode()) {
-      Map<Object,List<Address>> toMulticast=dm.locateAll(command.getKeys(),1);
-      Collection<Address> where;
-      if (toMulticast.size() == 1) {
-        where=toMulticast.values().iterator().next();
-      }
- else {
-        where=new HashSet<Address>();
-        for (        List<Address> values : toMulticast.values())         where.addAll(values);
-      }
-      rpcManager.invokeRemotely(where,command,true,true);
-      ((LocalTxInvocationContext)ctx).remoteLocksAcquired(where);
-    }
- else {
-      Collection<Address> where=dm.getAffectedNodes(command.getKeys());
-      rpcManager.invokeRemotely(where,command,true,true);
-      ((LocalTxInvocationContext)ctx).remoteLocksAcquired(where);
-    }
+    final Collection<Address> affectedNodes=dm.getAffectedNodes(command.getKeys());
+    ((LocalTxInvocationContext)ctx).remoteLocksAcquired(affectedNodes);
+    rpcManager.invokeRemotely(affectedNodes,command,true,true);
     ctx.addAffectedKeys(command.getKeys());
   }
   return invokeNextInterceptor(ctx,command);

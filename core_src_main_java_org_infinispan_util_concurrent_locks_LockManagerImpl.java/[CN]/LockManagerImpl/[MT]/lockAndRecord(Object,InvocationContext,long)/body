@@ -1,0 +1,21 @@
+{
+  if (trace)   log.tracef("Attempting to lock %s with acquisition timeout of %s millis",key,timeoutMillis);
+  if (lockContainer.acquireLock(ctx.getLockOwner(),key,timeoutMillis,MILLISECONDS) != null) {
+    if (trace)     log.tracef("Successfully acquired lock %s!",key);
+    return true;
+  }
+  if (log.isDebugEnabled()) {
+    log.debugf("Failed to acquire lock %s, owner is %s",key,getOwner(key));
+    Object owner=ctx.getLockOwner();
+    Set<Map.Entry<Object,CacheEntry>> entries=ctx.getLookedUpEntries().entrySet();
+    List<Object> lockedKeys=new ArrayList<Object>(entries.size());
+    for (    Map.Entry<Object,CacheEntry> e : entries) {
+      Object lockedKey=e.getKey();
+      if (ownsLock(lockedKey,owner)) {
+        lockedKeys.add(lockedKey);
+      }
+    }
+    log.debugf("This transaction (%s) already owned locks %s",owner,lockedKeys);
+  }
+  return false;
+}

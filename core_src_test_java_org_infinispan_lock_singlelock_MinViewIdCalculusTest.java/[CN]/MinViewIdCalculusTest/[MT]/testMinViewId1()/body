@@ -1,0 +1,15 @@
+{
+  final TransactionTable tt0=TestingUtil.getTransactionTable(cache(0));
+  final TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
+  final Integer viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
+  assertEquals(tt0.getMinViewId(),viewId);
+  assertEquals(tt1.getMinViewId(),viewId);
+  addClusterEnabledCacheManager(c);
+  waitForClusterToForm();
+  final Integer viewId2=advancedCache(0).getRpcManager().getTransport().getViewId();
+  assertEquals((Integer)(viewId + 1),viewId2);
+  assertEquals(tt0.getMinViewId(),viewId2);
+  assertEquals(tt1.getMinViewId(),viewId2);
+  final TransactionTable tt2=TestingUtil.getTransactionTable(cache(1));
+  assertEquals(tt2.getMinViewId(),viewId2);
+}

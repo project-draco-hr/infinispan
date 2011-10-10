@@ -1,0 +1,15 @@
+{
+  tm(0,"testcache").begin();
+  cache(0,"testcache").put("k","v");
+  tm(0,"testcache").commit();
+  assertEquals(cache(0,"testcache").get("k"),"v");
+  assertEquals(cache(1,"testcache").get("k"),"v");
+  assertNotLocked("testcache","k");
+  tm(0,"testcache").begin();
+  cache(0,"testcache").put("k","v");
+  cache(0,"testcache").remove("k");
+  tm(0,"testcache").commit();
+  assertEquals(cache(0,"testcache").get("k"),null);
+  assertEquals(cache(1,"testcache").get("k"),null);
+  assertNotLocked("testcache","k");
+}

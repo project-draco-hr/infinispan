@@ -1,0 +1,19 @@
+{
+  RpcManager rpcManager=new ControlledRpcManager(advancedCache(1).getRpcManager()){
+    @Override public void invokeRemotely(    Collection<Address> recipients,    ReplicableCommand rpcCommand,    boolean sync){
+      if (rpcCommand instanceof TxCompletionNotificationCommand) {
+        releaseLocksLatch.countDown();
+      }
+ else {
+        realOne.invokeRemotely(recipients,rpcCommand,sync);
+      }
+    }
+  }
+;
+  final TransactionTable transactionTable=TestingUtil.getTransactionTable(cache(1));
+  TestingUtil.replaceField(rpcManager,"rpcManager",transactionTable,TransactionTable.class);
+  TxControlInterceptor txControlInterceptor=new TxControlInterceptor();
+  txControlInterceptor.prepareProgress.countDown();
+  txControlInterceptor.commitProgress.countDown();
+  advancedCache(1).addInterceptor(txControlInterceptor,1);
+}

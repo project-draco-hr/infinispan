@@ -1,0 +1,14 @@
+{
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      boolean aNodeIsLocked=false;
+      for (int i=0; i < caches(cacheName).size(); i++) {
+        final boolean isLocked=lockManager(i).isLocked(key);
+        if (isLocked)         log.trace(key + " is locked on cache index " + i+ " by "+ lockManager(i).getOwner(key));
+        aNodeIsLocked=aNodeIsLocked || isLocked;
+      }
+      return !aNodeIsLocked;
+    }
+  }
+);
+}

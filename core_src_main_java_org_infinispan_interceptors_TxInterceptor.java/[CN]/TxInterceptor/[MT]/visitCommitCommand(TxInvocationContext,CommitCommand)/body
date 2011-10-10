@@ -1,7 +1,9 @@
 {
   if (this.statisticsEnabled)   commits.incrementAndGet();
   Object result=invokeNextInterceptor(ctx,command);
-  markCompleted(ctx,command.getGlobalTransaction(),true);
+  if (!ctx.isOriginLocal()) {
+    txTable.remoteTransactionCommitted(ctx.getGlobalTransaction());
+  }
   transactionLog.logCommit(command.getGlobalTransaction());
   return result;
 }

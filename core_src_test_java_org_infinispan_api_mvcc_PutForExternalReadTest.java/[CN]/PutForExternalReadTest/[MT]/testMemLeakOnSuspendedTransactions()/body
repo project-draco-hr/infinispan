@@ -1,2 +1,58 @@
 {
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  TransactionManager tm1=TestingUtil.getTransactionManager(cache1);
+  TransactionManager tm2=TestingUtil.getTransactionManager(cache2);
+  ReplListener replListener2=replListener(cache2);
+  replListener2.expect(PutKeyValueCommand.class);
+  tm1.begin();
+  cache1.putForExternalRead(key,value);
+  tm1.commit();
+  replListener2.waitForRpc();
+  final TransactionTable tt1=TestingUtil.extractComponent(cache1,TransactionTable.class);
+  final TransactionTable tt2=TestingUtil.extractComponent(cache2,TransactionTable.class);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 && tt2.getRemoteTxCount() == 0 && tt2.getLocalTxCount() == 0;
+    }
+  }
+);
+  replListener2.expectWithTx(PutKeyValueCommand.class);
+  tm1.begin();
+  assertEquals(tm1.getTransaction().getStatus(),Status.STATUS_ACTIVE);
+  cache1.putForExternalRead(key,value);
+  assertEquals(tm1.getTransaction().getStatus(),Status.STATUS_ACTIVE);
+  cache1.put(key,value);
+  assertEquals(tm1.getTransaction().getStatus(),Status.STATUS_ACTIVE);
+  log.info("Before commit!!");
+  tm1.commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) && (tt2.getRemoteTxCount() == 0)&& (tt2.getLocalTxCount() == 0);
+    }
+  }
+);
+  replListener2.expectWithTx(PutKeyValueCommand.class);
+  tm1.begin();
+  cache1.put(key,value);
+  cache1.putForExternalRead(key,value);
+  tm1.commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) && (tt2.getRemoteTxCount() == 0)&& (tt2.getLocalTxCount() == 0);
+    }
+  }
+);
+  replListener2.expectWithTx(PutKeyValueCommand.class,PutKeyValueCommand.class);
+  tm1.begin();
+  cache1.put(key,value);
+  cache1.putForExternalRead(key,value);
+  cache1.put(key,value);
+  tm1.commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) && (tt2.getRemoteTxCount() == 0)&& (tt2.getLocalTxCount() == 0);
+    }
+  }
+);
 }

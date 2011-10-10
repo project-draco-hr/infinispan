@@ -1,0 +1,17 @@
+{
+  int minViewId=getCurrentViewId();
+  for (  CacheTransaction ct : localTransactions.values()) {
+    if (ct.getViewId() < minViewId) {
+      minViewId=ct.getViewId();
+      log.tracef("Setting minViewId to %s form local transaction %s",ct.getViewId(),ct);
+    }
+  }
+  for (  CacheTransaction ct : remoteTransactions.values()) {
+    if (ct.getViewId() < minViewId) {
+      minViewId=ct.getViewId();
+      log.tracef("Setting minViewId to %s form remote transaction %s",ct.getViewId(),ct);
+    }
+  }
+  log.tracef("Recalculating min view id: existingValue=%s, minViewId=%s",minTxViewId,minViewId);
+  minTxViewId=minViewId;
+}
