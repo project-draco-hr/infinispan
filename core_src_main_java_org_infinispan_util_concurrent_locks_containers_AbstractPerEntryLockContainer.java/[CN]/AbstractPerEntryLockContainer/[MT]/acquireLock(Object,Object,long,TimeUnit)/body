@@ -1,0 +1,28 @@
+{
+  while (true) {
+    L lock=getLock(key);
+    boolean locked;
+    try {
+      locked=tryLock(lock,timeout,unit,lockOwner);
+    }
+ catch (    InterruptedException ie) {
+      safeRelease(lock,lockOwner);
+      throw ie;
+    }
+catch (    Throwable th) {
+      locked=false;
+    }
+    if (locked) {
+      L existingLock=locks.putIfAbsent(key,lock);
+      if (existingLock != null && existingLock != lock) {
+        safeRelease(lock,lockOwner);
+      }
+ else {
+        return lock;
+      }
+    }
+ else {
+      return null;
+    }
+  }
+}
