@@ -1,0 +1,44 @@
+{
+  Log log=getLog();
+  boolean invalidResponse=true;
+  if (!wasSuspected && wasReceived) {
+    invalidResponse=false;
+    if (rsp.hasException()) {
+      log.tracef(rsp.getException(),"Unexpected exception from %s",sender);
+      throw new CacheException("Remote (" + sender + ") failed unexpectedly",rsp.getException());
+    }
+    Object responseObject=rsp.getValue();
+    if (responseObject instanceof Response) {
+      Response response=(Response)responseObject;
+      if (response instanceof ExceptionResponse) {
+        Exception e=((ExceptionResponse)response).getException();
+        if (!(e instanceof RpcException)) {
+          if (shouldThrowException(e)) {
+            throw e;
+          }
+ else {
+            if (log.isDebugEnabled())             log.debug("Received exception from sender" + sender,e);
+          }
+        }
+      }
+      responseListToAddTo.put(sender,response);
+    }
+ else {
+      Class<? extends Object> responseClass=responseObject != null ? responseObject.getClass() : null;
+      log.tracef("Unexpected response object type from %s: %s",sender,responseClass);
+      throw new CacheException(String.format("Unexpected response object type from %s: %s",sender,responseClass));
+    }
+  }
+ else   if (wasSuspected) {
+    if (!ignoreLeavers) {
+      throw new SuspectException("Suspected member: " + sender,sender);
+    }
+ else {
+      log.tracef("Target node %s left during remote call, ignoring",sender);
+    }
+  }
+ else {
+    if (!usedResponseFilter)     throw new TimeoutException("Replication timeout for " + sender);
+  }
+  return invalidResponse;
+}
