@@ -3,11 +3,10 @@
   boolean invalidResponse=true;
   if (!wasSuspected && wasReceived) {
     invalidResponse=false;
-    if (rsp.hasException()) {
-      log.tracef(rsp.getException(),"Unexpected exception from %s",sender);
-      throw new CacheException("Remote (" + sender + ") failed unexpectedly",rsp.getException());
+    if (exception != null) {
+      log.tracef(exception,"Unexpected exception from %s",sender);
+      throw new CacheException("Remote (" + sender + ") failed unexpectedly",exception);
     }
-    Object responseObject=rsp.getValue();
     if (responseObject instanceof Response) {
       Response response=(Response)responseObject;
       if (response instanceof ExceptionResponse) {
@@ -23,7 +22,7 @@
       }
       responseListToAddTo.put(sender,response);
     }
- else {
+ else     if (responseObject != null) {
       Class<? extends Object> responseClass=responseObject != null ? responseObject.getClass() : null;
       log.tracef("Unexpected response object type from %s: %s",sender,responseClass);
       throw new CacheException(String.format("Unexpected response object type from %s: %s",sender,responseClass));
