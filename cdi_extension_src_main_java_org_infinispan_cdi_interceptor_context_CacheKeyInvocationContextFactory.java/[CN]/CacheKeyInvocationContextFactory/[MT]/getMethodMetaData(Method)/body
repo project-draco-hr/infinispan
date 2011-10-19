@@ -20,7 +20,7 @@
       aggregatedParameterMetaData=getAggregatedParameterMetaData(method,false);
       cacheAnnotation=cacheRemoveEntryAnnotation;
       if (cacheName.isEmpty()) {
-        throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveEntry "+ "doesn't specify a cache name");
+        throw log.cacheRemoveEntryMethodWithoutCacheName(method.getName());
       }
     }
  else     if (method.isAnnotationPresent(CacheRemoveAll.class)) {
@@ -30,7 +30,7 @@
       aggregatedParameterMetaData=getAggregatedParameterMetaData(method,false);
       cacheAnnotation=cacheRemoveAllAnnotation;
       if (cacheName.isEmpty()) {
-        throw new CacheException("Method named '" + method.getName() + "' annotated with CacheRemoveAll "+ "doesn't specify a cache name");
+        throw log.cacheRemoveAllMethodWithoutCacheName(method.getName());
       }
     }
  else     if (method.isAnnotationPresent(CachePut.class)) {
@@ -41,7 +41,7 @@
       cacheAnnotation=cachePutAnnotation;
     }
  else {
-      throw new IllegalArgumentException("Method named '" + method.getName() + "' is not annotated with "+ "CacheResult, CachePut, CacheRemoveEntry or CacheRemoveAll");
+      throw log.methodWithoutCacheAnnotation(method.getName());
     }
     final MethodMetaData<? extends Annotation> newCacheMethodMetaData=new MethodMetaData<Annotation>(method,aggregatedParameterMetaData,asSet(method.getAnnotations()),cacheKeyGenerator,cacheAnnotation,cacheName);
     methodMetaData=methodMetaDataCache.putIfAbsent(method,newCacheMethodMetaData);

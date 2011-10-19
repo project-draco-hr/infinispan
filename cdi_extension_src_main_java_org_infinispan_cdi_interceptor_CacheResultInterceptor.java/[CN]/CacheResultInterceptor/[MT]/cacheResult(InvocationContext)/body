@@ -1,4 +1,7 @@
 {
+  if (log.isTraceEnabled()) {
+    log.tracef("Interception of method named '%s'",invocationContext.getMethod().getName());
+  }
   final CacheKeyInvocationContext<CacheResult> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
   final CacheKeyGenerator cacheKeyGenerator=cacheKeyInvocationContext.unwrap(CacheKeyInvocationContextImpl.class).getCacheKeyGenerator();
   final CacheResult cacheResult=cacheKeyInvocationContext.getCacheAnnotation();
@@ -7,11 +10,17 @@
   Object result=null;
   if (!cacheResult.skipGet()) {
     result=cache.get(cacheKey);
+    if (log.isTraceEnabled()) {
+      log.tracef("Entry with value '%s' has been found in cache '%s' with key '%s'",result,cache.getName(),cacheKey);
+    }
   }
   if (result == null) {
     result=invocationContext.proceed();
     if (result != null) {
       cache.put(cacheKey,result);
+      if (log.isTraceEnabled()) {
+        log.tracef("Value '%s' cached in cache '%s' with key '%s'",result,cache.getName(),cacheKey);
+      }
     }
   }
   return result;
