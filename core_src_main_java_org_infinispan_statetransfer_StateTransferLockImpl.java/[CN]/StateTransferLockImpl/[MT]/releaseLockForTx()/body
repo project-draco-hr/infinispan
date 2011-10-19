@@ -2,6 +2,7 @@
   int holdCount=txLock.getReadHoldCount();
   if (holdCount > 1)   throw new IllegalStateException("Transaction lock should not be acquired more than once by any thread");
   if (holdCount == 1) {
+    if (trace)     log.tracef("Releasing shared state transfer shared lock, remaining holders: %d",txLock.getReadLockCount());
     txLock.readLock().unlock();
     return true;
   }

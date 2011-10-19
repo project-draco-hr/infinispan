@@ -1,6 +1,9 @@
 {
   if (txLockLatch.await(0,TimeUnit.MILLISECONDS)) {
-    if (txLock.readLock().tryLock(0,TimeUnit.MILLISECONDS))     return true;
+    if (txLock.readLock().tryLock(0,TimeUnit.MILLISECONDS)) {
+      if (trace)       log.tracef("Acquired shared state transfer shared lock, remaining holders: %d",txLock.getReadLockCount());
+      return true;
+    }
   }
   if (!ctx.isOriginLocal())   return false;
   boolean hasAcquiredLocks=ctx.getLockedKeys().size() > 0;
@@ -8,7 +11,10 @@
   long endTime=System.currentTimeMillis() + timeout;
   while (true) {
     if (!txLockLatch.await(timeout,TimeUnit.MILLISECONDS))     return false;
-    if (txLock.readLock().tryLock(0,TimeUnit.MILLISECONDS))     return true;
+    if (txLock.readLock().tryLock(0,TimeUnit.MILLISECONDS)) {
+      if (trace)       log.tracef("Acquired shared state transfer shared lock, remaining holders: %d",txLock.getReadLockCount());
+      return true;
+    }
     timeout=endTime - System.currentTimeMillis();
     if (timeout < 0)     return false;
   }

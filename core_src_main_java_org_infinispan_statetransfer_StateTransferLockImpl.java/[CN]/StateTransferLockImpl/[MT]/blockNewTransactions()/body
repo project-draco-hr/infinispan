@@ -1,8 +1,10 @@
 {
   if (!txLock.isWriteLockedByCurrentThread()) {
-    if (trace)     log.debug("Blocking new transactions");
+    log.debug("Blocking new transactions");
+    if (trace)     log.tracef("Acquiring exclusive state transfer shared lock, shared holders: %d",txLock.getReadLockCount());
     txLockLatch.close();
     txLock.writeLock().lockInterruptibly();
+    log.trace("Acquired state transfer lock in exclusive mode");
     txLock.writeLock().unlock();
   }
  else {
