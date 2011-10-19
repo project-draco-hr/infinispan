@@ -8,6 +8,7 @@
   }
 ).anyTimes();
   expect(cache.getClassLoader()).andReturn(Thread.currentThread().getContextClassLoader()).anyTimes();
+  expect(cache.getAdvancedCache()).andReturn(cache).anyTimes();
   extractor=createStrictMock(DocumentExtractor.class);
   HSQuery hsQuery=createMock(HSQuery.class);
   expect(hsQuery.queryDocumentExtractor()).andReturn(extractor).once();
@@ -23,5 +24,5 @@
   extractor.close();
   expectLastCall().once();
   EasyMock.replay(cache,extractor,hsQuery);
-  iterator=new LazyIterator(hsQuery,cache,fetchSize);
+  iterator=new LazyIterator(hsQuery,cache,new KeyTransformationHandler(),fetchSize);
 }
