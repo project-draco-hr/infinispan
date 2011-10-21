@@ -1,0 +1,18 @@
+{
+  short respStatus=readHeaderAndValidate(transport,params);
+  VersionedOperationResponse.RspCode code;
+  if (respStatus == NO_ERROR_STATUS) {
+    code=VersionedOperationResponse.RspCode.SUCCESS;
+  }
+ else   if (respStatus == NOT_PUT_REMOVED_REPLACED_STATUS) {
+    code=VersionedOperationResponse.RspCode.MODIFIED_KEY;
+  }
+ else   if (respStatus == KEY_DOES_NOT_EXIST_STATUS) {
+    code=VersionedOperationResponse.RspCode.NO_SUCH_KEY;
+  }
+ else {
+    throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
+  }
+  byte[] prevValue=returnPossiblePrevValue(transport);
+  return new VersionedOperationResponse(prevValue,code);
+}

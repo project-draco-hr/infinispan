@@ -1,0 +1,31 @@
+{
+  final boolean isTrace=log.isTraceEnabled();
+  if (isTrace)   log.tracef("Received operation status: %#x",status);
+switch ((int)status) {
+case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+case HotRodConstants.SERVER_ERROR_STATUS:
+case HotRodConstants.COMMAND_TIMEOUT_STATUS:
+case HotRodConstants.UNKNOWN_VERSION_STATUS:
+{
+      readNewTopologyIfPresent(transport,params);
+      String msgFromServer=transport.readString();
+      if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+        log.tracef("Server-side timeout performing operation: %s",msgFromServer);
+      }
+      if (msgFromServer.contains("SuspectException")) {
+        if (isTrace)         log.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",params.messageId,msgFromServer);
+        throw new RemoteNodeSuspecException(msgFromServer,params.messageId,status);
+      }
+ else {
+        log.errorFromServer(msgFromServer);
+      }
+      throw new HotRodClientException(msgFromServer,params.messageId,status);
+    }
+default :
+{
+    throw new IllegalStateException(String.format("Unknown status: %#04x",status));
+  }
+}
+}

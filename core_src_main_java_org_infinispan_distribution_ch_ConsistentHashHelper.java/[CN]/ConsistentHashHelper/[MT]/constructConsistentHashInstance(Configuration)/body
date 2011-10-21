@@ -1,14 +1,6 @@
 {
-  ConsistentHash ch=(ConsistentHash)Util.getInstance(c.getConsistentHashClass(),c.getClassLoader());
-  if (ch instanceof AbstractWheelConsistentHash) {
-    Hash h=(Hash)Util.getInstance(c.getHashFunctionClass(),c.getClassLoader());
-    AbstractWheelConsistentHash wch=(AbstractWheelConsistentHash)ch;
-    wch.setHashFunction(h);
-    wch.setNumVirtualNodes(c.getNumVirtualNodes());
-  }
-  if (ch instanceof AbstractConsistentHash) {
-    AbstractConsistentHash ach=(AbstractConsistentHash)ch;
-    if (c.isGroupsEnabled())     ach.setGroupManager(new GroupManagerImpl(c.getGroupers()));
-  }
-  return ch;
+  Class<? extends ConsistentHash> chClass=Util.loadClass(c.getConsistentHashClass(),c.getClassLoader());
+  Hash h=(Hash)Util.getInstance(c.getHashFunctionClass(),c.getClassLoader());
+  HashSeed hs=c.getHashSeed() != null ? c.getHashSeed() : (HashSeed)Util.getInstance(c.getHashSeedClass(),c.getClassLoader());
+  return constructConsistentHashInstance(chClass,h,hs,c.getNumVirtualNodes(),new GroupManagerImpl(c.getGroupers()));
 }
