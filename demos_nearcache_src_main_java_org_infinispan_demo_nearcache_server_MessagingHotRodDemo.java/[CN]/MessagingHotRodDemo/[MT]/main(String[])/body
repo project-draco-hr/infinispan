@@ -1,0 +1,25 @@
+{
+  final InputStream in=System.in;
+  HornetQBootstrapServer.main(new String[]{"hornetq-beans.xml"});
+  Main.main(new String[]{"-r","hotrod"});
+  ProtocolServer server=Main.getServer();
+  EmbeddedCacheManager cm=Main.getCacheManager();
+  Context ctx=new InitialContext();
+  Connection con=null;
+  try {
+    con=((ConnectionFactory)ctx.lookup("/ConnectionFactory")).createConnection();
+    con.start();
+    Session s=con.createSession(false,Session.AUTO_ACKNOWLEDGE);
+    Topic topic=(Topic)ctx.lookup("/topic/datagrid");
+    cm.getCache().addListener(new InvalidationProducer(s,topic));
+  }
+  finally {
+    while (in.read() != -1) {
+    }
+    ctx.close();
+    if (con != null)     con.close();
+    server.stop();
+    cm.stop();
+    System.exit(0);
+  }
+}

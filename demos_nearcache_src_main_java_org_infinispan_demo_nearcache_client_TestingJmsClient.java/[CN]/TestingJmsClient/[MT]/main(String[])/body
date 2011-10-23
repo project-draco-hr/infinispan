@@ -1,0 +1,24 @@
+{
+  Context ctx=getContext();
+  Connection con=null;
+  try {
+    ConnectionFactory cf=(ConnectionFactory)ctx.lookup("/ConnectionFactory");
+    con=cf.createConnection();
+    Session s=con.createSession(false,Session.AUTO_ACKNOWLEDGE);
+    Topic topic=(Topic)ctx.lookup("/topic/datagrid");
+    MessageProducer msgProduce=s.createProducer(topic);
+    MessageConsumer msgConsume1=s.createConsumer(topic);
+    MessageConsumer msgConsume2=s.createConsumer(topic);
+    TextMessage message=s.createTextMessage("This is a text message");
+    msgProduce.send(message);
+    con.start();
+    TextMessage msgReceived=(TextMessage)msgConsume1.receive();
+    System.out.println(msgReceived.getText());
+    msgReceived=(TextMessage)msgConsume2.receive();
+    System.out.println(msgReceived.getText());
+  }
+  finally {
+    ctx.close();
+    if (con != null)     con.close();
+  }
+}
