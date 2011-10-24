@@ -13,8 +13,8 @@
       }
     }
   }
- catch (  RehashInProgressException e) {
-    allowStateTransferToComplete(ctx);
+ catch (  StateTransferInProgressException e) {
+    allowStateTransferToComplete(ctx,command,e.getNewCacheViewId());
     if (retries > 0) {
       sendCommitCommand(ctx,command,retries - 1);
     }
@@ -23,7 +23,7 @@
     }
   }
 catch (  SuspectException e) {
-    allowStateTransferToComplete(ctx);
+    allowStateTransferToComplete(ctx,command,-1);
     if (retries > 0) {
       sendCommitCommand(ctx,command,retries - 1);
     }

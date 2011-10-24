@@ -1,0 +1,45 @@
+{
+  MagicKey k1=new MagicKey(c1,"k1");
+  MagicKey k2=new MagicKey(c2,"k2");
+  tm(c1).begin();
+  c1.put(k1,"v1");
+  c1.put(k2,"v2");
+  TransactionTable txTable=TestingUtil.extractComponent(c1,TransactionTable.class);
+  TransactionCoordinator txCoordinator=TestingUtil.extractComponent(c1,TransactionCoordinator.class);
+  LocalTransaction localTx=txTable.getLocalTransaction(tm(c1).getTransaction());
+  txCoordinator.prepare(localTx);
+  final StateTransferLock blockFirst=TestingUtil.extractComponent(failOnOriginator ? c1 : c2,StateTransferLock.class);
+  final StateTransferLock blockSecond=TestingUtil.extractComponent(failOnOriginator ? c2 : c1,StateTransferLock.class);
+  blockFirst.blockNewTransactions(1000);
+  Thread worker=new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest"){
+    @Override public void run(){
+      try {
+        Thread.sleep(1000);
+        blockSecond.blockNewTransactions(BLOCKING_CACHE_VIEW_ID);
+        blockFirst.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
+        blockSecond.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
+      }
+ catch (      InterruptedException e) {
+        log.errorf(e,"Error blocking/unblocking transactions");
+      }
+    }
+  }
+;
+  worker.start();
+  try {
+    if (commit) {
+      txCoordinator.commit(localTx,false);
+    }
+ else {
+      txCoordinator.rollback(localTx);
+    }
+    tm(c1).suspend();
+  }
+  finally {
+    worker.join();
+  }
+  assertNotLocked(c1,k1);
+  assertNotLocked(c2,k1);
+  assertNotLocked(c1,k2);
+  assertNotLocked(c2,k2);
+}

@@ -1,0 +1,21 @@
+{
+synchronized (lock) {
+    cancelled=true;
+    while (running) {
+      try {
+        lock.wait();
+      }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+    }
+  }
+  try {
+    stateTransferLock.unblockNewTransactions(newViewId);
+  }
+ catch (  Exception e) {
+    log.errorUnblockingTransactions(e);
+  }
+  log.debugf("Node %s cancelled state transfer for view %d after %s!",self,newViewId,Util.prettyPrintTime(System.currentTimeMillis() - stateTransferStartMillis));
+}

@@ -1,0 +1,34 @@
+{
+  if (!stateTransferManager.startStateTransfer(newViewId,members,initialView))   return;
+  if (log.isDebugEnabled())   log.debugf("Commencing rehash %d on node: %s. Before start, data container had %d entries",newViewId,self,dataContainer.size());
+  newCacheSet=Collections.emptySet();
+  oldCacheSet=Collections.emptySet();
+  keysToRemove=new ArrayList<Object>();
+  stateTransferLock.blockNewTransactions(newViewId);
+  if (trace) {
+    log.tracef("Rebalancing: chOld = %s, chNew = %s",chOld,chNew);
+  }
+  if (configuration.isRehashEnabled() && !initialView) {
+    cacheNotifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,true);
+    int numOwners=configuration.getNumOwners();
+    final Map<Address,Collection<InternalCacheEntry>> states=new HashMap<Address,Collection<InternalCacheEntry>>();
+    for (    InternalCacheEntry ice : dataContainer) {
+      rebalance(ice.getKey(),ice,numOwners,chOld,chNew,null,states,keysToRemove);
+    }
+    checkIfCancelled();
+    CacheStore cacheStore=stateTransferManager.getCacheStoreForStateTransfer();
+    if (cacheStore != null) {
+      for (      Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+        rebalance(key,null,numOwners,chOld,chNew,cacheStore,states,keysToRemove);
+      }
+    }
+ else {
+      if (trace)       log.trace("No cache store or cache store is shared, not rebalancing stored keys");
+    }
+    checkIfCancelled();
+    pushState(states);
+  }
+ else {
+    if (!initialView)     log.trace("Rehash not enabled, so not pushing state");
+  }
+}

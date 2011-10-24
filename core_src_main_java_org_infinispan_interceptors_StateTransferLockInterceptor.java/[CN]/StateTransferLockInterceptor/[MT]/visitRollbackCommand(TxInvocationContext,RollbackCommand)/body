@@ -1,11 +1,11 @@
 {
-  if (!stateTransferLock.acquireForCommand(ctx,cmd)) {
-    throw new RehashInProgressException("Timed out waiting for the transaction lock");
+  if (!stateTransferLock.acquireForCommand(ctx,command)) {
+    throw new StateTransferInProgressException(stateTransferLock.getBlockingCacheViewId(),"Timed out waiting for the transaction lock");
   }
   try {
-    return super.visitRollbackCommand(ctx,cmd);
+    return super.visitRollbackCommand(ctx,command);
   }
   finally {
-    stateTransferLock.releaseForCommand(ctx,cmd);
+    stateTransferLock.releaseForCommand(ctx,command);
   }
 }

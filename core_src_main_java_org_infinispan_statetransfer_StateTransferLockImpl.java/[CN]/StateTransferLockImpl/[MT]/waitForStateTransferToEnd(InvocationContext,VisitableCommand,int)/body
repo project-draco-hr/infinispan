@@ -1,0 +1,27 @@
+{
+  if (!stateTransferEnabled)   return;
+  if (!writesShouldBlock && newCacheViewId <= blockingCacheViewId)   return;
+  boolean shouldSuspendLock;
+  try {
+    shouldSuspendLock=(Boolean)command.acceptVisitor(ctx,new ShouldAcquireLockVisitor());
+  }
+ catch (  Throwable throwable) {
+    throw new CacheException("Unexpected exception",throwable);
+  }
+  if (shouldSuspendLock) {
+    log.tracef("Suspending shared state transfer lock to allow state transfer to start (and end)");
+    releaseLockForWrite();
+    if (blockingCacheViewId < newCacheViewId) {
+      long end=System.currentTimeMillis() + lockTimeout;
+      long timeout=lockTimeout;
+synchronized (lock) {
+        while (timeout >= 0 && blockingCacheViewId < newCacheViewId) {
+          if (trace)           log.tracef("We are waiting for cache view %d, right now we have %d",newCacheViewId,blockingCacheViewId);
+          lock.wait(timeout);
+          timeout=end - System.currentTimeMillis();
+        }
+      }
+    }
+    acquireLockForWriteCommand(ctx);
+  }
+}

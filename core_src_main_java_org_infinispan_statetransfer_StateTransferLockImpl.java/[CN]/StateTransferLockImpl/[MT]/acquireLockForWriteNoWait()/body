@@ -1,0 +1,15 @@
+{
+  if (!writesShouldBlock) {
+    int previousWrites=runningWritesCount.getAndIncrement();
+    if (!writesShouldBlock) {
+      if (trace) {
+        if (traceThreadWrites.get() == Boolean.TRUE)         log.error("Trying to acquire state transfer shared lock, but this thread already has it",new Exception());
+        traceThreadWrites.set(Boolean.TRUE);
+        log.tracef("Acquired shared state transfer shared lock, total holders: %d",runningWritesCount.get());
+      }
+      return true;
+    }
+    runningWritesCount.decrementAndGet();
+  }
+  return false;
+}

@@ -1,10 +1,11 @@
 {
   NotifyingNotifiableFuture<Object> stateTransferFuture=new AggregatingNotifyingFutureImpl(null,states.size());
   for (  Map.Entry<Address,Collection<InternalCacheEntry>> entry : states.entrySet()) {
+    checkIfCancelled();
     final Address target=entry.getKey();
     Collection<InternalCacheEntry> state=entry.getValue();
     stateTransferManager.pushStateToNode(stateTransferFuture,newViewId,target,state);
   }
   stateTransferFuture.get(configuration.getRehashRpcTimeout(),TimeUnit.MILLISECONDS);
-  log.debugf("Node finished pushing data for rehash %d.",newViewId);
+  log.debugf("Node finished pushing data for cache views %d.",newViewId);
 }

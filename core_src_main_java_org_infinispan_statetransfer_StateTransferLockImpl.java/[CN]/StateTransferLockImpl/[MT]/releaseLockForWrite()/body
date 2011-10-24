@@ -1,0 +1,16 @@
+{
+  if (trace) {
+    if (traceThreadWrites.get() != Boolean.TRUE)     log.error("Trying to release state transfer shared lock without acquiring it first",new Exception());
+    traceThreadWrites.set(null);
+  }
+  int remainingWrites=runningWritesCount.decrementAndGet();
+  if (remainingWrites < 0) {
+    throw new IllegalStateException("Trying to release state transfer shared lock without acquiring it first");
+  }
+ else   if (remainingWrites == 0) {
+synchronized (lock) {
+      lock.notifyAll();
+    }
+  }
+  if (trace)   log.tracef("Released shared state transfer shared lock, remaining holders: %d",remainingWrites);
+}

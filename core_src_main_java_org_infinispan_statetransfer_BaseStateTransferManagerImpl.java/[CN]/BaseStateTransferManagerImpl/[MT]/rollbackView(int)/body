@@ -1,4 +1,15 @@
 {
+  if (stateTransferTask == null) {
+    if (committedViewId == oldView.getViewId()) {
+      log.tracef("Ignoring rollback for cache view %d as we don't have a state transfer in progress",committedViewId);
+      return;
+    }
+ else {
+      throw new IllegalArgumentException(String.format("Cannot rollback to view %d, we are at view %d",committedViewId,oldView.getViewId()));
+    }
+  }
+  stateTransferTask.cancelStateTransfer();
+  stateTransferTask=null;
   newView=oldView;
   chNew=chOld;
   stateTransferInProgressLatch.open();

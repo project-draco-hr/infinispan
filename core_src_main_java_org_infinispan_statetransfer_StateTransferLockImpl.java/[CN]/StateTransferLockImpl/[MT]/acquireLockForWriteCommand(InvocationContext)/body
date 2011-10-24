@@ -1,0 +1,14 @@
+{
+  if (acquireLockForWriteNoWait())   return true;
+  if (!ctx.isOriginLocal())   return false;
+  long timeout=lockTimeout;
+  long endTime=System.currentTimeMillis() + lockTimeout;
+synchronized (lock) {
+    while (true) {
+      lock.wait(timeout);
+      if (acquireLockForWriteNoWait())       return true;
+      timeout=endTime - System.currentTimeMillis();
+      if (timeout < 0)       return false;
+    }
+  }
+}
