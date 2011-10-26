@@ -1,0 +1,16 @@
+{
+  Object[] compositeKeys=command.getCompositeKeys();
+  try {
+    HashSet<Object> keysToLock=new HashSet<Object>(Arrays.asList(compositeKeys));
+    acquireRemoteIfNeeded(ctx,keysToLock);
+    if (cll.localNodeIsOwner(command.getDeltaAwareKey())) {
+      for (      Object key : compositeKeys) {
+        lockKey(ctx,key);
+      }
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  Throwable te) {
+    throw cleanLocksAndRethrow(ctx,te);
+  }
+}
