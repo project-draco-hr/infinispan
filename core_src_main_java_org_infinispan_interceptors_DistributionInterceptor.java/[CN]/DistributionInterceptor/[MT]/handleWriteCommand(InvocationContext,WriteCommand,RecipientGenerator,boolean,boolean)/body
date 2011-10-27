@@ -9,7 +9,8 @@
     if (!ctx.isInTxScope()) {
       NotifyingNotifiableFuture<Object> future=null;
       if (ctx.isOriginLocal()) {
-        allowStateTransferToComplete(ctx,command,-1);
+        int newCacheViewId=-1;
+        stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
         List<Address> rec=recipientGenerator.generateRecipients();
         int numCallRecipients=rec == null ? 0 : rec.size();
         if (trace)         log.tracef("Invoking command %s on hosts %s",command,rec);

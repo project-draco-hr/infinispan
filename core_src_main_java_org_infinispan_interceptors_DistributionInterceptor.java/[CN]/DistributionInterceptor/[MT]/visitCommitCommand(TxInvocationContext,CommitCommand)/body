@@ -1,12 +1,13 @@
 {
   if (shouldInvokeRemoteTxCommand(ctx)) {
-    allowStateTransferToComplete(ctx,command,-1);
+    int newCacheViewId=-1;
+    stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
     Collection<Address> preparedOn=((LocalTxInvocationContext)ctx).getRemoteLocksAcquired();
     NotifyingNotifiableFuture<Object> f=null;
     if (isL1CacheEnabled) {
       f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
     }
-    sendCommitCommand(ctx,command,preparedOn,3);
+    sendCommitCommand(ctx,command,preparedOn);
     if (f != null && configuration.isSyncCommitPhase()) {
       try {
         f.get();
