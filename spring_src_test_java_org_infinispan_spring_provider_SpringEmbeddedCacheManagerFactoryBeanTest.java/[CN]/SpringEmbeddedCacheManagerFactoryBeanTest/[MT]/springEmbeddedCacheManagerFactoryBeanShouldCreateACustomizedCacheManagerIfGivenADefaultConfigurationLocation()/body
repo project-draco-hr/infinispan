@@ -6,7 +6,7 @@
   final SpringEmbeddedCacheManager springEmbeddedCacheManager=objectUnderTest.getObject();
   assertNotNull("getObject() should have returned a valid SpringEmbeddedCacheManager, configured using the configuration file " + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",springEmbeddedCacheManager);
   final SpringCache cacheDefinedInCustomConfiguration=springEmbeddedCacheManager.getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-  final Configuration configuration=cacheDefinedInCustomConfiguration.getNativeCache().getConfiguration();
+  final Configuration configuration=((Cache)cacheDefinedInCustomConfiguration.getNativeCache()).getConfiguration();
   assertEquals("The cache named [" + CACHE_NAME_FROM_CONFIGURATION_FILE + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("+ CACHE_NAME_FROM_CONFIGURATION_FILE+ ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "+ "the configuration file when instantiating SpringEmbeddedCacheManager.",CacheMode.REPL_ASYNC,configuration.getCacheMode());
   springEmbeddedCacheManager.stop();
 }
