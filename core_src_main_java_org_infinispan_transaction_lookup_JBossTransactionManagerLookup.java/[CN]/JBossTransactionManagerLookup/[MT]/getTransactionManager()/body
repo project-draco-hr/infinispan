@@ -1,9 +1,19 @@
 {
+  String as7Location="java:jboss/TransactionManager";
   InitialContext initialContext=new InitialContext();
   try {
-    return (TransactionManager)initialContext.lookup("java:/TransactionManager");
+    return (TransactionManager)initialContext.lookup(as7Location);
   }
-  finally {
+ catch (  NamingException ne) {
+    String legacyAsLocation="java:/TransactionManager";
+    try {
+      return (TransactionManager)initialContext.lookup(legacyAsLocation);
+    }
+ catch (    NamingException neAgain) {
+      throw new ConfigurationException("Unable to locate a transaction manager in JNDI, either in " + as7Location + " or "+ legacyAsLocation);
+    }
+  }
+ finally {
     Util.close(initialContext);
   }
 }
