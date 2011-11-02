@@ -1,14 +1,9 @@
 {
   Set<HashEntry<K,V>> evicted=new HashSet<HashEntry<K,V>>();
   try {
-    for (    HashEntry<K,V> e : accessQueue) {
-      if (present(e)) {
-        if (e.recency() == Recency.LIR_RESIDENT) {
-          handleLIRHit(e,evicted);
-        }
- else         if (e.recency() == Recency.HIR_RESIDENT) {
-          handleHIRHit(e,evicted);
-        }
+    for (    LIRSHashEntry<K,V> e : accessQueue) {
+      if (e.isResident()) {
+        e.hit(evicted);
       }
     }
     removeFromSegment(evicted);

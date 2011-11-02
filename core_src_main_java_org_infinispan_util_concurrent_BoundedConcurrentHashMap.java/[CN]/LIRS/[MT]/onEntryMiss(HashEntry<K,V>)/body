@@ -1,30 +1,6 @@
 {
-  Set<HashEntry<K,V>> evicted=Collections.emptySet();
-  if (currentLIRSize + 1 < lirSizeLimit) {
-    currentLIRSize++;
-    e.transitionToLIRResident();
-    stack.put(e.key,e);
-  }
- else {
-    if (queue.size() < hirSizeLimit) {
-      queue.addLast(e);
-    }
- else {
-      boolean inStack=stack.containsKey(e.key);
-      HashEntry<K,V> first=queue.removeFirst();
-      first.transitionHIRResidentToHIRNonResident();
-      stack.put(e.key,e);
-      evicted=new HashSet<HashEntry<K,V>>();
-      if (inStack) {
-        e.transitionToLIRResident();
-        switchBottomostLIRtoHIRAndPrune(evicted);
-      }
- else {
-        queue.addLast(e);
-        evicted.add(first);
-      }
-      removeFromSegment(evicted);
-    }
-  }
+  LIRSHashEntry<K,V> e=(LIRSHashEntry<K,V>)en;
+  Set<HashEntry<K,V>> evicted=e.miss();
+  removeFromSegment(evicted);
   return evicted;
 }

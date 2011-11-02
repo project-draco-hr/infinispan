@@ -1,0 +1,16 @@
+{
+  if (owner.size >= owner.maximumSize) {
+    LIRSHashEntry<K,V> evictedNode=owner.queueFront();
+    evicted.add(evictedNode);
+  }
+  boolean inStack=inStack();
+  moveToStackTop();
+  if (inStack) {
+    hot();
+    owner.stackBottom().migrateToQueue();
+    owner.pruneStack(evicted);
+  }
+ else {
+    cold();
+  }
+}
