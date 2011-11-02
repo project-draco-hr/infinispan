@@ -2,9 +2,10 @@
   record("load");
   if (numEntries < 0)   return loadAll();
   Set<InternalCacheEntry> s=new HashSet<InternalCacheEntry>(numEntries);
+  final long currentTimeMillis=System.currentTimeMillis();
   for (Iterator<InternalCacheEntry> i=store.values().iterator(); i.hasNext() && s.size() < numEntries; ) {
     InternalCacheEntry se=i.next();
-    if (se.isExpired()) {
+    if (se.isExpired(currentTimeMillis)) {
       log.debugf("Key %s exists, but has expired.  Entry is %s",se.getKey(),se);
       i.remove();
     }
