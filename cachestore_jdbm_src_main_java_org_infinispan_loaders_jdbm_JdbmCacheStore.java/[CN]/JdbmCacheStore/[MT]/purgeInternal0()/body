@@ -33,11 +33,12 @@
   }
   if (!keys.isEmpty())   log.debugf("purge (up to) %d entries",keys.size());
   int count=0;
+  long currentTimeMillis=System.currentTimeMillis();
   for (  Object key : keys) {
     byte[] b=(byte[])tree.get(key);
     if (b == null)     continue;
     InternalCacheValue ice=(InternalCacheValue)getMarshaller().objectFromByteBuffer(b);
-    if (ice.isExpired()) {
+    if (ice.isExpired(currentTimeMillis)) {
       tree.remove(key);
       count++;
     }
