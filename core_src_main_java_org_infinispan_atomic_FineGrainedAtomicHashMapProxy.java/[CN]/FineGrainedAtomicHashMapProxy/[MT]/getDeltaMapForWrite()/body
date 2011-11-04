@@ -1,0 +1,24 @@
+{
+  CacheEntry lookedUpEntry=lookupEntryFromCurrentTransaction();
+  boolean lockedAndCopied=lookedUpEntry != null && lookedUpEntry.isChanged() && toMap(lookedUpEntry.getValue()).copied;
+  if (lockedAndCopied) {
+    return getDeltaMapForRead();
+  }
+ else {
+    boolean suppressLocks=flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
+    if (!suppressLocks && flagContainer != null)     flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
+    if (trace) {
+      if (suppressLocks)       log.trace("Skip locking flag used.  Skipping locking.");
+ else       log.trace("Forcing write lock even for reads");
+    }
+    if (suppressLocks)     flagContainer.setFlags(Flag.SKIP_LOCKING);
+    AtomicHashMap<K,V> map=getDeltaMapForRead();
+    boolean insertNewMap=map == null;
+    AtomicHashMap<K,V> copy=insertNewMap ? new AtomicHashMap<K,V>(true) : map.copyForWrite();
+    copy.initForWriting();
+    if (insertNewMap) {
+      cache.put(deltaMapKey,copy);
+    }
+    return copy;
+  }
+}

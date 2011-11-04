@@ -1,6 +1,6 @@
 {
   Object retval=invokeNextInterceptor(ctx,command);
-  if (trace)   log.trace("Entering InvalidationInterceptor's prepare phase");
+  log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are %s",ctx.getFlags());
   if (shouldInvokeRemoteTxCommand(ctx)) {
     List<WriteCommand> mods=Arrays.asList(command.getModifications());
     Transaction runningTransaction=ctx.getTransaction();
@@ -8,7 +8,7 @@
     broadcastInvalidateForPrepare(mods,runningTransaction,ctx);
   }
  else {
-    if (trace)     log.trace("Nothing to invalidate - no modifications in the transaction.");
+    log.tracef("Nothing to invalidate - no modifications in the transaction.");
   }
   return retval;
 }
