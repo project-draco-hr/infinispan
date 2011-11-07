@@ -1,8 +1,14 @@
 {
-  if (store == null)   return true;
-  if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
-    if (trace)     log.trace("Passing up method call and bypassing this interceptor since the call contain a skip cache store flag");
+  if (store == null) {
+    log.trace("Skipping cache store because the cache loader does not implement CacheStore");
     return true;
+  }
+  if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+    log.trace("Skipping cache store since the call contain a skip cache store flag");
+    return true;
+  }
+  if (loaderConfig.isShared() && ctx.hasFlag(Flag.SKIP_SHARED_CACHE_STORE)) {
+    log.trace("Skipping cache store since it is shared and the call contain a skip shared cache store flag");
   }
   return false;
 }

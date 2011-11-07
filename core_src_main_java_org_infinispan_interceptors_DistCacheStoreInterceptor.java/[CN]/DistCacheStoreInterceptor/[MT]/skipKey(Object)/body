@@ -1,8 +1,16 @@
 {
   List<Address> addresses=dm.locate(key);
-  if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
-    if (trace)     log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " + "and the caller is not the first owner of the key, or the put call is an L1 put");
-    return true;
+  if (loaderConfig.isShared()) {
+    if (!isFirstOwner(addresses)) {
+      log.trace("Skipping cache store since the cache loader is shared " + "and the caller is not the first owner of the key");
+      return true;
+    }
+  }
+ else {
+    if (isL1Put(addresses)) {
+      log.trace("Skipping cache store since this is an L1 put");
+      return true;
+    }
   }
   return false;
 }

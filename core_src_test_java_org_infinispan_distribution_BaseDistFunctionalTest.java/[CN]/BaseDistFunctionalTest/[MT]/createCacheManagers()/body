@@ -1,26 +1,6 @@
 {
   cacheName="dist";
-  configuration=getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC,tx);
-  configuration.setRehashEnabled(performRehashing);
-  if (lockingMode != null) {
-    configuration.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
-  }
-  configuration.setNumOwners(numOwners);
-  if (!testRetVals) {
-    configuration.setUnsafeUnreliableReturnValues(true);
-    configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-  }
-  configuration.setInvocationBatchingEnabled(batchingEnabled);
-  configuration.setSyncReplTimeout(60,TimeUnit.SECONDS);
-  configuration.setLockAcquisitionTimeout(lockTimeout,TimeUnit.SECONDS);
-  configuration.setL1CacheEnabled(l1CacheEnabled);
-  configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
-  if (groupsEnabled) {
-    configuration.fluent().hash().groups().enabled(true);
-    configuration.fluent().hash().groups().groupers(groupers);
-  }
-  if (l1CacheEnabled)   configuration.setL1OnRehash(l1OnRehash);
-  if (l1CacheEnabled)   configuration.setL1InvalidationThreshold(l1Threshold);
+  configuration=buildConfiguration();
   caches=createClusteredCaches(INIT_CLUSTER_SIZE,cacheName,configuration,new TransportFlags().withFD(true));
   reorderBasedOnCHPositions();
   if (INIT_CLUSTER_SIZE > 0)   c1=caches.get(0);
