@@ -4,10 +4,12 @@
     LocalTransaction localTransaction=(LocalTransaction)txContext.getCacheTransaction();
     if (localTransaction.getAffectedKeys().containsAll(keys)) {
       log.tracef("We already have lock for keys %s, skip remote lock acquisition",keys);
+      return;
     }
  else {
       LockControlCommand lcc=cf.buildLockControlCommand(keys,true,ctx.getFlags(),txContext.getGlobalTransaction());
       invokeNextInterceptor(ctx,lcc);
     }
   }
+  ((TxInvocationContext)ctx).addAffectedKeys(keys);
 }

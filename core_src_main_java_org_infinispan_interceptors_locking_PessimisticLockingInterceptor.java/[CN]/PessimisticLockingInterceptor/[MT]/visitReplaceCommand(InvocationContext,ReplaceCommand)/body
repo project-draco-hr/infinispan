@@ -1,9 +1,11 @@
 {
   try {
+    final Object result=invokeNextInterceptor(ctx,command);
     final boolean localNodeOwnsLock=cdl.localNodeIsPrimaryOwner(command.getKey());
     acquireRemoteIfNeeded(ctx,command.getKey(),localNodeOwnsLock);
-    lockAndRegisterBackupLock((TxInvocationContext)ctx,command.getKey(),localNodeOwnsLock);
-    return invokeNextInterceptor(ctx,command);
+    final TxInvocationContext txContext=(TxInvocationContext)ctx;
+    lockAndRegisterBackupLock(txContext,command.getKey(),localNodeOwnsLock);
+    return result;
   }
  catch (  Throwable te) {
     releaseLocksOnFailureBeforePrepare(ctx);

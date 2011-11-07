@@ -1,10 +1,12 @@
 {
   try {
+    final Object result=invokeNextInterceptor(ctx,command);
     acquireRemoteIfNeeded(ctx,command.getMap().keySet());
+    final TxInvocationContext txContext=(TxInvocationContext)ctx;
     for (    Object key : command.getMap().keySet()) {
-      lockAndRegisterBackupLock((TxInvocationContext)ctx,key);
+      lockAndRegisterBackupLock(txContext,key);
     }
-    return invokeNextInterceptor(ctx,command);
+    return result;
   }
  catch (  Throwable te) {
     releaseLocksOnFailureBeforePrepare(ctx);

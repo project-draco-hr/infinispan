@@ -1,6 +1,14 @@
 {
   if (trace)   log.tracef("Doing a remote get for key %s",key);
-  InternalCacheEntry ice=dm.retrieveFromRemoteSource(key,ctx);
+  boolean acquireRemoteLock=false;
+  if (ctx.isInTxScope()) {
+    TxInvocationContext txContext=(TxInvocationContext)ctx;
+    acquireRemoteLock=isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
+  }
+  InternalCacheEntry ice=dm.retrieveFromRemoteSource(key,ctx,acquireRemoteLock);
+  if (acquireRemoteLock) {
+    ((TxInvocationContext)ctx).addAffectedKey(key);
+  }
   if (ice != null) {
     if (storeInL1) {
       if (isL1CacheEnabled) {

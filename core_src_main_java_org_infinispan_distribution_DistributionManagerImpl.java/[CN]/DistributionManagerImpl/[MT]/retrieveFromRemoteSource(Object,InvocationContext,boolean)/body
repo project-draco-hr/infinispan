@@ -1,0 +1,18 @@
+{
+  GlobalTransaction gtx=acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
+  ClusteredGetCommand get=cf.buildClusteredGetCommand(key,ctx.getFlags(),acquireRemoteLock,gtx);
+  List<Address> targets=locate(key);
+  targets.remove(getAddress());
+  targets.retainAll(rpcManager.getTransport().getMembers());
+  ResponseFilter filter=new ClusteredGetResponseValidityFilter(targets);
+  Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,ResponseMode.SYNCHRONOUS,configuration.getSyncReplTimeout(),false,filter);
+  if (!responses.isEmpty()) {
+    for (    Response r : responses.values()) {
+      if (r instanceof SuccessfulResponse) {
+        InternalCacheValue cacheValue=(InternalCacheValue)((SuccessfulResponse)r).getResponseValue();
+        return cacheValue.toInternalCacheEntry(key);
+      }
+    }
+  }
+  return null;
+}

@@ -1,0 +1,16 @@
+{
+  log.trace("Here is where the fun starts..");
+  tm(0).begin();
+  o.execute();
+  assertKeyLockedCorrectly(k0);
+  assertEquals(crm.lockCount,0);
+  assertEquals(crm.clusterGet,1);
+  assertEquals(crm.otherCount,0);
+  tm(0).commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return crm.lockCount == 0 && crm.clusterGet == 1 && crm.otherCount == 2;
+    }
+  }
+);
+}
