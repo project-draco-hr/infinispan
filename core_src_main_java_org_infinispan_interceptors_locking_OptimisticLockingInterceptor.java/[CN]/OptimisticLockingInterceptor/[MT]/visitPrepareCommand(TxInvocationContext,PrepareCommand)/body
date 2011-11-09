@@ -1,8 +1,20 @@
 {
   try {
     abortIfRemoteTransactionInvalid(ctx,command);
-    for (    WriteCommand wc : command.getModifications()) {
-      wc.acceptVisitor(ctx,lockAquisitionVisitor);
+    if (command.writesToASingleKey()) {
+      log.trace("Not using lock reordering as we have a single key.");
+      acquireLocksVisitingCommands(ctx,command);
+    }
+ else {
+      LockReorderingVisitor lre=new LockReorderingVisitor(command.getModifications());
+      if (!lre.hasClear) {
+        log.tracef("Using lock reordering, order is: %s",lre.orderedKeys);
+        acquireAllLocks(ctx,lre.orderedKeys.iterator());
+      }
+ else {
+        log.trace("Not using lock reordering as the prepare contains a clear command.");
+        acquireLocksVisitingCommands(ctx,command);
+      }
     }
     return invokeNextAndCommitIf1Pc(ctx,command);
   }

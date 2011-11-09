@@ -1,0 +1,16 @@
+{
+  TransactionManager tm=cache.getAdvancedCache().getTransactionManager();
+  for (int i=0; i < NUM_TRANSACTIONS; i++) {
+    try {
+      tm.begin();
+      op.perform(keys,value,cache);
+      beforeCommit.await(10,TimeUnit.SECONDS);
+      tm.commit();
+    }
+ catch (    Throwable t) {
+      log.error("Exception:",t);
+      error=true;
+      return;
+    }
+  }
+}
