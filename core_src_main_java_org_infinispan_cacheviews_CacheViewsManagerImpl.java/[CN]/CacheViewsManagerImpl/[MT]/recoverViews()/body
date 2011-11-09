@@ -40,6 +40,7 @@
       log.tracef("%s: Recovered members (including joiners) are %s",cacheName,recoveredMembers);
       int partitionCount=0;
       List<Address> membersToProcess=new LinkedList<Address>(recoveredMembers);
+      List<CacheView> partitions=new ArrayList(2);
       while (!membersToProcess.isEmpty()) {
         Address node=membersToProcess.get(0);
         CacheView committedView=recoveryInfo.get(node).get(cacheName);
@@ -58,15 +59,17 @@
           if (pmViewId < minViewId)           minViewId=pmViewId;
         }
         if (minViewId != highestViewId) {
-          log.debugf("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " + "committing the view",partitionCount,partitionMembers,highestViewId,minViewId);
+          log.tracef("Found partition %d (%s) that should have committed view id %d but not all of them do (min view id %d), " + "committing the view",partitionCount,partitionMembers,highestViewId,minViewId);
           clusterCommitView(cacheName,highestViewId,partitionMembers,false);
         }
  else {
-          log.debugf("Found partition %d (%s) that has committed view id %d, sending a rollback command " + "to clear any pending prepare",partitionCount,partitionMembers,highestViewId);
+          log.tracef("Found partition %d (%s) that has committed view id %d, sending a rollback command " + "to clear any pending prepare",partitionCount,partitionMembers,highestViewId);
           clusterRollbackView(cacheName,highestViewId,partitionMembers,false);
         }
+        partitions.add(new CacheView(highestViewId,partitionMembers));
         partitionCount++;
       }
+      log.debugf("Recovered partitions after merge for cache %s: %s",cacheName,partitions);
       cacheViewInfo.getPendingChanges().recoveredViews(recoveredMembers,recoveredJoiners);
     }
   }

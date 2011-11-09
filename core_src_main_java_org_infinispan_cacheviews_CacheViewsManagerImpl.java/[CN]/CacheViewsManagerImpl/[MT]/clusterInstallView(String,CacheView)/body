@@ -1,20 +1,27 @@
 {
   boolean success=false;
   try {
+    log.debugf("Installing new view %s for cache %s",newView,cacheName);
     clusterPrepareView(cacheName,newView);
     success=true;
   }
  catch (  InterruptedException e) {
     Thread.currentThread().interrupt();
   }
+catch (  Throwable t) {
+    CacheView committedView=viewsInfo.get(cacheName).getCommittedView();
+    log.errorf(t,"Failed to prepare view %s for cache  %s, rolling back to view %s",newView,cacheName,committedView);
+  }
  finally {
     if (!isRunning())     return false;
     if (success) {
       clusterCommitView(cacheName,newView.getViewId(),newView.getMembers(),true);
+      log.debugf("Successfully installed view %s for cache %s",newView,cacheName);
     }
  else {
-      int committedViewId=viewsInfo.get(cacheName).getCommittedView().getViewId();
-      clusterRollbackView(cacheName,committedViewId,newView.getMembers(),true);
+      CacheView committedView=viewsInfo.get(cacheName).getCommittedView();
+      clusterRollbackView(cacheName,committedView.getViewId(),newView.getMembers(),true);
+      log.debugf("Rolled back to view %s for cache %s",committedView,cacheName);
     }
   }
   return success;
