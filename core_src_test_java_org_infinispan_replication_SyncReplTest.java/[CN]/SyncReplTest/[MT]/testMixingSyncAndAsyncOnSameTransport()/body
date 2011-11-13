@@ -1,28 +1,36 @@
 {
   Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  waitForClusterToForm("replSync");
   Transport originalTransport=null;
   RpcManagerImpl rpcManager=null;
+  RpcManagerImpl asyncRpcManager=null;
   Map<Address,Response> emptyResponses=Collections.emptyMap();
   try {
     Configuration asyncCache=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
     asyncCache.setUseAsyncMarshalling(true);
     defineConfigurationOnAllManagers("asyncCache",asyncCache);
     Cache asyncCache1=manager(0).getCache("asyncCache");
+    Cache asyncCache2=manager(1).getCache("asyncCache");
+    waitForClusterToForm("asyncCache");
     Transport mockTransport=createMock(Transport.class);
     Address mockAddressOne=createNiceMock(Address.class);
     Address mockAddressTwo=createNiceMock(Address.class);
+    replay(mockAddressOne,mockAddressTwo);
     List<Address> addresses=new LinkedList<Address>();
     addresses.add(mockAddressOne);
     addresses.add(mockAddressTwo);
     expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
     expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
-    replay(mockAddressOne,mockAddressTwo);
-    originalTransport=TestingUtil.extractComponent(asyncCache1,Transport.class);
-    rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(asyncCache1,RpcManager.class);
+    originalTransport=TestingUtil.extractGlobalComponent(cache1.getCacheManager(),Transport.class);
+    rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
     rpcManager.setTransport(mockTransport);
     expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(emptyResponses).once();
     replay(mockTransport);
     cache1.put("k","v");
+    verify(mockTransport);
+    asyncRpcManager=(RpcManagerImpl)TestingUtil.extractComponent(asyncCache1,RpcManager.class);
+    asyncRpcManager.setTransport(mockTransport);
     reset(mockTransport);
     expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
     expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
@@ -33,5 +41,6 @@
   }
   finally {
     if (rpcManager != null)     rpcManager.setTransport(originalTransport);
+    if (asyncRpcManager != null)     asyncRpcManager.setTransport(originalTransport);
   }
 }
