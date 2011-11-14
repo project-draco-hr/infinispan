@@ -1,0 +1,14 @@
+{
+  GlobalConfiguration newGC=gc.clone();
+  TestCacheManagerFactory.amendTransport(newGC);
+  Properties p=newGC.getTransportProperties();
+  String jgroupsCfg=p.getProperty(JGroupsTransport.CONFIGURATION_STRING);
+  try {
+    JChannel channel=new JChannel(jgroupsCfg);
+    channel.connect(newGC.getClusterName());
+    return channel;
+  }
+ catch (  Exception e) {
+    throw new CacheException(e);
+  }
+}
