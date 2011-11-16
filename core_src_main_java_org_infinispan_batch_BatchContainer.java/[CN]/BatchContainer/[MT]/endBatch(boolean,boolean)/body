@@ -1,6 +1,10 @@
 {
   BatchDetails bd=batchDetailsTl.get();
-  if (bd.tx == null)   return;
+  if (bd == null)   return;
+  if (bd.tx == null) {
+    batchDetailsTl.remove();
+    return;
+  }
   if (autoBatch)   bd.nestedInvocationCount--;
   if (!autoBatch || bd.nestedInvocationCount == 0) {
     Transaction existingTx=null;
@@ -21,8 +25,5 @@
         throw new CacheException("Failed resuming existing transaction " + existingTx,e);
       }
     }
-  }
- else {
-    batchDetailsTl.set(bd);
   }
 }

@@ -1,5 +1,6 @@
 {
   BatchDetails bd=batchDetailsTl.get();
+  if (bd == null)   bd=new BatchDetails();
   try {
     if (transactionManager.getTransaction() == null && bd.tx == null) {
       transactionManager.begin();
@@ -8,17 +9,17 @@
       bd.thread=Thread.currentThread();
       if (autoBatch)       bd.tx=transactionManager.getTransaction();
  else       bd.tx=transactionManager.suspend();
+      batchDetailsTl.set(bd);
       return true;
     }
  else {
       bd.nestedInvocationCount++;
+      batchDetailsTl.set(bd);
       return false;
     }
   }
  catch (  Exception e) {
+    batchDetailsTl.remove();
     throw new CacheException("Unable to start batch",e);
-  }
- finally {
-    batchDetailsTl.set(bd);
   }
 }
