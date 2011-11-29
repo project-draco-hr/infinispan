@@ -2,16 +2,17 @@
   final InjectionTarget<T> injectionTarget=event.getInjectionTarget();
   for (  InjectionPoint injectionPoint : injectionTarget.getInjectionPoints()) {
     final Annotated annotated=injectionPoint.getAnnotated();
+    final Type type=annotated.getBaseType();
     final Class<?> rawType=getRawType(annotated.getBaseType());
     final Set<Annotation> qualifiers=getQualifiers(beanManager,annotated.getAnnotations());
-    if (!annotated.isAnnotationPresent(Remote.class) && !getAnnotationsWithMetaAnnotation(qualifiers,Remote.class).isEmpty() && rawType.isAssignableFrom(RemoteCache.class)) {
-      Set<Annotation> current=remoteCacheInjectionPoints.get(annotated.getBaseType());
-      if (current == null) {
-        remoteCacheInjectionPoints.put(annotated.getBaseType(),qualifiers);
+    if (rawType.equals(RemoteCache.class) && qualifiers.isEmpty()) {
+      qualifiers.add(new AnnotationLiteral<Default>(){
       }
- else {
-        current.addAll(qualifiers);
-      }
+);
+      addRemoteCacheInjectionPoint(type,qualifiers);
+    }
+ else     if (!annotated.isAnnotationPresent(Remote.class) && getMetaAnnotation(annotated,Remote.class) != null && rawType.isAssignableFrom(RemoteCache.class)) {
+      addRemoteCacheInjectionPoint(type,qualifiers);
     }
   }
 }
