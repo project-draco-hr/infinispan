@@ -1,0 +1,16 @@
+{
+  org.infinispan.configuration.global.GlobalConfiguration gc=builder.build();
+  if (gc.transport().transport() != null) {
+    String fullTestName=perThreadCacheManagers.get().fullTestName;
+    String nextCacheName=perThreadCacheManagers.get().getNextCacheName();
+    if (fullTestName == null) {
+      String threadName=Thread.currentThread().getName();
+      String pattern="TestNGInvoker-";
+      if (threadName.startsWith(pattern)) {
+        fullTestName=threadName;
+        nextCacheName=threadName.substring(threadName.indexOf("-") + 1,threadName.indexOf('('));
+      }
+    }
+    builder.transport().addProperty(JGroupsTransport.CONFIGURATION_STRING,getJGroupsConfig(fullTestName,flags)).nodeName(nextCacheName);
+  }
+}
