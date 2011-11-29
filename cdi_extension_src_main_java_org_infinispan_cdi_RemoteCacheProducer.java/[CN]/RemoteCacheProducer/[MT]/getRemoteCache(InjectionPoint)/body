@@ -1,11 +1,9 @@
 {
-  for (  Annotation qualifier : injectionPoint.getQualifiers()) {
-    if (qualifier.annotationType().equals(Remote.class)) {
-      Remote remote=(Remote)qualifier;
-      if (!remote.value().isEmpty()) {
-        return defaultRemoteCacheManager.getCache(remote.value());
-      }
-    }
+  final Set<Annotation> qualifiers=injectionPoint.getQualifiers();
+  final RemoteCacheManager cacheManager=getRemoteCacheManager(qualifiers.toArray(new Annotation[0]));
+  final Remote remote=getRemoteAnnotation(injectionPoint.getQualifiers());
+  if (remote != null && !remote.value().isEmpty()) {
+    return cacheManager.getCache(remote.value());
   }
-  return defaultRemoteCacheManager.getCache();
+  return cacheManager.getCache();
 }
