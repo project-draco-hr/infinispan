@@ -4,13 +4,12 @@
     log.tracef("Ignoring cache view rollback for unknown cache %s",cacheName);
     return;
   }
-  boolean isLocal=cacheViewInfo.getCommittedView().contains(self);
-  if (isLocal || isCoordinator) {
+  if (cacheViewInfo.hasPendingView()) {
     log.debugf("%s: Rolling back to cache view %d, new view id is %d",cacheName,committedViewId,newViewId);
     cacheViewInfo.rollbackView(newViewId,committedViewId);
     cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
     CacheViewListener cacheViewListener=cacheViewInfo.getListener();
-    if (isLocal && cacheViewListener != null) {
+    if (cacheViewListener != null) {
       cacheViewListener.rollbackView(committedViewId);
     }
   }

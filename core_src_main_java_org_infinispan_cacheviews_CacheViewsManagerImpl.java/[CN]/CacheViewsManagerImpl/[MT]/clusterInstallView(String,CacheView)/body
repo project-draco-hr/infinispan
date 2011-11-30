@@ -1,4 +1,5 @@
 {
+  CacheViewInfo cacheViewInfo=viewsInfo.get(cacheName);
   boolean success=false;
   try {
     log.debugf("Installing new view %s for cache %s",newView,cacheName);
@@ -9,8 +10,7 @@
     Thread.currentThread().interrupt();
   }
 catch (  Throwable t) {
-    CacheView committedView=viewsInfo.get(cacheName).getCommittedView();
-    log.errorf(t,"Failed to prepare view %s for cache  %s, rolling back to view %s",newView,cacheName,committedView);
+    log.cacheViewPrepareFailure(t,newView,cacheName,cacheViewInfo.getCommittedView());
   }
  finally {
     if (!isRunning())     return false;
@@ -19,9 +19,9 @@ catch (  Throwable t) {
       log.debugf("Successfully installed view %s for cache %s",newView,cacheName);
     }
  else {
-      CacheView committedView=viewsInfo.get(cacheName).getCommittedView();
-      clusterRollbackView(cacheName,committedView.getViewId(),newView.getMembers(),true);
-      log.debugf("Rolled back to view %s for cache %s",committedView,cacheName);
+      CacheView previousCommittedView=cacheViewInfo.getCommittedView();
+      clusterRollbackView(cacheName,previousCommittedView.getViewId(),newView.getMembers(),true);
+      log.debugf("Rolled back to view %s for cache %s",previousCommittedView,cacheName);
     }
   }
   return success;

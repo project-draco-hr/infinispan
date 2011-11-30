@@ -4,12 +4,13 @@
     log.tracef("Ignoring view commit for unknown cache %s",cacheName);
     return;
   }
-  boolean isLocal=cacheViewInfo.getPendingView() != null && cacheViewInfo.getPendingView().contains(self);
-  if (isLocal || isCoordinator) {
+  if (cacheViewInfo.hasPendingView()) {
     log.debugf("%s: Committing cache view %d",cacheName,viewId);
     cacheViewInfo.commitView(viewId);
-    cacheViewInfo.getPendingChanges().resetChanges(cacheViewInfo.getCommittedView());
+    CacheView committedView=cacheViewInfo.getCommittedView();
+    cacheViewInfo.getPendingChanges().resetChanges(committedView);
     CacheViewListener cacheViewListener=cacheViewInfo.getListener();
+    boolean isLocal=committedView.contains(self);
     if (isLocal && cacheViewListener != null) {
       cacheViewListener.updateLeavers(cacheViewInfo.getPendingChanges().getLeavers());
       cacheViewListener.commitView(viewId);

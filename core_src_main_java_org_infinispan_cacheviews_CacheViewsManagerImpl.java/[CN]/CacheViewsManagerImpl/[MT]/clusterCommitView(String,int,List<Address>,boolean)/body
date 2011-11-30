@@ -8,10 +8,15 @@
     Map<Address,Response> rspList=transport.invokeRemotely(validTargets,cmd,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,false,null,false);
     checkRemoteResponse(cacheName,cmd,rspList);
   }
- catch (  Exception e) {
-    log.cacheViewCommitFailure(e,viewId,cacheName);
+ catch (  Throwable t) {
+    log.cacheViewCommitFailure(t,viewId,cacheName);
   }
   if (includeCoordinator || validTargets.contains(self)) {
-    handleCommitView(cacheName,viewId);
+    try {
+      handleCommitView(cacheName,viewId);
+    }
+ catch (    Throwable t) {
+      log.cacheViewCommitFailure(t,viewId,cacheName);
+    }
   }
 }
