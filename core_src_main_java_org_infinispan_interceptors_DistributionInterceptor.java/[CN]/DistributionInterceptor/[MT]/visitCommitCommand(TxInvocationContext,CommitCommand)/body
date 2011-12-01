@@ -3,19 +3,12 @@
     int newCacheViewId=-1;
     stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
     Collection<Address> preparedOn=((LocalTxInvocationContext)ctx).getRemoteLocksAcquired();
-    NotifyingNotifiableFuture<Object> f=null;
-    if (isL1CacheEnabled) {
-      f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
-    }
+    Future<?> f=flushL1Caches(ctx);
     sendCommitCommand(ctx,command,preparedOn);
-    if (f != null && configuration.isSyncCommitPhase()) {
-      try {
-        f.get();
-      }
- catch (      Exception e) {
-        if (log.isInfoEnabled())         log.failedInvalidatingRemoteCache(e);
-      }
-    }
+    blockOnL1FutureIfNeeded(f);
+  }
+ else   if (isL1CacheEnabled && !ctx.isOriginLocal() && !ctx.getLockedKeys().isEmpty()) {
+    blockOnL1FutureIfNeeded(flushL1Caches(ctx));
   }
   return invokeNextInterceptor(ctx,command);
 }

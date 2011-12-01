@@ -4,12 +4,13 @@
   if (shouldInvokeRemoteTxCommand(ctx)) {
     int newCacheViewId=-1;
     stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
-    NotifyingNotifiableFuture<Object> f=null;
-    if (isL1CacheEnabled && command.isOnePhaseCommit())     f=l1Manager.flushCache(ctx.getLockedKeys(),null,null);
+    if (command.isOnePhaseCommit())     flushL1Caches(ctx);
     Collection<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
     rpcManager.invokeRemotely(recipients,command,sync);
     ((LocalTxInvocationContext)ctx).remoteLocksAcquired(recipients);
-    if (f != null)     f.get();
+  }
+ else   if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal()&& !ctx.getLockedKeys().isEmpty()) {
+    flushL1Caches(ctx);
   }
   return retVal;
 }
