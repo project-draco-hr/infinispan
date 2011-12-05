@@ -1,20 +1,14 @@
 {
-  Configuration cfg=cr.getComponent(Configuration.class);
-  if (cfg.isIndexingEnabled()) {
-    InterceptorChain interceptorChain=cr.getComponent(InterceptorChain.class);
-    CommandInterceptor chainElement=interceptorChain.getFirstInChain();
+  InterceptorChain interceptorChain=cr.getComponent(InterceptorChain.class);
+  CommandInterceptor chainElement=interceptorChain.getFirstInChain();
+  if (chainElement instanceof QueryInterceptor) {
+    return true;
+  }
+  while (chainElement.hasNext()) {
+    chainElement=chainElement.getNext();
     if (chainElement instanceof QueryInterceptor) {
       return true;
     }
-    while (chainElement.hasNext()) {
-      chainElement=chainElement.getNext();
-      if (chainElement instanceof QueryInterceptor) {
-        return true;
-      }
-    }
-    return false;
   }
- else {
-    return true;
-  }
+  return false;
 }

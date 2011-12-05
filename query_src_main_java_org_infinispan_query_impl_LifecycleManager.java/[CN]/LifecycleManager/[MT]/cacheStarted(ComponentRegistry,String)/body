@@ -1,4 +1,12 @@
 {
+  Configuration configuration=cr.getComponent(Configuration.class);
+  boolean indexingEnabled=configuration.isIndexingEnabled();
+  if (!indexingEnabled) {
+    if (verifyChainContainsQueryInterceptor(cr)) {
+      throw new IllegalStateException("It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found");
+    }
+    return;
+  }
   if (!verifyChainContainsQueryInterceptor(cr)) {
     throw new IllegalStateException("It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found");
   }
