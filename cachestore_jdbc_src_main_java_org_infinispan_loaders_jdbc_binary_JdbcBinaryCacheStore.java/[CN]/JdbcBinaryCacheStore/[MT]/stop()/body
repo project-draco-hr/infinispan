@@ -1,11 +1,24 @@
 {
+  super.stop();
+  Throwable cause=null;
   try {
     tableManipulation.stop();
   }
-  finally {
+ catch (  Throwable t) {
+    if (cause == null)     cause=t;
+    log.debug("Exception while stopping",t);
+  }
+  try {
     if (config.isManageConnectionFactory()) {
       log.tracef("Stopping mananged connection factory: %s",connectionFactory);
       connectionFactory.stop();
     }
+  }
+ catch (  Throwable t) {
+    if (cause == null)     cause=t;
+    log.debug("Exception while stopping",t);
+  }
+  if (cause != null) {
+    throw new CacheLoaderException("Exceptions occurred while stopping store",cause);
   }
 }
