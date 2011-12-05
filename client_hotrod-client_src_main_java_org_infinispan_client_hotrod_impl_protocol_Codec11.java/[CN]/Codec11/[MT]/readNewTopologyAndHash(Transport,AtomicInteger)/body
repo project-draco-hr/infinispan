@@ -3,40 +3,31 @@
   topologyId.set(newTopologyId);
   int numKeyOwners=transport.readUnsignedShort();
   short hashFctVersion=transport.readByte();
+  ConsistentHash ch=null;
+  if (hashFctVersion != 0)   ch=transport.getTransportFactory().getConsistentHashFactory().newConsistentHash(hashFctVersion);
+ else   log.trace("Not using a consistent hash function (hash function version == 0)");
+  int hashSpace=transport.readVInt();
+  int clusterSize=transport.readVInt();
+  int numVirtualNodes=transport.readVInt();
+  log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " + "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",newTopologyId,numKeyOwners,hashFctVersion,hashSpace,clusterSize,numVirtualNodes);
+  Map<SocketAddress,Set<Integer>> servers2Hash=new LinkedHashMap<SocketAddress,Set<Integer>>();
+  for (int i=0; i < clusterSize; i++) {
+    String host=transport.readString();
+    int port=transport.readUnsignedShort();
+    int baseHashCode=transport.read4ByteInt();
+    int normalizedHashCode=getNormalizedHash(baseHashCode,ch);
+    log.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",host,port,baseHashCode,normalizedHashCode);
+    cacheHashCode(servers2Hash,host,port,normalizedHashCode);
+    if (numVirtualNodes > 1)     calcVirtualHashCodes(baseHashCode,numVirtualNodes,servers2Hash,host,port,ch);
+  }
+  if (log.isInfoEnabled()) {
+    log.newTopology(servers2Hash.keySet());
+  }
+  transport.getTransportFactory().updateServers(servers2Hash.keySet());
   if (hashFctVersion == 0) {
-    log.trace("Not using a consistent hash function (hash function version == 0).");
-    transport.readVInt();
-    int clusterSize=transport.readVInt();
-    transport.readVInt();
-    Set<SocketAddress> addresses=new HashSet<SocketAddress>();
-    for (int i=0; i < clusterSize; i++) {
-      String host=transport.readString();
-      int port=transport.readUnsignedShort();
-      log.tracef("Server read: %s:%d",host,port);
-      addresses.add(new InetSocketAddress(host,port));
-    }
-    if (log.isInfoEnabled())     log.newTopology(addresses);
-    transport.getTransportFactory().updateServers(addresses);
+    log.trace("Not using a consistent hash function (hash function version == 0)");
   }
  else {
-    ConsistentHash ch=transport.getTransportFactory().getConsistentHashFactory().newConsistentHash(hashFctVersion);
-    int hashSpace=transport.readVInt();
-    int clusterSize=transport.readVInt();
-    int numVirtualNodes=transport.readVInt();
-    log.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " + "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",newTopologyId,numKeyOwners,hashFctVersion,hashSpace,clusterSize,numVirtualNodes);
-    Map<SocketAddress,Set<Integer>> servers2Hash=new LinkedHashMap<SocketAddress,Set<Integer>>();
-    for (int i=0; i < clusterSize; i++) {
-      String host=transport.readString();
-      int port=transport.readUnsignedShort();
-      log.tracef("Server read: %s:%d",host,port);
-      int hashCode=calcNodeHashCode(host,port,ch);
-      cacheHashCode(servers2Hash,host,port,hashCode);
-      if (numVirtualNodes > 1)       calcVirtualHashCodes(ch,numVirtualNodes,servers2Hash,host,port);
-    }
-    if (log.isInfoEnabled()) {
-      log.newTopology(servers2Hash.keySet());
-    }
-    transport.getTransportFactory().updateServers(servers2Hash.keySet());
     transport.getTransportFactory().updateHashFunction(servers2Hash,numKeyOwners,hashFctVersion,hashSpace);
   }
 }
