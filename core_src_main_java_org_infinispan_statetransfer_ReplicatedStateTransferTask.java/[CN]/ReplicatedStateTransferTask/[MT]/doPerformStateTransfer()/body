@@ -9,24 +9,21 @@
  else {
     log.tracef("Replicating: chOld = %s, chNew = %s",chOld,chNew);
     if (configuration.isStateTransferEnabled() && !initialView) {
-      final Collection<InternalCacheEntry> state=new ArrayList<InternalCacheEntry>();
+      final ByRef<Collection<InternalCacheEntry>> state=new ByRef<Collection<InternalCacheEntry>>(new ArrayList<InternalCacheEntry>());
       for (      InternalCacheEntry ice : dataContainer) {
-        replicate(ice.getKey(),ice,chOld,chNew,null,state);
+        replicate(ice.getKey(),ice,chOld,joiners,null,state);
       }
       CacheStore cacheStore=stateTransferManager.getCacheStoreForStateTransfer();
       if (cacheStore != null) {
         for (        Object key : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-          replicate(key,null,chOld,chNew,cacheStore,state);
+          replicate(key,null,chOld,joiners,cacheStore,state);
         }
       }
  else {
         if (trace)         log.trace("No cache store or cache store is shared, not replicating stored keys");
       }
-      final Map<Address,Collection<InternalCacheEntry>> states=new HashMap<Address,Collection<InternalCacheEntry>>();
-      for (      Address joiner : joiners) {
-        states.put(joiner,state);
-      }
-      pushState(states);
+      pushPartialState(joiners,state.get());
+      finishPushingState();
     }
  else {
       if (!initialView)       log.trace("State transfer not enabled, so not pushing state");

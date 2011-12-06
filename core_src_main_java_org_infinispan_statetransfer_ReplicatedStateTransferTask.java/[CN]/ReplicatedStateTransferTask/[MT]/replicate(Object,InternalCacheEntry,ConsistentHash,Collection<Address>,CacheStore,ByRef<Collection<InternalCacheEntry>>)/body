@@ -11,6 +11,11 @@
         log.failedLoadingValueFromCacheStore(key);
       }
     }
+    Collection<InternalCacheEntry> state=stateRef.get();
     if (value != null)     state.add(value);
+    if (state.size() >= stateTransferChunkSize) {
+      pushPartialState(joiners,state);
+      stateRef.set(new ArrayList());
+    }
   }
 }

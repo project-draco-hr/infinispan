@@ -26,7 +26,10 @@
       if (trace)       log.trace("No cache store or cache store is shared, not rebalancing stored keys");
     }
     checkIfCancelled();
-    pushState(states);
+    for (    Map.Entry<Address,Collection<InternalCacheEntry>> entry : states.entrySet()) {
+      pushPartialState(Collections.singleton(entry.getKey()),entry.getValue());
+    }
+    finishPushingState();
   }
  else {
     if (!initialView)     log.trace("Rehash not enabled, so not pushing state");
