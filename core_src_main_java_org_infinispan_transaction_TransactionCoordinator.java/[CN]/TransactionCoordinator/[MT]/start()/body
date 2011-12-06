@@ -1,0 +1,24 @@
+{
+  if (configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC && configuration.isEnableVersioning()) {
+    commandCreator=new CommandCreator(){
+      @Override public CommitCommand createCommitCommand(      GlobalTransaction gtx){
+        return commandsFactory.buildVersionedCommitCommand(gtx);
+      }
+      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications){
+        return commandsFactory.buildVersionedPrepareCommand(gtx,modifications);
+      }
+    }
+;
+  }
+ else {
+    commandCreator=new CommandCreator(){
+      @Override public CommitCommand createCommitCommand(      GlobalTransaction gtx){
+        return commandsFactory.buildCommitCommand(gtx);
+      }
+      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications){
+        return commandsFactory.buildPrepareCommand(gtx,modifications,false);
+      }
+    }
+;
+  }
+}

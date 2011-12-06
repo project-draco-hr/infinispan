@@ -6,7 +6,7 @@
     stateTransferLock.waitForStateTransferToEnd(ctx,command,newCacheViewId);
     if (command.isOnePhaseCommit())     flushL1Caches(ctx);
     Collection<Address> recipients=dm.getAffectedNodes(ctx.getAffectedKeys());
-    rpcManager.invokeRemotely(recipients,command,sync);
+    prepareOnAffectedNodes(ctx,command,recipients,sync);
     ((LocalTxInvocationContext)ctx).remoteLocksAcquired(recipients);
   }
  else   if (isL1CacheEnabled && command.isOnePhaseCommit() && !ctx.isOriginLocal()&& !ctx.getLockedKeys().isEmpty()) {

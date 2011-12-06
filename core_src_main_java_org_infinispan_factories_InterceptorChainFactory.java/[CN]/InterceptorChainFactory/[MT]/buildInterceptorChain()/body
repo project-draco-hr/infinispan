@@ -1,4 +1,5 @@
 {
+  boolean needsVersionAwareComponents=configuration.isTransactionalCache() && configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC && configuration.isEnableVersioning();
   boolean invocationBatching=configuration.isInvocationBatchingEnabled();
   CommandInterceptor first;
   if (invocationBatching) {
@@ -35,7 +36,8 @@
  else {
     interceptorChain.appendInterceptor(createInterceptor(NonTransactionalLockingInterceptor.class));
   }
-  interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
+  if (needsVersionAwareComponents && configuration.getCacheMode().isClustered())   interceptorChain.appendInterceptor(createInterceptor(VersionedEntryWrappingInterceptor.class));
+ else   interceptorChain.appendInterceptor(createInterceptor(EntryWrappingInterceptor.class));
   if (configuration.isUsingCacheLoaders()) {
     if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
       interceptorChain.appendInterceptor(createInterceptor(ActivationInterceptor.class));
@@ -59,6 +61,10 @@ interceptorChain.appendInterceptor(createInterceptor(DeadlockDetectingIntercepto
 }
 switch (configuration.getCacheMode()) {
 case REPL_SYNC:
+if (needsVersionAwareComponents) {
+interceptorChain.appendInterceptor(createInterceptor(VersionedReplicationInterceptor.class));
+break;
+}
 case REPL_ASYNC:
 interceptorChain.appendInterceptor(createInterceptor(ReplicationInterceptor.class));
 break;
@@ -67,6 +73,10 @@ case INVALIDATION_ASYNC:
 interceptorChain.appendInterceptor(createInterceptor(InvalidationInterceptor.class));
 break;
 case DIST_SYNC:
+if (needsVersionAwareComponents) {
+interceptorChain.appendInterceptor(createInterceptor(VersionedDistributionInterceptor.class));
+break;
+}
 case DIST_ASYNC:
 interceptorChain.appendInterceptor(createInterceptor(DistributionInterceptor.class));
 break;

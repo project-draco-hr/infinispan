@@ -1,0 +1,15 @@
+{
+  if (!rpcManager.getTransport().isCoordinator()) {
+    Map<Address,Response> resps=rpcManager.invokeRemotely(null,command,true,true);
+    Response r=resps.get(rpcManager.getTransport().getCoordinator());
+    CacheTransaction ct=context.getCacheTransaction();
+    if (r.isSuccessful()) {
+      SuccessfulResponse sr=(SuccessfulResponse)r;
+      EntryVersionsMap uv=(EntryVersionsMap)sr.getResponseValue();
+      ct.setUpdatedEntryVersions(uv);
+    }
+  }
+ else {
+    super.broadcastPrepare(context,command);
+  }
+}
