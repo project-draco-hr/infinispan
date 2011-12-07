@@ -1,11 +1,16 @@
 {
   if (deleteRowSql == null) {
-    if (DatabaseType.SYBASE == getDatabaseType()) {
+switch (getDatabaseType()) {
+case SYBASE:
       deleteRowSql="DELETE FROM " + getTableName() + " WHERE "+ idColumnName+ " = convert("+ idColumnType+ ","+ "?)";
-    }
- else {
-      deleteRowSql="DELETE FROM " + getTableName() + " WHERE "+ idColumnName+ " = ?";
-    }
-  }
-  return deleteRowSql;
+    break;
+case POSTGRES:
+  deleteRowSql="DELETE FROM " + getTableName() + " WHERE "+ idColumnName+ " = cast(? as "+ idColumnType+ ")";
+break;
+default :
+deleteRowSql="DELETE FROM " + getTableName() + " WHERE "+ idColumnName+ " = ?";
+break;
+}
+}
+return deleteRowSql;
 }

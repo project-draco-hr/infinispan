@@ -1,11 +1,16 @@
 {
   if (updateRowSql == null) {
-    if (DatabaseType.SYBASE == getDatabaseType()) {
+switch (getDatabaseType()) {
+case SYBASE:
       updateRowSql="UPDATE " + getTableName() + " SET "+ dataColumnName+ " = ? , "+ timestampColumnName+ "=? WHERE "+ idColumnName+ " = convert("+ idColumnType+ ","+ "?)";
-    }
- else {
-      updateRowSql="UPDATE " + getTableName() + " SET "+ dataColumnName+ " = ? , "+ timestampColumnName+ "=? WHERE "+ idColumnName+ " = ?";
-    }
-  }
-  return updateRowSql;
+    break;
+case POSTGRES:
+  updateRowSql="UPDATE " + getTableName() + " SET "+ dataColumnName+ " = ? , "+ timestampColumnName+ "=? WHERE "+ idColumnName+ " = cast(? as "+ idColumnType+ ")";
+break;
+default :
+updateRowSql="UPDATE " + getTableName() + " SET "+ dataColumnName+ " = ? , "+ timestampColumnName+ "=? WHERE "+ idColumnName+ " = ?";
+break;
+}
+}
+return updateRowSql;
 }

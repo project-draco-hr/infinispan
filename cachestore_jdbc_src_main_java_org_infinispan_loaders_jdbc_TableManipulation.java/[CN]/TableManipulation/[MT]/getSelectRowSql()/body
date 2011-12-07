@@ -1,11 +1,16 @@
 {
   if (selectRowSql == null) {
-    if (DatabaseType.SYBASE == getDatabaseType()) {
+switch (getDatabaseType()) {
+case SYBASE:
       selectRowSql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ getTableName()+ " WHERE "+ idColumnName+ " = convert("+ idColumnType+ ","+ "?)";
-    }
- else {
-      selectRowSql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ getTableName()+ " WHERE "+ idColumnName+ " = ?";
-    }
-  }
-  return selectRowSql;
+    break;
+case POSTGRES:
+  selectRowSql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ getTableName()+ " WHERE "+ idColumnName+ " = cast(? as "+ idColumnType+ ")";
+break;
+default :
+selectRowSql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ getTableName()+ " WHERE "+ idColumnName+ " = ?";
+break;
+}
+}
+return selectRowSql;
 }
