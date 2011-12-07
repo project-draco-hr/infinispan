@@ -1,0 +1,8 @@
+{
+  long lifespan=cacheEntry.getLifespan();
+  long maxIdle=cacheEntry.getMaxIdle();
+  if (lifespan < 0 && maxIdle < 0)   return new VersionedImmortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion());
+  if (lifespan > -1 && maxIdle < 0)   return new VersionedMortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),-1,lifespan);
+  if (lifespan < 0 && maxIdle > -1)   return new VersionedTransientCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),maxIdle,-1);
+  return new VersionedTransientMortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),-1,lifespan,maxIdle,-1);
+}

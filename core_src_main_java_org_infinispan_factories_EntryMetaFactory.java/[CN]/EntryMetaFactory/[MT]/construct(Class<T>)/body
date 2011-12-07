@@ -1,6 +1,11 @@
 {
-  if (configuration.getCacheMode().isClustered() && configuration.isTransactionalCache() && configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ && configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC) {
-    return (T)new IncrementalVersionableEntryFactoryImpl();
+  boolean useVersioning=configuration.getCacheMode().isClustered() && configuration.isTransactionalCache() && configuration.getIsolationLevel() == IsolationLevel.REPEATABLE_READ && configuration.isWriteSkewCheck() && configuration.getTransactionLockingMode() == LockingMode.OPTIMISTIC;
+  if (componentType.equals(EntryFactory.class)) {
+    if (useVersioning)     return (T)new IncrementalVersionableEntryFactoryImpl();
+ else     return (T)new EntryFactoryImpl();
   }
-  return (T)new EntryFactoryImpl();
+ else {
+    if (useVersioning)     return (T)new VersionedInternalEntryFactoryImpl();
+ else     return (T)new InternalEntryFactoryImpl();
+  }
 }

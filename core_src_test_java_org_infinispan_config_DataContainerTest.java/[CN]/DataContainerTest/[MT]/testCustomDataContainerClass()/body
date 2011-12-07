@@ -4,7 +4,9 @@
   EmbeddedCacheManager cm=TestCacheManagerFactory.fromStream(stream);
   try {
     AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
-    QueryableDataContainer.setDelegate(DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel()));
+    DataContainer ddc=DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
+    ((DefaultDataContainer)ddc).initialize(null,null,new InternalEntryFactoryImpl());
+    QueryableDataContainer.setDelegate(ddc);
     Assert.assertEquals(cm.getDefaultConfiguration().getDataContainerClass(),QueryableDataContainer.class.getName());
     Assert.assertEquals(cache.getDataContainer().getClass(),QueryableDataContainer.class);
     QueryableDataContainer dataContainer=QueryableDataContainer.class.cast(cache.getDataContainer());

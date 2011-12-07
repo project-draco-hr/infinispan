@@ -1,0 +1,83 @@
+{
+  EntryVersion version=ice.getVersion();
+  if (ice instanceof ImmortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return ice;
+      }
+ else {
+        return new VersionedTransientCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new VersionedMortalCacheEntry(ice.getKey(),ice.getValue(),version,lifespan);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new VersionedTransientMortalCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof MortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new VersionedImmortalCacheEntry(ice.getKey(),ice.getValue(),version);
+      }
+ else {
+        return new VersionedTransientCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        ice.setLifespan(lifespan);
+        return ice;
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new VersionedTransientMortalCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof TransientCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new VersionedImmortalCacheEntry(ice.getKey(),ice.getVersion(),version);
+      }
+ else {
+        ice.setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new VersionedMortalCacheEntry(ice.getKey(),ice.getValue(),version,lifespan);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new VersionedTransientMortalCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof TransientMortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new VersionedImmortalCacheEntry(ice.getKey(),ice.getValue(),version);
+      }
+ else {
+        return new VersionedTransientCacheEntry(ice.getKey(),ice.getValue(),version,maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new VersionedMortalCacheEntry(ice.getKey(),ice.getValue(),version,lifespan);
+      }
+ else {
+        ice.setLifespan(lifespan);
+        ice.setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+  }
+  return ice;
+}
