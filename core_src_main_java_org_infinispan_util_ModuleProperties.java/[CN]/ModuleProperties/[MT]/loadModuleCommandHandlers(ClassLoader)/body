@@ -1,33 +1,25 @@
 {
-  try {
+  ServiceLoader<ModuleCommandExtensions> moduleCmdExtLoader=ServiceLoader.load(ModuleCommandExtensions.class,cl);
+  if (moduleCmdExtLoader.iterator().hasNext()) {
     commandFactories=new HashMap<Byte,ModuleCommandFactory>(1);
-    commandInitializers=new HashMap<Byte,Class<? extends ModuleCommandInitializer>>(1);
+    commandInitializers=new HashMap<Byte,ModuleCommandInitializer>(1);
     moduleCommands=new HashSet<Class<? extends ReplicableCommand>>(1);
-    Map<String,ModuleProperties> p=getModuleProperties(cl);
-    for (    Map.Entry<String,ModuleProperties> module : p.entrySet()) {
-      String factClass=module.getValue().getCommandFactoryClassName();
-      String initClass=module.getValue().getCommandInitializerClassName();
-      if (factClass != null && initClass != null) {
-        try {
-          ModuleCommandFactory fact=(ModuleCommandFactory)Util.getInstance(factClass,cl);
-          Class<? extends ModuleCommandInitializer> initClazz=Util.loadClass(initClass,cl);
-          for (          Map.Entry<Byte,Class<? extends ReplicableCommand>> entry : fact.getModuleCommands().entrySet()) {
-            byte id=entry.getKey();
-            if (commandFactories.containsKey(id))             throw new IllegalArgumentException("Module " + module.getKey() + " cannot use id "+ id+ " for commands, as it is already in use by "+ commandFactories.get(id).getClass().getName());
-            commandFactories.put(id,fact);
-            commandInitializers.put(id,initClazz);
-            moduleCommands.add(entry.getValue());
-          }
-        }
- catch (        Exception e) {
-          throw new CacheException("Unable to load factory class " + factClass + " for module "+ module.getKey());
-        }
+    for (    ModuleCommandExtensions extension : moduleCmdExtLoader) {
+      log.debugf("Loading module command extension SPI class: %s",extension);
+      ExtendedModuleCommandFactory cmdFactory=extension.getModuleCommandFactory();
+      ModuleCommandInitializer cmdInitializer=extension.getModuleCommandInitializer();
+      for (      Map.Entry<Byte,Class<? extends ReplicableCommand>> command : cmdFactory.getModuleCommands().entrySet()) {
+        byte id=command.getKey();
+        if (commandFactories.containsKey(id))         throw new IllegalArgumentException(String.format("Cannot use id %d for commands, as it is already in use by %s",id,commandFactories.get(id).getClass().getName()));
+        commandFactories.put(id,cmdFactory);
+        moduleCommands.add(command.getValue());
+        commandInitializers.put(id,cmdInitializer);
       }
     }
   }
- catch (  IOException ioe) {
+ else {
+    log.debugf("No module command extensions to load");
     commandInitializers=Collections.emptyMap();
     commandFactories=Collections.emptyMap();
-    throw new CacheException("IO Exception reading module properties file!",ioe);
   }
 }

@@ -1,26 +1,15 @@
 {
-  try {
+  ServiceLoader<ModuleLifecycle> moduleLifecycleLoader=ServiceLoader.load(ModuleLifecycle.class,cl);
+  if (moduleLifecycleLoader.iterator().hasNext()) {
     List<ModuleLifecycle> lifecycles=new ArrayList<ModuleLifecycle>();
-    Map<String,ModuleProperties> p=getModuleProperties(cl);
-    for (    Map.Entry<String,ModuleProperties> m : p.entrySet()) {
-      log.debugf("Loading module properties: %s",m.getValue());
-      try {
-        String lifecycleClassName=m.getValue().getLifecycleClassName();
-        if (lifecycleClassName != null && !lifecycleClassName.isEmpty()) {
-          log.debugf("Loading lifecycle SPI class: %s",lifecycleClassName);
-          Class<?> loadClass=Util.loadClassStrict(lifecycleClassName,cl);
-          Object proxy=Proxies.newCatchThrowableProxy(loadClass.newInstance());
-          ModuleLifecycle ml=(ModuleLifecycle)proxy;
-          lifecycles.add(ml);
-        }
-      }
- catch (      Exception e) {
-        log.couldNotInitializeModule(m.getKey(),e);
-      }
+    for (    ModuleLifecycle lifecycle : moduleLifecycleLoader) {
+      log.debugf("Loading lifecycle SPI class: %s",lifecycle);
+      lifecycles.add(lifecycle);
     }
     return lifecycles;
   }
- catch (  Exception e) {
+ else {
+    log.debugf("No module lifecycle SPI classes available");
     return Collections.emptyList();
   }
 }
