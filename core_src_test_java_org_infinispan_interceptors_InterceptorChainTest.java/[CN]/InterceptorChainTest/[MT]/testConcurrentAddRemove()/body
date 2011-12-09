@@ -1,20 +1,2 @@
 {
-  CountDownLatch delayRemoveLatch=new CountDownLatch(1);
-  InterceptorChain ic=new MockInterceptorChain(new CallInterceptor(),delayRemoveLatch);
-  ic.addInterceptor(new CacheMgmtInterceptor(),1);
-  int nbWriters=2;
-  CyclicBarrier barrier=new CyclicBarrier(nbWriters + 1);
-  List<Future<Void>> futures=new ArrayList<Future<Void>>(nbWriters);
-  ExecutorService executorService=Executors.newCachedThreadPool();
-  try {
-    futures.add(executorService.submit(new ChainAdd(ic,barrier)));
-    futures.add(executorService.submit(new ChainRemove(ic,barrier)));
-    barrier.await();
-    barrier.await();
-    log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
-    for (    Future<Void> future : futures)     future.get();
-  }
-  finally {
-    executorService.shutdownNow();
-  }
 }
