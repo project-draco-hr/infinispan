@@ -1,0 +1,32 @@
+{
+  ConfigurationBuilderHolder holder=new ConfigurationBuilderHolder();
+  Element root=ParseUtils.nextElement(reader);
+  if (root.getLocalName() != Element.ROOT.getLocalName()) {
+    ParseUtils.missingRequiredElement(reader,Collections.singleton(Element.ROOT));
+  }
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case DEFAULT:
+{
+        parseDefaultCache(reader,holder.getDefaultConfigurationBuilder());
+        break;
+      }
+case GLOBAL:
+{
+      parseGlobal(reader,holder.getGlobalConfigurationBuilder());
+      break;
+    }
+case NAMED_CACHE:
+{
+    parseNamedCache(reader,holder.newConfigurationBuilder());
+    break;
+  }
+default :
+{
+  throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+return holder;
+}

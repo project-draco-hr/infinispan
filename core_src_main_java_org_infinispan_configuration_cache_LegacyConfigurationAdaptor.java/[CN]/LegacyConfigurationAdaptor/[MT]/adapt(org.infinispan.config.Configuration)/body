@@ -25,7 +25,12 @@
     builder.clustering().sync().replTimeout(legacy.getSyncReplTimeout());
   }
   for (  CustomInterceptorConfig interceptor : legacy.getCustomInterceptors()) {
-    builder.clustering().customInterceptors().addInterceptor(interceptor.getInterceptor());
+    InterceptorConfigurationBuilder interceptorConfigurationBuilder=builder.clustering().customInterceptors().addInterceptor();
+    interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(),legacy.getClassLoader()));
+    interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(),legacy.getClassLoader()));
+    interceptorConfigurationBuilder.index(interceptor.getIndex());
+    interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
+    interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
   }
   builder.dataContainer().dataContainer(legacy.getDataContainer()).withProperties(legacy.getDataContainerProperties());
   if (legacy.isDeadlockDetectionEnabled()) {

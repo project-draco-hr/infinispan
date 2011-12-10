@@ -1,0 +1,51 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceSystemProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case AUTO_COMMIT:
+      builder.transaction().autoCommit(Boolean.valueOf(value).booleanValue());
+    break;
+case CACHE_STOP_TIMEOUT:
+  builder.transaction().cacheStopTimeout(Integer.valueOf(value).intValue());
+break;
+case EAGER_LOCK_SINGLE_NODE:
+builder.transaction().eagerLockingSingleNode(Boolean.valueOf(value).booleanValue());
+break;
+case LOCKING_MODE:
+builder.transaction().lockingMode(LockingMode.valueOf(value));
+break;
+case SYNC_COMMIT_PHASE:
+builder.transaction().syncCommitPhase(Boolean.valueOf(value).booleanValue());
+break;
+case SYNC_ROLLBACK_PHASE:
+builder.transaction().syncRollbackPhase(Boolean.valueOf(value).booleanValue());
+break;
+case TRANSACTION_MANAGER_LOOKUP_CLASS:
+builder.transaction().transactionManagerLookup(Util.<TransactionManagerLookup>getInstance(value,cl));
+break;
+case TRANSACTION_MODE:
+builder.transaction().transactionMode(TransactionMode.valueOf(value));
+break;
+case USE_EAGER_LOCKING:
+builder.transaction().useEagerLocking(Boolean.valueOf(value).booleanValue());
+break;
+case USE_SYNCHRONIZAION:
+builder.transaction().useSynchronization(Boolean.valueOf(value).booleanValue());
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case RECOVERY:
+parseRecovery(reader,builder);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}

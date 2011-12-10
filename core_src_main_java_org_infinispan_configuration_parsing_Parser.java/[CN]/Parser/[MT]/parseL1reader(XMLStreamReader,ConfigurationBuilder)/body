@@ -1,0 +1,26 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceSystemProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+      if (Boolean.valueOf(value).booleanValue())       builder.clustering().l1().enable();
+ else       builder.clustering().l1().disable();
+    break;
+case INVALIDATION_THRESHOLD:
+  builder.clustering().l1().invalidationThreshold(Integer.valueOf(value).intValue());
+break;
+case LIFESPAN:
+builder.clustering().l1().lifespan(Long.valueOf(value).longValue());
+break;
+case ON_REHASH:
+if (Boolean.valueOf(value).booleanValue()) builder.clustering().l1().enableOnRehash();
+ else builder.clustering().l1().disableOnRehash();
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+ParseUtils.requireNoContent(reader);
+}

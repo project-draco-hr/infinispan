@@ -22,8 +22,13 @@
   if (config.clustering().cacheMode().isSynchronous()) {
     legacy.clustering().sync().replTimeout(config.clustering().sync().replTimeout());
   }
-  for (  CommandInterceptor interceptor : config.customInterceptors().interceptors()) {
-    legacy.clustering().customInterceptors().add(interceptor);
+  for (  InterceptorConfiguration interceptor : config.customInterceptors().interceptors()) {
+    CustomInterceptorPosition position=legacy.clustering().customInterceptors().add(interceptor.interceptor());
+    if (interceptor.after() != null)     position.after(interceptor.after());
+    if (interceptor.index() != -1)     position.atIndex(interceptor.index());
+    if (interceptor.before() != null)     position.before(interceptor.before());
+    if (interceptor.first())     position.first();
+    if (interceptor.last())     position.last();
   }
   legacy.dataContainer().dataContainer(config.dataContainer().dataContainer()).withProperties(config.dataContainer().properties());
   if (config.deadlockDetection().enabled()) {
@@ -39,13 +44,19 @@
   if (config.invocationBatching().enabled())   legacy.invocationBatching();
   if (config.jmxStatistics().enabled())   legacy.jmxStatistics();
   legacy.loaders().passivation(config.loaders().passivation()).preload(config.loaders().preload()).shared(config.loaders().shared());
-  for (  LoaderConfiguration loader : config.loaders().cacheLoaders()) {
-    AbstractCacheStoreConfig csc=new AbstractCacheStoreConfig();
-    csc.setCacheLoaderClassName(loader.cacheLoader().getClass().getName());
+  for (  AbstractLoaderConfiguration loader : config.loaders().cacheLoaders()) {
+    AbstractCacheStoreConfig csc=null;
+    if (loader instanceof LoaderConfiguration) {
+      csc=new AbstractCacheStoreConfig();
+      csc.setCacheLoaderClassName(((LoaderConfiguration)loader).cacheLoader().getClass().getName());
+      csc.purgerThreads(((LoaderConfiguration)loader).purgerThreads());
+    }
+ else     if (loader instanceof FileCacheStoreConfiguration) {
+      csc=new FileCacheStoreConfig();
+    }
     csc.fetchPersistentState(loader.fetchPersistentState());
     csc.ignoreModifications(loader.ignoreModifications());
     csc.purgeOnStartup(loader.purgeOnStartup());
-    csc.purgerThreads(loader.purgerThreads());
     csc.setPurgeSynchronously(loader.purgeSynchronously());
     csc.getAsyncStoreConfig().setEnabled(loader.async().enabled());
     csc.getAsyncStoreConfig().flushLockTimeout(loader.async().flushLockTimeout());
@@ -63,7 +74,7 @@
  else   legacy.storeAsBinary().disable();
   legacy.transaction().autoCommit(config.transaction().autoCommit()).cacheStopTimeout((int)config.transaction().cacheStopTimeout()).eagerLockSingleNode(config.transaction().eagerLockingSingleNode()).lockingMode(config.transaction().lockingMode()).syncCommitPhase(config.transaction().syncCommitPhase()).syncRollbackPhase(config.transaction().syncRollbackPhase()).transactionManagerLookup(config.transaction().transactionManagerLookup()).transactionMode(config.transaction().transactionMode()).useEagerLocking(config.transaction().useEagerLocking()).useSynchronization(config.transaction().useSynchronization());
   if (config.transaction().recovery().enabled()) {
-    legacy.transaction().recovery();
+    legacy.transaction().recovery().recoveryInfoCacheName(config.transaction().recovery().recoveryInfoCacheName());
   }
   legacy.unsafe().unreliableReturnValues(config.unsafe().unreliableReturnValues());
   if (config.versioning().enabled()) {

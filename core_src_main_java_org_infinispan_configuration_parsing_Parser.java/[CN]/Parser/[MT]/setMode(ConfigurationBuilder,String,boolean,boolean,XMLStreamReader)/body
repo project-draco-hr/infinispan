@@ -1,0 +1,24 @@
+{
+  if (synchronous && asynchronous)   throw new ConfigurationException("Cannot configure <sync> and <async> on the same cluster, " + reader.getLocation());
+  if (clusteringMode != null) {
+    String mode=clusteringMode.toUpperCase();
+    if (mode.startsWith("REPL")) {
+      if (!asynchronous)       builder.clustering().cacheMode(REPL_SYNC);
+ else       builder.clustering().cacheMode(REPL_ASYNC);
+    }
+ else     if (mode.startsWith("INV")) {
+      if (!asynchronous)       builder.clustering().cacheMode(INVALIDATION_SYNC);
+ else       builder.clustering().cacheMode(INVALIDATION_ASYNC);
+    }
+ else     if (mode.startsWith("DIST")) {
+      if (!asynchronous)       builder.clustering().cacheMode(DIST_SYNC);
+ else       builder.clustering().cacheMode(DIST_ASYNC);
+    }
+ else     if (mode.startsWith("LOCAL")) {
+      builder.clustering().cacheMode(LOCAL);
+    }
+ else {
+      throw new ConfigurationException("Invalid clustering mode " + clusteringMode + ", "+ reader.getLocation());
+    }
+  }
+}

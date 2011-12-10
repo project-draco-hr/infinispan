@@ -1,0 +1,55 @@
+{
+  CacheLoader loader=null;
+  Boolean fetchPersistentState=null;
+  Boolean ignoreModifications=null;
+  Boolean purgeOnStartup=null;
+  Integer purgerThreads=null;
+  Boolean purgeSynchronously=null;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceSystemProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+      loader=Util.<CacheLoader>getInstance(value,cl);
+    break;
+case FETCH_PERSISTENT_STATE:
+  fetchPersistentState=Boolean.valueOf(value);
+break;
+case IGNORE_MODIFICATIONS:
+ignoreModifications=Boolean.valueOf(value);
+break;
+case PURGE_ON_STARTUP:
+purgeOnStartup=Boolean.valueOf(value);
+break;
+case PURGER_THREADS:
+purgerThreads=Integer.valueOf(value).intValue();
+break;
+case PURGE_SYNCHRONOUSLY:
+purgeSynchronously=Boolean.valueOf(value).booleanValue();
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+if (loader != null) {
+if (loader instanceof FileCacheStore) {
+FileCacheStoreConfigurationBuilder fcscb=builder.loaders().addFileCacheStore();
+if (fetchPersistentState != null) fcscb.fetchPersistentState(fetchPersistentState.booleanValue());
+if (ignoreModifications != null) fcscb.ignoreModifications(ignoreModifications.booleanValue());
+if (purgeOnStartup != null) fcscb.purgeOnStartup(purgeOnStartup.booleanValue());
+if (purgeSynchronously != null) fcscb.purgeSynchronously(purgeSynchronously.booleanValue());
+parseLoaderChildren(reader,fcscb);
+}
+ else {
+LoaderConfigurationBuilder lcb=builder.loaders().addCacheLoader();
+lcb.cacheLoader(loader);
+if (fetchPersistentState != null) lcb.fetchPersistentState(fetchPersistentState.booleanValue());
+if (ignoreModifications != null) lcb.ignoreModifications(ignoreModifications.booleanValue());
+if (purgerThreads != null) lcb.purgerThreads(purgerThreads.intValue());
+if (purgeOnStartup != null) lcb.purgeOnStartup(purgeOnStartup.booleanValue());
+if (purgeSynchronously != null) lcb.purgeSynchronously(purgeSynchronously.booleanValue());
+parseLoaderChildren(reader,lcb);
+}
+}
+}

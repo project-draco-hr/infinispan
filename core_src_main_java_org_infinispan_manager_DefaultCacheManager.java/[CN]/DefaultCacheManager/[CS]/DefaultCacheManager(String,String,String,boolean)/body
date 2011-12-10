@@ -1,23 +1,15 @@
 {
-  try {
-    InfinispanConfiguration gconfiguration=InfinispanConfiguration.newInfinispanConfiguration(globalConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
-    globalConfiguration=gconfiguration.parseGlobalConfiguration();
-    globalConfiguration.accept(configurationValidator);
-    InfinispanConfiguration dconfiguration=InfinispanConfiguration.newInfinispanConfiguration(defaultConfigurationFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
-    defaultConfiguration=dconfiguration.parseDefaultConfiguration();
-    if (namedCacheFile != null) {
-      InfinispanConfiguration NCconfiguration=InfinispanConfiguration.newInfinispanConfiguration(namedCacheFile,InfinispanConfiguration.resolveSchemaPath(),Thread.currentThread().getContextClassLoader());
-      for (      Map.Entry<String,Configuration> entry : NCconfiguration.parseNamedConfigurations().entrySet()) {
-        Configuration c=defaultConfiguration.clone();
-        c.applyOverrides(entry.getValue());
-        configurationOverrides.put(entry.getKey(),c);
-      }
-    }
-    globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this,caches.keySet());
-    cacheCreateLock=new ReentrantLock();
+  Parser parser=new Parser(Thread.currentThread().getContextClassLoader());
+  ConfigurationBuilderHolder globalConfigurationBuilderHolder=parser.parse(globalConfigurationFile);
+  ConfigurationBuilderHolder defaultConfigurationBuilderHolder=parser.parse(defaultConfigurationFile);
+  globalConfiguration=new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+  defaultConfiguration=new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+  if (namedCacheFile != null) {
+    ConfigurationBuilderHolder namedConfigurationBuilderHolder=parser.parse(namedCacheFile);
+    org.infinispan.configuration.cache.Configuration c=namedConfigurationBuilderHolder.getConfigurationBuilders().iterator().next().build();
+    defineConfiguration(c.name(),new LegacyConfigurationAdaptor().adapt(c));
   }
- catch (  RuntimeException re) {
-    throw new ConfigurationException(re);
-  }
+  globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this,caches.keySet());
+  cacheCreateLock=new ReentrantLock();
   if (start)   start();
 }

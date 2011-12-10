@@ -1,0 +1,19 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceSystemProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+      if (Boolean.valueOf(value).booleanValue())       builder.transaction().recovery().enable();
+ else       builder.transaction().recovery().disable();
+    break;
+case RECOVERY_INFO_CACHE_NAME:
+  builder.transaction().recovery().recoveryInfoCacheName(value);
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+ParseUtils.requireNoContent(reader);
+}

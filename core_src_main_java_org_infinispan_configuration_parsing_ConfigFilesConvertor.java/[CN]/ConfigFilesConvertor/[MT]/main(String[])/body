@@ -1,0 +1,33 @@
+{
+  String sourceName=null, destinationName=null, type=null;
+  for (int i=0; i < args.length; i++) {
+    if (args[i].equals("-source")) {
+      sourceName=args[++i];
+      continue;
+    }
+    if (args[i].equals("-destination")) {
+      destinationName=args[++i];
+      continue;
+    }
+    if (args[i].equals("-type")) {
+      type=args[++i];
+      continue;
+    }
+    help();
+  }
+  mustExist(sourceName,"source");
+  mustExist(destinationName,"destination");
+  mustExist(type,"type");
+  if (!TRANSFORMATIONS.containsKey(type)) {
+    System.err.println("Unsupported transformation type: " + type + ". Supported formats are: "+ getSupportedFormats());
+  }
+  if (type.equals(JBOSS_CACHE3X)) {
+    transformFromJbossCache3x(sourceName,destinationName,ConfigFilesConvertor.class.getClassLoader());
+  }
+ else {
+    transformFromNonJBoss(sourceName,destinationName,TRANSFORMATIONS.get(type),ConfigFilesConvertor.class.getClassLoader());
+  }
+  System.out.println("---");
+  System.out.println("New configuration file [" + destinationName + "] successfully created.");
+  System.out.println("---");
+}

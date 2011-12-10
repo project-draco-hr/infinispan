@@ -1,0 +1,41 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceSystemProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+case HASH_FUNCTION_CLASS:
+      builder.clustering().hash().consistentHash(Util.<ConsistentHash>getInstance(value,cl));
+    break;
+case NUM_OWNERS:
+  builder.clustering().hash().numOwners(Integer.valueOf(value).intValue());
+break;
+case NUM_VIRTUAL_NODES:
+builder.clustering().hash().numVirtualNodes(Integer.valueOf(value).intValue());
+break;
+case REHASH_ENABLED:
+if (Boolean.valueOf(value).booleanValue()) builder.clustering().hash().rehashEnabled();
+ else builder.clustering().hash().rehashDisabled();
+break;
+case REHASH_RPC_TIMEOUT:
+builder.clustering().hash().rehashRpcTimeout(Long.valueOf(value).longValue());
+break;
+case REHASH_WAIT:
+builder.clustering().hash().rehashWait(Long.valueOf(value).longValue());
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case GROUPS:
+parseGroups(reader,builder);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}

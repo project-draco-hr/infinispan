@@ -1,14 +1,14 @@
 {
   InputStream schemaInputStream=InfinispanConfiguration.findSchemaInputStream();
   try {
-    InfinispanConfiguration configuration=InfinispanConfiguration.newInfinispanConfiguration(configurationStream,schemaInputStream);
-    globalConfiguration=configuration.parseGlobalConfiguration();
+    ConfigurationBuilderHolder holder=new Parser(Thread.currentThread().getContextClassLoader()).parse(configurationStream);
+    globalConfiguration=new LegacyGlobalConfigurationAdaptor().adapt(holder.getGlobalConfigurationBuilder().build());
     globalConfiguration.accept(configurationValidator);
-    defaultConfiguration=configuration.parseDefaultConfiguration();
-    for (    Map.Entry<String,Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
-      Configuration c=defaultConfiguration.clone();
-      c.applyOverrides(entry.getValue());
-      configurationOverrides.put(entry.getKey(),c);
+    defaultConfiguration=new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
+    for (    ConfigurationBuilder b : holder.getConfigurationBuilders()) {
+      org.infinispan.configuration.cache.Configuration c=b.build();
+      Configuration legacy=new LegacyConfigurationAdaptor().adapt(c);
+      configurationOverrides.put(c.name(),legacy);
     }
     globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());
     cacheCreateLock=new ReentrantLock();

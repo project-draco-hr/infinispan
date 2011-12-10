@@ -1,0 +1,41 @@
+{
+  File oldConfig=new File(sourceName);
+  if (!oldConfig.exists()) {
+    System.err.println("File specified as input ('" + sourceName + ") does not exist.");
+    System.exit(1);
+  }
+  ConfigFilesConvertor convertor=new ConfigFilesConvertor();
+  FileInputStream is=null;
+  FileOutputStream fos=null;
+  File jgroupsConfigFile=new File("jgroupsConfig.xml");
+  try {
+    is=new FileInputStream(oldConfig);
+    File destination=new File(destinationName);
+    if (!destination.exists()) {
+      if (!destination.createNewFile()) {
+        System.err.println("Problems creating destination file: " + destination);
+      }
+    }
+    fos=new FileOutputStream(destinationName);
+    convertor.parse(is,fos,"xslt/jbc3x2infinispan4x.xslt",cl);
+    fos.close();
+    is.close();
+    if (jgroupsConfigFile.exists())     if (!jgroupsConfigFile.delete()) {
+      System.err.println("Problems deleting existing jgroups file: " + jgroupsConfigFile);
+    }
+    if (!jgroupsConfigFile.createNewFile()) {
+      System.err.println("Could not create jgroupsConfigFile: " + jgroupsConfigFile);
+    }
+    is=new FileInputStream(oldConfig);
+    fos=new FileOutputStream(jgroupsConfigFile);
+    convertor=new ConfigFilesConvertor();
+    convertor.parse(is,fos,"xslt/jgroupsFileGen.xslt",cl);
+  }
+  finally {
+    Util.close(is);
+    Util.flushAndCloseStream(fos);
+  }
+  if (jgroupsConfigFile.length() < 5) {
+    jgroupsConfigFile.delete();
+  }
+}
