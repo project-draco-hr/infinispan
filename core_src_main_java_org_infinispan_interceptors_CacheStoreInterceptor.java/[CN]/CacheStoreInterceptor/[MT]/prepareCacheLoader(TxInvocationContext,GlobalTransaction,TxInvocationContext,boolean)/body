@@ -4,14 +4,14 @@
   }
   List<WriteCommand> modifications=transactionContext.getModifications();
   if (!transactionContext.hasModifications()) {
-    if (trace)     log.trace("Transaction has not logged any modifications!");
+    if (getLog().isTraceEnabled())     getLog().trace("Transaction has not logged any modifications!");
     return;
   }
-  if (trace)   log.tracef("Cache loader modification list: %s",modifications);
+  if (getLog().isTraceEnabled())   getLog().tracef("Cache loader modification list: %s",modifications);
   StoreModificationsBuilder modsBuilder=new StoreModificationsBuilder(getStatisticsEnabled());
   for (  WriteCommand cacheCommand : modifications)   cacheCommand.acceptVisitor(ctx,modsBuilder);
   int numMods=modsBuilder.modifications.size();
-  if (trace)   log.tracef("Converted method calls to cache loader modifications.  List size: %s",numMods);
+  if (getLog().isTraceEnabled())   getLog().tracef("Converted method calls to cache loader modifications.  List size: %s",numMods);
   if (numMods > 0) {
     GlobalTransaction tx=transactionContext.getGlobalTransaction();
     store.prepare(modsBuilder.modifications,tx,onePhase);
