@@ -11,11 +11,24 @@
   }
   channel.setDiscardOwnMessages(true);
   if (configuration.hasTopologyInfo()) {
-    ((JChannel)channel).setAddressGenerator(new AddressGenerator(){
-      public org.jgroups.Address generateAddress(){
-        return TopologyUUID.randomUUID(channel.getName(),configuration.getSiteId(),configuration.getRackId(),configuration.getMachineId());
+    if (!startChannel) {
+      ((JChannel)channel).setAddressGenerator(new AddressGenerator(){
+        @Override public org.jgroups.Address generateAddress(){
+          return TopologyUUID.randomUUID(channel.getName(),configuration.getSiteId(),configuration.getRackId(),configuration.getMachineId());
+        }
+      }
+);
+    }
+ else {
+      if (channel.getAddress() instanceof TopologyUUID) {
+        TopologyUUID topologyAddress=(TopologyUUID)channel.getAddress();
+        if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getSiteId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+          throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
+        }
+      }
+ else {
+        throw new CacheException("JGroups address does not contain topology coordinates");
       }
     }
-);
   }
 }
