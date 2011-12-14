@@ -1,0 +1,11 @@
+{
+  if (cmd == null)   throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+  if (cmd instanceof CacheRpcCommand) {
+    if (trace)     log.tracef("Attempting to execute command: %s [sender=%s]",cmd,req.getSrc());
+    return inboundInvocationHandler.handle((CacheRpcCommand)cmd,JGroupsTransport.fromJGroupsAddress(req.getSrc()));
+  }
+ else {
+    if (trace)     log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]",cmd,req.getSrc());
+    return cmd.perform(null);
+  }
+}

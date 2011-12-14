@@ -17,7 +17,7 @@
   expect(mockTransport.isCoordinator()).andReturn(true);
   mockListener.prepareView(v1_1,CacheView.EMPTY_CACHE_VIEW);
   expect(mockTransport.invokeRemotely(eq(members1_1),isA(CacheViewControlCommand.class),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),EasyMock.<ResponseFilter>isNull(),eq(false))).andReturn(noResponse);
-  mockListener.updateLeavers(Collections.<Address>emptySet());
+  mockListener.waitForPrepare();
   mockListener.commitView(v1_1.getViewId());
   expect(mockTransport.invokeRemotely(eq(members1_1),isA(CacheViewControlCommand.class),eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),anyLong(),anyBoolean(),EasyMock.<ResponseFilter>isNull(),eq(false))).andReturn(noResponse);
   expect(mockTransport.getCoordinator()).andReturn(a1);
@@ -28,7 +28,7 @@
   expect(mockTransport.invokeRemotely(eq(members1_2),isA(CacheViewControlCommand.class),eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),anyLong(),anyBoolean(),EasyMock.<ResponseFilter>isNull(),eq(false))).andReturn(nullResponses);
   mockListener.prepareView(v2,v1_1);
   expect(mockTransport.invokeRemotely(eq(members1_2),isA(CacheViewControlCommand.class),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),EasyMock.<ResponseFilter>isNull(),eq(false))).andReturn(nullResponses);
-  mockListener.updateLeavers(Collections.<Address>emptySet());
+  mockListener.waitForPrepare();
   mockListener.commitView(v2.getViewId());
   expect(mockTransport.invokeRemotely(eq(members1_2),isA(CacheViewControlCommand.class),eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),anyLong(),anyBoolean(),EasyMock.<ResponseFilter>isNull(),eq(false))).andReturn(nullResponses);
   replay(mockTransport,mockListener);

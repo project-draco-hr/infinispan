@@ -2,7 +2,14 @@
   log.debugf("Blocking new write commands for cache view %d",cacheViewId);
 synchronized (lock) {
     writesShouldBlock=true;
-    if (writesBlocked == true)     throw new IllegalStateException("Trying to block write commands but they are already blocked");
+    if (writesBlocked == true) {
+      if (blockingCacheViewId < cacheViewId) {
+        log.tracef("Write commands were already blocked for cache view %d",blockingCacheViewId);
+      }
+ else {
+        throw new IllegalStateException(String.format("Trying to block write commands but they are already blocked for view %d",blockingCacheViewId));
+      }
+    }
     while (runningWritesCount.get() != 0) {
       lock.wait();
     }

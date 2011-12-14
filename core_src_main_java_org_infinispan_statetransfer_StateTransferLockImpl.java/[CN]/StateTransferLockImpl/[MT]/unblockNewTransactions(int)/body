@@ -1,4 +1,5 @@
 {
+  log.debugf("Unblocking write commands for cache view %d",cacheViewId);
 synchronized (lock) {
     if (!writesBlocked)     throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d but they were not blocked",cacheViewId));
     writesShouldBlock=false;
@@ -6,5 +7,5 @@ synchronized (lock) {
     lock.notifyAll();
     if (cacheViewId != blockingCacheViewId && blockingCacheViewId != NO_BLOCKING_CACHE_VIEW)     throw new IllegalStateException(String.format("Trying to unblock write commands for cache view %d, but they were blocked with view id %d",cacheViewId,blockingCacheViewId));
   }
-  log.debugf("Unblocked write commands for cache view %d",cacheViewId);
+  log.tracef("Unblocked write commands for cache view %d",cacheViewId);
 }
