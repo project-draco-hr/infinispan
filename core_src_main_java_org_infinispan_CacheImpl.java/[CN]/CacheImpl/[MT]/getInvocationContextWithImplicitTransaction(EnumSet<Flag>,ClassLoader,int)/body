@@ -1,7 +1,8 @@
 {
   InvocationContext invocationContext;
   boolean txInjected=false;
-  if (config.isTransactionalCache()) {
+  final boolean isPutForExternalRed=isPutForExternalRed(explicitFlags);
+  if (config.isTransactionalCache() && !isPutForExternalRed) {
     Transaction transaction=getOngoingTransaction();
     if (transaction == null && config.isTransactionAutoCommit()) {
       try {
@@ -17,7 +18,7 @@
     invocationContext=getInvocationContext(transaction,explicitFlags,explicitClassLoader);
   }
  else {
-    invocationContext=getInvocationContextForWrite(explicitFlags,explicitClassLoader,keyCount);
+    invocationContext=getInvocationContextForWrite(explicitFlags,explicitClassLoader,keyCount,isPutForExternalRed);
   }
   if (txInjected) {
     ((TxInvocationContext)invocationContext).setImplicitTransaction(true);
