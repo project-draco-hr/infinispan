@@ -1,20 +1,21 @@
 {
   short magic=transport.readByte();
-  boolean isTrace=log.isTraceEnabled();
+  final Log localLog=getLog();
+  boolean isTrace=localLog.isTraceEnabled();
   if (magic != HotRodConstants.RESPONSE_MAGIC) {
     String message="Invalid magic number. Expected %#x and received %#x";
-    log.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC,magic);
-    if (isTrace)     log.tracef("Socket dump: %s",hexDump(transport.dumpStream()));
+    localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC,magic);
+    if (isTrace)     localLog.tracef("Socket dump: %s",hexDump(transport.dumpStream()));
     throw new InvalidResponseException(String.format(message,HotRodConstants.RESPONSE_MAGIC,magic));
   }
   long receivedMessageId=transport.readVLong();
   if (receivedMessageId != params.messageId && receivedMessageId != 0) {
     String message="Invalid message id. Expected %d and received %d";
-    log.invalidMessageId(params.messageId,receivedMessageId);
-    if (isTrace)     log.tracef("Socket dump: %s",hexDump(transport.dumpStream()));
+    localLog.invalidMessageId(params.messageId,receivedMessageId);
+    if (isTrace)     localLog.tracef("Socket dump: %s",hexDump(transport.dumpStream()));
     throw new InvalidResponseException(String.format(message,params.messageId,receivedMessageId));
   }
-  log.tracef("Received response for message id: %d",receivedMessageId);
+  localLog.tracef("Received response for message id: %d",receivedMessageId);
   short receivedOpCode=transport.readByte();
   if (receivedOpCode != params.opRespCode) {
     if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
@@ -22,7 +23,7 @@
     }
     throw new InvalidResponseException(String.format("Invalid response operation. Expected %#x and received %#x",params.opRespCode,receivedOpCode));
   }
-  log.tracef("Received operation code is: %#04x",receivedOpCode);
+  localLog.tracef("Received operation code is: %#04x",receivedOpCode);
   short status=transport.readByte();
   readNewTopologyIfPresent(transport,params);
   return status;
