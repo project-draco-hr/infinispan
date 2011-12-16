@@ -1,31 +1,46 @@
 {
-  if (componentType.isInterface()) {
-    Class componentImpl;
-    if (componentType.equals(ClusteringDependentLogic.class)) {
-      if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
-        return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
-      }
- else {
-        return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
-      }
-    }
- else     if (componentType.equals(StreamingMarshaller.class)) {
-      VersionAwareMarshaller versionAwareMarshaller=getInstance(VersionAwareMarshaller.class);
-      return componentType.cast(versionAwareMarshaller);
-    }
- else     if (componentType.equals(EntryFactory.class)) {
-      return componentType.cast(getInstance(EntryFactoryImpl.class));
-    }
- else     if (componentType.equals(InvocationContextContainer.class)) {
-      componentImpl=configuration.isTransactionalCache() ? TransactionalInvocationContextContainer.class : NonTransactionalInvocationContextContainer.class;
-      return componentType.cast(getInstance(componentImpl));
+  Class componentImpl;
+  if (componentType.equals(ClusteringDependentLogic.class)) {
+    if (configuration.getCacheMode().isReplicated() || !configuration.getCacheMode().isClustered() || configuration.getCacheMode().isInvalidation()) {
+      return componentType.cast(new ClusteringDependentLogic.AllNodesLogic());
     }
  else {
-      componentImpl=loadClass(componentType.getName() + "Impl",configuration.getClassLoader());
+      return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
     }
+  }
+ else   if (componentType.equals(InvocationContextContainer.class)) {
+    componentImpl=configuration.isTransactionalCache() ? TransactionalInvocationContextContainer.class : NonTransactionalInvocationContextContainer.class;
     return componentType.cast(getInstance(componentImpl));
   }
- else {
-    return getInstance(componentType);
+ else   if (componentType.equals(CacheNotifier.class)) {
+    return (T)new CacheNotifierImpl();
   }
+ else   if (componentType.equals(CommandsFactory.class)) {
+    return (T)new CommandsFactoryImpl();
+  }
+ else   if (componentType.equals(CacheLoaderManager.class)) {
+    return (T)new CacheLoaderManagerImpl();
+  }
+ else   if (componentType.equals(PassivationManager.class)) {
+    return (T)new PassivationManagerImpl();
+  }
+ else   if (componentType.equals(BatchContainer.class)) {
+    return (T)new BatchContainer();
+  }
+ else   if (componentType.equals(TransactionLog.class)) {
+    return (T)new TransactionLog();
+  }
+ else   if (componentType.equals(TransactionCoordinator.class)) {
+    return (T)new TransactionCoordinator();
+  }
+ else   if (componentType.equals(RecoveryAdminOperations.class)) {
+    return (T)new RecoveryAdminOperations();
+  }
+ else   if (componentType.equals(StateTransferLock.class)) {
+    return (T)new StateTransferLockImpl();
+  }
+ else   if (componentType.equals(EvictionManager.class)) {
+    return (T)new EvictionManagerImpl();
+  }
+  throw new ConfigurationException("Don't know how to create a " + componentType.getName());
 }

@@ -1,8 +1,13 @@
 {
   if ((!configuration.getCacheMode().isSynchronous()) && configuration.isUseReplQueue()) {
     String type=configuration.getReplQueueClass();
-    if (type == null)     return super.construct(componentType);
- else     return (T)super.construct(Util.loadClass(type,configuration.getClassLoader()));
+    if (type == null || type.equals(ReplicationQueueImpl.class.getName()))     return componentType.cast(new ReplicationQueueImpl());
+ else     try {
+      return componentType.cast(Util.loadClass(type,configuration.getClassLoader()).newInstance());
+    }
+ catch (    Exception e) {
+      throw new ConfigurationException(e);
+    }
   }
  else {
     return null;

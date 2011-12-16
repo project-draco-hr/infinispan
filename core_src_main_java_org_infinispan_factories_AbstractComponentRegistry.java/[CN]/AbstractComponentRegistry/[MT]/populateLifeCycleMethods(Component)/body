@@ -1,22 +1,8 @@
 {
   if (!c.methodsScanned) {
     c.methodsScanned=true;
-    c.startMethods.clear();
-    c.stopMethods.clear();
     Class<?> componentClass=c.instance.getClass();
-    for (    CachedMethod m : AnnotatedMethodCache.getStartMethods(componentClass,getClass().getClassLoader())) {
-      PrioritizedMethod em=new PrioritizedMethod();
-      em.component=c;
-      em.method=m;
-      em.priority=m.getAnnotationValueAsInt("priority");
-      c.startMethods.add(em);
-    }
-    for (    CachedMethod m : AnnotatedMethodCache.getStopMethods(componentClass,getClass().getClassLoader())) {
-      PrioritizedMethod em=new PrioritizedMethod();
-      em.component=c;
-      em.method=m;
-      em.priority=m.getAnnotationValueAsInt("priority");
-      c.stopMethods.add(em);
-    }
+    c.startMethods=processPrioritizedMethods(c.metadata.getStartMethods(),componentClass,c);
+    c.stopMethods=processPrioritizedMethods(c.metadata.getStopMethods(),componentClass,c);
   }
 }

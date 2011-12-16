@@ -1,7 +1,22 @@
 {
   try {
-    List<CachedMethod> methods=AnnotatedMethodCache.getInjectMethods(target.getClass(),getClass().getClassLoader());
-    for (    CachedMethod method : methods)     invokeInjectionMethod(target,method);
+    Class targetClass=target.getClass();
+    ComponentMetadata metadata=ComponentMetadataRepo.findComponentMetadata(targetClass);
+    if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
+      for (      ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
+        Class[] methodParameters=injectMetadata.getParameterClasses();
+        if (methodParameters == null) {
+          methodParameters=ReflectionUtil.toClassArray(injectMetadata.getParameters());
+          injectMetadata.setParameterClasses(methodParameters);
+        }
+        Method method=injectMetadata.getMethod();
+        if (method == null) {
+          method=ReflectionUtil.findMethod(targetClass,injectMetadata.getMethodName(),methodParameters);
+          injectMetadata.setMethod(method);
+        }
+        invokeInjectionMethod(target,injectMetadata);
+      }
+    }
   }
  catch (  Exception e) {
     throw new ConfigurationException("Unable to configure component (type: " + target.getClass() + ", instance "+ target+ ")",e);

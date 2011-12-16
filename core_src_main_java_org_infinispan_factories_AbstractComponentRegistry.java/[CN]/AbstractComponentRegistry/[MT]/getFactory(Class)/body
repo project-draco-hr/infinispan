@@ -1,6 +1,5 @@
 {
-  Map<String,Class<? extends AbstractComponentFactory>> defaultFactoryMap=getDefaultFactoryMap();
-  Class<? extends AbstractComponentFactory> cfClass=defaultFactoryMap.get(componentClass.getName());
+  String cfClass=ComponentMetadataRepo.findFactoryForComponent(componentClass);
   if (cfClass == null) {
     throwStackAwareConfigurationException("No registered default factory for component '" + componentClass + "' found!");
   }
@@ -10,7 +9,7 @@
     if (cf == null)     throwStackAwareConfigurationException("Unable to locate component factory for component " + componentClass);
     registerComponent(cf,cfClass);
   }
-  Component c=lookupComponent(cfClass,cfClass.getName());
+  Component c=lookupComponent(cfClass,cfClass,true);
   if (c.instance != cf)   throwStackAwareConfigurationException("Component factory " + cfClass + " incorrectly registered!");
   return cf;
 }

@@ -1,0 +1,18 @@
+{
+  injectionMethods=metadata.getInjectMethods();
+  if (injectionMethods != null && injectionMethods.length > 0) {
+    Class<?> clazz=instance.getClass();
+    for (    ComponentMetadata.InjectMetadata meta : injectionMethods) {
+      Class[] parameterClasses=meta.getParameterClasses();
+      if (parameterClasses == null) {
+        parameterClasses=ReflectionUtil.toClassArray(meta.getParameters());
+        meta.setParameterClasses(parameterClasses);
+      }
+      Method m=meta.getMethod();
+      if (m == null) {
+        m=ReflectionUtil.findMethod(clazz,meta.getMethodName(),parameterClasses);
+        meta.setMethod(m);
+      }
+    }
+  }
+}

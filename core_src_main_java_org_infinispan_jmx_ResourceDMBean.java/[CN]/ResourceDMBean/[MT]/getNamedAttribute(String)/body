@@ -1,14 +1,20 @@
 {
   Attribute result=null;
   if (name.equals(MBEAN_DESCRITION)) {
-    result=new Attribute(MBEAN_DESCRITION,this.description);
+    result=new Attribute(MBEAN_DESCRITION,mBeanMetadata.getDescription());
   }
  else {
-    AttributeEntry entry=atts.get(name);
-    if (entry != null) {
-      MBeanAttributeInfo i=entry.getInfo();
+    InvokableMBeanAttributeInfo i=atts.get(name);
+    if (i == null && name.length() > 0) {
+      Character firstChar=name.charAt(0);
+      if (Character.isUpperCase(firstChar)) {
+        name=name.replaceFirst(Character.toString(firstChar),Character.toString(Character.toLowerCase(firstChar)));
+        i=atts.get(name);
+      }
+    }
+    if (i != null) {
       try {
-        result=new Attribute(name,entry.invoke(null));
+        result=new Attribute(name,i.invoke(null));
         if (log.isDebugEnabled())         log.debugf("Attribute %s has r=%b,w=%b,is=%b and value %s",name,i.isReadable(),i.isWritable(),i.isIs(),result.getValue());
       }
  catch (      Exception e) {

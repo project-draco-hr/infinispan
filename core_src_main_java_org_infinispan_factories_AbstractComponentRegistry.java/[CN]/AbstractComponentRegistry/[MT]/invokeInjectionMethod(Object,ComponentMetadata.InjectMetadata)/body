@@ -1,0 +1,13 @@
+{
+  Class[] dependencies=injectMetadata.getParameterClasses();
+  if (dependencies.length > 0) {
+    Object[] params=new Object[dependencies.length];
+    if (getLog().isTraceEnabled())     getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].",injectMetadata.getMethod(),o.getClass().getName());
+    for (int i=0; i < dependencies.length; i++) {
+      String name=injectMetadata.getParameterName(i);
+      boolean nameIsFQCN=!injectMetadata.isParameterNameSet(i);
+      params[i]=getOrCreateComponent(dependencies[i],name,nameIsFQCN);
+    }
+    ReflectionUtil.invokeAccessibly(o,injectMetadata.getMethod(),params);
+  }
+}

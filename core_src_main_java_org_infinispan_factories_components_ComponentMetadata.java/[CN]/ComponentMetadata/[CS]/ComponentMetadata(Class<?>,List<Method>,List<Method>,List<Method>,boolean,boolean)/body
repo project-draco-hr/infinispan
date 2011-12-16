@@ -1,0 +1,47 @@
+{
+  clazz=component;
+  name=component.getName();
+  globalScope=global;
+  this.survivesRestarts=survivesRestarts;
+  if (startMethods != null && !startMethods.isEmpty()) {
+    this.startMethods=new PrioritizedMethodMetadata[startMethods.size()];
+    int i=0;
+    for (    Method m : startMethods) {
+      Start s=m.getAnnotation(Start.class);
+      this.startMethods[i++]=new PrioritizedMethodMetadata(m.getName(),s.priority());
+    }
+  }
+  if (stopMethods != null && !stopMethods.isEmpty()) {
+    this.stopMethods=new PrioritizedMethodMetadata[stopMethods.size()];
+    int i=0;
+    for (    Method m : stopMethods) {
+      Stop s=m.getAnnotation(Stop.class);
+      this.stopMethods[i++]=new PrioritizedMethodMetadata(m.getName(),s.priority());
+    }
+  }
+  if (injectMethods != null && !injectMethods.isEmpty()) {
+    this.injectMetadata=new InjectMetadata[injectMethods.size()];
+    this.dependencies=new HashMap<String,String>(injectMethods.size() * 2);
+    int j=0;
+    for (    Method m : injectMethods) {
+      List<String> params=new LinkedList<String>();
+      InjectMetadata injectMetadata=new InjectMetadata(m.getName());
+      Class[] parameterTypes=m.getParameterTypes();
+      Annotation[][] annotations=m.getParameterAnnotations();
+      for (int i=0; i < parameterTypes.length; i++) {
+        String componentName=findComponentName(annotations,i);
+        String parameterType=parameterTypes[i].getName();
+        params.add(parameterType);
+        if (componentName == null) {
+          dependencies.put(parameterType,parameterType);
+        }
+ else {
+          injectMetadata.addParameterName(i,componentName);
+          dependencies.put(componentName,parameterType);
+        }
+      }
+      injectMetadata.parameters=params.toArray(new String[params.size()]);
+      this.injectMetadata[j++]=injectMetadata;
+    }
+  }
+}

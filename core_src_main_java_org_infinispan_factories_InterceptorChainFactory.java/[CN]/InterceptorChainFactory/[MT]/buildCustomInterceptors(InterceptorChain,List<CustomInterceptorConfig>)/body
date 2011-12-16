@@ -1,22 +1,23 @@
 {
   for (  CustomInterceptorConfig config : customInterceptors) {
     if (interceptorChain.containsInterceptorType(getCustomInterceptorType(config)))     continue;
-    if (config.isFirst())     interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config),0);
- else     if (config.isLast())     interceptorChain.appendInterceptor(getOrCreateCustomInterceptor(config));
- else     if (config.getIndex() >= 0)     interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config),config.getIndex());
+    CommandInterceptor customInterceptor=getOrCreateCustomInterceptor(config);
+    if (config.isFirst())     interceptorChain.addInterceptor(customInterceptor,0);
+ else     if (config.isLast())     interceptorChain.appendInterceptor(customInterceptor,true);
+ else     if (config.getIndex() >= 0)     interceptorChain.addInterceptor(customInterceptor,config.getIndex());
  else     if (config.getAfter() != null) {
       List<CommandInterceptor> withClassName=interceptorChain.getInterceptorsWithClassName(config.getAfter());
       if (withClassName.isEmpty()) {
         throw new ConfigurationException("Cannot add after class: " + config.getAfter() + " as no such interceptor exists in the default chain");
       }
-      interceptorChain.addInterceptorAfter(getOrCreateCustomInterceptor(config),withClassName.get(0).getClass());
+      interceptorChain.addInterceptorAfter(customInterceptor,withClassName.get(0).getClass());
     }
  else     if (config.getBefore() != null) {
       List<CommandInterceptor> withClassName=interceptorChain.getInterceptorsWithClassName(config.getBefore());
       if (withClassName.isEmpty()) {
         throw new ConfigurationException("Cannot add before class: " + config.getAfter() + " as no such interceptor exists in the default chain");
       }
-      interceptorChain.addInterceptorBefore(getOrCreateCustomInterceptor(config),withClassName.get(0).getClass());
+      interceptorChain.addInterceptorBefore(customInterceptor,withClassName.get(0).getClass());
     }
   }
 }

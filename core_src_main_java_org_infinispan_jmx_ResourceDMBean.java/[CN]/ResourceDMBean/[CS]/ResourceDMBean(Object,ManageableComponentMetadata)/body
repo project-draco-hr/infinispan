@@ -1,0 +1,20 @@
+{
+  if (instance == null)   throw new NullPointerException("Cannot make an MBean wrapper for null instance");
+  this.obj=instance;
+  this.objectClass=instance.getClass();
+  this.mBeanMetadata=mBeanMetadata;
+  InvokableMBeanAttributeInfo info;
+  for (  JmxAttributeMetadata attributeMetadata : mBeanMetadata.getAttributeMetadata()) {
+    info=toJmxInfo(attributeMetadata);
+    atts.put(info.getName(),info);
+    if (trace)     log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]",info.getName(),info.isReadable(),info.isWritable(),info.isIs(),info.getType());
+  }
+  MBeanOperationInfo op;
+  opInfos=new MBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];
+  int i=0;
+  for (  JmxOperationMetadata operation : mBeanMetadata.getOperationMetadata()) {
+    op=toJmxInfo(operation);
+    opInfos[i++]=op;
+    if (trace)     log.tracef("Operation %s %s",op.getReturnType(),op.getName());
+  }
+}

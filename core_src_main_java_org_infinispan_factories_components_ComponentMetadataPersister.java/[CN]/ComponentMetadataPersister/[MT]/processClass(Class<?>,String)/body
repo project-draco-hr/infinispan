@@ -1,0 +1,27 @@
+{
+  MBean mbean=ReflectionUtil.getAnnotation(clazz,MBean.class);
+  boolean survivesRestarts;
+  boolean isGlobal;
+  isGlobal=ScopeDetector.detectScope(clazz) == Scopes.GLOBAL;
+  survivesRestarts=ReflectionUtil.getAnnotation(clazz,SurvivesRestarts.class) != null;
+  List<Method> injectMethods=ReflectionUtil.getAllMethods(clazz,Inject.class);
+  List<Method> startMethods=ReflectionUtil.getAllMethods(clazz,Start.class);
+  List<Method> stopMethods=ReflectionUtil.getAllMethods(clazz,Stop.class);
+  ComponentMetadata metadata=null;
+  if (mbean != null) {
+    List<Method> managedAttributeMethods=ReflectionUtil.getAllMethods(clazz,ManagedAttribute.class);
+    List<Field> managedAttributeFields=ReflectionUtil.getAnnotatedFields(clazz,ManagedAttribute.class);
+    List<Method> managedOperationMethods=ReflectionUtil.getAllMethods(clazz,ManagedOperation.class);
+    metadata=new ManageableComponentMetadata(clazz,injectMethods,startMethods,stopMethods,isGlobal,survivesRestarts,managedAttributeFields,managedAttributeMethods,managedOperationMethods,mbean);
+  }
+ else   if (!injectMethods.isEmpty() || !startMethods.isEmpty() || !stopMethods.isEmpty()|| isGlobal|| survivesRestarts|| ReflectionUtil.isAnnotationPresent(clazz,Scope.class)) {
+    metadata=new ComponentMetadata(clazz,injectMethods,startMethods,stopMethods,isGlobal,survivesRestarts);
+  }
+  if (metadata != null) {
+    COMPONENT_METADATA_MAP.put(metadata.getName(),metadata);
+  }
+  DefaultFactoryFor dff=ReflectionUtil.getAnnotation(clazz,DefaultFactoryFor.class);
+  if (dff != null) {
+    for (    Class target : dff.classes())     FACTORIES.put(target.getName(),className);
+  }
+}

@@ -1,18 +1,26 @@
 {
   boolean result=false;
   if (log.isDebugEnabled())   log.debugf("Invoking set on attribute %s with value %s",attribute.getName(),attribute.getValue());
-  AttributeEntry entry=atts.get(attribute.getName());
-  if (entry != null) {
+  String name=attribute.getName();
+  InvokableMBeanAttributeInfo i=atts.get(name);
+  if (i == null && name.length() > 0) {
+    Character firstChar=name.charAt(0);
+    if (Character.isUpperCase(firstChar)) {
+      name=name.replaceFirst(Character.toString(firstChar),Character.toString(Character.toLowerCase(firstChar)));
+      i=atts.get(name);
+    }
+  }
+  if (i != null) {
     try {
-      entry.invoke(attribute);
+      i.invoke(attribute);
       result=true;
     }
  catch (    Exception e) {
-      log.errorWritingValueForAttribute(attribute.getName(),e);
+      log.errorWritingValueForAttribute(name,e);
     }
   }
  else {
-    log.couldNotInvokeSetOnAttribute(attribute.getName(),attribute.getValue());
+    log.couldNotInvokeSetOnAttribute(name,attribute.getValue());
   }
   return result;
 }
