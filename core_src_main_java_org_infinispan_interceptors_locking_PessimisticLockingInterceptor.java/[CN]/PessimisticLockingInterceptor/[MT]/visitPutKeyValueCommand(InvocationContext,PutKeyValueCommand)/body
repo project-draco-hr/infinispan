@@ -2,7 +2,6 @@
   if (ctx.hasFlag(Flag.SKIP_LOCKING))   return invokeNextInterceptor(ctx,command);
   final TxInvocationContext txContext=(TxInvocationContext)ctx;
   try {
-    Object result=invokeNextInterceptor(ctx,command);
     final boolean localNodeOwnsLock=cdl.localNodeIsPrimaryOwner(command.getKey());
     acquireRemoteIfNeeded(ctx,command.getKey(),localNodeOwnsLock);
     if (ctx.hasFlag(Flag.SKIP_OWNERSHIP_CHECK) || localNodeOwnsLock) {
@@ -11,7 +10,7 @@
  else     if (cdl.localNodeIsOwner(command.getKey())) {
       txContext.getCacheTransaction().addBackupLockForKey(command.getKey());
     }
-    return result;
+    return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable te) {
     releaseLocksOnFailureBeforePrepare(ctx);
