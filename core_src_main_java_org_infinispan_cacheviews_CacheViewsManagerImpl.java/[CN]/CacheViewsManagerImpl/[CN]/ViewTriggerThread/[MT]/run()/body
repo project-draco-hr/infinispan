@@ -2,18 +2,19 @@
   outer:   while (isRunning()) {
     if (shouldRecoverViews) {
       recoverViews();
-      shouldRecoverViews=false;
     }
-    lock.lock();
-    try {
-      condition.await(viewChangeCooldown,TimeUnit.MILLISECONDS);
-      log.tracef("Woke up, shouldRecoverViews=%s",shouldRecoverViews);
-    }
- catch (    InterruptedException e) {
-      break;
-    }
+ else {
+      lock.lock();
+      try {
+        condition.await(viewChangeCooldown,TimeUnit.MILLISECONDS);
+        log.tracef("Woke up, shouldRecoverViews=%s",shouldRecoverViews);
+      }
+ catch (      InterruptedException e) {
+        break;
+      }
  finally {
-      lock.unlock();
+        lock.unlock();
+      }
     }
     if (isCoordinator && isRunning()) {
       for (      CacheViewInfo cacheViewInfo : viewsInfo.values()) {
