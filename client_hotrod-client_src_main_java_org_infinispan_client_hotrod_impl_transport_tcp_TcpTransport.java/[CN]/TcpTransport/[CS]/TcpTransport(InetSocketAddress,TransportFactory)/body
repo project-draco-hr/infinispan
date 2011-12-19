@@ -2,10 +2,11 @@
   super(transportFactory);
   this.serverAddress=serverAddress;
   try {
-    socketChannel=SocketChannel.open(serverAddress);
+    socketChannel=SocketChannel.open();
     socket=socketChannel.socket();
+    socket.connect(serverAddress,transportFactory.getSoTimeout());
     socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
-    socket.setSoTimeout(transportFactory.getSoTimeout());
+    socket.setSoTimeout(transportFactory.getConnectTimeout());
     socketInputStream=new BufferedInputStream(socket.getInputStream(),socket.getReceiveBufferSize());
     socketOutputStream=new BufferedOutputStream(socket.getOutputStream(),socket.getSendBufferSize());
   }
