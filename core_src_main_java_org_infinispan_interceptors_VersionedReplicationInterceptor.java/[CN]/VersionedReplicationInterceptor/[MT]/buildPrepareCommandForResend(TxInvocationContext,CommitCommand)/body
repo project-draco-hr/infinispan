@@ -1,0 +1,10 @@
+{
+  PrepareCommand command=cf.buildVersionedPrepareCommand(commit.getGlobalTransaction(),ctx.getModifications(),true);
+  super.buildPrepareCommandForResend(ctx,commit);
+  EntryVersionsMap vs=new EntryVersionsMap();
+  for (  CacheEntry ce : ctx.getLookedUpEntries().values()) {
+    vs.put(ce.getKey(),(IncrementableEntryVersion)ce.getVersion());
+  }
+  ((VersionedPrepareCommand)command).setVersionsSeen(vs);
+  return command;
+}
