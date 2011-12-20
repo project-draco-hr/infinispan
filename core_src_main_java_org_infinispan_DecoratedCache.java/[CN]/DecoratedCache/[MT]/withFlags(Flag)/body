@@ -1,6 +1,14 @@
 {
-  if (flags == null)   throw new NullPointerException("Flags cannot be null!");
-  if (this.flags == null)   this.flags=EnumSet.noneOf(Flag.class);
-  this.flags.addAll(Arrays.asList(flags));
-  return this;
+  if (flags == null || flags.length == 0)   return this;
+ else {
+    List<Flag> flagsToAdd=Arrays.asList(flags);
+    if (this.flags != null && this.flags.containsAll(flagsToAdd)) {
+      return this;
+    }
+ else {
+      EnumSet<Flag> newFlags=EnumSet.copyOf(this.flags);
+      newFlags.addAll(flagsToAdd);
+      return new DecoratedCache<K,V>(this.cacheImplementation,this.classLoader,newFlags);
+    }
+  }
 }
