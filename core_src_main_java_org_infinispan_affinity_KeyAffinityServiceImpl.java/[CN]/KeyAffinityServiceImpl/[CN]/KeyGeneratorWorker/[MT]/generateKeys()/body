@@ -1,14 +1,19 @@
 {
   maxNumberInvariant.readLock().lock();
   try {
-    while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get()) {
+    int maxMisses=maxNumberOfKeys.get();
+    int missCount=0;
+    while (!Thread.currentThread().isInterrupted() && exitingNumberOfKeys.get() < maxNumberOfKeys.get() && missCount < maxMisses) {
       Object key=keyGenerator.getKey();
       Address addressForKey=getAddressForKey(key);
       if (interestedInAddress(addressForKey)) {
-        tryAddKey(addressForKey,key);
+        boolean added=tryAddKey(addressForKey,key);
+        if (!added)         missCount++;
       }
     }
-    keyProducerStartLatch.close();
+    if (missCount < maxMisses) {
+      keyProducerStartLatch.close();
+    }
   }
   finally {
     maxNumberInvariant.readLock().unlock();

@@ -6,25 +6,25 @@
   BlockingQueue queue=address2key.get(address);
   if (queue == null)   throw new IllegalStateException("Address " + address + " is no longer in the cluster");
   try {
-    maxNumberInvariant.readLock().lock();
     Object result=null;
-    try {
-      while (result == null && !keyGenWorker.isStopped()) {
+    while (result == null && !keyGenWorker.isStopped()) {
+      maxNumberInvariant.readLock().lock();
+      try {
         result=queue.poll();
         if (result == null) {
           keyProducerStartLatch.open();
-          if (!address.equals(getAddressForKey(address)))           throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+          if (!isNodeInConsistentHash(address))           throw new IllegalStateException("Address " + address + " is no longer in the cluster");
         }
       }
-    }
   finally {
-      maxNumberInvariant.readLock().unlock();
+        maxNumberInvariant.readLock().unlock();
+      }
     }
     exitingNumberOfKeys.decrementAndGet();
     return result;
   }
   finally {
-    if (queue.size() < maxNumberOfKeys.get() * THRESHOLD + 1) {
+    if (queue.size() < bufferSize * THRESHOLD + 1) {
       keyProducerStartLatch.open();
     }
   }
