@@ -1,16 +1,29 @@
 {
   if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
+    if (returnValue == null)     return null;
     ClusteredGetCommand clusteredGet=(ClusteredGetCommand)command;
     if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))     return UnsureResponse.INSTANCE;
-    return returnValue == null ? null : new SuccessfulResponse(returnValue);
+    return new SuccessfulResponse(returnValue);
   }
  else   if (command instanceof SingleRpcCommand) {
     SingleRpcCommand src=(SingleRpcCommand)command;
     ReplicableCommand c=src.getCommand();
+    byte commandId=c.getCommandId();
     if (c instanceof WriteCommand) {
-      if (((WriteCommand)c).isSuccessful())       return new SuccessfulResponse(returnValue);
- else       return UnsuccessfulResponse.INSTANCE;
+      if (returnValue == null)       return null;
+      WriteCommand wc=(WriteCommand)c;
+      return handleWriteCommand(wc,returnValue);
+    }
+ else     if (commandId == MapReduceCommand.COMMAND_ID || commandId == DistributedExecuteCommand.COMMAND_ID) {
+      return new SuccessfulResponse(returnValue);
+    }
+ else     if (commandNeedsNonNullResponse(commandId)) {
+      if (returnValue == null)       return null;
+      return new SuccessfulResponse(returnValue);
     }
   }
-  return new SuccessfulResponse(returnValue);
+ else   if (commandNeedsNonNullResponse(command.getCommandId())) {
+    return new SuccessfulResponse(returnValue);
+  }
+  return null;
 }
