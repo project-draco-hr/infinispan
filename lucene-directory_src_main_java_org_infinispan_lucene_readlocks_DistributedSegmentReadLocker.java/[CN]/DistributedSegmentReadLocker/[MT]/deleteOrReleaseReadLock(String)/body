@@ -2,7 +2,7 @@
   FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
   int newValue=0;
   boolean done=false;
-  Object lockValue=locksCache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).get(readLockKey);
+  Object lockValue=locksCache.withFlags(Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).get(readLockKey);
   while (done == false) {
     if (lockValue == null) {
       lockValue=locksCache.withFlags(Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).putIfAbsent(readLockKey,Integer.valueOf(0));
@@ -13,7 +13,7 @@
       newValue=refCount - 1;
       done=locksCache.withFlags(Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).replace(readLockKey,refCount,newValue);
       if (!done) {
-        lockValue=locksCache.withFlags(Flag.SKIP_LOCKING,Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).get(readLockKey);
+        lockValue=locksCache.withFlags(Flag.SKIP_CACHE_STORE,Flag.SKIP_CACHE_LOAD).get(readLockKey);
       }
     }
   }
