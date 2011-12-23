@@ -3,9 +3,10 @@
   if (fileList == null) {
     fileList=new ConcurrentHashSet<String>();
     Set<String> prev=(Set<String>)cache.putIfAbsent(fileListCacheKey,fileList);
-    return prev == null ? fileList : prev;
+    if (prev != null) {
+      fileList=prev;
+    }
   }
- else {
-    return fileList;
-  }
+  if (trace)   log.trace("Refreshed file listing view");
+  return fileList;
 }
