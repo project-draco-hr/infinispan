@@ -1,8 +1,5 @@
 {
-  Configuration c=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  clmc.addCacheLoaderConfig(new CountingCacheStoreConfig());
-  clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
-  c.setCacheLoaderManagerConfig(clmc);
-  createClusteredCaches(2,"replication",c);
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+  builder.locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ).versioning().enable().scheme(VersioningScheme.SIMPLE).loaders().addCacheLoader().cacheLoader(new CountingCacheStore()).loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore()).transaction().syncCommitPhase(true);
+  createClusteredCaches(2,"replication",builder);
 }
