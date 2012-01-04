@@ -5,8 +5,11 @@
     fetchNextChunk();
     if (currentBuffer == null)     return -1;
  else     if (isLastChunk())     endReached=true;
+    remaining=getBytesRemainingInChunk();
   }
-  int retval=currentBuffer[localIndex++];
-  index++;
-  return retval;
+  int bytesToRead=Math.min(len,remaining);
+  System.arraycopy(currentBuffer,localIndex,b,off,bytesToRead);
+  localIndex+=bytesToRead;
+  index+=bytesToRead;
+  return bytesToRead;
 }
