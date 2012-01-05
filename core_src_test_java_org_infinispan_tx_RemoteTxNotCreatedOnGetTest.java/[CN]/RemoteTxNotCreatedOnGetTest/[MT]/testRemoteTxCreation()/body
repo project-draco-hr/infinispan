@@ -1,0 +1,14 @@
+{
+  Object key=getKeyForCache(1);
+  cache(1).put(key,"v");
+  assertEquals("v",cache(0).get(key));
+  assertEquals("v",cache(1).get(key));
+  Thread.sleep(1000);
+  TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
+  assertEquals(tt1.getRemoteTransactions().size(),0);
+  tm(0).begin();
+  log.trace("Before going remotely");
+  cache(0).get(key);
+  assertEquals(tt1.getRemoteTransactions().size(),0);
+  tm(0).commit();
+}
