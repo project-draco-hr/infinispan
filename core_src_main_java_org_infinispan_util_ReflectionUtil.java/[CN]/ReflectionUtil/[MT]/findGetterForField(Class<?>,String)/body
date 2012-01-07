@@ -1,16 +1,17 @@
 {
-  for (  Method m : c.getDeclaredMethods()) {
-    String name=m.getName();
-    String s=null;
-    if (name.startsWith("get")) {
-      s=name.substring(3);
-    }
- else     if (name.startsWith("is")) {
-      s=name.substring(2);
-    }
-    if (s != null && s.equalsIgnoreCase(fieldName)) {
-      return m;
+  Method retval=findGetterForFieldUsingReflection(c,fieldName);
+  if (retval == null) {
+    if (!c.equals(Object.class)) {
+      if (!c.isInterface()) {
+        retval=findGetterForField(c.getSuperclass(),fieldName);
+        if (retval == null) {
+          for (          Class ifc : c.getInterfaces()) {
+            retval=findGetterForField(ifc,fieldName);
+            if (retval != null)             break;
+          }
+        }
+      }
     }
   }
-  return null;
+  return retval;
 }
