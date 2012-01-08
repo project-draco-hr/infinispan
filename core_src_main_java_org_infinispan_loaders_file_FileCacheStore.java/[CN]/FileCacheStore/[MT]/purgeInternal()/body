@@ -1,60 +1,23 @@
 {
   if (trace)   log.trace("purgeInternal()");
-  try {
-    File[] files=root.listFiles(new NumericNamedFilesFilter());
-    if (files == null)     throw new CacheLoaderException("Root not directory or IO error occurred");
-    for (    final File bucketFile : files) {
-      if (multiThreadedPurge) {
-        purgerService.execute(new Runnable(){
-          @Override public void run(){
-            Integer bucketKey=Integer.valueOf(bucketFile.getName());
-            boolean lockAcquired=false;
-            try {
-              Bucket bucket=loadBucket(bucketFile);
-              if (bucket != null) {
-                if (bucket.removeExpiredEntries()) {
-                  lockForWriting(bucketKey);
-                  lockAcquired=true;
-                }
-                updateBucket(bucket);
-              }
-            }
- catch (            InterruptedException ie) {
-              log.debug("Interrupted, so finish work.");
-            }
-catch (            CacheLoaderException e) {
-              log.problemsPurgingFile(bucketFile,e);
-            }
- finally {
-              if (lockAcquired)               unlock(bucketKey);
-            }
-          }
+  File[] files=root.listFiles(new NumericNamedFilesFilter());
+  if (files == null)   throw new CacheLoaderException("Root not directory or IO error occurred");
+  for (  final File bucketFile : files) {
+    if (multiThreadedPurge) {
+      purgerService.execute(new Runnable(){
+        @Override public void run(){
+          boolean interrupted=!doPurge(bucketFile);
+          if (interrupted)           log.debug("Interrupted, so finish work.");
         }
-);
       }
+);
+    }
  else {
-        Integer bucketKey=Integer.valueOf(bucketFile.getName());
-        boolean lockAcquired=false;
-        try {
-          Bucket bucket=loadBucket(bucketFile);
-          if (bucket != null) {
-            if (bucket.removeExpiredEntries()) {
-              lockForWriting(bucketKey);
-              lockAcquired=true;
-            }
-            updateBucket(bucket);
-          }
-        }
-  finally {
-          if (lockAcquired) {
-            unlock(bucketKey);
-          }
-        }
+      boolean interrupted=!doPurge(bucketFile);
+      if (interrupted) {
+        log.debug("Interrupted, so stop loading and finish with purging.");
+        Thread.currentThread().interrupt();
       }
     }
-  }
- catch (  InterruptedException ie) {
-    log.debug("Interrupted, so stop loading and finish with purging.");
-    Thread.currentThread().interrupt();
   }
 }

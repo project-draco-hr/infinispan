@@ -1,0 +1,34 @@
+{
+  Integer bucketKey=Integer.valueOf(bucketFile.getName());
+  boolean lockAcquired=false;
+  boolean interrupted=false;
+  try {
+    Bucket bucket=loadBucket(bucketFile);
+    if (bucket != null) {
+      if (bucket.removeExpiredEntries()) {
+        lockForWriting(bucketKey);
+        lockAcquired=true;
+      }
+      updateBucket(bucket);
+    }
+ else {
+      if (bucketFile.exists() && bucketFile.length() == 0) {
+        lockForWriting(bucketKey);
+        lockAcquired=true;
+        if (!bucketFile.delete())         log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
+      }
+    }
+  }
+ catch (  InterruptedException ie) {
+    interrupted=true;
+  }
+catch (  CacheLoaderException e) {
+    log.problemsPurgingFile(bucketFile,e);
+  }
+ finally {
+    if (lockAcquired) {
+      unlock(bucketKey);
+    }
+  }
+  return !interrupted;
+}
