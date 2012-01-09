@@ -3,21 +3,18 @@
   try {
     Callable<Object> call=new Callable<Object>(){
       @Override public Object call() throws Exception {
-        Map<Address,Response> rspMap=new HashMap<Address,Response>();
         Object result=null;
         future.getCommand().init(cache);
         try {
           result=future.getCommand().perform(null);
-          rspMap.put(rpc.getAddress(),new SuccessfulResponse(result));
-          result=rspMap;
+          return Collections.singletonMap(rpc.getAddress(),new SuccessfulResponse(result));
         }
  catch (        Throwable e) {
-          result=e;
+          return e;
         }
  finally {
           future.notifyDone();
         }
-        return result;
       }
     }
 ;
