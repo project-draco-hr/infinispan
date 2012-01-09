@@ -1,5 +1,6 @@
 {
   ParseUtils.requireNoAttributes(reader);
+  boolean transportParsed=false;
   while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
     Element element=Element.forName(reader.getLocalName());
 switch (element) {
@@ -41,12 +42,21 @@ break;
 case TRANSPORT:
 {
 parseTransport(reader,builder);
+transportParsed=true;
 break;
 }
 default :
 {
 throw ParseUtils.unexpectedElement(reader);
 }
+}
+}
+if (!transportParsed) {
+builder.transport().transport(null);
+}
+ else {
+if (builder.transport().getTransport() == null) {
+builder.transport().transport(Util.getInstance(TransportConfigurationBuilder.DEFAULT_TRANSPORT));
 }
 }
 }
