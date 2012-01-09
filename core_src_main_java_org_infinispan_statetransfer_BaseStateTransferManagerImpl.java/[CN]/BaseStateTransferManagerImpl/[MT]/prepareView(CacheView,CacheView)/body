@@ -1,6 +1,9 @@
 {
   log.tracef("Received new cache view: %s %s",configuration.getName(),pendingView);
   joinStartedLatch.countDown();
+  if (oldView == null) {
+    oldView=committedView;
+  }
   newView=pendingView;
   chNew=createConsistentHash(pendingView.getMembers());
   stateTransferTask=createStateTransferTask(pendingView.getViewId(),pendingView.getMembers(),chOld == null);

@@ -4,6 +4,11 @@
   try {
     log.debugf("Installing new view %s for cache %s",newView,cacheName);
     clusterPrepareView(cacheName,newView);
+    Set<Address> leavers=cacheViewInfo.getPendingChanges().getLeavers();
+    if (cacheViewInfo.getPendingView().containsAny(leavers)) {
+      log.debugf("Cannot commit cache view %s, some nodes already left the cluster: %s",cacheViewInfo.getPendingView(),leavers);
+      return false;
+    }
     success=true;
   }
  catch (  InterruptedException e) {

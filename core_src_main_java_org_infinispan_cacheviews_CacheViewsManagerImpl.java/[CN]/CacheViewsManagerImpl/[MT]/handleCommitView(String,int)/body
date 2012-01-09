@@ -5,8 +5,8 @@
     return;
   }
   if (cacheViewInfo.hasPendingView()) {
-    log.debugf("%s: Committing cache view %d",cacheName,viewId);
     CacheView viewToCommit=cacheViewInfo.getPendingView();
+    log.debugf("%s: Committing cache view %s",cacheName,viewToCommit);
     CacheViewListener cacheViewListener=cacheViewInfo.getListener();
     boolean isLocal=viewToCommit.contains(self);
     if (isLocal && cacheViewListener != null) {
@@ -14,6 +14,9 @@
     }
     cacheViewInfo.commitView(viewId);
     cacheViewInfo.getPendingChanges().resetChanges(viewToCommit);
+    if (isLocal && cacheViewListener != null) {
+      cacheViewListener.postInstallView(viewId);
+    }
   }
  else {
     log.debugf("%s: We don't have a pending view, ignoring commit",cacheName);
