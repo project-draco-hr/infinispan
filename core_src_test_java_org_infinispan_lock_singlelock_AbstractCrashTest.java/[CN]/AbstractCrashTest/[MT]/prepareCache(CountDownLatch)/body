@@ -1,11 +1,12 @@
 {
   RpcManager rpcManager=new ControlledRpcManager(advancedCache(1).getRpcManager()){
-    @Override public void invokeRemotely(    Collection<Address> recipients,    ReplicableCommand rpcCommand,    boolean sync){
+    @Override public Map<Address,Response> invokeRemotely(    Collection<Address> recipients,    ReplicableCommand rpcCommand,    boolean sync,    boolean usePriorityQueue){
       if (rpcCommand instanceof TxCompletionNotificationCommand) {
         releaseLocksLatch.countDown();
+        return null;
       }
  else {
-        realOne.invokeRemotely(recipients,rpcCommand,sync);
+        return realOne.invokeRemotely(recipients,rpcCommand,sync,usePriorityQueue);
       }
     }
   }
