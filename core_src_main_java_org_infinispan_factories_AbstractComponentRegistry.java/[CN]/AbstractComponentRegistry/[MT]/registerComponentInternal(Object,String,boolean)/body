@@ -1,9 +1,6 @@
 {
   if (component == null)   throw new NullPointerException("Cannot register a null component under name [" + name + "]");
   Component old=componentLookup.get(name);
-  if (component.getClass().getSimpleName().endsWith("SomeInterceptor")) {
-    System.out.println("Scoundrel");
-  }
   if (old != null) {
     if (old.instance.equals(component)) {
       getLog().tracef("Attempting to register a component equal to one that already exists under the same name (%s).  Not doing anything.",name);
@@ -32,5 +29,8 @@
   }
   c.injectDependencies();
   if (old == null)   getLog().tracef("Registering component %s under name %s",c,name);
-  if (state == ComponentStatus.RUNNING)   populateLifeCycleMethods(c);
+  if (state == ComponentStatus.RUNNING) {
+    populateLifeCycleMethods(c);
+    invokeStartMethods(Arrays.asList(c.startMethods));
+  }
 }

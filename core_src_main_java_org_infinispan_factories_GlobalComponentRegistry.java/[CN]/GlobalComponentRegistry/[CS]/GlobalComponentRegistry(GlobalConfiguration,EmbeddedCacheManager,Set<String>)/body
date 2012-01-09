@@ -1,6 +1,5 @@
 {
   super(configuration.getClassLoader());
-  if (configuration == null)   throw new NullPointerException("GlobalConfiguration cannot be null!");
   moduleLifecycles=moduleProperties.resolveModuleLifecycles(defaultClassLoader);
   ComponentMetadataRepo.initialize(moduleProperties.getModuleMetadataFiles(defaultClassLoader),defaultClassLoader);
   try {
@@ -15,6 +14,7 @@
     if (factories != null && !factories.isEmpty())     registerNonVolatileComponent(factories,KnownComponentNames.MODULE_COMMAND_FACTORIES);
  else     registerNonVolatileComponent(Collections.<Object,Object>emptyMap(),KnownComponentNames.MODULE_COMMAND_FACTORIES);
     this.createdCaches=createdCaches;
+    getOrCreateComponent(Transport.class);
   }
  catch (  Exception e) {
     throw new CacheException("Unable to construct a GlobalComponentRegistry!",e);
