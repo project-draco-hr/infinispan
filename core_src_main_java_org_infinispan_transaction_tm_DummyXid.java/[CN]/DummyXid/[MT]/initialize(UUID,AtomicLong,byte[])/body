@@ -1,0 +1,13 @@
+{
+  long lsb=transactionManagerId.getLeastSignificantBits();
+  long msb=transactionManagerId.getMostSignificantBits();
+  long id=generator.getAndIncrement();
+  Arrays.fill(field,(byte)0);
+  UnsignedNumeric.writeUnsignedLong(field,0,lsb);
+  UnsignedNumeric.writeUnsignedLong(field,10,msb);
+  UnsignedNumeric.writeUnsignedLong(field,20,id);
+  int hash=(int)(lsb ^ lsb >>> 32);
+  hash=37 * hash + (int)(msb ^ msb >>> 32);
+  hash=37 * hash + (int)(id ^ id >>> 32);
+  return hash;
+}
