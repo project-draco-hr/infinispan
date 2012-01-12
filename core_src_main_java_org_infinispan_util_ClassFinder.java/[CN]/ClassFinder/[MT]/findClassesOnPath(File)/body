@@ -29,22 +29,32 @@ catch (      Throwable e) {
         log.warnf("Could not create jar file on path %s",path);
         return classes;
       }
-      Enumeration<JarEntry> en=jar.entries();
-      while (en.hasMoreElements()) {
-        JarEntry entry=en.nextElement();
-        if (entry.getName().endsWith("class")) {
-          String clazz=null;
-          try {
-            clazz=toClassName(entry.getName());
-            claz=Util.loadClassStrict(clazz,null);
-            classes.add(claz);
+      try {
+        Enumeration<JarEntry> en=jar.entries();
+        while (en.hasMoreElements()) {
+          JarEntry entry=en.nextElement();
+          if (entry.getName().endsWith("class")) {
+            String clazz=null;
+            try {
+              clazz=toClassName(entry.getName());
+              claz=Util.loadClassStrict(clazz,null);
+              classes.add(claz);
+            }
+ catch (            NoClassDefFoundError ncdfe) {
+              log.warnf("%s has reference to a class %s that could not be loaded from classpath",entry.getName(),ncdfe.getMessage());
+            }
+catch (            Throwable e) {
+              log.warn("From jar path " + entry.getName() + " could not load class "+ clazz,e);
+            }
           }
- catch (          NoClassDefFoundError ncdfe) {
-            log.warnf("%s has reference to a class %s that could not be loaded from classpath",entry.getName(),ncdfe.getMessage());
-          }
-catch (          Throwable e) {
-            log.warn("From jar path " + entry.getName() + " could not load class "+ clazz,e);
-          }
+        }
+      }
+  finally {
+        try {
+          jar.close();
+        }
+ catch (        IOException e) {
+          log.debugf(e,"error closing jar file %s",jar);
         }
       }
     }
