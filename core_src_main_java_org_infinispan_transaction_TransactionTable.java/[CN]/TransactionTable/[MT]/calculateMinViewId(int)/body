@@ -1,15 +1,26 @@
 {
-  if (idOfRemovedTransaction == -1 || idOfRemovedTransaction == minTxViewId) {
-    int minViewId=currentViewId;
-    for (    CacheTransaction ct : localTransactions.values()) {
-      int viewId=ct.getViewId();
-      if (viewId < minViewId)       minViewId=viewId;
+  minViewRecalculationLock.lock();
+  try {
+    if (idOfRemovedTransaction == -1 || (idOfRemovedTransaction == minTxViewId && idOfRemovedTransaction < currentViewId)) {
+      int minViewIdFound=currentViewId;
+      for (      CacheTransaction ct : localTransactions.values()) {
+        int viewId=ct.getViewId();
+        if (viewId < minViewIdFound)         minViewIdFound=viewId;
+      }
+      for (      CacheTransaction ct : remoteTransactions.values()) {
+        int viewId=ct.getViewId();
+        if (viewId < minViewIdFound)         minViewIdFound=viewId;
+      }
+      if (minViewIdFound > minTxViewId) {
+        log.tracef("Changing minimum view ID from %s to %s",minTxViewId,minViewIdFound);
+        minTxViewId=minViewIdFound;
+      }
+ else {
+        log.tracef("Minimum view ID still is %s; nothing to change",minViewIdFound);
+      }
     }
-    for (    CacheTransaction ct : remoteTransactions.values()) {
-      int viewId=ct.getViewId();
-      if (viewId < minViewId)       minViewId=viewId;
-    }
-    log.tracef("Changing minimum view ID from %s to %s",minTxViewId,minViewId);
-    minTxViewId=minViewId;
+  }
+  finally {
+    minViewRecalculationLock.unlock();
   }
 }

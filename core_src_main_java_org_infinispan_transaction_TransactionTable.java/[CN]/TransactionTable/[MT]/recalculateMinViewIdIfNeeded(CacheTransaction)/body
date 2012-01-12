@@ -3,9 +3,10 @@
   if (currentViewId != CACHE_STOPPED_VIEW_ID) {
     int removedTransactionViewId=removedTransaction.getViewId();
     if (removedTransactionViewId < minTxViewId) {
-      log.tracef("A transaction has a view ID (" + removedTransactionViewId + ") that is smaller than the smallest transaction view ID ("+ minTxViewId+ ") this node knows about!  This can happen if a concurrent thread recalculates the minimum view ID after the current transaction has been removed from the transaction table.");
-      return;
+      log.tracef("A transaction has a view ID (%s) that is smaller than the smallest transaction view ID (%s) this node knows about!  This can happen if a concurrent thread recalculates the minimum view ID after the current transaction has been removed from the transaction table.",removedTransactionViewId,minTxViewId);
     }
-    if (removedTransactionViewId == minTxViewId)     calculateMinViewId(removedTransactionViewId);
+ else     if (removedTransactionViewId == minTxViewId && removedTransactionViewId < currentViewId) {
+      calculateMinViewId(removedTransactionViewId);
+    }
   }
 }

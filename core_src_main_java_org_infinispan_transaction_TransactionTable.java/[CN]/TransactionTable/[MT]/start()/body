@@ -1,5 +1,8 @@
 {
+  localTransactions=new ConcurrentHashMap<Transaction,LocalTransaction>(configuration.getConcurrencyLevel());
   if (configuration.getCacheMode().isClustered()) {
+    minViewRecalculationLock=new ReentrantLock();
+    remoteTransactions=new ConcurrentHashMap<GlobalTransaction,RemoteTransaction>(configuration.getConcurrencyLevel());
     cleanupService.start(configuration,rpcManager,invoker);
     cm.addListener(cleanupService);
     cm.addListener(this);
