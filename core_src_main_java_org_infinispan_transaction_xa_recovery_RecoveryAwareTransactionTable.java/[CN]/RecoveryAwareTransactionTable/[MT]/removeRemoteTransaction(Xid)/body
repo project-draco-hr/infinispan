@@ -4,11 +4,11 @@
     RemoteTransaction next=it.next();
     RecoverableTransactionIdentifier gtx=(RecoverableTransactionIdentifier)next.getGlobalTransaction();
     if (xid.equals(gtx.getXid())) {
-synchronized (minViewIdInvariant) {
-        it.remove();
+      it.remove();
+      if (clustered) {
         recalculateMinViewIdIfNeeded(next);
-        next.notifyOnTransactionFinished();
       }
+      next.notifyOnTransactionFinished();
       return next;
     }
   }

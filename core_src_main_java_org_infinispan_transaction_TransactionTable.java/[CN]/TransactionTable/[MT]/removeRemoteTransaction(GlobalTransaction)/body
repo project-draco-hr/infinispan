@@ -1,11 +1,6 @@
 {
-  RemoteTransaction result;
-synchronized (minViewIdInvariant) {
-    result=remoteTransactions.remove(txId);
-    if (result == null)     return null;
-    recalculateMinViewIdIfNeeded(result);
-  }
-  log.tracef("Removed %s from transaction table. Transaction %s",txId,result);
-  result.notifyOnTransactionFinished();
-  return result;
+  RemoteTransaction removed;
+  removed=remoteTransactions.remove(txId);
+  releaseResources(removed);
+  return removed;
 }

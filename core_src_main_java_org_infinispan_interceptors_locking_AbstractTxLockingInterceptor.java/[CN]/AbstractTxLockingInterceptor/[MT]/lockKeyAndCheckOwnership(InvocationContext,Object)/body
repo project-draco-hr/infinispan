@@ -5,16 +5,15 @@
     return;
   }
   TxInvocationContext txContext=(TxInvocationContext)ctx;
-  final Integer viewId=txContext.getCacheTransaction().getViewId();
-  if (viewId != null) {
-    checkForPendingLocks=viewId > txTable.getMinViewId();
+  final int transactionViewId=txContext.getCacheTransaction().getViewId();
+  if (clustered) {
+    if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
+      checkForPendingLocks=transactionViewId > txTable.getMinViewId();
+    }
   }
-  getLog().tracef("Locking key %s, checking for pending locks? %s",key,checkForPendingLocks);
-  if (!checkForPendingLocks) {
-    lockManager.acquireLock(ctx,key);
-  }
- else {
-    Set<CacheTransaction> tx=txTable.getTransactionsStartedBefore(viewId);
+  if (checkForPendingLocks) {
+    getLog().tracef("Checking for pending locks and then locking key %s",key);
+    Set<CacheTransaction> tx=txTable.getTransactionsStartedBefore(transactionViewId);
     long expectedEndTime=nowMillis() + configuration.getLockAcquisitionTimeout();
     for (    CacheTransaction ct : tx) {
       long remaining=expectedEndTime - nowMillis();
@@ -28,5 +27,9 @@
       getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s",key);
       lockManager.acquireLock(ctx,key,remaining);
     }
+  }
+ else {
+    getLog().tracef("Locking key %s, no need to check for pending locks.",key);
+    lockManager.acquireLock(ctx,key);
   }
 }
