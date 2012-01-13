@@ -1,25 +1,21 @@
 {
-  try {
-    abortIfRemoteTransactionInvalid(ctx,command);
-    if (command.writesToASingleKey()) {
-      log.trace("Not using lock reordering as we have a single key.");
+  abortIfRemoteTransactionInvalid(ctx,command);
+  if (!command.hasModifications() || command.writesToASingleKey()) {
+    log.trace("Not using lock reordering as we have a single key.");
+    acquireLocksVisitingCommands(ctx,command);
+  }
+ else {
+    Object[] orderedKeys=sort(command.getModifications());
+    boolean hasClear=orderedKeys == null;
+    if (hasClear) {
+      log.trace("Not using lock reordering as the prepare contains a clear command.");
       acquireLocksVisitingCommands(ctx,command);
     }
  else {
-      LockReorderingVisitor lre=new LockReorderingVisitor(command.getModifications());
-      if (!lre.hasClear) {
-        log.tracef("Using lock reordering, order is: %s",lre.orderedKeys);
-        acquireAllLocks(ctx,lre.orderedKeys.iterator());
-        ctx.addAllAffectedKeys(lre.orderedKeys);
-      }
- else {
-        log.trace("Not using lock reordering as the prepare contains a clear command.");
-        acquireLocksVisitingCommands(ctx,command);
-      }
+      log.tracef("Using lock reordering, order is: %s",orderedKeys);
+      acquireAllLocks(ctx,orderedKeys);
+      ctx.addAllAffectedKeys(Arrays.asList(orderedKeys));
     }
-    return invokeNextAndCommitIf1Pc(ctx,command);
   }
- catch (  Throwable te) {
-    throw te;
-  }
+  return invokeNextAndCommitIf1Pc(ctx,command);
 }
