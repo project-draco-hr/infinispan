@@ -14,11 +14,18 @@
   }
   if (checkForPendingLocks) {
     getLog().tracef("Checking for pending locks and then locking key %s",key);
-    Set<CacheTransaction> tx=txTable.getTransactionsStartedBefore(transactionViewId);
     long expectedEndTime=nowMillis() + configuration.getLockAcquisitionTimeout();
-    for (    CacheTransaction ct : tx) {
-      long remaining=expectedEndTime - nowMillis();
-      if (remaining < 0 || !ct.waitForLockRelease(key,remaining))       throw newTimeoutException(key,txContext);
+    for (    CacheTransaction ct : txTable.getLocalTransactions()) {
+      if (ct.getViewId() < transactionViewId) {
+        long remaining=expectedEndTime - nowMillis();
+        if (remaining < 0 || !ct.waitForLockRelease(key,remaining))         throw newTimeoutException(key,txContext);
+      }
+    }
+    for (    CacheTransaction ct : txTable.getRemoteTransactions()) {
+      if (ct.getViewId() < transactionViewId) {
+        long remaining=expectedEndTime - nowMillis();
+        if (remaining < 0 || !ct.waitForLockRelease(key,remaining))         throw newTimeoutException(key,txContext);
+      }
     }
     final long remaining=expectedEndTime - nowMillis();
     if (remaining <= 0) {
