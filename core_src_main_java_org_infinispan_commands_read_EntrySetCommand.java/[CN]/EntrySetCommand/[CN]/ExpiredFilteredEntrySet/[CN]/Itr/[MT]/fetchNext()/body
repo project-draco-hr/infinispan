@@ -1,13 +1,17 @@
 {
-  long currentTimeMillis=System.currentTimeMillis();
+  long currentTimeMillis=-1;
   while (it.hasNext()) {
     InternalCacheEntry e=it.next();
-    if (e.isExpired(currentTimeMillis)) {
-      continue;
+    if (e.canExpire()) {
+      if (currentTimeMillis == -1)       currentTimeMillis=System.currentTimeMillis();
+      if (!e.isExpired(currentTimeMillis)) {
+        next=e;
+        return;
+      }
     }
  else {
       next=e;
-      break;
+      return;
     }
   }
 }

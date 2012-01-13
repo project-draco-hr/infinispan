@@ -2,11 +2,12 @@
   if (trace)   log.tracef("Attempting to lock %s with acquisition timeout of %s millis",key,lockTimeout);
   if (ctx.isInTxScope()) {
     if (trace)     log.trace("Using early dead lock detection");
-    final long start=System.currentTimeMillis();
+    final long startNanos=System.nanoTime();
+    final long timeoutNanoTime=TimeUnit.NANOSECONDS.convert(lockTimeout,MILLISECONDS) + startNanos;
     DldGlobalTransaction thisTx=(DldGlobalTransaction)ctx.getLockOwner();
     thisTx.setLockIntention(key);
     if (trace)     log.tracef("Setting lock intention to %s for %s (%s)",key,thisTx,System.identityHashCode(thisTx));
-    while (System.currentTimeMillis() < (start + lockTimeout)) {
+    while (System.nanoTime() < timeoutNanoTime) {
       if (lockContainer.acquireLock(ctx.getLockOwner(),key,spinDuration,MILLISECONDS) != null) {
         thisTx.setLockIntention(null);
         if (trace)         log.tracef("successfully acquired lock on %s on behalf of %s, returning ...",key,ctx.getLockOwner());
