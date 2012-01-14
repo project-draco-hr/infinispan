@@ -1,10 +1,14 @@
 {
-  final boolean potentiallyLocked=txComplete || hasLockOrIsLockBackup(key);
+  if (txComplete)   return true;
+  final boolean potentiallyLocked=hasLockOrIsLockBackup(key);
   log.tracef("Transaction gtx=%s potentially locks key %s? %s",tx,key,potentiallyLocked);
   if (potentiallyLocked) {
 synchronized (this) {
-      if (txComplete)       return true;
-      if (!needToNotifyWaiters)       needToNotifyWaiters=true;
+      needToNotifyWaiters=true;
+      if (txComplete) {
+        needToNotifyWaiters=false;
+        return true;
+      }
       this.wait(lockAcquisitionTimeout);
       return txComplete;
     }
