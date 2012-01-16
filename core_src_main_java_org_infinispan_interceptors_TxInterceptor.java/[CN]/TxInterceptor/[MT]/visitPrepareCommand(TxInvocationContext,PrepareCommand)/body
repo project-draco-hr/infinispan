@@ -1,12 +1,6 @@
 {
-  if (!command.isOnePhaseCommit()) {
-    transactionLog.logPrepare(command);
-  }
   if (this.statisticsEnabled)   prepares.incrementAndGet();
   Object result=invokeNextInterceptor(ctx,command);
-  if (command.isOnePhaseCommit()) {
-    transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(),command.getModifications());
-  }
   if (!ctx.isOriginLocal()) {
     if (command.isOnePhaseCommit()) {
       txTable.remoteTransactionCommitted(command.getGlobalTransaction());
