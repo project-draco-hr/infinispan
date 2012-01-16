@@ -1,8 +1,12 @@
 {
   final Class<?> keyClass=key.getClass();
-  if (!groupMetadataCache.containsKey(keyClass)) {
-    GroupMetadata gmd=createGroupMetadata(keyClass);
-    groupMetadataCache.putIfAbsent(keyClass,gmd);
+  GroupMetadata groupMetadata=groupMetadataCache.get(keyClass);
+  if (groupMetadata == null) {
+    groupMetadata=createGroupMetadata(keyClass);
+    GroupMetadata previous=groupMetadataCache.putIfAbsent(keyClass,groupMetadata);
+    if (previous != null) {
+      return previous;
+    }
   }
-  return groupMetadataCache.get(keyClass);
+  return groupMetadata;
 }
