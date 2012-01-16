@@ -1,9 +1,12 @@
 {
-  GlobalConfigurationBuilder gcb=GlobalConfigurationBuilder.defaultClusteredBuilder();
-  ConfigurationBuilder cb=new ConfigurationBuilder();
-  DefaultCacheManager manager=new DefaultCacheManager(gcb.build(),cb.build());
-  cb=new ConfigurationBuilder();
-  cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
-  manager.defineConfiguration("testConfigCache",cb.build());
-  manager.getCache("testConfigCache");
+  EmbeddedCacheManager manager=TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder(),new TransportFlags());
+  try {
+    ConfigurationBuilder cb=new ConfigurationBuilder();
+    cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().disableOnRehash();
+    manager.defineConfiguration("testConfigCache",cb.build());
+    manager.getCache("testConfigCache");
+  }
+  finally {
+    TestingUtil.killCacheManagers(manager);
+  }
 }
