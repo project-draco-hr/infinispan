@@ -1,0 +1,15 @@
+{
+  CacheMode cacheMode=getClusteringBuilder().cacheMode();
+  boolean _fetchInMemoryState;
+  if ((cacheMode.isReplicated() || cacheMode.isDistributed()) && fetchInMemoryState == null) {
+    log.trace("Cache is distributed or replicated but state transfer was not defined, enabling it by default");
+    _fetchInMemoryState=true;
+  }
+ else   if (fetchInMemoryState != null) {
+    _fetchInMemoryState=fetchInMemoryState;
+  }
+ else {
+    _fetchInMemoryState=false;
+  }
+  return new StateTransferConfiguration(_fetchInMemoryState,fetchInMemoryState,timeout,chunkSize);
+}
