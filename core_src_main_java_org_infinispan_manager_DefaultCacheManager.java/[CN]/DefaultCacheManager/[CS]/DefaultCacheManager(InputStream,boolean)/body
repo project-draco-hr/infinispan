@@ -5,10 +5,10 @@
     globalConfiguration=new LegacyGlobalConfigurationAdaptor().adapt(holder.getGlobalConfigurationBuilder().build());
     globalConfiguration.accept(configurationValidator);
     defaultConfiguration=new LegacyConfigurationAdaptor().adapt(holder.getDefaultConfigurationBuilder().build());
-    for (    ConfigurationBuilder b : holder.getConfigurationBuilders()) {
-      org.infinispan.configuration.cache.Configuration c=b.build();
+    for (    Entry<String,ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+      org.infinispan.configuration.cache.Configuration c=entry.getValue().build();
       Configuration legacy=new LegacyConfigurationAdaptor().adapt(c);
-      configurationOverrides.put(c.name(),legacy);
+      configurationOverrides.put(entry.getKey(),legacy);
     }
     globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());
     cacheCreateLock=new ReentrantLock();
