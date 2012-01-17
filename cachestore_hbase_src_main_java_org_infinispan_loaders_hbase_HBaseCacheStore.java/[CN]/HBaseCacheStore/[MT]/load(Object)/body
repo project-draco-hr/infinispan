@@ -1,0 +1,27 @@
+{
+  log.debugf("In HBaseCacheStore.load for key %s",key);
+  String hashedKey=hashKey(this.entryKeyPrefix,key);
+  List<String> colFamilies=Collections.singletonList(entryColumnFamily);
+  try {
+    Map<String,Map<String,byte[]>> resultMap=hbf.readRow(this.entryTable,hashedKey,colFamilies);
+    if (resultMap.isEmpty()) {
+      log.debugf("Key %s not found.",hashedKey);
+      return null;
+    }
+    byte[] val=resultMap.get(entryColumnFamily).get(entryValueField);
+    InternalCacheEntry ice=unmarshall(val,key);
+    if (ice != null && ice.isExpired()) {
+      remove(key);
+      return null;
+    }
+    return ice;
+  }
+ catch (  HBaseException ex) {
+    log.error("Caught HadoopException: " + ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+catch (  Exception ex2) {
+    log.error("Caught Exception: " + ex2.getMessage());
+    throw new CacheLoaderException(ex2);
+  }
+}

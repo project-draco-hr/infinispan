@@ -1,0 +1,51 @@
+{
+  if (tableName == null || "".equals(tableName)) {
+    throw new HBaseException("Table name must not be empty.");
+  }
+  if (isEmpty(keyPrefix)) {
+    throw new IllegalArgumentException("keyPrefix cannot be null or empty.");
+  }
+  if (isEmpty(columnFamily)) {
+    throw new IllegalArgumentException("columnFamily cannot be null or empty.");
+  }
+  log.debugf("Reading rows from table %s with key prefix %s and ts %s",tableName,keyPrefix,ts);
+  HTable table=null;
+  ResultScanner scanner=null;
+  try {
+    table=new HTable(CONFIG,tableName);
+    Scan s=new Scan();
+    s.setMaxVersions(Integer.MAX_VALUE);
+    s.addColumn(Bytes.toBytes(columnFamily),Bytes.toBytes(qualifier));
+    s.setStartRow(Bytes.toBytes(keyPrefix));
+    s.setStopRow(Bytes.toBytes(keyPrefix + ts));
+    Map<String,Map<String,Map<String,byte[]>>> resultMaps=new HashMap<String,Map<String,Map<String,byte[]>>>();
+    scanner=table.getScanner(s);
+    Result[] resultBatch=scanner.next(SCAN_BATCH_SIZE);
+    while (resultBatch != null && resultBatch.length > 0) {
+      for (int i=0; i < resultBatch.length; i++) {
+        if (!resultBatch[i].isEmpty()) {
+          List<KeyValue> kv=resultBatch[i].getColumn(Bytes.toBytes(columnFamily),Bytes.toBytes(qualifier));
+          Map<String,byte[]> resultCFMap=new HashMap<String,byte[]>();
+          for (          KeyValue keyValue : kv) {
+            resultCFMap.put(qualifier,keyValue.getValue());
+          }
+          Map<String,Map<String,byte[]>> resultMap=Collections.singletonMap(columnFamily,resultCFMap);
+          resultMaps.put(getKeyFromResult(resultBatch[i]),resultMap);
+        }
+      }
+      resultBatch=scanner.next(SCAN_BATCH_SIZE);
+    }
+    return resultMaps;
+  }
+ catch (  IOException ex) {
+    throw new HBaseException("Exception happened while reading rows from HBase.",ex);
+  }
+ finally {
+    try {
+      table.close();
+      scanner.close();
+    }
+ catch (    Exception ex) {
+    }
+  }
+}

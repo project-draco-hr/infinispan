@@ -1,0 +1,23 @@
+{
+  log.debug("Purging expired entries.");
+  try {
+    long ts=System.currentTimeMillis();
+    Map<String,Map<String,Map<String,byte[]>>> rowsToPurge=hbf.readRows(this.expirationTable,this.expirationKeyPrefix,ts,this.expirationColumnFamily,this.expirationValueField);
+    Set<Object> keysToDelete=new HashSet<Object>();
+    Set<Object> expKeysToDelete=new HashSet<Object>();
+    for (    Entry<String,Map<String,Map<String,byte[]>>> entry : rowsToPurge.entrySet()) {
+      expKeysToDelete.add(entry.getKey());
+      byte[] targetKeyBytes=entry.getValue().get(this.expirationColumnFamily).get(this.expirationValueField);
+      String targetKey=Bytes.toString(targetKeyBytes);
+      keysToDelete.add(targetKey);
+    }
+    if (keysToDelete.size() > 0) {
+      hbf.removeRows(this.entryTable,keysToDelete);
+    }
+    hbf.removeRows(this.expirationTable,expKeysToDelete);
+  }
+ catch (  HBaseException ex) {
+    log.error("HadoopException loading all keys: " + ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+}

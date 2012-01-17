@@ -1,0 +1,20 @@
+{
+  if (name == null || "".equals(name)) {
+    throw new HBaseException("Table name must not be empty.");
+  }
+  try {
+    HBaseAdmin admin=new HBaseAdmin(CONFIG);
+    HTableDescriptor desc=new HTableDescriptor(name.getBytes());
+    if (columnFamilies != null) {
+      for (      String cf : columnFamilies) {
+        HColumnDescriptor colFamilyDesc=new HColumnDescriptor(cf.getBytes());
+        colFamilyDesc.setMaxVersions(maxVersions);
+        desc.addFamily(colFamilyDesc);
+      }
+    }
+    admin.createTable(desc);
+  }
+ catch (  Exception ex) {
+    throw new HBaseException("Exception occurred when creating HBase table.",ex);
+  }
+}

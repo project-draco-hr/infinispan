@@ -1,0 +1,60 @@
+{
+  if (isEmpty(tableName)) {
+    throw new IllegalArgumentException("tableName cannot be null or empty.");
+  }
+  if (isEmpty(columnFamily)) {
+    throw new IllegalArgumentException("colFamily cannot be null or empty.");
+  }
+  if (isEmpty(qualifier)) {
+    throw new IllegalArgumentException("field cannot be null or empty.");
+  }
+  if (numEntries < 0) {
+    numEntries=Integer.MAX_VALUE;
+  }
+  log.debugf("Scanning table %s.",tableName);
+  ResultScanner scanner=null;
+  HTable table=null;
+  try {
+    table=new HTable(CONFIG,tableName);
+    scanner=table.getScanner(Bytes.toBytes(columnFamily),Bytes.toBytes(qualifier));
+    Map<String,byte[]> results=new HashMap<String,byte[]>();
+    int ct=0;
+    while (ct < numEntries) {
+      int batchSize=Math.min(SCAN_BATCH_SIZE,numEntries - ct);
+      Result[] batch=scanner.next(batchSize);
+      if (batch.length <= 0) {
+        break;
+      }
+ else {
+        for (int i=0; i < batch.length; i++) {
+          Result curr=batch[i];
+          String key=getKeyFromResult(curr);
+          byte[] valueArr=null;
+          if (curr.containsColumn(Bytes.toBytes(columnFamily),Bytes.toBytes(qualifier))) {
+            valueArr=curr.getValue(Bytes.toBytes(columnFamily),Bytes.toBytes(qualifier));
+            log.tracef("Value=%s",Bytes.toString(valueArr));
+          }
+          log.tracef("Added %s->%s",key,Bytes.toString(valueArr));
+          results.put(key,valueArr);
+        }
+        ct+=batch.length;
+      }
+    }
+    return results;
+  }
+ catch (  IOException ex) {
+    throw new HBaseException("Exception happened while " + "scanning table " + tableName + ".",ex);
+  }
+catch (  Exception ex) {
+    throw new HBaseException("Exception happened while " + "scanning table " + tableName + ".",ex);
+  }
+ finally {
+    scanner.close();
+    try {
+      table.close();
+      scanner.close();
+    }
+ catch (    Exception ex) {
+    }
+  }
+}

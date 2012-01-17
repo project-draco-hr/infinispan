@@ -1,0 +1,55 @@
+{
+  log.debug("In HBaseCacheStore.start");
+  try {
+    entryTable=config.entryTable;
+    entryColumnFamily=config.entryColumnFamily;
+    entryValueField=config.entryValueField;
+    entryKeyPrefix="e_" + (config.isSharedTable() ? cacheName + "_" : "");
+    expirationTable=config.expirationTable;
+    expirationKeyPrefix="x_" + (config.isSharedTable() ? "_" + cacheName : "");
+    expirationColumnFamily=config.expirationColumnFamily;
+    expirationValueField=config.expirationValueField;
+    keyMapper=(TwoWayKey2StringMapper)Util.getInstance(config.getKeyMapper(),config.getClassLoader());
+    if (keyMapper instanceof MarshallingTwoWayKey2StringMapper) {
+      ((MarshallingTwoWayKey2StringMapper)keyMapper).setMarshaller(getMarshaller());
+    }
+    Map<String,String> props=new HashMap<String,String>();
+    props.put("hbase.zookeeper.quorum",config.hbaseZookeeperQuorum);
+    props.put("hbase.zookeeper.property.clientPort",config.hbaseZookeeperPropertyClientPort);
+    hbf=new HBaseFacade(props);
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException(e);
+  }
+  if (config.autoCreateTable) {
+    log.infof("Automatically creating %s and %s tables.",this.entryTable,this.expirationTable);
+    try {
+      List<String> colFamilies=Collections.singletonList(this.entryColumnFamily);
+      hbf.createTable(this.entryTable,colFamilies,1);
+    }
+ catch (    HBaseException ex) {
+      if (ex.getCause() instanceof TableExistsException) {
+        log.infof("Not creating %s because it already exists.",this.entryTable);
+      }
+ else {
+        throw new CacheLoaderException("Got HadoopException while creating the " + this.entryTable + " cache store table.",ex);
+      }
+    }
+    try {
+      List<String> colFamilies=Collections.singletonList(this.expirationColumnFamily);
+      hbf.createTable(this.expirationTable,colFamilies,1);
+    }
+ catch (    HBaseException ex) {
+      if (ex.getCause() instanceof TableExistsException) {
+        log.infof("Not creating %s because it already exists.",this.expirationTable);
+      }
+ else {
+        throw new CacheLoaderException("Got HadoopException while creating the " + this.expirationTable + " cache store table.",ex);
+      }
+    }
+  }
+  log.info("Cleaning up expired entries...");
+  purgeInternal();
+  log.info("HBaseCacheStore started");
+  super.start();
+}

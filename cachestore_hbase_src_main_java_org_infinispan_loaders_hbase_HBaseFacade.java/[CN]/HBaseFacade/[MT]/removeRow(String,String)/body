@@ -1,0 +1,30 @@
+{
+  if (tableName == null || "".equals(tableName)) {
+    throw new HBaseException("Table name must not be empty.");
+  }
+  if (isEmpty(key)) {
+    throw new IllegalArgumentException("key cannot be null or empty.");
+  }
+  log.debugf("Removing row from table %s with key %s.",tableName,key);
+  HTable table=null;
+  try {
+    table=new HTable(CONFIG,tableName);
+    Get get=new Get(Bytes.toBytes(key));
+    boolean exists=table.exists(get);
+    if (exists) {
+      Delete d=new Delete(Bytes.toBytes(key));
+      table.delete(d);
+    }
+    return exists;
+  }
+ catch (  IOException ex) {
+    throw new HBaseException("Exception happened while " + "deleting row from HBase.",ex);
+  }
+ finally {
+    try {
+      table.close();
+    }
+ catch (    Exception ex) {
+    }
+  }
+}

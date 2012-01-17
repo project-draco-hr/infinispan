@@ -1,0 +1,23 @@
+{
+  log.debugf("In HBaseCacheStore.load for %s entries.",numEntries);
+  Map<String,byte[]> items=null;
+  try {
+    items=hbf.scan(this.entryTable,numEntries,entryColumnFamily,entryValueField);
+  }
+ catch (  HBaseException ex) {
+    log.error("Caught HadoopException loading " + numEntries + " entries: "+ ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+  Set<InternalCacheEntry> iceSet=new HashSet<InternalCacheEntry>(items.size());
+  try {
+    for (    Entry<String,byte[]> entry : items.entrySet()) {
+      Object unhashedKey=unhashKey(this.entryKeyPrefix,entry.getKey());
+      iceSet.add(unmarshall(entry.getValue(),unhashedKey));
+    }
+  }
+ catch (  Exception ex) {
+    log.error("Caught exception loading items: " + ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+  return iceSet;
+}

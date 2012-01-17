@@ -1,0 +1,26 @@
+{
+  log.debugf("In HBaseCacheStore.store for %s: %s",this.entryTable,entry.getKey());
+  Object key=entry.getKey();
+  String hashedKey=hashKey(this.entryKeyPrefix,key);
+  try {
+    byte[] val=marshall(entry);
+    Map<String,byte[]> valMap=Collections.singletonMap(entryValueField,val);
+    Map<String,Map<String,byte[]>> cfMap=Collections.singletonMap(entryColumnFamily,valMap);
+    hbf.addRow(this.entryTable,hashedKey,cfMap);
+    if (entry.canExpire()) {
+      Map<String,byte[]> expValMap=Collections.singletonMap(expirationValueField,Bytes.toBytes(hashedKey));
+      Map<String,Map<String,byte[]>> expCfMap=Collections.singletonMap(expirationColumnFamily,expValMap);
+      String expKey="ts_" + String.valueOf(System.currentTimeMillis());
+      String hashedExpKey=hashKey(this.expirationKeyPrefix,expKey);
+      hbf.addRow(this.expirationTable,hashedExpKey,expCfMap);
+    }
+  }
+ catch (  HBaseException ex) {
+    log.error("HadoopException storing entry: " + ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+catch (  Exception ex2) {
+    log.error("Exception storing entry: " + ex2.getMessage());
+    throw new CacheLoaderException(ex2);
+  }
+}

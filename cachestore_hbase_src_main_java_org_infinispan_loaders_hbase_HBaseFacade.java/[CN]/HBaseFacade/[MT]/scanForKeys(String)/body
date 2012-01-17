@@ -1,0 +1,34 @@
+{
+  if (isEmpty(tableName)) {
+    throw new IllegalArgumentException("tableName cannot be null or empty.");
+  }
+  log.debugf("Scanning table %s for keys.",tableName);
+  ResultScanner scanner=null;
+  HTable table=null;
+  try {
+    table=new HTable(CONFIG,tableName);
+    scanner=table.getScanner(new Scan());
+    Set<Object> results=new HashSet<Object>();
+    Result[] resultBatch=scanner.next(SCAN_BATCH_SIZE);
+    while (resultBatch != null && resultBatch.length > 0) {
+      for (int i=0; i < resultBatch.length; i++) {
+        String key=getKeyFromResult(resultBatch[i]);
+        results.add(key);
+      }
+      resultBatch=scanner.next(SCAN_BATCH_SIZE);
+    }
+    return results;
+  }
+ catch (  IOException ex) {
+    throw new HBaseException("Exception happened while " + "scanning table " + tableName + ".",ex);
+  }
+ finally {
+    scanner.close();
+    try {
+      table.close();
+      scanner.close();
+    }
+ catch (    Exception ex) {
+    }
+  }
+}

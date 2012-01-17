@@ -1,0 +1,20 @@
+{
+  log.debugf("In HBaseCacheStore.loadAllKeys for %s",table);
+  Set<Object> allKeys=null;
+  try {
+    allKeys=hbf.scanForKeys(table);
+  }
+ catch (  HBaseException ex) {
+    log.error("HadoopException loading all keys: " + ex.getMessage());
+    throw new CacheLoaderException(ex);
+  }
+  String keyPrefix=table.equals(this.entryTable) ? this.entryKeyPrefix : this.expirationKeyPrefix;
+  Set<Object> unhashedKeys=new HashSet<Object>(allKeys.size());
+  for (  Object hashedKey : allKeys) {
+    unhashedKeys.add(unhashKey(keyPrefix,hashedKey));
+  }
+  if (keysToExclude != null) {
+    unhashedKeys.removeAll(keysToExclude);
+  }
+  return unhashedKeys;
+}
