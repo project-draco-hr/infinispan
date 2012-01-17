@@ -8,17 +8,10 @@
     result.add(new InDoubtTxInfoImpl(r.getXid(),internalId));
   }
   for (  Xid xid : txs) {
-    RecoveryAwareTransaction pTx=getPreparedTransaction(xid);
+    RecoveryAwareRemoteTransaction pTx=getPreparedTransaction(xid);
     if (pTx == null)     continue;
     RecoverableTransactionIdentifier gtx=(RecoverableTransactionIdentifier)pTx.getGlobalTransaction();
-    int status;
-    if (pTx instanceof RecoveryAwareRemoteTransaction) {
-      status=((RecoveryAwareRemoteTransaction)pTx).getStatus();
-    }
- else {
-      status=Status.STATUS_PREPARED;
-    }
-    InDoubtTxInfoImpl infoInDoubt=new InDoubtTxInfoImpl(xid,gtx.getInternalId(),status);
+    InDoubtTxInfoImpl infoInDoubt=new InDoubtTxInfoImpl(xid,gtx.getInternalId(),pTx.getStatus());
     result.add(infoInDoubt);
   }
   if (log.isTraceEnabled())   log.tracef("The set of in-doubt txs from this node is %s",result);
