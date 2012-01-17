@@ -1,12 +1,7 @@
 {
-  GlobalConfiguration cfg=GlobalConfiguration.getClusteredDefault();
-  manager=new DefaultCacheManager(cfg);
-  Configuration config=new Configuration();
-  config.setCacheMode(Configuration.CacheMode.DIST_ASYNC);
-  config.setNumOwners(1);
-  config.setL1CacheEnabled(true);
-  manager.defineConfiguration("bela",config);
-  cache=manager.getCache("bela");
+  manager=new DefaultCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder().build());
+  manager.defineConfiguration("dirCache",new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC).clustering().hash().numOwners(1).clustering().l1().enable().build());
+  cache=manager.getCache("dirCache");
   boolean looping=true;
   while (looping) {
     int ch=Util.keyPress("[1] put dir [2] remove dir [3] dump [4] get [5] verify [x] exit");
