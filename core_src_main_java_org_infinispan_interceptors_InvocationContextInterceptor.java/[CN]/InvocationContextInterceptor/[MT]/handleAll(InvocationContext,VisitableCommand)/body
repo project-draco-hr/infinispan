@@ -23,8 +23,10 @@
         return invokeNextInterceptor(ctx,command);
       }
  catch (      Throwable th) {
+        suppressExceptions=suppressExceptions || shuttingDown;
         if (suppressExceptions) {
-          log.trace("Exception while executing code, failing silently...",th);
+          if (shuttingDown)           log.trace("Exception while executing code, but we're shutting down so failing silently.");
+ else           log.trace("Exception while executing code, failing silently...",th);
           return null;
         }
  else {
