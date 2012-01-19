@@ -3,7 +3,8 @@
     stateTransferLock.unblockNewTransactions(viewId);
   }
  catch (  Exception e) {
-    log.errorUnblockingTransactions(e);
+    if (shuttingDown)     log.trace("Unable to release state transfer lock, possibly because we're shutting down.");
+ else     log.errorUnblockingTransactions(e);
   }
   stateTransferInProgressLatch.open();
   joinCompletedLatch.countDown();
