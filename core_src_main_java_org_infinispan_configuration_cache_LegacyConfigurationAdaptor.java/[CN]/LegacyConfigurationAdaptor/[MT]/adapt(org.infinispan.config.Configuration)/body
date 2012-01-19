@@ -29,10 +29,9 @@
   for (  CustomInterceptorConfig interceptor : legacy.getCustomInterceptors()) {
     InterceptorConfigurationBuilder interceptorConfigurationBuilder=builder.clustering().customInterceptors().addInterceptor();
     if (interceptor.getAfter() != null && !interceptor.getAfter().isEmpty())     interceptorConfigurationBuilder.after(Util.<CommandInterceptor>loadClass(interceptor.getAfter(),legacy.getClassLoader()));
-    if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())     interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(),legacy.getClassLoader()));
-    if (interceptor.getIndex() > -1)     interceptorConfigurationBuilder.index(interceptor.getIndex());
-    interceptorConfigurationBuilder.interceptor(interceptor.getInterceptor());
-    interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+ else     if (interceptor.getBefore() != null && !interceptor.getBefore().isEmpty())     interceptorConfigurationBuilder.before(Util.<CommandInterceptor>loadClass(interceptor.getBefore(),legacy.getClassLoader()));
+ else     if (!interceptor.getPositionAsString().equals(Position.OTHER_THAN_FIRST_OR_LAST.toString()))     interceptorConfigurationBuilder.position(Position.valueOf(interceptor.getPositionAsString()));
+ else     interceptorConfigurationBuilder.index(interceptor.getIndex());
   }
   builder.dataContainer().dataContainer(legacy.getDataContainer()).withProperties(legacy.getDataContainerProperties());
   if (legacy.isDeadlockDetectionEnabled()) {
