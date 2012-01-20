@@ -1,8 +1,9 @@
 {
-  int pollFrequencyMS=100;
-  long startupWaitTime=getConfiguration().getStateRetrievalTimeout();
-  long giveUpTime=System.currentTimeMillis() + startupWaitTime;
-  while (System.currentTimeMillis() < giveUpTime) {
+  int pollFrequencyMS=20;
+  final long startupWaitTime=getConfiguration().getStateRetrievalTimeout();
+  final long startupWaitTimeNanos=TimeUnit.NANOSECONDS.convert(startupWaitTime,TimeUnit.MILLISECONDS);
+  final long giveUpTime=System.nanoTime() + startupWaitTimeNanos;
+  while (System.nanoTime() < giveUpTime) {
     if (state.allowInvocations())     break;
     Thread.sleep(pollFrequencyMS);
   }
