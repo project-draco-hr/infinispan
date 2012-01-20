@@ -15,12 +15,15 @@
   }
   if (!atIt1) {
     boolean found=false;
-    long currentTimeMillis=System.currentTimeMillis();
+    long currentTimeMillis=0;
     while (it2.hasNext()) {
       InternalCacheEntry ice=it2.next();
       Object key=ice.getKey();
       CacheEntry e=lookedUpEntries.get(key);
-      if (ice.isExpired(currentTimeMillis))       continue;
+      if (ice.canExpire()) {
+        if (currentTimeMillis == 0)         currentTimeMillis=System.currentTimeMillis();
+        if (ice.isExpired(currentTimeMillis))         continue;
+      }
       if (e == null) {
         next=ice.getValue();
         found=true;

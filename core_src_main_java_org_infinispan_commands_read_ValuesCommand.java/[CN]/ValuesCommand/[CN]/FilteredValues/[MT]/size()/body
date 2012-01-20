@@ -1,8 +1,11 @@
 {
-  long currentTimeMillis=System.currentTimeMillis();
+  long currentTimeMillis=0;
   int size=entrySet.size();
   for (  InternalCacheEntry e : entrySet) {
-    if (e.isExpired(currentTimeMillis))     size--;
+    if (e.canExpire()) {
+      if (currentTimeMillis == 0)       currentTimeMillis=System.currentTimeMillis();
+      if (e.isExpired(currentTimeMillis))       size--;
+    }
   }
   for (  CacheEntry e : lookedUpEntries.values()) {
     if (e.isCreated()) {

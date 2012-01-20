@@ -1,8 +1,16 @@
 {
-  long currentTimeMillis=System.currentTimeMillis();
+  long currentTimeMillis=0;
   while (it.hasNext()) {
     InternalCacheEntry e=it.next();
-    if (!e.isExpired(currentTimeMillis)) {
+    final boolean canExpire=e.canExpire();
+    if (canExpire && currentTimeMillis == 0) {
+      currentTimeMillis=System.currentTimeMillis();
+    }
+    if (!canExpire) {
+      next=e.getValue();
+      break;
+    }
+ else     if (!e.isExpired(currentTimeMillis)) {
       next=e.getValue();
       break;
     }
