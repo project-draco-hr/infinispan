@@ -11,13 +11,13 @@
     log.tracef("Suspending shared state transfer lock to allow state transfer to start (and end)");
     releaseLockForWrite();
     if (blockingCacheViewId < newCacheViewId) {
-      long end=currentTimeMillisFromNanotime() + lockTimeout;
+      long end=currentMillisFromNanotime() + lockTimeout;
       long timeout=lockTimeout;
 synchronized (lock) {
         while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
           if (trace)           log.tracef("We are waiting for cache view %d, right now we have %d",newCacheViewId,blockingCacheViewId);
           lock.wait(timeout);
-          timeout=end - currentTimeMillisFromNanotime();
+          timeout=end - currentMillisFromNanotime();
         }
       }
     }
