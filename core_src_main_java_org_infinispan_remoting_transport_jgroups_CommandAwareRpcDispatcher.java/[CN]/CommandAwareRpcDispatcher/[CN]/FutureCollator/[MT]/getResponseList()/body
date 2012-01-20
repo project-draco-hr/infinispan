@@ -1,10 +1,16 @@
 {
-  long giveupTimeNanos=System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout,TimeUnit.MILLISECONDS);
   boolean notTimedOut=true;
+  if (retval == null) {
 synchronized (this) {
-    while (notTimedOut && expectedResponses > 0 && retval == null) {
-      notTimedOut=giveupTimeNanos > System.nanoTime();
-      this.wait(timeout);
+      if (expectedResponses > 0 && retval == null) {
+        final long giveupTimeNanos=System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout,TimeUnit.MILLISECONDS);
+        boolean firstLoop=true;
+        while (notTimedOut && expectedResponses > 0 && retval == null) {
+          notTimedOut=firstLoop || giveupTimeNanos > System.nanoTime();
+          firstLoop=false;
+          this.wait(timeout);
+        }
+      }
     }
   }
   if (retval != null)   return retval;
