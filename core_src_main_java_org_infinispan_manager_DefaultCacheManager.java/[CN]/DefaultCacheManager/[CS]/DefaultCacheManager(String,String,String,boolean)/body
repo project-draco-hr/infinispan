@@ -2,12 +2,12 @@
   Parser parser=new Parser(Thread.currentThread().getContextClassLoader());
   ConfigurationBuilderHolder globalConfigurationBuilderHolder=parser.parse(globalConfigurationFile);
   ConfigurationBuilderHolder defaultConfigurationBuilderHolder=parser.parse(defaultConfigurationFile);
-  globalConfiguration=new LegacyGlobalConfigurationAdaptor().adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
-  defaultConfiguration=new LegacyConfigurationAdaptor().adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
+  globalConfiguration=LegacyGlobalConfigurationAdaptor.adapt(globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build());
+  defaultConfiguration=LegacyConfigurationAdaptor.adapt(defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build());
   if (namedCacheFile != null) {
     ConfigurationBuilderHolder namedConfigurationBuilderHolder=parser.parse(namedCacheFile);
     Entry<String,ConfigurationBuilder> entry=namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-    defineConfiguration(entry.getKey(),new LegacyConfigurationAdaptor().adapt(entry.getValue().build()));
+    defineConfiguration(entry.getKey(),LegacyConfigurationAdaptor.adapt(entry.getValue().build()));
   }
   globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this,caches.keySet());
   cacheCreateLock=new ReentrantLock();
