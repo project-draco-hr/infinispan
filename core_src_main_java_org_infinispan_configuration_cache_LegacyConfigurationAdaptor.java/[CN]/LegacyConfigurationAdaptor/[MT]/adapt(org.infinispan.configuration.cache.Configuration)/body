@@ -66,8 +66,15 @@
  else     if (loader instanceof FileCacheStoreConfiguration) {
       FileCacheStoreConfig fcsc=new FileCacheStoreConfig();
       clc=fcsc;
-      String location=loader.properties().getProperty("location");
-      if (location != null)       fcsc.location(location);
+      FileCacheStoreConfiguration store=(FileCacheStoreConfiguration)loader;
+      if (store.location() != null) {
+        fcsc.location(store.location());
+      }
+      if (store.fsyncMode() != null) {
+        fcsc.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(store.fsyncMode().name()));
+      }
+      fcsc.fsyncInterval(store.fsyncInterval());
+      fcsc.streamBufferSize(store.streamBufferSize());
     }
     if (clc instanceof CacheStoreConfig) {
       CacheStoreConfig csc=(CacheStoreConfig)clc;
