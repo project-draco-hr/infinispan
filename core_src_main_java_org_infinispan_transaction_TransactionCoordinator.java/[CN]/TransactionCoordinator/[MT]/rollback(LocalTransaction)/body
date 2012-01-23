@@ -3,7 +3,8 @@
     rollbackInternal(localTransaction);
   }
  catch (  Throwable e) {
-    log.errorRollingBack(e);
+    if (shuttingDown)     log.trace("Exception while rolling back, probably because we're shutting down.");
+ else     log.errorRollingBack(e);
     final Transaction transaction=localTransaction.getTransaction();
     if (transaction != null) {
       txTable.failureCompletingTransaction(transaction);
