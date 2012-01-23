@@ -1,7 +1,7 @@
 {
   if (!writesBlocked) {
     int previousWrites=runningWritesCount.getAndIncrement();
-    if (previousWrites != 0 || !writesBlocked) {
+    if (previousWrites > 0 || !writesBlocked) {
       if (trace) {
         if (traceThreadWrites.get() == Boolean.TRUE)         log.error("Trying to acquire state transfer shared lock, but this thread already has it",new Exception());
         traceThreadWrites.set(Boolean.TRUE);
@@ -10,6 +10,9 @@
       return true;
     }
     runningWritesCount.decrementAndGet();
+synchronized (lock) {
+      lock.notifyAll();
+    }
   }
   return false;
 }

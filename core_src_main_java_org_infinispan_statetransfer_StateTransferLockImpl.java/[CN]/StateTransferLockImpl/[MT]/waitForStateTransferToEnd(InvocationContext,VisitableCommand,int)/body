@@ -10,17 +10,17 @@
   if (shouldSuspendLock) {
     log.tracef("Suspending shared state transfer lock to allow state transfer to start (and end)");
     releaseLockForWrite();
-    if (blockingCacheViewId < newCacheViewId) {
-      long end=currentMillisFromNanotime() + lockTimeout;
-      long timeout=lockTimeout;
+    long end=currentMillisFromNanotime() + lockTimeout;
+    long timeout=lockTimeout;
 synchronized (lock) {
-        while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
-          if (trace)           log.tracef("We are waiting for cache view %d, right now we have %d",newCacheViewId,blockingCacheViewId);
-          lock.wait(timeout);
-          timeout=end - currentMillisFromNanotime();
-        }
+      while (timeout > 0 && blockingCacheViewId < newCacheViewId) {
+        if (trace)         log.tracef("We are waiting for cache view %d, right now we have %d",newCacheViewId,blockingCacheViewId);
+        lock.wait(timeout);
+        timeout=end - currentMillisFromNanotime();
       }
     }
-    acquireLockForWriteCommand(ctx);
+    if (timeout <= 0 || !acquireLockForWriteCommand(ctx)) {
+      throw new StateTransferLockReacquisitionException("We released the state transfer lock temporarily but we cannot acquire it back");
+    }
   }
 }

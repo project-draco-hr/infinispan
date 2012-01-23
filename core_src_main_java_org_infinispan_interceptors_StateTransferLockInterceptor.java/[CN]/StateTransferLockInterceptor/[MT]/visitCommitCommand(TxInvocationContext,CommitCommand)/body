@@ -2,10 +2,17 @@
   if (!stateTransferLock.acquireForCommand(ctx,command)) {
     signalStateTransferInProgress();
   }
+  boolean release=true;
   try {
     return handleWithRetries(ctx,command,-1);
   }
-  finally {
-    stateTransferLock.releaseForCommand(ctx,command);
+ catch (  StateTransferLockReacquisitionException e) {
+    release=false;
+    return signalStateTransferInProgress();
+  }
+ finally {
+    if (release) {
+      stateTransferLock.releaseForCommand(ctx,command);
+    }
   }
 }
