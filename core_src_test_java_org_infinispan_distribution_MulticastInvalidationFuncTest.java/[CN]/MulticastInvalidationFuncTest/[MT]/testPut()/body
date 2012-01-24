@@ -6,11 +6,18 @@
   nonOwner.put(KEY1,"foo");
   Assert.assertEquals(nonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(),"foo");
   Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(),"foo");
-  for (  Cache<Object,String> c : getNonOwners(KEY1)) {
-    ReplListener rl=new ReplListener(c);
+  if (owner.getAdvancedCache().getRpcManager().getTransport().isMulticastCapable()) {
+    for (    Cache<Object,String> c : getNonOwners(KEY1)) {
+      ReplListener rl=new ReplListener(c);
+      rl.expect(InvalidateL1Command.class);
+      listeners.add(rl);
+      log.debugf("Added nonowner %s",c);
+    }
+  }
+ else {
+    ReplListener rl=new ReplListener(nonOwner);
     rl.expect(InvalidateL1Command.class);
     listeners.add(rl);
-    System.out.println("Added nonowner " + c);
   }
   owner.put(KEY1,"bar");
   for (  ReplListener rl : listeners) {
