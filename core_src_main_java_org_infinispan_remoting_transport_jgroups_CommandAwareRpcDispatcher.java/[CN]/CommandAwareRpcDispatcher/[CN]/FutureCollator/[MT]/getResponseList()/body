@@ -1,20 +1,15 @@
 {
-  boolean notTimedOut=true;
-  if (retval == null) {
-synchronized (this) {
-      if (expectedResponses > 0 && retval == null) {
-        final long giveupTimeNanos=System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout,TimeUnit.MILLISECONDS);
-        boolean firstLoop=true;
-        while (notTimedOut && expectedResponses > 0 && retval == null) {
-          notTimedOut=firstLoop || giveupTimeNanos > System.nanoTime();
-          firstLoop=false;
-          this.wait(timeout);
-        }
-      }
+  while (expectedResponses > 0 && retval == null) {
+    try {
+      this.wait(timeout);
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      expectedResponses=-1;
     }
   }
   if (retval != null)   return retval;
  else   if (exception != null)   throw exception;
- else   if (notTimedOut)   throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s",futures.values()));
+ else   if (expectedResponses == 0)   throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s",futures.values()));
  else   throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.",Util.prettyPrintTime(timeout),futures.values()));
 }
