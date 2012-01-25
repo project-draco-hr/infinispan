@@ -1,3 +1,25 @@
 {
-  return MurmurHash3_x64_128(key,seed)[0];
+  State state=new State();
+  state.h1=0x9368e53c2f6af274L ^ seed;
+  state.h2=0x586dcd208f7cd3fdL ^ seed;
+  state.c1=0x87c37b91114253d5L;
+  state.c2=0x4cf5ad432745937fL;
+  for (int i=0; i < key.length / 2; i++) {
+    state.k1=key[i * 2];
+    state.k2=key[i * 2 + 1];
+    bmix(state);
+  }
+  long tail=key[key.length - 1];
+  if (key.length % 2 != 0) {
+    state.k1^=tail;
+    bmix(state);
+  }
+  state.h2^=key.length * 8;
+  state.h1+=state.h2;
+  state.h2+=state.h1;
+  state.h1=fmix(state.h1);
+  state.h2=fmix(state.h2);
+  state.h1+=state.h2;
+  state.h2+=state.h1;
+  return state.h1;
 }

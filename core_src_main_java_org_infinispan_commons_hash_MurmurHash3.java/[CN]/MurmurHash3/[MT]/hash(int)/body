@@ -1,8 +1,26 @@
 {
-  byte[] b=new byte[4];
-  b[0]=(byte)hashcode;
-  b[1]=(byte)(hashcode >>> 8);
-  b[2]=(byte)(hashcode >>> 16);
-  b[3]=(byte)(hashcode >>> 24);
-  return hash(b);
+  byte b0=(byte)hashcode;
+  byte b1=(byte)(hashcode >>> 8);
+  byte b2=(byte)(hashcode >>> 16);
+  byte b3=(byte)(hashcode >>> 24);
+  State state=new State();
+  state.h1=0x9368e53c2f6af274L ^ 9001;
+  state.h2=0x586dcd208f7cd3fdL ^ 9001;
+  state.c1=0x87c37b91114253d5L;
+  state.c2=0x4cf5ad432745937fL;
+  state.k1=0;
+  state.k2=0;
+  state.k1^=(long)b3 << 24;
+  state.k1^=(long)b2 << 16;
+  state.k1^=(long)b1 << 8;
+  state.k1^=(long)b0;
+  bmix(state);
+  state.h2^=4;
+  state.h1+=state.h2;
+  state.h2+=state.h1;
+  state.h1=fmix(state.h1);
+  state.h2=fmix(state.h2);
+  state.h1+=state.h2;
+  state.h2+=state.h1;
+  return (int)(state.h1 >>> 32);
 }
