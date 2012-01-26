@@ -1,4 +1,5 @@
 {
+  forceReturnValueDefault=config.getForceReturnValues();
   codec=CodecFactory.getCodec(config.getProtocolVersion());
   String factory=config.getTransportFactory();
   transportFactory=(TransportFactory)getInstance(factory,classLoader);
@@ -13,10 +14,9 @@
     ExecutorFactory executorFactory=(ExecutorFactory)getInstance(asyncExecutorClass,classLoader);
     asyncExecutorService=executorFactory.getExecutor(config.getProperties());
   }
-  forceReturnValueDefault=config.getForceReturnValues();
 synchronized (cacheName2RemoteCache) {
-    for (    RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
-      startRemoteCache(remoteCache);
+    for (    RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
+      startRemoteCache(rcc);
     }
   }
   started=true;
