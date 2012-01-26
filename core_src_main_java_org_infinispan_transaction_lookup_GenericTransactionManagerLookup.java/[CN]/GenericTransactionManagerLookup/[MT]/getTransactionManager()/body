@@ -2,8 +2,12 @@
   if (!lookupDone)   doLookups(configuration.getClassLoader());
   if (tm != null)   return tm;
   if (lookupFailed) {
-    tm=DummyTransactionManager.getInstance();
-    log.fallingBackToDummyTm();
+    if (!noJBossTM) {
+      tryEmbeddedJBossTM();
+    }
+    if (noJBossTM) {
+      useDummyTM();
+    }
   }
   return tm;
 }
