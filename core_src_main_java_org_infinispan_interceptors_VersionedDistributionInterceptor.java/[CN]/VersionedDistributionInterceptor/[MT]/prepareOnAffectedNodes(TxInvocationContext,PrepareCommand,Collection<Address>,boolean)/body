@@ -1,18 +1,6 @@
 {
-  EntryVersionsMap vs=new EntryVersionsMap();
-  for (  WriteCommand wc : command.getModifications()) {
-    for (    Object k : wc.getAffectedKeys()) {
-      vs.put(k,(IncrementableEntryVersion)ctx.lookupEntry(k).getVersion());
-    }
-  }
-  ((VersionedPrepareCommand)command).setVersionsSeen(vs);
+  setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,ctx);
   Map<Address,Response> resps=rpcManager.invokeRemotely(recipients,command,true,true);
   CacheTransaction ct=ctx.getCacheTransaction();
-  for (  Response r : resps.values()) {
-    if (r != null && r.isSuccessful()) {
-      SuccessfulResponse sr=(SuccessfulResponse)r;
-      EntryVersionsMap uv=(EntryVersionsMap)sr.getResponseValue();
-      if (uv != null)       ct.setUpdatedEntryVersions(uv.merge(ct.getUpdatedEntryVersions()));
-    }
-  }
+  for (  Response r : resps.values())   readVersionsFromResponse(r,ct);
 }

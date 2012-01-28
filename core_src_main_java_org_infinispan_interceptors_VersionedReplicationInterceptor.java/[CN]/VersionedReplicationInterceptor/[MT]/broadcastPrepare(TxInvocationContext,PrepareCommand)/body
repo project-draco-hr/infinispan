@@ -1,13 +1,9 @@
 {
   if (!rpcManager.getTransport().isCoordinator()) {
+    setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,context);
     Map<Address,Response> resps=rpcManager.invokeRemotely(null,command,true,true);
     Response r=resps.get(rpcManager.getTransport().getCoordinator());
-    CacheTransaction ct=context.getCacheTransaction();
-    if (r.isSuccessful()) {
-      SuccessfulResponse sr=(SuccessfulResponse)r;
-      EntryVersionsMap uv=(EntryVersionsMap)sr.getResponseValue();
-      ct.setUpdatedEntryVersions(uv);
-    }
+    readVersionsFromResponse(r,context.getCacheTransaction());
   }
  else {
     super.broadcastPrepare(context,command);
