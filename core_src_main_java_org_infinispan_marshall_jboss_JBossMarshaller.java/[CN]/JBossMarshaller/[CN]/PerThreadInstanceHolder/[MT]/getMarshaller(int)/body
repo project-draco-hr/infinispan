@@ -1,0 +1,20 @@
+{
+  if (availableMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+    configuration.setBufferSize(estimatedSize);
+    return factory.createMarshaller(configuration);
+  }
+ else {
+    ExtendedRiverMarshaller marshaller=reusableMarshaller[availableMarshallerIndex];
+    if (marshaller != null) {
+      availableMarshallerIndex++;
+      return marshaller;
+    }
+ else {
+      marshaller=factory.createMarshaller(configuration);
+      marshaller.setCloseListener(this);
+      reusableMarshaller[availableMarshallerIndex]=marshaller;
+      availableMarshallerIndex++;
+      return marshaller;
+    }
+  }
+}

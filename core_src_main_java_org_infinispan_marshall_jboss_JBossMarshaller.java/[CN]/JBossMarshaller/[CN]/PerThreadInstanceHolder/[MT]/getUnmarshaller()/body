@@ -1,0 +1,21 @@
+{
+  if (availableUnMarshallerIndex == PER_THREAD_REUSABLE_INSTANCES) {
+    configuration.setBufferSize(512);
+    return factory.createUnmarshaller(configuration);
+  }
+ else {
+    ExtendedRiverUnmarshaller unMarshaller=reusableUnMarshaller[availableUnMarshallerIndex];
+    if (unMarshaller != null) {
+      availableUnMarshallerIndex++;
+      return unMarshaller;
+    }
+ else {
+      configuration.setBufferSize(512);
+      unMarshaller=factory.createUnmarshaller(configuration);
+      unMarshaller.setCloseListener(this);
+      reusableUnMarshaller[availableUnMarshallerIndex]=unMarshaller;
+      availableUnMarshallerIndex++;
+      return unMarshaller;
+    }
+  }
+}
