@@ -1,0 +1,17 @@
+{
+  Map<String,String> metrics=new HashMap<String,String>();
+  long[] distribution=new long[LOOPS * numNodes];
+  long[] distributionPrimary=new long[LOOPS * numNodes];
+  for (int i=0; i < LOOPS; i++) {
+    TransparentDefaultConsistentHash ch=createConsistentHash(numNodes,numVirtualNodes);
+    long[] dist=computeDistribution(numNodes,numOwners,ch);
+    System.arraycopy(dist,0,distribution,i * numNodes,numNodes);
+    long[] distPrimary=computeDistribution(numNodes,1,ch);
+    System.arraycopy(distPrimary,0,distributionPrimary,i * numNodes,numNodes);
+  }
+  Arrays.sort(distribution);
+  Arrays.sort(distributionPrimary);
+  addMetrics(metrics,"Any owner:",numNodes,numOwners,distribution,INTERVALS);
+  addMetrics(metrics,"Primary:",numNodes,1,distributionPrimary,INTERVALS_PRIMARY);
+  return metrics;
+}
