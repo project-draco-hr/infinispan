@@ -1,0 +1,13 @@
+{
+  EmbeddedCacheManager cacheManager=getCacheManager(batching);
+  try {
+    Cache<Object,Object> c=cacheManager.getCache();
+    if (inTran)     c.getAdvancedCache().getTransactionManager().begin();
+    c.put("key1",new SEntity(1,"name1","surname1"));
+    if (inTran)     c.getAdvancedCache().getTransactionManager().commit();
+    assertEquals(searchByName("name1",c).size(),1,"should be 1, even repeating this");
+  }
+  finally {
+    cacheManager.stop();
+  }
+}
