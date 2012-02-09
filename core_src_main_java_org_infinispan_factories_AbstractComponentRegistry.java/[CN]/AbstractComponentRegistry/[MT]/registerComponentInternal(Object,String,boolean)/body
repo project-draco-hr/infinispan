@@ -31,6 +31,12 @@
   if (old == null)   getLog().tracef("Registering component %s under name %s",c,name);
   if (state == ComponentStatus.RUNNING) {
     populateLifeCycleMethods(c);
-    invokeStartMethods(Arrays.asList(c.startMethods));
+    try {
+      invokeStartMethods(Arrays.asList(c.startMethods));
+    }
+ catch (    Throwable t) {
+      componentLookup.remove(name);
+      handleLifecycleTransitionFailure(t);
+    }
   }
 }
