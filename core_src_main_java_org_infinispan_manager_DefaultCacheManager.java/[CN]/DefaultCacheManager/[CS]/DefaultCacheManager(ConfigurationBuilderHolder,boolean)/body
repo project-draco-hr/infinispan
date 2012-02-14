@@ -1,0 +1,21 @@
+{
+  try {
+    globalConfiguration=LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
+    globalConfiguration.accept(configurationValidator);
+    defaultConfiguration=LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
+    for (    Entry<String,ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
+      org.infinispan.configuration.cache.Configuration c=entry.getValue().build();
+      Configuration legacy=LegacyConfigurationAdaptor.adapt(c);
+      configurationOverrides.put(entry.getKey(),legacy);
+    }
+    globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());
+    cacheCreateLock=new ReentrantLock();
+  }
+ catch (  ConfigurationException ce) {
+    throw ce;
+  }
+catch (  RuntimeException re) {
+    throw new ConfigurationException(re);
+  }
+  if (start)   start();
+}
