@@ -27,7 +27,16 @@
     }
     checkIfCancelled();
     for (    Map.Entry<Address,Collection<InternalCacheEntry>> entry : states.entrySet()) {
-      pushPartialState(Collections.singleton(entry.getKey()),entry.getValue());
+      pushPartialState(Collections.singleton(entry.getKey()),entry.getValue(),null);
+    }
+    if (transactionTable != null) {
+      log.debug("Starting lock migration");
+      Map<Address,Collection<LockInfo>> locksToMigrate=new HashMap<Address,Collection<LockInfo>>();
+      rebalanceLocks(numOwners,locksToMigrate,transactionTable.getRemoteTransactions());
+      rebalanceLocks(numOwners,locksToMigrate,transactionTable.getLocalTransactions());
+      for (      Map.Entry<Address,Collection<LockInfo>> e : locksToMigrate.entrySet()) {
+        pushPartialState(Collections.singleton(e.getKey()),null,e.getValue());
+      }
     }
     finishPushingState();
   }

@@ -39,5 +39,10 @@
  else   if (componentType.equals(EvictionManager.class)) {
     return (T)new EvictionManagerImpl();
   }
+ else   if (componentType.equals(LockContainer.class)) {
+    boolean notTransactional=!configuration.isTransactionalCache();
+    LockContainer lockContainer=configuration.isUseLockStriping() ? notTransactional ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : notTransactional ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel());
+    return (T)lockContainer;
+  }
   throw new ConfigurationException("Don't know how to create a " + componentType.getName());
 }

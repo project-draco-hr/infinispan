@@ -8,18 +8,20 @@
     log.debugf("Rejecting state pushed by node %s for rehash %d (last view id we know is %d)",sender,viewId,newView.getViewId());
     return;
   }
-  log.debugf("Applying new state from %s: received %d keys",sender,state.size());
-  if (trace)   log.tracef("Received keys: %s",keys(state));
-  for (  InternalCacheEntry e : state) {
-    InvocationContext ctx=icc.createInvocationContext(false,1);
-    ctx.setFlags(CACHE_MODE_LOCAL,SKIP_CACHE_LOAD,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
-    try {
-      PutKeyValueCommand put=commandBuilder.buildPut(ctx,e);
-      interceptorChain.invoke(ctx,put);
+  if (state != null) {
+    log.debugf("Applying new state from %s: received %d keys",sender,state.size());
+    if (trace)     log.tracef("Received keys: %s",keys(state));
+    for (    InternalCacheEntry e : state) {
+      InvocationContext ctx=icc.createInvocationContext(false,1);
+      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_CACHE_LOAD,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
+      try {
+        PutKeyValueCommand put=commandBuilder.buildPut(ctx,e);
+        interceptorChain.invoke(ctx,put);
+      }
+ catch (      Exception ee) {
+        log.problemApplyingStateForKey(ee.getMessage(),e.getKey());
+      }
     }
- catch (    Exception ee) {
-      log.problemApplyingStateForKey(ee.getMessage(),e.getKey());
-    }
+    if (trace)     log.tracef("After applying state data container has %d keys",dataContainer.size());
   }
-  if (trace)   log.tracef("After applying state data container has %d keys",dataContainer.size());
 }

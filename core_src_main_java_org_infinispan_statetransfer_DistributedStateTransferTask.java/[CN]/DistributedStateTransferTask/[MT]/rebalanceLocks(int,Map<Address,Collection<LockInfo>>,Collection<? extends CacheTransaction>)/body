@@ -1,0 +1,21 @@
+{
+  for (  CacheTransaction cacheTx : tx) {
+    for (    Object key : cacheTx.getLockedKeys()) {
+      Address oldLockOwner=self;
+      Address newLockOwner=chNew.locate(key,numOwners).get(0);
+      if (!oldLockOwner.equals(newLockOwner)) {
+        log.tracef("Migrating lock %s from node %s to ",key,oldLockOwner,newLockOwner);
+        Collection<LockInfo> lockInfo=locksToMigrate.get(newLockOwner);
+        if (lockInfo == null) {
+          lockInfo=new ArrayList<LockInfo>();
+          locksToMigrate.put(newLockOwner,lockInfo);
+        }
+        lockInfo.add(new LockInfo(cacheTx.getGlobalTransaction(),key));
+        if (lockInfo.size() > stateTransferChunkSize) {
+          pushPartialState(Collections.singleton(newLockOwner),null,lockInfo);
+          locksToMigrate.remove(newLockOwner);
+        }
+      }
+    }
+  }
+}
