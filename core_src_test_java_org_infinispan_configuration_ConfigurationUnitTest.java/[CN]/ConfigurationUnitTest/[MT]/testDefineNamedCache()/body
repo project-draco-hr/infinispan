@@ -1,9 +1,10 @@
 {
-  DefaultCacheManager cacheManager=new DefaultCacheManager(new ConfigurationBuilder().build());
-  try {
-    cacheManager.defineConfiguration("foo",new ConfigurationBuilder().build());
+  withCacheManager(new Callable<EmbeddedCacheManager>(){
+    @Override public EmbeddedCacheManager call() throws Exception {
+      DefaultCacheManager cacheManager=new DefaultCacheManager(new ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("foo",new ConfigurationBuilder().build());
+      return cacheManager;
+    }
   }
-  finally {
-    TestingUtil.killCacheManagers(cacheManager);
-  }
+);
 }
