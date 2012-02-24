@@ -2,18 +2,18 @@
   boolean trace=log.isTraceEnabled();
   if (trace)   log.trace("Get values metrics");
   for (  MeasurementScheduleRequest req : metrics) {
-    if (trace)     log.tracef("Inspect metric %s",req);
+    if (trace)     log.trace("Inspect metric " + req);
     String metric=req.getName();
     try {
       EmsBean bean=queryComponentBean(metric);
       if (bean != null) {
-        if (trace)         log.tracef("Retrieved mbean with name %s",bean.getBeanName());
+        if (trace)         log.trace("Retrieved mbean with name " + bean.getBeanName());
         bean.refreshAttributes();
         String attName=metric.substring(metric.indexOf(".") + 1);
         EmsAttribute att=bean.getAttribute(attName);
         if (att != null) {
           Object o=att.getValue();
-          Class attrType=att.getTypeClass();
+          Class<?> attrType=att.getTypeClass();
           DataType type=req.getDataType();
           if (type == DataType.MEASUREMENT) {
             if (o != null) {
@@ -21,23 +21,27 @@
               if (res != null)               report.addData(res);
             }
  else {
-              if (log.isDebugEnabled())               log.debugf("Metric (%s) has null value, do not add to report",req.getName());
+              if (log.isDebugEnabled())               log.debug("Metric (" + req.getName() + ") has null value, do not add to report");
             }
           }
  else           if (type == DataType.TRAIT) {
             String value=(String)o;
-            if (trace)             log.tracef("Metric (%s) is trait with value %s",req.getName(),value);
+            if (trace)             log.trace("Metric (" + req.getName() + ") is trait with value "+ value);
             MeasurementDataTrait res=new MeasurementDataTrait(req,value);
             report.addData(res);
           }
         }
  else {
-          log.attributeNotFound(attName);
+          if (log.isWarnEnabled()) {
+            log.warn("Attribute " + attName + " not found");
+          }
         }
       }
     }
  catch (    Exception e) {
-      log.getValuesFailed(metric,e);
+      if (log.isWarnEnabled()) {
+        log.warn("getValues failed for " + metric,e);
+      }
     }
   }
 }

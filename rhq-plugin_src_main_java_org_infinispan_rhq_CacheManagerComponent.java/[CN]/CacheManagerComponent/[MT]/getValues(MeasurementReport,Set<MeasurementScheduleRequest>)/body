@@ -1,21 +1,23 @@
 {
   boolean trace=log.isTraceEnabled();
-  if (trace)   log.tracef("Get values for these metrics: %s",metrics);
+  if (trace)   log.trace("Get values for these metrics: " + metrics);
   EmsConnection conn=getEmsConnection();
-  if (trace)   log.tracef("Connection to ems server established: %s",conn);
+  if (trace)   log.trace("Connection to ems server established: " + conn);
   EmsBean bean=queryCacheManagerBean(conn);
   bean.refreshAttributes();
-  if (trace)   log.tracef("Querying returned bean: %s",bean);
+  if (trace)   log.trace("Querying returned bean: " + bean);
   for (  MeasurementScheduleRequest req : metrics) {
     DataType type=req.getDataType();
     if (type == DataType.MEASUREMENT) {
       EmsAttribute att=bean.getAttribute(req.getName());
-      MeasurementDataNumeric res=constructNumericMeasure(att.getTypeClass(),att.getValue(),req);
-      report.addData(res);
+      if (att != null) {
+        MeasurementDataNumeric res=constructNumericMeasure(att.getTypeClass(),att.getValue(),req);
+        report.addData(res);
+      }
     }
  else     if (type == DataType.TRAIT) {
       String value=(String)bean.getAttribute(req.getName()).getValue();
-      if (trace)       log.tracef("Metric (%s) is trait with value %s",req.getName(),value);
+      if (trace)       log.trace("Metric (" + req.getName() + ") is trait with value "+ value);
       MeasurementDataTrait res=new MeasurementDataTrait(req,value);
       report.addData(res);
     }
