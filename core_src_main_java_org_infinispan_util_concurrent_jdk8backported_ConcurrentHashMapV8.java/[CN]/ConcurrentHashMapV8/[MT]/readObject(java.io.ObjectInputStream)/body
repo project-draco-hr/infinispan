@@ -1,0 +1,54 @@
+{
+  s.defaultReadObject();
+  this.segments=null;
+  UNSAFE.putObjectVolatile(this,counterOffset,new LongAdder());
+  long size=0L;
+  Node p=null;
+  for (; ; ) {
+    K k=(K)s.readObject();
+    V v=(V)s.readObject();
+    if (k != null && v != null) {
+      p=new Node(spread(k.hashCode()),k,v,p);
+      ++size;
+    }
+ else     break;
+  }
+  if (p != null) {
+    boolean init=false;
+    int n;
+    if (size >= (long)(MAXIMUM_CAPACITY >>> 1))     n=MAXIMUM_CAPACITY;
+ else {
+      int sz=(int)size;
+      n=tableSizeFor(sz + (sz >>> 1) + 1);
+    }
+    int sc=sizeCtl;
+    if (n > sc && UNSAFE.compareAndSwapInt(this,sizeCtlOffset,sc,-1)) {
+      try {
+        if (table == null) {
+          init=true;
+          Node[] tab=new Node[n];
+          int mask=n - 1;
+          while (p != null) {
+            int j=p.hash & mask;
+            Node next=p.next;
+            p.next=tabAt(tab,j);
+            setTabAt(tab,j,p);
+            p=next;
+          }
+          table=tab;
+          counter.add(size);
+          sc=n - (n >>> 2);
+        }
+      }
+  finally {
+        sizeCtl=sc;
+      }
+    }
+    if (!init) {
+      while (p != null) {
+        internalPut(p.key,p.val);
+        p=p.next;
+      }
+    }
+  }
+}

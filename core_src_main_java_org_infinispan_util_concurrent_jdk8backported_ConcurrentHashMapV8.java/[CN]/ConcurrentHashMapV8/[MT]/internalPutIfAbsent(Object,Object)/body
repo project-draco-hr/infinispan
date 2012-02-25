@@ -1,0 +1,68 @@
+{
+  int h=spread(k.hashCode());
+  for (Node[] tab=table; ; ) {
+    int i;
+    Node f;
+    int fh;
+    Object fk, fv;
+    if (tab == null)     tab=initTable();
+ else     if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
+      if (casTabAt(tab,i,null,new Node(h,k,v,null)))       break;
+    }
+ else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh & HASH_BITS) == h && (fv=f.val) != null && ((fk=f.key) == k || k.equals(fk)))     return fv;
+ else {
+      Node g=f.next;
+      if (g != null) {
+        for (Node e=g; ; ) {
+          Object ek, ev;
+          if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek)))           return ev;
+          if ((e=e.next) == null) {
+            checkForResize();
+            break;
+          }
+        }
+      }
+      if (((fh=f.hash) & LOCKED) != 0) {
+        checkForResize();
+        f.tryAwaitLock(tab,i);
+      }
+ else       if (tabAt(tab,i) == f && f.casHash(fh,fh | LOCKED)) {
+        Object oldVal=null;
+        boolean validated=false;
+        try {
+          if (tabAt(tab,i) == f) {
+            validated=true;
+            for (Node e=f; ; ) {
+              Object ek, ev;
+              if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
+                oldVal=ev;
+                break;
+              }
+              Node last=e;
+              if ((e=e.next) == null) {
+                last.next=new Node(h,k,v,null);
+                break;
+              }
+            }
+          }
+        }
+  finally {
+          if (!f.casHash(fh | LOCKED,fh)) {
+            f.hash=fh;
+synchronized (f) {
+              f.notifyAll();
+            }
+            ;
+          }
+        }
+        if (validated) {
+          if (oldVal != null)           return oldVal;
+          break;
+        }
+      }
+    }
+  }
+  counter.add(1L);
+  return null;
+}

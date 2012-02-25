@@ -1,0 +1,57 @@
+{
+  int h=spread(k.hashCode());
+  boolean checkSize=false;
+  for (Node[] tab=table; ; ) {
+    int i;
+    Node f;
+    int fh;
+    if (tab == null)     tab=initTable();
+ else     if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
+      if (casTabAt(tab,i,null,new Node(h,k,v,null)))       break;
+    }
+ else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh & LOCKED) != 0) {
+      checkForResize();
+      f.tryAwaitLock(tab,i);
+    }
+ else     if (f.casHash(fh,fh | LOCKED)) {
+      Object oldVal=null;
+      boolean validated=false;
+      try {
+        if (tabAt(tab,i) == f) {
+          validated=true;
+          for (Node e=f; ; ) {
+            Object ek, ev;
+            if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
+              oldVal=ev;
+              e.val=v;
+              break;
+            }
+            Node last=e;
+            if ((e=e.next) == null) {
+              last.next=new Node(h,k,v,null);
+              if (last != f || tab.length <= 64)               checkSize=true;
+              break;
+            }
+          }
+        }
+      }
+  finally {
+        if (!f.casHash(fh | LOCKED,fh)) {
+          f.hash=fh;
+synchronized (f) {
+            f.notifyAll();
+          }
+          ;
+        }
+      }
+      if (validated) {
+        if (oldVal != null)         return oldVal;
+        break;
+      }
+    }
+  }
+  counter.add(1L);
+  if (checkSize)   checkForResize();
+  return null;
+}

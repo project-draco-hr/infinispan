@@ -1,0 +1,78 @@
+{
+  tryPresize(m.size());
+  long delta=0L;
+  boolean npe=false;
+  try {
+    for (    Map.Entry<?,?> entry : m.entrySet()) {
+      Object k, v;
+      if (entry == null || (k=entry.getKey()) == null || (v=entry.getValue()) == null) {
+        npe=true;
+        break;
+      }
+      int h=spread(k.hashCode());
+      for (Node[] tab=table; ; ) {
+        int i;
+        Node f;
+        int fh;
+        if (tab == null)         tab=initTable();
+ else         if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
+          if (casTabAt(tab,i,null,new Node(h,k,v,null))) {
+            ++delta;
+            break;
+          }
+        }
+ else         if ((fh=f.hash) == MOVED)         tab=(Node[])f.key;
+ else         if ((fh & LOCKED) != 0) {
+          counter.add(delta);
+          delta=0L;
+          checkForResize();
+          f.tryAwaitLock(tab,i);
+        }
+ else         if (f.casHash(fh,fh | LOCKED)) {
+          boolean validated=false;
+          boolean tooLong=false;
+          try {
+            if (tabAt(tab,i) == f) {
+              validated=true;
+              for (Node e=f; ; ) {
+                Object ek, ev;
+                if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
+                  e.val=v;
+                  break;
+                }
+                Node last=e;
+                if ((e=e.next) == null) {
+                  ++delta;
+                  last.next=new Node(h,k,v,null);
+                  break;
+                }
+                tooLong=true;
+              }
+            }
+          }
+  finally {
+            if (!f.casHash(fh | LOCKED,fh)) {
+              f.hash=fh;
+synchronized (f) {
+                f.notifyAll();
+              }
+              ;
+            }
+          }
+          if (validated) {
+            if (tooLong) {
+              counter.add(delta);
+              delta=0L;
+              checkForResize();
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+  finally {
+    if (delta != 0)     counter.add(delta);
+  }
+  if (npe)   throw new NullPointerException();
+}

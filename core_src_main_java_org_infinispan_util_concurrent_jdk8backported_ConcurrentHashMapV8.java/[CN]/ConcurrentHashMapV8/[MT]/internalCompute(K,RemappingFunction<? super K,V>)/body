@@ -1,0 +1,81 @@
+{
+  int h=spread(k.hashCode());
+  Object val=null;
+  boolean added=false;
+  boolean checkSize=false;
+  for (Node[] tab=table; ; ) {
+    Node f;
+    int i, fh;
+    if (tab == null)     tab=initTable();
+ else     if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
+      Node node=new Node(fh=h | LOCKED,k,null,null);
+      boolean validated=false;
+      if (casTabAt(tab,i,null,node)) {
+        validated=true;
+        try {
+          if ((val=mf.remap(k,null)) != null) {
+            node.val=val;
+            added=true;
+          }
+        }
+  finally {
+          if (!added)           setTabAt(tab,i,null);
+          if (!node.casHash(fh,h)) {
+            node.hash=h;
+synchronized (node) {
+              node.notifyAll();
+            }
+            ;
+          }
+        }
+      }
+      if (validated)       break;
+    }
+ else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh & LOCKED) != 0) {
+      checkForResize();
+      f.tryAwaitLock(tab,i);
+    }
+ else     if (f.casHash(fh,fh | LOCKED)) {
+      boolean validated=false;
+      try {
+        if (tabAt(tab,i) == f) {
+          validated=true;
+          for (Node e=f; ; ) {
+            Object ek, ev;
+            if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
+              val=mf.remap(k,(V)ev);
+              if (val != null)               e.val=val;
+              break;
+            }
+            Node last=e;
+            if ((e=e.next) == null) {
+              if ((val=mf.remap(k,null)) != null) {
+                last.next=new Node(h,k,val,null);
+                added=true;
+                if (last != f || tab.length <= 64)                 checkSize=true;
+              }
+              break;
+            }
+          }
+        }
+      }
+  finally {
+        if (!f.casHash(fh | LOCKED,fh)) {
+          f.hash=fh;
+synchronized (f) {
+            f.notifyAll();
+          }
+          ;
+        }
+      }
+      if (validated)       break;
+    }
+  }
+  if (val == null)   throw new NullPointerException();
+  if (added) {
+    counter.add(1L);
+    if (checkSize)     checkForResize();
+  }
+  return val;
+}

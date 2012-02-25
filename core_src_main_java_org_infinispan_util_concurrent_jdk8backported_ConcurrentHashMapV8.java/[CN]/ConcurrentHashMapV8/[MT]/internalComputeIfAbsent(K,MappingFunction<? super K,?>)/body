@@ -1,0 +1,83 @@
+{
+  int h=spread(k.hashCode());
+  Object val=null;
+  for (Node[] tab=table; ; ) {
+    Node f;
+    int i, fh;
+    Object fk, fv;
+    if (tab == null)     tab=initTable();
+ else     if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
+      Node node=new Node(fh=h | LOCKED,k,null,null);
+      boolean validated=false;
+      if (casTabAt(tab,i,null,node)) {
+        validated=true;
+        try {
+          if ((val=mf.map(k)) != null)           node.val=val;
+        }
+  finally {
+          if (val == null)           setTabAt(tab,i,null);
+          if (!node.casHash(fh,h)) {
+            node.hash=h;
+synchronized (node) {
+              node.notifyAll();
+            }
+            ;
+          }
+        }
+      }
+      if (validated)       break;
+    }
+ else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh & HASH_BITS) == h && (fv=f.val) != null && ((fk=f.key) == k || k.equals(fk)))     return fv;
+ else {
+      Node g=f.next;
+      if (g != null) {
+        for (Node e=g; ; ) {
+          Object ek, ev;
+          if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek)))           return ev;
+          if ((e=e.next) == null) {
+            checkForResize();
+            break;
+          }
+        }
+      }
+      if (((fh=f.hash) & LOCKED) != 0) {
+        checkForResize();
+        f.tryAwaitLock(tab,i);
+      }
+ else       if (tabAt(tab,i) == f && f.casHash(fh,fh | LOCKED)) {
+        boolean validated=false;
+        try {
+          if (tabAt(tab,i) == f) {
+            validated=true;
+            for (Node e=f; ; ) {
+              Object ek, ev;
+              if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
+                val=ev;
+                break;
+              }
+              Node last=e;
+              if ((e=e.next) == null) {
+                if ((val=mf.map(k)) != null)                 last.next=new Node(h,k,val,null);
+                break;
+              }
+            }
+          }
+        }
+  finally {
+          if (!f.casHash(fh | LOCKED,fh)) {
+            f.hash=fh;
+synchronized (f) {
+              f.notifyAll();
+            }
+            ;
+          }
+        }
+        if (validated)         break;
+      }
+    }
+  }
+  if (val == null)   throw new NullPointerException();
+  counter.add(1L);
+  return val;
+}
