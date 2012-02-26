@@ -1,0 +1,25 @@
+{
+  if (asyncMarshalling) {
+    asyncExecutor.submit(new Callable<Response>(){
+      @Override public Response call() throws Exception {
+        return processSingleCall(command,supportReplay,timeout,recipient,mode,req_marshaller,CommandAwareRpcDispatcher.this,oob,transport);
+      }
+    }
+);
+    return null;
+  }
+ else {
+    Response response;
+    try {
+      response=processSingleCall(command,supportReplay,timeout,recipient,mode,req_marshaller,this,oob,transport);
+    }
+ catch (    InterruptedException e) {
+      throw e;
+    }
+catch (    Exception e) {
+      throw rewrapAsCacheException(e);
+    }
+    if (mode == ResponseMode.GET_NONE)     return null;
+    return response;
+  }
+}

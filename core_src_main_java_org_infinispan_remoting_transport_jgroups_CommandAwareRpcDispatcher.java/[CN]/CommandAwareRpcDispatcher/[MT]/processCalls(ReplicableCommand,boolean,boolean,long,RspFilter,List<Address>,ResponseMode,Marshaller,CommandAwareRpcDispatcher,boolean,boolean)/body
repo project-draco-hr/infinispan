@@ -1,37 +1,28 @@
 {
-  if (trace)   log.tracef("Replication task sending %s to addresses %s",command,dests);
-  ResponseMode mode=supportReplay ? ResponseMode.GET_ALL : this.mode;
+  log.tracef("Replication task sending %s to addresses %s",command,dests);
+  ResponseMode mode=supportReplay ? ResponseMode.GET_ALL : origMode;
   RspList<Object> retval=null;
   Buffer buf;
   if (broadcast || FORCE_MCAST) {
-    RequestOptions opts=new RequestOptions();
-    opts.setMode(mode);
-    opts.setTimeout(timeout);
-    opts.setRspFilter(filter);
-    opts.setAnycasting(false);
-    buf=marshallCall();
-    retval=castMessage(dests,constructMessage(buf,null),opts);
+    buf=marshallCall(marshaller,command);
+    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode),new RequestOptions(mode,timeout,false,filter));
   }
  else {
-    Set<Address> targets=new HashSet<Address>(dests);
-    RequestOptions opts=new RequestOptions();
-    opts.setMode(mode);
-    opts.setTimeout(timeout);
-    targets.remove(channel.getAddress());
-    if (targets.isEmpty())     return new RspList();
-    buf=marshallCall();
+    RequestOptions opts=new RequestOptions(mode,timeout);
+    if (dests.isEmpty())     return new RspList<Object>();
+    buf=marshallCall(marshaller,command);
     if (filter != null) {
-      FutureCollator futureCollator=new FutureCollator(filter,targets.size(),timeout);
-      for (      Address a : targets) {
-        NotifyingFuture<Object> f=sendMessageWithFuture(constructMessage(buf,a),opts);
+      FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout);
+      for (      Address a : dests) {
+        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode),opts);
         futureCollator.watchFuture(f,a);
       }
       retval=futureCollator.getResponseList();
     }
  else     if (mode == ResponseMode.GET_ALL) {
-      Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(targets.size());
-      for (      Address dest : targets)       futures.put(dest,sendMessageWithFuture(constructMessage(buf,dest),opts));
-      retval=new RspList();
+      Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(dests.size());
+      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode),opts));
+      retval=new RspList<Object>();
       for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
         try {
           retval.addRsp(entry.getKey(),entry.getValue().get(timeout,MILLISECONDS));
@@ -42,11 +33,11 @@
       }
     }
  else     if (mode == ResponseMode.GET_NONE) {
-      for (      Address dest : targets)       sendMessage(constructMessage(buf,dest),opts);
+      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode),opts);
     }
   }
   if (mode != ResponseMode.GET_NONE) {
-    if (trace)     log.tracef("Responses: %s",retval);
+    log.tracef("Responses: %s",retval);
     if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
     if (supportReplay) {
       boolean replay=false;
@@ -63,15 +54,10 @@
         }
       }
       if (replay && !ignorers.isEmpty()) {
-        Message msg=constructMessage(buf,null);
+        Message msg=constructMessage(buf,null,oob,mode);
         msg.setFlag(Message.DONT_BUNDLE);
-        if (trace)         log.tracef("Replaying message to ignoring senders: %s",ignorers);
-        RequestOptions opts=new RequestOptions();
-        opts.setMode(ResponseMode.GET_ALL);
-        opts.setTimeout(timeout);
-        opts.setAnycasting(anycasting);
-        opts.setRspFilter(filter);
-        RspList responses=castMessage(ignorers,msg,opts);
+        RequestOptions opts=new RequestOptions(ResponseMode.GET_ALL,timeout,anycasting,filter);
+        RspList<Object> responses=card.castMessage(ignorers,msg,opts);
         if (responses != null)         retval.putAll(responses);
       }
     }

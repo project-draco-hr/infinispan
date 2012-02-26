@@ -7,26 +7,7 @@
       log.tracef(exception,"Unexpected exception from %s",sender);
       throw new CacheException("Remote (" + sender + ") failed unexpectedly",exception);
     }
-    if (responseObject instanceof Response) {
-      Response response=(Response)responseObject;
-      if (response instanceof ExceptionResponse) {
-        Exception e=((ExceptionResponse)response).getException();
-        if (!(e instanceof RpcException)) {
-          if (shouldThrowException(e)) {
-            throw e;
-          }
- else {
-            if (log.isDebugEnabled())             log.debug("Received exception from sender" + sender,e);
-          }
-        }
-      }
-      responseListToAddTo.put(sender,response);
-    }
- else     if (responseObject != null) {
-      Class<?> responseClass=responseObject.getClass();
-      log.tracef("Unexpected response object type from %s: %s",sender,responseClass);
-      throw new CacheException(String.format("Unexpected response object type from %s: %s",sender,responseClass));
-    }
+    if (checkResponse(responseObject,sender))     responseListToAddTo.put(sender,(Response)responseObject);
   }
  else   if (wasSuspected) {
     if (!ignoreLeavers) {

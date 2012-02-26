@@ -1,0 +1,36 @@
+{
+  log.tracef("Replication task sending %s to single recipient %s",command,destination);
+  ResponseMode mode=supportReplay ? ResponseMode.GET_ALL : origMode;
+  Response retval;
+  Buffer buf;
+  buf=marshallCall(marshaller,command);
+  retval=card.sendMessage(constructMessage(buf,destination,oob,mode),new RequestOptions(mode,timeout));
+  log.tracef("Response: %s",retval);
+  if (mode != ResponseMode.GET_NONE) {
+    if (retval != null) {
+      if (!transport.checkResponse(retval,fromJGroupsAddress(destination))) {
+        log.tracef("Invalid response from %s",destination);
+        throw new TimeoutException("Received an invalid response " + retval + " from "+ destination);
+      }
+      if (supportReplay) {
+        boolean replay=false;
+        if (retval instanceof ExtendedResponse) {
+          ExtendedResponse extended=(ExtendedResponse)retval;
+          replay=extended.isReplayIgnoredRequests();
+          retval=extended.getResponse();
+        }
+        if (replay) {
+          Message msg=constructMessage(buf,destination,oob,mode);
+          msg.setFlag(Message.DONT_BUNDLE);
+          log.tracef("Replaying message to ignoring sender: %s",destination);
+          Response rv2=card.sendMessage(msg,new RequestOptions(ResponseMode.GET_ALL,timeout,false));
+          if (rv2 != null)           retval=rv2;
+        }
+      }
+    }
+    return retval;
+  }
+ else {
+    return null;
+  }
+}
