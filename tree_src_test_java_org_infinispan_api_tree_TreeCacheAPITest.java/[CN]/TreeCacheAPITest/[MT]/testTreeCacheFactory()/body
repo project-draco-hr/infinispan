@@ -1,11 +1,8 @@
 {
-  withCacheManager(new Callable<EmbeddedCacheManager>(){
-    @Override public EmbeddedCacheManager call() throws Exception {
-      org.infinispan.configuration.cache.Configuration config=new ConfigurationBuilder().invocationBatching().enable().build();
-      DefaultCacheManager cm=new DefaultCacheManager(config);
+  withCacheManager(new CacheManagerCallable(new DefaultCacheManager(new ConfigurationBuilder().invocationBatching().enable().build())){
+    @Override public void call() throws Exception {
       TreeCacheFactory tcf=new TreeCacheFactory();
       tcf.createTreeCache(cm.getCache());
-      return cm;
     }
   }
 );
