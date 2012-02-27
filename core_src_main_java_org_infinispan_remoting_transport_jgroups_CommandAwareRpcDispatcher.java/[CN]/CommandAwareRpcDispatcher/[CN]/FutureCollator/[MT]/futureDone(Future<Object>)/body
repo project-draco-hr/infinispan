@@ -1,7 +1,7 @@
 {
   SenderContainer sc=futures.get(objectFuture);
   if (sc.processed) {
-    log.tracef("Not processing callback; already processed callback for sender %s",sc.address);
+    if (trace)     log.tracef("Not processing callback; already processed callback for sender %s",sc.address);
   }
  else {
     sc.processed=true;
@@ -10,7 +10,7 @@
     try {
       if (retval == null) {
         Object response=objectFuture.get();
-        log.tracef("Received response: %s from %s",response,sender);
+        if (trace)         log.tracef("Received response: %s from %s",response,sender);
         filter.isAcceptable(response,sender);
         if (!filter.needMoreResponses()) {
           retval=new RspList(Collections.singleton(new Rsp(sender,response)));
@@ -18,7 +18,7 @@
         }
       }
  else {
-        log.tracef("Skipping response from %s since a valid response for this request has already been received",sender);
+        if (trace)         log.tracef("Skipping response from %s since a valid response for this request has already been received",sender);
       }
     }
  catch (    InterruptedException e) {
