@@ -1,11 +1,9 @@
 {
-  withCacheManager(new Callable<EmbeddedCacheManager>(){
-    @Override public EmbeddedCacheManager call() throws Exception {
-      ConfigurationBuilder cb=new ConfigurationBuilder();
-      cb.transaction().use1PcForAutoCommitTransactions(true).transactionManagerLookup(new DummyTransactionManagerLookup());
-      DefaultCacheManager cm=new DefaultCacheManager(cb.build());
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.transaction().use1PcForAutoCommitTransactions(true).transactionManagerLookup(new DummyTransactionManagerLookup());
+  withCacheManager(new CacheManagerCallable(new DefaultCacheManager(cb.build())){
+    @Override public void call() throws Exception {
       cm.getCache();
-      return cm;
     }
   }
 );
