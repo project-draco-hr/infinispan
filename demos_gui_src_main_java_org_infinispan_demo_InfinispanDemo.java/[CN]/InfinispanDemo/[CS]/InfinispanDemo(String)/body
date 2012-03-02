@@ -1,5 +1,6 @@
 {
   asyncExecutor=Executors.newFixedThreadPool(1);
+  tableUpdateExecutor=new ThreadPoolExecutor(1,1,0,TimeUnit.SECONDS,new ArrayBlockingQueue(1),new ThreadPoolExecutor.DiscardPolicy());
   cacheConfigFile=cfgFileName;
   cacheStatusProgressBar.setVisible(false);
   cacheStatusProgressBar.setEnabled(false);
@@ -104,6 +105,14 @@
       asyncExecutor.execute(new Runnable(){
         public void run(){
           int entries=generateSlider.getValue();
+          if (entries > 1000) {
+            for (int i=0; i < entries / 1000; i++) {
+              Map<String,String> rand=new HashMap<String,String>();
+              while (rand.size() < 1000)               rand.put(randomString(),randomString());
+              cache.putAll(rand);
+            }
+            entries=entries % 1000;
+          }
           Map<String,String> rand=new HashMap<String,String>();
           while (rand.size() < entries)           rand.put(randomString(),randomString());
           cache.putAll(rand);
