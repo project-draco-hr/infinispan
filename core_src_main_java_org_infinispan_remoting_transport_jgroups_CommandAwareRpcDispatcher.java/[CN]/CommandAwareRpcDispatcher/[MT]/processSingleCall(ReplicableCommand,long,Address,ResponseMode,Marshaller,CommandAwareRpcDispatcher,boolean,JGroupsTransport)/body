@@ -1,0 +1,16 @@
+{
+  if (trace)   log.tracef("Replication task sending %s to single recipient %s",command,destination);
+  Response retval;
+  Buffer buf;
+  buf=marshallCall(marshaller,command);
+  retval=card.sendMessage(constructMessage(buf,destination,oob,mode),new RequestOptions(mode,timeout));
+  if (trace)   log.tracef("Response: %s",retval);
+  if (mode == ResponseMode.GET_NONE)   return null;
+  if (retval != null) {
+    if (!transport.checkResponse(retval,fromJGroupsAddress(destination))) {
+      if (trace)       log.tracef("Invalid response from %s",destination);
+      throw new TimeoutException("Received an invalid response " + retval + " from "+ destination);
+    }
+  }
+  return retval;
+}

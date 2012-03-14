@@ -1,0 +1,43 @@
+{
+  if (trace)   log.tracef("Replication task sending %s to addresses %s",command,dests);
+  RspList<Object> retval=null;
+  Buffer buf;
+  if (broadcast || FORCE_MCAST) {
+    buf=marshallCall(marshaller,command);
+    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode),new RequestOptions(mode,timeout,false,filter));
+  }
+ else {
+    RequestOptions opts=new RequestOptions(mode,timeout);
+    if (dests.isEmpty())     return new RspList<Object>();
+    buf=marshallCall(marshaller,command);
+    if (filter != null) {
+      FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout);
+      for (      Address a : dests) {
+        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode),opts);
+        futureCollator.watchFuture(f,a);
+      }
+      retval=futureCollator.getResponseList();
+    }
+ else     if (mode == ResponseMode.GET_ALL) {
+      Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(dests.size());
+      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode),opts));
+      retval=new RspList<Object>();
+      for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
+        try {
+          retval.addRsp(entry.getKey(),entry.getValue().get(timeout,MILLISECONDS));
+        }
+ catch (        java.util.concurrent.TimeoutException te) {
+          throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),entry.getKey()));
+        }
+      }
+    }
+ else     if (mode == ResponseMode.GET_NONE) {
+      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode),opts);
+    }
+  }
+  if (mode != ResponseMode.GET_NONE) {
+    if (trace)     log.tracef("Responses: %s",retval);
+    if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
+  }
+  return retval;
+}
