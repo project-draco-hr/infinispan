@@ -1,20 +1,19 @@
 {
   Cache cache1=cache(0,"replSync");
   Cache cache2=cache(1,"replSync");
-  Transport mockTransport=createNiceMock(Transport.class);
+  Transport mockTransport=mock(Transport.class);
   RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
   Transport originalTransport=TestingUtil.extractComponent(cache1,Transport.class);
   try {
-    Address mockAddress1=createNiceMock(Address.class);
-    Address mockAddress2=createNiceMock(Address.class);
+    Address mockAddress1=mock(Address.class);
+    Address mockAddress2=mock(Address.class);
     List<Address> memberList=new ArrayList<Address>(2);
     memberList.add(mockAddress1);
     memberList.add(mockAddress2);
-    expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
     rpcManager.setTransport(mockTransport);
-    expect(mockTransport.getViewId()).andReturn(originalTransport.getViewId()).anyTimes();
-    expect(mockTransport.invokeRemotely(anyAddresses(),(CacheRpcCommand)anyObject(),anyResponseMode(),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andThrow(new RuntimeException("Barf!")).anyTimes();
-    replay(mockTransport);
+    when(mockTransport.getMembers()).thenReturn(memberList);
+    when(mockTransport.getViewId()).thenReturn(originalTransport.getViewId());
+    when(mockTransport.invokeRemotely(anyAddresses(),(CacheRpcCommand)anyObject(),anyResponseMode(),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).thenThrow(new RuntimeException("Barf!"));
     try {
       cache1.put(key,value);
       fail("Should have barfed");

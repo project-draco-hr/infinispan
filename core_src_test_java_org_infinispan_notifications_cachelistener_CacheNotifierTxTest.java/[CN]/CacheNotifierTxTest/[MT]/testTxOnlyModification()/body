@@ -1,13 +1,9 @@
 {
   initCacheData("key","value");
-  expectTransactionBoundaries(true);
-  mockNotifier.notifyCacheEntryModified(eq("key"),eq("value"),eq(true),isA(InvocationContext.class));
-  expectLastCall().once();
-  mockNotifier.notifyCacheEntryModified(eq("key"),eq("value2"),eq(false),isA(InvocationContext.class));
-  expectLastCall().once();
-  replay(mockNotifier);
   tm.begin();
   cache.put("key","value2");
   tm.commit();
-  verify(mockNotifier);
+  expectTransactionBoundaries(true);
+  verify(mockNotifier).notifyCacheEntryModified(eq("key"),eq("value"),eq(true),isA(InvocationContext.class));
+  verify(mockNotifier).notifyCacheEntryModified(eq("key"),eq("value2"),eq(false),isA(InvocationContext.class));
 }

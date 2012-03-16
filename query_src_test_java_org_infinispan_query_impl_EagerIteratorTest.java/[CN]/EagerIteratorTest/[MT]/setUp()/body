@@ -6,14 +6,13 @@
     keys.add(key);
     dummyResults.put(key,"Result number " + i);
   }
-  cache=createMock(AdvancedCache.class);
-  expect(cache.get(anyObject())).andAnswer(new IAnswer<String>(){
-    public String answer() throws Throwable {
-      String k=getCurrentArguments()[0].toString();
+  cache=mock(AdvancedCache.class);
+  when(cache.get(anyObject())).thenAnswer(new Answer<String>(){
+    @Override public String answer(    InvocationOnMock invocation) throws Throwable {
+      String k=invocation.getArguments()[0].toString();
       return dummyResults.get(k);
     }
   }
-).anyTimes();
+);
   iterator=new EagerIterator(keys,cache,fetchSize);
-  EasyMock.replay(cache);
 }

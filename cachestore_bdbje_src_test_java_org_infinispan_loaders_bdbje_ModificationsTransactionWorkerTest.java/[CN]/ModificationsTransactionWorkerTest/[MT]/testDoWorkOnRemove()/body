@@ -1,13 +1,9 @@
 {
-  CacheStore cs=createMock(CacheStore.class);
-  Remove store=createMock(Remove.class);
-  expect(store.getType()).andReturn(Modification.Type.REMOVE);
-  expect(store.getKey()).andReturn("1");
-  expect(cs.remove("1")).andReturn(true);
-  replay(cs);
-  replay(store);
+  CacheStore cs=mock(CacheStore.class);
+  Remove store=mock(Remove.class);
+  when(store.getType()).thenReturn(Modification.Type.REMOVE);
+  when(store.getKey()).thenReturn("1");
+  when(cs.remove("1")).thenReturn(true);
   ModificationsTransactionWorker worker=new ModificationsTransactionWorker(cs,Collections.singletonList(store));
   worker.doWork();
-  verify(cs);
-  verify(store);
 }

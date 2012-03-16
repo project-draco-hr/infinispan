@@ -1,14 +1,10 @@
 {
-  CacheStore cs=createMock(CacheStore.class);
-  Store store=createMock(Store.class);
+  CacheStore cs=mock(CacheStore.class);
+  Store store=mock(Store.class);
   InternalCacheEntry entry=TestInternalCacheEntryFactory.create("1","2");
-  expect(store.getType()).andReturn(Modification.Type.STORE);
-  expect(store.getStoredEntry()).andReturn(entry);
+  when(store.getType()).thenReturn(Modification.Type.STORE);
+  when(store.getStoredEntry()).thenReturn(entry);
   cs.store(entry);
-  replay(cs);
-  replay(store);
   ModificationsTransactionWorker worker=new ModificationsTransactionWorker(cs,Collections.singletonList(store));
   worker.doWork();
-  verify(cs);
-  verify(store);
 }

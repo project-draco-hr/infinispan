@@ -1,12 +1,8 @@
 {
-  CacheStore cs=createMock(CacheStore.class);
-  PurgeExpired purge=createMock(PurgeExpired.class);
-  expect(purge.getType()).andReturn(Modification.Type.PURGE_EXPIRED);
+  CacheStore cs=mock(CacheStore.class);
+  PurgeExpired purge=mock(PurgeExpired.class);
+  when(purge.getType()).thenReturn(Modification.Type.PURGE_EXPIRED);
   cs.purgeExpired();
-  replay(cs);
-  replay(purge);
   ModificationsTransactionWorker worker=new ModificationsTransactionWorker(cs,Collections.singletonList(purge));
   worker.doWork();
-  verify(cs);
-  verify(purge);
 }

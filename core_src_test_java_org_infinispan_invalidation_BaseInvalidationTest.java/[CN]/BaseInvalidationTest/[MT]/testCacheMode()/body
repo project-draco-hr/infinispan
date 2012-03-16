@@ -4,19 +4,17 @@
   RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
   Transport origTransport=TestingUtil.extractComponent(cache1,Transport.class);
   try {
-    Transport mockTransport=createMock(Transport.class);
+    Transport mockTransport=mock(Transport.class);
     rpcManager.setTransport(mockTransport);
-    Address addressOne=createNiceMock(Address.class);
-    Address addressTwo=createNiceMock(Address.class);
+    Address addressOne=mock(Address.class);
+    Address addressTwo=mock(Address.class);
     List<Address> members=new ArrayList<Address>(2);
     members.add(addressOne);
     members.add(addressTwo);
-    expect(mockTransport.getMembers()).andReturn(members).anyTimes();
-    expect(mockTransport.getAddress()).andReturn(addressOne).anyTimes();
-    expect(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).andReturn(null).anyTimes();
-    replay(mockTransport);
+    when(mockTransport.getMembers()).thenReturn(members);
+    when(mockTransport.getAddress()).thenReturn(addressOne);
+    when(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean())).thenReturn(null);
     cache1.put("k","v");
-    verify(mockTransport);
   }
   finally {
     if (rpcManager != null)     rpcManager.setTransport(origTransport);
