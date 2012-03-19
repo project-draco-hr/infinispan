@@ -1,11 +1,12 @@
 {
-  EmbeddedCacheManager cm0=createCacheManager(GlobalConfiguration.getClusteredDefault());
-  cm0.getDefaultConfiguration().fluent().clustering().mode(CacheMode.REPL_SYNC).storeAsBinary().build();
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.storeAsBinary().enable().clustering().cacheMode(org.infinispan.configuration.cache.CacheMode.REPL_SYNC);
+  EmbeddedCacheManager cm0=createClusteredCacheManager(builder);
   cacheManagers.add(cm0);
   String[] notFound=new String[]{CAR};
   systemCl=Thread.currentThread().getContextClassLoader();
   CherryPickClassLoader cl=new CherryPickClassLoader(null,null,notFound,systemCl);
-  EmbeddedCacheManager cm1=createCacheManager(GlobalConfiguration.getClusteredDefault(cl));
-  cm1.getDefaultConfiguration().fluent().clustering().mode(CacheMode.REPL_SYNC).storeAsBinary().build();
+  GlobalConfigurationBuilder gcBuilder=createSecondGlobalCfgBuilder(cl);
+  EmbeddedCacheManager cm1=createClusteredCacheManager(gcBuilder,builder);
   cacheManagers.add(cm1);
 }
