@@ -1,0 +1,22 @@
+{
+  Cache cache=cacheManagers.get(0).getCache("P006");
+  for (int i=0; i < 4; i++) {
+    cache.put(cacheManagers.get(0).getAddress().toString() + "-" + i,"42");
+  }
+  CacheStore cs1=cache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class).getCacheStore();
+  Set<Object> keys=cs1.loadAllKeys(null);
+  Assert.assertEquals(keys.size(),4);
+  addClusterEnabledCacheManager(getCB());
+  waitForClusterToForm("P006");
+  cache=cacheManagers.get(1).getCache("P006");
+  for (int i=0; i < 4; i++) {
+    cache.put(cacheManagers.get(1).getAddress().toString() + "-" + i,"42");
+  }
+  Set mergedKeys=new HashSet();
+  CacheStore cs2=cache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class).getCacheStore();
+  log.debugf("Load from cache store via cache 1");
+  mergedKeys.addAll(cs1.loadAllKeys(null));
+  log.debugf("Load from cache store via cache 2");
+  mergedKeys.addAll(cs2.loadAllKeys(null));
+  Assert.assertEquals(mergedKeys.size(),8);
+}
