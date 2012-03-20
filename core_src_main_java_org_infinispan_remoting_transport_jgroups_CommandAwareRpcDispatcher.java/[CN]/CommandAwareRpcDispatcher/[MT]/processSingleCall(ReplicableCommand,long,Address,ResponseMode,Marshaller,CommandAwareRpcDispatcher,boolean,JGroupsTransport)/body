@@ -1,9 +1,10 @@
 {
   if (trace)   log.tracef("Replication task sending %s to single recipient %s",command,destination);
+  boolean rsvp=command instanceof StateTransferControlCommand || command instanceof CacheViewControlCommand;
   Response retval;
   Buffer buf;
   buf=marshallCall(marshaller,command);
-  retval=card.sendMessage(constructMessage(buf,destination,oob,mode),new RequestOptions(mode,timeout));
+  retval=card.sendMessage(constructMessage(buf,destination,oob,mode,rsvp),new RequestOptions(mode,timeout));
   if (trace)   log.tracef("Response: %s",retval);
   if (mode == ResponseMode.GET_NONE)   return null;
   if (retval != null) {

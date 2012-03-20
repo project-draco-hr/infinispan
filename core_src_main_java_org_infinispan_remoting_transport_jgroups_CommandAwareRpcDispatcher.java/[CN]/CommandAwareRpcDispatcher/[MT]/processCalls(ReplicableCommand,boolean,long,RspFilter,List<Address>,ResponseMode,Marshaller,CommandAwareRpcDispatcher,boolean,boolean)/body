@@ -1,10 +1,11 @@
 {
   if (trace)   log.tracef("Replication task sending %s to addresses %s",command,dests);
+  boolean rsvp=command instanceof CacheViewControlCommand;
   RspList<Object> retval=null;
   Buffer buf;
   if (broadcast || FORCE_MCAST) {
     buf=marshallCall(marshaller,command);
-    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode),new RequestOptions(mode,timeout,false,filter));
+    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode,rsvp),new RequestOptions(mode,timeout,false,filter));
   }
  else {
     RequestOptions opts=new RequestOptions(mode,timeout);
@@ -13,14 +14,14 @@
     if (filter != null) {
       FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout);
       for (      Address a : dests) {
-        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode),opts);
+        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode,rsvp),opts);
         futureCollator.watchFuture(f,a);
       }
       retval=futureCollator.getResponseList();
     }
  else     if (mode == ResponseMode.GET_ALL) {
       Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(dests.size());
-      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode),opts));
+      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode,rsvp),opts));
       retval=new RspList<Object>();
       for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
         try {
@@ -32,7 +33,7 @@
       }
     }
  else     if (mode == ResponseMode.GET_NONE) {
-      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode),opts);
+      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode,rsvp),opts);
     }
   }
   if (mode != ResponseMode.GET_NONE) {
