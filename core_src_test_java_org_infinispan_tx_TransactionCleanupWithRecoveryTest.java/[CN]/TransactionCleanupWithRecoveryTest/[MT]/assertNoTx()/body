@@ -1,7 +1,13 @@
 {
   final TransactionTable tt0=TestingUtil.getTransactionTable(cache(0));
-  assertEquals(tt0.getLocalTxCount(),0);
-  assertEquals(tt0.getRemoteTxCount(),0);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      int localTxCount=tt0.getLocalTxCount();
+      int remoteTxCount=tt0.getRemoteTxCount();
+      return localTxCount == 0 && remoteTxCount == 0;
+    }
+  }
+);
   final TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
