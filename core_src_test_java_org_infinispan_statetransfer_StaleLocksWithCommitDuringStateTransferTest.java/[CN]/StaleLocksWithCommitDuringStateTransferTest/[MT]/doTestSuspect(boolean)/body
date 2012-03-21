@@ -1,0 +1,48 @@
+{
+  MagicKey k1=new MagicKey(c1,"k1");
+  MagicKey k2=new MagicKey(c2,"k2");
+  tm(c1).begin();
+  c1.put(k1,"v1");
+  c1.put(k2,"v2");
+  TransactionTable txTable=TestingUtil.extractComponent(c1,TransactionTable.class);
+  TransactionCoordinator txCoordinator=TestingUtil.extractComponent(c1,TransactionCoordinator.class);
+  LocalTransaction localTx=txTable.getLocalTransaction(tm(c1).getTransaction());
+  txCoordinator.prepare(localTx);
+  InterceptorChain c2ic=TestingUtil.extractComponent(c2,InterceptorChain.class);
+  c2ic.addInterceptorBefore(new CommandInterceptor(){
+    protected Object handleDefault(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      if (command instanceof CommitCommand) {
+        Thread.sleep(3000);
+      }
+      return super.handleDefault(ctx,command);
+    }
+  }
+,StateTransferLockInterceptor.class);
+  Thread worker=new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest"){
+    @Override public void run(){
+      try {
+        Thread.sleep(1000);
+        manager(c2).stop();
+      }
+ catch (      InterruptedException e) {
+        log.errorf(e,"Error stopping cache");
+      }
+    }
+  }
+;
+  worker.start();
+  try {
+    if (commit) {
+      txCoordinator.commit(localTx,false);
+    }
+ else {
+      txCoordinator.rollback(localTx);
+    }
+    tm(c1).suspend();
+  }
+  finally {
+    worker.join();
+  }
+  assertNotLocked(c1,k1);
+  assertNotLocked(c1,k2);
+}
