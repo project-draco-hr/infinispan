@@ -1,12 +1,17 @@
 {
   Collection<Address> addresses=new HashSet<Address>(2);
+  boolean originIsInRequestorsList=false;
   for (  Object key : keys) {
-    Collection<Address> as=requestors.remove(key);
+    ConcurrentMap<Address,Long> as=requestors.remove(key);
     if (as != null) {
-      addresses.addAll(as);
-      if (origin != null && as.contains(origin))       addRequestor(key,origin);
+      Set<Address> requestorAddresses=as.keySet();
+      addresses.addAll(requestorAddresses);
+      if (origin != null && requestorAddresses.contains(origin)) {
+        originIsInRequestorsList=true;
+        addRequestor(key,origin);
+      }
     }
   }
-  if (origin != null)   addresses.remove(origin);
+  if (originIsInRequestorsList)   addresses.remove(origin);
   return addresses;
 }

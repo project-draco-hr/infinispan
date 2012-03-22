@@ -1,14 +1,15 @@
 {
-  Collection<Address> as=requestors.get(key);
+  ConcurrentMap<Address,Long> as=requestors.get(key);
+  long now=System.currentTimeMillis();
   if (as == null) {
-    as=new ConcurrentHashSet<Address>();
-    as.add(origin);
-    Collection<Address> previousAs=requestors.putIfAbsent(key,as);
+    as=ConcurrentMapFactory.makeConcurrentMap();
+    as.put(origin,now);
+    ConcurrentMap<Address,Long> previousAs=requestors.putIfAbsent(key,as);
     if (previousAs != null) {
-      previousAs.add(origin);
+      previousAs.put(origin,now);
     }
   }
  else {
-    as.add(origin);
+    as.put(origin,now);
   }
 }
