@@ -19,10 +19,10 @@
         if (isL1CacheEnabled && !skipL1Invalidation)         if (rpcManager.getTransport().getMembers().size() > numCallRecipients) {
           if (trace)           log.tracef("Put occuring on node, requesting L1 cache invalidation for keys %s. Other data owners are %s",command.getAffectedKeys(),dm.getAffectedNodes(command.getAffectedKeys()));
           if (useFuture) {
-            futureToReturn=l1Manager.flushCache(recipientGenerator.getKeys(),returnValue,null);
+            futureToReturn=l1Manager.flushCache(recipientGenerator.getKeys(),returnValue,ctx.getOrigin(),!(command instanceof RemoveCommand));
           }
  else {
-            invalidationFuture=l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),returnValue,null);
+            invalidationFuture=l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),returnValue,ctx.getOrigin(),!(command instanceof RemoveCommand));
           }
         }
  else {
@@ -49,7 +49,7 @@
  else {
         if (isL1CacheEnabled && !skipL1Invalidation) {
           if (trace)           log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote",command.getAffectedKeys());
-          invalidationFuture=l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),returnValue,command instanceof RemoveCommand ? null : ctx.getOrigin());
+          invalidationFuture=l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),returnValue,ctx.getOrigin(),!(command instanceof RemoveCommand));
           if (sync) {
             invalidationFuture.get();
             if (trace)             log.tracef("Finished invalidating keys %s ",recipientGenerator.getKeys());
