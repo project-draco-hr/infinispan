@@ -1,0 +1,13 @@
+{
+  InternalCacheEntry ice=container.get(key);
+  Object actualValue=ice == null ? null : ice.getValue();
+  Object valueToCompare=alreadyCopied ? oldValue : value;
+  if (actualValue != null && actualValue != valueToCompare) {
+    log.unableToCopyEntryForUpdate(getKey());
+    throw new CacheException("Detected write skew.");
+  }
+  if (ice == null && !isCreated()) {
+    log.unableToCopyEntryForUpdate(getKey());
+    throw new CacheException("Detected write skew - concurrent removal of entry!");
+  }
+}

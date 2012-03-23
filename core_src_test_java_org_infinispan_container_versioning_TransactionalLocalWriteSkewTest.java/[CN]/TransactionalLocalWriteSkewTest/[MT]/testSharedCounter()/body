@@ -1,0 +1,16 @@
+{
+  int counterMaxValue=1000;
+  Cache<String,Integer> c1=cacheManager.getCache("cache");
+  c1.put("counter",0);
+  assertTrue(c1.get("counter") == 0);
+  ConcurrentSkipListSet<Integer> uniqueValuesIncremented=new ConcurrentSkipListSet<Integer>();
+  IncrementCounterThread ict1=new IncrementCounterThread("Node-1",c1,uniqueValuesIncremented,counterMaxValue);
+  IncrementCounterThread ict2=new IncrementCounterThread("Node-2",c1,uniqueValuesIncremented,counterMaxValue);
+  ict1.start();
+  ict2.start();
+  ict1.join();
+  ict2.join();
+  assertTrue(c1.get("counter") >= counterMaxValue);
+  assertTrue(ict1.result);
+  assertTrue(ict2.result);
+}
