@@ -1,21 +1,20 @@
 {
   Integer bucketKey=Integer.valueOf(bucketFile.getName());
-  boolean lockAcquired=false;
   boolean interrupted=false;
   try {
+    lockForReading(bucketKey);
     Bucket bucket=loadBucket(bucketFile);
     if (bucket != null) {
       if (bucket.removeExpiredEntries()) {
-        lockForWriting(bucketKey);
-        lockAcquired=true;
+        upgradeLock(bucketKey);
+        updateBucket(bucket);
       }
-      updateBucket(bucket);
     }
  else {
       if (bucketFile.exists() && bucketFile.length() == 0) {
-        lockForWriting(bucketKey);
-        lockAcquired=true;
-        if (!bucketFile.delete())         log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
+        upgradeLock(bucketKey);
+        fileSync.deleteFile(bucketFile);
+        if (bucketFile.exists())         log.info("Unable to remove empty file " + bucketFile + " - will try again later.");
       }
     }
   }
@@ -26,9 +25,7 @@ catch (  CacheLoaderException e) {
     log.problemsPurgingFile(bucketFile,e);
   }
  finally {
-    if (lockAcquired) {
-      unlock(bucketKey);
-    }
+    unlock(bucketKey);
   }
   return !interrupted;
 }

@@ -4,7 +4,13 @@
     Bucket bucket=readFromBlob(blob,blobName);
     if (bucket != null) {
       if (bucket.removeExpiredEntries()) {
-        updateBucket(bucket);
+        lockForWriting(bucket.getBucketId());
+        try {
+          updateBucket(bucket);
+        }
+  finally {
+          unlock(bucket.getBucketId());
+        }
       }
     }
  else {

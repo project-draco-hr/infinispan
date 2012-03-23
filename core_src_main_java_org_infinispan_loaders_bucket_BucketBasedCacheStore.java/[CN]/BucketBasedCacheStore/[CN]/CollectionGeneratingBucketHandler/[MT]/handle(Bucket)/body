@@ -1,7 +1,13 @@
 {
   if (bucket != null) {
     if (bucket.removeExpiredEntries()) {
-      updateBucket(bucket);
+      upgradeLock(bucket.getBucketId());
+      try {
+        updateBucket(bucket);
+      }
+  finally {
+        downgradeLock(bucket.getBucketId());
+      }
     }
     boolean enoughLooping=consider(bucket.getStoredEntries());
     if (enoughLooping) {

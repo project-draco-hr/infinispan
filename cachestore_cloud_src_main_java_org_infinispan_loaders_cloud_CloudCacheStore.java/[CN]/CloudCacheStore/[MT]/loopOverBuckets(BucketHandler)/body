@@ -3,7 +3,13 @@
     Bucket bucket=readFromBlob(entry.getValue(),entry.getKey());
     if (bucket != null) {
       if (bucket.removeExpiredEntries()) {
-        updateBucket(bucket);
+        upgradeLock(bucket.getBucketId());
+        try {
+          updateBucket(bucket);
+        }
+  finally {
+          downgradeLock(bucket.getBucketId());
+        }
       }
       if (handler.handle(bucket)) {
         break;
