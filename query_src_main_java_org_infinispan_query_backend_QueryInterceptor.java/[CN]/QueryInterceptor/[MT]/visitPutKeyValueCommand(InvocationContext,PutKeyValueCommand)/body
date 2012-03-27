@@ -1,11 +1,17 @@
 {
   Object toReturn=invokeNextInterceptor(ctx,command);
   if (shouldModifyIndexes(ctx)) {
+    getLog().debug("Infinispan Query indexing is triggered");
     Object key=command.getKey();
     Object value=extractValue(command.getValue());
-    updateKnownTypesIfNeeded(value);
-    getLog().debug("Entry is changed");
-    updateIndexes(value,extractValue(key));
+    if (updateKnownTypesIfNeeded(value)) {
+      updateIndexes(value,extractValue(key));
+    }
+ else {
+      if (updateKnownTypesIfNeeded(toReturn)) {
+        removeFromIndexes(toReturn,extractValue(command.getKey()));
+      }
+    }
   }
   return toReturn;
 }

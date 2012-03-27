@@ -2,8 +2,9 @@
   Object valueRemoved=invokeNextInterceptor(ctx,command);
   if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx)) {
     Object value=extractValue(valueRemoved);
-    updateKnownTypesIfNeeded(value);
-    removeFromIndexes(value,extractValue(command.getKey()));
+    if (updateKnownTypesIfNeeded(value)) {
+      removeFromIndexes(value,extractValue(command.getKey()));
+    }
   }
   return valueRemoved;
 }
