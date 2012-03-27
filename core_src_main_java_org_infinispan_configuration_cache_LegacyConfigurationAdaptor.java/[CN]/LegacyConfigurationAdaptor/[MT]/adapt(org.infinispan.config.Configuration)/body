@@ -22,7 +22,13 @@
  else {
     builder.clustering().l1().disable();
   }
-  builder.clustering().stateTransfer().fetchInMemoryState(legacy.isFetchInMemoryState()).timeout(legacy.getStateRetrievalTimeout()).chunkSize(legacy.getStateRetrievalChunkSize());
+  if (legacy.getCacheMode().isDistributed()) {
+    builder.clustering().stateTransfer().fetchInMemoryState(legacy.isRehashEnabled()).timeout(legacy.getRehashWaitTime());
+  }
+ else   if (legacy.getCacheMode().isClustered()) {
+    builder.clustering().stateTransfer().fetchInMemoryState(legacy.isFetchInMemoryState()).timeout(legacy.getStateRetrievalTimeout());
+  }
+  builder.clustering().stateTransfer().chunkSize(legacy.getStateRetrievalChunkSize());
   if (legacy.getCacheMode().isSynchronous()) {
     builder.clustering().sync().replTimeout(legacy.getSyncReplTimeout());
   }
