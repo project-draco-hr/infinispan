@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.locking().isolationLevel(IsolationLevel.NONE).clustering().cacheMode(CacheMode.REPL_SYNC).build();
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(builder)){
+    @Override public void call() throws Exception {
+      Configuration cfg=cm.getCache().getCacheConfiguration();
+      assertEquals(IsolationLevel.READ_COMMITTED,cfg.locking().isolationLevel());
+    }
+  }
+);
+}

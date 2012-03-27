@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.locking().isolationLevel(IsolationLevel.NONE);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call() throws Exception {
+      AbstractLockingInterceptor locking=TestingUtil.findInterceptor(cm.getCache(),AbstractLockingInterceptor.class);
+      assertNull(locking);
+    }
+  }
+);
+}
