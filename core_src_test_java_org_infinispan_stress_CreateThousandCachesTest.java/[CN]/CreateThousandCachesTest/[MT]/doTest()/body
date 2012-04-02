@@ -1,10 +1,14 @@
 {
   System.out.println("Starting... ");
-  EmbeddedCacheManager ecm=new DefaultCacheManager();
-  List<Cache<?,?>> thousandCaches=new LinkedList<Cache<?,?>>();
-  long start=System.currentTimeMillis();
-  for (int i=0; i < 1000; i++) {
-    thousandCaches.add(ecm.getCache("cache" + i));
+  withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+    @Override public void call() throws Exception {
+      List<Cache<?,?>> thousandCaches=new LinkedList<Cache<?,?>>();
+      long start=System.currentTimeMillis();
+      for (int i=0; i < 1000; i++) {
+        thousandCaches.add(cm.getCache("cache" + i));
+      }
+      System.out.println("Created 1000 basic caches in " + (System.currentTimeMillis() - start) + " millis");
+    }
   }
-  System.out.println("Created 1000 basic caches in " + (System.currentTimeMillis() - start) + " millis");
+);
 }

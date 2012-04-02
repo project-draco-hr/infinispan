@@ -1,44 +1,49 @@
 {
   MockChannel mockChannel=new MockChannel();
   MockClient firstCacheClient=new MockClient("firstCache",mockChannel);
-  JSONObject jsonPayload;
-  firstCacheClient.put("a","aVal");
-  firstCacheClient.put("b","bVal");
-  firstCacheClient.get("a");
-  jsonPayload=mockChannel.getJSONPayload();
-  Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
-  Assert.assertEquals("a",jsonPayload.get(OpHandler.KEY));
-  Assert.assertEquals("aVal",jsonPayload.get(OpHandler.VALUE));
-  Assert.assertEquals("text/plain",jsonPayload.get(OpHandler.MIME));
-  firstCacheClient.get("b");
-  jsonPayload=mockChannel.getJSONPayload();
-  Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
-  Assert.assertEquals("b",jsonPayload.get(OpHandler.KEY));
-  Assert.assertEquals("bVal",jsonPayload.get(OpHandler.VALUE));
-  Assert.assertEquals("text/plain",jsonPayload.get(OpHandler.MIME));
-  firstCacheClient.get("x");
-  jsonPayload=mockChannel.getJSONPayload();
-  Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
-  Assert.assertEquals("x",jsonPayload.get(OpHandler.KEY));
-  Assert.assertEquals(null,jsonPayload.get(OpHandler.VALUE));
-  firstCacheClient.notify("a");
-  jsonPayload=mockChannel.getJSONPayload(1000);
-  Assert.assertEquals("aVal",jsonPayload.get(OpHandler.VALUE));
-  firstCacheClient.getCache().put("a","aNewValue");
-  jsonPayload=mockChannel.getJSONPayload();
-  Assert.assertEquals("aNewValue",jsonPayload.get(OpHandler.VALUE));
-  firstCacheClient.getCache().put("b","bNewValue");
   try {
-    mockChannel.getJSONPayload(500);
-    Assert.fail("Expected timeout");
+    JSONObject jsonPayload;
+    firstCacheClient.put("a","aVal");
+    firstCacheClient.put("b","bVal");
+    firstCacheClient.get("a");
+    jsonPayload=mockChannel.getJSONPayload();
+    Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
+    Assert.assertEquals("a",jsonPayload.get(OpHandler.KEY));
+    Assert.assertEquals("aVal",jsonPayload.get(OpHandler.VALUE));
+    Assert.assertEquals("text/plain",jsonPayload.get(OpHandler.MIME));
+    firstCacheClient.get("b");
+    jsonPayload=mockChannel.getJSONPayload();
+    Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
+    Assert.assertEquals("b",jsonPayload.get(OpHandler.KEY));
+    Assert.assertEquals("bVal",jsonPayload.get(OpHandler.VALUE));
+    Assert.assertEquals("text/plain",jsonPayload.get(OpHandler.MIME));
+    firstCacheClient.get("x");
+    jsonPayload=mockChannel.getJSONPayload();
+    Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
+    Assert.assertEquals("x",jsonPayload.get(OpHandler.KEY));
+    Assert.assertEquals(null,jsonPayload.get(OpHandler.VALUE));
+    firstCacheClient.notify("a");
+    jsonPayload=mockChannel.getJSONPayload(1000);
+    Assert.assertEquals("aVal",jsonPayload.get(OpHandler.VALUE));
+    firstCacheClient.getCache().put("a","aNewValue");
+    jsonPayload=mockChannel.getJSONPayload();
+    Assert.assertEquals("aNewValue",jsonPayload.get(OpHandler.VALUE));
+    firstCacheClient.getCache().put("b","bNewValue");
+    try {
+      mockChannel.getJSONPayload(500);
+      Assert.fail("Expected timeout");
+    }
+ catch (    RuntimeException e) {
+      Assert.assertEquals("Timed out waiting for data to be pushed onto the channel.",e.getMessage());
+    }
+    firstCacheClient.remove("a");
+    firstCacheClient.get("a");
+    jsonPayload=mockChannel.getJSONPayload();
+    Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
+    Assert.assertEquals("a",jsonPayload.get(OpHandler.KEY));
+    Assert.assertEquals(null,jsonPayload.get(OpHandler.VALUE));
   }
- catch (  RuntimeException e) {
-    Assert.assertEquals("Timed out waiting for data to be pushed onto the channel.",e.getMessage());
+  finally {
+    firstCacheClient.stop();
   }
-  firstCacheClient.remove("a");
-  firstCacheClient.get("a");
-  jsonPayload=mockChannel.getJSONPayload();
-  Assert.assertEquals("firstCache",jsonPayload.get(OpHandler.CACHE_NAME));
-  Assert.assertEquals("a",jsonPayload.get(OpHandler.KEY));
-  Assert.assertEquals(null,jsonPayload.get(OpHandler.VALUE));
 }

@@ -1,10 +1,14 @@
 {
-  final DefaultCacheManager cacheManager=new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault(),new Configuration(),true);
-  Configuration customConfiguration=TestCacheManagerFactory.getDefaultConfiguration(true);
-  customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
-  Configuration definedConfiguration=cacheManager.defineConfiguration("aCache",customConfiguration);
-  assertTrue(definedConfiguration.getTransactionManagerLookup() instanceof TxManagerLookupA);
-  TransactionManager activeTransactionManager=cacheManager.getCache("aCache").getAdvancedCache().getTransactionManager();
-  assertNotNull(activeTransactionManager);
-  assertTrue(activeTransactionManager instanceof TmA);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(new Configuration())){
+    @Override public void call() throws Exception {
+      Configuration customConfiguration=TestCacheManagerFactory.getDefaultConfiguration(true);
+      customConfiguration.setTransactionManagerLookup(new TxManagerLookupA());
+      Configuration definedConfiguration=cm.defineConfiguration("aCache",customConfiguration);
+      assertTrue(definedConfiguration.getTransactionManagerLookup() instanceof TxManagerLookupA);
+      TransactionManager activeTransactionManager=cm.getCache("aCache").getAdvancedCache().getTransactionManager();
+      assertNotNull(activeTransactionManager);
+      assertTrue(activeTransactionManager instanceof TmA);
+    }
+  }
+);
 }

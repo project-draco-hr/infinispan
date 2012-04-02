@@ -1,7 +1,11 @@
 {
-  final EmbeddedCacheManager nativeCacheManager=new DefaultCacheManager();
-  nativeCacheManager.getCache();
-  final SpringEmbeddedCacheManager objectUnderTest=new SpringEmbeddedCacheManager(nativeCacheManager);
-  objectUnderTest.stop();
-  assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed " + "Infinispan EmbeddedCacheManager. However, it is still running.",ComponentStatus.TERMINATED,nativeCacheManager.getStatus());
+  withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+    @Override public void call() throws Exception {
+      cm.getCache();
+      final SpringEmbeddedCacheManager objectUnderTest=new SpringEmbeddedCacheManager(cm);
+      objectUnderTest.stop();
+      assertEquals("Calling stop() on SpringEmbeddedCacheManager should stop the enclosed " + "Infinispan EmbeddedCacheManager. However, it is still running.",ComponentStatus.TERMINATED,cm.getStatus());
+    }
+  }
+);
 }
