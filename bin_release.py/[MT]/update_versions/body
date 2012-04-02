@@ -1,4 +1,5 @@
-def update_versions(version):
+def update_versions(base_dir, version):
+    os.chdir(base_dir)
     poms_to_patch = get_poms_to_patch('.')
     modified_files = []
     for pom in poms_to_patch:
@@ -9,7 +10,8 @@ def update_versions(version):
     f_in = open(version_java)
     f_out = open((version_java + '.tmp'), 'w')
     regexp = re.compile('\\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
-    pieces = version.split('.')
+    pieces = re.compile('[\\.\\-]').split(version)
+    snapshot = (pieces[3] == 'SNAPSHOT')
     try:
         for l in f_in:
             if regexp.match(l):
@@ -22,11 +24,12 @@ def update_versions(version):
                 elif (l.find('MODIFIER') > (-1)):
                     f_out.write(('   private static final String MODIFIER = "%s";\n' % pieces[3]))
                 elif (l.find('SNAPSHOT') > (-1)):
-                    f_out.write('   private static final boolean SNAPSHOT = false;\n')
+                    f_out.write(('   private static final boolean SNAPSHOT = %s;\n' % ('true' if snapshot else 'false')))
             else:
                 f_out.write(l)
     finally:
         f_in.close()
         f_out.close()
     os.rename((version_java + '.tmp'), version_java)
-    git.commit(modified_files)
+    git.commit(modified_files, ("'Release Script: update versions for %s'" % version))
+    return (((((pieces[0] + '.') + pieces[1]) + '.') + str((int(pieces[2]) + 1))) + ('.FINAL' if snapshot else '-SNAPSHOT'))

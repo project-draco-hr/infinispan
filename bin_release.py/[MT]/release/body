@@ -33,7 +33,7 @@ def release():
     tag_release(version, branch)
     prettyprint('Step 1: Complete', Levels.INFO)
     prettyprint('Step 2: Updating version number in source files', Levels.INFO)
-    update_versions(version)
+    version_next = update_versions(base_dir, version)
     prettyprint('Step 2: Complete', Levels.INFO)
     prettyprint('Step 3: Build and test in Maven2', Levels.INFO)
     maven_build_distribution(version)
@@ -60,6 +60,9 @@ def release():
     for p in async_processes:
         p.join()
     git.tag_for_release()
+    prettyprint('Step 9: Updating version number for next release', Levels.INFO)
+    update_versions(base_dir, version_next)
+    prettyprint('Step 9: Complete', Levels.INFO)
     if (not settings['dry_run']):
         git.push_to_origin()
         git.cleanup()
