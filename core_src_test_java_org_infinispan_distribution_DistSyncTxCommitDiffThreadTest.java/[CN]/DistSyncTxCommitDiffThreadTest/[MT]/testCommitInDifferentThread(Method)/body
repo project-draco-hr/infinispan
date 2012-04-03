@@ -15,7 +15,8 @@
     }
   }
 ;
-  Future commitFuture=Executors.newSingleThreadExecutor().submit(commitCallable);
+  Future commitFuture=fork(commitCallable);
+  Thread.sleep(500);
   nonOwnerCache.put(key,value);
   commitLatch.countDown();
   commitFuture.get();
@@ -29,6 +30,6 @@
     }
   }
 ;
-  Future getFuture=Executors.newSingleThreadExecutor().submit(getCallable);
+  Future getFuture=fork(getCallable);
   getFuture.get();
 }
