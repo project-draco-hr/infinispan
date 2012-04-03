@@ -1,8 +1,9 @@
 {
   String cacheName="my-cache";
   Configuration config=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3).numVirtualNodes(51).build();
-  GlobalConfiguration globalConfig=GlobalConfigurationBuilder.defaultClusteredBuilder().build();
-  EmbeddedCacheManager cm=new DefaultCacheManager(globalConfig);
+  GlobalConfigurationBuilder globalConfigBuilder=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  TestCacheManagerFactory.amendGlobalConfiguration(globalConfigBuilder,new TransportFlags());
+  cm=new DefaultCacheManager(globalConfigBuilder.build());
   cm.defineConfiguration(cacheName,config);
   Cache<?,?> cache=cm.getCache(cacheName);
   Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(),CacheMode.DIST_SYNC);
