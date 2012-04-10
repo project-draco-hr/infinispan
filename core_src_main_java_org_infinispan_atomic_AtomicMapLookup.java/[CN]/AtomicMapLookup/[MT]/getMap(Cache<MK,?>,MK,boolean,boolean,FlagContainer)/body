@@ -1,11 +1,11 @@
 {
   Object value=cache.get(key);
   if (value == null) {
-    if (createIfAbsent)     value=AtomicHashMap.newInstance(cache,key);
+    if (createIfAbsent)     value=AtomicHashMap.newInstance((Cache<Object,Object>)cache,key);
  else     return null;
   }
   AtomicHashMap<K,V> castValue=(AtomicHashMap<K,V>)value;
-  AtomicHashMapProxy<K,V> proxy=castValue.getProxy(cache.getAdvancedCache(),key,fineGrained,flagContainer);
+  AtomicHashMapProxy<K,V> proxy=castValue.getProxy((AdvancedCache<Object,Object>)cache.getAdvancedCache(),key,fineGrained,flagContainer);
   boolean typeSwitchAttempt=proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
   if (typeSwitchAttempt) {
     throw new IllegalArgumentException("Cannot switch type of previously used " + value + " from "+ (fineGrained ? "regular to fine-grained!" : "fine-grained to regular!"));

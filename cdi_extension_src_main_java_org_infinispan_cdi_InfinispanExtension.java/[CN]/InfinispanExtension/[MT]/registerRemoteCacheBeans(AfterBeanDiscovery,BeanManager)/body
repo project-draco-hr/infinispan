@@ -1,10 +1,10 @@
 {
   for (  Map.Entry<Type,Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
-    event.addBean(new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(getRawType(entry.getKey()))).addType(entry.getKey()).addQualifiers(entry.getValue()).beanLifecycle(new ContextualLifecycle<RemoteCache>(){
-      @Override public RemoteCache create(      Bean<RemoteCache> bean,      CreationalContext<RemoteCache> ctx){
+    event.addBean(new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(getRawType(entry.getKey()))).addType(entry.getKey()).addQualifiers(entry.getValue()).beanLifecycle(new ContextualLifecycle<RemoteCache<?,?>>(){
+      @Override public RemoteCache<?,?> create(      Bean<RemoteCache<?,?>> bean,      CreationalContext<RemoteCache<?,?>> ctx){
         return remoteCacheProducer.produce(ctx);
       }
-      @Override public void destroy(      Bean<RemoteCache> bean,      RemoteCache instance,      CreationalContext<RemoteCache> ctx){
+      @Override public void destroy(      Bean<RemoteCache<?,?>> bean,      RemoteCache<?,?> instance,      CreationalContext<RemoteCache<?,?>> ctx){
         remoteCacheProducer.dispose(instance);
       }
     }

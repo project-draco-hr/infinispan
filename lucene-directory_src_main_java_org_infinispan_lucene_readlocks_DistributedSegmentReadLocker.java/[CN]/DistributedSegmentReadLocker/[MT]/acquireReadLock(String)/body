@@ -1,6 +1,6 @@
 {
   FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
-  Object lockValue=locksCache.get(readLockKey);
+  Integer lockValue=locksCache.get(readLockKey);
   boolean done=false;
   while (done == false) {
     if (lockValue != null) {
@@ -8,14 +8,14 @@
       if (refCount == 0) {
         return false;
       }
-      Integer newValue=Integer.valueOf(refCount + 1);
+      Integer newValue=refCount + 1;
       done=locksCache.replace(readLockKey,lockValue,newValue);
       if (!done) {
         lockValue=locksCache.get(readLockKey);
       }
     }
  else {
-      lockValue=locksCache.putIfAbsent(readLockKey,Integer.valueOf(2));
+      lockValue=locksCache.putIfAbsent(readLockKey,2);
       done=(null == lockValue);
       if (done) {
         final FileCacheKey fileKey=new FileCacheKey(indexName,filename);

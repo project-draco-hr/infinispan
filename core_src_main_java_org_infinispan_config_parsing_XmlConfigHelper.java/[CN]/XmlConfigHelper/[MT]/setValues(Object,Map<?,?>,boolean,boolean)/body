@@ -1,6 +1,6 @@
 {
-  Class objectClass=target.getClass();
-  for (  Map.Entry entry : attribs.entrySet()) {
+  Class<?> objectClass=target.getClass();
+  for (  Map.Entry<?,?> entry : attribs.entrySet()) {
     String propName=(String)entry.getKey();
     String setter=BeanUtils.setterName(propName);
     try {
@@ -23,12 +23,12 @@ catch (    Exception e) {
     boolean setterFound=false;
     for (    Method m : objectClass.getMethods()) {
       if (setter.equals(m.getName())) {
-        Class paramTypes[]=m.getParameterTypes();
+        Class<?> paramTypes[]=m.getParameterTypes();
         if (paramTypes.length != 1) {
           log.tracef("Rejecting setter %s on class %s due to incorrect number of parameters",m,objectClass);
           continue;
         }
-        Class parameterType=paramTypes[0];
+        Class<?> parameterType=paramTypes[0];
         PropertyEditor editor=PropertyEditorManager.findEditor(parameterType);
         if (editor == null) {
           throw new ConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
