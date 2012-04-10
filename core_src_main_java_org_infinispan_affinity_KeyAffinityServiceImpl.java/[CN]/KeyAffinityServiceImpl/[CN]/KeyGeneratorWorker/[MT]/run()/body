@@ -1,16 +1,20 @@
 {
-  this.runner=Thread.currentThread();
   try {
-    while (true) {
-      if (waitToBeWakenUp())       break;
-      isActive=true;
-      log.trace("KeyGeneratorWorker marked as ACTIVE");
-      generateKeys();
-      isActive=false;
-      log.trace("KeyGeneratorWorker marked as INACTIVE");
+    while (isStopped == false) {
+      keyProducerStartLatch.await();
+      if (isStopped == false) {
+        isActive=true;
+        log.trace("KeyGeneratorWorker marked as ACTIVE");
+        generateKeys();
+        isActive=false;
+        log.trace("KeyGeneratorWorker marked as INACTIVE");
+      }
     }
   }
-  finally {
-    isStopped=true;
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+ finally {
+    log.debugf("Shutting down KeyAffinity service for key set: %s",filter);
   }
 }
