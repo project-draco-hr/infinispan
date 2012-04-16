@@ -1,0 +1,55 @@
+{
+  CacheLoader loader=null;
+  Boolean fetchPersistentState=null;
+  Boolean ignoreModifications=null;
+  Boolean purgeOnStartup=null;
+  Integer purgerThreads=null;
+  Boolean purgeSynchronously=null;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+      loader=Util.getInstance(value,cl);
+    break;
+case FETCH_PERSISTENT_STATE:
+  fetchPersistentState=Boolean.valueOf(value);
+break;
+case IGNORE_MODIFICATIONS:
+ignoreModifications=Boolean.valueOf(value);
+break;
+case PURGE_ON_STARTUP:
+purgeOnStartup=Boolean.valueOf(value);
+break;
+case PURGER_THREADS:
+purgerThreads=Integer.valueOf(value);
+break;
+case PURGE_SYNCHRONOUSLY:
+purgeSynchronously=Boolean.valueOf(value);
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+if (loader != null) {
+if (loader instanceof FileCacheStore) {
+FileCacheStoreConfigurationBuilder fcscb=builder.loaders().addFileCacheStore();
+if (fetchPersistentState != null) fcscb.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) fcscb.ignoreModifications(ignoreModifications);
+if (purgeOnStartup != null) fcscb.purgeOnStartup(purgeOnStartup);
+if (purgeSynchronously != null) fcscb.purgeSynchronously(purgeSynchronously);
+parseLoaderChildren(reader,fcscb);
+}
+ else {
+LoaderConfigurationBuilder lcb=builder.loaders().addCacheLoader();
+lcb.cacheLoader(loader);
+if (fetchPersistentState != null) lcb.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) lcb.ignoreModifications(ignoreModifications);
+if (purgerThreads != null) lcb.purgerThreads(purgerThreads);
+if (purgeOnStartup != null) lcb.purgeOnStartup(purgeOnStartup);
+if (purgeSynchronously != null) lcb.purgeSynchronously(purgeSynchronously);
+parseLoaderChildren(reader,lcb);
+}
+}
+}

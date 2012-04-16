@@ -1,0 +1,26 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case MAX_ENTRIES:
+      builder.eviction().maxEntries(Integer.parseInt(value));
+    break;
+case STRATEGY:
+  builder.eviction().strategy(EvictionStrategy.valueOf(value));
+break;
+case THREAD_POLICY:
+builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
+break;
+case WAKE_UP_INTERVAL:
+final Long wakeUpInterval=Long.valueOf(value);
+log.evictionWakeUpIntervalDeprecated(wakeUpInterval);
+builder.expiration().wakeUpInterval(wakeUpInterval);
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+ParseUtils.requireNoContent(reader);
+}

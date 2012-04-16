@@ -1,0 +1,44 @@
+{
+  String clusteringMode=null;
+  boolean synchronous=false;
+  boolean asynchronous=false;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case MODE:
+      clusteringMode=value;
+    break;
+default :
+  throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ASYNC:
+asynchronous=true;
+setMode(builder,clusteringMode,asynchronous,synchronous,reader);
+parseAsync(reader,builder,cl);
+break;
+case HASH:
+parseHash(reader,builder,cl);
+break;
+case L1:
+parseL1reader(reader,builder);
+break;
+case STATE_TRANSFER:
+parseStateTransfer(reader,builder);
+break;
+case SYNC:
+synchronous=true;
+setMode(builder,clusteringMode,asynchronous,synchronous,reader);
+parseSync(reader,builder);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+if (!synchronous && !asynchronous) setMode(builder,clusteringMode,asynchronous,asynchronous,reader);
+}

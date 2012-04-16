@@ -1,7 +1,8 @@
 {
   String config=INFINISPAN_START_TAG + "<global><transport /></global>" + "   <default>\n"+ "      <clustering mode=\"d\">\n"+ "          <hash numVirtualNodes=\"5000\" />"+ "      </clustering>\n"+ "   </default>\n"+ "   <namedCache name=\"x\" />"+ TestingUtil.INFINISPAN_END_TAG;
   InputStream is=new ByteArrayInputStream(config.getBytes());
-  ConfigurationBuilderHolder holder=new Parser(Thread.currentThread().getContextClassLoader()).parse(is);
+  ParserRegistry parserRegistry=new ParserRegistry(Thread.currentThread().getContextClassLoader());
+  ConfigurationBuilderHolder holder=parserRegistry.parse(is);
   org.infinispan.configuration.cache.Configuration defaultCfg=holder.getDefaultConfigurationBuilder().build();
   org.infinispan.configuration.cache.Configuration namedCfg=holder.getNamedConfigurationBuilders().get("x").build();
   for (  org.infinispan.configuration.cache.Configuration c : Arrays.asList(defaultCfg,namedCfg)) {

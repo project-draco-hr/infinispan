@@ -1,0 +1,22 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+      if (Boolean.parseBoolean(value))       loaderBuilder.singletonStore().enable();
+ else       loaderBuilder.singletonStore().disable();
+    break;
+case PUSH_STATE_TIMEOUT:
+  loaderBuilder.singletonStore().pushStateTimeout(Long.parseLong(value));
+break;
+case PUSH_STATE_WHEN_COORDINATOR:
+loaderBuilder.singletonStore().pushStateWhenCoordinator(Boolean.parseBoolean(value));
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+ParseUtils.requireNoContent(reader);
+}
