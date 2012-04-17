@@ -1,9 +1,11 @@
 {
-  IndexWriter iwriter=new IndexWriter(directory,LuceneSettings.analyzer,false,MaxFieldLength.UNLIMITED);
+  IndexWriterConfig indexWriterConfig=new IndexWriterConfig(LUCENE_VERSION,analyzer);
   if (useSerialMerger) {
-    iwriter.setMergeScheduler(mergeScheduler);
+    indexWriterConfig.setMergeScheduler(mergeScheduler);
   }
-  iwriter.setMaxMergeDocs(maxMergeDocs);
-  iwriter.setUseCompoundFile(false);
-  return iwriter;
+  LogMergePolicy mergePolicy=new LogByteSizeMergePolicy();
+  mergePolicy.setMaxMergeDocs(maxMergeDocs);
+  mergePolicy.setUseCompoundFile(false);
+  indexWriterConfig.setMergePolicy(mergePolicy);
+  return new IndexWriter(directory,indexWriterConfig);
 }
