@@ -1,0 +1,25 @@
+{
+  ObjectInstance manager=cacheManagers.get(activeCacheManager);
+  try {
+    String result=(String)mbsc.invoke(manager.getObjectName(),"execute",new String[]{context.getCommandBuffer().toString()},new String[]{String.class.getName()});
+    if (result != null) {
+      context.println(result);
+    }
+  }
+ catch (  InstanceNotFoundException e) {
+    context.error(e);
+  }
+catch (  MBeanException e) {
+    Exception te=e.getTargetException();
+    context.error(te.getCause() != null ? te.getCause() : te);
+  }
+catch (  ReflectionException e) {
+    context.error(e);
+  }
+catch (  IOException e) {
+    context.error(e);
+  }
+ finally {
+    context.getCommandBuffer().reset();
+  }
+}

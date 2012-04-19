@@ -1,0 +1,37 @@
+{
+  BufferedReader r=new BufferedReader(new InputStreamReader(is));
+  for (String line=r.readLine(); line != null; line=r.readLine()) {
+    Matcher matcher=MAN_MACRO_REGEX.matcher(line);
+    if (matcher.matches()) {
+      String macro=matcher.group(1);
+      String text=matcher.group(2);
+      if (".B ".equals(macro)) {
+        fit(text,Attribute.INTENSITY_BOLD);
+      }
+ else       if (".I ".equals(macro)) {
+        fit(text,Attribute.ITALIC);
+      }
+ else       if (".SH ".equals(macro)) {
+        newline(false);
+        flushLeft();
+        newline(true);
+        fit(text,Attribute.INTENSITY_BOLD);
+        resetIndent();
+        newline(true);
+      }
+ else       if (".IP ".equals(macro)) {
+        resetIndent();
+        newline(false);
+        fit(text);
+        tab(DEFAULT_INDENT);
+      }
+ else       if (".BR".equals(macro)) {
+        newline(false);
+      }
+ else {
+        fit(text);
+      }
+    }
+  }
+  return ansi.toString();
+}

@@ -1,0 +1,18 @@
+{
+  GlobalConfiguration globalCfg=gcr.getGlobalConfiguration();
+  MBeanServer mbeanServer=JmxUtil.lookupMBeanServer(globalCfg);
+  String groupName=getGroupName(globalCfg);
+  String jmxDomain=globalCfg.globalJmxStatistics().domain();
+  Interpreter interpreter=new Interpreter();
+  gcr.registerComponent(interpreter,Interpreter.class);
+  ManageableComponentMetadata meta=ComponentMetadataRepo.findComponentMetadata(Interpreter.class).toManageableComponentMetadata();
+  try {
+    ResourceDMBean mbean=new ResourceDMBean(interpreter,meta);
+    interpreterObjName=new ObjectName(String.format("%s:%s,component=Interpreter",jmxDomain,groupName));
+    JmxUtil.registerMBean(mbean,interpreterObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    interpreterObjName=null;
+    log.jmxRegistrationFailed();
+  }
+}

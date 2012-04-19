@@ -1,0 +1,34 @@
+{
+  Cache<Object,Object> cache;
+  if (keyData.getCacheName() != null) {
+    cache=(Cache<Object,Object>)session.getCache(keyData.getCacheName());
+  }
+ else {
+    cache=(Cache<Object,Object>)session.getCache();
+  }
+  if (expires == null) {
+    if (oldValue != null) {
+      cache.replace(keyData.getKey(),oldValue,newValue);
+    }
+ else {
+      cache.replace(keyData.getKey(),newValue);
+    }
+  }
+ else   if (maxIdle == null) {
+    if (oldValue != null) {
+      cache.replace(keyData.getKey(),oldValue,newValue,expires,TimeUnit.MILLISECONDS);
+    }
+ else {
+      cache.replace(keyData.getKey(),newValue,expires,TimeUnit.MILLISECONDS);
+    }
+  }
+ else {
+    if (oldValue != null) {
+      cache.replace(keyData.getKey(),oldValue,newValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
+    }
+ else {
+      cache.replace(keyData.getKey(),newValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
+    }
+  }
+  return EmptyResult.RESULT;
+}

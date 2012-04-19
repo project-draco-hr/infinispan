@@ -1,0 +1,36 @@
+{
+  String buffer=op.getBuffer();
+  List<String> candidates=op.getCompletionCandidates();
+  if (buffer.isEmpty()) {
+    for (    String name : context.getCommandRegistry().getCommandNames()) {
+      Command command=context.getCommandRegistry().getCommand(name);
+      if (command.isAvailable(context)) {
+        candidates.add(name);
+      }
+    }
+  }
+ else {
+    ProcessedCommand procCmd=new ProcessedCommand(buffer);
+    if (!procCmd.isCommandComplete()) {
+      for (      String name : context.getCommandRegistry().getCommandNames()) {
+        Command command=context.getCommandRegistry().getCommand(name);
+        if (command.isAvailable(context) && name.startsWith(procCmd.getCommand())) {
+          candidates.add(name);
+        }
+      }
+    }
+ else {
+      Command command=context.getCommandRegistry().getCommand(procCmd.getCommand());
+      if (command.isAvailable(context)) {
+        for (        Argument arg : procCmd.getArguments()) {
+          if (arg.getOffset() < op.getCursor()) {
+            op.setOffset(arg.getOffset());
+          }
+ else           break;
+        }
+        command.complete(context,procCmd,candidates);
+      }
+    }
+  }
+  Collections.sort(candidates);
+}

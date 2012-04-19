@@ -1,0 +1,22 @@
+{
+  Cache<Object,Object> cache;
+  if (keyData.getCacheName() != null) {
+    cache=(Cache<Object,Object>)session.getCache(keyData.getCacheName());
+  }
+ else {
+    cache=(Cache<Object,Object>)session.getCache();
+  }
+  Object value=cache.get(keyData.key);
+  if (value == null) {
+    return new StringResult("null");
+  }
+ else   if (value instanceof String) {
+    return new StringResult((String)value);
+  }
+ else   if (value.getClass().isPrimitive()) {
+    return new StringResult(value.toString());
+  }
+ else {
+    return new JsonResult(value);
+  }
+}

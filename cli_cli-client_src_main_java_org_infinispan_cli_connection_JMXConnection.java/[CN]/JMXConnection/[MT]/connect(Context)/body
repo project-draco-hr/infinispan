@@ -1,0 +1,15 @@
+{
+  JMXServiceURL url=new JMXServiceURL(serviceUrl.getUrl());
+  Map<String,Object> env=new HashMap<String,Object>();
+  if (serviceUrl.username != null || serviceUrl.password != null) {
+    env.put(JMXConnector.CREDENTIALS,new String[]{serviceUrl.username,serviceUrl.password});
+  }
+  jmxConnector=JMXConnectorFactory.connect(url,env);
+  mbsc=jmxConnector.getMBeanServerConnection();
+  cacheManagers=new TreeMap<String,ObjectInstance>();
+  for (  ObjectInstance mbean : mbsc.queryMBeans(null,INTERPRETER_QUERY)) {
+    cacheManagers.put(unquote(mbean.getObjectName().getKeyProperty("name")),mbean);
+  }
+  cacheManagers=Collections.unmodifiableMap(cacheManagers);
+  activeCacheManager=cacheManagers.keySet().iterator().next();
+}

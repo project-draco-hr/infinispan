@@ -1,0 +1,33 @@
+{
+switch (commandLine.getArguments().size()) {
+case 0:
+    for (    String name : context.getCommandRegistry().getCommandNames()) {
+      context.println(name);
+    }
+  break;
+case 1:
+String name=commandLine.getArguments().get(0).getValue();
+Command command=context.getCommandRegistry().getCommand(name);
+if (command == null) {
+context.println("No such command '" + name + "'");
+}
+ else {
+InputStream is=Thread.currentThread().getContextClassLoader().getResourceAsStream("help/" + name + ".txt");
+if (is == null) {
+context.println("No help available for command '" + name + "'");
+}
+ else {
+try {
+  Man2Ansi man2ansi=new Man2Ansi(context.getOutputAdapter().getWidth() - 8);
+  context.println(man2ansi.render(is));
+  is.close();
+}
+ catch (IOException e) {
+}
+}
+}
+break;
+default :
+break;
+}
+}

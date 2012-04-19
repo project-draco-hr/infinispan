@@ -1,0 +1,30 @@
+{
+  CharStream stream=new ANTLRStringStream(s);
+  IspnQLLexer lexer=new IspnQLLexer(stream);
+  CommonTokenStream tokens=new CommonTokenStream(lexer);
+  IspnQLParser parser=new IspnQLParser(tokens);
+  ClassLoader oldCL=SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
+  Session session=null;
+  try {
+    parser.statements();
+    session=new SessionImpl(cacheManager);
+    StringBuilder output=new StringBuilder();
+    for (    Statement stmt : parser.statements) {
+      Result result=stmt.execute(session);
+      if (result != EmptyResult.RESULT) {
+        output.append(result.getResult());
+      }
+    }
+    return output.length() == 0 ? null : output.toString();
+  }
+ catch (  Exception e) {
+    log.interpreterError(e);
+    Exception exception=new Exception(e.getMessage());
+    exception.setStackTrace(e.getStackTrace());
+    throw exception;
+  }
+ finally {
+    if (session != null)     session.reset();
+    SysPropertyActions.setThreadContextClassLoader(oldCL);
+  }
+}

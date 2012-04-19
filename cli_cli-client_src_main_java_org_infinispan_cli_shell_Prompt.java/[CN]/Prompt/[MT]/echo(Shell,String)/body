@@ -1,0 +1,49 @@
+{
+  char[] expr=input.toCharArray();
+  StringBuilder out=new StringBuilder();
+  int start=0;
+  int i=0;
+  while (i < expr.length) {
+    if (i >= expr.length) {
+      break;
+    }
+switch (expr[i]) {
+case '\\':
+      if (i + 1 < expr.length && expr[i + 1] == '$') {
+        out.append(new String(expr,start,i - start));
+        out.append('$');
+        start=i+=2;
+      }
+    break;
+case '$':
+  out.append(new String(expr,start,i - start));
+start=++i;
+while (i != expr.length && Character.isJavaIdentifierPart(expr[i]) && expr[i] != 27) {
+i++;
+}
+String var=new String(expr,start,i - start);
+String val=shell.getContext().getProperty(var);
+if (val != null) {
+out.append(String.valueOf(val));
+}
+start=i;
+break;
+default :
+if (Character.isWhitespace(expr[i])) {
+out.append(new String(expr,start,i - start));
+start=i;
+while (i != expr.length && Character.isWhitespace(expr[i])) {
+i++;
+}
+out.append(new String(expr,start,i - start));
+start=i;
+continue;
+}
+}
+i++;
+}
+if (start < expr.length && i > start) {
+out.append(new String(expr,start,i - start));
+}
+return out.toString();
+}

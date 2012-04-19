@@ -1,0 +1,17 @@
+{
+  Cache<Object,Object> cache;
+  if (keyData.getCacheName() != null) {
+    cache=(Cache<Object,Object>)session.getCache(keyData.getCacheName());
+  }
+ else {
+    cache=(Cache<Object,Object>)session.getCache();
+  }
+  DistributionManager distributionManager=cache.getAdvancedCache().getDistributionManager();
+  if (distributionManager != null) {
+    List<Address> addresses=distributionManager.locate(keyData.getKey());
+    return new StringResult(addresses.toString());
+  }
+ else {
+    throw new StatementException("Cache is not distributed");
+  }
+}
