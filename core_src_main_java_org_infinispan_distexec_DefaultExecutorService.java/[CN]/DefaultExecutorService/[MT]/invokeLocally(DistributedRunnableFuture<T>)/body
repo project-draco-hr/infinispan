@@ -5,7 +5,9 @@
       @Override public Object call() throws Exception {
         Object result=null;
         future.getCommand().init(cache);
+        DistributedTaskLifecycleService taskLifecycleService=DistributedTaskLifecycleService.getInstance();
         try {
+          taskLifecycleService.onPreExecute(future.getCommand().getCallable());
           result=future.getCommand().perform(null);
           return Collections.singletonMap(rpc.getAddress(),SuccessfulResponse.create(result));
         }
@@ -13,6 +15,7 @@
           return e;
         }
  finally {
+          taskLifecycleService.onPostExecute(future.getCommand().getCallable());
           future.notifyDone();
         }
       }

@@ -90,9 +90,16 @@
     groupKeys(reduceMap,(Map<KOut,VOut>)localCommandResult);
   }
   Map<KOut,VOut> result=new HashMap<KOut,VOut>();
-  for (  Entry<KOut,List<VOut>> entry : reduceMap.entrySet()) {
-    VOut reduced=reducer.reduce(entry.getKey(),(entry.getValue()).iterator());
-    result.put(entry.getKey(),reduced);
+  MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+  try {
+    taskLifecycleService.onPreExecute(reducer);
+    for (    Entry<KOut,List<VOut>> entry : reduceMap.entrySet()) {
+      VOut reduced=reducer.reduce(entry.getKey(),(entry.getValue()).iterator());
+      result.put(entry.getKey(),reduced);
+    }
+  }
+  finally {
+    taskLifecycleService.onPostExecute(reducer);
   }
   return result;
 }
