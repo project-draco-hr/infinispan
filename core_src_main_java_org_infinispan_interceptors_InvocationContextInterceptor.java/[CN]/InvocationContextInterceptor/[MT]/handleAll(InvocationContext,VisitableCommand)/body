@@ -30,7 +30,13 @@
           return null;
         }
  else {
-          log.executionError(th);
+          boolean logAsError=!(th instanceof StateTransferInProgressException && !ctx.isOriginLocal());
+          if (logAsError) {
+            log.executionError(th);
+          }
+ else {
+            log.trace("Exception while executing code",th);
+          }
           if (ctx.isInTxScope() && ctx.isOriginLocal()) {
             if (trace)             log.trace("Transaction marked for rollback as exception was received.");
             markTxForRollbackAndRethrow(ctx,th);
