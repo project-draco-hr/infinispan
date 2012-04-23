@@ -51,7 +51,14 @@
           if (trace)           log.tracef("Put occuring on node, requesting cache invalidation for keys %s. Origin of command is remote",command.getAffectedKeys());
           invalidationFuture=l1Manager.flushCacheWithSimpleFuture(recipientGenerator.getKeys(),returnValue,ctx.getOrigin(),!(command instanceof RemoveCommand));
           if (sync) {
-            invalidationFuture.get();
+            try {
+              invalidationFuture.get();
+            }
+ catch (            ExecutionException ee) {
+              if (!(ee.getCause() instanceof SuspectException)) {
+                throw ee.getCause();
+              }
+            }
             if (trace)             log.tracef("Finished invalidating keys %s ",recipientGenerator.getKeys());
           }
         }
