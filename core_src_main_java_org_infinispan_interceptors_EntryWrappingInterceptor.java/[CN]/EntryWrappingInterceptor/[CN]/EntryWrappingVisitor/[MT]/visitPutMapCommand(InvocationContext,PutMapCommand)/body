@@ -1,11 +1,15 @@
 {
-  boolean notWrapped=false;
-  for (  Object key : command.getMap().keySet()) {
+  Map<Object,Object> newMap=new HashMap<Object,Object>(4);
+  for (  Map.Entry<Object,Object> e : command.getMap().entrySet()) {
+    Object key=e.getKey();
     if (cll.localNodeIsOwner(key)) {
       entryFactory.wrapEntryForPut(ctx,key,null,true);
-      notWrapped=true;
+      newMap.put(key,e.getValue());
     }
   }
-  if (notWrapped)   invokeNextInterceptor(ctx,command);
+  if (newMap.size() > 0) {
+    PutMapCommand clonedCommand=commandFactory.buildPutMapCommand(newMap,command.getLifespanMillis(),command.getMaxIdleTimeMillis(),command.getFlags());
+    invokeNextInterceptor(ctx,clonedCommand);
+  }
   return null;
 }
