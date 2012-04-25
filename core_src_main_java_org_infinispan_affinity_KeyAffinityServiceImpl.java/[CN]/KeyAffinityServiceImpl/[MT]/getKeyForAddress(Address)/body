@@ -3,8 +3,15 @@
     throw new IllegalStateException("You have to start the service first!");
   }
   if (address == null)   throw new NullPointerException("Null address not supported!");
-  BlockingQueue<K> queue=address2key.get(address);
-  if (queue == null)   throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+  BlockingQueue<K> queue=null;
+  maxNumberInvariant.readLock().lock();
+  try {
+    queue=address2key.get(address);
+    if (queue == null)     throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+  }
+  finally {
+    maxNumberInvariant.readLock().unlock();
+  }
   try {
     K result=null;
     while (result == null && !keyGenWorker.isStopped()) {
