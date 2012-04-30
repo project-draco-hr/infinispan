@@ -12,12 +12,10 @@
     chunksCache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD).put(toChunkKey,ob);
   }
  while (true);
-  boolean batching=metadataCache.startBatch();
   FileCacheKey fromKey=new FileCacheKey(indexName,from);
   FileMetadata metadata=(FileMetadata)metadataCache.get(fromKey);
   metadataCache.put(new FileCacheKey(indexName,to),metadata);
   fileOps.removeAndAdd(from,to);
-  if (batching)   metadataCache.endBatch(true);
   readLocks.deleteOrReleaseReadLock(from);
   if (log.isTraceEnabled()) {
     log.tracef("Renamed file from: %s to: %s in index %s",from,to,indexName);
