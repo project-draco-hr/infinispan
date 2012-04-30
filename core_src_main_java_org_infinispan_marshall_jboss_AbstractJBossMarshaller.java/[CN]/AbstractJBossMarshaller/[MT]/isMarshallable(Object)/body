@@ -1,8 +1,8 @@
 {
   Class<?> clazz=o.getClass();
-  Object isClassMarshallable=isMarshallableMap.get(clazz);
-  if (isClassMarshallable != null) {
-    return (Boolean)isClassMarshallable;
+  boolean containsMarshallable=marshallableTypeHints.containsMarshallable(clazz);
+  if (containsMarshallable) {
+    return marshallableTypeHints.isMarshallable(clazz);
   }
  else {
     if (isMarshallableCandidate(o)) {
@@ -15,7 +15,7 @@
         throw e;
       }
  finally {
-        isMarshallableMap.putIfAbsent(clazz,isMarshallable);
+        marshallableTypeHints.markMarshallable(clazz,isMarshallable);
       }
       return isMarshallable;
     }

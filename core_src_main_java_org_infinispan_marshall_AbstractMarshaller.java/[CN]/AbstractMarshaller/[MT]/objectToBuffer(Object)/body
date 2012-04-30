@@ -1,12 +1,17 @@
 {
-  BufferSizePredictor sizePredictor=BufferSizePredictorFactory.getBufferSizePredictor();
-  int estimatedSize=sizePredictor.nextSize(obj);
-  ByteBuffer byteBuffer=objectToBuffer(obj,estimatedSize);
-  int length=byteBuffer.getLength();
-  if (estimatedSize > (length * 4)) {
-    byte[] buffer=trimBuffer(byteBuffer);
-    byteBuffer=new ByteBuffer(buffer,0,buffer.length);
+  if (obj != null) {
+    BufferSizePredictor sizePredictor=marshallableTypeHints.getBufferSizePredictor(obj.getClass());
+    int estimatedSize=sizePredictor.nextSize(obj);
+    ByteBuffer byteBuffer=objectToBuffer(obj,estimatedSize);
+    int length=byteBuffer.getLength();
+    if (estimatedSize > (length * 4)) {
+      byte[] buffer=trimBuffer(byteBuffer);
+      byteBuffer=new ByteBuffer(buffer,0,buffer.length);
+    }
+    sizePredictor.recordSize(length);
+    return byteBuffer;
   }
-  sizePredictor.recordSize(length);
-  return byteBuffer;
+ else {
+    return objectToBuffer(null,1);
+  }
 }

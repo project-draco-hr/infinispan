@@ -1,6 +1,12 @@
 {
-  BufferSizePredictor sizePredictor=BufferSizePredictorFactory.getBufferSizePredictor();
-  byte[] bytes=objectToByteBuffer(o,sizePredictor.nextSize(o));
-  sizePredictor.recordSize(bytes.length);
-  return bytes;
+  int estimatedSize=0;
+  if (o != null) {
+    BufferSizePredictor sizePredictor=marshallableTypeHints.getBufferSizePredictor(o.getClass());
+    byte[] bytes=objectToByteBuffer(o,sizePredictor.nextSize(o));
+    sizePredictor.recordSize(bytes.length);
+    return bytes;
+  }
+ else {
+    return objectToByteBuffer(null,1);
+  }
 }
