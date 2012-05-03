@@ -1,13 +1,14 @@
 {
-  long interval=configuration.getReplQueueInterval();
+  AsyncConfiguration async=configuration.clustering().async();
+  long interval=async.replQueueInterval();
   trace=log.isTraceEnabled();
   if (trace)   log.tracef("Starting replication queue, with interval %d and maxElements %s",interval,maxElements);
-  this.maxElements=configuration.getReplQueueMaxElements();
-  enabled=configuration.isUseReplQueue();
+  this.maxElements=async.replQueueMaxElements();
+  enabled=async.useReplQueue();
   if (enabled && interval > 0) {
     scheduledFuture=scheduledExecutor.scheduleWithFixedDelay(new Runnable(){
       @Override public void run(){
-        LogFactory.pushNDC(configuration.getName(),trace);
+        LogFactory.pushNDC(cacheName,trace);
         try {
           flush();
         }
