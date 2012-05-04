@@ -1,12 +1,10 @@
 {
   try {
-    globalConfiguration=LegacyGlobalConfigurationAdaptor.adapt(holder.getGlobalConfigurationBuilder().build());
-    globalConfiguration.accept(configurationValidator);
-    defaultConfiguration=LegacyConfigurationAdaptor.adapt(holder.getDefaultConfigurationBuilder().build());
+    globalConfiguration=holder.getGlobalConfigurationBuilder().build();
+    defaultConfiguration=holder.getDefaultConfigurationBuilder().build();
     for (    Entry<String,ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
       org.infinispan.configuration.cache.Configuration c=entry.getValue().build();
-      Configuration legacy=LegacyConfigurationAdaptor.adapt(c);
-      configurationOverrides.put(entry.getKey(),legacy);
+      configurationOverrides.put(entry.getKey(),c);
     }
     globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());
     cacheCreateLock=new ReentrantLock();

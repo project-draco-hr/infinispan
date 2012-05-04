@@ -1,7 +1,7 @@
 {
   List<Thread> threads=new ArrayList<Thread>(cacheNames.length);
   for (  final String cacheName : cacheNames) {
-    String threadName="CacheStartThread," + globalConfiguration.getClusterName() + ","+ cacheName;
+    String threadName="CacheStartThread," + globalConfiguration.transport().clusterName() + ","+ cacheName;
     Thread thread=new Thread(threadName){
       @Override public void run(){
         createCache(cacheName);
@@ -13,7 +13,7 @@
   }
   try {
     for (    Thread thread : threads) {
-      thread.join(defaultConfiguration.getLockAcquisitionTimeout());
+      thread.join(defaultConfiguration.locking().lockAcquisitionTimeout());
     }
   }
  catch (  InterruptedException e) {

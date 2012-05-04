@@ -40,7 +40,7 @@ if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModific
 initializeReplicableCommand(nested,false);
 }
 pc.markTransactionAsRemote(isRemote);
-if (configuration.isEnableDeadlockDetection() && isRemote) {
+if (configuration.deadlockDetection().enabled() && isRemote) {
 DldGlobalTransaction transaction=(DldGlobalTransaction)pc.getGlobalTransaction();
 transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
 }
@@ -68,11 +68,11 @@ case LockControlCommand.COMMAND_ID:
 LockControlCommand lcc=(LockControlCommand)c;
 lcc.init(interceptorChain,icc,txTable);
 lcc.markTransactionAsRemote(isRemote);
-if (configuration.isEnableDeadlockDetection() && isRemote) {
+if (configuration.deadlockDetection().enabled() && isRemote) {
 DldGlobalTransaction gtx=(DldGlobalTransaction)lcc.getGlobalTransaction();
 RemoteTransaction transaction=txTable.getRemoteTransaction(gtx);
 if (transaction != null) {
-if (!configuration.getCacheMode().isDistributed()) {
+if (!configuration.clustering().cacheMode().isDistributed()) {
 Set<Object> keys=txTable.getLockedKeysForRemoteTransaction(gtx);
 GlobalTransaction gtx2=transaction.getGlobalTransaction();
 ((DldGlobalTransaction)gtx2).setLocksHeldAtOrigin(keys);
@@ -87,7 +87,7 @@ GlobalTransaction gtx2=transaction.getGlobalTransaction();
 break;
 case StateTransferControlCommand.COMMAND_ID:
 StateTransferControlCommand rcc=(StateTransferControlCommand)c;
-rcc.init(stateTransferManager,configuration,dataContainer,this);
+rcc.init(stateTransferManager,dataContainer,this);
 break;
 case GetInDoubtTransactionsCommand.COMMAND_ID:
 GetInDoubtTransactionsCommand gptx=(GetInDoubtTransactionsCommand)c;

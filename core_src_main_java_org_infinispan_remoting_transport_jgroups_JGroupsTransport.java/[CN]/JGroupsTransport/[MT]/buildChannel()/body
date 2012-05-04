@@ -4,7 +4,7 @@
     if (props.containsKey(CHANNEL_LOOKUP)) {
       String channelLookupClassName=props.getProperty(CHANNEL_LOOKUP);
       try {
-        JGroupsChannelLookup lookup=(JGroupsChannelLookup)Util.getInstance(channelLookupClassName,configuration.getClassLoader());
+        JGroupsChannelLookup lookup=(JGroupsChannelLookup)Util.getInstance(channelLookupClassName,configuration.classLoader());
         channel=lookup.getJGroupsChannel(props);
         startChannel=lookup.shouldStartAndConnect();
         stopChannel=lookup.shouldStopAndDisconnect();
@@ -17,13 +17,13 @@ catch (      Exception e) {
         log.errorInstantiatingJGroupsChannelLookup(channelLookupClassName,e);
         throw new CacheException(e);
       }
-      if (configuration.isStrictPeerToPeer() && !startChannel) {
+      if (configuration.transport().strictPeerToPeer() && !startChannel) {
         log.warnStrictPeerToPeerWithInjectedChannel();
       }
     }
     if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
       cfg=props.getProperty(CONFIGURATION_FILE);
-      URL conf=FileLookupFactory.newInstance().lookupFileLocation(cfg,configuration.getClassLoader());
+      URL conf=FileLookupFactory.newInstance().lookupFileLocation(cfg,configuration.classLoader());
       if (conf == null) {
         throw new CacheConfigurationException(CONFIGURATION_FILE + " property specifies value " + conf+ " that could not be read!",new FileNotFoundException(cfg));
       }
@@ -59,7 +59,7 @@ catch (      Exception e) {
   if (channel == null) {
     log.unableToUseJGroupsPropertiesProvided(props);
     try {
-      channel=new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE,configuration.getClassLoader()));
+      channel=new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE,configuration.classLoader()));
     }
  catch (    Exception e) {
       throw new CacheException("Unable to start JGroups channel",e);

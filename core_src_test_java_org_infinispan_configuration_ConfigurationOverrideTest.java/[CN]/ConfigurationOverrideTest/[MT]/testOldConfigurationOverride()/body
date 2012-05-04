@@ -1,9 +1,10 @@
 {
-  org.infinispan.config.Configuration defaultConfiguration=new org.infinispan.config.Configuration().fluent().eviction().maxEntries(200).strategy(EvictionStrategy.LIRS).build();
-  org.infinispan.config.Configuration cacheConfiguration=new org.infinispan.config.Configuration().fluent().build();
-  cm=new DefaultCacheManager(defaultConfiguration);
+  org.infinispan.config.Configuration defaultConfiguration=new org.infinispan.config.Configuration().fluent().eviction().maxEntries(200).strategy(LIRS).build();
+  cm=TestCacheManagerFactory.createCacheManager(defaultConfiguration);
+  final org.infinispan.config.Configuration cacheConfiguration=new org.infinispan.config.Configuration().fluent().build();
   cm.defineConfiguration("my-cache",cacheConfiguration);
   Cache<?,?> cache=cm.getCache("my-cache");
-  Assert.assertEquals(cache.getConfiguration().getEvictionMaxEntries(),200);
-  Assert.assertEquals(cache.getConfiguration().getEvictionStrategy(),EvictionStrategy.LIRS);
+  org.infinispan.config.Configuration cfg=cache.getConfiguration();
+  assertEquals(200,cfg.getEvictionMaxEntries());
+  assertEquals(LIRS,cfg.getEvictionStrategy());
 }

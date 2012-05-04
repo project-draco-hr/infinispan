@@ -4,13 +4,16 @@
   if (legacy.getTransportClass() != null) {
     builder.transport().clusterName(legacy.getClusterName()).machineId(legacy.getMachineId()).rackId(legacy.getRackId()).siteId(legacy.getSiteId()).strictPeerToPeer(legacy.isStrictPeerToPeer()).distributedSyncTimeout(legacy.getDistributedSyncTimeout()).transport(Util.<Transport>getInstance(legacy.getTransportClass(),legacy.getClassLoader())).nodeName(legacy.getTransportNodeName()).withProperties(legacy.getTransportProperties());
   }
-  if (legacy.isExposeGlobalJmxStatistics()) {
-    builder.globalJmxStatistics().enable().jmxDomain(legacy.getJmxDomain()).mBeanServerLookup(legacy.getMBeanServerLookupInstance()).allowDuplicateDomains(legacy.isAllowDuplicateDomains()).cacheManagerName(legacy.getCacheManagerName());
-  }
+  builder.globalJmxStatistics().jmxDomain(legacy.getJmxDomain()).mBeanServerLookup(legacy.getMBeanServerLookupInstance()).allowDuplicateDomains(legacy.isAllowDuplicateDomains()).cacheManagerName(legacy.getCacheManagerName()).withProperties(legacy.getMBeanServerProperties());
+  if (legacy.isExposeGlobalJmxStatistics())   builder.globalJmxStatistics().enable();
  else   builder.globalJmxStatistics().disable();
   builder.serialization().marshaller(Util.<Marshaller>getInstance(legacy.getMarshallerClass(),legacy.getClassLoader())).version(legacy.getMarshallVersion());
   for (  AdvancedExternalizerConfig externalizerConfig : legacy.getExternalizers()) {
-    builder.serialization().addAdvancedExternalizer(externalizerConfig.getId(),externalizerConfig.getAdvancedExternalizer());
+    AdvancedExternalizer ext=externalizerConfig.getAdvancedExternalizer();
+    if (ext == null)     ext=Util.getInstance(externalizerConfig.getExternalizerClass(),legacy.getClassLoader());
+    Integer id=externalizerConfig.getId();
+    if (id != null)     builder.serialization().addAdvancedExternalizer(id,ext);
+ else     builder.serialization().addAdvancedExternalizer(ext);
   }
   builder.serialization().classResolver(legacy.getClassResolver());
   builder.asyncTransportExecutor().factory(Util.<ExecutorFactory>getInstance(legacy.getAsyncTransportExecutorFactoryClass(),legacy.getClassLoader())).withProperties(legacy.getAsyncTransportExecutorProperties());

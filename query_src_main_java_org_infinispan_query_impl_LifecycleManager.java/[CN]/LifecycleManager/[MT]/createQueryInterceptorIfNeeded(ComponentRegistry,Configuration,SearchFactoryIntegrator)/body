@@ -3,15 +3,18 @@
   if (queryInterceptor == null) {
     queryInterceptor=buildQueryInterceptor(cfg,searchFactory);
     cr.registerComponent(queryInterceptor,QueryInterceptor.class);
-    CustomInterceptorPosition customInterceptorPosition=cfg.fluent().customInterceptors().add(queryInterceptor);
-    if (!cfg.isTransactionalCache()) {
-      customInterceptorPosition.after(NonTransactionalLockingInterceptor.class);
+    ConfigurationBuilder builder=new ConfigurationBuilder();
+    InterceptorConfigurationBuilder interceptorBuilder=builder.customInterceptors().addInterceptor();
+    interceptorBuilder.interceptor(queryInterceptor);
+    if (!cfg.transaction().transactionMode().isTransactional()) {
+      interceptorBuilder.after(NonTransactionalLockingInterceptor.class);
     }
- else     if (cfg.getTransactionLockingMode() == LockingMode.OPTIMISTIC) {
-      customInterceptorPosition.after(OptimisticLockingInterceptor.class);
+ else     if (cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+      interceptorBuilder.after(OptimisticLockingInterceptor.class);
     }
  else {
-      customInterceptorPosition.after(PessimisticLockingInterceptor.class);
+      interceptorBuilder.after(PessimisticLockingInterceptor.class);
     }
+    cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
   }
 }

@@ -1,7 +1,7 @@
 {
   boolean acquired=false;
   try {
-    if (!cacheCreateLock.tryLock(defaultConfiguration.getLockAcquisitionTimeout(),MILLISECONDS)) {
+    if (!cacheCreateLock.tryLock(defaultConfiguration.locking().lockAcquisitionTimeout(),MILLISECONDS)) {
       throw new CacheException("Unable to acquire lock on cache with name " + cacheName);
     }
     acquired=true;
@@ -9,10 +9,6 @@
     if (existingCache != null)     return null;
     globalComponentRegistry.start();
     Configuration c=getConfiguration(cacheName);
-    setConfigurationName(cacheName,c);
-    c.setGlobalConfiguration(globalConfiguration);
-    c.accept(configurationValidator);
-    c.assertValid();
     Cache<K,V> cache=new InternalCacheFactory<K,V>().createCache(c,globalComponentRegistry,cacheName);
     CacheWrapper cw=new CacheWrapper(cache);
     existingCache=caches.put(cacheName,cw);

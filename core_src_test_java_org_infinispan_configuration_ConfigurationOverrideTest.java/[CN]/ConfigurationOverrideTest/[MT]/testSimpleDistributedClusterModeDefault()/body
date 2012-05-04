@@ -1,8 +1,10 @@
 {
-  Configuration config=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3).numVirtualNodes(51).build();
-  cm=TestCacheManagerFactory.createCacheManager(config);
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.clustering().cacheMode(DIST_SYNC).hash().numOwners(3).numVirtualNodes(51);
+  cm=TestCacheManagerFactory.createClusteredCacheManager(builder);
   Cache<?,?> cache=cm.getCache("my-cache");
-  Assert.assertEquals(cache.getCacheConfiguration().clustering().cacheMode(),CacheMode.DIST_SYNC);
-  Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numOwners(),3);
-  Assert.assertEquals(cache.getCacheConfiguration().clustering().hash().numVirtualNodes(),51);
+  ClusteringConfiguration clusteringCfg=cache.getCacheConfiguration().clustering();
+  assertEquals(DIST_SYNC,clusteringCfg.cacheMode());
+  assertEquals(3,clusteringCfg.hash().numOwners());
+  assertEquals(51,clusteringCfg.hash().numVirtualNodes());
 }

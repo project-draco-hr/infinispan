@@ -5,13 +5,16 @@
   if (checkExisting) {
     Configuration existing=configurationOverrides.get(cacheName);
     if (existing != null) {
-      existing.applyOverrides(configOverride);
-      return existing.clone();
+      ConfigurationBuilder builder=new ConfigurationBuilder();
+      builder.read(existing);
+      builder.read(configOverride);
+      return builder.build();
     }
   }
-  Configuration configuration=defaultConfigIfNotPresent.clone();
-  configuration.applyOverrides(configOverride.clone());
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.read(defaultConfigIfNotPresent);
+  builder.read(configOverride);
+  Configuration configuration=builder.build();
   configurationOverrides.put(cacheName,configuration);
-  setConfigurationName(cacheName,configuration);
   return configuration;
 }

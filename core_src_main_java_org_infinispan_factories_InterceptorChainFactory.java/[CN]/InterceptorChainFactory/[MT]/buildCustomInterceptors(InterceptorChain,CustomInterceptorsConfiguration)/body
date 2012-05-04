@@ -1,0 +1,24 @@
+{
+  for (  InterceptorConfiguration config : customInterceptors.interceptors()) {
+    if (interceptorChain.containsInterceptorType(config.interceptor().getClass()))     continue;
+    CommandInterceptor customInterceptor=config.interceptor();
+    register(customInterceptor.getClass(),customInterceptor);
+    if (config.first())     interceptorChain.addInterceptor(customInterceptor,0);
+ else     if (config.last())     interceptorChain.appendInterceptor(customInterceptor,true);
+ else     if (config.index() >= 0)     interceptorChain.addInterceptor(customInterceptor,config.index());
+ else     if (config.after() != null) {
+      List<CommandInterceptor> withClassName=interceptorChain.getInterceptorsWithClass(config.after());
+      if (withClassName.isEmpty()) {
+        throw new ConfigurationException("Cannot add after class: " + config.after() + " as no such interceptor exists in the default chain");
+      }
+      interceptorChain.addInterceptorAfter(customInterceptor,withClassName.get(0).getClass());
+    }
+ else     if (config.before() != null) {
+      List<CommandInterceptor> withClassName=interceptorChain.getInterceptorsWithClass(config.before());
+      if (withClassName.isEmpty()) {
+        throw new ConfigurationException("Cannot add before class: " + config.after() + " as no such interceptor exists in the default chain");
+      }
+      interceptorChain.addInterceptorBefore(customInterceptor,withClassName.get(0).getClass());
+    }
+  }
+}

@@ -6,9 +6,9 @@
   when(ses.scheduleWithFixedDelay(any(Runnable.class),anyLong(),anyLong(),any(TimeUnit.class))).thenReturn(sf);
   RpcManager rpc=mock(RpcManager.class);
   CommandsFactory commandsFactory=mock(CommandsFactory.class);
-  Configuration c=new Configuration();
-  c.setUseReplQueue(true);
-  rqi.injectDependencies(ses,rpc,c,commandsFactory,"");
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.clustering().cacheMode(CacheMode.REPL_ASYNC).async().useReplQueue(true);
+  rqi.injectDependencies(ses,rpc,builder.build(),commandsFactory,"");
   rqi.start();
   rqi.stop();
 }

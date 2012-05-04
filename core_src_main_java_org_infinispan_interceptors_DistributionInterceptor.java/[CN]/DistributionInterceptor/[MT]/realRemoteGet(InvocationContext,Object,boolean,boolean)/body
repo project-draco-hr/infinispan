@@ -14,7 +14,8 @@
       if (isL1CacheEnabled) {
         if (trace)         log.tracef("Caching remotely retrieved entry for key %s in L1",key);
         try {
-          long lifespan=ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(),configuration.getL1Lifespan());
+          long l1Lifespan=cacheConfiguration.clustering().l1().lifespan();
+          long lifespan=ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(),l1Lifespan);
           PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),lifespan,-1,ctx.getFlags());
           lockAndWrap(ctx,key,ice);
           invokeNextInterceptor(ctx,put);

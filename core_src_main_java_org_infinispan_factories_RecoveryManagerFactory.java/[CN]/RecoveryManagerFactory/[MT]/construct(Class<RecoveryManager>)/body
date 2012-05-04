@@ -1,12 +1,11 @@
 {
   checkAsyncCache(configuration);
-  boolean recoveryEnabled=configuration.isTransactionRecoveryEnabled();
-  String cacheName=configuration.getName() == null ? CacheContainer.DEFAULT_CACHE_NAME : configuration.getName();
+  boolean recoveryEnabled=configuration.transaction().recovery().enabled();
   if (recoveryEnabled) {
-    String recoveryCacheName=configuration.getTransactionRecoveryCacheName();
+    String recoveryCacheName=configuration.transaction().recovery().recoveryInfoCacheName();
     log.tracef("Using recovery cache name %s",recoveryCacheName);
     EmbeddedCacheManager cm=componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-    boolean useDefaultCache=recoveryCacheName.equals(Configuration.RecoveryType.DEFAULT_RECOVERY_INFO_CACHE);
+    boolean useDefaultCache=recoveryCacheName.equals(RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE);
     if (!useDefaultCache) {
       if (!cm.getCacheNames().contains(recoveryCacheName)) {
         throw new ConfigurationException("Recovery cache (" + recoveryCacheName + ") does not exist!!");
@@ -18,7 +17,7 @@
         cm.defineConfiguration(recoveryCacheName,config);
       }
     }
-    return (RecoveryManager)buildRecoveryManager(cacheName,recoveryCacheName,cm,useDefaultCache);
+    return (RecoveryManager)buildRecoveryManager(componentRegistry.getCacheName(),recoveryCacheName,cm,useDefaultCache);
   }
  else {
     return null;

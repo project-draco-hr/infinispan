@@ -1,9 +1,10 @@
 {
-  boolean dldEnabled=configuration.isDeadlockDetectionEnabled();
-  boolean xa=!configuration.isUseSynchronizationForTransactions();
-  boolean recoveryEnabled=configuration.isTransactionRecoveryEnabled();
-  init(dldEnabled,recoveryEnabled,xa);
-  isClustered=configuration.getCacheMode().isClustered();
+  boolean dldEnabled=configuration.deadlockDetection().enabled();
+  boolean xa=!configuration.transaction().useSynchronization();
+  boolean recoveryEnabled=configuration.transaction().recovery().enabled();
+  boolean batchingEnabled=configuration.invocationBatching().enabled();
+  init(dldEnabled,recoveryEnabled,xa,batchingEnabled);
+  isClustered=configuration.clustering().cacheMode().isClustered();
   if (recoveryEnabled) {
     Transport transport=rpcManager != null ? rpcManager.getTransport() : null;
     clusterIdGenerator=new ClusterIdGenerator(cm,transport);

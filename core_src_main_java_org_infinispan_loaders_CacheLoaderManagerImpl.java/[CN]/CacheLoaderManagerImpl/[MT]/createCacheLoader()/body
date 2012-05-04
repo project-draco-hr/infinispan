@@ -4,26 +4,23 @@
     ChainingCacheStore ccl=new ChainingCacheStore();
     tmpLoader=ccl;
     int numLoadersWithFetchPersistentState=0;
-    for (    CacheLoaderConfig cfg : clmConfig.getCacheLoaderConfigs()) {
-      if (cfg instanceof CacheStoreConfig) {
-        if (((CacheStoreConfig)cfg).isFetchPersistentState())         numLoadersWithFetchPersistentState++;
-        if (numLoadersWithFetchPersistentState > 1)         throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
-        assertNotSingletonAndShared(((CacheStoreConfig)cfg));
-      }
-      CacheLoader l=createCacheLoader(cfg,cache);
+    for (    AbstractLoaderConfiguration cfg : clmConfig.cacheLoaders()) {
+      if (cfg.fetchPersistentState())       numLoadersWithFetchPersistentState++;
+      if (numLoadersWithFetchPersistentState > 1)       throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
+      assertNotSingletonAndShared(cfg);
+      CacheLoader l=createCacheLoader(LegacyConfigurationAdaptor.adapt(cfg),cache);
       ccl.addCacheLoader(l,cfg);
     }
   }
  else {
-    CacheLoaderConfig cfg=clmConfig.getFirstCacheLoaderConfig();
-    if (cfg != null) {
-      tmpLoader=createCacheLoader(cfg,cache);
-      if (cfg instanceof CacheStoreConfig)       assertNotSingletonAndShared(((CacheStoreConfig)cfg));
+    if (!clmConfig.cacheLoaders().isEmpty()) {
+      AbstractLoaderConfiguration cfg=clmConfig.cacheLoaders().get(0);
+      tmpLoader=createCacheLoader(LegacyConfigurationAdaptor.adapt(cfg),cache);
+      if (cfg instanceof CacheStoreConfig)       assertNotSingletonAndShared(cfg);
     }
  else {
       return null;
     }
   }
-  ReflectionUtil.setValue(clmConfig,"accessible",true);
   return tmpLoader;
 }

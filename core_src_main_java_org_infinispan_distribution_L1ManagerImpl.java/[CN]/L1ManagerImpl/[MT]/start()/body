@@ -1,14 +1,14 @@
 {
-  this.threshold=configuration.getL1InvalidationThreshold();
-  this.rpcTimeout=configuration.getSyncReplTimeout();
-  this.l1Lifespan=configuration.getL1Lifespan();
-  if (configuration.getL1InvalidationCleanupTaskFrequency() > 0) {
+  this.threshold=configuration.clustering().l1().invalidationThreshold();
+  this.rpcTimeout=configuration.clustering().sync().replTimeout();
+  this.l1Lifespan=configuration.clustering().l1().lifespan();
+  if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
     scheduledRequestorsCleanupTask=scheduledExecutor.scheduleAtFixedRate(new Runnable(){
       @Override public void run(){
         cleanUpRequestors();
       }
     }
-,configuration.getL1InvalidationCleanupTaskFrequency(),configuration.getL1InvalidationCleanupTaskFrequency(),TimeUnit.MILLISECONDS);
+,configuration.clustering().l1().cleanupTaskFrequency(),configuration.clustering().l1().cleanupTaskFrequency(),TimeUnit.MILLISECONDS);
   }
  else {
     log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");

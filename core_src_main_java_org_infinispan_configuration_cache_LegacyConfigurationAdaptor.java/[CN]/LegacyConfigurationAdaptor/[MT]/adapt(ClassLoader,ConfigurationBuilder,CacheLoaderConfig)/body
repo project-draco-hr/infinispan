@@ -1,0 +1,44 @@
+{
+  AbstractLoaderConfigurationBuilder<?> loaderBuilder=null;
+  if (clc instanceof FileCacheStoreConfig) {
+    FileCacheStoreConfig csc=(FileCacheStoreConfig)clc;
+    FileCacheStoreConfigurationBuilder fcsBuilder=builder.loaders().addFileCacheStore();
+    fcsBuilder.fetchPersistentState(csc.isFetchPersistentState());
+    fcsBuilder.ignoreModifications(csc.isIgnoreModifications());
+    fcsBuilder.purgeOnStartup(csc.isPurgeOnStartup());
+    fcsBuilder.purgerThreads(csc.getPurgerThreads());
+    fcsBuilder.purgeSynchronously(csc.isPurgeSynchronously());
+    fcsBuilder.location(csc.getLocation());
+    fcsBuilder.fsyncInterval(csc.getFsyncInterval());
+    fcsBuilder.fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.valueOf(csc.getFsyncMode().name()));
+    fcsBuilder.streamBufferSize(csc.getStreamBufferSize());
+    loaderBuilder=fcsBuilder;
+  }
+ else {
+    LoaderConfigurationBuilder tmpLoaderBuilder=builder.loaders().addCacheLoader();
+    tmpLoaderBuilder.cacheLoader(Util.<CacheLoader>getInstance(clc.getCacheLoaderClassName(),cl));
+    if (clc instanceof CacheStoreConfig) {
+      CacheStoreConfig csc=(CacheStoreConfig)clc;
+      tmpLoaderBuilder.fetchPersistentState(csc.isFetchPersistentState());
+      tmpLoaderBuilder.ignoreModifications(csc.isIgnoreModifications());
+      tmpLoaderBuilder.purgeOnStartup(csc.isPurgeOnStartup());
+      tmpLoaderBuilder.purgerThreads(csc.getPurgerThreads());
+      tmpLoaderBuilder.purgeSynchronously(csc.isPurgeSynchronously());
+      loaderBuilder=tmpLoaderBuilder;
+    }
+    if (clc instanceof AbstractCacheStoreConfig) {
+      tmpLoaderBuilder.withProperties(((AbstractCacheLoaderConfig)clc).getProperties());
+    }
+  }
+  if (clc instanceof CacheStoreConfig) {
+    CacheStoreConfig csc=(CacheStoreConfig)clc;
+    loaderBuilder.async().enabled(csc.getAsyncStoreConfig().isEnabled());
+    loaderBuilder.async().flushLockTimeout(csc.getAsyncStoreConfig().getFlushLockTimeout());
+    loaderBuilder.async().modificationQueueSize(csc.getAsyncStoreConfig().getModificationQueueSize());
+    loaderBuilder.async().shutdownTimeout(csc.getAsyncStoreConfig().getShutdownTimeout());
+    loaderBuilder.async().threadPoolSize(csc.getAsyncStoreConfig().getThreadPoolSize());
+    loaderBuilder.singletonStore().enabled(csc.getSingletonStoreConfig().isSingletonStoreEnabled());
+    loaderBuilder.singletonStore().pushStateTimeout(csc.getSingletonStoreConfig().getPushStateTimeout());
+    loaderBuilder.singletonStore().pushStateWhenCoordinator(csc.getSingletonStoreConfig().isPushStateWhenCoordinator());
+  }
+}

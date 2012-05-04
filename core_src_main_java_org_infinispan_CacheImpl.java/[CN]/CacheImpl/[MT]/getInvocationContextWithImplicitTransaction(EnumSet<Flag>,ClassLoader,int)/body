@@ -2,9 +2,9 @@
   InvocationContext invocationContext;
   boolean txInjected=false;
   final boolean isPutForExternalRead=isPutForExternalRead(explicitFlags);
-  if (config.isTransactionalCache() && !isPutForExternalRead) {
+  if (config.transaction().transactionMode().isTransactional() && !isPutForExternalRead) {
     Transaction transaction=getOngoingTransaction();
-    if (transaction == null && config.isTransactionAutoCommit()) {
+    if (transaction == null && config.transaction().autoCommit()) {
       try {
         transactionManager.begin();
         transaction=transactionManager.getTransaction();

@@ -1,7 +1,8 @@
 {
+  final TransportConfiguration transportCfg=configuration.transport();
   if (channel == null) {
     buildChannel();
-    String transportNodeName=configuration.getTransportNodeName();
+    String transportNodeName=transportCfg.nodeName();
     if (transportNodeName != null && transportNodeName.length() > 0) {
       long range=Short.MAX_VALUE * 2;
       long randomInRange=(long)((Math.random() * range) % range) + 1;
@@ -10,11 +11,11 @@
     }
   }
   channel.setDiscardOwnMessages(true);
-  if (configuration.hasTopologyInfo()) {
+  if (transportCfg.hasTopologyInfo()) {
     if (startChannel) {
       ((JChannel)channel).setAddressGenerator(new AddressGenerator(){
         @Override public org.jgroups.Address generateAddress(){
-          return TopologyUUID.randomUUID(channel.getName(),configuration.getSiteId(),configuration.getRackId(),configuration.getMachineId());
+          return TopologyUUID.randomUUID(channel.getName(),transportCfg.siteId(),transportCfg.rackId(),transportCfg.machineId());
         }
       }
 );
@@ -22,7 +23,7 @@
  else {
       if (channel.getAddress() instanceof TopologyUUID) {
         TopologyUUID topologyAddress=(TopologyUUID)channel.getAddress();
-        if (!configuration.getSiteId().equals(topologyAddress.getSiteId()) || !configuration.getRackId().equals(topologyAddress.getRackId()) || !configuration.getMachineId().equals(topologyAddress.getMachineId())) {
+        if (!transportCfg.siteId().equals(topologyAddress.getSiteId()) || !transportCfg.rackId().equals(topologyAddress.getRackId()) || !transportCfg.machineId().equals(topologyAddress.getMachineId())) {
           throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
         }
       }

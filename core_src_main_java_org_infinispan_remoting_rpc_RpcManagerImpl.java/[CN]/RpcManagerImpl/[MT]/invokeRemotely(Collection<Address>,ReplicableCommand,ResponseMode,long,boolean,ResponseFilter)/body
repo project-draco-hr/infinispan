@@ -1,5 +1,5 @@
 {
-  if (!configuration.getCacheMode().isClustered())   throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+  if (!configuration.clustering().cacheMode().isClustered())   throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
   List<Address> clusterMembers=t.getMembers();
   if (clusterMembers.size() < 2) {
     log.tracef("We're the only member in the cluster; Don't invoke remotely.");
@@ -9,10 +9,10 @@
     long startTimeNanos=0;
     if (statisticsEnabled)     startTimeNanos=System.nanoTime();
     try {
-      if (recipients == null && mode.isSynchronous() && !configuration.getGlobalConfiguration().isStrictPeerToPeer()) {
-        List<Address> cacheMembers=cvm.getCommittedView(configuration.getName()).getMembers();
+      if (recipients == null && mode.isSynchronous() && !globalCfg.transport().strictPeerToPeer()) {
+        List<Address> cacheMembers=cvm.getCommittedView(cacheName).getMembers();
         if (cacheMembers.size() < 2) {
-          log.tracef("We're the only member of cache %s; Don't invoke remotely.",configuration.getName());
+          log.tracef("We're the only member of cache %s; Don't invoke remotely.",cacheName);
           return Collections.emptyMap();
         }
         if (responseFilter == null) {

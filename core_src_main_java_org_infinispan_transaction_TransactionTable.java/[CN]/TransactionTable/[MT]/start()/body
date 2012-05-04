@@ -1,10 +1,10 @@
 {
-  final int concurrencyLevel=configuration.getConcurrencyLevel();
+  final int concurrencyLevel=configuration.locking().concurrencyLevel();
   localTransactions=ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel);
-  if (configuration.getCacheMode().isClustered()) {
+  if (configuration.clustering().cacheMode().isClustered()) {
     minViewRecalculationLock=new ReentrantLock();
     remoteTransactions=ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel);
-    cleanupService.start(configuration,rpcManager,invoker);
+    cleanupService.start(cacheName,rpcManager,invoker);
     cm.addListener(cleanupService);
     cm.addListener(this);
     notifier.addListener(cleanupService);

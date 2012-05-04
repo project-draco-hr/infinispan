@@ -4,7 +4,7 @@
   ConsistentHash chOld=tce.getConsistentHashAtStart();
   ConsistentHash chNew=tce.getConsistentHashAtEnd();
   log.tracef("Unlocking keys for which we are no longer an owner");
-  int numOwners=transactionTable.configuration.getNumOwners();
+  int numOwners=transactionTable.configuration.clustering().hash().numOwners();
   for (  RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
     GlobalTransaction gtx=remoteTx.getGlobalTransaction();
     List<Object> keys=new ArrayList<Object>();
@@ -20,7 +20,6 @@
     if (keys.size() > 0) {
       log.tracef("Unlocking keys %s for remote transaction %s as we are no longer an owner",keys,gtx);
       Set<Flag> flags=EnumSet.of(Flag.CACHE_MODE_LOCAL);
-      String cacheName=transactionTable.configuration.getName();
       LockControlCommand unlockCmd=new LockControlCommand(keys,cacheName,flags,gtx);
       unlockCmd.init(invoker,transactionTable.icc,transactionTable);
       unlockCmd.setUnlock(true);

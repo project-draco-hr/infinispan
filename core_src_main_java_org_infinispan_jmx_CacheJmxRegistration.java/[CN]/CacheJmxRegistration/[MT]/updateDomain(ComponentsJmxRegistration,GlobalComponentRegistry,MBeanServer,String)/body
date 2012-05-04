@@ -1,12 +1,12 @@
 {
   CacheManagerJmxRegistration managerJmxReg=componentRegistry.getComponent(CacheManagerJmxRegistration.class);
-  if (!globalConfig.isExposeGlobalJmxStatistics() && jmxDomain == null) {
+  if (!globalConfig.globalJmxStatistics().enabled() && jmxDomain == null) {
     String tmpJmxDomain=JmxUtil.buildJmxDomain(globalConfig,mBeanServer,groupName);
 synchronized (managerJmxReg) {
       if (managerJmxReg.jmxDomain == null) {
-        if (!tmpJmxDomain.equals(globalConfig.getJmxDomain()) && !globalConfig.isAllowDuplicateDomains()) {
-          log.cacheManagerAlreadyRegistered(globalConfig.getJmxDomain());
-          throw new JmxDomainConflictException(String.format("Domain already registered %s",globalConfig.getJmxDomain()));
+        if (!tmpJmxDomain.equals(globalConfig.globalJmxStatistics().domain()) && !globalConfig.globalJmxStatistics().allowDuplicateDomains()) {
+          log.cacheManagerAlreadyRegistered(globalConfig.globalJmxStatistics().domain());
+          throw new JmxDomainConflictException(String.format("Domain already registered %s",globalConfig.globalJmxStatistics().domain()));
         }
         managerJmxReg.jmxDomain=tmpJmxDomain;
       }
@@ -14,7 +14,7 @@ synchronized (managerJmxReg) {
     }
   }
  else {
-    jmxDomain=managerJmxReg.jmxDomain == null ? globalConfig.getJmxDomain() : managerJmxReg.jmxDomain;
+    jmxDomain=managerJmxReg.jmxDomain == null ? globalConfig.globalJmxStatistics().domain() : managerJmxReg.jmxDomain;
   }
   registrar.setJmxDomain(jmxDomain);
 }

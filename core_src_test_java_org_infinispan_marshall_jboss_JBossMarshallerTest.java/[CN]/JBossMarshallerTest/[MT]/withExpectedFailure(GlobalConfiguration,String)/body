@@ -1,10 +1,14 @@
 {
-  EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(globalCfg);
+  EmbeddedCacheManager cm=null;
   try {
-    getCacheWithExpectedFailure(message,cm);
-    getCacheWithExpectedFailure(message,cm);
+    cm=TestCacheManagerFactory.createCacheManager(globalCfg);
+    cm.getCache();
+    fail(message);
   }
-  finally {
-    cm.stop();
+ catch (  ConfigurationException e) {
+    log.trace("Expected exception",e);
+  }
+ finally {
+    TestingUtil.killCacheManagers(cm);
   }
 }

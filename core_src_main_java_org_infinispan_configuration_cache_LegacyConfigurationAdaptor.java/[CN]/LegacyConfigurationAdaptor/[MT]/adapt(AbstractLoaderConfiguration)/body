@@ -1,0 +1,50 @@
+{
+  CacheLoaderConfig clc=null;
+  if (loader instanceof LoaderConfiguration) {
+    CacheLoader cacheLoader=((LoaderConfiguration)loader).cacheLoader();
+    if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
+      clc=Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
+    }
+ else {
+      AbstractCacheStoreConfig acsc=new AbstractCacheStoreConfig();
+      acsc.setCacheLoaderClassName(((LoaderConfiguration)loader).cacheLoader().getClass().getName());
+      clc=acsc;
+    }
+  }
+ else   if (loader instanceof FileCacheStoreConfiguration) {
+    FileCacheStoreConfig fcsc=new FileCacheStoreConfig();
+    clc=fcsc;
+    FileCacheStoreConfiguration store=(FileCacheStoreConfiguration)loader;
+    if (store.location() != null) {
+      fcsc.location(store.location());
+    }
+    if (store.fsyncMode() != null) {
+      fcsc.fsyncMode(FileCacheStoreConfig.FsyncMode.valueOf(store.fsyncMode().name()));
+    }
+    fcsc.fsyncInterval(store.fsyncInterval());
+    fcsc.streamBufferSize(store.streamBufferSize());
+  }
+  if (clc instanceof CacheStoreConfig) {
+    CacheStoreConfig csc=(CacheStoreConfig)clc;
+    csc.fetchPersistentState(loader.fetchPersistentState());
+    csc.ignoreModifications(loader.ignoreModifications());
+    csc.purgeOnStartup(loader.purgeOnStartup());
+    csc.setPurgeSynchronously(loader.purgeSynchronously());
+    csc.getAsyncStoreConfig().setEnabled(loader.async().enabled());
+    csc.getAsyncStoreConfig().flushLockTimeout(loader.async().flushLockTimeout());
+    csc.getAsyncStoreConfig().modificationQueueSize(loader.async().modificationQueueSize());
+    csc.getAsyncStoreConfig().shutdownTimeout(loader.async().shutdownTimeout());
+    csc.getAsyncStoreConfig().threadPoolSize(loader.async().threadPoolSize());
+    csc.getSingletonStoreConfig().enabled(loader.singletonStore().enabled());
+    csc.getSingletonStoreConfig().pushStateTimeout(loader.singletonStore().pushStateTimeout());
+    csc.getSingletonStoreConfig().pushStateWhenCoordinator(loader.singletonStore().pushStateWhenCoordinator());
+  }
+  if (clc instanceof AbstractCacheStoreConfig) {
+    AbstractCacheStoreConfig acsc=(AbstractCacheStoreConfig)clc;
+    Properties p=loader.properties();
+    acsc.setProperties(p);
+    if (p != null)     XmlConfigHelper.setValues(clc,p,false,true);
+    if (loader instanceof LoaderConfiguration)     acsc.purgerThreads(loader.purgerThreads());
+  }
+  return clc;
+}
