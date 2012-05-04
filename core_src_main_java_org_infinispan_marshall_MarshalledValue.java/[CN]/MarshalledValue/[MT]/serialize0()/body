@@ -1,8 +1,8 @@
 {
-  byte[] rawValue=raw;
-  if (rawValue == null) {
+  MarshalledValueByteStream localRaw=raw;
+  if (localRaw == null) {
     try {
-      ExposedByteArrayOutputStream baos=new ExposedByteArrayOutputStream(this.serialisedSize);
+      MarshalledValueByteStream baos=new ExpandableMarshalledValueByteStream(this.serialisedSize);
       ObjectOutput out=marshaller.startObjectOutput(baos,true,this.serialisedSize);
       try {
         marshaller.objectToObjectStream(instance,out);
@@ -10,21 +10,13 @@
   finally {
         marshaller.finishObjectOutput(out);
       }
-      final byte[] buf=baos.getRawBuffer();
-      final int length=baos.size();
-      if (buf.length == length) {
-        rawValue=buf;
-      }
- else {
-        serialisedSize=length;
-        rawValue=new byte[length];
-        System.arraycopy(buf,0,rawValue,0,length);
-      }
-      raw=rawValue;
+      serialisedSize=baos.size();
+      localRaw=baos;
+      raw=baos;
     }
  catch (    Exception e) {
       throw new CacheException("Unable to marshall value " + instance,e);
     }
   }
-  return rawValue;
+  return localRaw;
 }
