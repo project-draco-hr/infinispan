@@ -3,7 +3,18 @@
   if (clmConfig != null) {
     try {
       loader=createCacheLoader();
-      if (loader != null)       loader.start();
+      Transaction xaTx=null;
+      if (transactionManager != null) {
+        xaTx=transactionManager.suspend();
+      }
+      try {
+        if (loader != null)         loader.start();
+      }
+  finally {
+        if (transactionManager != null && xaTx != null) {
+          transactionManager.resume(xaTx);
+        }
+      }
       purgeLoaders(false);
     }
  catch (    Exception e) {
