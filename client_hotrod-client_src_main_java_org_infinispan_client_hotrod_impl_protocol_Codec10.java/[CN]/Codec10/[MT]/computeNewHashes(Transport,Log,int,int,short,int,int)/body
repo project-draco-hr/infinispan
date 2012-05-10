@@ -1,0 +1,21 @@
+{
+  if (localLog.isTraceEnabled()) {
+    localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " + "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",newTopologyId,numKeyOwners,hashFunctionVersion,hashSpace,clusterSize);
+  }
+  Map<SocketAddress,Set<Integer>> servers2Hash=new LinkedHashMap<SocketAddress,Set<Integer>>();
+  for (int i=0; i < clusterSize; i++) {
+    String host=transport.readString();
+    int port=transport.readUnsignedShort();
+    int hashCode=transport.read4ByteInt();
+    localLog.tracef("Server read: %s:%d - hash code is %d",host,port,hashCode);
+    InetSocketAddress address=new InetSocketAddress(host,port);
+    Set<Integer> hashes=servers2Hash.get(address);
+    if (hashes == null) {
+      hashes=new HashSet<Integer>();
+      servers2Hash.put(address,hashes);
+    }
+    hashes.add(hashCode);
+    localLog.tracef("Hash code is: %d",hashCode);
+  }
+  return servers2Hash;
+}
