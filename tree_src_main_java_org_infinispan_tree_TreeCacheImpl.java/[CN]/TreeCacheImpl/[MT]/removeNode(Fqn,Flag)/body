@@ -1,7 +1,19 @@
 {
-  tcc.setFlags(flags);
+  setFlagsOnContext(flags);
   try {
-    return removeNode(fqn);
+    if (fqn.isRoot())     return false;
+    startAtomic();
+    boolean result;
+    try {
+      if (trace)       log.tracef("About to remove node %s",fqn);
+      Node<K,V> n=getNode(fqn.getParent());
+      result=n != null && n.removeChild(fqn.getLastElement());
+    }
+  finally {
+      endAtomic();
+    }
+    if (trace)     log.trace("Node successfully removed");
+    return result;
   }
   finally {
     tcc.suspend();

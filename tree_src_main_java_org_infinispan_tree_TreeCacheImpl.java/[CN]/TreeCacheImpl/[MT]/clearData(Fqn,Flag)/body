@@ -1,7 +1,14 @@
 {
-  tcc.setFlags(flags);
+  setFlagsOnContext(flags);
   try {
-    clearData(fqn);
+    startAtomic();
+    try {
+      Node<K,V> node=getNode(fqn);
+      if (node != null)       node.clearData();
+    }
+  finally {
+      endAtomic();
+    }
   }
   finally {
     tcc.suspend();

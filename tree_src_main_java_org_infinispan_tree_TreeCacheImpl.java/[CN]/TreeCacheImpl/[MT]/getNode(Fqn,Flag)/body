@@ -1,7 +1,14 @@
 {
-  tcc.setFlags(flags);
+  setFlagsOnContext(flags);
   try {
-    return getNode(fqn);
+    startAtomic();
+    try {
+      if (exists(fqn))       return new NodeImpl<K,V>(fqn,cache,batchContainer);
+ else       return null;
+    }
+  finally {
+      endAtomic();
+    }
   }
   finally {
     tcc.suspend();

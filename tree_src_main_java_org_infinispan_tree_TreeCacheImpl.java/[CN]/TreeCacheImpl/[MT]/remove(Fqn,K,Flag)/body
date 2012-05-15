@@ -1,7 +1,14 @@
 {
-  tcc.setFlags(flags);
+  setFlagsOnContext(flags);
   try {
-    return remove(fqn,key);
+    startAtomic();
+    try {
+      AtomicMap<K,V> map=getAtomicMap(new NodeKey(fqn,NodeKey.Type.DATA));
+      return map == null ? null : map.remove(key);
+    }
+  finally {
+      endAtomic();
+    }
   }
   finally {
     tcc.suspend();

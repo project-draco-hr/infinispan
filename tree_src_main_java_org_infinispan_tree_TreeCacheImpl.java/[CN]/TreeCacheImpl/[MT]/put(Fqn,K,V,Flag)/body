@@ -1,7 +1,15 @@
 {
-  tcc.setFlags(flags);
+  setFlagsOnContext(flags);
   try {
-    return put(fqn,key,value);
+    startAtomic();
+    try {
+      createNodeInCache(fqn);
+      Map<K,V> m=getAtomicMap(new NodeKey(fqn,NodeKey.Type.DATA));
+      return m.put(key,value);
+    }
+  finally {
+      endAtomic();
+    }
   }
   finally {
     tcc.suspend();
