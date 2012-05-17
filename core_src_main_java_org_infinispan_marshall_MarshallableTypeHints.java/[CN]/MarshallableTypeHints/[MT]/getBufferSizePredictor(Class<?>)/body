@@ -1,9 +1,16 @@
 {
   MarshallingType marshallingType=typeHints.get(type);
   if (marshallingType == null) {
-    marshallingType=new MarshallingType(false,new AdaptiveBufferSizePredictor());
+    marshallingType=new MarshallingType(null,new AdaptiveBufferSizePredictor());
     MarshallingType prev=typeHints.putIfAbsent(type,marshallingType);
-    if (prev != null)     marshallingType=prev;
+    if (prev != null) {
+      marshallingType=prev;
+    }
+ else {
+      if (trace) {
+        log.tracef("Cache a buffer size predictor for '%s' assuming " + "its serializability is unknown",type.getName());
+      }
+    }
   }
   return marshallingType.sizePredictor;
 }

@@ -1,9 +1,15 @@
 {
-  MarshallingType marshallingType=typeHints.get(type);
-  if (marshallingType != null && marshallingType.isMarshallable != isMarshallable) {
-    typeHints.replace(type,new MarshallingType(isMarshallable,marshallingType.sizePredictor));
+  MarshallingType marshallType=typeHints.get(type);
+  if (marshallableUpdateRequired(isMarshallable,marshallType)) {
+    boolean replaced=typeHints.replace(type,marshallType,new MarshallingType(Boolean.valueOf(isMarshallable),marshallType.sizePredictor));
+    if (replaced && trace) {
+      log.tracef("Replacing '%s' type to be marshallable=%b",type.getName(),isMarshallable);
+    }
   }
- else   if (marshallingType == null) {
-    typeHints.putIfAbsent(type,new MarshallingType(isMarshallable,new AdaptiveBufferSizePredictor()));
+ else   if (marshallType == null) {
+    if (trace) {
+      log.tracef("Cache '%s' type to be marshallable=%b",type.getName(),isMarshallable);
+    }
+    typeHints.put(type,new MarshallingType(Boolean.valueOf(isMarshallable),new AdaptiveBufferSizePredictor()));
   }
 }

@@ -1,0 +1,17 @@
+{
+  log.debug("Wait for all executions paths to be ready");
+  barrier.await();
+  try {
+    for (int i=0; i < 10; i++) {
+      String decimal=Integer.toString(i);
+      ByteArrayKey key=new ByteArrayKey(("key-" + Thread.currentThread().getName() + decimal).getBytes());
+      ByteArrayKey value=new ByteArrayKey(("value-" + Thread.currentThread().getName() + decimal).getBytes());
+      cache.put(key,value);
+    }
+    return null;
+  }
+  finally {
+    log.debug("Wait for all execution paths to finish");
+    barrier.await();
+  }
+}

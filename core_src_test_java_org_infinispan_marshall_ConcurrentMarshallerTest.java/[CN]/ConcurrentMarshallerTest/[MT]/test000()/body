@@ -1,0 +1,28 @@
+{
+  final Cache cache1=cache(0,"concurrentMarshaller");
+  int nbWriters=10;
+  final CyclicBarrier barrier=new CyclicBarrier(nbWriters + 1);
+  List<Future<Void>> futures=new ArrayList<Future<Void>>(nbWriters);
+  ExecutorService exec=Executors.newCachedThreadPool(new ThreadFactory(){
+    volatile int i=0;
+    @Override public Thread newThread(    Runnable r){
+      int ii=i++;
+      return new Thread(r,"ConcurrentMarshallerTester-" + ii);
+    }
+  }
+);
+  try {
+    for (int i=0; i < nbWriters; i++) {
+      log.debug("Schedule execution");
+      Future<Void> future=exec.submit(new CacheUpdater(barrier,cache1));
+      futures.add(future);
+    }
+    barrier.await();
+    barrier.await();
+    log.debug("Threads finished, shutdown executor and check for exceptions");
+    for (    Future<Void> future : futures)     future.get();
+  }
+  finally {
+    exec.shutdownNow();
+  }
+}
