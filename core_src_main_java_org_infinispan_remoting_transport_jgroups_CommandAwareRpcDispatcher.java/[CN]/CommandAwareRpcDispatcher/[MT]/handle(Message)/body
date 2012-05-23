@@ -2,8 +2,12 @@
   if (isValid(req)) {
     ReplicableCommand cmd=null;
     try {
-      cmd=(ReplicableCommand)req_marshaller.objectFromBuffer(req.getRawBuffer(),req.getOffset(),req.getLength());
-      return executeCommand(cmd,req);
+      Object o=req_marshaller.objectFromBuffer(req.getRawBuffer(),req.getOffset(),req.getLength());
+      if (o != null) {
+        cmd=(ReplicableCommand)o;
+        return executeCommand(cmd,req);
+      }
+      return null;
     }
  catch (    InterruptedException e) {
       log.warnf("Shutdown while handling command %s",cmd);
