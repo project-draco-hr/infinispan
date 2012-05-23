@@ -1,0 +1,14 @@
+{
+  hotrodServer=new HotRodServer();
+  HotRodServerConfigurationBuilder serverBuilder=new HotRodServerConfigurationBuilder();
+  ClassLoader tccl=Thread.currentThread().getContextClassLoader();
+  String keyStoreFileName=tccl.getResource("keystore.jks").getPath();
+  String trustStoreFileName=tccl.getResource("truststore.jks").getPath();
+  serverBuilder.ssl().enabled(sslServer).keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray()).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray());
+  hotrodServer.start(serverBuilder.build(),cacheManager);
+  log.info("Started server on port: " + hotrodServer.getPort());
+  ConfigurationBuilder clientBuilder=new ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).socketTimeout(3000).connectionPool().maxActive(1).ssl().enabled(sslClient).keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray()).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray()).connectionPool().timeBetweenEvictionRuns(2000);
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+  defaultRemote=remoteCacheManager.getCache();
+}

@@ -11,6 +11,10 @@ synchronized (lock) {
     tcpNoDelay=configuration.tcpNoDelay();
     soTimeout=configuration.socketTimeout();
     connectTimeout=configuration.connectionTimeout();
+    if (configuration.ssl().enabled()) {
+      SslConfiguration ssl=configuration.ssl();
+      sslContext=SslContextFactory.getContext(ssl.keyManagers(),ssl.keyStoreFileName(),ssl.keyStorePassword(),ssl.trustManagers(),ssl.trustStoreFileName(),ssl.trustStorePassword());
+    }
     if (log.isDebugEnabled()) {
       log.debugf("Statically configured servers: %s",servers);
       log.debugf("Load balancer class: %s",balancer.getClass().getName());
