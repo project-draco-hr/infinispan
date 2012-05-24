@@ -1,0 +1,21 @@
+{
+  startAtomic();
+  try {
+    NodeKey dataKey=new NodeKey(fqn,NodeKey.Type.DATA);
+    NodeKey structureKey=new NodeKey(fqn,NodeKey.Type.STRUCTURE);
+    if (cache.containsKey(dataKey) && cache.containsKey(structureKey))     return false;
+    Fqn parent=fqn.getParent();
+    if (!fqn.isRoot()) {
+      if (!exists(cache,parent))       createNodeInCache(cache,parent);
+      AtomicMap<Object,Fqn> parentStructure=getStructure(cache,parent);
+      parentStructure.put(fqn.getLastElement(),fqn);
+    }
+    getAtomicMap(cache,structureKey);
+    getAtomicMap(cache,dataKey);
+    if (log.isTraceEnabled())     log.tracef("Created node %s",fqn);
+    return true;
+  }
+  finally {
+    endAtomic();
+  }
+}

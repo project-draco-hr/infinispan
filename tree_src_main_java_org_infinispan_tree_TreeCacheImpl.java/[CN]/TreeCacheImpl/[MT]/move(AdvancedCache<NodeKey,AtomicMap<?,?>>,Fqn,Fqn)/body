@@ -1,0 +1,35 @@
+{
+  if (trace)   log.tracef("Moving node '%s' to '%s'",nodeToMoveFqn,newParentFqn);
+  if (nodeToMoveFqn == null || newParentFqn == null)   throw new NullPointerException("Cannot accept null parameters!");
+  if (nodeToMoveFqn.getParent().equals(newParentFqn)) {
+    if (trace)     log.trace("Not doing anything as this node is equal with its parent");
+    return;
+  }
+  startAtomic();
+  try {
+    Node<K,V> nodeToMove=getNode(cache.withFlags(Flag.FORCE_WRITE_LOCK),nodeToMoveFqn);
+    if (nodeToMove == null) {
+      if (trace)       log.trace("Did not find the node that needs to be moved. Returning...");
+      return;
+    }
+    if (!exists(cache,newParentFqn)) {
+      createNodeInCache(cache,newParentFqn);
+      if (trace)       log.tracef("The new parent (%s) did not exists, was created",newParentFqn);
+    }
+    Fqn newFqn=Fqn.fromRelativeElements(newParentFqn,nodeToMoveFqn.getLastElement());
+    createNodeInCache(cache,newFqn);
+    Node<K,V> newNode=getNode(cache,newFqn);
+    Map<K,V> oldData=nodeToMove.getData();
+    if (oldData != null && !oldData.isEmpty())     newNode.putAll(oldData);
+    for (    Object child : nodeToMove.getChildrenNames()) {
+      if (trace)       log.tracef("Moving child %s",child);
+      Fqn oldChildFqn=Fqn.fromRelativeElements(nodeToMoveFqn,child);
+      move(cache,oldChildFqn,newFqn);
+    }
+    removeNode(cache,nodeToMoveFqn);
+  }
+  finally {
+    endAtomic();
+  }
+  log.tracef("Successfully moved node '%s' to '%s'",nodeToMoveFqn,newParentFqn);
+}
