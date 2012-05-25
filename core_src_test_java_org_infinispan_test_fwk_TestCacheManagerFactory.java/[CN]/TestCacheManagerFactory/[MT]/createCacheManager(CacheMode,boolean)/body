@@ -1,5 +1,10 @@
 {
   ConfigurationBuilder builder=new ConfigurationBuilder();
-  builder.clustering().cacheMode(mode).indexing().enabled(indexing);
-  return createCacheManager(builder);
+  builder.clustering().cacheMode(mode).indexing().enabled(indexing).addProperty("hibernate.search.lucene_version","LUCENE_CURRENT");
+  if (mode.isClustered()) {
+    return createClusteredCacheManager(builder);
+  }
+ else {
+    return createCacheManager(builder);
+  }
 }
