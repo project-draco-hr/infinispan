@@ -1,0 +1,15 @@
+{
+  int loopSize=1000000;
+  Random rnd=new Random();
+  long duration=0;
+  for (int i=0; i < loopSize; i++) {
+    int keyIndex=rnd.nextInt(KEY_POOL_SIZE);
+    long start=System.nanoTime();
+    SocketAddress server=ch.getServer(keys.get(keyIndex));
+    duration+=System.nanoTime() - start;
+    if (server.hashCode() == loopSize) {
+      System.out.println("");
+    }
+  }
+  System.out.printf("It took %s millis for consistent hash %s to execute %s operations \n",TimeUnit.NANOSECONDS.toMillis(duration),ch.getClass().getSimpleName(),loopSize);
+}
