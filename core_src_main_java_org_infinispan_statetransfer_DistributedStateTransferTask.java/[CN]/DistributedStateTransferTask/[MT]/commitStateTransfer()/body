@@ -1,8 +1,10 @@
 {
   dm.setConsistentHash(chNew);
-  if (configuration.clustering().stateTransfer().fetchInMemoryState() && !initialView) {
+  if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
     stateTransferManager.invalidateKeys(keysToRemove);
-    cacheNotifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
+    if (!initialView) {
+      cacheNotifier.notifyDataRehashed(oldCacheSet,newCacheSet,newViewId,false);
+    }
   }
   super.commitStateTransfer();
 }

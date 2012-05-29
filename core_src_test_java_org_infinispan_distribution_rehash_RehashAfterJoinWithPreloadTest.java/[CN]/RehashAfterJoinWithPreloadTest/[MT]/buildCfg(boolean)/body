@@ -1,0 +1,17 @@
+{
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  FileCacheStoreConfigurationBuilder fileStoreCB=cb.loaders().addFileCacheStore().location(fileCacheStoreTmpDir);
+  fileStoreCB.purgeOnStartup(false);
+  cb.loaders().passivation(false);
+  cb.loaders().preload(true);
+  cb.loaders().shared(true);
+  if (clustered) {
+    cb.clustering().l1().disable();
+    cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+    cb.clustering().hash().numOwners(1);
+    cb.clustering().hash().numVirtualNodes(1);
+    cb.clustering().stateTransfer().fetchInMemoryState(true);
+    cb.clustering().hash().groups().enabled();
+  }
+  return cb.build(true);
+}
