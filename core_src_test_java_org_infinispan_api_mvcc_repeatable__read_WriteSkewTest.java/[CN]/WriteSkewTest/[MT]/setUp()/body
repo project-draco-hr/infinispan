@@ -1,7 +1,7 @@
 {
-  Configuration c=new Configuration();
-  c.fluent().transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-  c.setLockAcquisitionTimeout(3000);
-  c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-  cacheManager=TestCacheManagerFactory.createCacheManager(c);
+  ConfigurationBuilder configurationBuilder=new ConfigurationBuilder();
+  configurationBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).locking().lockAcquisitionTimeout(3000).isolationLevel(IsolationLevel.REPEATABLE_READ);
+  cacheManager=TestCacheManagerFactory.createCacheManager(configurationBuilder);
+  configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+  cacheManager.defineConfiguration("writeSkew",configurationBuilder.build());
 }

@@ -3,7 +3,14 @@
   if (cacheEntry == null) {
     cacheEntry=getFromContainer(key);
     if (useRepeatableRead) {
-      MVCCEntry mvccEntry=cacheEntry == null ? createWrappedEntry(key,null,null,false,false,-1) : createWrappedEntry(key,cacheEntry.getValue(),cacheEntry.getVersion(),false,false,cacheEntry.getLifespan());
+      MVCCEntry mvccEntry=null;
+      if (cacheEntry == null) {
+        mvccEntry=createWrappedEntry(key,null,null,false,false,-1);
+      }
+ else {
+        mvccEntry=createWrappedEntry(key,cacheEntry.getValue(),cacheEntry.getVersion(),false,false,cacheEntry.getLifespan());
+        if (cacheEntry instanceof StateChangingEntry && mvccEntry != null)         mvccEntry.copyStateFlagsFrom((StateChangingEntry)cacheEntry);
+      }
       if (mvccEntry != null)       ctx.putLookedUpEntry(key,mvccEntry);
       return mvccEntry;
     }
