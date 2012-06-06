@@ -1,0 +1,30 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  TransactionManager tm1=cache1.getAdvancedCache().getTransactionManager();
+  withTx(tm1,new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      AtomicMap<String,String> map=AtomicMapLookup.getAtomicMap(cache1,"map");
+      map.put("key1","value1");
+      map.put("key2","value2");
+      return null;
+    }
+  }
+);
+  cache2.evict("map");
+  withTx(tm1,new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      AtomicMap<String,String> map=AtomicMapLookup.getAtomicMap(cache1,"map");
+      map.put("key1","new_value1");
+      assertTrue(map.containsKey("key2"));
+      assertEquals("value2",map.get("key2"));
+      return null;
+    }
+  }
+);
+  AtomicMap<String,String> map=AtomicMapLookup.getAtomicMap(cache2,"map");
+  assertTrue(map.containsKey("key1"));
+  assertTrue(map.containsKey("key2"));
+  assertEquals("new_value1",map.get("key1"));
+  assertEquals("value2",map.get("key2"));
+}

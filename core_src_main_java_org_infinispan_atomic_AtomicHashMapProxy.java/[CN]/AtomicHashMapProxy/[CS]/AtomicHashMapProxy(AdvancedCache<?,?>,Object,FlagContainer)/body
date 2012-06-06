@@ -1,6 +1,10 @@
 {
   this.cache=(AdvancedCache<Object,AtomicMap<K,V>>)cache;
-  this.cacheForWriting=this.cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_CACHE_LOAD);
+  Flag[] flags=new Flag[2];
+  flags[0]=Flag.SKIP_REMOTE_LOOKUP;
+  if (cache.getCacheConfiguration().loaders().passivation())   flags[1]=Flag.DELTA_WRITE;
+ else   flags[1]=Flag.SKIP_CACHE_LOAD;
+  this.cacheForWriting=this.cache.withFlags(flags);
   this.deltaMapKey=deltaMapKey;
   this.batchContainer=cache.getBatchContainer();
   this.flagContainer=flagContainer;
