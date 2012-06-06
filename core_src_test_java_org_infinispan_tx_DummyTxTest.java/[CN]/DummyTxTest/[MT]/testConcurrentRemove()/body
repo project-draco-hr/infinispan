@@ -3,6 +3,7 @@
   final int numThreads=5;
   final AtomicInteger removed=new AtomicInteger();
   final AtomicInteger rolledBack=new AtomicInteger();
+  final AtomicInteger didNothing=new AtomicInteger();
   final CountDownLatch latch=new CountDownLatch(1);
   Thread[] threads=new Thread[numThreads];
   for (int i=0; i < numThreads; i++) {
@@ -18,14 +19,18 @@
             if (success) {
               removed.incrementAndGet();
             }
+ else {
+              didNothing.incrementAndGet();
+            }
           }
  catch (          Throwable e) {
             if (e instanceof RollbackException) {
               rolledBack.incrementAndGet();
             }
-            if (tm().getTransaction() != null) {
+ else             if (tm().getTransaction() != null) {
               try {
                 tm().rollback();
+                rolledBack.incrementAndGet();
               }
  catch (              SystemException e1) {
                 log.error("Failed to rollback",e1);
@@ -48,7 +53,8 @@
   }
   log.trace("removed= " + removed.get());
   log.trace("rolledBack= " + rolledBack.get());
+  log.trace("didNothing= " + didNothing.get());
   assertFalse(cache.containsKey("k1"));
   assertEquals(1,removed.get());
-  assertEquals(numThreads - 1,rolledBack.get());
+  assertEquals(numThreads - 1,rolledBack.get() + didNothing.get());
 }
