@@ -1,6 +1,7 @@
 {
   int h=spread(k.hashCode());
   Object val=null;
+  int count=0;
   for (Node[] tab=table; ; ) {
     Node f;
     int i, fh;
@@ -8,9 +9,8 @@
     if (tab == null)     tab=initTable();
  else     if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
       Node node=new Node(fh=h | LOCKED,k,null,null);
-      boolean validated=false;
       if (casTabAt(tab,i,null,node)) {
-        validated=true;
+        count=1;
         try {
           if ((val=mf.map(k)) != null)           node.val=val;
         }
@@ -25,9 +25,35 @@ synchronized (node) {
           }
         }
       }
-      if (validated)       break;
+      if (count != 0)       break;
     }
- else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh=f.hash) == MOVED) {
+      if ((fk=f.key) instanceof TreeBin) {
+        TreeBin t=(TreeBin)fk;
+        boolean added=false;
+        t.acquire(0);
+        try {
+          if (tabAt(tab,i) == f) {
+            count=1;
+            TreeNode p=t.getTreeNode(h,k,t.root);
+            if (p != null)             val=p.val;
+ else             if ((val=mf.map(k)) != null) {
+              added=true;
+              count=2;
+              t.putTreeNode(h,k,val);
+            }
+          }
+        }
+  finally {
+          t.release(0);
+        }
+        if (count != 0) {
+          if (!added)           return val;
+          break;
+        }
+      }
+ else       tab=(Node[])fk;
+    }
  else     if ((fh & HASH_BITS) == h && (fv=f.val) != null && ((fk=f.key) == k || k.equals(fk)))     return fv;
  else {
       Node g=f.next;
@@ -46,11 +72,11 @@ synchronized (node) {
         f.tryAwaitLock(tab,i);
       }
  else       if (tabAt(tab,i) == f && f.casHash(fh,fh | LOCKED)) {
-        boolean validated=false;
+        boolean added=false;
         try {
           if (tabAt(tab,i) == f) {
-            validated=true;
-            for (Node e=f; ; ) {
+            count=1;
+            for (Node e=f; ; ++count) {
               Object ek, ev;
               if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
                 val=ev;
@@ -58,7 +84,11 @@ synchronized (node) {
               }
               Node last=e;
               if ((e=e.next) == null) {
-                if ((val=mf.map(k)) != null)                 last.next=new Node(h,k,val,null);
+                if ((val=mf.map(k)) != null) {
+                  added=true;
+                  last.next=new Node(h,k,val,null);
+                  if (count >= TREE_THRESHOLD)                   replaceWithTreeBin(tab,i,k);
+                }
                 break;
               }
             }
@@ -73,11 +103,16 @@ synchronized (f) {
             ;
           }
         }
-        if (validated)         break;
+        if (count != 0) {
+          if (!added)           return val;
+          if (tab.length <= 64)           count=2;
+          break;
+        }
       }
     }
   }
   if (val == null)   throw new NullPointerException();
   counter.add(1L);
+  if (count > 1)   checkForResize();
   return val;
 }

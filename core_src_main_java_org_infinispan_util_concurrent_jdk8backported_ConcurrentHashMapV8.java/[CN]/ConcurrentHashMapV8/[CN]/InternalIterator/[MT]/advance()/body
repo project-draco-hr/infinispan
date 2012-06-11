@@ -5,9 +5,16 @@
     while (e == null) {
       Node[] t;
       int b, i, n;
+      Object ek;
       if ((b=baseIndex) >= baseLimit || (i=index) < 0 || (t=tab) == null || i >= (n=t.length))       break outer;
- else       if ((e=tabAt(t,i)) != null && e.hash == MOVED)       tab=(Node[])e.key;
- else       index=(i+=baseSize) < n ? i : (baseIndex=b + 1);
+ else       if ((e=tabAt(t,i)) != null && e.hash == MOVED) {
+        if ((ek=e.key) instanceof TreeBin)         e=((TreeBin)ek).first;
+ else {
+          tab=(Node[])ek;
+          continue;
+        }
+      }
+      index=(i+=baseSize) < n ? i : (baseIndex=b + 1);
     }
     nextKey=e.key;
   }

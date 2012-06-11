@@ -14,6 +14,7 @@
         int i;
         Node f;
         int fh;
+        Object fk;
         if (tab == null)         tab=initTable();
  else         if ((f=tabAt(tab,i=(tab.length - 1) & h)) == null) {
           if (casTabAt(tab,i,null,new Node(h,k,v,null))) {
@@ -21,7 +22,29 @@
             break;
           }
         }
- else         if ((fh=f.hash) == MOVED)         tab=(Node[])f.key;
+ else         if ((fh=f.hash) == MOVED) {
+          if ((fk=f.key) instanceof TreeBin) {
+            TreeBin t=(TreeBin)fk;
+            boolean validated=false;
+            t.acquire(0);
+            try {
+              if (tabAt(tab,i) == f) {
+                validated=true;
+                TreeNode p=t.getTreeNode(h,k,t.root);
+                if (p != null)                 p.val=v;
+ else {
+                  t.putTreeNode(h,k,v);
+                  ++delta;
+                }
+              }
+            }
+  finally {
+              t.release(0);
+            }
+            if (validated)             break;
+          }
+ else           tab=(Node[])fk;
+        }
  else         if ((fh & LOCKED) != 0) {
           counter.add(delta);
           delta=0L;
@@ -29,12 +52,11 @@
           f.tryAwaitLock(tab,i);
         }
  else         if (f.casHash(fh,fh | LOCKED)) {
-          boolean validated=false;
-          boolean tooLong=false;
+          int count=0;
           try {
             if (tabAt(tab,i) == f) {
-              validated=true;
-              for (Node e=f; ; ) {
+              count=1;
+              for (Node e=f; ; ++count) {
                 Object ek, ev;
                 if ((e.hash & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek))) {
                   e.val=v;
@@ -44,9 +66,9 @@
                 if ((e=e.next) == null) {
                   ++delta;
                   last.next=new Node(h,k,v,null);
+                  if (count >= TREE_THRESHOLD)                   replaceWithTreeBin(tab,i,k);
                   break;
                 }
-                tooLong=true;
               }
             }
           }
@@ -59,8 +81,8 @@ synchronized (f) {
               ;
             }
           }
-          if (validated) {
-            if (tooLong) {
+          if (count != 0) {
+            if (count > 1) {
               counter.add(delta);
               delta=0L;
               checkForResize();

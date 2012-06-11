@@ -1,15 +1,18 @@
 {
   int h=spread(k.hashCode());
   retry:   for (Node[] tab=table; tab != null; ) {
-    Node e;
+    Node e, p;
     Object ek, ev;
     int eh;
     for (e=tabAt(tab,(tab.length - 1) & h); e != null; e=e.next) {
       if ((eh=e.hash) == MOVED) {
-        tab=(Node[])e.key;
-        continue retry;
+        if ((ek=e.key) instanceof TreeBin)         return ((TreeBin)ek).getValue(h,k);
+ else {
+          tab=(Node[])ek;
+          continue retry;
+        }
       }
-      if ((eh & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek)))       return ev;
+ else       if ((eh & HASH_BITS) == h && (ev=e.val) != null && ((ek=e.key) == k || k.equals(ek)))       return ev;
     }
     break;
   }

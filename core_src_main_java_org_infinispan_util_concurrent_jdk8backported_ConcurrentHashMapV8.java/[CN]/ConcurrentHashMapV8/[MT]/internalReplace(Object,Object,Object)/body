@@ -4,8 +4,40 @@
   for (Node[] tab=table; ; ) {
     Node f;
     int i, fh;
+    Object fk;
     if (tab == null || (f=tabAt(tab,i=(tab.length - 1) & h)) == null)     break;
- else     if ((fh=f.hash) == MOVED)     tab=(Node[])f.key;
+ else     if ((fh=f.hash) == MOVED) {
+      if ((fk=f.key) instanceof TreeBin) {
+        TreeBin t=(TreeBin)fk;
+        boolean validated=false;
+        boolean deleted=false;
+        t.acquire(0);
+        try {
+          if (tabAt(tab,i) == f) {
+            validated=true;
+            TreeNode p=t.getTreeNode(h,k,t.root);
+            if (p != null) {
+              Object pv=p.val;
+              if (cv == null || cv == pv || cv.equals(pv)) {
+                oldVal=pv;
+                if ((p.val=v) == null) {
+                  deleted=true;
+                  t.deleteTreeNode(p);
+                }
+              }
+            }
+          }
+        }
+  finally {
+          t.release(0);
+        }
+        if (validated) {
+          if (deleted)           counter.add(-1L);
+          break;
+        }
+      }
+ else       tab=(Node[])fk;
+    }
  else     if ((fh & HASH_BITS) != h && f.next == null)     break;
  else     if ((fh & LOCKED) != 0) {
       checkForResize();
