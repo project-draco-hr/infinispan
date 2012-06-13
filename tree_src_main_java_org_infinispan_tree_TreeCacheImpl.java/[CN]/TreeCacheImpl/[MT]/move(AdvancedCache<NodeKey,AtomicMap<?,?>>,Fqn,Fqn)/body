@@ -6,7 +6,13 @@
     return;
   }
   startAtomic();
+  boolean success=false;
   try {
+    Node<K,V> parent=getNode(cache,nodeToMoveFqn.getParent());
+    if (!parent.hasChild(nodeToMoveFqn.getLastElement())) {
+      if (trace)       log.trace("The parent does not have the child that needs to be moved. Returning...");
+      return;
+    }
     Node<K,V> nodeToMove=getNode(cache.withFlags(Flag.FORCE_WRITE_LOCK),nodeToMoveFqn);
     if (nodeToMove == null) {
       if (trace)       log.trace("Did not find the node that needs to be moved. Returning...");
@@ -27,9 +33,15 @@
       move(cache,oldChildFqn,newFqn);
     }
     removeNode(cache,nodeToMoveFqn);
+    success=true;
   }
   finally {
-    endAtomic();
+    if (success) {
+      endAtomic();
+    }
+ else {
+      failAtomic();
+    }
   }
   log.tracef("Successfully moved node '%s' to '%s'",nodeToMoveFqn,newParentFqn);
 }

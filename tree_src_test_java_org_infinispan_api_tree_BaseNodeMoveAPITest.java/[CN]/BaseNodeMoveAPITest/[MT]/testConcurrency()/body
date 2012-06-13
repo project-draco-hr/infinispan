@@ -1,7 +1,7 @@
 {
   Node<Object,Object> rootNode=treeCache.getRoot();
-  final int N=3;
-  final int loops=1 << 6;
+  final int N=5;
+  final int loops=64;
   final Fqn FQN_A=A, FQN_B=B, FQN_C=C, FQN_D=D, FQN_E=E, FQN_X=Fqn.fromString("/x"), FQN_Y=Fqn.fromString("/y");
   final Node[] NODES={rootNode.addChild(FQN_A),rootNode.addChild(FQN_B),rootNode.addChild(FQN_C),rootNode.addChild(FQN_D),rootNode.addChild(FQN_E)};
   final Node<Object,Object> NODE_X=genericize(NODES[0]).addChild(FQN_X);
@@ -10,7 +10,7 @@
   final CountDownLatch latch=new CountDownLatch(1);
   final Random rnd=new Random();
   for (int i=0; i < N; i++) {
-    movers[i]=new Thread("Mover-" + i){
+    movers[i]=new Thread(getClass().getSimpleName() + ".Mover-" + i){
       public void run(){
         try {
           latch.await();
@@ -53,7 +53,7 @@
       found_y_again=found_y_again || n.hasChild(FQN_Y);
     }
   }
-  log.fatal("Tree: " + TreeStructureSupport.printTree(treeCache,true));
+  log.info("Tree: " + TreeStructureSupport.printTree(treeCache,true));
   assertTrue("Should have found x",found_x);
   assertTrue("Should have found y",found_y);
   assertFalse("Should have only found x once",found_x_again);
