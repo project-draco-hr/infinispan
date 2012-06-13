@@ -1,14 +1,27 @@
 {
   int c=0;
   while (!stop) {
+    boolean success=false;
     try {
       if (tx)       tm.begin();
       cache.put("test" + c,c++);
       if (tx)       tm.commit();
+      success=true;
     }
  catch (    Exception e) {
       c--;
+      log.errorf("Error writing key test%s",c,e);
       stopThread();
+    }
+ finally {
+      if (tx && !success) {
+        try {
+          tm.rollback();
+        }
+ catch (        SystemException e) {
+          log.error(e);
+        }
+      }
     }
   }
   result=c;
