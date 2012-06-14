@@ -14,7 +14,12 @@
   for (  WorkerThread wt : workers) {
     wt.awaitTermination();
   }
-  Thread.sleep(500 * 3);
-  assertEquals(1,connectionPool.getNumIdle());
-  assertEquals(0,connectionPool.getNumActive());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      int numIdle=connectionPool.getNumIdle();
+      int numActive=connectionPool.getNumActive();
+      return numIdle == 0 && numActive == 0;
+    }
+  }
+);
 }
