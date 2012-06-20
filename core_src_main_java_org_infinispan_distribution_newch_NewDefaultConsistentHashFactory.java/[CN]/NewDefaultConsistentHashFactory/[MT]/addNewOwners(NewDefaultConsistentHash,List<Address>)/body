@@ -1,0 +1,18 @@
+{
+  Hash hashFunction=baseDCH.getHashFunction();
+  int requestedNumOwners=baseDCH.getNumOwners();
+  int numOwners=Math.min(requestedNumOwners,nodes.size());
+  int numSegments=baseDCH.getNumSegments();
+  boolean needStateTransfer=false;
+  CHStatistics stats=computeStatistics(baseDCH,nodes);
+  List<Address>[] ownerLists=extractOwnerLists(baseDCH);
+  List<Address>[] intOwnerLists=copyOwnerLists(ownerLists);
+  needStateTransfer|=addPrimaryOwners(numSegments,numOwners,nodes,intOwnerLists,ownerLists,stats);
+  needStateTransfer|=addBackupOwners(numSegments,numOwners,nodes,intOwnerLists,ownerLists,stats);
+  if (needStateTransfer) {
+    return new NewDefaultConsistentHash(hashFunction,numSegments,requestedNumOwners,nodes,ownerLists);
+  }
+ else {
+    return new NewDefaultConsistentHash(hashFunction,numSegments,requestedNumOwners,nodes,intOwnerLists);
+  }
+}

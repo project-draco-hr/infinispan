@@ -1,0 +1,25 @@
+{
+  int[] numSegments={1,2,4,8,16,64,128,256,512,1024};
+  int[] numNodes={1,2,3,4,5,6,7,8,9,10,100,1000};
+  int[] numOwners={1,2,3,5,10};
+  NewDefaultConsistentHashFactory chf=new NewDefaultConsistentHashFactory();
+  Hash hashFunction=new MurmurHash3();
+  for (int i=0; i < numNodes.length; i++) {
+    int nn=numNodes[i];
+    List<Address> nodes=new ArrayList<Address>(nn);
+    for (int j=0; j < nn; j++) {
+      nodes.add(new TestAddress(j));
+    }
+    for (int j=0; j < numSegments.length; j++) {
+      int ns=numSegments[j];
+      if (nn < ns) {
+        for (int k=0; k < numOwners.length; k++) {
+          int no=numOwners[k];
+          NewDefaultConsistentHash ch=(NewDefaultConsistentHash)chf.createConsistentHash(hashFunction,no,ns,nodes);
+          checkDistribution(ch);
+          testConsistentHashModifications(chf,ch);
+        }
+      }
+    }
+  }
+}
