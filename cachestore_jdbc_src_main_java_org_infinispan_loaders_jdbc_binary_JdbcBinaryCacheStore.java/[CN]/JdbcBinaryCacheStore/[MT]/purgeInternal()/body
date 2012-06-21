@@ -16,8 +16,15 @@
         if (log.isTraceEnabled()) {
           log.tracef("Adding bucket keyed %s for purging.",key);
         }
-        InputStream binaryStream=rs.getBinaryStream(1);
-        Bucket bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+        Bucket bucket=null;
+        try {
+          InputStream binaryStream=rs.getBinaryStream(1);
+          bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+        }
+ catch (        Exception ex) {
+          unlock(key);
+          throw ex;
+        }
         bucket.setBucketId(key);
         expiredBuckets.add(bucket);
       }
@@ -28,7 +35,7 @@
       }
     }
   }
- catch (  SQLException ex) {
+ catch (  Exception ex) {
     releaseLocks(expiredBuckets);
     connectionFactory.releaseConnection(conn);
     log.failedClearingJdbcCacheStore(ex);
