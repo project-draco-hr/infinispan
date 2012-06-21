@@ -3,13 +3,15 @@
   Object retval=invokeNextInterceptor(ctx,command);
   long t2=System.nanoTime();
   long intervalMilliseconds=nanosecondsIntervalToMilliseconds(t1,t2);
-  if (retval == null) {
-    missTimes.getAndAdd(intervalMilliseconds);
-    misses.incrementAndGet();
-  }
+  if (ctx.isOriginLocal()) {
+    if (retval == null) {
+      missTimes.getAndAdd(intervalMilliseconds);
+      misses.incrementAndGet();
+    }
  else {
-    hitTimes.getAndAdd(intervalMilliseconds);
-    hits.incrementAndGet();
+      hitTimes.getAndAdd(intervalMilliseconds);
+      hits.incrementAndGet();
+    }
   }
   return retval;
 }

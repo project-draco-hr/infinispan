@@ -1,0 +1,21 @@
+{
+  Cache<String,String> cache1=cache(0);
+  Cache<String,String> cache2=cache(1);
+  cache1.put("k","v");
+  assertEquals("v",cache2.get("k"));
+  ObjectName stats1=getCacheObjectName(JMX_1,"___defaultcache(repl_sync)","Statistics");
+  ObjectName stats2=getCacheObjectName(JMX_2,"___defaultcache(repl_sync)","Statistics");
+  MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  assertEquals((long)1,mBeanServer.getAttribute(stats1,"Stores"));
+  assertEquals((long)0,mBeanServer.getAttribute(stats2,"Stores"));
+  Map<String,String> values=new HashMap<String,String>();
+  values.put("k1","v1");
+  values.put("k2","v2");
+  values.put("k3","v3");
+  cache2.putAll(values);
+  assertEquals((long)1,mBeanServer.getAttribute(stats1,"Stores"));
+  assertEquals((long)3,mBeanServer.getAttribute(stats2,"Stores"));
+  cache1.remove("k");
+  assertEquals((long)1,mBeanServer.getAttribute(stats1,"RemoveHits"));
+  assertEquals((long)0,mBeanServer.getAttribute(stats2,"RemoveHits"));
+}
