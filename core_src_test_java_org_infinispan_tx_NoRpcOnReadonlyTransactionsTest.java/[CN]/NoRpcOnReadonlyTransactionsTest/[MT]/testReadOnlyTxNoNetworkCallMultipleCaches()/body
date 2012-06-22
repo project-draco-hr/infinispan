@@ -1,0 +1,37 @@
+{
+  cache(0,"a");
+  cache(1,"a");
+  cache(2,"a");
+  waitForClusterToForm("a");
+  cache(0,"a").put("k","v");
+  assertEquals(0,i0.remotePrepares);
+  assertEquals(0,i0.remoteCommits);
+  assertEquals(0,i1.remotePrepares);
+  assertEquals(0,i1.remoteCommits);
+  assertEquals(0,i2.remotePrepares);
+  assertEquals(0,i2.remoteCommits);
+  assertEquals("v",cache(0,"a").get("k"));
+  assertEquals("v",cache(1,"a").get("k"));
+  assertEquals("v",cache(2,"a").get("k"));
+  Object k0=getKeyForCache(0);
+  cache(0).put(k0,"v0");
+  Object k1=getKeyForCache(1);
+  cache(1).put(k1,"v0");
+  Object k2=getKeyForCache(2);
+  cache(2).put(k2,"v0");
+  tm(1).begin();
+  assertEquals("v",cache(1,"a").put("k","v2"));
+  assertEquals("v0",cache(1).get(k0));
+  assertEquals("v0",cache(1).get(k1));
+  assertEquals("v0",cache(1).get(k2));
+  tm(1).commit();
+  assertEquals(0,i0.remotePrepares);
+  assertEquals(0,i0.remoteCommits);
+  assertEquals(0,i1.remotePrepares);
+  assertEquals(0,i1.remoteCommits);
+  assertEquals(0,i2.remotePrepares);
+  assertEquals(0,i2.remoteCommits);
+  assertEquals("v2",cache(0,"a").get("k"));
+  assertEquals("v2",cache(1,"a").get("k"));
+  assertEquals("v2",cache(2,"a").get("k"));
+}

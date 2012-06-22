@@ -1,0 +1,31 @@
+{
+  Object k0=getKeyForCache(0);
+  log.tracef("On address %s adding key %s",address(0),k0);
+  cache(0).put(k0,"v");
+  assertEquals(0,i0.remotePrepares);
+  assertEquals(0,i0.remoteCommits);
+  assertEquals(0,i1.remotePrepares);
+  assertEquals(0,i1.remoteCommits);
+  assertEquals(0,i2.remotePrepares);
+  assertEquals(0,i2.remoteCommits);
+  log.trace("Here is where the r-o tx happens.");
+  tm(1).begin();
+  assertEquals("v",cache(1).get(k0));
+  tm(1).commit();
+  assertEquals(0,i0.remotePrepares);
+  assertEquals(0,i0.remoteCommits);
+  assertEquals(0,i1.remotePrepares);
+  assertEquals(0,i1.remoteCommits);
+  assertEquals(0,i2.remotePrepares);
+  assertEquals(0,i2.remoteCommits);
+  tm(1).begin();
+  cache(1).put(getKeyForCache(2),"v");
+  assertEquals("v",cache(1).get(k0));
+  tm(1).commit();
+  assertEquals(0,i0.remotePrepares);
+  assertEquals(0,i0.remoteCommits);
+  assertEquals(0,i1.remotePrepares);
+  assertEquals(0,i1.remoteCommits);
+  assertEquals(1,i2.remotePrepares);
+  assertEquals(1,i2.remoteCommits);
+}
