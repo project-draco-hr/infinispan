@@ -1,0 +1,16 @@
+{
+  if (component == null) {
+    return;
+  }
+  ComponentMetadataRepo mr=cache.getAdvancedCache().getComponentRegistry().getComponentMetadataRepo();
+  ComponentMetadata cm=mr.findComponentMetadata(component.getClass().getName());
+  if (cm == null || !(cm instanceof ManageableComponentMetadata)) {
+    return;
+  }
+  ManageableComponentMetadata mcm=cm.toManageableComponentMetadata();
+  pw.printf("%s: {\n",mcm.getJmxObjectName());
+  for (  JmxAttributeMetadata s : mcm.getAttributeMetadata()) {
+    pw.printf("  %s: %s\n",s.getName(),getAttributeValue(component,s));
+  }
+  pw.println("}");
+}

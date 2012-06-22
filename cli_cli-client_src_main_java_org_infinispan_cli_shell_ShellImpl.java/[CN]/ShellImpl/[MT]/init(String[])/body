@@ -1,31 +1,31 @@
 {
   context=new ContextImpl(new StreamIOAdapter(),new CommandBufferImpl());
-  String sopts="hc:v";
-  LongOpt[] lopts=new LongOpt[]{new LongOpt("connect",LongOpt.REQUIRED_ARGUMENT,null,'c'),new LongOpt("help",LongOpt.NO_ARGUMENT,null,'h'),new LongOpt("version",LongOpt.NO_ARGUMENT,null,'v')};
+  String sopts="c:f:hv";
+  LongOpt[] lopts=new LongOpt[]{new LongOpt("connect",LongOpt.REQUIRED_ARGUMENT,null,'c'),new LongOpt("file",LongOpt.REQUIRED_ARGUMENT,null,'f'),new LongOpt("help",LongOpt.NO_ARGUMENT,null,'h'),new LongOpt("version",LongOpt.NO_ARGUMENT,null,'v')};
   Getopt g=new Getopt("ispn-cli",args,sopts,lopts);
   int c;
   while ((c=g.getopt()) != -1) {
 switch (c) {
 case 'c':
-{
-        Connection connection=ConnectionFactory.getConnection(g.getOptarg());
-        connection.connect(context);
-        context.setConnection(connection);
-        break;
-      }
+      Connection connection=ConnectionFactory.getConnection(g.getOptarg());
+    connection.connect(context);
+  context.setConnection(connection);
+break;
+case 'f':
+inputFile=g.getOptarg();
+if ("-".equals(inputFile) || new File(inputFile).isFile()) {
+mode=ShellMode.BATCH;
+}
+ else {
+exitWithError("File '%s' doesn't exist or is not a file",g.getOptarg());
+}
+break;
 case 'h':
-    help();
-  break;
+help();
+break;
 case 'v':
 version();
 break;
 }
 }
-config=new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
-config.load();
-Settings settings=Settings.getInstance();
-settings.setReadInputrc(false);
-console=new Console(settings);
-context.setOutputAdapter(new ConsoleIOAdapter(console));
-console.addCompletion(new Completer(context));
 }

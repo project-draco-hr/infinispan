@@ -1,0 +1,36 @@
+{
+  Configuration configuration;
+  if (baseCacheName != null) {
+    configuration=cacheManager.getCacheConfiguration(baseCacheName);
+    if (configuration == null) {
+      throw new IllegalArgumentException("A cache named " + baseCacheName + " doesn't exist");
+    }
+  }
+ else {
+    configuration=cacheManager.getDefaultCacheConfiguration();
+    baseCacheName=BasicCacheContainer.DEFAULT_CACHE_NAME;
+  }
+  if (cacheManager.cacheExists(cacheName)) {
+    throw new IllegalArgumentException("A cache named " + cacheName + " already exists");
+  }
+  if (configuration.clustering().cacheMode().isClustered()) {
+    AdvancedCache<?,?> clusteredCache=cacheManager.getCache(baseCacheName).getAdvancedCache();
+    RpcManager rpc=clusteredCache.getRpcManager();
+    CommandsFactory factory=clusteredCache.getComponentRegistry().getComponent(CommandsFactory.class);
+    CreateCacheCommand ccc=factory.buildCreateCacheCommand(cacheName,baseCacheName);
+    try {
+      rpc.invokeRemotely(null,ccc,true,false);
+      ccc.init(cacheManager);
+      ccc.perform(null);
+    }
+ catch (    Throwable e) {
+      throw new CacheException("Could not create cache on all clustered nodes",e);
+    }
+  }
+ else {
+    ConfigurationBuilder b=new ConfigurationBuilder();
+    b.read(configuration);
+    cacheManager.defineConfiguration(cacheName,b.build());
+    cacheManager.getCache(cacheName);
+  }
+}

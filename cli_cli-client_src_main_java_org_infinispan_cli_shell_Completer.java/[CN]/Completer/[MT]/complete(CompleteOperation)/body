@@ -10,7 +10,7 @@
     }
   }
  else {
-    ProcessedCommand procCmd=new ProcessedCommand(buffer);
+    ProcessedCommand procCmd=new ProcessedCommand(buffer,op.getCursor());
     if (!procCmd.isCommandComplete()) {
       for (      String name : context.getCommandRegistry().getCommandNames()) {
         Command command=context.getCommandRegistry().getCommand(name);
@@ -22,12 +22,16 @@
  else {
       Command command=context.getCommandRegistry().getCommand(procCmd.getCommand());
       if (command.isAvailable(context)) {
+        op.setOffset(op.getCursor());
         for (        Argument arg : procCmd.getArguments()) {
           if (arg.getOffset() < op.getCursor()) {
             op.setOffset(arg.getOffset());
           }
- else           break;
+ else {
+            break;
+          }
         }
+        addPrefixMatches(procCmd.getCurrentArgument(),command.getOptions(),candidates);
         command.complete(context,procCmd,candidates);
       }
     }

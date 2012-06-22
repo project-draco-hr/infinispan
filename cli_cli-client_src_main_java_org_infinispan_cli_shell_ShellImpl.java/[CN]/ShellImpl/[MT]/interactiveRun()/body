@@ -1,0 +1,27 @@
+{
+  config=new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
+  config.load();
+  console=new Console();
+  context.setOutputAdapter(new ConsoleIOAdapter(console));
+  console.addCompletion(new Completer(context));
+  while (!context.isQuitting()) {
+    try {
+      context.refreshProperties();
+      String line=console.read(getPrompt());
+      if (line != null) {
+        if (!"".equals(line.trim())) {
+          execute(line);
+        }
+      }
+    }
+ catch (    Exception e) {
+      context.error(e);
+    }
+  }
+  try {
+    config.save();
+    console.stop();
+  }
+ catch (  Exception e) {
+  }
+}
