@@ -1,12 +1,17 @@
 {
   int numSegments=ch.getNumSegments();
-  List<Address> nodes=ch.getNodes();
+  List<Address> nodes=ch.getMembers();
   int numNodes=nodes.size();
   int actualNumOwners=Math.min(ch.getNumOwners(),numNodes);
   CHStatistics stats=new CHStatistics(nodes);
   for (int i=0; i < numSegments; i++) {
     List<Address> owners=ch.locateOwnersForSegment(i);
-    Assert.assertEquals(owners.size(),actualNumOwners);
+    if (!allowExtraOwners) {
+      assertEquals(owners.size(),actualNumOwners);
+    }
+ else {
+      assertTrue(owners.size() >= actualNumOwners);
+    }
     stats.incPrimaryOwned(owners.get(0));
     for (int j=0; j < owners.size(); j++) {
       Address owner=owners.get(j);
@@ -19,11 +24,15 @@
   int minOwned=numSegments * actualNumOwners / numNodes;
   int maxOwned=(int)Math.ceil((double)numSegments * actualNumOwners / numNodes);
   for (  Address node : nodes) {
-    int primaryOwned=stats.getPrimaryOwned(node);
-    assertTrue(minPrimaryOwned <= primaryOwned);
-    assertTrue(primaryOwned <= maxPrimaryOwned);
+    if (!allowExtraOwners) {
+      int primaryOwned=stats.getPrimaryOwned(node);
+      assertTrue(minPrimaryOwned <= primaryOwned);
+      assertTrue(primaryOwned <= maxPrimaryOwned);
+    }
     int owned=stats.getOwned(node);
     assertTrue(minOwned <= owned);
-    assertTrue(owned <= maxOwned);
+    if (!allowExtraOwners) {
+      assertTrue(owned <= maxOwned);
+    }
   }
 }

@@ -1,12 +1,12 @@
 {
   CHStatistics stats=computeStatistics(baseDCH,newMembers);
-  int numOwners=baseDCH.getNumOwners();
+  int actualNumOwners=Math.min(baseDCH.getNumOwners(),newMembers.size());
   int numSegments=baseDCH.getNumSegments();
   Map<Address,Integer> expectedPrimaryOwnedSegments=computeExpectedPrimaryOwned(newMembers,numSegments);
-  Map<Address,Integer> expectedOwnedSegments=computeExpectedOwned(newMembers,numOwners,numSegments);
+  Map<Address,Integer> expectedOwnedSegments=computeExpectedOwned(newMembers,actualNumOwners,numSegments);
   for (int i=0; i < numSegments; i++) {
     if (ownerLists[i].size() == 0) {
-      List<Address> newOwners=new ArrayList<Address>(numOwners);
+      List<Address> newOwners=new ArrayList<Address>(actualNumOwners);
       for (int j=0; j < newMembers.size(); j++) {
         Address a=newMembers.get(j);
         if (stats.getPrimaryOwned(a) < expectedPrimaryOwnedSegments.get(a)) {
@@ -20,13 +20,13 @@
         log.debugf("Could not find a primary owner for segment %d, base ch = %s, new members = %s",i,baseDCH,newMembers);
         throw new IllegalStateException("Could not find a primary owner!");
       }
-      if (numOwners > 1) {
+      if (actualNumOwners > 1) {
         for (int j=0; j < newMembers.size(); j++) {
           Address a=newMembers.get(j);
           if (stats.getOwned(a) < expectedOwnedSegments.get(a) && !newOwners.contains(a)) {
             newOwners.add(a);
             stats.incOwned(a);
-            if (newOwners.size() == numOwners)             break;
+            if (newOwners.size() == actualNumOwners)             break;
           }
         }
       }

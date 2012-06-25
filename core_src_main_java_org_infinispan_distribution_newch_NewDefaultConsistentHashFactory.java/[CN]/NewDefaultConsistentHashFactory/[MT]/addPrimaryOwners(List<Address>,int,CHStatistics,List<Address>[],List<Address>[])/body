@@ -1,8 +1,6 @@
 {
-  int numNodes=nodes.size();
   Map<Address,Integer> expectedPrimaryOwned=computeExpectedPrimaryOwned(nodes,numSegments);
   List<Address> newPrimaryOwners=computeNewPrimaryOwners(nodes,stats,expectedPrimaryOwned);
-  boolean needStateTransfer=false;
   for (int i=numSegments - 1; i >= 0; i--) {
     Address primaryOwner=ownerLists[i].get(0);
     int primaryOwned=stats.getPrimaryOwned(primaryOwner);
@@ -15,7 +13,6 @@
         stats.incPrimaryOwned(newPrimaryOwner);
       }
  else {
-        needStateTransfer=true;
         newPrimaryOwner=newPrimaryOwners.remove(0);
         intOwnerLists[i].add(newPrimaryOwner);
         ownerLists[i].add(0,newPrimaryOwner);
@@ -25,5 +22,4 @@
       }
     }
   }
-  return needStateTransfer;
 }

@@ -1,43 +1,43 @@
 {
-  int[][] nodeChanges={{0,0},{1,0},{2,0},{0,1},{0,2},{1,1},{2,2},{10,0},{0,10},{10,10}};
+  int[][] nodeChanges={{1,0},{2,0},{0,1},{0,2},{1,1},{2,2},{10,0},{0,10},{10,10}};
   int numSegments=baseCH.getNumSegments();
   int numOwners=baseCH.getNumOwners();
-  int nodeIndex=baseCH.getNodes().size();
+  assertSame(baseCH,chf.updateConsistentHashMembers(baseCH,baseCH.getMembers()));
+  assertSame(baseCH,chf.rebalanceConsistentHash(baseCH,true));
+  assertSame(baseCH,chf.rebalanceConsistentHash(baseCH,false));
+  int nodeIndex=baseCH.getMembers().size();
   for (int i=0; i < nodeChanges.length; i++) {
     int nodesToAdd=nodeChanges[i][0];
     int nodesToRemove=nodeChanges[i][1];
-    if (nodesToRemove > baseCH.getNodes().size())     break;
-    List<Address> newNodes=new ArrayList<Address>(baseCH.getNodes());
+    if (nodesToRemove > baseCH.getMembers().size())     break;
+    List<Address> newMembers=new ArrayList<Address>(baseCH.getMembers());
     for (int k=0; k < nodesToRemove; k++) {
-      newNodes.remove(Math.abs(baseCH.getHashFunction().hash(k) % newNodes.size()));
+      newMembers.remove(Math.abs(baseCH.getHashFunction().hash(k) % newMembers.size()));
     }
     for (int k=0; k < nodesToAdd; k++) {
-      newNodes.add(new TestAddress(nodeIndex++));
+      newMembers.add(new TestAddress(nodeIndex++));
     }
-    if (newNodes.size() > baseCH.getNumSegments())     break;
-    log.debugf("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",iterationCount,baseCH,newNodes);
-    if (nodesToAdd == 0 && nodesToRemove == 0) {
-      assertFalse(chf.needNewConsistentHash(baseCH,newNodes));
-      continue;
-    }
-    assertTrue(chf.needNewConsistentHash(baseCH,newNodes));
-    NewDefaultConsistentHash newCH=(NewDefaultConsistentHash)chf.createConsistentHash(baseCH,newNodes);
+    if (newMembers.size() > baseCH.getNumSegments())     break;
+    log.debugf("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",iterationCount,baseCH,newMembers);
+    NewDefaultConsistentHash updatedMembersCH=(NewDefaultConsistentHash)chf.updateConsistentHashMembers(baseCH,newMembers);
     if (nodesToRemove > 0) {
-      for (int l=0; l < newCH.getNumSegments(); l++) {
-        assertTrue(newCH.locateOwnersForSegment(l).size() >= 0);
+      for (int l=0; l < updatedMembersCH.getNumSegments(); l++) {
+        assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() >= 0);
       }
-      assertTrue(chf.needNewConsistentHash(baseCH,newNodes));
-      newCH=(NewDefaultConsistentHash)chf.createConsistentHash(newCH,newNodes);
     }
-    for (int l=0; l < newCH.getNumSegments(); l++) {
-      int actualNumOwners=Math.min(newCH.getNodes().size(),newCH.getNumOwners());
-      assertTrue(newCH.locateOwnersForSegment(l).size() >= actualNumOwners);
+    NewDefaultConsistentHash inclRebalancedCH=(NewDefaultConsistentHash)chf.rebalanceConsistentHash(updatedMembersCH,true);
+    checkDistribution(inclRebalancedCH,true);
+    for (int l=0; l < inclRebalancedCH.getNumSegments(); l++) {
+      int actualNumOwners=Math.min(inclRebalancedCH.getMembers().size(),inclRebalancedCH.getNumOwners());
+      assertTrue(inclRebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
     }
-    newCH=(NewDefaultConsistentHash)chf.createConsistentHash(newCH,newNodes);
-    checkDistribution(newCH);
-    assertEquals(newCH.getNumSegments(),baseCH.getNumSegments());
-    assertEquals(newCH.getNumOwners(),baseCH.getNumOwners());
-    baseCH=newCH;
+    NewDefaultConsistentHash exclRebalancedCH=(NewDefaultConsistentHash)chf.rebalanceConsistentHash(updatedMembersCH,false);
+    NewDefaultConsistentHash exclRebalancedCH2=(NewDefaultConsistentHash)chf.rebalanceConsistentHash(inclRebalancedCH,false);
+    checkDistribution(exclRebalancedCH,false);
+    assertEquals(exclRebalancedCH.getNumSegments(),baseCH.getNumSegments());
+    assertEquals(exclRebalancedCH.getNumOwners(),baseCH.getNumOwners());
+    assertEquals(exclRebalancedCH.getMembers(),newMembers);
+    baseCH=exclRebalancedCH;
     iterationCount++;
   }
 }
