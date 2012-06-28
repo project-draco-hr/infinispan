@@ -1,7 +1,9 @@
 {
   SearchFactoryIntegrator searchFactory=cr.getComponent(SearchFactoryIntegrator.class);
   if (searchFactory == null) {
-    SearchConfiguration config=new SearchableCacheConfiguration(new Class[0],indexingProperties);
+    GlobalComponentRegistry globalComponentRegistry=cr.getGlobalComponentRegistry();
+    EmbeddedCacheManager uninitializedCacheManager=globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
+    SearchConfiguration config=new SearchableCacheConfiguration(new Class[0],indexingProperties,uninitializedCacheManager,cr);
     searchFactory=new SearchFactoryBuilder().configuration(config).buildSearchFactory();
     cr.registerComponent(searchFactory,SearchFactoryIntegrator.class);
   }

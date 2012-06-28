@@ -1,0 +1,14 @@
+{
+  this.context=context;
+  this.indexManager=indexManager;
+  this.cacheManager=context.requestService(CacheManagerServiceProvider.class);
+  final ComponentRegistry componentsRegistry=context.requestService(ComponentRegistryServiceProvider.class);
+  this.indexName=indexManager.getIndexName();
+  this.rpcManager=componentsRegistry.getComponent(RpcManager.class);
+  this.cacheName=componentsRegistry.getCacheName();
+  DistributionManager distributionManager=componentsRegistry.getComponent(DistributionManager.class);
+  if (distributionManager != null) {
+    hashService=distributionManager.getConsistentHash();
+  }
+  log.commandsBackendInitialized(indexName);
+}

@@ -1,0 +1,26 @@
+{
+  try {
+    createCacheManager();
+    createCacheManager();
+    assertIndexSize(0);
+    storeOn(caches.get(0),"k1",new Person("K. Firt","Is not a character from the matrix",1));
+    assertIndexSize(1);
+    storeOn(caches.get(1),"k2",new Person("K. Seycond","Is a pilot",1));
+    assertIndexSize(2);
+    storeOn(caches.get(0),"k3",new Person("K. Theerd","Forgot the fundamental laws",1));
+    assertIndexSize(3);
+    storeOn(caches.get(1),"k3",new Person("K. Overide","Impersonating Mr. Theerd",1));
+    assertIndexSize(3);
+    createCacheManager();
+    storeOn(caches.get(2),"k4",new Person("K. Forth","Dynamic Topology!",1));
+    assertIndexSize(4);
+    createCacheManager();
+    assertIndexSize(4);
+    killMasterNode();
+    storeOn(caches.get(2),"k5",new Person("K. Vife","Failover!",1));
+    assertIndexSize(5);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cacheManagers);
+  }
+}
