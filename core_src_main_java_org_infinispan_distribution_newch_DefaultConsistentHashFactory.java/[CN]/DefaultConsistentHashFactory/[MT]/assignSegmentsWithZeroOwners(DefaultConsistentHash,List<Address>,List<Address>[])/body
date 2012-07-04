@@ -5,24 +5,20 @@
   Map<Address,Integer> expectedPrimaryOwnedSegments=computeExpectedPrimaryOwned(newMembers,numSegments);
   Map<Address,Integer> expectedOwnedSegments=computeExpectedOwned(newMembers,actualNumOwners,numSegments);
   for (int i=0; i < numSegments; i++) {
-    if (ownerLists[i].size() == 0) {
+    if (segmentOwners[i].isEmpty()) {
       List<Address> newOwners=new ArrayList<Address>(actualNumOwners);
-      for (int j=0; j < newMembers.size(); j++) {
-        Address a=newMembers.get(j);
+      Address primaryOwner=null;
+      for (      Address a : newMembers) {
+        primaryOwner=a;
         if (stats.getPrimaryOwned(a) < expectedPrimaryOwnedSegments.get(a)) {
-          newOwners.add(a);
-          stats.incPrimaryOwned(a);
-          stats.incOwned(a);
           break;
         }
       }
-      if (newOwners.isEmpty()) {
-        log.debugf("Could not find a primary owner for segment %d, base ch = %s, new members = %s",i,baseDCH,newMembers);
-        throw new IllegalStateException("Could not find a primary owner!");
-      }
+      newOwners.add(primaryOwner);
+      stats.incPrimaryOwned(primaryOwner);
+      stats.incOwned(primaryOwner);
       if (actualNumOwners > 1) {
-        for (int j=0; j < newMembers.size(); j++) {
-          Address a=newMembers.get(j);
+        for (        Address a : newMembers) {
           if (stats.getOwned(a) < expectedOwnedSegments.get(a) && !newOwners.contains(a)) {
             newOwners.add(a);
             stats.incOwned(a);
@@ -30,7 +26,7 @@
           }
         }
       }
-      ownerLists[i]=newOwners;
+      segmentOwners[i]=newOwners;
     }
   }
 }

@@ -1,0 +1,11 @@
+{
+  Hash hashFunction=baseCH.getHashFunction();
+  List<Address> nodes=baseCH.getMembers();
+  CHStatistics stats=computeStatistics(baseCH,nodes);
+  List<Address>[] ownerLists=extractSegmentOwners(baseCH);
+  List<Address>[] intOwnerLists=extractSegmentOwners(baseCH);
+  addPrimaryOwners(nodes,baseCH.getNumSegments(),stats,ownerLists,intOwnerLists);
+  addBackupOwners(baseCH.getNumOwners(),nodes,baseCH.getNumSegments(),stats,ownerLists,intOwnerLists);
+  DefaultConsistentHash ch=new DefaultConsistentHash(hashFunction,baseCH.getNumSegments(),baseCH.getNumOwners(),nodes,ownerLists);
+  return ch.equals(baseCH) ? baseCH : ch;
+}

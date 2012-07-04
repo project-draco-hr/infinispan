@@ -1,0 +1,11 @@
+{
+  if (numOwners <= 0)   throw new IllegalArgumentException("The number of owners should be greater than 0");
+  int actualNumOwners=Math.min(numOwners,members.size());
+  List<Address>[] segmentOwners=new List[numSegments];
+  for (int i=0; i < numSegments; i++) {
+    segmentOwners[i]=new ArrayList<Address>(actualNumOwners);
+    segmentOwners[i].add(members.get(i % members.size()));
+  }
+  DefaultConsistentHash baseCH=new DefaultConsistentHash(hashFunction,numSegments,numOwners,members,segmentOwners);
+  return actualNumOwners > 1 ? rebalance(baseCH) : baseCH;
+}
