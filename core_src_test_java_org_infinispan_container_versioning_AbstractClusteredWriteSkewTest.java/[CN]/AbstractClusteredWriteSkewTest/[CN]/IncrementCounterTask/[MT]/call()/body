@@ -1,0 +1,25 @@
+{
+  while (lastValue < counterMaxValue && !Thread.interrupted()) {
+    try {
+      transactionManager.begin();
+      Integer value=cache.get("counter");
+      value=value + 1;
+      lastValue=value;
+      cache.put("counter",value);
+      transactionManager.commit();
+      unique=uniqueValuesSet.add(value);
+    }
+ catch (    Exception e) {
+      try {
+        if (transactionManager.getStatus() != Status.STATUS_NO_TRANSACTION)         transactionManager.rollback();
+      }
+ catch (      Throwable t) {
+        log.trace("Exception during rollback",t);
+      }
+    }
+ finally {
+      assertTrue(unique,"Duplicate value found in " + address(cache) + " (value="+ lastValue+ ")");
+    }
+  }
+  return unique;
+}
