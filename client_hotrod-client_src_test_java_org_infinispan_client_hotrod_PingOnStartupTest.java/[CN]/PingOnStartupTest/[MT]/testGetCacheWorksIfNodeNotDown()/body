@@ -2,11 +2,11 @@
   Properties props=new Properties();
   HotRodServer hotRodServer2=server(1);
   props.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer2.getPort());
-  props.put("infinispan.client.hotrod.ping_on_startup","false");
+  props.put("infinispan.client.hotrod.ping_on_startup","true");
+  props.put("timeBetweenEvictionRunsMillis","500");
   withRemoteCacheManager(new RemoteCacheManagerCallable(new RemoteCacheManager(props)){
     @Override public void call() throws Exception {
-      TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(rcm,"transportFactory");
-      assertEquals(1,tcpConnectionFactory.getServers().size());
+      rcm.getCache();
     }
   }
 );

@@ -4,20 +4,19 @@
   props.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer2.getPort() + ";localhost:"+ hotRodServer2.getPort());
   props.put("infinispan.client.hotrod.ping_on_startup","true");
   props.put("timeBetweenEvictionRunsMillis","500");
-  RemoteCacheManager remoteCacheManager=new RemoteCacheManager(props);
-  TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
-  for (int i=0; i < 10; i++) {
-    try {
-      if (tcpConnectionFactory.getServers().size() == 1) {
-        Thread.sleep(1000);
-      }
+  withRemoteCacheManager(new RemoteCacheManagerCallable(new RemoteCacheManager(props)){
+    @Override public void call() throws Exception {
+      TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(rcm,"transportFactory");
+      for (int i=0; i < 10; i++) {
+        if (tcpConnectionFactory.getServers().size() == 1) {
+          Thread.sleep(1000);
+        }
  else {
-        break;
+          break;
+        }
       }
-    }
-  finally {
-      remoteCacheManager.stop();
+      assertEquals(2,tcpConnectionFactory.getServers().size());
     }
   }
-  assertEquals(2,tcpConnectionFactory.getServers().size());
+);
 }
