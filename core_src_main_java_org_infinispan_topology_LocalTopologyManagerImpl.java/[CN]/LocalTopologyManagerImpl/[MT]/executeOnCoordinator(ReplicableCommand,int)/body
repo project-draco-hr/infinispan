@@ -1,0 +1,17 @@
+{
+  if (transport.isCoordinator()) {
+    try {
+      command.perform(null);
+    }
+ catch (    Throwable t) {
+      throw new CacheException("Error handling join request",t);
+    }
+  }
+  Address coordinator=transport.getCoordinator();
+  Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,timeout,false,null);
+  Response response=responseMap.get(coordinator);
+  if (response != null && !response.isSuccessful()) {
+    throw new CacheException("Bad response received from coordinator: " + response);
+  }
+  return (CacheTopology)((SuccessfulResponse)response).getResponseValue();
+}
