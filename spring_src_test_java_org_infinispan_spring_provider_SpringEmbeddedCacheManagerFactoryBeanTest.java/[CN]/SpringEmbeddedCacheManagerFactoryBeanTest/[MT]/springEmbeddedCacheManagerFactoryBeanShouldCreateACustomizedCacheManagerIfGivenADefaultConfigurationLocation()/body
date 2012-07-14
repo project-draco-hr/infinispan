@@ -1,17 +1,12 @@
 {
   final Resource infinispanConfig=new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,getClass());
-  final SpringEmbeddedCacheManagerFactoryBean objectUnderTest=new SpringEmbeddedCacheManagerFactoryBean(){
-    @Override protected EmbeddedCacheManager createCacheManager(    ConfigurationContainer template){
-      return TestCacheManagerFactory.createCacheManager(template.globalConfiguration,template.defaultConfiguration);
-    }
-  }
-;
+  final SpringEmbeddedCacheManagerFactoryBean objectUnderTest=new SpringEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setConfigurationFileLocation(infinispanConfig);
   objectUnderTest.afterPropertiesSet();
   final SpringEmbeddedCacheManager springEmbeddedCacheManager=objectUnderTest.getObject();
   assertNotNull("getObject() should have returned a valid SpringEmbeddedCacheManager, configured using the configuration file " + "set on SpringEmbeddedCacheManagerFactoryBean. However, it returned null.",springEmbeddedCacheManager);
   final SpringCache cacheDefinedInCustomConfiguration=springEmbeddedCacheManager.getCache(CACHE_NAME_FROM_CONFIGURATION_FILE);
-  final Configuration configuration=((Cache)cacheDefinedInCustomConfiguration.getNativeCache()).getConfiguration();
-  assertEquals("The cache named [" + CACHE_NAME_FROM_CONFIGURATION_FILE + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("+ CACHE_NAME_FROM_CONFIGURATION_FILE+ ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "+ "the configuration file when instantiating SpringEmbeddedCacheManager.",CacheMode.REPL_ASYNC,configuration.getCacheMode());
+  final org.infinispan.configuration.cache.Configuration configuration=((Cache)cacheDefinedInCustomConfiguration.getNativeCache()).getCacheConfiguration();
+  assertEquals("The cache named [" + CACHE_NAME_FROM_CONFIGURATION_FILE + "] is configured to have asynchonous replication cache mode. Yet, the cache returned from getCache("+ CACHE_NAME_FROM_CONFIGURATION_FILE+ ") has a different cache mode. Obviously, SpringEmbeddedCacheManagerFactoryBean did not use "+ "the configuration file when instantiating SpringEmbeddedCacheManager.",org.infinispan.configuration.cache.CacheMode.REPL_ASYNC,configuration.clustering().cacheMode());
   springEmbeddedCacheManager.stop();
 }

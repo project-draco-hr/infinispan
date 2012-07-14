@@ -1,10 +1,14 @@
 {
-  final ConfigurationContainer templateConfiguration=createTemplateConfiguration();
-  this.globalConfigurationOverrides.applyOverridesTo(templateConfiguration.globalConfiguration);
-  this.configurationOverrides.applyOverridesTo(templateConfiguration.defaultConfiguration);
-  final EmbeddedCacheManager nativeEmbeddedCacheManager=createCacheManager(templateConfiguration);
-  for (  final Map.Entry<String,Configuration> namedCacheConfig : templateConfiguration.namedCaches.entrySet()) {
-    nativeEmbeddedCacheManager.defineConfiguration(namedCacheConfig.getKey(),namedCacheConfig.getValue());
+  EmbeddedCacheManager cm;
+  if (configurationFileLocation != null) {
+    return new DefaultCacheManager(configurationFileLocation.getInputStream());
   }
-  return nativeEmbeddedCacheManager;
+ else {
+    final GlobalConfigurationBuilder globalCfgBuilder=new GlobalConfigurationBuilder();
+    final ConfigurationBuilder cacheCfgBuilder=new ConfigurationBuilder();
+    this.globalConfigurationOverrides.applyOverridesTo(globalCfgBuilder);
+    this.configurationOverrides.applyOverridesTo(cacheCfgBuilder);
+    cm=createCacheManager(globalCfgBuilder,cacheCfgBuilder);
+    return cm;
+  }
 }

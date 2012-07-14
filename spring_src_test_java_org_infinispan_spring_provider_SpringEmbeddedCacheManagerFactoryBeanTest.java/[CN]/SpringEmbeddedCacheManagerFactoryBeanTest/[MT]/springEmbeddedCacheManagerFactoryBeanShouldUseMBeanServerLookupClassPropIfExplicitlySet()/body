@@ -1,14 +1,9 @@
 {
-  final MBeanServerLookup expectedMBeanServerLookup=new MBeanServerLookup(){
-    @Override public MBeanServer getMBeanServer(    final Properties properties){
-      return null;
-    }
-  }
-;
+  final MBeanServerLookup expectedMBeanServerLookup=new PlatformMBeanServerLookup();
   final SpringEmbeddedCacheManagerFactoryBean objectUnderTest=new SpringEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setMBeanServerLookupClass(expectedMBeanServerLookup.getClass().getName());
   objectUnderTest.afterPropertiesSet();
   final SpringEmbeddedCacheManager springEmbeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",expectedMBeanServerLookup.getClass().getName(),springEmbeddedCacheManager.getNativeCacheManager().getGlobalConfiguration().getMBeanServerLookup());
+  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MBeanServerLookupClass. However, it didn't.",expectedMBeanServerLookup.getClass().getName(),springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().globalJmxStatistics().mbeanServerLookup().getClass().getName());
   springEmbeddedCacheManager.stop();
 }
