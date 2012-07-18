@@ -1,0 +1,17 @@
+{
+  Map<K,V> result=new HashMap<K,V>();
+  for (  Entry<Address,Response> e : responses.entrySet()) {
+    Response rsp=e.getValue();
+    if (rsp.isSuccessful() && rsp.isValid()) {
+      Map<K,V> r=(Map<K,V>)((SuccessfulResponse)rsp).getResponseValue();
+      result.putAll(r);
+    }
+ else     if (rsp instanceof ExceptionResponse) {
+      throw new CacheException("Reduce phase of MapReduce task on remote node " + e.getKey() + " threw Exception",((ExceptionResponse)rsp).getException());
+    }
+ else {
+      throw new CacheException("Reduce phase of MapReduce task on remote node " + e.getKey() + " failed ");
+    }
+  }
+  return result;
+}

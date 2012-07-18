@@ -1,0 +1,15 @@
+{
+  Map<Address,Response> results=new HashMap<Address,Response>();
+  for (  MapReduceFuture future : futures) {
+    Map<Address,Response> resultReduced;
+    try {
+      resultReduced=(Map<Address,Response>)future.get();
+      results.putAll(resultReduced);
+      log.debugf("Received result from future %s",resultReduced);
+    }
+ catch (    Exception e1) {
+      throw new CacheException("Could not retrieve MapReduceTask result from remote node ",e1);
+    }
+  }
+  return results;
+}

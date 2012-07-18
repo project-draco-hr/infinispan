@@ -1,0 +1,35 @@
+{
+  String taskId=mcc.getTaskId();
+  Reducer<KOut,VOut> combiner=mcc.getCombiner();
+  Map<KOut,List<VOut>> result=null;
+  if (combiner != null) {
+    result=new HashMap<KOut,List<VOut>>();
+    log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,localAddress);
+    MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+    try {
+      taskLifecycleService.onPreExecute(combiner);
+      Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
+      for (      Entry<KOut,List<VOut>> e : collectedValues.entrySet()) {
+        VOut combined=null;
+        List<VOut> list=e.getValue();
+        List<VOut> l=new LinkedList<VOut>();
+        if (list.size() > 1) {
+          combined=(VOut)combiner.reduce(e.getKey(),list.iterator());
+        }
+ else {
+          combined=list.get(0);
+        }
+        l.add(combined);
+        result.put(e.getKey(),l);
+        log.tracef("For m/r task %s combined %s to %s at %s",taskId,e.getKey(),combined,localAddress);
+      }
+    }
+  finally {
+      taskLifecycleService.onPostExecute(combiner);
+    }
+  }
+ else {
+    result=collector.collectedValues();
+  }
+  return result;
+}

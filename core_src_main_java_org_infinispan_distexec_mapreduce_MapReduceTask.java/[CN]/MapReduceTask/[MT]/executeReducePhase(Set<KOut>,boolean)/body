@@ -1,0 +1,33 @@
+{
+  RpcManager rpc=cache.getRpcManager();
+  String destinationCache=null;
+  if (emitCompositeIntermediateKeys) {
+    destinationCache=DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+  }
+ else {
+    destinationCache=taskId.toString();
+  }
+  Cache<Object,Object> dstCache=cache.getCacheManager().getCache(destinationCache);
+  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(),allMapPhasesResponses,emitCompositeIntermediateKeys);
+  Map<KOut,VOut> reduceResult=new HashMap<KOut,VOut>();
+  List<MapReduceFuture> reduceFutures=new ArrayList<MapReduceFuture>();
+  ReduceCommand<KOut,VOut> reduceCommand=null;
+  for (  Entry<Address,List<KOut>> e : keysToNodes.entrySet()) {
+    Address address=e.getKey();
+    List<KOut> keys=e.getValue();
+    if (address.equals(rpc.getAddress())) {
+      reduceCommand=buildReduceCommand(taskId.toString(),destinationCache,clone(reducer),keys,emitCompositeIntermediateKeys);
+      Map<KOut,VOut> reduceLocally=invokeReduceLocally(reduceCommand,dstCache);
+      reduceResult.putAll(reduceLocally);
+    }
+ else {
+      reduceCommand=buildReduceCommand(taskId.toString(),destinationCache,reducer,keys,emitCompositeIntermediateKeys);
+      MapReduceFuture future=invokeRemotely(reduceCommand,address);
+      reduceFutures.add(future);
+    }
+  }
+  Map<Address,Response> reducePhaseResults=extractResultsFromFutures(reduceFutures);
+  Map<KOut,VOut> responses=extractMapFromResponses(reducePhaseResults);
+  reduceResult.putAll(responses);
+  return reduceResult;
+}

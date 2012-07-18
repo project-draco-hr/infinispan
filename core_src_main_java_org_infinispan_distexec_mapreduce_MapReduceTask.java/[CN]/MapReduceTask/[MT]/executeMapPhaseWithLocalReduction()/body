@@ -1,0 +1,41 @@
+{
+  RpcManager rpc=cache.getRpcManager();
+  MapCombineCommand<KIn,VIn,KOut,VOut> cmd=null;
+  Map<Address,Response> mapPhaseResponses=new HashMap<Address,Response>();
+  Map<KOut,List<VOut>> mapPhasesResult=new HashMap<KOut,List<VOut>>();
+  List<MapReduceFuture> futures=new ArrayList<MapReduceFuture>();
+  if (inputTaskKeysEmpty()) {
+    cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,null,false,false);
+    Map<Address,Response> map=invokeEverywhere(cmd);
+    mapPhaseResponses.putAll(map);
+    Map<KOut,List<VOut>> localResult=invokeMapCombineLocallyForLocalReduction(cmd);
+    mapPhasesResult.putAll(localResult);
+  }
+ else {
+    Map<Address,List<KIn>> keysToNodes=mapKeysToNodes(keys);
+    for (    Entry<Address,List<KIn>> e : keysToNodes.entrySet()) {
+      Address address=e.getKey();
+      List<KIn> keys=e.getValue();
+      if (address.equals(rpc.getAddress())) {
+        cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),keys,false,false);
+        Map<KOut,List<VOut>> localResult=invokeMapCombineLocallyForLocalReduction(cmd);
+        mapPhasesResult.putAll(localResult);
+      }
+ else {
+        cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,keys,false,false);
+        MapReduceFuture future=invokeRemotely(cmd,address);
+        futures.add(future);
+      }
+    }
+    Map<Address,Response> resultsFromFutures=extractResultsFromFutures(futures);
+    mapPhaseResponses.putAll(resultsFromFutures);
+  }
+  Map<KOut,VOut> reducedResult=new HashMap<KOut,VOut>();
+  for (  Entry<Address,Response> response : mapPhaseResponses.entrySet()) {
+    mergeResponse(mapPhasesResult,response);
+  }
+  for (  Entry<KOut,List<VOut>> e : mapPhasesResult.entrySet()) {
+    reducedResult.put(e.getKey(),reducer.reduce(e.getKey(),e.getValue().iterator()));
+  }
+  return reducedResult;
+}

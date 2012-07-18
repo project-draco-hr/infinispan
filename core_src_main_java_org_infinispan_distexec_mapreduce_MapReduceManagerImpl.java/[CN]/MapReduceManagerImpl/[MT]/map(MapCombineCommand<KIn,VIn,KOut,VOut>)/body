@@ -1,0 +1,24 @@
+{
+  Cache<KIn,VIn> cache=cacheManager.getCache(mcc.getCacheName());
+  Set<KIn> keys=mcc.getKeys();
+  Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
+  boolean noInputKeys=keys == null || keys.isEmpty();
+  Collection<KIn> inputKeys=keys;
+  if (noInputKeys) {
+    inputKeys=filterNodeLocal(cache.keySet(),cache.getAdvancedCache().getDistributionManager());
+  }
+  log.tracef("For m/r task %s invoking mapper %s at %s",mcc.getTaskId(),mcc,localAddress);
+  MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+  DefaultCollector<KOut,VOut> collector=new DefaultCollector<KOut,VOut>();
+  try {
+    taskLifecycleService.onPreExecute(mapper);
+    for (    KIn key : inputKeys) {
+      VIn value=cache.get(key);
+      mapper.map(key,value,collector);
+    }
+  }
+  finally {
+    taskLifecycleService.onPostExecute(mapper);
+  }
+  return collector;
+}

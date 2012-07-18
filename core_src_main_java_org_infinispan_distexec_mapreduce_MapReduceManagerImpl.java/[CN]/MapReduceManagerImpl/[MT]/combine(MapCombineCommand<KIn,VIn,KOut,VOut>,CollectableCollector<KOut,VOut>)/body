@@ -1,0 +1,96 @@
+{
+  String taskId=mcc.getTaskId();
+  boolean emitCompositeIntermediateKeys=mcc.isEmitCompositeIntermediateKeys();
+  Reducer<KOut,VOut> combiner=mcc.getCombiner();
+  Set<KOut> mapPhaseKeys=new HashSet<KOut>();
+  Cache<Object,DeltaAwareList<VOut>> tmpCache=null;
+  if (emitCompositeIntermediateKeys) {
+    tmpCache=cacheManager.getCache(DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
+  }
+ else {
+    tmpCache=cacheManager.getCache(taskId);
+  }
+  if (tmpCache == null) {
+    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " not found on "+ localAddress);
+  }
+  DistributionManager dm=tmpCache.getAdvancedCache().getDistributionManager();
+  if (combiner != null) {
+    log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,localAddress);
+    MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+    Map<KOut,VOut> combinedMap=new ConcurrentHashMap<KOut,VOut>();
+    try {
+      taskLifecycleService.onPreExecute(combiner);
+      Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
+      for (      Entry<KOut,List<VOut>> e : collectedValues.entrySet()) {
+        List<VOut> list=e.getValue();
+        VOut combined=null;
+        if (list.size() > 1) {
+          combined=(VOut)combiner.reduce(e.getKey(),list.iterator());
+          combinedMap.put(e.getKey(),combined);
+        }
+ else {
+          combined=list.get(0);
+          combinedMap.put(e.getKey(),combined);
+        }
+        log.tracef("For m/r task %s combined %s to %s at %s",taskId,e.getKey(),combined,localAddress);
+      }
+    }
+  finally {
+      taskLifecycleService.onPostExecute(combiner);
+    }
+    Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dm,taskId,combinedMap.keySet(),emitCompositeIntermediateKeys);
+    TransactionManager tm=tmpCache.getAdvancedCache().getTransactionManager();
+    for (    Entry<Address,List<KOut>> entry : keysToNodes.entrySet()) {
+      List<KOut> keysHashedToAddress=entry.getValue();
+      try {
+        tm.begin();
+        log.tracef("For m/r task %s migrating intermediate keys %s to %s",taskId,keysHashedToAddress,entry.getKey());
+        for (        KOut key : keysHashedToAddress) {
+          VOut value=combinedMap.get(key);
+          DeltaAwareList<VOut> delta=new DeltaAwareList<VOut>(value);
+          if (emitCompositeIntermediateKeys) {
+            tmpCache.put(new IntermediateCompositeKey<KOut>(taskId,key),delta);
+          }
+ else {
+            tmpCache.put(key,delta);
+          }
+          mapPhaseKeys.add(key);
+        }
+        tm.commit();
+      }
+ catch (      Exception e) {
+        tm.rollback();
+        throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId,e);
+      }
+    }
+  }
+ else {
+    Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
+    Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dm,taskId,collectedValues.keySet(),emitCompositeIntermediateKeys);
+    TransactionManager tm=tmpCache.getAdvancedCache().getTransactionManager();
+    for (    Entry<Address,List<KOut>> entry : keysToNodes.entrySet()) {
+      List<KOut> keysHashedToAddress=entry.getValue();
+      try {
+        tm.begin();
+        log.tracef("For m/r task %s migrating intermediate keys %s to %s",taskId,keysHashedToAddress,entry.getKey());
+        for (        KOut key : keysHashedToAddress) {
+          List<VOut> value=collectedValues.get(key);
+          DeltaAwareList<VOut> delta=new DeltaAwareList<VOut>(value);
+          if (emitCompositeIntermediateKeys) {
+            tmpCache.put(new IntermediateCompositeKey<KOut>(taskId,key),delta);
+          }
+ else {
+            tmpCache.put(key,delta);
+          }
+          mapPhaseKeys.add(key);
+        }
+        tm.commit();
+      }
+ catch (      Exception e) {
+        tm.rollback();
+        throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId,e);
+      }
+    }
+  }
+  return mapPhaseKeys;
+}

@@ -1,105 +1,26 @@
 {
   if (mapper == null)   throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
   if (reducer == null)   throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
-  ComponentRegistry registry=cache.getComponentRegistry();
-  RpcManager rpc=cache.getRpcManager();
-  InvocationContextContainer icc=cache.getInvocationContextContainer();
-  DistributionManager dm=cache.getDistributionManager();
-  InterceptorChain invoker=registry.getComponent(InterceptorChain.class);
-  CommandsFactory factory=registry.getComponent(CommandsFactory.class);
-  MapReduceCommand cmd=null;
-  MapReduceCommand selfCmd=null;
-  Map<Address,Response> results=new HashMap<Address,Response>();
-  if (inputTaskKeysEmpty()) {
-    cmd=factory.buildMapReduceCommand(mapper,reducer,rpc.getAddress(),keys);
-    selfCmd=cmd;
+  if (distributeReducePhase()) {
+    boolean useCompositeKeys=useIntermediateSharedCache();
+    String intermediateCacheName=DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+    if (useIntermediatePerTaskCache()) {
+      intermediateCacheName=taskId.toString();
+    }
     try {
-      log.debugf("Invoking %s across entire cluster ",cmd);
-      Map<Address,Response> map=rpc.invokeRemotely(null,cmd,true,false);
-      log.debugf("Invoked %s across entire cluster, results are %s",cmd,map);
-      results.putAll(map);
+      executeTaskInit(intermediateCacheName);
+      Set<KOut> allMapPhasesResponses=executeMapPhase(useCompositeKeys);
+      return executeReducePhase(allMapPhasesResponses,useCompositeKeys);
     }
- catch (    Throwable e) {
-      throw new CacheException("Could not invoke MapReduce task on remote nodes ",e);
-    }
-  }
- else {
-    Map<Address,List<KIn>> keysToNodes=mapKeysToNodes();
-    log.debugf("Keys to nodes mapping is " + keysToNodes);
-    List<MapReduceFuture> futures=new ArrayList<MapReduceFuture>();
-    for (    Entry<Address,List<KIn>> e : keysToNodes.entrySet()) {
-      Address address=e.getKey();
-      List<KIn> keys=e.getValue();
-      if (address.equals(rpc.getAddress())) {
-        selfCmd=factory.buildMapReduceCommand(clone(mapper),clone(reducer),rpc.getAddress(),keys);
-      }
- else {
-        cmd=factory.buildMapReduceCommand(mapper,reducer,rpc.getAddress(),keys);
-        try {
-          log.debugf("Invoking %s on %s",cmd,address);
-          MapReduceFuture future=new MapReduceFuture();
-          futures.add(future);
-          rpc.invokeRemotelyInFuture(Collections.singleton(address),cmd,future);
-          log.debugf("Invoked %s on %s ",cmd,address);
-        }
- catch (        Exception ex) {
-          throw new CacheException("Could not invoke MapReduceTask on remote node " + address,ex);
-        }
-      }
-    }
-    for (    MapReduceFuture future : futures) {
-      Map<Address,Response> result;
-      try {
-        result=(Map<Address,Response>)future.get();
-        results.putAll(result);
-        log.debugf("Received result from future %s",result);
-      }
- catch (      Exception e1) {
-        throw new CacheException("Could not retrieve MapReduceTask result from remote node",e1);
-      }
-    }
-  }
-  boolean selfInvoke=selfCmd != null;
-  Object localCommandResult=null;
-  if (selfInvoke) {
-    log.debugf("Invoking %s locally",cmd);
-    selfCmd.init(factory,invoker,icc,dm,rpc.getAddress());
-    try {
-      localCommandResult=selfCmd.perform(null);
-      log.debugf("Invoked %s locally",cmd);
-    }
- catch (    Throwable e1) {
-      throw new CacheException("Could not invoke MapReduce task locally ",e1);
-    }
-  }
-  Map<KOut,List<VOut>> reduceMap=new HashMap<KOut,List<VOut>>();
-  for (  Entry<Address,Response> e : results.entrySet()) {
-    Response rsp=e.getValue();
-    if (rsp.isSuccessful() && rsp.isValid()) {
-      Map<KOut,VOut> reducedResponse=(Map<KOut,VOut>)((SuccessfulResponse)rsp).getResponseValue();
-      groupKeys(reduceMap,reducedResponse);
-    }
- else     if (rsp instanceof ExceptionResponse) {
-      throw new CacheException("MapReduce task on remote node " + e.getKey() + " threw Exception",((ExceptionResponse)rsp).getException());
-    }
- else {
-      throw new CacheException("MapReduce task on remote node " + e.getKey() + " failed ");
-    }
-  }
-  if (selfInvoke) {
-    groupKeys(reduceMap,(Map<KOut,VOut>)localCommandResult);
-  }
-  Map<KOut,VOut> result=new HashMap<KOut,VOut>();
-  MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
-  try {
-    taskLifecycleService.onPreExecute(reducer);
-    for (    Entry<KOut,List<VOut>> entry : reduceMap.entrySet()) {
-      VOut reduced=reducer.reduce(entry.getKey(),(entry.getValue()).iterator());
-      result.put(entry.getKey(),reduced);
-    }
-  }
   finally {
-    taskLifecycleService.onPostExecute(reducer);
+      if (useIntermediatePerTaskCache()) {
+        EmbeddedCacheManager cm=cache.getCacheManager();
+        cm.getCache(intermediateCacheName).clear();
+        cm.removeCache(intermediateCacheName);
+      }
+    }
   }
-  return result;
+ else {
+    return executeMapPhaseWithLocalReduction();
+  }
 }

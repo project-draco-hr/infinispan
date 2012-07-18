@@ -1,0 +1,35 @@
+{
+  Set<KOut> keys=reduceCommand.getKeys();
+  String taskId=reduceCommand.getTaskId();
+  Reducer<KOut,VOut> reducer=reduceCommand.getReducer();
+  boolean useIntermediateKeys=reduceCommand.isEmitCompositeIntermediateKeys();
+  boolean noInputKeys=keys == null || keys.isEmpty();
+  Cache<Object,List<VOut>> tmpCache=cacheManager.getCache(reduceCommand.getCacheName());
+  Map<KOut,VOut> result=new HashMap<KOut,VOut>();
+  if (noInputKeys) {
+    throw new IllegalStateException("Reduce phase of MapReduceTask " + taskId + " on node "+ localAddress+ " executed with empty input keys");
+  }
+ else {
+    MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+    log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,localAddress);
+    try {
+      taskLifecycleService.onPreExecute(reducer);
+      for (      KOut key : keys) {
+        List<VOut> value=null;
+        if (useIntermediateKeys) {
+          value=tmpCache.get(new IntermediateCompositeKey<KOut>(taskId,key));
+        }
+ else {
+          value=tmpCache.get(key);
+        }
+        VOut reduced=reducer.reduce(key,value.iterator());
+        result.put(key,reduced);
+        log.tracef("For m/r task %s reduced %s to %s at %s ",taskId,key,reduced,localAddress);
+      }
+    }
+  finally {
+      taskLifecycleService.onPostExecute(reducer);
+    }
+  }
+  return result;
+}

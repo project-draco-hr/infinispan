@@ -100,9 +100,13 @@ case TxCompletionNotificationCommand.COMMAND_ID:
 TxCompletionNotificationCommand ftx=(TxCompletionNotificationCommand)c;
 ftx.init(txTable,lockManager,recoveryManager);
 break;
-case MapReduceCommand.COMMAND_ID:
-MapReduceCommand mrc=(MapReduceCommand)c;
-mrc.init(this,interceptorChain,icc,distributionManager,cache.getAdvancedCache().getRpcManager().getAddress());
+case MapCombineCommand.COMMAND_ID:
+MapCombineCommand mrc=(MapCombineCommand)c;
+mrc.init(mapReduceManager);
+break;
+case ReduceCommand.COMMAND_ID:
+ReduceCommand reduceCommand=(ReduceCommand)c;
+reduceCommand.init(mapReduceManager);
 break;
 case DistributedExecuteCommand.COMMAND_ID:
 DistributedExecuteCommand dec=(DistributedExecuteCommand)c;
@@ -118,6 +122,9 @@ ccc.init(recoveryManager);
 break;
 case ApplyDeltaCommand.COMMAND_ID:
 break;
+case CreateCacheCommand.COMMAND_ID:
+CreateCacheCommand createCacheCommand=(CreateCacheCommand)c;
+createCacheCommand.init(cache.getCacheManager());
 default :
 ModuleCommandInitializer mci=moduleCommandInitializers.get(c.getCommandId());
 if (mci != null) {
