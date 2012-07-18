@@ -1,2 +1,15 @@
 {
+  MapReduceTask<String,String,String,Integer> task=invokeMapReduce(new String[]{"1","2","3"});
+  Future<Integer> future=task.executeAsynchronously(new Collator<String,Integer,Integer>(){
+    @Override public Integer collate(    Map<String,Integer> reducedResults){
+      int sum=0;
+      for (      Entry<String,Integer> e : reducedResults.entrySet()) {
+        sum+=e.getValue();
+      }
+      return sum;
+    }
+  }
+);
+  Integer totalWords=future.get();
+  assertWordCount(totalWords,13);
 }

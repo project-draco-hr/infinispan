@@ -1,20 +1,42 @@
 {
   Cache<KIn,VIn> cache=cacheManager.getCache(mcc.getCacheName());
   Set<KIn> keys=mcc.getKeys();
+  Set<KIn> inputKeysCopy=null;
   Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
-  boolean noInputKeys=keys == null || keys.isEmpty();
-  Collection<KIn> inputKeys=keys;
-  if (noInputKeys) {
-    inputKeys=filterNodeLocal(cache.keySet(),cache.getAdvancedCache().getDistributionManager());
+  DistributionManager dm=cache.getAdvancedCache().getDistributionManager();
+  boolean inputKeysSpecified=keys != null && !keys.isEmpty();
+  Set<KIn> inputKeys=keys;
+  if (!inputKeysSpecified) {
+    inputKeys=filterLocalPrimaryOwner(cache.keySet(),dm);
   }
-  log.tracef("For m/r task %s invoking mapper %s at %s",mcc.getTaskId(),mcc,localAddress);
+ else {
+    inputKeysCopy=new HashSet<KIn>(keys);
+  }
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
   DefaultCollector<KOut,VOut> collector=new DefaultCollector<KOut,VOut>();
+  log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,inputKeys);
   try {
     taskLifecycleService.onPreExecute(mapper);
     for (    KIn key : inputKeys) {
       VIn value=cache.get(key);
       mapper.map(key,value,collector);
+      if (inputKeysSpecified) {
+        inputKeysCopy.remove(key);
+      }
+    }
+    Set<KIn> keysFromCacheLoader=null;
+    if (inputKeysSpecified) {
+      keysFromCacheLoader=filterLocalPrimaryOwner(inputKeysCopy,dm);
+    }
+ else {
+      keysFromCacheLoader=filterLocalPrimaryOwner(loadAllKeysFromCacheLoaderUsingFilter(inputKeys),dm);
+    }
+    log.tracef("For m/r task %s cache loader input keys %s",mcc.getTaskId(),keysFromCacheLoader);
+    for (    KIn key : keysFromCacheLoader) {
+      VIn value=loadValueFromCacheLoader(key);
+      if (value != null) {
+        mapper.map(key,value,collector);
+      }
     }
   }
   finally {
