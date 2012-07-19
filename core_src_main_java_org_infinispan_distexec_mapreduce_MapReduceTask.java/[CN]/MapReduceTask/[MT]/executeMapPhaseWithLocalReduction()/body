@@ -34,8 +34,16 @@
   for (  Entry<Address,Response> response : mapPhaseResponses.entrySet()) {
     mergeResponse(mapPhasesResult,response);
   }
-  for (  Entry<KOut,List<VOut>> e : mapPhasesResult.entrySet()) {
-    reducedResult.put(e.getKey(),reducer.reduce(e.getKey(),e.getValue().iterator()));
+  MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+  log.tracef("For m/r task %s invoking %s locally",taskId,reducer);
+  try {
+    taskLifecycleService.onPreExecute(reducer);
+    for (    Entry<KOut,List<VOut>> e : mapPhasesResult.entrySet()) {
+      reducedResult.put(e.getKey(),reducer.reduce(e.getKey(),e.getValue().iterator()));
+    }
+  }
+  finally {
+    taskLifecycleService.onPostExecute(reducer);
   }
   return reducedResult;
 }
