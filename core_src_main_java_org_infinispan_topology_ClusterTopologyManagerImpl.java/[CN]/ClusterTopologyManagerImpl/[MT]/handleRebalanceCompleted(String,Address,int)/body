@@ -1,2 +1,10 @@
 {
+  RebalanceInfo rebalanceInfo=rebalanceStatusMap.get(cacheName);
+  if (rebalanceInfo == null || topologyId != rebalanceInfo.topologyId) {
+    throw new CacheException(String.format("%s: Received invalid rebalance confirmation from %s for " + "topology %s, rebalance status is %s",cacheName,node,topologyId,rebalanceInfo));
+  }
+  if (rebalanceInfo.confirmRebalance(node)) {
+    rebalancePolicy.onRebalanceCompleted(cacheName,topologyId);
+    rebalanceStatusMap.remove(rebalanceInfo);
+  }
 }

@@ -1,9 +1,15 @@
 {
-  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.LEAVE,transport.getAddress(),null);
+  CacheTopologyHandler handler=runningCaches.get(cacheName);
   try {
-    executeOnCoordinatorAsync(command);
+    handler.rebalance(topologyId,pendingCH);
   }
- catch (  Exception e) {
-    log.debugf(e,"Error sending the rebalance completed notification for cache %s to coordinator",cacheName);
+  finally {
+    ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.REBALANCE_CONFIRM,transport.getAddress(),null);
+    try {
+      executeOnCoordinatorAsync(command);
+    }
+ catch (    Exception e) {
+      log.debugf(e,"Error sending the rebalance completed notification for cache %s to coordinator",cacheName);
+    }
   }
 }

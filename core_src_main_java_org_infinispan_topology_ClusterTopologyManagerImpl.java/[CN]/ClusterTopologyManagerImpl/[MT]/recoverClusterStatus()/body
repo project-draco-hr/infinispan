@@ -1,0 +1,19 @@
+{
+  ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress());
+  Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout());
+  HashMap<String,List<CacheTopology>> clusterCacheMap=new HashMap<String,List<CacheTopology>>();
+  for (  Object o : statusResponses.values()) {
+    Map<String,CacheTopology> nodeStatus=(Map<String,CacheTopology>)o;
+    for (    Map.Entry<String,CacheTopology> e : nodeStatus.entrySet()) {
+      String cacheName=e.getKey();
+      CacheTopology cacheTopology=e.getValue();
+      List<CacheTopology> topologyList=clusterCacheMap.get(cacheName);
+      if (topologyList == null) {
+        topologyList=new ArrayList<CacheTopology>();
+        clusterCacheMap.put(cacheName,topologyList);
+      }
+      topologyList.add(cacheTopology);
+    }
+  }
+  return clusterCacheMap;
+}

@@ -1,0 +1,11 @@
+{
+  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.CH_UPDATE,transport.getAddress(),topologyId,currentCH,pendingCH);
+  executeOnClusterSync(command,getGlobalTimeout());
+  for (  Map.Entry<String,RebalanceInfo> e : rebalanceStatusMap.entrySet()) {
+    RebalanceInfo rebalanceInfo=e.getValue();
+    if (rebalanceInfo.updateMembers(pendingCH.getMembers())) {
+      rebalancePolicy.onRebalanceCompleted(cacheName,topologyId);
+      rebalanceStatusMap.remove(rebalanceInfo);
+    }
+  }
+}

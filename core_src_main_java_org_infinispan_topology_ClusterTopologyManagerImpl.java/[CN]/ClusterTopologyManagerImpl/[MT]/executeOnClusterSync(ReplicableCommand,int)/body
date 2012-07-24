@@ -1,0 +1,13 @@
+{
+  Map<Address,Response> responseMap=transport.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,false,null);
+  Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
+  for (  Map.Entry<Address,Response> entry : responseMap.entrySet()) {
+    Address address=entry.getKey();
+    Response response=entry.getValue();
+    if (!response.isSuccessful()) {
+      throw new CacheException("Unsuccessful response received from node " + address + ": "+ response);
+    }
+    responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
+  }
+  return responseValues;
+}

@@ -1,0 +1,26 @@
+{
+  this.clusterMembers=clusterMembers;
+  for (  Map.Entry<String,CacheStatus> e : cacheStatusMap.entrySet()) {
+    String cacheName=e.getKey();
+    CacheStatus cacheStatus=e.getValue();
+synchronized (cacheStatus) {
+      cacheStatus.joiners.retainAll(clusterMembers);
+      ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
+      if (currentCH == null)       continue;
+      ConsistentHash pendingCH=cacheStatus.cacheTopology.getPendingCH();
+      boolean currentMembersValid=clusterMembers.containsAll(currentCH.getMembers());
+      boolean pendingMembersValid=pendingCH == null || clusterMembers.containsAll(pendingCH.getMembers());
+      if (!currentMembersValid || !pendingMembersValid) {
+        int topologyId=cacheStatus.cacheTopology.getTopologyId();
+        List<Address> newMembers1=new ArrayList<Address>(currentCH.getMembers());
+        newMembers1.retainAll(clusterMembers);
+        ConsistentHash newCurrentCH=cacheStatus.chFactory.updateMembers(currentCH,newMembers1);
+        List<Address> newMembers=new ArrayList<Address>(pendingCH.getMembers());
+        newMembers.retainAll(clusterMembers);
+        ConsistentHash newPendingCH=cacheStatus.chFactory.updateMembers(pendingCH,newMembers);
+        cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
+        clusterTopologyManager.updateConsistentHash(cacheName,topologyId,newCurrentCH,newPendingCH);
+      }
+    }
+  }
+}
