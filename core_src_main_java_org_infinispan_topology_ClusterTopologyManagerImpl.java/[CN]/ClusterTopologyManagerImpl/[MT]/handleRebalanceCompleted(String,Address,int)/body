@@ -1,10 +1,10 @@
 {
+  log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d",cacheName,node,topologyId);
   RebalanceInfo rebalanceInfo=rebalanceStatusMap.get(cacheName);
   if (rebalanceInfo == null || topologyId != rebalanceInfo.topologyId) {
-    throw new CacheException(String.format("%s: Received invalid rebalance confirmation from %s for " + "topology %s, rebalance status is %s",cacheName,node,topologyId,rebalanceInfo));
+    throw new CacheException(String.format("%s: Received invalid rebalance confirmation from %s for " + "rebalance status is %s",cacheName,node,rebalanceInfo));
   }
   if (rebalanceInfo.confirmRebalance(node)) {
-    rebalancePolicy.onRebalanceCompleted(cacheName,topologyId);
-    rebalanceStatusMap.remove(rebalanceInfo);
+    onRebalanceCompleted(cacheName,topologyId,rebalanceInfo);
   }
 }

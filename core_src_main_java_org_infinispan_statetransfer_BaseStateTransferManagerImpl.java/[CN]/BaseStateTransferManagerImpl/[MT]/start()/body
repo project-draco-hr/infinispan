@@ -17,5 +17,8 @@
   }
   this.withTopology=globalCfg.transport().hasTopologyInfo();
   if (trace)   log.tracef("Starting state transfer manager on " + getAddress());
-  cacheViewsManager.join(cacheName,this);
+  int numSegments=configuration.clustering().hash().numVirtualNodes();
+  int numOwners=configuration.clustering().hash().numOwners();
+  int timeout=(int)configuration.clustering().stateTransfer().timeout();
+  localTopologyManager.join(cacheName,new CacheJoinInfo(DefaultConsistentHashFactory.class.getName(),MurmurHash3.class.getName(),numSegments,numOwners,timeout),this);
 }

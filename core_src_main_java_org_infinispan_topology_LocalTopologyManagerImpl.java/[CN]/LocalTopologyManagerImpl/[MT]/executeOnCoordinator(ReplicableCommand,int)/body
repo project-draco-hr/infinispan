@@ -1,16 +1,20 @@
 {
+  Response response;
   if (transport.isCoordinator()) {
     try {
-      command.perform(null);
+      gcr.wireDependencies(command);
+      response=(Response)command.perform(null);
     }
  catch (    Throwable t) {
       throw new CacheException("Error handling join request",t);
     }
   }
-  Address coordinator=transport.getCoordinator();
-  Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,timeout,false,null);
-  Response response=responseMap.get(coordinator);
-  if (response != null && !response.isSuccessful()) {
+ else {
+    Address coordinator=transport.getCoordinator();
+    Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,timeout,false,null);
+    response=responseMap.get(coordinator);
+  }
+  if (response == null || !response.isSuccessful()) {
     throw new CacheException("Bad response received from coordinator: " + response);
   }
   return ((SuccessfulResponse)response).getResponseValue();

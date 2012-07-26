@@ -1,22 +1,22 @@
 {
-  this.clusterMembers=clusterMembers;
+  this.clusterMembers=newClusterMembers;
   for (  Map.Entry<String,CacheStatus> e : cacheStatusMap.entrySet()) {
     String cacheName=e.getKey();
     CacheStatus cacheStatus=e.getValue();
 synchronized (cacheStatus) {
-      cacheStatus.joiners.retainAll(clusterMembers);
+      cacheStatus.joiners.retainAll(newClusterMembers);
       ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
       if (currentCH == null)       continue;
       ConsistentHash pendingCH=cacheStatus.cacheTopology.getPendingCH();
-      boolean currentMembersValid=clusterMembers.containsAll(currentCH.getMembers());
-      boolean pendingMembersValid=pendingCH == null || clusterMembers.containsAll(pendingCH.getMembers());
+      boolean currentMembersValid=newClusterMembers.containsAll(currentCH.getMembers());
+      boolean pendingMembersValid=pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
       if (!currentMembersValid || !pendingMembersValid) {
         int topologyId=cacheStatus.cacheTopology.getTopologyId();
         List<Address> newMembers1=new ArrayList<Address>(currentCH.getMembers());
-        newMembers1.retainAll(clusterMembers);
+        newMembers1.retainAll(newClusterMembers);
         ConsistentHash newCurrentCH=cacheStatus.chFactory.updateMembers(currentCH,newMembers1);
         List<Address> newMembers=new ArrayList<Address>(pendingCH.getMembers());
-        newMembers.retainAll(clusterMembers);
+        newMembers.retainAll(newClusterMembers);
         ConsistentHash newPendingCH=cacheStatus.chFactory.updateMembers(pendingCH,newMembers);
         cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
         clusterTopologyManager.updateConsistentHash(cacheName,topologyId,newCurrentCH,newPendingCH);

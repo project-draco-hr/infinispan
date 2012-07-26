@@ -1,0 +1,22 @@
+{
+switch (type) {
+case JOIN:
+    return clusterTopologyManager.handleJoin(cacheName,sender,joinInfo);
+case LEAVE:
+  clusterTopologyManager.handleLeave(cacheName,sender);
+return null;
+case REBALANCE_CONFIRM:
+clusterTopologyManager.handleRebalanceCompleted(cacheName,sender,topologyId);
+return null;
+case CH_UPDATE:
+localTopologyManager.handleConsistentHashUpdate(cacheName,currentCH,pendingCH);
+return null;
+case REBALANCE_START:
+localTopologyManager.handleRebalance(cacheName,topologyId,currentCH);
+return null;
+case GET_STATUS:
+return localTopologyManager.handleStatusRequest();
+default :
+throw new CacheException("Unknown cache topology control command type " + type);
+}
+}

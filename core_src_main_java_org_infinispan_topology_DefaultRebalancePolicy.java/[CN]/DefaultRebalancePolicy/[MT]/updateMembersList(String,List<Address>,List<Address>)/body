@@ -12,6 +12,7 @@ synchronized (cacheStatus) {
       ConsistentHash newCurrentCH=cacheStatus.chFactory.updateMembers(currentCH,newMembers);
       cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
       clusterTopologyManager.updateConsistentHash(cacheName,topologyId,newCurrentCH,newPendingCH);
+      startRebalance(cacheName,cacheStatus,newMembers);
     }
   }
   if (!joiners.isEmpty()) {
@@ -24,16 +25,20 @@ synchronized (cacheStatus) {
         log.debugf("Received join request from %s, but there is already a rebalance operation " + "in progress. The node will join once the current rebalance has ended.",joiners);
         return;
       }
-      int newTopologyId=topologyId + 1;
       List<Address> newMembers=cacheStatus.joiners;
       cacheStatus.joiners=new ArrayList<Address>();
       newMembers.addAll(cacheStatus.cacheTopology.getMembers());
       newMembers.retainAll(clusterMembers);
-      ConsistentHash balancedCH=cacheStatus.chFactory.rebalance(pendingCH);
-      cacheStatus.balancedCH=balancedCH;
-      ConsistentHash newPendingCH=cacheStatus.chFactory.union(currentCH,balancedCH);
-      cacheStatus.cacheTopology=new CacheTopology(newTopologyId,currentCH,newPendingCH);
-      clusterTopologyManager.updateConsistentHash(cacheName,newTopologyId,currentCH,newPendingCH);
+      if (currentCH == null) {
+        ConsistentHash balancedCH=cacheStatus.chFactory.create(cacheStatus.hash,cacheStatus.numOwners,cacheStatus.numSegments,newMembers);
+        cacheStatus.balancedCH=balancedCH;
+        int newTopologyId=topologyId + 1;
+        cacheStatus.cacheTopology=new CacheTopology(newTopologyId,balancedCH,null);
+        clusterTopologyManager.updateConsistentHash(cacheName,newTopologyId,balancedCH,null);
+      }
+ else {
+        startRebalance(cacheName,cacheStatus,newMembers);
+      }
     }
   }
 }

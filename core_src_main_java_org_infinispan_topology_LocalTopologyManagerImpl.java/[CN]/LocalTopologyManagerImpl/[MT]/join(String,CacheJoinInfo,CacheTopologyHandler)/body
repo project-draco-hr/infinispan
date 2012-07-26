@@ -1,17 +1,23 @@
 {
-  runningCaches.put(cacheName,stm);
+  log.debugf("Node %s joining cache %s",transport.getAddress(),cacheName);
+  LocalCacheStatus status=new LocalCacheStatus(stm);
+  runningCaches.put(cacheName,status);
   ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.JOIN,transport.getAddress(),joinInfo);
   int timeout=joinInfo.getTimeout();
   double endTime=System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
   while (true) {
     try {
-      return (CacheTopology)executeOnCoordinator(command,timeout);
+      CacheTopology initialTopology=(CacheTopology)executeOnCoordinator(command,timeout);
+      status.topology=initialTopology;
+      status.joinedLatch.countDown();
+      return initialTopology;
     }
  catch (    Exception e) {
       log.debugf(e,"Error sending join request for cache %s to coordinator",cacheName);
       if (endTime <= System.nanoTime()) {
         throw e;
       }
+      Thread.sleep(1000);
     }
   }
 }

@@ -1,11 +1,12 @@
 {
+  log.debugf("Updating cluster-wide consistent hash for cache %s, topology id = %d, currentCH = %s, pendingCH = %s",cacheName,topologyId,currentCH,pendingCH);
   ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.CH_UPDATE,transport.getAddress(),topologyId,currentCH,pendingCH);
   executeOnClusterSync(command,getGlobalTimeout());
-  for (  Map.Entry<String,RebalanceInfo> e : rebalanceStatusMap.entrySet()) {
-    RebalanceInfo rebalanceInfo=e.getValue();
-    if (rebalanceInfo.updateMembers(pendingCH.getMembers())) {
-      rebalancePolicy.onRebalanceCompleted(cacheName,topologyId);
-      rebalanceStatusMap.remove(rebalanceInfo);
+  RebalanceInfo rebalanceInfo=rebalanceStatusMap.get(cacheName);
+  if (rebalanceInfo != null) {
+    List<Address> members=pendingCH != null ? pendingCH.getMembers() : currentCH.getMembers();
+    if (rebalanceInfo.updateMembers(members)) {
+      onRebalanceCompleted(cacheName,topologyId,rebalanceInfo);
     }
   }
 }
