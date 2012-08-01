@@ -1,0 +1,48 @@
+{
+synchronized (this) {
+    List<Integer> segmentsToCancel=new ArrayList<Integer>(segments);
+    while (!segmentsToCancel.isEmpty()) {
+      int segmentId=segmentsToCancel.get(0);
+      log.debugf("Removing state transfer for segment %d",segmentId);
+      InboundTransferTask inboundTransfer=transfersBySegment.get(segmentId);
+      Set<Integer> cancelledSegments=new HashSet<Integer>(segmentsToCancel);
+      cancelledSegments.retainAll(inboundTransfer.getSegments());
+      segmentsToCancel.removeAll(cancelledSegments);
+      inboundTransfer.cancelSegments(cancelledSegments);
+    }
+  }
+  Set<Object> keysToRemove=new HashSet<Object>();
+  for (  InternalCacheEntry ice : dataContainer) {
+    Object key=ice.getKey();
+    if (segments.contains(currentCh.getSegment(key))) {
+      keysToRemove.add(key);
+    }
+  }
+  CacheStore cacheStore=getCacheStore();
+  if (cacheStore != null) {
+    try {
+      Set<Object> storedKeys=cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
+      for (      Object key : storedKeys) {
+        if (segments.contains(currentCh.getSegment(key))) {
+          keysToRemove.add(key);
+        }
+      }
+    }
+ catch (    CacheLoaderException e) {
+      e.printStackTrace();
+    }
+  }
+  if (!keysToRemove.isEmpty()) {
+    try {
+      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(true,keysToRemove);
+      InvocationContext ctx=icc.createNonTxInvocationContext();
+      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_LOCKING);
+      interceptorChain.invoke(ctx,invalidateCmd);
+      log.debugf("Invalidated %d keys, data container now has %d keys",keysToRemove.size(),dataContainer.size());
+      log.tracef("Invalidated keys: %s",keysToRemove);
+    }
+ catch (    CacheException e) {
+      log.failedToInvalidateKeys(e);
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  final boolean trace=log.isTraceEnabled();
+  LogFactory.pushNDC(cacheName,trace);
+  try {
+switch (type) {
+case GET_TRANSACTIONS:
+      return stateProvider.getTransactionsForSegments(getOrigin(),topologyId,segments);
+case START_STATE_TRANSFER:
+    stateProvider.startOutboundTransfer(getOrigin(),topologyId,segments);
+  return null;
+case CANCEL_STATE_TRANSFER:
+stateProvider.cancelOutboundTransfer(getOrigin(),topologyId,segments);
+return null;
+default :
+throw new CacheException("Unknown state request command type: " + type);
+}
+}
+ catch (Throwable t) {
+log.exceptionHandlingCommand(this,t);
+return null;
+}
+ finally {
+LogFactory.popNDC(trace);
+}
+}

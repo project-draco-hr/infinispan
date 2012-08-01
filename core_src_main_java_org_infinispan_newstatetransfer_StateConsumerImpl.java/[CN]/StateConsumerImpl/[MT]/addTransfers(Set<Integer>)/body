@@ -1,0 +1,33 @@
+{
+  log.debugf("Adding state transfer for segments: %s",segments);
+synchronized (this) {
+    Map<Address,Set<Integer>> segmentsBySource=new HashMap<Address,Set<Integer>>();
+    for (    int segmentId : segments) {
+      if (transfersBySegment.containsKey(segmentId)) {
+        throw new IllegalArgumentException("Cannot have more than one transfer for segment " + segmentId);
+      }
+      List<Address> owners=currentCh.locateOwnersForSegment(segmentId);
+      Address source=owners.get(owners.size() - 1);
+      Set<Integer> seg=segmentsBySource.get(source);
+      if (seg == null) {
+        seg=new HashSet<Integer>();
+        segmentsBySource.put(source,seg);
+      }
+      seg.add(segmentId);
+    }
+    for (    Address source : segmentsBySource.keySet()) {
+      Set<Integer> seg=segmentsBySource.get(source);
+      InboundTransferTask inboundTransfer=new InboundTransferTask(seg,source,topologyId,this,rpcManager,commandsFactory,timeout);
+      for (      int segmentId : seg) {
+        transfersBySegment.put(segmentId,inboundTransfer);
+      }
+      List<InboundTransferTask> inboundTransfers=transfersBySource.get(inboundTransfer.getSource());
+      if (inboundTransfers == null) {
+        inboundTransfers=new ArrayList<InboundTransferTask>();
+        transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
+      }
+      inboundTransfers.add(inboundTransfer);
+      executorService.submit(inboundTransfer);
+    }
+  }
+}

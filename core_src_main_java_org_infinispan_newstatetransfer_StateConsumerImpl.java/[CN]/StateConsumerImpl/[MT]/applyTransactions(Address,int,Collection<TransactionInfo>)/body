@@ -1,0 +1,15 @@
+{
+  log.debugf("Transferring %d transaction from %s",transactions.size(),sender);
+  for (  TransactionInfo transactionInfo : transactions) {
+    CacheTransaction tx=transactionTable.getLocalTransaction(transactionInfo.getGlobalTransaction());
+    if (tx == null) {
+      tx=transactionTable.getRemoteTransaction(transactionInfo.getGlobalTransaction());
+      if (tx == null) {
+        tx=transactionTable.createRemoteTransaction(transactionInfo.getGlobalTransaction(),transactionInfo.getModifications());
+      }
+    }
+    for (    Object key : transactionInfo.getLockedKeys()) {
+      tx.addBackupLockForKey(key);
+    }
+  }
+}

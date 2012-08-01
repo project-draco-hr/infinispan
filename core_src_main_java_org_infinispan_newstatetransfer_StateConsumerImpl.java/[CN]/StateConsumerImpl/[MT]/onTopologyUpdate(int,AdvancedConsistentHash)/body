@@ -1,0 +1,34 @@
+{
+  log.debugf("Received new CH: %s",newCh);
+  this.topologyId=topologyId;
+synchronized (this) {
+    if (currentCh == null) {
+      currentCh=newCh;
+      Set<Integer> segments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
+      addTransfers(segments);
+    }
+ else {
+      Set<Integer> oldSegments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
+      currentCh=newCh;
+      Set<Integer> newSegments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
+      Set<Integer> removedSegments=new HashSet<Integer>(oldSegments);
+      removedSegments.removeAll(newSegments);
+      Set<Integer> addedSegments=new HashSet<Integer>(newSegments);
+      addedSegments.removeAll(oldSegments);
+      discardSegments(removedSegments);
+      Set<Address> members=new HashSet<Address>(currentCh.getMembers());
+      for (      Address source : transfersBySource.keySet()) {
+        if (!members.contains(source)) {
+          List<InboundTransferTask> inboundTransfers=transfersBySource.get(source);
+          if (inboundTransfers != null) {
+            for (            InboundTransferTask inboundTransfer : inboundTransfers) {
+              removeTransfer(inboundTransfer);
+              addedSegments.addAll(inboundTransfer.getSegments());
+            }
+          }
+        }
+      }
+      addTransfers(addedSegments);
+    }
+  }
+}

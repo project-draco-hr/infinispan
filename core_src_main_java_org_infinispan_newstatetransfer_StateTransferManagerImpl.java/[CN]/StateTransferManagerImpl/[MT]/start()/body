@@ -1,0 +1,21 @@
+{
+  if (trace) {
+    log.tracef("Starting state transfer manager on " + rpcManager.getAddress());
+  }
+  CacheJoinInfo joinInfo=new CacheJoinInfo(DefaultConsistentHashFactory.class.getName(),configuration.clustering().hash().hash().getClass().getName(),configuration.clustering().hash().numVirtualNodes(),configuration.clustering().hash().numOwners(),0);
+  localTopologyManager.join(cacheName,joinInfo,new CacheTopologyHandler(){
+    private CacheTopology cacheTopology;
+    @Override public CacheTopology getStatus(){
+      return cacheTopology;
+    }
+    @Override public void updateConsistentHash(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
+      rebalance(topologyId,currentCH,pendingCH);
+    }
+    @Override public void rebalance(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
+      cacheTopology=new CacheTopology(topologyId,currentCH,pendingCH);
+      AdvancedConsistentHash ch=(AdvancedConsistentHash)(pendingCH != null ? pendingCH : currentCH);
+      onTopologyUpdate(topologyId,ch);
+    }
+  }
+);
+}
