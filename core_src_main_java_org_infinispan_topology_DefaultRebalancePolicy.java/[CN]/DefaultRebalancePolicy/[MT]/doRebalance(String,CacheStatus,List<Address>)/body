@@ -1,8 +1,9 @@
 {
   int newTopologyId=cacheStatus.cacheTopology.getTopologyId() + 1;
   ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
-  ConsistentHash updatedMembersCH=cacheStatus.chFactory.updateMembers(currentCH,newMembers);
-  ConsistentHash balancedCH=cacheStatus.chFactory.rebalance(updatedMembersCH);
+  ConsistentHashFactory chFactory=cacheStatus.joinInfo.getConsistentHashFactory();
+  ConsistentHash updatedMembersCH=chFactory.updateMembers(currentCH,newMembers);
+  ConsistentHash balancedCH=chFactory.rebalance(updatedMembersCH);
   cacheStatus.cacheTopology=new CacheTopology(newTopologyId,currentCH,balancedCH);
   clusterTopologyManager.rebalance(cacheName,newTopologyId,currentCH,balancedCH);
 }

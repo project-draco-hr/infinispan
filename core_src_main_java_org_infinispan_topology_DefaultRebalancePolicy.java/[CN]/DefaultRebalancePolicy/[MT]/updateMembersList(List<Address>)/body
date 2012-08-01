@@ -14,10 +14,10 @@ synchronized (cacheStatus) {
         int topologyId=cacheStatus.cacheTopology.getTopologyId();
         List<Address> newMembers1=new ArrayList<Address>(currentCH.getMembers());
         newMembers1.retainAll(newClusterMembers);
-        ConsistentHash newCurrentCH=cacheStatus.chFactory.updateMembers(currentCH,newMembers1);
+        ConsistentHash newCurrentCH=cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(currentCH,newMembers1);
         List<Address> newMembers=new ArrayList<Address>(pendingCH.getMembers());
         newMembers.retainAll(newClusterMembers);
-        ConsistentHash newPendingCH=cacheStatus.chFactory.updateMembers(pendingCH,newMembers);
+        ConsistentHash newPendingCH=cacheStatus.joinInfo.getConsistentHashFactory().updateMembers(pendingCH,newMembers);
         cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
         clusterTopologyManager.updateConsistentHash(cacheName,topologyId,newCurrentCH,newPendingCH);
       }
