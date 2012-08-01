@@ -1,10 +1,12 @@
 {
   log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s",cacheName,topologyId,pendingCH);
-  LocalCacheStatus status=runningCaches.get(cacheName);
-  status.joinedLatch.await();
-  CacheTopologyHandler handler=status.handler;
+  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  cacheStatus.joinedLatch.await();
+  cacheStatus.topology=new CacheTopology(topologyId,currentCH,pendingCH);
+  ConsistentHash unionCH=cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH,pendingCH);
+  CacheTopologyHandler handler=cacheStatus.handler;
   try {
-    handler.rebalance(topologyId,currentCH,pendingCH);
+    handler.rebalance(topologyId,currentCH,unionCH);
   }
   finally {
     ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.REBALANCE_CONFIRM,transport.getAddress(),topologyId,null,null);

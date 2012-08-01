@@ -1,5 +1,8 @@
 {
   log.debugf("Updating local consistent hash(es) for cache %s: currentCH = %s, pendingCH = %s",cacheName,currentCH,pendingCH);
-  CacheTopologyHandler handler=runningCaches.get(cacheName).handler;
-  handler.updateConsistentHash(topologyId,currentCH,pendingCH);
+  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  cacheStatus.topology=new CacheTopology(topologyId,currentCH,pendingCH);
+  ConsistentHash unionCH=cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH,pendingCH);
+  CacheTopologyHandler handler=cacheStatus.handler;
+  handler.updateConsistentHash(topologyId,currentCH,unionCH);
 }
