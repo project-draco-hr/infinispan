@@ -17,12 +17,14 @@
   if (paramsInput instanceof ExtendedRiverUnmarshaller)   ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
   try {
     Object[] args=cmdExt.readParameters(paramsInput);
-    return cmdExt.fromStream(methodId,args,type,cacheName);
+    CacheRpcCommand cacheRpcCommand=cmdExt.fromStream(methodId,args,type,cacheName);
+    if (cacheRpcCommand instanceof TopologyAffectedCommand) {
+      int topologyId=input.readInt();
+      ((TopologyAffectedCommand)cacheRpcCommand).setTopologyId(topologyId);
+    }
+    return cacheRpcCommand;
   }
- catch (  IOException e) {
-    throw e;
-  }
- finally {
+  finally {
     marshaller.finishObjectInput(paramsInput);
   }
 }
