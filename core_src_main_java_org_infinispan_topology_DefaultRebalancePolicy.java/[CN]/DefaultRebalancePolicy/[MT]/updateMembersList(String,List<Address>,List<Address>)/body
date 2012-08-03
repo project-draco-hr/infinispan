@@ -7,8 +7,11 @@ synchronized (cacheStatus) {
       ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
       ConsistentHash pendingCH=cacheStatus.cacheTopology.getPendingCH();
       List<Address> newMembers=new ArrayList<Address>(clusterMembers);
-      newMembers.retainAll(pendingCH.getMembers());
-      ConsistentHash newPendingCH=joinInfo.getConsistentHashFactory().updateMembers(pendingCH,newMembers);
+      ConsistentHash newPendingCH=null;
+      if (pendingCH != null) {
+        newMembers.retainAll(pendingCH.getMembers());
+        newPendingCH=joinInfo.getConsistentHashFactory().updateMembers(pendingCH,newMembers);
+      }
       newMembers.retainAll(currentCH.getMembers());
       ConsistentHash newCurrentCH=joinInfo.getConsistentHashFactory().updateMembers(currentCH,newMembers);
       cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);

@@ -3,14 +3,16 @@
     log.tracef("Starting state transfer manager on " + rpcManager.getAddress());
   }
   CacheJoinInfo joinInfo=new CacheJoinInfo(configuration.clustering().cacheMode().isReplicated() ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),configuration.clustering().hash().hash(),configuration.clustering().hash().numVirtualNodes(),configuration.clustering().hash().numOwners(),configuration.clustering().stateTransfer().timeout());
-  localTopologyManager.join(cacheName,joinInfo,new CacheTopologyHandler(){
+  CacheTopologyHandler handler=new CacheTopologyHandler(){
     @Override public void updateConsistentHash(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
-      rebalance(topologyId,currentCH,pendingCH);
-    }
-    @Override public void rebalance(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
       ConsistentHash ch=pendingCH != null ? pendingCH : currentCH;
       onTopologyUpdate(topologyId,ch);
     }
+    @Override public void rebalance(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
+      rebalance(topologyId,currentCH,pendingCH);
+    }
   }
-);
+;
+  CacheTopology cacheTopology=localTopologyManager.join(cacheName,joinInfo,handler);
+  handler.updateConsistentHash(cacheTopology.getTopologyId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
 }

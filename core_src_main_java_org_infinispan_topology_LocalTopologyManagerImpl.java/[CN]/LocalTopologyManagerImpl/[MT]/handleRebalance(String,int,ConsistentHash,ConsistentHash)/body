@@ -1,6 +1,10 @@
 {
-  log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s",cacheName,topologyId,pendingCH);
   LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  if (cacheStatus == null) {
+    log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally",topologyId,cacheName);
+    return;
+  }
+  log.debugf("Starting local rebalance for cache %s, topology id = %d, new CH = %s",cacheName,topologyId,pendingCH);
   cacheStatus.joinedLatch.await();
   cacheStatus.topology=new CacheTopology(topologyId,currentCH,pendingCH);
   ConsistentHash unionCH=cacheStatus.joinInfo.getConsistentHashFactory().union(currentCH,pendingCH);
