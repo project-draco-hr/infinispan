@@ -1,0 +1,16 @@
+{
+  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  if (cacheStatus == null) {
+    log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",cacheTopology.getTopologyId(),cacheName);
+    return;
+  }
+  log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",cacheName,cacheTopology);
+  cacheStatus.topology=cacheTopology;
+  ConsistentHash unionCH=null;
+  if (cacheTopology.getPendingCH() != null) {
+    unionCH=cacheStatus.joinInfo.getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
+  }
+  CacheTopologyHandler handler=cacheStatus.handler;
+  CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getCurrentCH(),unionCH);
+  handler.updateConsistentHash(unionTopology);
+}

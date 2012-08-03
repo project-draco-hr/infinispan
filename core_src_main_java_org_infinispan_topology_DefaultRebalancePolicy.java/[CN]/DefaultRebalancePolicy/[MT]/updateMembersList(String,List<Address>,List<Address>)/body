@@ -15,7 +15,7 @@ synchronized (cacheStatus) {
       newMembers.retainAll(currentCH.getMembers());
       ConsistentHash newCurrentCH=joinInfo.getConsistentHashFactory().updateMembers(currentCH,newMembers);
       cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
-      clusterTopologyManager.updateConsistentHash(cacheName,topologyId,newCurrentCH,newPendingCH);
+      clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
       startRebalance(cacheName,cacheStatus,newMembers);
     }
   }
@@ -37,7 +37,7 @@ synchronized (cacheStatus) {
         ConsistentHash balancedCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),newMembers);
         int newTopologyId=topologyId + 1;
         cacheStatus.cacheTopology=new CacheTopology(newTopologyId,balancedCH,null);
-        clusterTopologyManager.updateConsistentHash(cacheName,newTopologyId,balancedCH,null);
+        clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
       }
  else {
         startRebalance(cacheName,cacheStatus,newMembers);
