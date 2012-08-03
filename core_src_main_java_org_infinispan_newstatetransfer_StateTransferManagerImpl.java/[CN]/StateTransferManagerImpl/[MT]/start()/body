@@ -5,11 +5,12 @@
   CacheJoinInfo joinInfo=new CacheJoinInfo(configuration.clustering().cacheMode().isReplicated() ? new ReplicatedConsistentHashFactory() : new DefaultConsistentHashFactory(),configuration.clustering().hash().hash(),configuration.clustering().hash().numVirtualNodes(),configuration.clustering().hash().numOwners(),configuration.clustering().stateTransfer().timeout());
   CacheTopologyHandler handler=new CacheTopologyHandler(){
     @Override public void updateConsistentHash(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
-      ConsistentHash ch=pendingCH != null ? pendingCH : currentCH;
-      onTopologyUpdate(topologyId,ch);
+      rebalance(topologyId,currentCH,pendingCH);
     }
     @Override public void rebalance(    int topologyId,    ConsistentHash currentCH,    ConsistentHash pendingCH){
-      rebalance(topologyId,currentCH,pendingCH);
+      distributionManager.setCacheTopology(new CacheTopology(topologyId,currentCH,pendingCH));
+      ConsistentHash ch=pendingCH != null ? pendingCH : currentCH;
+      onTopologyUpdate(topologyId,ch);
     }
   }
 ;
