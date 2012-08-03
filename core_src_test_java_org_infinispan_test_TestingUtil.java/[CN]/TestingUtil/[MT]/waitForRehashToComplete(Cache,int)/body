@@ -2,11 +2,12 @@
   LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
   int gracetime=30000;
   long giveup=System.currentTimeMillis() + gracetime;
-  CacheViewsManager cacheViewsManager=TestingUtil.extractGlobalComponent(cache.getCacheManager(),CacheViewsManager.class);
+  LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(cache.getCacheManager(),LocalTopologyManager.class);
   RpcManager rpcManager=TestingUtil.extractComponent(cache,RpcManager.class);
-  while (cacheViewsManager.getCommittedView(cache.getName()).getMembers().size() != groupSize) {
+  CacheTopology cacheTopology=localTopologyManager.getCacheTopology(cache.getName());
+  while (cacheTopology.getCurrentCH().getMembers().size() != groupSize) {
     if (System.currentTimeMillis() > giveup) {
-      String message=String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",rpcManager.getAddress(),groupSize,cacheViewsManager.getCommittedView(cache.getName()));
+      String message=String.format("Timed out waiting for rehash to complete on node %s, expected member count %s, current member count is %s!",rpcManager.getAddress(),groupSize,cacheTopology.getCurrentCH());
       log.error(message);
       throw new RuntimeException(message);
     }
