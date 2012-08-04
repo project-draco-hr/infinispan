@@ -10,14 +10,14 @@
   txCoordinator.prepare(localTx);
   final StateTransferLock blockFirst=TestingUtil.extractComponent(failOnOriginator ? c1 : c2,StateTransferLock.class);
   final StateTransferLock blockSecond=TestingUtil.extractComponent(failOnOriginator ? c2 : c1,StateTransferLock.class);
-  blockFirst.blockNewTransactions(1000);
+  blockFirst.acquireTTExclusiveLock();
   Thread worker=new Thread("RehasherSim,StaleLocksWithCommitDuringStateTransferTest"){
     @Override public void run(){
       try {
         Thread.sleep(1000);
-        blockSecond.blockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-        blockFirst.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
-        blockSecond.unblockNewTransactions(BLOCKING_CACHE_VIEW_ID);
+        blockSecond.acquireTTExclusiveLock();
+        blockFirst.releaseTTExclusiveLock();
+        blockSecond.releaseTTExclusiveLock();
       }
  catch (      InterruptedException e) {
         log.errorf(e,"Error blocking/unblocking transactions");
