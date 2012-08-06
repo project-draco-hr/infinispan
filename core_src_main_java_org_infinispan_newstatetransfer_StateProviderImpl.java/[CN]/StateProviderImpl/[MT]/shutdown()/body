@@ -1,8 +1,9 @@
 {
-  for (  Address destination : transfersByDestination.keySet()) {
-    List<OutboundTransferTask> outboundTransferTasks=transfersByDestination.get(destination);
-    if (outboundTransferTasks != null) {
-      for (      OutboundTransferTask outboundTransfer : outboundTransferTasks) {
+synchronized (transfersByDestination) {
+    for (Iterator<List<OutboundTransferTask>> it=transfersByDestination.values().iterator(); it.hasNext(); ) {
+      List<OutboundTransferTask> transfers=it.next();
+      it.remove();
+      for (      OutboundTransferTask outboundTransfer : transfers) {
         outboundTransfer.cancel();
       }
     }

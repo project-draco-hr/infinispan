@@ -3,14 +3,6 @@
     log.tracef("Discarding the received cache entries because they do not belong to this node.");
     return;
   }
-  InboundTransferTask inboundTransfer=transfersBySegment.get(segmentId);
-  if (inboundTransfer != null) {
-    inboundTransfer.onStateReceived(segmentId,cacheEntries.size());
-  }
- else {
-    log.debugf("Received unsolicited state for segment %d from node %s",segmentId,sender);
-    return;
-  }
   log.debugf("Applying new state for segment %d from %s: received %d cache entries",segmentId,sender,cacheEntries.size());
   if (trace) {
     List<Object> keys=new ArrayList<Object>(cacheEntries.size());
@@ -30,6 +22,17 @@
  catch (    Exception ex) {
       log.problemApplyingStateForKey(ex.getMessage(),e.getKey());
     }
+  }
+  InboundTransferTask inboundTransfer;
+synchronized (this) {
+    inboundTransfer=transfersBySegment.get(segmentId);
+  }
+  if (inboundTransfer != null) {
+    inboundTransfer.onStateReceived(segmentId,cacheEntries.size());
+  }
+ else {
+    log.debugf("Received unsolicited state for segment %d from node %s",segmentId,sender);
+    return;
   }
   if (trace) {
     log.tracef("After applying state data container has %d keys",dataContainer.size());

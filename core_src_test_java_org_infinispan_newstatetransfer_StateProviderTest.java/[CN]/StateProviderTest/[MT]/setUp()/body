@@ -1,0 +1,18 @@
+{
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.clustering().invocationBatching().enable().clustering().cacheMode(CacheMode.DIST_SYNC).clustering().stateTransfer().timeout(10000).versioning().enable().scheme(VersioningScheme.SIMPLE).locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
+  configuration=cb.build();
+  ThreadFactory threadFactory=new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      return new Thread(r);
+    }
+  }
+;
+  pooledExecutorService=new ThreadPoolExecutor(10,20,0L,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(),threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
+  rpcManager=mock(RpcManager.class);
+  commandsFactory=mock(CommandsFactory.class);
+  cacheLoaderManager=mock(CacheLoaderManager.class);
+  dataContainer=mock(DataContainer.class);
+  transactionTable=mock(TransactionTable.class);
+  stateTransferLock=mock(StateTransferLock.class);
+}

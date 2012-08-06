@@ -1,12 +1,13 @@
 {
-  this.topologyId=topologyId;
   currentCh=ch;
   Set<Address> members=new HashSet<Address>(ch.getMembers());
-  for (  Address destination : transfersByDestination.keySet()) {
-    if (!members.contains(destination)) {
-      List<OutboundTransferTask> outboundTransfers=transfersByDestination.remove(destination);
-      for (      OutboundTransferTask outboundTransfer : outboundTransfers) {
-        outboundTransfer.cancel();
+synchronized (transfersByDestination) {
+    for (    Address destination : transfersByDestination.keySet()) {
+      if (!members.contains(destination)) {
+        List<OutboundTransferTask> transfers=transfersByDestination.remove(destination);
+        for (        OutboundTransferTask outboundTransfer : transfers) {
+          outboundTransfer.cancel();
+        }
       }
     }
   }

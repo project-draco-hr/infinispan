@@ -1,15 +1,15 @@
 {
-  try {
-    stateTransferLock.acquireTTExclusiveLock();
-    List<TransactionInfo> transactions=new ArrayList<TransactionInfo>();
-    if (transactionTable != null) {
+  List<TransactionInfo> transactions=new ArrayList<TransactionInfo>();
+  if (transactionTable != null) {
+    try {
+      stateTransferLock.acquireTTExclusiveLock();
       collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments);
       collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments);
       log.debugf("Found %d transfer to transfer",transactions.size());
     }
-    return transactions;
-  }
   finally {
-    stateTransferLock.releaseTTExclusiveLock();
+      stateTransferLock.releaseTTExclusiveLock();
+    }
   }
+  return transactions;
 }

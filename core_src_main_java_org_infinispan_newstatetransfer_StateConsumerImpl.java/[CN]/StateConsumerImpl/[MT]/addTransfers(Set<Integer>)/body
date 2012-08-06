@@ -8,12 +8,12 @@ synchronized (this) {
       }
       List<Address> owners=currentCh.locateOwnersForSegment(segmentId);
       Address source=owners.get(owners.size() - 1);
-      Set<Integer> seg=segmentsBySource.get(source);
-      if (seg == null) {
-        seg=new HashSet<Integer>();
-        segmentsBySource.put(source,seg);
+      Set<Integer> segs=segmentsBySource.get(source);
+      if (segs == null) {
+        segs=new HashSet<Integer>();
+        segmentsBySource.put(source,segs);
       }
-      seg.add(segmentId);
+      segs.add(segmentId);
     }
     for (    Address source : segmentsBySource.keySet()) {
       Set<Integer> seg=segmentsBySource.get(source);
@@ -28,7 +28,7 @@ synchronized (this) {
       }
       inboundTransfers.add(inboundTransfer);
       inboundTransfer.getTransactions();
-      executorService.submit(inboundTransfer);
+      inboundTransfer.requestSegments();
     }
   }
 }
