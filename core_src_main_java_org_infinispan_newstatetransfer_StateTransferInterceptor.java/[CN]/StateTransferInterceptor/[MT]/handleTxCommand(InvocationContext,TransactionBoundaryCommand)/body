@@ -1,9 +1,20 @@
 {
-  stateTransferLock.acquireTTSharedLock();
   try {
-    return invokeNextInterceptor(ctx,command);
+    stateTransferLock.commandsSharedLock();
+    try {
+      stateTransferLock.transactionsSharedLock();
+      try {
+        return invokeNextInterceptor(ctx,command);
+      }
+  finally {
+        stateTransferLock.transactionsSharedUnlock();
+      }
+    }
+  finally {
+      stateTransferLock.commandsSharedUnlock();
+    }
   }
   finally {
-    stateTransferLock.releaseTTSharedLock();
+    forwardCommand(ctx,command);
   }
 }

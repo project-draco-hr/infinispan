@@ -1,0 +1,19 @@
+{
+  if (command instanceof TopologyAffectedCommand) {
+    try {
+      stateTransferLock.commandsSharedLock();
+      try {
+        return invokeNextInterceptor(ctx,command);
+      }
+  finally {
+        stateTransferLock.commandsSharedUnlock();
+      }
+    }
+  finally {
+      forwardCommand(ctx,command);
+    }
+  }
+ else {
+    return invokeNextInterceptor(ctx,command);
+  }
+}

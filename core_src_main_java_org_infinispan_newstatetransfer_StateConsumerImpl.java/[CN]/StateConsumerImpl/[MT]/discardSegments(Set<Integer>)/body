@@ -4,11 +4,13 @@ synchronized (this) {
     while (!segmentsToCancel.isEmpty()) {
       int segmentId=segmentsToCancel.get(0);
       log.debugf("Removing state transfer for segment %d",segmentId);
-      InboundTransferTask inboundTransfer=transfersBySegment.get(segmentId);
-      Set<Integer> cancelledSegments=new HashSet<Integer>(segmentsToCancel);
-      cancelledSegments.retainAll(inboundTransfer.getSegments());
-      segmentsToCancel.removeAll(cancelledSegments);
-      inboundTransfer.cancelSegments(cancelledSegments);
+      InboundTransferTask inboundTransfer=transfersBySegment.remove(segmentId);
+      if (inboundTransfer != null) {
+        Set<Integer> cancelledSegments=new HashSet<Integer>(segmentsToCancel);
+        cancelledSegments.retainAll(inboundTransfer.getSegments());
+        segmentsToCancel.removeAll(cancelledSegments);
+        inboundTransfer.cancelSegments(cancelledSegments);
+      }
     }
   }
   Set<Object> keysToRemove=new HashSet<Object>();

@@ -1,11 +1,11 @@
 {
   log.debugf("Received new CH: %s",newCh);
   this.topologyId=topologyId;
+  Set<Integer> addedSegments=null;
   if (currentCh == null) {
     currentCh=newCh;
     if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-      Set<Integer> segments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
-      addTransfers(segments);
+      addedSegments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
     }
   }
  else {
@@ -14,10 +14,10 @@
     Set<Integer> newSegments=currentCh.getSegmentsForOwner(rpcManager.getAddress());
     Set<Integer> removedSegments=new HashSet<Integer>(oldSegments);
     removedSegments.removeAll(newSegments);
-    Set<Integer> addedSegments=new HashSet<Integer>(newSegments);
-    addedSegments.removeAll(oldSegments);
     discardSegments(removedSegments);
     if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
+      addedSegments=new HashSet<Integer>(newSegments);
+      addedSegments.removeAll(oldSegments);
       Set<Address> members=new HashSet<Address>(currentCh.getMembers());
 synchronized (this) {
         for (        Address source : transfersBySource.keySet()) {
@@ -34,7 +34,15 @@ synchronized (this) {
           }
         }
       }
+    }
+  }
+  if (addedSegments != null) {
+    stateTransferLock.commandsExclusiveLock();
+    try {
       addTransfers(addedSegments);
+    }
+  finally {
+      stateTransferLock.commandsExclusiveUnlock();
     }
   }
 }

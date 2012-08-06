@@ -1,3 +1,14 @@
 {
-  return invokeNextInterceptor(ctx,command);
+  try {
+    stateTransferLock.commandsSharedLock();
+    try {
+      return invokeNextInterceptor(ctx,command);
+    }
+  finally {
+      stateTransferLock.commandsSharedUnlock();
+    }
+  }
+  finally {
+    forwardCommand(ctx,command);
+  }
 }
