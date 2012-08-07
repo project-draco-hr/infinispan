@@ -8,9 +8,18 @@
       rebalance(cacheTopology);
     }
     @Override public void rebalance(    CacheTopology cacheTopology){
+      if (groupManager != null) {
+        ConsistentHash currentCH=cacheTopology.getCurrentCH();
+        currentCH=new GroupingConsistentHash(currentCH,groupManager);
+        ConsistentHash pendingCH=cacheTopology.getPendingCH();
+        if (pendingCH != null) {
+          pendingCH=new GroupingConsistentHash(pendingCH,groupManager);
+        }
+        cacheTopology=new CacheTopology(cacheTopology.getTopologyId(),currentCH,pendingCH);
+      }
+      topologyId=cacheTopology.getTopologyId();
       distributionManager.setCacheTopology(cacheTopology);
-      ConsistentHash ch=cacheTopology.getWriteConsistentHash();
-      onTopologyUpdate(topologyId,ch);
+      onTopologyUpdate(topologyId,cacheTopology.getReadConsistentHash(),cacheTopology.getWriteConsistentHash());
     }
   }
 ;

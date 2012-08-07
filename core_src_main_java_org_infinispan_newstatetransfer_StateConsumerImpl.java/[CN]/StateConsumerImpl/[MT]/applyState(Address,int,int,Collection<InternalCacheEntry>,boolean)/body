@@ -1,0 +1,40 @@
+{
+  if (rCh == null || !rCh.locateOwnersForSegment(segmentId).contains(rpcManager.getAddress())) {
+    log.tracef("Discarding the received cache entries because they do not belong to this node.");
+    return;
+  }
+  log.debugf("Applying new state for segment %d from %s: received %d cache entries",segmentId,sender,cacheEntries.size());
+  if (trace) {
+    List<Object> keys=new ArrayList<Object>(cacheEntries.size());
+    for (    InternalCacheEntry e : cacheEntries) {
+      keys.add(e.getKey());
+    }
+    log.tracef("Received keys: %s",keys);
+  }
+  for (  InternalCacheEntry e : cacheEntries) {
+    InvocationContext ctx=icc.createInvocationContext(false,1);
+    ctx.setFlags(CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
+    try {
+      PutKeyValueCommand put=useVersionedPut ? commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),e.getVersion(),ctx.getFlags()) : commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),ctx.getFlags());
+      put.setPutIfAbsent(true);
+      interceptorChain.invoke(ctx,put);
+    }
+ catch (    Exception ex) {
+      log.problemApplyingStateForKey(ex.getMessage(),e.getKey());
+    }
+  }
+  InboundTransferTask inboundTransfer;
+synchronized (this) {
+    inboundTransfer=transfersBySegment.get(segmentId);
+  }
+  if (inboundTransfer != null) {
+    inboundTransfer.onStateReceived(segmentId,isLastChunk);
+  }
+ else {
+    log.debugf("Received unsolicited state for segment %d from node %s",segmentId,sender);
+    return;
+  }
+  if (trace) {
+    log.tracef("After applying state data container has %d keys",dataContainer.size());
+  }
+}

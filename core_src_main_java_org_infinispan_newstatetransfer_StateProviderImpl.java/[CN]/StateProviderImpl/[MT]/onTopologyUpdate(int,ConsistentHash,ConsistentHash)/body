@@ -1,0 +1,14 @@
+{
+  this.rCh=rCh;
+  Set<Address> members=new HashSet<Address>(wCh.getMembers());
+synchronized (transfersByDestination) {
+    for (    Address destination : transfersByDestination.keySet()) {
+      if (!members.contains(destination)) {
+        List<OutboundTransferTask> transfers=transfersByDestination.remove(destination);
+        for (        OutboundTransferTask outboundTransfer : transfers) {
+          outboundTransfer.cancel();
+        }
+      }
+    }
+  }
+}

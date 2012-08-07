@@ -5,7 +5,7 @@
         return;
       }
       Object key=ice.getKey();
-      int segmentId=ch.getSegment(key);
+      int segmentId=rCh.getSegment(key);
       if (segments.contains(segmentId)) {
         sendEntry(ice,segmentId);
       }
@@ -21,7 +21,7 @@
           if (isCancelled) {
             return;
           }
-          int segmentId=ch.getSegment(key);
+          int segmentId=rCh.getSegment(key);
           if (segments.contains(segmentId)) {
             try {
               InternalCacheEntry ice=cacheStore.load(key);
@@ -30,13 +30,13 @@
               }
             }
  catch (            CacheLoaderException e) {
-              log.failedLoadingValueFromCacheStore(key);
+              log.failedLoadingValueFromCacheStore(key,e);
             }
           }
         }
       }
  catch (      CacheLoaderException e) {
-        e.printStackTrace();
+        log.failedLoadingKeysFromCacheStore(e);
       }
     }
  else {
@@ -49,10 +49,7 @@
         return;
       }
       List<InternalCacheEntry> entries=entriesBySegment.get(segmentId);
-      sendEntries(entries,segmentId);
-      if (!entries.isEmpty()) {
-        sendEntries(Collections.<InternalCacheEntry>emptyList(),segmentId);
-      }
+      sendEntries(entries,segmentId,true);
     }
   }
   finally {

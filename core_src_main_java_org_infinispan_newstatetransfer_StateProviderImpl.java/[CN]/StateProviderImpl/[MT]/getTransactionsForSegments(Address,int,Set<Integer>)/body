@@ -1,11 +1,16 @@
 {
+  Set<Integer> ownedSegments=rCh.getSegmentsForOwner(rpcManager.getAddress());
+  if (!ownedSegments.containsAll(segments)) {
+    segments.removeAll(ownedSegments);
+    throw new IllegalArgumentException("Segments " + segments + " are not owned by "+ rpcManager.getAddress());
+  }
   List<TransactionInfo> transactions=new ArrayList<TransactionInfo>();
   if (configuration.transaction().transactionMode().isTransactional()) {
+    stateTransferLock.transactionsExclusiveLock();
     try {
-      stateTransferLock.transactionsExclusiveLock();
       collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments);
       collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments);
-      log.debugf("Found %d transfer to transfer",transactions.size());
+      log.debugf("Found %d transactions to transfer",transactions.size());
     }
   finally {
       stateTransferLock.transactionsExclusiveUnlock();
