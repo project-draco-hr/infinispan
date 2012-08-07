@@ -10,14 +10,19 @@ synchronized (this) {
           throw new IllegalArgumentException("Cannot have more than one transfer for segment " + segmentId);
         }
         Address source=pickSourceOwner(segmentId,faultyMembers);
-        Set<Integer> segs=segmentsBySource.get(source);
-        if (segs == null) {
-          segs=new HashSet<Integer>();
-          segmentsBySource.put(source,segs);
+        if (source == null) {
+          log.errorf("No owners found for segment %d",segmentId);
         }
-        segs.add(segmentId);
+ else {
+          Set<Integer> segs=segmentsBySource.get(source);
+          if (segs == null) {
+            segs=new HashSet<Integer>();
+            segmentsBySource.put(source,segs);
+          }
+          segs.add(segmentId);
+        }
       }
-      Set<Integer> failedSegments=new HashSet<Integer>(segments);
+      Set<Integer> failedSegments=new HashSet<Integer>();
       for (      Address source : segmentsBySource.keySet()) {
         Set<Integer> segs=segmentsBySource.get(source);
         InboundTransferTask inboundTransfer=new InboundTransferTask(segs,source,topologyId,this,rpcManager,commandsFactory,timeout);

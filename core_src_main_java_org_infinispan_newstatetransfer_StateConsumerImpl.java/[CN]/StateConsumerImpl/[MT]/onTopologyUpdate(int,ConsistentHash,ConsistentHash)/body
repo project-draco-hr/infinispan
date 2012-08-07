@@ -5,18 +5,18 @@ synchronized (this) {
     isTopologyUpdate++;
     this.topologyId=topologyId;
   }
-  ((StateTransferLockImpl)stateTransferLock).setTopologyId(topologyId);
+  stateTransferLock.setTopologyId(topologyId);
   try {
     Set<Integer> addedSegments=null;
     if (this.rCh == null) {
       this.rCh=rCh;
       this.wCh=wCh;
       if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-        addedSegments=this.rCh.getSegmentsForOwner(rpcManager.getAddress());
+        addedSegments=this.wCh.getSegmentsForOwner(rpcManager.getAddress());
       }
     }
  else {
-      Set<Integer> oldSegments=this.rCh.getSegmentsForOwner(rpcManager.getAddress());
+      Set<Integer> oldSegments=this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
       this.rCh=rCh;
       this.wCh=wCh;
       Set<Integer> newSegments=this.wCh.getSegmentsForOwner(rpcManager.getAddress());
@@ -58,7 +58,7 @@ synchronized (this) {
 synchronized (this) {
       isTopologyUpdate--;
       if (isTopologyUpdate == 0 && !isStateTransferInProgress()) {
-        notifyEndOfStateTransfer();
+        stateTransferManager.notifyEndOfStateTransfer(topologyId);
       }
     }
   }

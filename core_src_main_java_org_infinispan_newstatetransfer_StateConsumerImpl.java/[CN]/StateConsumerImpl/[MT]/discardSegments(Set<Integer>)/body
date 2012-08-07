@@ -2,7 +2,7 @@
 synchronized (this) {
     List<Integer> segmentsToCancel=new ArrayList<Integer>(segments);
     while (!segmentsToCancel.isEmpty()) {
-      int segmentId=segmentsToCancel.get(0);
+      int segmentId=segmentsToCancel.remove(0);
       log.debugf("Removing state transfer for segment %d",segmentId);
       InboundTransferTask inboundTransfer=transfersBySegment.remove(segmentId);
       if (inboundTransfer != null) {
@@ -31,7 +31,7 @@ synchronized (this) {
       }
     }
  catch (    CacheLoaderException e) {
-      e.printStackTrace();
+      log.failedLoadingKeysFromCacheStore(e);
     }
   }
   if (!keysToRemove.isEmpty()) {
@@ -41,7 +41,7 @@ synchronized (this) {
       ctx.setFlags(CACHE_MODE_LOCAL,SKIP_LOCKING);
       interceptorChain.invoke(ctx,invalidateCmd);
       log.debugf("Invalidated %d keys, data container now has %d keys",keysToRemove.size(),dataContainer.size());
-      log.tracef("Invalidated keys: %s",keysToRemove);
+      if (trace)       log.tracef("Invalidated keys: %s",keysToRemove);
     }
  catch (    CacheException e) {
       log.failedToInvalidateKeys(e);
