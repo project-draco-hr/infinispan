@@ -5,15 +5,16 @@
     String value=replaceProperties(reader.getAttributeValue(i));
     Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
 switch (attribute) {
-case CLASS:
+case FACTORY:
+      builder.clustering().hash().consistentHashFactory(Util.<ConsistentHashFactory>getInstance(value,holder.getClassLoader()));
 case HASH_FUNCTION_CLASS:
-      builder.clustering().hash().consistentHash(Util.<ConsistentHash>getInstance(value,holder.getClassLoader()));
-    break;
+    builder.clustering().hash().hash(Util.<Hash>getInstance(value,holder.getClassLoader()));
+  break;
 case NUM_OWNERS:
-  builder.clustering().hash().numOwners(Integer.parseInt(value));
+builder.clustering().hash().numOwners(Integer.parseInt(value));
 break;
-case NUM_VIRTUAL_NODES:
-builder.clustering().hash().numVirtualNodes(Integer.parseInt(value));
+case NUM_SEGMENTS:
+builder.clustering().hash().numSegments(Integer.parseInt(value));
 break;
 default :
 throw ParseUtils.unexpectedAttribute(reader,i);

@@ -1,3 +1,15 @@
 {
-  return new HashConfiguration(consistentHash,hash,numOwners,numVirtualNodes,groupsConfigurationBuilder.create(),stateTransfer().create());
+  ConsistentHashFactory finalCHFactory=null;
+  if (consistentHashFactory != null) {
+    finalCHFactory=consistentHashFactory;
+  }
+ else   if (clustering().cacheMode().isClustered()) {
+    if (clustering().cacheMode().isDistributed()) {
+      finalCHFactory=new DefaultConsistentHashFactory();
+    }
+ else {
+      finalCHFactory=new ReplicatedConsistentHashFactory();
+    }
+  }
+  return new HashConfiguration(finalCHFactory,hash,numOwners,numSegments,groupsConfigurationBuilder.create(),stateTransfer().create());
 }
