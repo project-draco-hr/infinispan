@@ -10,7 +10,8 @@
     @Override public void rebalance(    CacheTopology cacheTopology){
       doTopologyUpdate(cacheTopology,true);
     }
-    private void doTopologyUpdate(    CacheTopology cacheTopology,    boolean rebalance){
+    private void doTopologyUpdate(    CacheTopology newCacheTopology,    boolean rebalance){
+      if (trace)       log.tracef("Installing new cache topology %s",newCacheTopology);
       if (groupManager != null) {
         ConsistentHash currentCH=cacheTopology.getCurrentCH();
         currentCH=new GroupingConsistentHash(currentCH,groupManager);
@@ -20,12 +21,13 @@
         }
         cacheTopology=new CacheTopology(cacheTopology.getTopologyId(),currentCH,pendingCH);
       }
-      topologyId=cacheTopology.getTopologyId();
+      ConsistentHash oldCH=cacheTopology != null ? cacheTopology.getWriteConsistentHash() : null;
+      ConsistentHash newCH=newCacheTopology.getWriteConsistentHash();
       rebalanceInProgress=rebalance;
-      if (distributionManager != null) {
-        distributionManager.setCacheTopology(cacheTopology);
-      }
-      onTopologyUpdate(topologyId,cacheTopology.getReadConsistentHash(),cacheTopology.getWriteConsistentHash());
+      cacheNotifier.notifyTopologyChanged(oldCH,newCH,true);
+      cacheTopology=newCacheTopology;
+      cacheNotifier.notifyTopologyChanged(oldCH,newCH,false);
+      onTopologyUpdate(cacheTopology.getTopologyId(),newCacheTopology.getReadConsistentHash(),newCacheTopology.getWriteConsistentHash());
     }
   }
 ;
