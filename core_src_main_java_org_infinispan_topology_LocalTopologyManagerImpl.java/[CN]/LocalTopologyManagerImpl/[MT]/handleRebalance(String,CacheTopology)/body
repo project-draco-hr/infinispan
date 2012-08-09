@@ -5,9 +5,10 @@
     return;
   }
   log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
-  cacheStatus.joinedLatch.await();
-  cacheStatus.topology=cacheTopology;
-  ConsistentHash unionCH=cacheStatus.joinInfo.getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
-  CacheTopologyHandler handler=cacheStatus.handler;
+synchronized (cacheStatus) {
+    cacheStatus.setTopology(cacheTopology);
+  }
+  ConsistentHash unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
+  CacheTopologyHandler handler=cacheStatus.getHandler();
   handler.rebalance(new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getCurrentCH(),unionCH));
 }

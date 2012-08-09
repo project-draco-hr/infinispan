@@ -11,11 +11,12 @@
   }
  else {
     Address coordinator=transport.getCoordinator();
-    Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,timeout,false,null);
+    Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,timeout,true,null);
     response=responseMap.get(coordinator);
   }
   if (response == null || !response.isSuccessful()) {
-    throw new CacheException("Bad response received from coordinator: " + response);
+    Throwable exception=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
+    throw new CacheException("Bad response received from coordinator: " + response,exception);
   }
   return ((SuccessfulResponse)response).getResponseValue();
 }
