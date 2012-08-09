@@ -3,8 +3,17 @@
   String cacheName=command.getCacheName();
   output.writeUTF(cacheName);
   ComponentRegistry registry=gcr.getNamedComponentRegistry(cacheName);
-  StreamingMarshaller marshaller=registry.getCacheMarshaller();
+  StreamingMarshaller marshaller;
+  if (registry == null) {
+    marshaller=globalMarshaller;
+  }
+ else {
+    marshaller=registry.getCacheMarshaller();
+  }
   ExposedByteArrayOutputStream os=marshallParameters(command,marshaller);
   UnsignedNumeric.writeUnsignedInt(output,os.size());
   output.write(os.getRawBuffer(),0,os.size());
+  if (command instanceof TopologyAffectedCommand) {
+    output.writeInt(((TopologyAffectedCommand)command).getTopologyId());
+  }
 }
