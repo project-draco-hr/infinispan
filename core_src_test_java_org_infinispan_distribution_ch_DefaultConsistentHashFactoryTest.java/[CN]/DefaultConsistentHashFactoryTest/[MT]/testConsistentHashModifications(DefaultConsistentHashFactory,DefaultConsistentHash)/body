@@ -15,20 +15,20 @@
       newMembers.add(new TestAddress(nodeIndex++));
     }
     log.debugf("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",iterationCount,baseCH,newMembers);
-    DefaultConsistentHash updatedMembersCH=(DefaultConsistentHash)chf.updateMembers(baseCH,newMembers);
+    DefaultConsistentHash updatedMembersCH=chf.updateMembers(baseCH,newMembers);
     if (nodesToRemove > 0) {
       for (int l=0; l < updatedMembersCH.getNumSegments(); l++) {
         assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
       }
     }
-    DefaultConsistentHash inclRebalancedCH=(DefaultConsistentHash)chf.rebalance(updatedMembersCH);
+    DefaultConsistentHash inclRebalancedCH=chf.rebalance(updatedMembersCH);
     checkDistribution(inclRebalancedCH,false);
     int actualNumOwners=Math.min(inclRebalancedCH.getMembers().size(),inclRebalancedCH.getNumOwners());
     for (int l=0; l < inclRebalancedCH.getNumSegments(); l++) {
       assertTrue(inclRebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
     }
-    DefaultConsistentHash exclRebalancedCH=(DefaultConsistentHash)chf.rebalance(updatedMembersCH);
-    DefaultConsistentHash exclRebalancedCH2=(DefaultConsistentHash)chf.rebalance(inclRebalancedCH);
+    DefaultConsistentHash exclRebalancedCH=chf.rebalance(updatedMembersCH);
+    DefaultConsistentHash exclRebalancedCH2=chf.rebalance(inclRebalancedCH);
     assertEquals(exclRebalancedCH2,exclRebalancedCH);
     checkDistribution(exclRebalancedCH,false);
     assertEquals(exclRebalancedCH.getNumSegments(),baseCH.getNumSegments());
