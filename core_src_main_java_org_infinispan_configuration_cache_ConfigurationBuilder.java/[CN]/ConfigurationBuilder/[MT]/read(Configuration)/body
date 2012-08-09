@@ -15,5 +15,13 @@
   this.transaction.read(template.transaction());
   this.unsafe.read(template.unsafe());
   this.versioning.read(template.versioning());
+  for (  Object c : template.modules().values()) {
+    BuiltBy builtBy=c.getClass().getAnnotation(BuiltBy.class);
+    if (builtBy == null) {
+      throw new ConfigurationException("Missing BuiltBy annotation for configuration bean " + c.getClass().getName());
+    }
+    Builder<Object> builder=(Builder<Object>)this.addModule(builtBy.value());
+    builder.read(c);
+  }
   return this;
 }
