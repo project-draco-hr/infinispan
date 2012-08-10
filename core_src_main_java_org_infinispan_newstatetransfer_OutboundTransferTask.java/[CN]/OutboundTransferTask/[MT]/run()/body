@@ -13,8 +13,8 @@
     if (isCancelled) {
       return;
     }
-    if (cacheLoaderManager != null && cacheLoaderManager.isEnabled() && !cacheLoaderManager.isShared()) {
-      CacheStore cacheStore=cacheLoaderManager.getCacheStore();
+    CacheStore cacheStore=getCacheStore();
+    if (cacheStore != null) {
       try {
         Set<Object> storedKeys=cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
         for (        Object key : storedKeys) {
@@ -49,11 +49,14 @@
         return;
       }
       List<InternalCacheEntry> entries=entriesBySegment.get(segmentId);
+      if (entries == null) {
+        entries=Collections.emptyList();
+      }
       sendEntries(entries,segmentId,true);
     }
   }
  catch (  Throwable t) {
-    log.error("Error sending data",t);
+    log.error("Failed to execute outbound transfer",t);
   }
  finally {
     stateProvider.onTaskCompletion(this);

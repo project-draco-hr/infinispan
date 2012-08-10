@@ -11,16 +11,16 @@ synchronized (this) {
     if (this.rCh == null) {
       this.rCh=rCh;
       this.wCh=wCh;
-      if (this.wCh.getMembers().size() != 1) {
+      if (wCh.getMembers().size() > 1) {
         if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
           addedSegments=this.wCh.getSegmentsForOwner(rpcManager.getAddress());
         }
       }
     }
  else {
-      Set<Integer> oldSegments=this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
       this.rCh=rCh;
       this.wCh=wCh;
+      Set<Integer> oldSegments=this.rCh.getMembers().contains(rpcManager.getAddress()) ? this.rCh.getSegmentsForOwner(rpcManager.getAddress()) : new HashSet<Integer>();
       Set<Integer> newSegments=this.wCh.getSegmentsForOwner(rpcManager.getAddress());
       Set<Integer> removedSegments=new HashSet<Integer>(oldSegments);
       removedSegments.removeAll(newSegments);

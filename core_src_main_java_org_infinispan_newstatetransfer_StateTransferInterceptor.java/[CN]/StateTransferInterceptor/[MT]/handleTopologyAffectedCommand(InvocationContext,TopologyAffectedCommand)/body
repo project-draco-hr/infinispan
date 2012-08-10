@@ -25,18 +25,23 @@
           }
         }
  else         if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {
-          Set<Object> affectedKeys=getAffectedKeys(ctx,command);
-          newTargets=new HashSet<Address>();
-          boolean localExecutionNeeded=false;
-          for (          Object key : affectedKeys) {
-            if (wCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
-              localExecutionNeeded=true;
-            }
+          if (!(command instanceof WriteCommand && ctx instanceof TxInvocationContext)) {
+            Set<Object> affectedKeys=getAffectedKeys(ctx,command);
+            newTargets=new HashSet<Address>();
+            boolean localExecutionNeeded=false;
+            for (            Object key : affectedKeys) {
+              if (wCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
+                localExecutionNeeded=true;
+              }
  else {
-              newTargets.addAll(wCh.locateOwners(key));
+                newTargets.addAll(wCh.locateOwners(key));
+              }
+            }
+            if (localExecutionNeeded) {
+              return invokeNextInterceptor(ctx,command);
             }
           }
-          if (localExecutionNeeded) {
+ else {
             return invokeNextInterceptor(ctx,command);
           }
         }
