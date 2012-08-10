@@ -3,8 +3,8 @@
   stateTransferLock.commandsSharedLock();
   CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
   final int topologyId=cacheTopology.getTopologyId();
-  final ConsistentHash rCh=cacheTopology.getReadConsistentHash();
-  final ConsistentHash wCh=cacheTopology.getWriteConsistentHash();
+  final ConsistentHash readCh=cacheTopology.getReadConsistentHash();
+  final ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
   if (command.getTopologyId() == -1) {
     command.setTopologyId(cacheTopology.getTopologyId());
   }
@@ -23,7 +23,7 @@
           readKey=((ClusteredGetCommand)command).getKey();
         }
         if (readKey != null) {
-          if (!rCh.isKeyLocalToNode(rpcManager.getAddress(),readKey)) {
+          if (!readCh.isKeyLocalToNode(rpcManager.getAddress(),readKey)) {
             return null;
           }
         }
@@ -33,11 +33,11 @@
             newTargets=new HashSet<Address>();
             boolean localExecutionNeeded=false;
             for (            Object key : affectedKeys) {
-              if (wCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
+              if (writeCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
                 localExecutionNeeded=true;
               }
  else {
-                newTargets.addAll(wCh.locateOwners(key));
+                newTargets.addAll(writeCh.locateOwners(key));
               }
             }
             if (localExecutionNeeded) {
@@ -56,8 +56,8 @@
             newTargets=new HashSet<Address>();
             Set<Object> affectedKeys=((TxInvocationContext)ctx).getAffectedKeys();
             for (            Object key : affectedKeys) {
-              if (!wCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
-                newTargets.addAll(wCh.locateOwners(key));
+              if (!writeCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
+                newTargets.addAll(writeCh.locateOwners(key));
               }
             }
           }

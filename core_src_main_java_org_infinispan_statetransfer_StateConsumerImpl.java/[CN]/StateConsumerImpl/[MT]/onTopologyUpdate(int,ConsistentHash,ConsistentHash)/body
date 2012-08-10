@@ -1,6 +1,6 @@
 {
-  log.debugf("Received new CH: %s",wCh);
-  if (trace)   log.tracef("Received new CH: %s",wCh);
+  log.debugf("Received new CH: %s",writeCh);
+  if (trace)   log.tracef("Received new CH: %s",writeCh);
 synchronized (this) {
     isTopologyUpdate++;
     this.topologyId=topologyId;
@@ -8,27 +8,27 @@ synchronized (this) {
   stateTransferLock.setTopologyId(topologyId);
   try {
     Set<Integer> addedSegments=null;
-    if (this.rCh == null) {
-      this.rCh=rCh;
-      this.wCh=wCh;
-      if (wCh.getMembers().size() > 1) {
+    if (this.readCh == null) {
+      this.readCh=readCh;
+      this.writeCh=writeCh;
+      if (writeCh.getMembers().size() > 1) {
         if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
-          addedSegments=getMySegments(wCh);
+          addedSegments=getMySegments(writeCh);
         }
       }
     }
  else {
-      this.rCh=rCh;
-      this.wCh=wCh;
-      Set<Integer> oldSegments=getMySegments(rCh);
-      Set<Integer> newSegments=getMySegments(wCh);
+      this.readCh=readCh;
+      this.writeCh=writeCh;
+      Set<Integer> oldSegments=getMySegments(readCh);
+      Set<Integer> newSegments=getMySegments(writeCh);
       Set<Integer> removedSegments=new HashSet<Integer>(oldSegments);
       removedSegments.removeAll(newSegments);
       discardSegments(removedSegments);
       if (configuration.clustering().stateTransfer().fetchInMemoryState()) {
         addedSegments=new HashSet<Integer>(newSegments);
         addedSegments.removeAll(oldSegments);
-        Set<Address> members=new HashSet<Address>(rCh.getMembers());
+        Set<Address> members=new HashSet<Address>(readCh.getMembers());
 synchronized (this) {
           for (          Address source : transfersBySource.keySet()) {
             if (!members.contains(source)) {

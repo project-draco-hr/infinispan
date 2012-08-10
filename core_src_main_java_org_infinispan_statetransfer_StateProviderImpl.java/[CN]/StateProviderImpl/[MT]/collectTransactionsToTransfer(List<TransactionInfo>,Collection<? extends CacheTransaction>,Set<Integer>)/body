@@ -2,18 +2,19 @@
   for (  CacheTransaction tx : transactions) {
     Set<Object> lockedKeys=new HashSet<Object>();
     for (    Object key : tx.getLockedKeys()) {
-      if (segments.contains(rCh.getSegment(key))) {
+      if (segments.contains(readCh.getSegment(key))) {
         lockedKeys.add(key);
       }
     }
     if (tx.getBackupLockedKeys() != null) {
       for (      Object key : tx.getBackupLockedKeys()) {
-        if (segments.contains(rCh.getSegment(key))) {
+        if (segments.contains(readCh.getSegment(key))) {
           lockedKeys.add(key);
         }
       }
     }
-    List<WriteCommand> modifications=tx.getModifications();
-    transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(),modifications.toArray(new WriteCommand[modifications.size()]),lockedKeys));
+    List<WriteCommand> txModifications=tx.getModifications();
+    WriteCommand[] modifications=txModifications.toArray(new WriteCommand[txModifications.size()]);
+    transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(),modifications,lockedKeys));
   }
 }
