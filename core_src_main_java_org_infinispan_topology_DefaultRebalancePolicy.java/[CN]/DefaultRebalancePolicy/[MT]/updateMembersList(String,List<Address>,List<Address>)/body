@@ -33,9 +33,9 @@ synchronized (cacheStatus) {
         log.debugf("Received join request from %s, but there is already a rebalance operation " + "in progress. The node will join once the current rebalance has ended.",joiners);
         return;
       }
-      List<Address> newMembers=cacheStatus.joiners;
+      List<Address> newMembers=new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+      newMembers.addAll(cacheStatus.joiners);
       cacheStatus.joiners=new ArrayList<Address>();
-      newMembers.addAll(cacheStatus.cacheTopology.getMembers());
       newMembers.retainAll(clusterMembers);
       if (currentCH == null) {
         ConsistentHash balancedCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),newMembers);
