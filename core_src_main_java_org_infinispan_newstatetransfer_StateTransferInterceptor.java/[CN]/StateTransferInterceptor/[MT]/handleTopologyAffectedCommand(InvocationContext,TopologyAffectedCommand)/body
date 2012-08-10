@@ -5,6 +5,9 @@
   final int topologyId=cacheTopology.getTopologyId();
   final ConsistentHash rCh=cacheTopology.getReadConsistentHash();
   final ConsistentHash wCh=cacheTopology.getWriteConsistentHash();
+  if (command.getTopologyId() == -1) {
+    command.setTopologyId(cacheTopology.getTopologyId());
+  }
   try {
     final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
     if (isTxCommand) {
@@ -75,7 +78,6 @@
   finally {
     stateTransferLock.commandsSharedUnlock();
     if (newTargets != null && !newTargets.isEmpty()) {
-      command.setTopologyId(topologyId);
       rpcManager.invokeRemotely(newTargets,command,true);
     }
   }
