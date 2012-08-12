@@ -12,15 +12,15 @@ synchronized (cacheStatus) {
       boolean pendingMembersValid=pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
       if (!currentMembersValid || !pendingMembersValid) {
         int topologyId=cacheStatus.cacheTopology.getTopologyId();
-        List<Address> newMembers1=new ArrayList<Address>(currentCH.getMembers());
-        newMembers1.retainAll(newClusterMembers);
         ConsistentHashFactory consistentHashFactory=cacheStatus.joinInfo.getConsistentHashFactory();
-        ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newMembers1);
-        List<Address> newMembers=new ArrayList<Address>(pendingCH.getMembers());
-        newMembers.retainAll(newClusterMembers);
+        List<Address> newCurrentMembers=new ArrayList<Address>(currentCH.getMembers());
+        newCurrentMembers.retainAll(newClusterMembers);
+        ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers);
         ConsistentHash newPendingCH=null;
         if (pendingCH != null) {
-          newPendingCH=consistentHashFactory.updateMembers(pendingCH,newMembers);
+          List<Address> newPendingMembers=new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+          newPendingMembers.retainAll(newClusterMembers);
+          newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers);
         }
         cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
         clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
