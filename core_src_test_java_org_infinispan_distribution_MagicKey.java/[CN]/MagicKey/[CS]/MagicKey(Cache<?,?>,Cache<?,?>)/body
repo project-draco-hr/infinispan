@@ -2,10 +2,15 @@
   address=addressOf(primaryOwner).toString();
   Random r=new Random();
   Object dummy;
+  int attemptsLeft=1000;
   do {
     final int hc=r.nextInt();
     dummy=new Integer(hc);
+    attemptsLeft--;
   }
- while (!hasOwners(dummy,primaryOwner,backupOwners));
+ while (!hasOwners(dummy,primaryOwner,backupOwners) && attemptsLeft >= 0);
+  if (attemptsLeft < 0) {
+    throw new IllegalStateException("Could not find any key owned by " + primaryOwner + ", "+ Arrays.toString(backupOwners));
+  }
   hashcode=dummy.hashCode();
 }
