@@ -1,0 +1,20 @@
+{
+  ConsistentHashFactory factory=configuration.clustering().hash().consistentHashFactory();
+  if (factory == null) {
+    CacheMode cacheMode=configuration.clustering().cacheMode();
+    if (cacheMode.isClustered()) {
+      if (cacheMode.isDistributed()) {
+        if (globalConfiguration.transport().hasTopologyInfo()) {
+          factory=new TopologyAwareConsistentHashFactory();
+        }
+ else {
+          factory=new DefaultConsistentHashFactory();
+        }
+      }
+ else {
+        factory=new ReplicatedConsistentHashFactory();
+      }
+    }
+  }
+  return factory;
+}

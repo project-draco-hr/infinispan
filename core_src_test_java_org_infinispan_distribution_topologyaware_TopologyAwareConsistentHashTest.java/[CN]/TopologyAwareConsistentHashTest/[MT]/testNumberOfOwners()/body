@@ -1,21 +1,15 @@
 {
   addNode(testAddresses[0],"m0",null,null);
-  setAddresses();
-  assert(ch.locate(testAddresses[0],1).size() == 1);
-  assert(ch.locate(testAddresses[0],2).size() == 1);
+  updateConsistentHash();
+  assert(ch.locateOwners(testAddresses[0]).size() == 1);
   addNode(testAddresses[1],"m1",null,null);
-  setAddresses();
+  ch=chf.create(new MurmurHash3(),2,12,chMembers);
   for (int i=0; i < testAddresses.length; i++) {
-    assert(ch.locate(testAddresses[i],1).size() == 1);
-    assert(ch.locate(testAddresses[i],2).size() == 2);
-    assert(ch.locate(testAddresses[i],3).size() == 2);
+    assert(ch.locateOwners(testAddresses[i]).size() == 2);
   }
   addNode(testAddresses[2],"m0",null,null);
-  setAddresses();
+  ch=chf.create(new MurmurHash3(),2,12,chMembers);
   for (int i=0; i < testAddresses.length; i++) {
-    assert(ch.locate(testAddresses[i],1).size() == 1);
-    assert(ch.locate(testAddresses[i],2).size() == 2);
-    assert(ch.locate(testAddresses[i],3).size() == 3);
-    assert(ch.locate(testAddresses[i],4).size() == 3);
+    assert(ch.locateOwners(testAddresses[i]).size() == 2);
   }
 }
