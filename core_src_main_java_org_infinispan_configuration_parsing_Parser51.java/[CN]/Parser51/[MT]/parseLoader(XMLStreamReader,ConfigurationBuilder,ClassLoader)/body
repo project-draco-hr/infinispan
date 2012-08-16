@@ -39,16 +39,21 @@ if (fetchPersistentState != null) fcscb.fetchPersistentState(fetchPersistentStat
 if (ignoreModifications != null) fcscb.ignoreModifications(ignoreModifications);
 if (purgeOnStartup != null) fcscb.purgeOnStartup(purgeOnStartup);
 if (purgeSynchronously != null) fcscb.purgeSynchronously(purgeSynchronously);
-parseLoaderChildren(reader,fcscb);
+parseStoreChildren(reader,fcscb);
+}
+ else if (loader instanceof CacheStore) {
+LegacyStoreConfigurationBuilder scb=builder.loaders().addStore();
+scb.cacheStore((CacheStore)loader);
+if (fetchPersistentState != null) scb.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) scb.ignoreModifications(ignoreModifications);
+if (purgerThreads != null) scb.purgerThreads(purgerThreads);
+if (purgeOnStartup != null) scb.purgeOnStartup(purgeOnStartup);
+if (purgeSynchronously != null) scb.purgeSynchronously(purgeSynchronously);
+parseStoreChildren(reader,scb);
 }
  else {
-LoaderConfigurationBuilder lcb=builder.loaders().addCacheLoader();
+LegacyLoaderConfigurationBuilder lcb=builder.loaders().addLoader();
 lcb.cacheLoader(loader);
-if (fetchPersistentState != null) lcb.fetchPersistentState(fetchPersistentState);
-if (ignoreModifications != null) lcb.ignoreModifications(ignoreModifications);
-if (purgerThreads != null) lcb.purgerThreads(purgerThreads);
-if (purgeOnStartup != null) lcb.purgeOnStartup(purgeOnStartup);
-if (purgeSynchronously != null) lcb.purgeSynchronously(purgeSynchronously);
 parseLoaderChildren(reader,lcb);
 }
 }

@@ -1,0 +1,16 @@
+{
+  CacheLoaderConfig clc;
+  if (cacheLoader.getClass().isAnnotationPresent(CacheLoaderMetadata.class)) {
+    return Util.getInstance(cacheLoader.getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
+  }
+ else {
+    AbstractCacheStoreConfig acsc=new AbstractCacheStoreConfig();
+    if (loader instanceof LegacyStoreConfiguration) {
+      acsc.setCacheLoaderClassName(((LegacyStoreConfiguration)loader).cacheStore().getClass().getName());
+    }
+ else {
+      acsc.setCacheLoaderClassName(((LegacyLoaderConfiguration)loader).cacheLoader().getClass().getName());
+    }
+    return acsc;
+  }
+}

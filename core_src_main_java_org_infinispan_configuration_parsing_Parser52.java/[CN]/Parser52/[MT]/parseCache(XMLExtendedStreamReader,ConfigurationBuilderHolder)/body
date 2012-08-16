@@ -1,5 +1,4 @@
 {
-  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
   while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
     Element element=Element.forName(reader.getLocalName());
 switch (element) {
@@ -36,6 +35,9 @@ break;
 case LOCKING:
 parseLocking(reader,holder);
 break;
+case MODULES:
+parseModules(reader,holder);
+break;
 case LAZY_DESERIALIZATION:
 case STORE_AS_BINARY:
 parseStoreAsBinary(reader,holder);
@@ -50,8 +52,7 @@ case VERSIONING:
 parseVersioning(reader,holder);
 break;
 default :
-reader.handleAny(holder);
-break;
+throw ParseUtils.unexpectedElement(reader);
 }
 }
 }
