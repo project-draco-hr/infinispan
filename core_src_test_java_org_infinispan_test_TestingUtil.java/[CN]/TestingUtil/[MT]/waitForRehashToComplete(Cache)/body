@@ -1,19 +1,34 @@
 {
   LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
-  int gracetime=120000;
+  int gracetime=90000;
   long giveup=System.currentTimeMillis() + gracetime;
   for (  Cache c : caches) {
     LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(c.getCacheManager(),LocalTopologyManager.class);
+    DefaultRebalancePolicy rebalancePolicy=(DefaultRebalancePolicy)TestingUtil.extractGlobalComponent(c.getCacheManager(),RebalancePolicy.class);
     RpcManager rpcManager=TestingUtil.extractComponent(c,RpcManager.class);
-    CacheTopology cacheTopology=localTopologyManager.getCacheTopology(c.getName());
-    while (cacheTopology.getCurrentCH().getMembers().size() != caches.length) {
+    while (true) {
+      CacheTopology cacheTopology=localTopologyManager.getCacheTopology(c.getName());
+      boolean chContainsAllMembers=cacheTopology.getCurrentCH().getMembers().size() == caches.length;
+      boolean chIsBalanced=rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+      boolean stateTransferInProgress=cacheTopology.getPendingCH() != null;
+      if (chContainsAllMembers && chIsBalanced && !stateTransferInProgress)       break;
       if (System.currentTimeMillis() > giveup) {
-        String message=String.format("Timed out waiting for rehash to complete on node %s, expected member list is %s, current member list is %s!",rpcManager.getAddress(),Arrays.toString(caches),cacheTopology.getCurrentCH());
+        String message;
+        if (!chContainsAllMembers) {
+          Address[] addresses=new Address[caches.length];
+          for (int i=0; i < caches.length; i++) {
+            addresses[i]=caches[i].getCacheManager().getAddress();
+          }
+          message=String.format("Timed out waiting for rebalancing to complete on node %s, " + "expected member list is %s, current member list is %s!",rpcManager.getAddress(),Arrays.toString(addresses),cacheTopology.getCurrentCH().getMembers());
+        }
+ else {
+          message=String.format("Timed out waiting for rebalancing to complete on node %s, " + "current topology is %s",c.getCacheManager().getAddress(),cacheTopology);
+        }
         log.error(message);
         throw new RuntimeException(message);
       }
       LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
     }
-    log.trace("Node " + rpcManager.getAddress() + " finished rehash task.");
+    log.trace("Node " + rpcManager.getAddress() + " finished state transfer.");
   }
 }
