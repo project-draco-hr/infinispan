@@ -28,7 +28,10 @@
           }
         }
  else         if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {
-          if (!(command instanceof WriteCommand && ctx instanceof TxInvocationContext)) {
+          if (command instanceof WriteCommand && ctx instanceof TxInvocationContext) {
+            return invokeNextInterceptor(ctx,command);
+          }
+ else {
             Set<Object> affectedKeys=getAffectedKeys(ctx,command);
             newTargets=new HashSet<Address>();
             boolean localExecutionNeeded=false;
@@ -43,9 +46,6 @@
             if (localExecutionNeeded) {
               return invokeNextInterceptor(ctx,command);
             }
-          }
- else {
-            return invokeNextInterceptor(ctx,command);
           }
         }
  else         if (command instanceof CommitCommand || command instanceof RollbackCommand) {
@@ -64,6 +64,7 @@
         }
       }
  else       if (command.getTopologyId() > topologyId) {
+        stateTransferLock.waitForTopology(command.getTopologyId());
       }
  else {
       }

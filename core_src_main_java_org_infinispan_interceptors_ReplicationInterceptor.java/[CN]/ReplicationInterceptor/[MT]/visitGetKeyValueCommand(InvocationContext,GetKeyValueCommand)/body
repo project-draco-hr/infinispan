@@ -1,0 +1,14 @@
+{
+  try {
+    Object returnValue=invokeNextInterceptor(ctx,command);
+    if (returnValue == null && ctx.isOriginLocal()) {
+      if (needsRemoteGet(ctx,command.getKey())) {
+        returnValue=remoteGet(ctx,command.getKey(),false);
+      }
+    }
+    return returnValue;
+  }
+ catch (  SuspectException e) {
+    return visitGetKeyValueCommand(ctx,command);
+  }
+}

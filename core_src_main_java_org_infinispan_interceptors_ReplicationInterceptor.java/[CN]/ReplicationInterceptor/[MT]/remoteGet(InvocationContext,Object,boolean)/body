@@ -1,0 +1,15 @@
+{
+  if (trace) {
+    log.tracef("Key %s is not yet available on %s, so we may need to look elsewhere",key,rpcManager.getAddress());
+  }
+  boolean acquireRemoteLock=false;
+  if (ctx.isInTxScope()) {
+    TxInvocationContext txContext=(TxInvocationContext)ctx;
+    acquireRemoteLock=isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
+  }
+  InternalCacheEntry ice=retrieveFromRemoteSource(key,ctx,acquireRemoteLock);
+  if (acquireRemoteLock) {
+    ((TxInvocationContext)ctx).addAffectedKey(key);
+  }
+  return ice != null ? ice.getValue() : null;
+}
