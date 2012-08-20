@@ -1,0 +1,47 @@
+{
+  AdvancedCache cache1=cache(0,"replSync").getAdvancedCache();
+  AdvancedCache cache2=cache(1,"replSync").getAdvancedCache();
+  waitForClusterToForm("replSync");
+  Transport originalTransport=null;
+  RpcManagerImpl rpcManager=null;
+  RpcManagerImpl asyncRpcManager=null;
+  Map<Address,Response> emptyResponses=Collections.emptyMap();
+  try {
+    Configuration asyncCache=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
+    asyncCache.setUseAsyncMarshalling(true);
+    defineConfigurationOnAllManagers("asyncCache",asyncCache);
+    AdvancedCache asyncCache1=manager(0).getCache("asyncCache").getAdvancedCache();
+    AdvancedCache asyncCache2=manager(1).getCache("asyncCache").getAdvancedCache();
+    waitForClusterToForm("asyncCache");
+    Transport mockTransport=mock(Transport.class);
+    Address mockAddressOne=mock(Address.class);
+    Address mockAddressTwo=mock(Address.class);
+    List<Address> addresses=new LinkedList<Address>();
+    addresses.add(mockAddressOne);
+    addresses.add(mockAddressTwo);
+    when(mockTransport.getAddress()).thenReturn(mockAddressOne);
+    when(mockTransport.getMembers()).thenReturn(addresses);
+    originalTransport=TestingUtil.extractGlobalComponent(cache1.getCacheManager(),Transport.class);
+    rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
+    rpcManager.setTransport(mockTransport);
+    when(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject())).thenReturn(emptyResponses);
+    cache1.put("k","v");
+    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject());
+    cache1.withFlags(Flag.FORCE_ASYNCHRONOUS).put("k","v");
+    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING),anyLong(),anyBoolean(),(ResponseFilter)anyObject());
+    asyncRpcManager=(RpcManagerImpl)TestingUtil.extractComponent(asyncCache1,RpcManager.class);
+    asyncRpcManager.setTransport(mockTransport);
+    reset(mockTransport);
+    when(mockTransport.getAddress()).thenReturn(mockAddressOne);
+    when(mockTransport.getMembers()).thenReturn(addresses);
+    when(mockTransport.invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject())).thenReturn(emptyResponses);
+    asyncCache1.put("k","v");
+    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject());
+    asyncCache1.withFlags(Flag.FORCE_SYNCHRONOUS).put("k","v");
+    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject());
+  }
+  finally {
+    if (rpcManager != null)     rpcManager.setTransport(originalTransport);
+    if (asyncRpcManager != null)     asyncRpcManager.setTransport(originalTransport);
+  }
+}
