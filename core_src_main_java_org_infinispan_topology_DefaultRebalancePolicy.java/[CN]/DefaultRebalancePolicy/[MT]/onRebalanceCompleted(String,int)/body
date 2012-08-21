@@ -1,2 +1,16 @@
 {
+  log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,topologyId);
+  CacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+synchronized (cacheStatus) {
+    if (topologyId != cacheStatus.cacheTopology.getTopologyId()) {
+      throw new IllegalStateException(String.format("Invalid cluster-wide rebalance confirmation: received topology id %d, expected %d",topologyId,cacheStatus.cacheTopology.getTopologyId()));
+    }
+    int newTopologyId=topologyId + 1;
+    ConsistentHash newCurrentCH=cacheStatus.cacheTopology.getPendingCH();
+    cacheStatus.cacheTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
+    clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
+    if (!isBalanced(newCurrentCH)) {
+      startRebalance(cacheName,cacheStatus,newCurrentCH.getMembers());
+    }
+  }
 }
