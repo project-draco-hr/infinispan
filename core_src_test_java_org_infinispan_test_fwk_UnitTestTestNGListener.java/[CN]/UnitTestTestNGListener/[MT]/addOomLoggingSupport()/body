@@ -1,7 +1,17 @@
 {
+  final Thread.UncaughtExceptionHandler oldHandler=Thread.getDefaultUncaughtExceptionHandler();
   Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler(){
     public void uncaughtException(    final Thread t,    final Throwable e){
-      printAllTheThreadsInTheJvm(e);
+      try {
+        if (e instanceof OutOfMemoryError && oomHandled.compareAndSet(false,true)) {
+          printAllTheThreadsInTheJvm();
+        }
+      }
+  finally {
+        if (oldHandler != null) {
+          oldHandler.uncaughtException(t,e);
+        }
+      }
     }
   }
 );
