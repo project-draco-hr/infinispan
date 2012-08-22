@@ -1,7 +1,7 @@
 {
   GlobalTransaction gtx=acquireRemoteLock ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,ctx.getFlags(),acquireRemoteLock,gtx);
-  List<Address> targets=stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key);
+  List<Address> targets=new ArrayList<Address>(stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key));
   targets.retainAll(rpcManager.getTransport().getMembers());
   ResponseFilter filter=new ClusteredGetResponseValidityFilter(targets,rpcManager.getAddress());
   Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,ResponseMode.WAIT_FOR_VALID_RESPONSE,cacheConfiguration.clustering().sync().replTimeout(),true,filter);
