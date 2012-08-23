@@ -9,7 +9,11 @@
   }
   PerThreadCacheManagers threadCacheManagers=perThreadCacheManagers.get();
   String methodName=extractMethodName();
-  log.trace("Adding DCM (" + cm.getAddress() + ") for method: '"+ methodName+ "'");
+  if (cm.getAddress() != null) {
+    String uuid=((UUID)((JGroupsAddress)cm.getAddress()).getJGroupsAddress()).toStringLong();
+    log.debugf("Started cache manager %s, UUID is %s",cm.getAddress(),uuid);
+  }
+  log.trace("Adding DCM (" + cm.getCacheManagerConfiguration().transport().nodeName() + ") for method: '"+ methodName+ "'");
   threadCacheManagers.add(methodName,cm);
   return cm;
 }
