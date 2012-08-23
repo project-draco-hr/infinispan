@@ -1,0 +1,27 @@
+{
+  List<StateChunk> chunks=new ArrayList<StateChunk>();
+  if (isLast) {
+    for (    int segmentId : segments) {
+      List<InternalCacheEntry> entries=entriesBySegment.get(segmentId);
+      if (entries == null) {
+        entries=Collections.emptyList();
+      }
+      chunks.add(new StateChunk(segmentId,entries,isLast));
+    }
+  }
+ else {
+    for (    Map.Entry<Integer,List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
+      List<InternalCacheEntry> entries=e.getValue();
+      if (!entries.isEmpty()) {
+        chunks.add(new StateChunk(e.getKey(),entries,isLast));
+      }
+    }
+  }
+  if (!chunks.isEmpty() || isLast) {
+    if (trace) {
+      log.tracef("Sending %d cache entries from segments %s to node %s",accumulatedEntries,entriesBySegment.keySet(),destination);
+    }
+    StateResponseCommand cmd=commandsFactory.buildStateResponseCommand(rpcManager.getAddress(),topologyId,chunks);
+    rpcManager.invokeRemotelyInFuture(Collections.singleton(destination),cmd,false,sendFuture,timeout);
+  }
+}

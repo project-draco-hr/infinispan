@@ -1,12 +1,14 @@
 {
+  if (accumulatedEntries >= stateTransferChunkSize) {
+    sendEntries(false);
+    entriesBySegment.clear();
+    accumulatedEntries=0;
+  }
   List<InternalCacheEntry> entries=entriesBySegment.get(segmentId);
   if (entries == null) {
     entries=new ArrayList<InternalCacheEntry>();
     entriesBySegment.put(segmentId,entries);
   }
-  if (entries.size() >= stateTransferChunkSize) {
-    sendEntries(entries,segmentId,false);
-    entries.clear();
-  }
   entries.add(ice);
+  accumulatedEntries++;
 }
