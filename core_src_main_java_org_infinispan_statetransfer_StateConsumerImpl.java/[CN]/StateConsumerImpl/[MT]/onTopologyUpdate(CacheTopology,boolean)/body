@@ -1,0 +1,70 @@
+{
+  ConsistentHash readCh=cacheTopology.getReadConsistentHash();
+  ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
+  int topologyId=cacheTopology.getTopologyId();
+  if (trace)   log.tracef("Received new CH: %s",writeCh);
+  ConsistentHash previousCh;
+synchronized (this) {
+    isTopologyUpdate++;
+    this.cacheTopology=cacheTopology;
+    this.topologyId=cacheTopology.getTopologyId();
+    rebalanceInProgress|=isRebalance;
+    previousCh=this.writeCh != null ? this.writeCh : this.readCh;
+    this.readCh=readCh;
+    this.writeCh=writeCh;
+  }
+  stateTransferLock.setTopologyId(topologyId);
+  try {
+    Set<Integer> addedSegments=null;
+    if (previousCh == null) {
+      if (configuration.clustering().stateTransfer().fetchInMemoryState() && !configuration.clustering().cacheMode().isInvalidation()) {
+        addedSegments=getOwnedSegments(writeCh);
+      }
+    }
+ else {
+      Set<Integer> previousSegments=getOwnedSegments(previousCh);
+      Set<Integer> newSegments=getOwnedSegments(writeCh);
+      Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
+      removedSegments.removeAll(newSegments);
+      discardSegments(removedSegments);
+      if (configuration.clustering().stateTransfer().fetchInMemoryState() && !configuration.clustering().cacheMode().isInvalidation()) {
+        Set<Integer> currentSegments=getOwnedSegments(readCh);
+        addedSegments=new HashSet<Integer>(newSegments);
+        addedSegments.removeAll(currentSegments);
+        Set<Address> members=new HashSet<Address>(readCh.getMembers());
+synchronized (this) {
+          for (          Address source : transfersBySource.keySet()) {
+            if (!members.contains(source)) {
+              List<InboundTransferTask> inboundTransfers=transfersBySource.remove(source);
+              if (inboundTransfers != null) {
+                for (                InboundTransferTask inboundTransfer : inboundTransfers) {
+                  for (                  int segmentId : inboundTransfer.getSegments()) {
+                    transfersBySegment.remove(segmentId);
+                    addedSegments.add(segmentId);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if (addedSegments != null && !addedSegments.isEmpty()) {
+      stateTransferLock.commandsExclusiveLock();
+      try {
+        addTransfers(addedSegments);
+      }
+  finally {
+        stateTransferLock.commandsExclusiveUnlock();
+      }
+    }
+  }
+  finally {
+synchronized (this) {
+      isTopologyUpdate--;
+      if (isTopologyUpdate == 0 && !isStateTransferInProgress()) {
+        notifyEndOfStateTransfer(topologyId);
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  if (trace) {
+    log.tracef("Installing new cache topology %s",newCacheTopology);
+  }
+  newCacheTopology=addGrouping(newCacheTopology);
+  CacheTopology oldCacheTopology=cacheTopology;
+  ConsistentHash oldCH=oldCacheTopology != null ? oldCacheTopology.getWriteConsistentHash() : null;
+  ConsistentHash newCH=newCacheTopology.getWriteConsistentHash();
+  cacheNotifier.notifyTopologyChanged(oldCH,newCH,true);
+  cacheNotifier.notifyTopologyChanged(oldCH,newCH,false);
+  stateProvider.onTopologyUpdate(newCacheTopology,isRebalance);
+  onTopologyUpdate(newCacheTopology,isRebalance);
+}

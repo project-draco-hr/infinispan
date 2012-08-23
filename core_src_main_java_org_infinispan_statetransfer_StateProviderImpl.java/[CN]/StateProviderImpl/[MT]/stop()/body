@@ -1,0 +1,19 @@
+{
+  if (trace) {
+    log.tracef("Shutting down StateProvider of cache %s on node %s",cacheName,rpcManager.getAddress());
+  }
+  try {
+synchronized (transfersByDestination) {
+      for (Iterator<List<OutboundTransferTask>> it=transfersByDestination.values().iterator(); it.hasNext(); ) {
+        List<OutboundTransferTask> transfers=it.next();
+        it.remove();
+        for (        OutboundTransferTask outboundTransfer : transfers) {
+          outboundTransfer.cancel();
+        }
+      }
+    }
+  }
+ catch (  Throwable t) {
+    log.errorf(t,"Failed to stop StateProvider of cache %s on node %s",cacheName,rpcManager.getAddress());
+  }
+}

@@ -1,0 +1,22 @@
+{
+  if (trace) {
+    log.tracef("Shutting down StateConsumer of cache %s on node %s",cacheName,rpcManager.getAddress());
+  }
+  try {
+synchronized (this) {
+      for (Iterator<List<InboundTransferTask>> it=transfersBySource.values().iterator(); it.hasNext(); ) {
+        List<InboundTransferTask> inboundTransfers=it.next();
+        it.remove();
+        for (        InboundTransferTask inboundTransfer : inboundTransfers) {
+          inboundTransfer.cancel();
+        }
+      }
+      transfersBySource.clear();
+      transfersBySegment.clear();
+    }
+  }
+ catch (  Throwable t) {
+    log.errorf(t,"Failed to stop StateConsumer of cache %s on node %s",cacheName,rpcManager.getAddress());
+  }
+  localTopologyManager.leave(cacheName);
+}
