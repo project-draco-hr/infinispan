@@ -2,8 +2,8 @@
   if (viewId < this.viewId) {
     return;
   }
-  this.viewId=viewId;
   boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
+  isCoordinator=transport.isCoordinator();
   if (mergeView || becameCoordinator) {
     try {
       Map<String,List<CacheTopology>> clusterCacheMap=recoverClusterStatus();
@@ -17,7 +17,7 @@
       log.failedToRecoverClusterState(e);
     }
   }
- else {
+ else   if (isCoordinator) {
     try {
       rebalancePolicy.updateMembersList(newMembers);
     }
@@ -25,4 +25,5 @@
       log.errorUpdatingMembersList(e);
     }
   }
+  this.viewId=viewId;
 }

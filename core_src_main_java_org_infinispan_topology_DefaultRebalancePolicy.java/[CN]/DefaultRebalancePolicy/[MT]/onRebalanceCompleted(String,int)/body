@@ -9,6 +9,11 @@ synchronized (cacheStatus) {
     ConsistentHash newCurrentCH=cacheStatus.cacheTopology.getPendingCH();
     cacheStatus.cacheTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
     clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
+    if (!cacheStatus.joiners.isEmpty()) {
+      List<Address> newMembers=new ArrayList<Address>(newCurrentCH.getMembers());
+      newMembers.addAll(cacheStatus.joiners);
+      startRebalance(cacheName,cacheStatus,newMembers);
+    }
     if (!isBalanced(newCurrentCH,cacheStatus)) {
       startRebalance(cacheName,cacheStatus,newCurrentCH.getMembers());
     }

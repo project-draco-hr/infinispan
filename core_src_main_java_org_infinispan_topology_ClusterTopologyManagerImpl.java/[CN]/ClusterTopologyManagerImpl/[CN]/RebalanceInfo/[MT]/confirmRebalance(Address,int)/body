@@ -1,0 +1,14 @@
+{
+synchronized (this) {
+    if (topologyId != receivedTopologyId) {
+      throw new CacheException(String.format("Received invalid rebalance confirmation from %s " + "for cache %s, expecting topology id %d but got %d",node,cacheName,topologyId,receivedTopologyId));
+    }
+    boolean removed=confirmationsNeeded.remove(node);
+    if (!removed) {
+      log.tracef("Rebalance confirmation collector %d ignored confirmation for %s, which is not a member",topologyId,node);
+      return false;
+    }
+    log.tracef("Rebalance confirmation collector %d received confirmation for %s, remaining list is %s",topologyId,node,confirmationsNeeded);
+    return confirmationsNeeded.isEmpty();
+  }
+}
