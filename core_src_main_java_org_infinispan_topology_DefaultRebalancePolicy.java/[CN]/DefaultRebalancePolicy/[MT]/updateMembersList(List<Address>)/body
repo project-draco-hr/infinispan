@@ -5,28 +5,25 @@
     String cacheName=e.getKey();
     CacheStatus cacheStatus=e.getValue();
 synchronized (cacheStatus) {
-      cacheStatus.joiners.retainAll(newClusterMembers);
-      ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
+      ConsistentHash currentCH=cacheStatus.getCacheTopology().getCurrentCH();
       if (currentCH == null)       continue;
-      ConsistentHash pendingCH=cacheStatus.cacheTopology.getPendingCH();
+      ConsistentHash pendingCH=cacheStatus.getCacheTopology().getPendingCH();
       boolean currentMembersValid=newClusterMembers.containsAll(currentCH.getMembers());
       boolean pendingMembersValid=pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
       if (!currentMembersValid || !pendingMembersValid) {
-        int topologyId=cacheStatus.cacheTopology.getTopologyId();
-        ConsistentHashFactory consistentHashFactory=cacheStatus.joinInfo.getConsistentHashFactory();
+        int topologyId=cacheStatus.getCacheTopology().getTopologyId();
+        ConsistentHashFactory consistentHashFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();
         List<Address> newCurrentMembers=new ArrayList<Address>(currentCH.getMembers());
         newCurrentMembers.retainAll(newClusterMembers);
         ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers);
         ConsistentHash newPendingCH=null;
         if (pendingCH != null) {
-          List<Address> newPendingMembers=new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+          List<Address> newPendingMembers=new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
           newPendingMembers.retainAll(newClusterMembers);
           newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers);
         }
         CacheTopology cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
-        log.tracef("Updating cache %s topology: %s",cacheName,cacheTopology);
-        cacheStatus.cacheTopology=cacheTopology;
-        clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
+        updateConsistentHash(cacheName,cacheStatus,cacheTopology);
       }
     }
   }

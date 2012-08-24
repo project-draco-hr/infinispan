@@ -1,29 +1,33 @@
 {
-  if (viewId < this.viewId) {
-    return;
-  }
-  boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
-  isCoordinator=transport.isCoordinator();
-  if (mergeView || becameCoordinator) {
-    try {
-      Map<String,List<CacheTopology>> clusterCacheMap=recoverClusterStatus();
-      for (      Map.Entry<String,List<CacheTopology>> e : clusterCacheMap.entrySet()) {
-        String cacheName=e.getKey();
-        List<CacheTopology> topologyList=e.getValue();
-        rebalancePolicy.initCache(cacheName,topologyList);
+synchronized (viewUpdateLock) {
+    if (newViewId <= viewId) {
+      log.tracef("Ignoring old cluster view notification: %s",newViewId);
+      return;
+    }
+    log.tracef("Received new cluster view: %s",newViewId);
+    boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
+    isCoordinator=transport.isCoordinator();
+    if (mergeView || becameCoordinator) {
+      try {
+        Map<String,List<CacheTopology>> clusterCacheMap=recoverClusterStatus();
+        for (        Map.Entry<String,List<CacheTopology>> e : clusterCacheMap.entrySet()) {
+          String cacheName=e.getKey();
+          List<CacheTopology> topologyList=e.getValue();
+          rebalancePolicy.initCache(cacheName,topologyList);
+        }
+      }
+ catch (      Exception e) {
+        log.failedToRecoverClusterState(e);
       }
     }
- catch (    Exception e) {
-      log.failedToRecoverClusterState(e);
+ else     if (isCoordinator) {
+      try {
+        rebalancePolicy.updateMembersList(newMembers);
+      }
+ catch (      Exception e) {
+        log.errorUpdatingMembersList(e);
+      }
     }
+    this.viewId=newViewId;
   }
- else   if (isCoordinator) {
-    try {
-      rebalancePolicy.updateMembersList(newMembers);
-    }
- catch (    Exception e) {
-      log.errorUpdatingMembersList(e);
-    }
-  }
-  this.viewId=viewId;
 }

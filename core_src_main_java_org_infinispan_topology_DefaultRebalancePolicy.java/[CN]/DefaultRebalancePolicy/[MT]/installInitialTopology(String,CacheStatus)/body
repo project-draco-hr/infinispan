@@ -1,0 +1,9 @@
+{
+  CacheJoinInfo joinInfo=cacheStatus.getJoinInfo();
+  int topologyId=cacheStatus.getCacheTopology().getTopologyId();
+  ConsistentHash balancedCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),cacheStatus.getJoiners());
+  int newTopologyId=topologyId + 1;
+  CacheTopology cacheTopology=new CacheTopology(newTopologyId,balancedCH,null);
+  log.tracef("Installing initial topology for cache %s: %s",cacheName,cacheTopology);
+  updateConsistentHash(cacheName,cacheStatus,cacheTopology);
+}

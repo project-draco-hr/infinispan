@@ -2,25 +2,20 @@
   log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,topologyId);
   CacheStatus cacheStatus=cacheStatusMap.get(cacheName);
 synchronized (cacheStatus) {
-    if (topologyId != cacheStatus.cacheTopology.getTopologyId()) {
-      throw new IllegalStateException(String.format("Invalid cluster-wide rebalance confirmation: received topology id %d, expected %d",topologyId,cacheStatus.cacheTopology.getTopologyId()));
+    if (topologyId != cacheStatus.getCacheTopology().getTopologyId()) {
+      throw new IllegalStateException(String.format("Invalid cluster-wide rebalance confirmation: received topology id %d, expected %d",topologyId,cacheStatus.getCacheTopology().getTopologyId()));
     }
     int newTopologyId=topologyId + 1;
-    ConsistentHash newCurrentCH=cacheStatus.cacheTopology.getPendingCH();
-    cacheStatus.cacheTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
-    clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
-    if (!cacheStatus.joiners.isEmpty()) {
-      List<Address> newMembers=new ArrayList<Address>(newCurrentCH.getMembers());
-      cacheStatus.joiners.removeAll(newMembers);
-      newMembers.addAll(cacheStatus.joiners);
-      cacheStatus.joiners.removeAll(newMembers);
-      startRebalance(cacheName,cacheStatus,newMembers);
-    }
- else     if (!isBalanced(newCurrentCH,cacheStatus)) {
-      startRebalance(cacheName,cacheStatus,newCurrentCH.getMembers());
+    ConsistentHash newCurrentCH=cacheStatus.getCacheTopology().getPendingCH();
+    CacheTopology cacheTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
+    updateConsistentHash(cacheName,cacheStatus,cacheTopology);
+    cacheStatus.getJoiners().removeAll(newCurrentCH.getMembers());
+    log.tracef("After rebalance, joiners without state are %",cacheStatus.getJoiners());
+    if (cacheStatus.getJoiners().isEmpty() && isBalanced(newCurrentCH,cacheStatus)) {
+      log.tracef("Consistent hash is now balanced for cache %s",cacheName);
     }
  else {
-      log.tracef("Consistent hash is now balanced for cache %s",cacheName);
+      triggerRebalance(cacheName,cacheStatus);
     }
   }
 }
