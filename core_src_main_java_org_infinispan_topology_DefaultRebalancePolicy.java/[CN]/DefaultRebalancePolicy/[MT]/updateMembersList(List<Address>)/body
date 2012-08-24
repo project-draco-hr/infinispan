@@ -23,7 +23,9 @@ synchronized (cacheStatus) {
           newPendingMembers.retainAll(newClusterMembers);
           newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers);
         }
-        cacheStatus.cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
+        CacheTopology cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
+        log.tracef("Updating cache %s topology: %s",cacheName,cacheTopology);
+        cacheStatus.cacheTopology=cacheTopology;
         clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.cacheTopology);
       }
     }
