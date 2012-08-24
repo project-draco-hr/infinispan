@@ -25,6 +25,7 @@ synchronized (cacheStatus) {
   }
   if (!joiners.isEmpty()) {
 synchronized (cacheStatus) {
+      joiners.removeAll(cacheStatus.joiners);
       cacheStatus.joiners.addAll(joiners);
       int topologyId=cacheStatus.cacheTopology.getTopologyId();
       ConsistentHash currentCH=cacheStatus.cacheTopology.getCurrentCH();
@@ -34,9 +35,10 @@ synchronized (cacheStatus) {
         return;
       }
       List<Address> newMembers=new ArrayList<Address>(cacheStatus.cacheTopology.getMembers());
+      cacheStatus.joiners.removeAll(newMembers);
       newMembers.addAll(cacheStatus.joiners);
-      cacheStatus.joiners=new ArrayList<Address>();
       newMembers.retainAll(clusterMembers);
+      cacheStatus.joiners.removeAll(newMembers);
       if (currentCH == null) {
         ConsistentHash balancedCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),newMembers);
         int newTopologyId=topologyId + 1;
