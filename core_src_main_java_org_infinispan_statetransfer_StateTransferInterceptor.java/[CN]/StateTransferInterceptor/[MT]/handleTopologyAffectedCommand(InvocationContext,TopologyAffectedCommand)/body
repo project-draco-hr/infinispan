@@ -1,4 +1,18 @@
 {
+  if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+    final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
+    try {
+      if (isTxCommand) {
+        stateTransferLock.transactionsSharedLock();
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  finally {
+      if (isTxCommand) {
+        stateTransferLock.transactionsSharedUnlock();
+      }
+    }
+  }
   Set<Address> newTargets=null;
   stateTransferLock.commandsSharedLock();
   CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
