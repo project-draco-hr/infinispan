@@ -1,11 +1,14 @@
 {
-  List<Address> owners=readCh.locateOwnersForSegment(segmentId);
+  List<Address> owners=cacheTopology.getReadConsistentHash().locateOwnersForSegment(segmentId);
+  if (owners.size() == 1 && owners.get(0).equals(rpcManager.getAddress())) {
+    return null;
+  }
   for (int i=owners.size() - 1; i >= 0; i--) {
     Address o=owners.get(i);
-    if (!blacklistedSources.contains(o) && !o.equals(rpcManager.getAddress())) {
+    if (!o.equals(rpcManager.getAddress()) && !blacklistedSources.contains(o)) {
       return o;
     }
   }
-  log.errorf("No live owners found for segment %d. Current owners are %s",segmentId,owners);
+  log.errorf("No live owners found for segment %d. Current owners are:  %s. Blacklisted owners: %s",segmentId,owners,blacklistedSources);
   return null;
 }

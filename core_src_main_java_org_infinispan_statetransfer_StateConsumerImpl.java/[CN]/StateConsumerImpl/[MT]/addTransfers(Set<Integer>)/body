@@ -11,26 +11,25 @@
   }
 synchronized (this) {
     segmentsToProcess.removeAll(transfersBySegment.keySet());
-    while (!segmentsToProcess.isEmpty()) {
-      Map<Address,Set<Integer>> segmentsBySource=new HashMap<Address,Set<Integer>>();
-      for (      int segmentId : segmentsToProcess) {
-        if (transfersBySegment.containsKey(segmentId)) {
-          throw new IllegalStateException("Cannot have more than one transfer for segment " + segmentId);
-        }
-        Address source=pickSourceOwner(segmentId,blacklistedSources);
-        if (source != null) {
-          Set<Integer> segmentsFromSource=segmentsBySource.get(source);
-          if (segmentsFromSource == null) {
-            segmentsFromSource=new HashSet<Integer>();
-            segmentsBySource.put(source,segmentsFromSource);
-          }
-          segmentsFromSource.add(segmentId);
-        }
-      }
-      Set<Integer> failedSegments=new HashSet<Integer>();
-      for (      Address source : segmentsBySource.keySet()) {
+  }
+  while (!segmentsToProcess.isEmpty()) {
+    Map<Address,Set<Integer>> segmentsBySource=new HashMap<Address,Set<Integer>>();
+    for (    int segmentId : segmentsToProcess) {
+      Address source=pickSourceOwner(segmentId,blacklistedSources);
+      if (source != null) {
         Set<Integer> segmentsFromSource=segmentsBySource.get(source);
-        InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,topologyId,this,rpcManager,commandsFactory,timeout);
+        if (segmentsFromSource == null) {
+          segmentsFromSource=new HashSet<Integer>();
+          segmentsBySource.put(source,segmentsFromSource);
+        }
+        segmentsFromSource.add(segmentId);
+      }
+    }
+    Set<Integer> failedSegments=new HashSet<Integer>();
+    for (    Address source : segmentsBySource.keySet()) {
+      Set<Integer> segmentsFromSource=segmentsBySource.get(source);
+      InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout);
+synchronized (this) {
         for (        int segmentId : segmentsFromSource) {
           transfersBySegment.put(segmentId,inboundTransfer);
         }
@@ -40,20 +39,23 @@ synchronized (this) {
           transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
         }
         inboundTransfers.add(inboundTransfer);
-        if (inboundTransfer.requestTransactions()) {
-          if (!inboundTransfer.requestSegments()) {
-            log.errorf("Failed to request segments %s from %s",segmentsFromSource,source);
-          }
-        }
- else {
-          log.errorf("Failed to retrieve transactions for segments %s from %s",segmentsFromSource,source);
-          log.tracef("Adding members %s to black list",source);
+      }
+      if (configuration.transaction().transactionMode().isTransactional()) {
+        if (!inboundTransfer.requestTransactions()) {
+          log.errorf("Failed to retrieve transactions for segments %s from node %s (node will be blacklisted)",segmentsFromSource,source);
           failedSegments.addAll(segmentsFromSource);
           blacklistedSources.add(source);
           removeTransfer(inboundTransfer);
+          continue;
         }
       }
-      segmentsToProcess=failedSegments;
+      if (!inboundTransfer.requestSegments()) {
+        log.errorf("Failed to request segments %s from node %s (node will be blacklisted)",segmentsFromSource,source);
+        failedSegments.addAll(segmentsFromSource);
+        blacklistedSources.add(source);
+        removeTransfer(inboundTransfer);
+      }
     }
+    segmentsToProcess=failedSegments;
   }
 }
