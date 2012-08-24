@@ -1,0 +1,17 @@
+{
+  ClassLoader cl=Thread.currentThread().getContextClassLoader();
+  XMLMapper xmlMapper=XMLMapper.Factory.create();
+  @SuppressWarnings("rawtypes") ServiceLoader<ConfigurationParser> parsers=ServiceLoader.load(ConfigurationParser.class,cl);
+  for (  ConfigurationParser<?> parser : parsers) {
+    for (    Namespace ns : parser.getSupportedNamespaces()) {
+      xmlMapper.registerRootElement(new QName(ns.getUri(),ns.getRootElement()),parser);
+    }
+  }
+  ConfigurationBuilderHolder holder=new ConfigurationBuilderHolder(cl);
+  for (int i=0; i < xmls.length; ++i) {
+    BufferedInputStream input=new BufferedInputStream(new ByteArrayInputStream(xmls[i].getBytes()));
+    XMLStreamReader streamReader=XMLInputFactory.newInstance().createXMLStreamReader(input);
+    xmlMapper.parseDocument(holder,streamReader);
+  }
+  return holder;
+}

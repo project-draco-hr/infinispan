@@ -1,0 +1,22 @@
+{
+  final String cacheName="asyncRepl";
+  String xml1=INFINISPAN_START_TAG + "   <namedCache name=\"" + cacheName+ "\">\n"+ "      <clustering mode=\"repl\">\n"+ "         <stateTransfer fetchInMemoryState=\"false\"/>\n"+ "         <async useReplQueue=\"false\" asyncMarshalling=\"false\"/>\n"+ "      </clustering>\n"+ "      <locking isolationLevel=\"REPEATABLE_READ\" concurrencyLevel=\"1000\" lockAcquisitionTimeout=\"20000\"/>\n"+ "      <storeAsBinary enabled=\"true\"/>\n"+ "      <expiration wakeUpInterval=\"23\" lifespan=\"50012\" maxIdle=\"1341\"/>\n"+ "   </namedCache>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  String xml2=INFINISPAN_START_TAG + "   <namedCache name=\"" + cacheName+ "\">\n"+ "      <clustering mode=\"repl\">\n"+ "         <stateTransfer fetchInMemoryState=\"true\"/>\n"+ "         <sync replTimeout=\"30000\"/>\n"+ "      </clustering>\n"+ "      <locking isolationLevel=\"READ_COMMITTED\" concurrencyLevel=\"30\" lockAcquisitionTimeout=\"25000\"/>\n"+ "      <storeAsBinary enabled=\"false\"/>\n"+ "   </namedCache>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  ConfigurationBuilderHolder holder=TestCacheManagerFactory.buildAggregateHolder(xml1,xml2);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(holder)){
+    @Override public void call(){
+      Configuration c=cm.getCacheConfiguration(cacheName);
+      Assert.assertEquals(c.clustering().cacheMode(),CacheMode.REPL_SYNC);
+      Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(),true);
+      Assert.assertEquals(c.clustering().sync().replTimeout(),30000);
+      Assert.assertEquals(c.locking().isolationLevel(),IsolationLevel.READ_COMMITTED);
+      Assert.assertEquals(c.locking().concurrencyLevel(),30);
+      Assert.assertEquals(c.locking().lockAcquisitionTimeout(),25000);
+      Assert.assertEquals(c.storeAsBinary().enabled(),false);
+      Assert.assertEquals(c.expiration().wakeUpInterval(),23);
+      Assert.assertEquals(c.expiration().lifespan(),50012);
+      Assert.assertEquals(c.expiration().maxIdle(),1341);
+    }
+  }
+);
+}
