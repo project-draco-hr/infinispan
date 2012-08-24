@@ -1,11 +1,16 @@
 {
   final InfinispanDefaultCacheFactoryBean<Object,Object> objectUnderTest=new InfinispanDefaultCacheFactoryBean<Object,Object>();
   withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
-    @Override public void call() throws Exception {
-      objectUnderTest.setInfinispanCacheContainer(cm);
-      objectUnderTest.afterPropertiesSet();
-      assertEquals("getObjectType() should have returned the produced Infinispan cache's most derived type. " + "However, it returned a more generic type.",objectUnderTest.getObject().getClass(),objectUnderTest.getObjectType());
-      objectUnderTest.destroy();
+    @Override public void call(){
+      try {
+        objectUnderTest.setInfinispanCacheContainer(cm);
+        objectUnderTest.afterPropertiesSet();
+        assertEquals("getObjectType() should have returned the produced Infinispan cache's most derived type. " + "However, it returned a more generic type.",objectUnderTest.getObject().getClass(),objectUnderTest.getObjectType());
+        objectUnderTest.destroy();
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 );

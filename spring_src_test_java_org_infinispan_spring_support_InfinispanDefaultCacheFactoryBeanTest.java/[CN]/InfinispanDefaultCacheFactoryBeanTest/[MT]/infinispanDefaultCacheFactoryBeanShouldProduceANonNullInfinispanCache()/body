@@ -1,12 +1,17 @@
 {
   final InfinispanDefaultCacheFactoryBean<Object,Object> objectUnderTest=new InfinispanDefaultCacheFactoryBean<Object,Object>();
   withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
-    @Override public void call() throws Exception {
-      objectUnderTest.setInfinispanCacheContainer(cm);
-      objectUnderTest.afterPropertiesSet();
-      final Cache<Object,Object> cache=objectUnderTest.getObject();
-      assertNotNull("InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. " + "However, it produced a null Infinispan cache.",cache);
-      objectUnderTest.destroy();
+    @Override public void call(){
+      try {
+        objectUnderTest.setInfinispanCacheContainer(cm);
+        objectUnderTest.afterPropertiesSet();
+        final Cache<Object,Object> cache=objectUnderTest.getObject();
+        assertNotNull("InfinispanDefaultCacheFactoryBean should have produced a proper Infinispan cache. " + "However, it produced a null Infinispan cache.",cache);
+        objectUnderTest.destroy();
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 );

@@ -3,7 +3,7 @@
   myGlobalConfig.setJmxDomain("org.infinispan");
   myGlobalConfig.setExposeGlobalJmxStatistics(true);
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(myGlobalConfig)){
-    @Override public void call() throws Exception {
+    @Override public void call(){
       Configuration config=new Configuration();
       config.setExposeJmxStatistics(true);
       config.setEvictionMaxEntries(123);
@@ -13,7 +13,12 @@
       cache.put("myKey","myValue");
       int i=0;
       while (i < Integer.MAX_VALUE) {
-        Thread.sleep(12000);
+        try {
+          Thread.sleep(12000);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
         cache.put("key" + i,String.valueOf(i));
         cache.get("key" + ((int)(10000 * Math.random())));
         i++;
