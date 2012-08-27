@@ -1,6 +1,9 @@
 {
-  List<Address> newMembers=new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
-  addUniqueJoiners(newMembers,cacheStatus.getJoiners());
-  newMembers.retainAll(clusterMembers);
-  startRebalance(cacheName,cacheStatus,newMembers);
+  asyncTransportExecutor.submit(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      doRebalance(cacheName,cacheStatus);
+      return null;
+    }
+  }
+);
 }
