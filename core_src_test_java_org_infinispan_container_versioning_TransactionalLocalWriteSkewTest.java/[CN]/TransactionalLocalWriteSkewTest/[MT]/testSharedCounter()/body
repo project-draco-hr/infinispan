@@ -4,13 +4,17 @@
   c1.put("counter",0);
   assertTrue(c1.get("counter") == 0);
   ConcurrentSkipListSet<Integer> uniqueValuesIncremented=new ConcurrentSkipListSet<Integer>();
-  IncrementCounterThread ict1=new IncrementCounterThread("Node-1",c1,uniqueValuesIncremented,counterMaxValue);
-  IncrementCounterThread ict2=new IncrementCounterThread("Node-2",c1,uniqueValuesIncremented,counterMaxValue);
-  ict1.start();
-  ict2.start();
-  ict1.join();
-  ict2.join();
-  assertTrue(c1.get("counter") >= counterMaxValue);
-  assertTrue(ict1.result);
-  assertTrue(ict2.result);
+  Future ict1=fork(new IncrementCounterTask(c1,uniqueValuesIncremented,counterMaxValue));
+  Future ict2=fork(new IncrementCounterTask(c1,uniqueValuesIncremented,counterMaxValue));
+  try {
+    Boolean unique1=(Boolean)ict1.get(30,TimeUnit.SECONDS);
+    Boolean unique2=(Boolean)ict1.get(30,TimeUnit.SECONDS);
+    assertTrue(unique1);
+    assertTrue(unique2);
+    assertTrue(c1.get("counter") >= counterMaxValue);
+  }
+  finally {
+    ict1.cancel(true);
+    ict2.cancel(true);
+  }
 }
