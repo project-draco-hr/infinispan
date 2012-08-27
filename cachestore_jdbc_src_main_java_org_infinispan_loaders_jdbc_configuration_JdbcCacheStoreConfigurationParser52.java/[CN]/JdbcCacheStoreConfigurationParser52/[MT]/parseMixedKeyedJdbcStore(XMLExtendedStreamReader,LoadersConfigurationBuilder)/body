@@ -1,0 +1,25 @@
+{
+  JdbcMixedCacheStoreConfigurationBuilder builder=new JdbcMixedCacheStoreConfigurationBuilder(loadersBuilder);
+  parseCommonJdbcStoreAttributes(reader,builder);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case STRING_KEYED_TABLE:
+{
+        parseTable(reader,builder.stringTable());
+        break;
+      }
+case BINARY_KEYED_TABLE:
+{
+      parseTable(reader,builder.binaryTable());
+      break;
+    }
+default :
+{
+    Parser52.parseCommonStoreChildren(reader,builder);
+    break;
+  }
+}
+}
+loadersBuilder.addStore(builder);
+}
