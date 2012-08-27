@@ -4,8 +4,13 @@
     log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally",cacheTopology.getTopologyId(),cacheName);
     return;
   }
-  log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
 synchronized (cacheStatus) {
+    CacheTopology existingTopology=cacheStatus.getTopology();
+    if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()) {
+      log.debugf("Ignoring old rebalance for cache %s: %s",cacheName,cacheTopology.getTopologyId());
+      return;
+    }
+    log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
     cacheStatus.setTopology(cacheTopology);
   }
   ConsistentHash unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
