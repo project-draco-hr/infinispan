@@ -2,13 +2,14 @@
   log.debugf("Node %s joining cache %s",transport.getAddress(),cacheName);
   LocalCacheStatus cacheStatus=new LocalCacheStatus(joinInfo,stm);
   runningCaches.put(cacheName,cacheStatus);
-  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.JOIN,transport.getAddress(),joinInfo);
+  int viewId=transport.getViewId();
+  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.JOIN,transport.getAddress(),joinInfo,viewId);
   long timeout=joinInfo.getTimeout();
   long endTime=System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
   while (true) {
     try {
       CacheTopology initialTopology=(CacheTopology)executeOnCoordinator(command,timeout);
-      handleConsistentHashUpdate(cacheName,initialTopology);
+      handleConsistentHashUpdate(cacheName,initialTopology,viewId);
       return initialTopology;
     }
  catch (    Exception e) {

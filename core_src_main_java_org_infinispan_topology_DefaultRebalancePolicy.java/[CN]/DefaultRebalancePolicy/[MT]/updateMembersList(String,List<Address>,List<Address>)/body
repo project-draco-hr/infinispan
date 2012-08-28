@@ -15,9 +15,17 @@ synchronized (cacheStatus) {
       ConsistentHash newPendingCH=null;
       if (pendingCH != null) {
         newMembers.retainAll(pendingCH.getMembers());
+        if (newMembers.isEmpty()) {
+          log.tracef("Zero members remaining for cache %s",cacheName);
+          return;
+        }
         newPendingCH=joinInfo.getConsistentHashFactory().updateMembers(pendingCH,newMembers);
       }
       newMembers.retainAll(currentCH.getMembers());
+      if (newMembers.isEmpty()) {
+        log.tracef("Zero members remaining for cache %s",cacheName);
+        return;
+      }
       ConsistentHash newCurrentCH=joinInfo.getConsistentHashFactory().updateMembers(currentCH,newMembers);
       CacheTopology cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
       updateConsistentHash(cacheName,cacheStatus,cacheTopology);
