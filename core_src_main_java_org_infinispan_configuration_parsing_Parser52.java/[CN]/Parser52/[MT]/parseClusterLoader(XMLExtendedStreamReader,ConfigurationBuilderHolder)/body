@@ -1,0 +1,18 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  ClusterCacheLoaderConfigurationBuilder cclb=builder.loaders().addClusterCacheLoader();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case REMOTE_CALL_TIMEOUT:
+      cclb.remoteCallTimeout(Long.parseLong(value));
+    break;
+default :
+  parseCommonLoaderAttributes(reader,i,cclb);
+break;
+}
+}
+parseLoaderChildren(reader,cclb);
+}
