@@ -4,7 +4,6 @@
   ConsistentHash chOld=tce.getConsistentHashAtStart();
   ConsistentHash chNew=tce.getConsistentHashAtEnd();
   log.tracef("Unlocking keys for which we are no longer an owner");
-  int numOwners=transactionTable.configuration.clustering().hash().numOwners();
   for (  RemoteTransaction remoteTx : transactionTable.getRemoteTransactions()) {
     GlobalTransaction gtx=remoteTx.getGlobalTransaction();
     List<Object> keys=new ArrayList<Object>();
@@ -15,6 +14,10 @@
       if (wasLocal && !isLocal) {
         keys.add(key);
       }
+      txHasLocalKeys|=isLocal;
+    }
+    for (    Object key : remoteTx.getBackupLockedKeys()) {
+      boolean isLocal=chNew.isKeyLocalToNode(self,key);
       txHasLocalKeys|=isLocal;
     }
     if (keys.size() > 0) {
@@ -30,20 +33,20 @@
  catch (      Throwable t) {
         log.unableToUnlockRebalancedKeys(gtx,keys,self,t);
       }
-      if (!txHasLocalKeys) {
-        log.tracef("Killing remote transaction without any local keys %s",gtx);
-        RollbackCommand rc=new RollbackCommand(cacheName,gtx);
-        rc.init(invoker,transactionTable.icc,transactionTable);
-        try {
-          rc.perform(null);
-          log.tracef("Rollback of transaction %s complete.",gtx);
-        }
- catch (        Throwable e) {
-          log.unableToRollbackGlobalTx(gtx,e);
-        }
+    }
+    if (!txHasLocalKeys) {
+      log.tracef("Killing remote transaction without any local keys %s",gtx);
+      RollbackCommand rc=new RollbackCommand(cacheName,gtx);
+      rc.init(invoker,transactionTable.icc,transactionTable);
+      try {
+        rc.perform(null);
+        log.tracef("Rollback of transaction %s complete.",gtx);
+      }
+ catch (      Throwable e) {
+        log.unableToRollbackGlobalTx(gtx,e);
+      }
  finally {
-          transactionTable.removeRemoteTransaction(gtx);
-        }
+        transactionTable.removeRemoteTransaction(gtx);
       }
     }
   }
