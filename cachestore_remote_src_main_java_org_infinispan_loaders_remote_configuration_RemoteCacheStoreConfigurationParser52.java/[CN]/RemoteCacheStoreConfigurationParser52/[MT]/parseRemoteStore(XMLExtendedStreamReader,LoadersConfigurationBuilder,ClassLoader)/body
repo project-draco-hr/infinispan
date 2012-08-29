@@ -1,0 +1,30 @@
+{
+  RemoteCacheStoreConfigurationBuilder builder=new RemoteCacheStoreConfigurationBuilder(loadersBuilder);
+  parseRemoteStoreAttributes(reader,builder);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ASYNC_TRANSPORT_EXECUTOR:
+{
+        parseAsyncTransportExecutor(reader,builder.asyncExecutorFactory(),classLoader);
+        break;
+      }
+case CONNECTION_POOL:
+{
+      parseConnectionPool(reader,builder.connectionPool());
+      break;
+    }
+case SERVERS:
+{
+    parseServers(reader,builder);
+    break;
+  }
+default :
+{
+  Parser52.parseCommonStoreChildren(reader,builder);
+  break;
+}
+}
+}
+loadersBuilder.addStore(builder);
+}

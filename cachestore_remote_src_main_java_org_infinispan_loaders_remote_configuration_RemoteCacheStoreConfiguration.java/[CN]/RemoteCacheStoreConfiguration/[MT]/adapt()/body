@@ -1,0 +1,41 @@
+{
+  RemoteCacheStoreConfig config=new RemoteCacheStoreConfig();
+  config.fetchPersistentState(fetchPersistentState());
+  config.ignoreModifications(ignoreModifications());
+  config.purgeOnStartup(purgeOnStartup());
+  config.purgeSynchronously(purgeSynchronously());
+  config.purgerThreads(purgerThreads());
+  config.setRemoteCacheName(remoteCacheName);
+  config.setAsyncExecutorFactory(asyncExecutorFactory.factory());
+  TypedProperties p=new TypedProperties();
+  p.putAll(asyncExecutorFactory.properties());
+  p.put("maxActive",Integer.toString(connectionPool.maxActive()));
+  p.put("maxIdle",Integer.toString(connectionPool.maxIdle()));
+  p.put("maxTotal",Integer.toString(connectionPool.maxTotal()));
+  p.put("minIdle",connectionPool.minIdle());
+  p.put("minEvictableIdleTimeMillis",Long.toString(connectionPool.minEvictableIdleTime()));
+  p.put("testWhileIdle",Boolean.toString(connectionPool.testWhileIdle()));
+  p.put("timeBetweenEvictionRunsMillis",Long.toString(connectionPool.timeBetweenEvictionRuns()));
+  p.put("whenExhaustedAction",Integer.toString(connectionPool.exhaustedAction().ordinal()));
+  config.setTypedProperties(p);
+  Properties hrp=new Properties();
+  hrp.put(ConfigurationProperties.CONNECT_TIMEOUT,Long.toString(connectionTimeout));
+  hrp.put(ConfigurationProperties.FORCE_RETURN_VALUES,Boolean.toString(forceReturnValues));
+  hrp.put(ConfigurationProperties.KEY_SIZE_ESTIMATE,Integer.toString(keySizeEstimate));
+  hrp.put(ConfigurationProperties.PING_ON_STARTUP,Boolean.toString(pingOnStartup));
+  StringBuilder serverList=new StringBuilder();
+  for (  RemoteServerConfiguration server : servers) {
+    if (serverList.length() > 0)     serverList.append(";");
+    serverList.append(server.host());
+    serverList.append(":");
+    serverList.append(server.port());
+  }
+  hrp.put(ConfigurationProperties.SERVER_LIST,serverList.toString());
+  hrp.put(ConfigurationProperties.SO_TIMEOUT,Long.toString(socketTimeout));
+  hrp.put(ConfigurationProperties.TCP_NO_DELAY,Boolean.toString(tcpNoDelay));
+  hrp.put(ConfigurationProperties.VALUE_SIZE_ESTIMATE,Integer.toString(valueSizeEstimate));
+  if (marshaller != null)   hrp.put(ConfigurationProperties.MARSHALLER,marshaller);
+  if (transportFactory != null)   hrp.put(ConfigurationProperties.TRANSPORT_FACTORY,transportFactory);
+  config.setHotRodClientProperties(hrp);
+  return config;
+}
