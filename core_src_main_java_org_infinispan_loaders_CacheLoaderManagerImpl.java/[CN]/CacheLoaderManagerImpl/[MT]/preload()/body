@@ -1,6 +1,10 @@
 {
   if (loader != null) {
     if (clmConfig.preload()) {
+      if (stateTransferManager != null && !stateTransferManager.isLocalNodeFirst()) {
+        log.debugf("We are not the first node to join cache %s, skipping preload",cache.getName());
+        return;
+      }
       long start=0;
       boolean debugTiming=log.isDebugEnabled();
       if (debugTiming) {
@@ -23,7 +27,7 @@
         flags.add(SKIP_INDEXING);
       }
       AdvancedCache<Object,Object> flaggedCache=cache.getAdvancedCache().withFlags(flags.toArray(new Flag[]{}));
-      for (      InternalCacheEntry e : state)       flaggedCache.put(e.getKey(),e.getValue(),e.getLifespan(),MILLISECONDS,e.getMaxIdle(),MILLISECONDS);
+      for (      InternalCacheEntry e : state)       flaggedCache.putIfAbsent(e.getKey(),e.getValue(),e.getLifespan(),MILLISECONDS,e.getMaxIdle(),MILLISECONDS);
       if (debugTiming) {
         final long stop=System.nanoTime();
         log.debugf("Preloaded %s keys in %s",state.size(),Util.prettyPrintTime(stop - start,TimeUnit.NANOSECONDS));
