@@ -1,0 +1,13 @@
+{
+  SearchManager searchManager=Search.getSearchManager(cache);
+  searchManager.setTimeoutExceptionFactory(new MyTimeoutExceptionFactory());
+  Query query=searchManager.buildQueryBuilderForClass(Foo.class).get().keyword().onField("bar").matching("1").createQuery();
+  CacheQuery cacheQuery=searchManager.getQuery(query);
+  cacheQuery.timeout(1,TimeUnit.NANOSECONDS);
+  try {
+    cacheQuery.list();
+    fail("Expected MyTimeoutException");
+  }
+ catch (  MyTimeoutException e) {
+  }
+}
