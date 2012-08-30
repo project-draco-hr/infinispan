@@ -1,0 +1,24 @@
+{
+  BasicDBObject excludeObject=new BasicDBObject();
+  Set<Object> values=new HashSet<Object>();
+  DBCursor keyObjects=null;
+  BasicDBObject idRestrictionObject=new BasicDBObject(ID_FIELD,1);
+  if (keysToExclude != null) {
+    byte[][] exclusionArray=new byte[keysToExclude.size()][];
+    Iterator<Object> iterator=keysToExclude.iterator();
+    int i=0;
+    while (iterator.hasNext()) {
+      Object next=iterator.next();
+      exclusionArray[i++]=objectToByteBuffer(next);
+    }
+    excludeObject.put(ID_FIELD,new BasicDBObject("$nin",exclusionArray));
+    keyObjects=this.collection.find(excludeObject);
+  }
+ else {
+    keyObjects=this.collection.find(new BasicDBObject(),idRestrictionObject);
+  }
+  for (  DBObject rawObject : keyObjects) {
+    values.add(this.unmarshall(rawObject,ID_FIELD));
+  }
+  return values;
+}

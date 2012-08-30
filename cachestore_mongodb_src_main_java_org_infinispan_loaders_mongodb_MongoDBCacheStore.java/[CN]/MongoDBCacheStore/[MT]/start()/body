@@ -1,0 +1,20 @@
+{
+  super.start();
+  try {
+    MongoClientOptions.Builder optionBuilder=new MongoClientOptions.Builder();
+    optionBuilder.connectTimeout(this.cfg.getTimeout());
+    WriteConcern writeConcern=new WriteConcern(this.cfg.getAcknowledgment());
+    optionBuilder.writeConcern(writeConcern);
+    log.connectingToMongo(this.cfg.getHost(),this.cfg.getPort(),this.cfg.getTimeout(),this.cfg.getAcknowledgment());
+    ServerAddress serverAddress=new ServerAddress(this.cfg.getHost(),this.cfg.getPort());
+    this.mongo=new MongoClient(serverAddress,optionBuilder.build());
+  }
+ catch (  UnknownHostException e) {
+    throw log.mongoOnUnknownHost(this.cfg.getHost());
+  }
+catch (  RuntimeException e) {
+    throw log.unableToInitializeMongoDB(e);
+  }
+  mongoDb=extractDatabase();
+  this.collection=mongoDb.getCollection(this.cfg.getCollectionName());
+}

@@ -1,0 +1,17 @@
+{
+  if (trace) {
+    log.tracef("Adding entry: %s",entry);
+  }
+  byte[] id=objectToByteBuffer(entry.getKey());
+  if (this.findById(id) == null) {
+    BasicDBObject entryObject=this.createDBObject(id);
+    entryObject.put(VALUE_FIELD,objectToByteBuffer(entry));
+    entryObject.put(TIMESTAMP_FIELD,entry.getExpiryTime());
+    this.collection.update(entryObject,entryObject,true,false);
+  }
+ else {
+    BasicDBObject updater=new BasicDBObject(VALUE_FIELD,objectToByteBuffer(entry));
+    updater.append(TIMESTAMP_FIELD,entry.getExpiryTime());
+    this.collection.update(this.createDBObject(id),updater);
+  }
+}

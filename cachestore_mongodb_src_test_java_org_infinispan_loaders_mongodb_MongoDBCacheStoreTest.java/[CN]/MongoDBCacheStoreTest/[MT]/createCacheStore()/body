@@ -1,0 +1,23 @@
+{
+  String hostname=System.getProperty("MONGODB_HOSTNAME");
+  if (hostname == null || "".equals(hostname)) {
+    hostname="127.0.0.1";
+  }
+  int port=27017;
+  String configurationPort=System.getProperty("MONGODB_PORT");
+  try {
+    if (configurationPort != null && !"".equals(configurationPort)) {
+      port=Integer.parseInt(configurationPort);
+    }
+  }
+ catch (  NumberFormatException e) {
+    throw log.mongoPortIllegalValue(configurationPort);
+  }
+  log.runningTest(hostname,port);
+  MongoDBCacheStoreConfig config=new MongoDBCacheStoreConfig(hostname,port,2000,"","","infinispan_test_database","infinispan_indexes",-1);
+  config.setPurgeSynchronously(true);
+  cacheStore=new MongoDBCacheStore();
+  cacheStore.init(config,getCache(),getMarshaller());
+  cacheStore.start();
+  return cacheStore;
+}

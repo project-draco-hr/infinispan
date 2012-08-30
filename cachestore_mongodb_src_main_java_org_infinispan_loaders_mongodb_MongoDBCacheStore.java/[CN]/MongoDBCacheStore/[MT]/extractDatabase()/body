@@ -1,0 +1,22 @@
+{
+  try {
+    log.connectingToMongoDatabase(this.cfg.getDatabase());
+    if (!"".equals(this.cfg.getUsername())) {
+      DB admin=this.mongo.getDB("admin");
+      boolean auth=admin.authenticate(this.cfg.getUsername(),this.cfg.getPassword().toCharArray());
+      if (!auth) {
+        throw log.authenticationFailed(this.cfg.getUsername());
+      }
+    }
+    if ("".equals(this.cfg.getDatabase())) {
+      throw log.mongoDbNameMissing();
+    }
+    if (!this.mongo.getDatabaseNames().contains(this.cfg.getDatabase())) {
+      log.creatingDatabase(this.cfg.getDatabase());
+    }
+    return this.mongo.getDB(this.cfg.getDatabase());
+  }
+ catch (  MongoException e) {
+    throw log.unableToConnectToDatastore(this.cfg.getHost(),this.cfg.getPort(),e);
+  }
+}
