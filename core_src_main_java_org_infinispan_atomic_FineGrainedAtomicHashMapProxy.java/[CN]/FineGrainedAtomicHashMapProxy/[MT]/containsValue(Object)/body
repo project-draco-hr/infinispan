@@ -1,4 +1,9 @@
 {
-  AtomicHashMap<K,V> map=getDeltaMapForRead();
-  return containsValueUncommitted(value) || (map != null && map.containsValue(value));
+  if (hasUncommittedChanges()) {
+    return containsValueUncommitted(value);
+  }
+ else {
+    AtomicHashMap<K,V> map=getDeltaMapForRead();
+    return map != null ? map.containsValue(value) : false;
+  }
 }

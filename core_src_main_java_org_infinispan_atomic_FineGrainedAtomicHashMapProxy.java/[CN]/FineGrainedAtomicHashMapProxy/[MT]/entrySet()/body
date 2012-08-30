@@ -1,8 +1,14 @@
 {
-  AtomicHashMap<K,V> map=getDeltaMapForRead().copy();
-  Set<Entry<K,V>> result=new HashSet<Entry<K,V>>(entrySetUncommitted());
-  if (map != null) {
-    result.addAll(map.entrySet());
+  Set<Entry<K,V>> result;
+  if (hasUncommittedChanges()) {
+    return new HashSet<Entry<K,V>>(entrySetUncommitted());
   }
-  return result;
+ else {
+    AtomicHashMap<K,V> map=getDeltaMapForRead().copy();
+    result=new HashSet<Entry<K,V>>();
+    if (map != null) {
+      result.addAll(map.entrySet());
+    }
+    return result;
+  }
 }
