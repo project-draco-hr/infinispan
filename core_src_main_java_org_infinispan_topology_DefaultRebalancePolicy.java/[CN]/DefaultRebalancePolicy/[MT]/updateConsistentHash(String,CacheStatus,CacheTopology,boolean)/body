@@ -1,0 +1,12 @@
+{
+  log.tracef("Updating cache %s topology: %s",cacheName,cacheTopology);
+  cacheStatus.setCacheTopology(cacheTopology);
+  ConsistentHash currentCH=cacheTopology.getCurrentCH();
+  if (currentCH != null) {
+    cacheStatus.getJoiners().removeAll(currentCH.getMembers());
+    log.tracef("Updated joiners list for cache %s: %s",cacheName,cacheStatus.getJoiners());
+  }
+  if (broadcast) {
+    clusterTopologyManager.updateConsistentHash(cacheName,cacheStatus.getCacheTopology());
+  }
+}

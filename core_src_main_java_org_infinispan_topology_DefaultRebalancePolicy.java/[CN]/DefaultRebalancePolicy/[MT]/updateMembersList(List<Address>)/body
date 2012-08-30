@@ -11,27 +11,9 @@ synchronized (cacheStatus) {
       boolean currentMembersValid=newClusterMembers.containsAll(currentCH.getMembers());
       boolean pendingMembersValid=pendingCH == null || newClusterMembers.containsAll(pendingCH.getMembers());
       if (!currentMembersValid || !pendingMembersValid) {
-        int topologyId=cacheStatus.getCacheTopology().getTopologyId();
-        ConsistentHashFactory consistentHashFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();
         List<Address> newCurrentMembers=new ArrayList<Address>(currentCH.getMembers());
         newCurrentMembers.retainAll(newClusterMembers);
-        if (newCurrentMembers.isEmpty()) {
-          log.tracef("Zero members remaining for cache %s",cacheName);
-          return;
-        }
-        ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers);
-        ConsistentHash newPendingCH=null;
-        if (pendingCH != null) {
-          List<Address> newPendingMembers=new ArrayList<Address>(cacheStatus.getCacheTopology().getMembers());
-          newPendingMembers.retainAll(newClusterMembers);
-          if (newPendingMembers.isEmpty()) {
-            log.tracef("Zero members remaining for cache %s",cacheName);
-            return;
-          }
-          newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers);
-        }
-        CacheTopology cacheTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
-        updateConsistentHash(cacheName,cacheStatus,cacheTopology);
+        updateCacheMembers(cacheName,cacheStatus,newCurrentMembers);
       }
       if (!isBalanced(cacheStatus.getCacheTopology().getCurrentCH()) || !cacheStatus.getJoiners().isEmpty()) {
         triggerRebalance(cacheName,cacheStatus);

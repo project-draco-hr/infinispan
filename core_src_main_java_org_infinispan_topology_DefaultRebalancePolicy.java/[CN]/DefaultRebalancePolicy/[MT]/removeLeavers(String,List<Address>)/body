@@ -1,0 +1,12 @@
+{
+  CacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  if (cacheStatus == null) {
+    log.tracef("Ignoring members update for cache %s, as we haven't initialized it yet",cacheName);
+    return;
+  }
+synchronized (cacheStatus) {
+    List<Address> newMembers=new ArrayList<Address>(clusterMembers);
+    newMembers.removeAll(leavers);
+    updateCacheMembers(cacheName,cacheStatus,newMembers);
+  }
+}
