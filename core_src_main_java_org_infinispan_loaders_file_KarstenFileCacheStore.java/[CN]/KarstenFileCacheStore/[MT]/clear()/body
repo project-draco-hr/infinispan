@@ -1,0 +1,18 @@
+{
+  try {
+synchronized (entries) {
+synchronized (freeList) {
+        for (        FileEntry fe : entries.values())         fe.waitUnlocked();
+        for (        FileEntry fe : freeList)         fe.waitUnlocked();
+        entries.clear();
+        freeList.clear();
+        file.truncate(0);
+        file.write(ByteBuffer.wrap(MAGIC),0);
+        filePos=MAGIC.length;
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+}

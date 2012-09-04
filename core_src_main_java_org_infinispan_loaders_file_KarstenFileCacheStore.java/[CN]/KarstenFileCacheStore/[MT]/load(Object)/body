@@ -1,0 +1,29 @@
+{
+  try {
+    final FileEntry fe;
+    final boolean expired;
+synchronized (entries) {
+      fe=entries.get(key);
+      if (fe == null)       return null;
+      expired=fe.isExpired(System.currentTimeMillis());
+      if (expired)       entries.remove(key);
+      fe.lock();
+    }
+    final byte[] data;
+    try {
+      if (expired) {
+        free(fe);
+        return null;
+      }
+      data=new byte[fe.dataLen];
+      file.read(ByteBuffer.wrap(data),fe.offset + KEY_POS + fe.keyLen);
+    }
+  finally {
+      fe.unlock();
+    }
+    return ((InternalCacheValue)getMarshaller().objectFromByteBuffer(data)).toInternalCacheEntry(key);
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+}
