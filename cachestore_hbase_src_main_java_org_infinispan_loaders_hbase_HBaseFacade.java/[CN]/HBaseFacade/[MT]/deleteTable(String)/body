@@ -2,12 +2,16 @@
   if (name == null || "".equals(name)) {
     throw new HBaseException("Table name must not be empty.");
   }
+  HBaseAdmin admin=null;
   try {
-    HBaseAdmin admin=new HBaseAdmin(CONFIG);
+    admin=new HBaseAdmin(CONFIG);
     admin.disableTable(name);
     admin.deleteTable(name);
   }
  catch (  Exception ex) {
     throw new HBaseException("Exception occurred when deleting HBase table.",ex);
+  }
+ finally {
+    close(admin);
   }
 }
