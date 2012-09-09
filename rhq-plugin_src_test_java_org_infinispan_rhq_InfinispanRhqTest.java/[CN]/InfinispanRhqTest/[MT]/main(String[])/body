@@ -1,14 +1,13 @@
 {
-  GlobalConfiguration myGlobalConfig=new GlobalConfiguration();
-  myGlobalConfig.setJmxDomain("org.infinispan");
-  myGlobalConfig.setExposeGlobalJmxStatistics(true);
-  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(myGlobalConfig)){
+  GlobalConfigurationBuilder globalConfigurationBuilder=new GlobalConfigurationBuilder();
+  globalConfigurationBuilder.globalJmxStatistics().enable().jmxDomain("org.infinispan");
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(globalConfigurationBuilder,new ConfigurationBuilder())){
     @Override public void call(){
-      Configuration config=new Configuration();
-      config.setExposeJmxStatistics(true);
-      config.setEvictionMaxEntries(123);
-      config.setExpirationMaxIdle(180000);
-      cm.defineConfiguration(MY_CUSTOM_CACHE,config);
+      ConfigurationBuilder configurationBuilder=new ConfigurationBuilder();
+      configurationBuilder.jmxStatistics().enable();
+      configurationBuilder.eviction().maxEntries(123);
+      configurationBuilder.expiration().maxIdle(180000);
+      cm.defineConfiguration(MY_CUSTOM_CACHE,configurationBuilder.build());
       Cache<String,String> cache=cm.getCache(MY_CUSTOM_CACHE);
       cache.put("myKey","myValue");
       int i=0;
