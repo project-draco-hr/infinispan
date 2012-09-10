@@ -1,2 +1,16 @@
 {
+  String key="k1", value="value", value2="v2";
+  initAndTest();
+  boolean replaced=getFirstNonOwner(key).replace(key,value2,value);
+  assertFalse(replaced);
+  replaced=getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).replace(key,value,value2);
+  assertTrue(replaced);
+  for (  Cache<Object,String> c : caches) {
+    assertEquals(value2,c.get(key));
+    if (isOwner(c,key)) {
+      CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+      assertTrue(store.containsKey(key));
+      assertEquals(value,store.load(key).getValue());
+    }
+  }
 }
