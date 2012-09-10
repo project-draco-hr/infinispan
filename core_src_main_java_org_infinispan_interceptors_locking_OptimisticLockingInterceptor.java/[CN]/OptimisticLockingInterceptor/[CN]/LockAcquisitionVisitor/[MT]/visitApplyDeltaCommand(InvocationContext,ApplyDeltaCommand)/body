@@ -2,9 +2,12 @@
   if (cdl.localNodeIsOwner(command.getKey())) {
     Object[] compositeKeys=command.getCompositeKeys();
     TxInvocationContext txC=(TxInvocationContext)ctx;
+    boolean skipLocking=hasSkipLocking(command);
+    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
     for (    Object key : compositeKeys) {
       performWriteSkewCheck(txC,key);
-      lockAndRegisterBackupLock(txC,key);
+      lockAndRegisterBackupLock(txC,key,lockTimeout,skipLocking);
+      txC.addAffectedKey(key);
     }
   }
   return null;

@@ -2,10 +2,12 @@
   Object[] compositeKeys=command.getCompositeKeys();
   try {
     HashSet<Object> keysToLock=new HashSet<Object>(Arrays.asList(compositeKeys));
-    acquireRemoteIfNeeded(ctx,keysToLock);
+    acquireRemoteIfNeeded(ctx,keysToLock,command);
+    boolean skipLocking=hasSkipLocking(command);
+    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
     if (cdl.localNodeIsOwner(command.getDeltaAwareKey())) {
       for (      Object key : compositeKeys) {
-        lockKey(ctx,key);
+        lockKey(ctx,key,lockTimeout,skipLocking);
       }
     }
     return invokeNextInterceptor(ctx,command);

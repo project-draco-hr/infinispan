@@ -1,9 +1,11 @@
 {
   try {
     final boolean localNodeOwnsLock=cdl.localNodeIsPrimaryOwner(command.getKey());
-    acquireRemoteIfNeeded(ctx,command.getKey(),localNodeOwnsLock);
+    acquireRemoteIfNeeded(ctx,command,localNodeOwnsLock);
     final TxInvocationContext txContext=(TxInvocationContext)ctx;
-    lockAndRegisterBackupLock(txContext,command.getKey(),localNodeOwnsLock);
+    boolean skipLocking=hasSkipLocking(command);
+    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
+    lockAndRegisterBackupLock(txContext,command.getKey(),localNodeOwnsLock,lockTimeout,skipLocking);
     return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable te) {

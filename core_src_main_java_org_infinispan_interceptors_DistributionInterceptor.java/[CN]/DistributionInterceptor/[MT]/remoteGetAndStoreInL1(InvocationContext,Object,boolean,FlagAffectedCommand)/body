@@ -1,0 +1,16 @@
+{
+  DataLocality locality=dm.getLocality(key);
+  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
+    return realRemoteGet(ctx,key,true,isWrite,command);
+  }
+ else {
+    if (locality.isUncertain()) {
+      if (trace)       log.tracef("Key %s is mapped to local node %s, but a rehash is in progress so may need to look elsewhere",key,rpcManager.getAddress());
+      return realRemoteGet(ctx,key,false,isWrite,command);
+    }
+ else {
+      if (trace)       log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s",key,rpcManager.getAddress(),dm.locate(key));
+    }
+  }
+  return null;
+}

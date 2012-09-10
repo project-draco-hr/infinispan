@@ -1,0 +1,14 @@
+{
+  incrementInvalidations();
+  final InvalidateCommand command=commandsFactory.buildInvalidateCommand(Collections.<Flag>emptySet(),keys);
+  if (log.isDebugEnabled())   log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating "+ command);
+  if (useFuture) {
+    NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl(retvalForFuture);
+    rpcManager.broadcastRpcCommandInFuture(command,future);
+    return future;
+  }
+ else {
+    rpcManager.broadcastRpcCommand(command,synchronous);
+  }
+  return retvalForFuture;
+}

@@ -1,5 +1,4 @@
 {
-  boolean suppressExceptions=false;
   try {
     ComponentStatus status=componentRegistry.getStatus();
     if (command.ignoreCommandOnStatus(status)) {
@@ -16,9 +15,6 @@
     try {
       if (trace)       log.tracef("Invoked with command %s and InvocationContext [%s]",command,ctx);
       if (ctx == null)       throw new IllegalStateException("Null context not allowed!!");
-      if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
-        suppressExceptions=true;
-      }
       try {
         return invokeNextInterceptor(ctx,command);
       }
@@ -26,6 +22,7 @@
         throw ex;
       }
 catch (      Throwable th) {
+        boolean suppressExceptions=(command instanceof FlagAffectedCommand) && ((FlagAffectedCommand)command).hasFlag(Flag.FAIL_SILENTLY);
         suppressExceptions=suppressExceptions || shuttingDown;
         if (suppressExceptions) {
           if (shuttingDown)           log.trace("Exception while executing code, but we're shutting down so failing silently.");
@@ -52,9 +49,6 @@ catch (      Throwable th) {
           }
           throw th;
         }
-      }
- finally {
-        ctx.reset();
       }
     }
   finally {

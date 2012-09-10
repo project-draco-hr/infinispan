@@ -1,0 +1,100 @@
+{
+  if (cacheModeLocal) {
+    final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
+    try {
+      if (isTxCommand) {
+        stateTransferLock.transactionsSharedLock();
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  finally {
+      if (isTxCommand) {
+        stateTransferLock.transactionsSharedUnlock();
+      }
+    }
+  }
+  Set<Address> newTargets=null;
+  stateTransferLock.commandsSharedLock();
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  final int topologyId=cacheTopology.getTopologyId();
+  final ConsistentHash readCh=cacheTopology.getReadConsistentHash();
+  final ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
+  if (command.getTopologyId() == -1) {
+    command.setTopologyId(cacheTopology.getTopologyId());
+  }
+  try {
+    final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
+    if (isTxCommand) {
+      stateTransferLock.transactionsSharedLock();
+    }
+    try {
+      if (command.getTopologyId() < topologyId) {
+        Object readKey=null;
+        if (command instanceof GetKeyValueCommand) {
+          readKey=((GetKeyValueCommand)command).getKey();
+        }
+ else         if (command instanceof ClusteredGetCommand) {
+          readKey=((ClusteredGetCommand)command).getKey();
+        }
+        if (readKey != null) {
+          if (!readCh.isKeyLocalToNode(rpcManager.getAddress(),readKey)) {
+            return null;
+          }
+        }
+ else         if (command instanceof PrepareCommand || command instanceof LockControlCommand || command instanceof WriteCommand) {
+          if (command instanceof WriteCommand && ctx instanceof TxInvocationContext) {
+            return invokeNextInterceptor(ctx,command);
+          }
+ else {
+            Set<Object> affectedKeys=getAffectedKeys(ctx,command);
+            newTargets=new HashSet<Address>();
+            boolean localExecutionNeeded=false;
+            for (            Object key : affectedKeys) {
+              if (writeCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
+                localExecutionNeeded=true;
+              }
+ else {
+                newTargets.addAll(writeCh.locateOwners(key));
+              }
+            }
+            if (localExecutionNeeded) {
+              return invokeNextInterceptor(ctx,command);
+            }
+          }
+        }
+ else         if (command instanceof CommitCommand || command instanceof RollbackCommand) {
+          try {
+            return invokeNextInterceptor(ctx,command);
+          }
+  finally {
+            newTargets=new HashSet<Address>();
+            Set<Object> affectedKeys=((TxInvocationContext)ctx).getAffectedKeys();
+            for (            Object key : affectedKeys) {
+              if (!writeCh.isKeyLocalToNode(rpcManager.getAddress(),key)) {
+                newTargets.addAll(writeCh.locateOwners(key));
+              }
+            }
+          }
+        }
+      }
+ else       if (command.getTopologyId() > topologyId) {
+        stateTransferLock.waitForTopology(command.getTopologyId());
+      }
+ else {
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  finally {
+      if (isTxCommand) {
+        stateTransferLock.transactionsSharedUnlock();
+      }
+    }
+  }
+  finally {
+    stateTransferLock.commandsSharedUnlock();
+    log.tracef("Forwarding command %s to new targets %s",command,newTargets);
+    if (newTargets != null && !newTargets.isEmpty()) {
+      rpcManager.invokeRemotely(newTargets,command,true);
+    }
+  }
+}

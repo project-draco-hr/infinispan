@@ -20,8 +20,10 @@
       releaseLocksOnFailureBeforePrepare(ctx);
       return Boolean.FALSE;
     }
+    boolean skipLocking=hasSkipLocking(command);
+    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
     for (    Object key : command.getKeys()) {
-      lockAndRegisterBackupLock(ctx,key);
+      lockAndRegisterBackupLock(ctx,key,lockTimeout,skipLocking);
     }
     return Boolean.TRUE;
   }

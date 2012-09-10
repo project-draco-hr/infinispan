@@ -1,14 +1,17 @@
 {
-  RemoveCacheCommand cmd=new RemoveCacheCommand(cacheName,this,globalComponentRegistry);
-  Transport transport=getTransport();
-  try {
-    if (transport != null) {
-      Configuration c=getConfiguration(cacheName);
-      transport.invokeRemotely(null,cmd,ResponseMode.SYNCHRONOUS,c.clustering().sync().replTimeout(),false,null);
+  ComponentRegistry cacheComponentRegistry=globalComponentRegistry.getNamedComponentRegistry(cacheName);
+  if (cacheComponentRegistry != null) {
+    RemoveCacheCommand cmd=new RemoveCacheCommand(cacheName,this,globalComponentRegistry,cacheComponentRegistry.getComponent(CacheLoaderManager.class));
+    Transport transport=getTransport();
+    try {
+      if (transport != null) {
+        Configuration c=getConfiguration(cacheName);
+        transport.invokeRemotely(null,cmd,ResponseMode.SYNCHRONOUS,c.clustering().sync().replTimeout(),false,null);
+      }
+      cmd.perform(null);
     }
-    cmd.perform(null);
-  }
- catch (  Throwable t) {
-    throw new CacheException("Error removing cache",t);
+ catch (    Throwable t) {
+      throw new CacheException("Error removing cache",t);
+    }
   }
 }

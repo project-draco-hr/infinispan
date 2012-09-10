@@ -1,8 +1,10 @@
 {
   assertNonTransactional(ctx);
   try {
+    boolean skipLocking=hasSkipLocking(command);
+    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
     for (    Object key : command.getMap().keySet()) {
-      lockKey(ctx,key);
+      lockKey(ctx,key,lockTimeout,skipLocking);
     }
     return invokeNextInterceptor(ctx,command);
   }

@@ -36,9 +36,8 @@ synchronized (this) {
   }
   if (!keysToRemove.isEmpty()) {
     try {
-      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(true,keysToRemove);
+      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(true,EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove);
       InvocationContext ctx=icc.createNonTxInvocationContext();
-      ctx.setFlags(CACHE_MODE_LOCAL,SKIP_LOCKING);
       interceptorChain.invoke(ctx,invalidateCmd);
       log.debugf("Invalidated %d keys, data container now has %d keys",keysToRemove.size(),dataContainer.size());
       if (trace)       log.tracef("Invalidated keys: %s",keysToRemove);

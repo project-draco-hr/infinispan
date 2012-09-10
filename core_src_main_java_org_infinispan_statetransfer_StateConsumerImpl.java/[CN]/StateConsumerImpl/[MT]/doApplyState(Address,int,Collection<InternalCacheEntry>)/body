@@ -9,9 +9,9 @@
   }
   for (  InternalCacheEntry e : cacheEntries) {
     InvocationContext ctx=icc.createInvocationContext(false,1);
-    ctx.setFlags(CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
+    EnumSet<Flag> flags=EnumSet.of(CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_SHARED_CACHE_STORE,SKIP_LOCKING,SKIP_OWNERSHIP_CHECK);
     try {
-      PutKeyValueCommand put=useVersionedPut ? commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),e.getVersion(),ctx.getFlags()) : commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),ctx.getFlags());
+      PutKeyValueCommand put=useVersionedPut ? commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),e.getVersion(),flags) : commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),flags);
       put.setPutIfAbsent(true);
       interceptorChain.invoke(ctx,put);
     }

@@ -1,5 +1,5 @@
 {
-  if (ctx.isInTxScope() && !isLocalModeForced(ctx)) {
+  if (ctx.isInTxScope()) {
     if (modifications == null || modifications.isEmpty())     return;
     InvalidationFilterVisitor filterVisitor=new InvalidationFilterVisitor(modifications.size());
     filterVisitor.visitCollection(null,modifications);
@@ -11,7 +11,7 @@
     }
  else {
       try {
-        invalidateAcrossCluster(defaultSynchronous,ctx,filterVisitor.result.toArray(),false,null);
+        invalidateAcrossCluster(defaultSynchronous,filterVisitor.result.toArray(),false,null);
       }
  catch (      Throwable t) {
         log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.",t);

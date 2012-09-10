@@ -1,7 +1,9 @@
 {
   try {
-    if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
-      lockKeyAndCheckOwnership(ctx,command.getKey());
+    if (command.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+      boolean skipLocking=hasSkipLocking(command);
+      long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
+      lockKeyAndCheckOwnership(ctx,command.getKey(),lockTimeout,skipLocking);
     }
     return invokeNextInterceptor(ctx,command);
   }
