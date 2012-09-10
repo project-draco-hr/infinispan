@@ -1,0 +1,12 @@
+{
+  Class clazz=value.getClass();
+  EntityIndexBinder entityIndexBinding=searchFactory.getIndexBindingForEntity(clazz);
+  if (entityIndexBinding == null) {
+    return;
+  }
+  ConversionContext conversionContext=new ContextualExceptionBridgeHelper();
+  DocumentBuilderIndexedEntity docBuilder=entityIndexBinding.getDocumentBuilder();
+  final String idInString=keyTransformationHandler.keyToString(key);
+  UpdateLuceneWork updateTask=docBuilder.createUpdateWork(clazz,value,(Serializable)key,idInString,SimpleInitializer.INSTANCE,conversionContext);
+  collector.emit(key,updateTask);
+}
