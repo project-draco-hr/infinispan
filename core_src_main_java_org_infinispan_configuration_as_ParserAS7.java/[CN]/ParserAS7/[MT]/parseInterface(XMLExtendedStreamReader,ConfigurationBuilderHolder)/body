@@ -1,0 +1,25 @@
+{
+  String name=ParseUtils.requireSingleAttribute(reader,Attribute.NAME.getLocalName());
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case INET_ADDRESS:
+{
+        String value=replaceProperties(ParseUtils.requireSingleAttribute(reader,Attribute.VALUE.getLocalName()));
+        ParserContextAS7 parserContext=holder.getParserContext(ParserAS7.class);
+        try {
+          parserContext.addInterface(new NetworkInterface(name,InetAddress.getByName(value)));
+        }
+ catch (        UnknownHostException e) {
+          throw ParseUtils.invalidAttributeValue(reader,0);
+        }
+        break;
+      }
+default :
+{
+      reader.discardRemainder();
+    }
+}
+}
+ParseUtils.requireNoContent(reader);
+}

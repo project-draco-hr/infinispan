@@ -1,0 +1,22 @@
+{
+  String name=ParseUtils.requireAttributes(reader,Attribute.NAME.getLocalName())[0];
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case REMOTE_DESTINATION:
+{
+        String[] attributes=ParseUtils.requireAttributes(reader,Attribute.HOST.getLocalName(),Attribute.PORT.getLocalName());
+        ParserContextAS7 parserContext=holder.getParserContext(ParserAS7.class);
+        SocketBindingGroup socketBindingGroup=parserContext.getCurrentSocketBindingGroup();
+        socketBindingGroup.addOutboundSocketBinding(new OutboundSocketBinding(name,attributes[0],Integer.parseInt(attributes[1])));
+        ParseUtils.requireNoContent(reader);
+        return;
+      }
+default :
+{
+      reader.discardRemainder();
+    }
+}
+}
+throw ParseUtils.missingRequiredElement(reader,EnumSet.of(Element.REMOTE_DESTINATION));
+}

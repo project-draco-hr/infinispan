@@ -1,0 +1,26 @@
+{
+  ParserContextAS7 parserContext=holder.getParserContext(ParserAS7.class);
+  String[] attributes=ParseUtils.requireAttributes(reader,Attribute.NAME.getLocalName(),Attribute.DEFAULT_INTERFACE.getLocalName());
+  String portOffset=reader.getAttributeValue(null,Attribute.PORT_OFFSET.getLocalName());
+  SocketBindingGroup socketBindingGroup=new SocketBindingGroup(attributes[0],attributes[1],portOffset == null ? 0 : Integer.parseInt(replaceProperties(portOffset)));
+  parserContext.addSocketBindingGroup(socketBindingGroup);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case SOCKET_BINDING:
+{
+        parseSocketBinding(reader,holder);
+        break;
+      }
+case OUTBOUND_SOCKET_BINDING:
+{
+      parseOutboundSocketBinding(reader,holder);
+      break;
+    }
+default :
+{
+    reader.discardRemainder();
+  }
+}
+}
+}

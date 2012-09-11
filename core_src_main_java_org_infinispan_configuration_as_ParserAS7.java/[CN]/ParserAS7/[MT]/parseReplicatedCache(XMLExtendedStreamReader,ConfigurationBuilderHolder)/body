@@ -1,0 +1,23 @@
+{
+  String name=reader.getAttributeValue(null,Attribute.NAME.getLocalName());
+  ConfigurationBuilder builder=holder.newConfigurationBuilder(name);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    this.parseClusteredCacheAttribute(reader,i,attribute,value,builder,CacheMode.REPL_ASYNC);
+  }
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case STATE_TRANSFER:
+{
+        this.parseStateTransfer(reader,builder);
+        break;
+      }
+default :
+{
+      this.parseCacheElement(reader,element,holder);
+    }
+}
+}
+}

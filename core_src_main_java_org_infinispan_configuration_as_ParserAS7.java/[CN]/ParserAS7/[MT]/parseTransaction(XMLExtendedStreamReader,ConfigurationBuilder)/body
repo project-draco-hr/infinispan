@@ -1,0 +1,31 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case STOP_TIMEOUT:
+{
+        builder.transaction().cacheStopTimeout(Long.parseLong(value));
+        break;
+      }
+case MODE:
+{
+      TransactionMode txMode=TransactionMode.valueOf(value);
+      builder.transaction().transactionMode(txMode.getMode());
+      builder.transaction().useSynchronization(!txMode.isXAEnabled());
+      builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
+      break;
+    }
+case LOCKING:
+{
+    builder.transaction().lockingMode(LockingMode.valueOf(value));
+    break;
+  }
+default :
+{
+  throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+ParseUtils.requireNoContent(reader);
+}

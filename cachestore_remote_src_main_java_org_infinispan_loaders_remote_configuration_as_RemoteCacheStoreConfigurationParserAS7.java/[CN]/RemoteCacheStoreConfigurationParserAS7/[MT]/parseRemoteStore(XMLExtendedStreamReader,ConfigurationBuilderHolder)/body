@@ -1,0 +1,21 @@
+{
+  ParserContextAS7 context=holder.getParserContext(ParserAS7.class);
+  LoadersConfigurationBuilder loaders=holder.getCurrentConfigurationBuilder().loaders();
+  RemoteCacheStoreConfigurationBuilder builder=new RemoteCacheStoreConfigurationBuilder(loaders);
+  parseRemoteStoreAttributes(reader,builder);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case REMOTE_SERVER:
+{
+        parseServer(reader,builder.addServer(),context);
+        break;
+      }
+default :
+{
+      ParserAS7.parseStoreElement(reader,builder);
+    }
+}
+}
+loaders.addStore(builder);
+}

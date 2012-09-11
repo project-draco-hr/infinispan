@@ -1,0 +1,12 @@
+{
+  String[] attributes=ParseUtils.requireAttributes(reader,Attribute.NAME.getLocalName(),Attribute.PORT.getLocalName());
+  ParserContextAS7 parserContext=holder.getParserContext(ParserAS7.class);
+  SocketBindingGroup socketBindingGroup=parserContext.getCurrentSocketBindingGroup();
+  String interfaceName=reader.getAttributeValue(null,Attribute.INTERFACE.getLocalName());
+  if (interfaceName == null) {
+    interfaceName=socketBindingGroup.defaultInterface();
+  }
+  InetAddress address=parserContext.getInterface(interfaceName).address();
+  socketBindingGroup.addSocketBinding(new SocketBinding(attributes[0],address,Integer.parseInt(replaceProperties(attributes[1]))));
+  ParseUtils.requireNoContent(reader);
+}
