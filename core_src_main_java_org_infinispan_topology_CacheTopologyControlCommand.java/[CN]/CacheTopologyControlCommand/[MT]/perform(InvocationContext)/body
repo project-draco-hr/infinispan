@@ -5,7 +5,11 @@
     Object responseValue=doPerform();
     return SuccessfulResponse.create(responseValue);
   }
- catch (  Exception t) {
+ catch (  InterruptedException e) {
+    log.tracef("Command execution %s was interrupted because the cache manager is shutting down",this);
+    return UnsuccessfulResponse.INSTANCE;
+  }
+catch (  Exception t) {
     log.exceptionHandlingCommand(this,t);
     return new ExceptionResponse(t);
   }
