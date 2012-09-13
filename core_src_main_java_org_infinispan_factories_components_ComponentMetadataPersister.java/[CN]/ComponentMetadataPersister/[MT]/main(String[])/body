@@ -3,27 +3,28 @@
   String path=args[0];
   String outputFile=args[1];
   System.out.printf(" [ComponentMetadataPersister] Starting component metadata generation.  Scanning classes in %s%n",path);
-  FACTORIES.clear();
-  COMPONENT_METADATA_MAP.clear();
+  repo=new ComponentMetadataRepo();
+  repo.factories.clear();
+  repo.componentMetadataMap.clear();
   File f=new File(path);
   process(path,f);
   Map<String,String> dependencies=new HashMap<String,String>(128);
-  for (  ComponentMetadata md : COMPONENT_METADATA_MAP.values()) {
+  for (  ComponentMetadata md : repo.componentMetadataMap.values()) {
     if (md.getDependencies() != null)     dependencies.putAll(md.getDependencies());
   }
   ClassLoader cl=ComponentMetadataRepo.class.getClassLoader();
   for (  String s : dependencies.keySet()) {
-    if (!COMPONENT_METADATA_MAP.containsKey(s)) {
+    if (!repo.componentMetadataMap.containsKey(s)) {
       try {
         Class<?> dependencyType=Util.loadClass(s,cl);
         ComponentMetadata equivalent=null;
-        for (        ComponentMetadata cm : COMPONENT_METADATA_MAP.values()) {
+        for (        ComponentMetadata cm : repo.componentMetadataMap.values()) {
           if (dependencyType.isAssignableFrom(cm.getClazz())) {
             equivalent=cm;
             break;
           }
         }
-        if (equivalent != null)         COMPONENT_METADATA_MAP.put(s,equivalent);
+        if (equivalent != null)         repo.componentMetadataMap.put(s,equivalent);
       }
  catch (      Exception e) {
       }
@@ -32,7 +33,7 @@
   if (Boolean.getBoolean("infinispan.isCoreModule")) {
     boolean hasErrors=false;
     for (    Map.Entry<String,String> e : dependencies.entrySet()) {
-      if (!COMPONENT_METADATA_MAP.containsKey(e.getKey())) {
+      if (!repo.componentMetadataMap.containsKey(e.getKey())) {
         if (!hasFactory(e.getKey()) && !hasFactory(e.getValue()) && !KnownComponentNames.ALL_KNOWN_COMPONENT_NAMES.contains(e.getKey())) {
           System.out.printf(" [ComponentMetadataPersister]     **** WARNING!!!  Missing components or factories for dependency on %s%n",e.getKey());
           hasErrors=true;
@@ -42,5 +43,5 @@
     if (hasErrors && Boolean.getBoolean("infinispan.isCoreModule"))     throw new RuntimeException("Could not pass sanity check of all annotated components and their respective factories/dependencies.");
   }
   writeMetadata(outputFile);
-  System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n",COMPONENT_METADATA_MAP.size(),FACTORIES.size(),Util.prettyPrintTime(System.nanoTime() - startTime,TimeUnit.NANOSECONDS));
+  System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n",repo.componentMetadataMap.size(),repo.factories.size(),Util.prettyPrintTime(System.nanoTime() - startTime,TimeUnit.NANOSECONDS));
 }

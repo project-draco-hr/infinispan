@@ -1,0 +1,30 @@
+{
+  ConfigurationBuilder builder=asyncStoreWithEvictionBuilder();
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      GlobalComponentRegistry gcr=TestingUtil.extractGlobalComponentRegistry(cm);
+      gcr.getComponentMetadataRepo().injectFactoryForComponent(CacheLoaderManager.class,CustomCacheLoaderManagerFactory.class);
+      Cache<Integer,String> cache=cm.getCache();
+      MockAsyncStore cacheStore=getMockAsyncStore(cache);
+      CountDownLatch modApplyLatch=cacheStore.modApplyLatch;
+      CountDownLatch lockedWaitLatch=cacheStore.lockedWaitLatch;
+      cache.put(1,"v1");
+      try {
+        log.trace("Wait for async store to lock keys");
+        lockedWaitLatch.await(60,TimeUnit.SECONDS);
+      }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      cache.put(2,"v2");
+      try {
+        assertEquals("v1",cache.get(1));
+        assertEquals("v2",cache.get(2));
+      }
+  finally {
+        modApplyLatch.countDown();
+      }
+    }
+  }
+);
+}

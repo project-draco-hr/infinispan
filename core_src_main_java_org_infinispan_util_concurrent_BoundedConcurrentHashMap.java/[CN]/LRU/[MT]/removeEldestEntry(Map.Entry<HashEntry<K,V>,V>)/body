@@ -2,9 +2,11 @@
   boolean aboveThreshold=isAboveThreshold();
   if (aboveThreshold) {
     HashEntry<K,V> evictedEntry=eldest.getKey();
-    segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
-    segment.remove(evictedEntry.key,evictedEntry.hash,null);
-    evicted.add(evictedEntry);
+    boolean evict=segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+    if (evict) {
+      segment.remove(evictedEntry.key,evictedEntry.hash,null);
+      evicted.add(evictedEntry);
+    }
   }
   return aboveThreshold;
 }

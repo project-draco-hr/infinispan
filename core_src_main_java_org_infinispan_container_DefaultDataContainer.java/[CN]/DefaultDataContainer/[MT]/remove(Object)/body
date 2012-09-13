@@ -1,4 +1,10 @@
 {
-  InternalCacheEntry e=entries.remove(k);
+  InternalCacheEntry e;
+  if (isAsyncStore) {
+    e=entries.replace(k,new InternalNullEntry(asyncStore));
+  }
+ else {
+    e=entries.remove(k);
+  }
   return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
 }
