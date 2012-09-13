@@ -15,11 +15,12 @@
   }
   DistributionManager dm=tmpCache.getAdvancedCache().getDistributionManager();
   if (combiner != null) {
+    Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
     log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,localAddress);
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     Map<KOut,VOut> combinedMap=new ConcurrentHashMap<KOut,VOut>();
     try {
-      taskLifecycleService.onPreExecute(combiner);
+      taskLifecycleService.onPreExecute(combiner,cache);
       Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
       for (      Entry<KOut,List<VOut>> e : collectedValues.entrySet()) {
         List<VOut> list=e.getValue();

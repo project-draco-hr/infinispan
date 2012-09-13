@@ -1,4 +1,5 @@
 {
+  Cache<?,?> cache=cacheManager.getCache(reduceCommand.getCacheName());
   Set<KOut> keys=reduceCommand.getKeys();
   String taskId=reduceCommand.getTaskId();
   Reducer<KOut,VOut> reducer=reduceCommand.getReducer();
@@ -13,7 +14,7 @@
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,localAddress);
     try {
-      taskLifecycleService.onPreExecute(reducer);
+      taskLifecycleService.onPreExecute(reducer,cache);
       for (      KOut key : keys) {
         List<VOut> value=null;
         if (useIntermediateKeys) {
