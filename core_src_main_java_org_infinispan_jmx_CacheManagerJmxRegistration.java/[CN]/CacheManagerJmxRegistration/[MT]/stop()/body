@@ -1,7 +1,13 @@
 {
   if (globalReg == null)   return;
-  if (globalConfig.globalJmxStatistics().enabled()) {
-    unregisterMBeans(globalReg.getRegisteredComponents());
+  if (needToUnregister) {
+    try {
+      unregisterMBeans(globalReg.getRegisteredComponents());
+      needToUnregister=false;
+    }
+ catch (    Exception e) {
+      log.problemsUnregisteringMBeans(e);
+    }
   }
   globalReg=null;
 }
