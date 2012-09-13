@@ -1,5 +1,11 @@
 {
   Set<InternalCacheEntry> set=new HashSet<InternalCacheEntry>();
-  for (  CacheStore s : stores.keySet())   set.addAll(s.loadAll());
+  loadersAndStoresMutex.readLock().lock();
+  try {
+    for (    CacheStore s : stores.keySet())     set.addAll(s.loadAll());
+  }
+  finally {
+    loadersAndStoresMutex.readLock().unlock();
+  }
   return set;
 }

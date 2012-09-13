@@ -1,5 +1,11 @@
 {
   Set<Object> set=new HashSet<Object>();
-  for (  CacheStore s : stores.keySet())   set.addAll(s.loadAllKeys(keysToExclude));
+  loadersAndStoresMutex.readLock().lock();
+  try {
+    for (    CacheStore s : stores.keySet())     set.addAll(s.loadAllKeys(keysToExclude));
+  }
+  finally {
+    loadersAndStoresMutex.readLock().unlock();
+  }
   return set;
 }

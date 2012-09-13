@@ -1,8 +1,14 @@
 {
   InternalCacheEntry se=null;
-  for (  CacheLoader l : loaders.keySet()) {
-    se=l.load(key);
-    if (se != null)     break;
+  loadersAndStoresMutex.readLock().lock();
+  try {
+    for (    CacheLoader l : loaders.keySet()) {
+      se=l.load(key);
+      if (se != null)       break;
+    }
+  }
+  finally {
+    loadersAndStoresMutex.readLock().unlock();
   }
   return se;
 }

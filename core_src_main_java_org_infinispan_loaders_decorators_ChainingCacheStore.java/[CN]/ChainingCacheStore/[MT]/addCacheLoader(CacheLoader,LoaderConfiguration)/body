@@ -1,4 +1,10 @@
 {
-  loaders.put(loader,config);
-  if (loader instanceof CacheStore)   stores.put((CacheStore)loader,(StoreConfiguration)config);
+  loadersAndStoresMutex.writeLock().lock();
+  try {
+    loaders.put(loader,config);
+    if (loader instanceof CacheStore)     stores.put((CacheStore)loader,(StoreConfiguration)config);
+  }
+  finally {
+    loadersAndStoresMutex.writeLock().unlock();
+  }
 }

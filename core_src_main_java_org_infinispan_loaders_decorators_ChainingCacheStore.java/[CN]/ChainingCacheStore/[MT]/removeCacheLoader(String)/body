@@ -1,0 +1,26 @@
+{
+  loadersAndStoresMutex.writeLock().lock();
+  try {
+    Set<CacheLoader> toRemove=new HashSet<CacheLoader>();
+    for (    CacheStore cs : stores.keySet()) {
+      if (cs.getClass().getName().equals(loaderType))       toRemove.add(cs);
+    }
+    for (    CacheLoader cl : loaders.keySet()) {
+      if (cl.getClass().getName().equals(loaderType))       toRemove.add(cl);
+    }
+    for (    CacheLoader cl : toRemove) {
+      try {
+        log.debugf("Stopping and removing cache loader %s",loaderType);
+        cl.stop();
+      }
+ catch (      Exception e) {
+        log.infof("Problems shutting down cache loader %s",loaderType,e);
+      }
+      stores.remove(cl);
+      loaders.remove(cl);
+    }
+  }
+  finally {
+    loadersAndStoresMutex.writeLock().unlock();
+  }
+}
