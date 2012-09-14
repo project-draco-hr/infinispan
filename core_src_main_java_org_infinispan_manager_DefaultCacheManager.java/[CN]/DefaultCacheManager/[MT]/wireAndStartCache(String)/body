@@ -1,0 +1,25 @@
+{
+  CacheWrapper cacheWrapper;
+synchronized (caches) {
+    cacheWrapper=caches.get(cacheName);
+    if (cacheWrapper != null) {
+      return null;
+    }
+    cacheWrapper=new CacheWrapper();
+    if (caches.put(cacheName,cacheWrapper) != null) {
+      throw new IllegalStateException("attempt to initialize the cache twice");
+    }
+  }
+  globalComponentRegistry.start();
+  Configuration c=getConfiguration(cacheName);
+  Cache<K,V> cache=new InternalCacheFactory<K,V>().createCache(c,globalComponentRegistry,cacheName);
+  cacheWrapper.setCache(cache);
+  try {
+    log.tracef("About to start cache %s",cacheName);
+    cache.start();
+  }
+  finally {
+    cacheWrapper.latch.countDown();
+  }
+  return cache;
+}

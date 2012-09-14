@@ -2,14 +2,8 @@
   final boolean trace=log.isTraceEnabled();
   LogFactory.pushNDC(cacheName,trace);
   try {
-    Cache<K,V> cache=wireCache(cacheName);
+    Cache<K,V> cache=wireAndStartCache(cacheName);
     if (cache == null)     return caches.get(cacheName).getCache();
-    try {
-      cache.start();
-    }
-  finally {
-      caches.get(cacheName).latch.countDown();
-    }
     return cache;
   }
   finally {

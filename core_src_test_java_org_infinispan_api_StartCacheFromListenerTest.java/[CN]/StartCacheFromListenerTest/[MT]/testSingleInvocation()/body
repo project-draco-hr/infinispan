@@ -1,0 +1,44 @@
+{
+  final EmbeddedCacheManager cacheManager=manager(0);
+  GlobalComponentRegistry registry=(GlobalComponentRegistry)TestingUtil.extractField(cacheManager,"globalComponentRegistry");
+  List<ModuleLifecycle> lifecycles=new LinkedList<ModuleLifecycle>();
+  TestingUtil.replaceField(lifecycles,"moduleLifecycles",registry,GlobalComponentRegistry.class);
+  lifecycles.add(new AbstractModuleLifecycle(){
+    @Override public void cacheStarting(    ComponentRegistry cr,    Configuration configuration,    String cacheName){
+      log.debug("StartCacheFromListenerTest.cacheStarting");
+      if (!cacheStartingInvoked.get()) {
+        cacheStartingInvoked.set(true);
+        Future<Cache> fork=fork(new Callable<Cache>(){
+          @Override public Cache call() throws Exception {
+            try {
+              return cacheManager.getCache("cacheStarting");
+            }
+ catch (            Exception e) {
+              log.error("Got",e);
+              throw e;
+            }
+          }
+        }
+);
+        try {
+          log.debug("About to wait in get");
+          Cache cache=fork.get();
+          cache.put("k","v");
+          log.debug("returned from get!");
+        }
+ catch (        InterruptedException e) {
+          e.printStackTrace();
+        }
+catch (        ExecutionException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+);
+  log.debug("StartCacheFromListenerTest.testSingleInvocation1");
+  Cache<Object,Object> some=cacheManager.getCache("some");
+  log.debug("StartCacheFromListenerTest.testSingleInvocation2");
+  some.put("k","v");
+  assertEquals("v",cacheManager.getCache("cacheStarting").get("k"));
+}
