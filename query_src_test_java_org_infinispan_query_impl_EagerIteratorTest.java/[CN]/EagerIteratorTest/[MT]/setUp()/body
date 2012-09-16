@@ -1,9 +1,12 @@
 {
-  keys=new ArrayList<Object>();
+  keys=new ArrayList<String>();
   dummyResults=new HashMap<String,String>();
+  entityInfos=new ArrayList<EntityInfo>();
+  keyTransformationHandler=new KeyTransformationHandler();
   for (int i=1; i <= 10; i++) {
     String key="key" + i;
     keys.add(key);
+    entityInfos.add(new MockEntityInfo(keyTransformationHandler.keyToString(key)));
     dummyResults.put(key,"Result number " + i);
   }
   cache=mock(AdvancedCache.class);
@@ -14,5 +17,5 @@
     }
   }
 );
-  iterator=new EagerIterator(keys,cache,fetchSize);
+  iterator=new EagerIterator(entityInfos,new EntityLoader(cache,keyTransformationHandler),fetchSize);
 }
