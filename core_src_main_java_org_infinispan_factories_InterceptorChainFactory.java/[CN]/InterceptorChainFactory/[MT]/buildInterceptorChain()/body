@@ -33,6 +33,19 @@
  else {
     if (configuration.locking().isolationLevel() != IsolationLevel.NONE)     interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(),NonTransactionalLockingInterceptor.class),false);
   }
+  if (!configuration.sites().backups().isEmpty() && !configuration.sites().disableBackups()) {
+    if ((configuration.transaction().transactionMode() == TransactionMode.TRANSACTIONAL)) {
+      if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+        interceptorChain.appendInterceptor(createInterceptor(new OptimisticBackupInterceptor(),OptimisticBackupInterceptor.class),false);
+      }
+ else {
+        interceptorChain.appendInterceptor(createInterceptor(new PessimisticBackupInterceptor(),PessimisticBackupInterceptor.class),false);
+      }
+    }
+ else {
+      interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalBackupInterceptor(),NonTransactionalBackupInterceptor.class),false);
+    }
+  }
   if (needsVersionAwareComponents && configuration.clustering().cacheMode().isClustered())   interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(),VersionedEntryWrappingInterceptor.class),false);
  else   interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(),EntryWrappingInterceptor.class),false);
   if (configuration.loaders().usingCacheLoaders()) {

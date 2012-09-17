@@ -1,0 +1,20 @@
+{
+  List<XSiteBackup> backupInfo=new ArrayList<XSiteBackup>(2);
+  SitesConfiguration sites=config.sites();
+  for (  BackupConfiguration bc : sites.backups()) {
+    if (bc.site().equals(localSiteName)) {
+      log.cacheBackupsDataToSameSite(localSiteName);
+      continue;
+    }
+    boolean isSync=bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
+    if (backupFilter == BackupFilter.KEEP_ASYNC_ONLY) {
+      if (isSync)       continue;
+    }
+    if (backupFilter == BackupFilter.KEEP_SYNC_ONLY) {
+      if (!isSync)       continue;
+    }
+    XSiteBackup bi=new XSiteBackup(bc.site(),isSync,bc.replicationTimeout());
+    backupInfo.add(bi);
+  }
+  return backupInfo;
+}

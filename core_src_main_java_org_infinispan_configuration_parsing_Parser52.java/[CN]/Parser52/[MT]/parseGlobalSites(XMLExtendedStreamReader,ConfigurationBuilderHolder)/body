@@ -1,0 +1,19 @@
+{
+  GlobalConfigurationBuilder gcb=holder.getGlobalConfigurationBuilder();
+  ParseUtils.requireSingleAttribute(reader,"local");
+  String value=replaceProperties(reader.getAttributeValue(0));
+  gcb.sites().localSite(value);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case SITE:
+      ParseUtils.requireSingleAttribute(reader,Attribute.NAME.getLocalName());
+    value=replaceProperties(reader.getAttributeValue(0));
+  gcb.sites().addSite().name(value);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+ParseUtils.requireNoContent(reader);
+}
+}

@@ -1,0 +1,17 @@
+{
+  Map toAdd=new HashMap();
+  for (int i=0; i < 100; i++) {
+    toAdd.put("k" + i,"v" + i);
+  }
+  try {
+    cache("LON",0).putAll(toAdd);
+    checkFailOnBackupFailure();
+  }
+ catch (  CacheException e) {
+    checkNonFailOnBackupFailure();
+  }
+  for (int i=0; i < 100; i++) {
+    assertEquals("v" + i,cache("LON",i % 2).get("k" + i));
+    assertNull(backup("LON").get("k" + i));
+  }
+}

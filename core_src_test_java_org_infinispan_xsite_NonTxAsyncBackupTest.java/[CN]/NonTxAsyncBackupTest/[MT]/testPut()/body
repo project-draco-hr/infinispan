@@ -1,0 +1,14 @@
+{
+  cache("LON",0).put("k","v");
+  blockingInterceptor.invocationReceivedLatch.await(20000,TimeUnit.MILLISECONDS);
+  assertEquals("v",cache("LON",0).get("k"));
+  assertEquals("v",cache("LON",1).get("k"));
+  assertNull(backup("LON").get("k"));
+  blockingInterceptor.waitingLatch.countDown();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return "v".equals(backup("LON").get("k"));
+    }
+  }
+);
+}

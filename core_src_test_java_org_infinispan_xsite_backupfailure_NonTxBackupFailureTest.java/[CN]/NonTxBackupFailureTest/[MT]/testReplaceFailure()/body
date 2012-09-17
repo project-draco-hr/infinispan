@@ -1,0 +1,18 @@
+{
+  failureInterceptor.disable();
+  cache("LON",0).put("k","v");
+  assertEquals("v",cache("LON",1).get("k"));
+  assertEquals("v",backup("LON").get("k"));
+  failureInterceptor.enable();
+  try {
+    cache("LON",0).replace("k","v2");
+    checkFailOnBackupFailure();
+  }
+ catch (  CacheException e) {
+    checkNonFailOnBackupFailure();
+  }
+  assertEquals("v2",cache("LON",0).get("k"));
+  assertEquals("v2",cache("LON",1).get("k"));
+  assertTrue(failureInterceptor.replaceFailed);
+  assertEquals("v",backup("LON").get("k"));
+}

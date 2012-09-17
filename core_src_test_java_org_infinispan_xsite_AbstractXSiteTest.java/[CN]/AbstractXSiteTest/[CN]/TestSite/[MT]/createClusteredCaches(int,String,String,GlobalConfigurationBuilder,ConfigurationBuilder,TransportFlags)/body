@@ -1,0 +1,11 @@
+{
+  List<Cache<K,V>> caches=new ArrayList<Cache<K,V>>(numMembersInCluster);
+  for (int i=0; i < numMembersInCluster; i++) {
+    EmbeddedCacheManager cm=addClusterEnabledCacheManager(flags,gcb,builder,siteName);
+    if (cacheName != null)     cm.defineConfiguration(cacheName,builder.build());
+    Cache<K,V> cache=(Cache<K,V>)(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+    caches.add(cache);
+  }
+  waitForClusterToForm(cacheName);
+  return caches;
+}

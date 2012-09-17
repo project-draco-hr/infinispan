@@ -1,0 +1,13 @@
+{
+  GlobalConfigurationBuilder lonGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  lonGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("LON");
+  ConfigurationBuilder lon=getDefaultClusteredCacheConfig(CacheMode.LOCAL,false);
+  lon.sites().addBackup().site("NYC").strategy(BackupConfiguration.BackupStrategy.SYNC);
+  ConfigurationBuilder nycBackup=getDefaultClusteredCacheConfig(CacheMode.LOCAL,false);
+  nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
+  EmbeddedCacheManager ecm=new DefaultCacheManager(lonGc.build(),lon.build());
+  ecm.getCache();
+  ecm.defineConfiguration("nycBackup",nycBackup.build());
+  ecm.getCache("nycBackup");
+  return ecm;
+}

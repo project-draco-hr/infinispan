@@ -1,9 +1,17 @@
 {
   JGroupsProtocolCfg jgroupsCfg=getJGroupsProtocolCfg(tcpConfigurator.getProtocolStack());
   if (!flags.withFD())   removeFailureDetectionTcp(jgroupsCfg);
+  if (!flags.isSiteIndexSpecified()) {
+    removeRela2(jgroupsCfg);
+  }
+ else {
+    ProtocolConfiguration protocol=jgroupsCfg.getProtocol(RELAY2);
+    protocol.getProperties().put("site",flags.siteName());
+    if (flags.relayConfig() != null)     protocol.getProperties().put("config",flags.relayConfig());
+  }
   if (!flags.withMerge())   removeMerge(jgroupsCfg);
   if (jgroupsCfg.containsProtocol(TEST_PING)) {
-    replaceTcpStartPort(jgroupsCfg);
+    replaceTcpStartPort(jgroupsCfg,flags);
     if (fullTestName == null)     return jgroupsCfg.toString();
  else     return getTestPingDiscovery(fullTestName,jgroupsCfg);
   }

@@ -1,0 +1,33 @@
+{
+  long deductFromTimeout=NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
+  errors=new HashMap<String,Exception>(syncBackupCalls.size());
+  long elapsedTime=0;
+  for (  Map.Entry<XSiteBackup,Future<Object>> entry : syncBackupCalls.entrySet()) {
+    long timeout=entry.getKey().getTimeout();
+    String siteName=entry.getKey().getSiteName();
+    if (timeout > 0) {
+      timeout-=deductFromTimeout;
+      timeout-=elapsedTime;
+      if (timeout <= 0 && !entry.getValue().isDone())       errors.put(siteName,newTimeoutException(entry,entry.getKey().getTimeout()));
+    }
+    long startNanos=System.nanoTime();
+    Object value=null;
+    try {
+      value=entry.getValue().get(timeout,MILLISECONDS);
+    }
+ catch (    TimeoutException te) {
+      errors.put(siteName,newTimeoutException(entry,entry.getKey().getTimeout()));
+    }
+ finally {
+      elapsedTime+=NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    }
+    if (value instanceof ExceptionResponse) {
+      Exception remoteException=((ExceptionResponse)value).getException();
+      log.tracef(remoteException,"Got error backup response from site %s",siteName);
+      errors.put(siteName,remoteException);
+    }
+ else {
+      log.tracef("Received response from site %s: %s",siteName,value);
+    }
+  }
+}

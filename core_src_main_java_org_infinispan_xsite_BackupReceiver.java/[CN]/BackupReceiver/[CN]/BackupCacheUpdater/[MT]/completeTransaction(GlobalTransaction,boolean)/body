@@ -1,0 +1,19 @@
+{
+  TransactionTable txTable=txTable();
+  GlobalTransaction localTxId=remote2localTx.remove(globalTransaction);
+  if (localTxId == null) {
+    throw new CacheException("Couldn't find a local transaction corresponding to remote transaction " + globalTransaction);
+  }
+  LocalTransaction localTx=txTable.getLocalTransaction(localTxId);
+  if (localTx == null) {
+    throw new IllegalStateException("Local tx not found but present in the tx table!");
+  }
+  TransactionManager txManager=txManager();
+  txManager.resume(localTx.getTransaction());
+  if (commit) {
+    txManager.commit();
+  }
+ else {
+    txManager.rollback();
+  }
+}

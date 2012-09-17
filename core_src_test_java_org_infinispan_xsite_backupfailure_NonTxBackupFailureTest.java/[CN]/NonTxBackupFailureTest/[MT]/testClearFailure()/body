@@ -1,0 +1,21 @@
+{
+  failureInterceptor.disable();
+  cache("LON",0).put("k1","v1");
+  cache("LON",0).put("k2","v2");
+  cache("LON",0).put("k3","v3");
+  failureInterceptor.enable();
+  try {
+    cache("LON",1).clear();
+    checkFailOnBackupFailure();
+  }
+ catch (  CacheException e) {
+    checkNonFailOnBackupFailure();
+  }
+  assertNull(cache("LON",0).get("k1"));
+  assertNull(cache("LON",0).get("k2"));
+  assertNull(cache("LON",1).get("k3"));
+  assertTrue(failureInterceptor.clearFailed);
+  assertEquals("v1",backup("LON").get("k1"));
+  assertEquals("v2",backup("LON").get("k2"));
+  assertEquals("v3",backup("LON").get("k3"));
+}

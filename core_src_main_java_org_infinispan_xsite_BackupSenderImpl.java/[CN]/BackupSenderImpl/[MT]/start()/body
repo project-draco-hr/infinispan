@@ -1,0 +1,14 @@
+{
+  this.config=cache.getCacheConfiguration();
+  this.cacheName=cache.getName();
+  for (  BackupConfiguration bc : config.sites().backups()) {
+    if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
+      String backupPolicy=bc.failurePolicyClass();
+      if (backupPolicy == null) {
+        throw new IllegalStateException("Backup policy class missing for custom failure policy!");
+      }
+      CustomFailurePolicy instance=Util.getInstance(backupPolicy,globalConfig.classLoader());
+      siteFailurePolicy.put(bc.site(),instance);
+    }
+  }
+}

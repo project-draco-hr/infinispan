@@ -1,0 +1,17 @@
+{
+  blockingInterceptor.isActive=false;
+  cache("LON",0).put("k","v");
+  blockingInterceptor.isActive=true;
+  cache("LON",1).clear();
+  blockingInterceptor.invocationReceivedLatch.await(20000,TimeUnit.MILLISECONDS);
+  assertNull(cache("LON",0).get("k"));
+  assertNull(cache("LON",1).get("k"));
+  assertEquals("v",backup("LON").get("k"));
+  blockingInterceptor.waitingLatch.countDown();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return backup("LON").get("k") == null;
+    }
+  }
+);
+}

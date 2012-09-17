@@ -3,7 +3,13 @@
     ReplicableCommand cmd=null;
     try {
       cmd=(ReplicableCommand)req_marshaller.objectFromBuffer(req.getRawBuffer(),req.getOffset(),req.getLength());
-      return executeCommand(cmd,req);
+      if (cmd == null)       throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+      if (req.getSrc() instanceof SiteAddress) {
+        return executeCommandFromRemoteSite(cmd,(SiteAddress)req.getSrc());
+      }
+ else {
+        return executeCommandFromLocalCluster(cmd,req);
+      }
     }
  catch (    InterruptedException e) {
       log.warnf("Shutdown while handling command %s",cmd);

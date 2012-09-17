@@ -1,0 +1,11 @@
+{
+  if (!shouldInvokeRemoteTxCommand(ctx))   return super.visitPrepareCommand(ctx,command);
+  boolean isTxFromRemoteSite=isTxFromRemoteSite(command.getGlobalTransaction());
+  if (isTxFromRemoteSite) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  BackupResponse backupResponse=backupSender.backupPrepare(command);
+  Object result=invokeNextInterceptor(ctx,command);
+  backupSender.processResponses(backupResponse,command,ctx.getTransaction());
+  return result;
+}

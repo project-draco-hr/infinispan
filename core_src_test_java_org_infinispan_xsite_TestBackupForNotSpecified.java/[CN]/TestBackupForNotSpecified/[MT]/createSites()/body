@@ -1,0 +1,20 @@
+{
+  GlobalConfigurationBuilder lonGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  lonGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("LON");
+  ConfigurationBuilder lonDefault=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  lonDefault.sites().addBackup().site("NYC").backupFailurePolicy(BackupFailurePolicy.FAIL).strategy(BackupConfiguration.BackupStrategy.SYNC);
+  ConfigurationBuilder someCache=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  GlobalConfigurationBuilder nycGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  nycGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("NYC");
+  ConfigurationBuilder nycDefault=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  nycDefault.sites().addBackup().site("LON").strategy(BackupConfiguration.BackupStrategy.SYNC);
+  ConfigurationBuilder someCacheBackup=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  someCacheBackup.sites().backupFor().remoteCache("someCache").remoteSite("LON");
+  someCacheBackup.sites().disableBackups(true);
+  createSite("LON",2,lonGc,lonDefault);
+  createSite("NYC",2,nycGc,nycDefault);
+  startCache("LON","backup",getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true));
+  startCache("NYC","backup",getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true));
+  startCache("LON","someCache",someCache);
+  startCache("NYC","someCacheBackup",someCacheBackup);
+}
