@@ -1,5 +1,18 @@
 {
-  if (tce.isPre())   return;
+  if (tce.isPre()) {
+    ConsistentHash consistentHashAtStart=tce.getConsistentHashAtStart();
+    if (consistentHashAtStart != null) {
+      List<Address> leavers=MembershipArithmetic.getMembersLeft(consistentHashAtStart.getMembers(),tce.getConsistentHashAtEnd().getMembers());
+      if (!leavers.isEmpty()) {
+        log.tracef("Saw %d leavers - kicking off a lock breaking task",leavers.size());
+        cleanTxForWhichTheOwnerLeft(leavers);
+      }
+    }
+    return;
+  }
+  if (!isDistributed) {
+    return;
+  }
   Address self=transactionTable.rpcManager.getAddress();
   ConsistentHash chOld=tce.getConsistentHashAtStart();
   ConsistentHash chNew=tce.getConsistentHashAtEnd();

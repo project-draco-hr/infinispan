@@ -11,11 +11,13 @@
         lockedKeys.add(key);
       }
     }
-    List<WriteCommand> txModifications=tx.getModifications();
-    WriteCommand[] modifications=null;
-    if (txModifications != null) {
-      modifications=txModifications.toArray(new WriteCommand[txModifications.size()]);
+    if (!lockedKeys.isEmpty()) {
+      List<WriteCommand> txModifications=tx.getModifications();
+      WriteCommand[] modifications=null;
+      if (txModifications != null) {
+        modifications=txModifications.toArray(new WriteCommand[txModifications.size()]);
+      }
+      transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(),tx.getViewId(),modifications,lockedKeys));
     }
-    transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(),modifications,lockedKeys));
   }
 }

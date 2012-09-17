@@ -4,13 +4,9 @@
   if (configuration.clustering().cacheMode().isClustered()) {
     minViewRecalculationLock=new ReentrantLock();
     remoteTransactions=ConcurrentMapFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel);
-    cleanupService.start(cacheName,rpcManager,invoker);
-    cm.addListener(cleanupService);
-    cm.addListener(this);
+    cleanupService.start(cacheName,rpcManager,invoker,configuration.clustering().cacheMode().isDistributed());
     notifier.addListener(cleanupService);
-    minTxViewId=rpcManager.getTransport().getViewId();
-    currentViewId=minTxViewId;
-    log.debugf("Min view id set to %s",minTxViewId);
+    notifier.addListener(this);
     clustered=true;
   }
 }

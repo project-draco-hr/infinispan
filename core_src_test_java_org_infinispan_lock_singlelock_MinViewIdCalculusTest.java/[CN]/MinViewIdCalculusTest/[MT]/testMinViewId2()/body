@@ -1,7 +1,8 @@
 {
   final TransactionTable tt0=TestingUtil.getTransactionTable(cache(0));
   final TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
-  final int viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
+  StateTransferManager stateTransferManager0=TestingUtil.extractComponent(cache(0),StateTransferManager.class);
+  final int viewId=stateTransferManager0.getCacheTopology().getTopologyId();
   tm(1).begin();
   cache(1).put(getKeyForCache(0),"v");
   final DummyTransaction t=(DummyTransaction)tm(1).getTransaction();
@@ -16,8 +17,8 @@
   log.trace("Here is the topology change..");
   addClusterEnabledCacheManager(c);
   waitForClusterToForm();
-  final int viewId2=advancedCache(0).getRpcManager().getTransport().getViewId();
-  assertEquals(viewId + 1,viewId2);
+  final int viewId2=stateTransferManager0.getCacheTopology().getTopologyId();
+  assertTrue(viewId2 > viewId);
   assertEquals(tt0.getMinViewId(),viewId);
   assertEquals(tt1.getMinViewId(),viewId);
   tm(1).resume(t);

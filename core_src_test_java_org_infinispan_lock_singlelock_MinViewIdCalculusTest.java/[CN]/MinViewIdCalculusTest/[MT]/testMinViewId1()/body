@@ -1,13 +1,14 @@
 {
   final TransactionTable tt0=TestingUtil.getTransactionTable(cache(0));
   final TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
-  final int viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
+  StateTransferManager stateTransferManager0=TestingUtil.extractComponent(cache(0),StateTransferManager.class);
+  final int viewId=stateTransferManager0.getCacheTopology().getTopologyId();
   assertEquals(tt0.getMinViewId(),viewId);
   assertEquals(tt1.getMinViewId(),viewId);
   addClusterEnabledCacheManager(c);
   waitForClusterToForm();
-  final int viewId2=advancedCache(0).getRpcManager().getTransport().getViewId();
-  assertEquals(viewId + 1,viewId2);
+  final int viewId2=stateTransferManager0.getCacheTopology().getTopologyId();
+  assertTrue(viewId2 > viewId);
   assertEquals(tt0.getMinViewId(),viewId2);
   assertEquals(tt1.getMinViewId(),viewId2);
   final TransactionTable tt2=TestingUtil.getTransactionTable(cache(1));
