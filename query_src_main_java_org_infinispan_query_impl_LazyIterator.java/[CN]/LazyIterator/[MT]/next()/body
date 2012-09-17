@@ -1,5 +1,5 @@
 {
-  if (!hasNext())   throw new IndexOutOfBoundsException("Index is out of bounds. There is no next");
+  if (!hasNext())   throw new NoSuchElementException("Index is out of bounds. There is no next");
   Object toReturn=null;
   int bufferSize=buffer.length;
   if (bufferIndex >= 0 && index >= bufferIndex && index < (bufferIndex + bufferSize)) {
@@ -7,18 +7,13 @@
     toReturn=buffer[indexToReturn];
   }
  else {
-    try {
-      toReturn=loadResult(index);
-      Arrays.fill(buffer,null);
-      buffer[0]=toReturn;
-      for (int i=1; i < bufferSize; i++) {
-        buffer[i]=loadResult(index + i);
-      }
-      bufferIndex=index;
+    toReturn=loadResult(index);
+    Arrays.fill(buffer,null);
+    buffer[0]=toReturn;
+    for (int i=1; i < bufferSize; i++) {
+      buffer[i]=loadResult(index + i);
     }
- catch (    IOException e) {
-      throw new CacheException();
-    }
+    bufferIndex=index;
   }
   index++;
   return toReturn;

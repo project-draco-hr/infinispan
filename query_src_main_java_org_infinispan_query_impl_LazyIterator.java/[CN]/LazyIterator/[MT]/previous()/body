@@ -1,23 +1,18 @@
 {
-  if (!hasPrevious())   throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
-  Object toReturn=null;
+  if (!hasPrevious())   throw new NoSuchElementException("Index is out of bounds. There is no previous");
+  Object toReturn;
   int bufferSize=buffer.length;
   if (bufferIndex >= 0 && index <= bufferIndex && index >= (bufferIndex + bufferSize)) {
     int indexToReturn=bufferIndex - index;
     toReturn=buffer[indexToReturn];
   }
-  try {
-    Arrays.fill(buffer,null);
-    toReturn=loadResult(index);
-    buffer[0]=toReturn;
-    for (int i=1; i < bufferSize; i++) {
-      buffer[i]=loadResult(index - i);
-    }
-    bufferIndex=index;
+  Arrays.fill(buffer,null);
+  toReturn=loadResult(index);
+  buffer[0]=toReturn;
+  for (int i=1; i < bufferSize; i++) {
+    buffer[i]=loadResult(index - i);
   }
- catch (  IOException e) {
-    e.printStackTrace();
-  }
+  bufferIndex=index;
   index--;
   return toReturn;
 }
