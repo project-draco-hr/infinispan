@@ -3,29 +3,29 @@
   Configuration config=createCacheStoreConfig(mapperName,true,true);
   config.setEvictionStrategy(EvictionStrategy.LRU);
   config.setEvictionMaxEntries(3);
-  EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(config);
-  AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
-  for (int i=0; i < 10; i++) {
-    Person p=new Person("name" + i,"surname" + i,30);
-    cache.put(p,"" + i);
-  }
-  cache.stop();
-  cm.stop();
-  cm=TestCacheManagerFactory.createCacheManager(config);
-  try {
-    cache=cm.getCache().getAdvancedCache();
-    assertEquals(3,cache.size());
-    int found=0;
-    for (int i=0; i < 10; i++) {
-      Person p=new Person("name" + i,"surname" + i,30);
-      if (cache.getDataContainer().containsKey(p)) {
-        found++;
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(config)){
+    @Override public void call(){
+      AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
+      for (int i=0; i < 10; i++) {
+        Person p=new Person("name" + i,"surname" + i,30);
+        cache.put(p,"" + i);
       }
     }
-    assertEquals(3,found);
   }
-  finally {
-    cache.stop();
-    cm.stop();
+);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(config)){
+    @Override public void call(){
+      AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
+      assertEquals(3,cache.size());
+      int found=0;
+      for (int i=0; i < 10; i++) {
+        Person p=new Person("name" + i,"surname" + i,30);
+        if (cache.getDataContainer().containsKey(p)) {
+          found++;
+        }
+      }
+      assertEquals(3,found);
+    }
   }
+);
 }

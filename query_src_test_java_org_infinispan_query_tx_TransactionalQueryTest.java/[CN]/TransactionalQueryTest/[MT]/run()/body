@@ -1,9 +1,17 @@
 {
-  createCacheQuery(m_cache,"","Id:2?");
-  m_transactionManager.begin();
-  m_cache.remove("50");
-  m_transactionManager.commit();
-  m_transactionManager.begin();
-  m_cache.remove("200");
-  m_transactionManager.commit();
+  createCacheQuery(cache,"","Id:2?");
+  withTx(tm(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.remove("50");
+      return null;
+    }
+  }
+);
+  withTx(tm(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.remove("200");
+      return null;
+    }
+  }
+);
 }

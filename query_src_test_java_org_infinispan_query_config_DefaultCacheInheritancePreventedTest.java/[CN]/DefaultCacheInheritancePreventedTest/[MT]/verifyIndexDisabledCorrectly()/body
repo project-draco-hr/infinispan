@@ -1,13 +1,12 @@
 {
-  DefaultCacheManager cacheManager=new DefaultCacheManager("configuration-parsing-test-enbledInDefault.xml");
-  try {
-    assertIndexingEnabled(cacheManager.getCache(),true,QueryInterceptor.class);
-    assertIndexingEnabled(cacheManager.getCache("simple"),true,QueryInterceptor.class);
-    assertIndexingEnabled(cacheManager.getCache("not-searchable"),false,QueryInterceptor.class);
-    assertIndexingEnabled(cacheManager.getCache("memory-searchable"),true,QueryInterceptor.class);
-    assertIndexingEnabled(cacheManager.getCache("disk-searchable"),true,LocalQueryInterceptor.class);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configuration-parsing-test-enbledInDefault.xml")){
+    @Override public void call(){
+      assertIndexingEnabled(cm.getCache(),true,QueryInterceptor.class);
+      assertIndexingEnabled(cm.getCache("simple"),true,QueryInterceptor.class);
+      assertIndexingEnabled(cm.getCache("not-searchable"),false,QueryInterceptor.class);
+      assertIndexingEnabled(cm.getCache("memory-searchable"),true,QueryInterceptor.class);
+      assertIndexingEnabled(cm.getCache("disk-searchable"),true,LocalQueryInterceptor.class);
+    }
   }
-  finally {
-    TestingUtil.killCacheManagers(cacheManager);
-  }
+);
 }

@@ -1,7 +1,11 @@
 {
-  m_transactionManager.begin();
-  for (int i=0; i < 100; i++) {
-    m_cache.put(String.valueOf(i),new Session(String.valueOf(i)));
+  withTx(tm(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      for (int i=0; i < 100; i++) {
+        cache.put(String.valueOf(i),new Session(String.valueOf(i)));
+      }
+      return null;
+    }
   }
-  m_transactionManager.commit();
+);
 }

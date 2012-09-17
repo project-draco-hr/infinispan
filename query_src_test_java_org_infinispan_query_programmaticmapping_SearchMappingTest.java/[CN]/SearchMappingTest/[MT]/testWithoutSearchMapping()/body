@@ -1,19 +1,19 @@
 {
   final Properties properties=new Properties();
   properties.put("hibernate.search.default.directory_provider","ram");
-  final Configuration config=new ConfigurationBuilder().indexing().enable().indexLocalOnly(true).withProperties(properties).build();
-  final DefaultCacheManager cacheManager=new DefaultCacheManager(config);
-  try {
-    final Cache<Long,BondPVO2> cache=cacheManager.getCache();
-    final SearchManager sm=Search.getSearchManager(cache);
-    final BondPVO2 bond=new BondPVO2(1,"Test","DE000123");
-    cache.put(bond.getId(),bond);
-    final QueryBuilder qb=sm.buildQueryBuilderForClass(BondPVO2.class).get();
-    final Query q=qb.keyword().onField("name").matching("Test").createQuery();
-    final CacheQuery cq=sm.getQuery(q,BondPVO2.class);
-    Assert.assertEquals(cq.getResultSize(),1);
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.indexing().enable().indexLocalOnly(true).withProperties(properties);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      final Cache<Long,BondPVO2> cache=cm.getCache();
+      final SearchManager sm=Search.getSearchManager(cache);
+      final BondPVO2 bond=new BondPVO2(1,"Test","DE000123");
+      cache.put(bond.getId(),bond);
+      final QueryBuilder qb=sm.buildQueryBuilderForClass(BondPVO2.class).get();
+      final Query q=qb.keyword().onField("name").matching("Test").createQuery();
+      final CacheQuery cq=sm.getQuery(q,BondPVO2.class);
+      Assert.assertEquals(cq.getResultSize(),1);
+    }
   }
-  finally {
-    cacheManager.stop();
-  }
+);
 }
