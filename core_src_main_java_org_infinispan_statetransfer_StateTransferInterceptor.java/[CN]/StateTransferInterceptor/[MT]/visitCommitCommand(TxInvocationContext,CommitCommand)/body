@@ -1,3 +1,19 @@
 {
+  if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
+    RemoteTransaction remoteTx=(RemoteTransaction)ctx.getCacheTransaction();
+    if (remoteTx.isMissingLookedUpEntries()) {
+      remoteTx.setMissingLookedUpEntries(false);
+      PrepareCommand prepareCommand;
+      if (useVersioning) {
+        prepareCommand=commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(),ctx.getModifications(),false);
+        WriteSkewHelper.setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)prepareCommand,ctx);
+      }
+ else {
+        prepareCommand=commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(),ctx.getModifications(),false);
+      }
+      commandFactory.initializeReplicableCommand(prepareCommand,true);
+      prepareCommand.perform(null);
+    }
+  }
   return handleTxCommand(ctx,command);
 }
