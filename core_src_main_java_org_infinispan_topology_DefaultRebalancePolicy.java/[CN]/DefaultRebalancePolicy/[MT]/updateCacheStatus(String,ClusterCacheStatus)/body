@@ -1,0 +1,17 @@
+{
+  log.tracef("Cache %s status changed: joiners=%s, topology=%s",cacheName,cacheStatus.getJoiners(),cacheStatus.getCacheTopology());
+  if (!cacheStatus.hasMembers()) {
+    log.tracef("Not triggering rebalance for zero-members cache %s",cacheName);
+    return;
+  }
+  if (!cacheStatus.hasJoiners() && isBalanced(cacheStatus.getCacheTopology().getCurrentCH())) {
+    log.tracef("Not triggering rebalance for cache %s, no joiners and the current consistent hash is already balanced",cacheName);
+    return;
+  }
+  if (cacheStatus.isRebalanceInProgress()) {
+    log.tracef("Not triggering rebalance for cache %s, a rebalance is already in progress");
+    return;
+  }
+  log.tracef("Triggering rebalance for cache %s",cacheName);
+  clusterTopologyManager.triggerRebalance(cacheName);
+}

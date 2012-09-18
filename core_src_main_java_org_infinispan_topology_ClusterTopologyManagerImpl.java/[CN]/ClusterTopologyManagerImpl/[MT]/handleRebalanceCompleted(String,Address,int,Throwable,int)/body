@@ -3,11 +3,14 @@
     log.rebalanceError(cacheName,node,throwable);
   }
   log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d",cacheName,node,topologyId);
-  RebalanceInfo rebalanceInfo=rebalanceStatusMap.get(cacheName);
-  if (rebalanceInfo == null) {
+  ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
     throw new CacheException(String.format("Received invalid rebalance confirmation from %s " + "for cache %s, we don't have a rebalance in progress",node,cacheName));
   }
-  if (rebalanceInfo.confirmRebalance(node,topologyId)) {
-    onClusterRebalanceCompleted(cacheName,topologyId,rebalanceInfo);
+  boolean rebalanceCompleted=cacheStatus.confirmRebalanceOnNode(node,topologyId);
+  if (rebalanceCompleted) {
+    endRebalance(cacheName,cacheStatus);
+    broadcastConsistentHashUpdate(cacheName,cacheStatus);
+    rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
   }
 }

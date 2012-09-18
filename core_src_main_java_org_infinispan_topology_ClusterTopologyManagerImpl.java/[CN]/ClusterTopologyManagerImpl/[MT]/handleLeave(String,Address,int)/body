@@ -3,5 +3,12 @@
     log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",leaver,cacheName);
     return;
   }
-  rebalancePolicy.removeLeavers(cacheName,Collections.singletonList(leaver));
+  ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  if (cacheStatus == null) {
+    log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry");
+    return;
+  }
+  boolean actualLeaver=cacheStatus.removeMember(leaver);
+  if (!actualLeaver)   return;
+  onCacheMembershipChange(cacheName,cacheStatus);
 }

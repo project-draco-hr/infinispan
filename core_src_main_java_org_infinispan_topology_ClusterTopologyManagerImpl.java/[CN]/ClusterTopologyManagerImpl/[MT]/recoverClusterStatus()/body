@@ -1,6 +1,6 @@
 {
   log.debugf("Recovering running caches in the cluster");
-  ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),transport.getViewId());
+  ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),viewId);
   Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout());
   HashMap<String,List<CacheTopology>> clusterCacheMap=new HashMap<String,List<CacheTopology>>();
   for (  Object o : statusResponses.values()) {
@@ -11,7 +11,7 @@
       CacheTopology cacheTopology=(CacheTopology)e.getValue()[1];
       List<CacheTopology> topologyList=clusterCacheMap.get(cacheName);
       if (topologyList == null) {
-        rebalancePolicy.initCache(cacheName,joinInfo);
+        initCacheStatusIfAbsent(cacheName,joinInfo);
         topologyList=new ArrayList<CacheTopology>();
         clusterCacheMap.put(cacheName,topologyList);
       }

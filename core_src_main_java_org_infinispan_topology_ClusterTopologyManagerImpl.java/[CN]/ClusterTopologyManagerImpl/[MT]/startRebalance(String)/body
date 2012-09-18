@@ -1,0 +1,35 @@
+{
+  ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  CacheTopology cacheTopology=cacheStatus.getCacheTopology();
+  CacheTopology newTopology;
+synchronized (cacheStatus) {
+    boolean isRebalanceInProgress=cacheTopology.getPendingCH() != null;
+    if (isRebalanceInProgress) {
+      log.tracef("Ignoring request to rebalance cache %s, there's already a rebalance in progress: %s",cacheName,cacheTopology);
+      return;
+    }
+    List<Address> newMembers=new ArrayList<Address>(cacheStatus.getMembers());
+    if (newMembers.isEmpty()) {
+      log.tracef("Ignoring request to rebalance cache %s, it doesn't have any member",cacheName);
+      return;
+    }
+    log.tracef("Rebalancing consistent hash for cache %s, members are %s",cacheName,newMembers);
+    int newTopologyId=cacheTopology.getTopologyId() + 1;
+    ConsistentHash currentCH=cacheTopology.getCurrentCH();
+    if (currentCH == null) {
+      return;
+    }
+    ConsistentHashFactory chFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();
+    ConsistentHash updatedMembersCH=chFactory.updateMembers(currentCH,newMembers);
+    ConsistentHash balancedCH=chFactory.rebalance(updatedMembersCH);
+    if (balancedCH.equals(currentCH)) {
+      log.tracef("The balanced CH is the same as the current CH, not rebalancing");
+      return;
+    }
+    newTopology=new CacheTopology(newTopologyId,currentCH,balancedCH);
+    log.tracef("Updating cache %s topology for rebalance: %s",cacheName,newTopology);
+    cacheStatus.startRebalance(newTopology);
+  }
+  rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
+  broadcastRebalanceStart(cacheName,cacheStatus);
+}
