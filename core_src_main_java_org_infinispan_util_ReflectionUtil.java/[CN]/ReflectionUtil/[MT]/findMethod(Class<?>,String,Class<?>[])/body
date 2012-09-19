@@ -1,3 +1,11 @@
 {
-  return findRecursively(type,methodName,parameters);
+  try {
+    return type.getDeclaredMethod(methodName,parameters);
+  }
+ catch (  NoSuchMethodException e) {
+    if (type.equals(Object.class) || type.isInterface()) {
+      throw new CacheException(e);
+    }
+    return findMethod(type.getSuperclass(),methodName,parameters);
+  }
 }
