@@ -15,9 +15,15 @@
   if (numMods > 0) {
     GlobalTransaction tx=transactionContext.getGlobalTransaction();
     store.prepare(modsBuilder.modifications,tx,onePhase);
-    preparingTxs.put(tx,modsBuilder.affectedKeys);
-    if (getStatisticsEnabled() && modsBuilder.putCount > 0) {
-      txStores.put(tx,modsBuilder.putCount);
+    boolean shouldCountStores=getStatisticsEnabled() && modsBuilder.putCount > 0;
+    if (!onePhase) {
+      preparingTxs.put(tx,modsBuilder.affectedKeys);
+      if (shouldCountStores) {
+        txStores.put(tx,modsBuilder.putCount);
+      }
+    }
+ else     if (shouldCountStores) {
+      cacheStores.getAndAdd(modsBuilder.putCount);
     }
   }
 }

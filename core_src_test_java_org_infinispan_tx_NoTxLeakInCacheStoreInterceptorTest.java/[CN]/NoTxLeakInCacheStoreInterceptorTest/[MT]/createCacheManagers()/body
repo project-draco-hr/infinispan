@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.clustering().invocationBatching().enable().versioning().enable().scheme(VersioningScheme.SIMPLE).transaction().lockingMode(LockingMode.PESSIMISTIC);
+  cb.loaders().passivation(false).preload(true).shared(true);
+  LoaderConfigurationBuilder lb=cb.loaders().addCacheLoader().cacheLoader(new DummyInMemoryCacheStore());
+  lb.addProperty("storeName",getClass().getSimpleName());
+  EmbeddedCacheManager cm1=TestCacheManagerFactory.createClusteredCacheManager();
+  EmbeddedCacheManager cm2=TestCacheManagerFactory.createClusteredCacheManager();
+  registerCacheManager(cm1,cm2);
+  defineConfigurationOnAllManagers(testCacheName,cb);
+  waitForClusterToForm(testCacheName);
+}
