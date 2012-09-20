@@ -1,9 +1,12 @@
 {
   final String expectedAsyncTransportExecutorFactoryClass=MockExecutorFatory.class.getName();
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setAsyncTransportExecutorFactoryClass(expectedAsyncTransportExecutorFactoryClass);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",expectedAsyncTransportExecutorFactoryClass,embeddedCacheManager.getGlobalConfiguration().getAsyncTransportExecutorFactoryClass());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncTransportExecutorFactoryClass. However, it didn't.",expectedAsyncTransportExecutorFactoryClass,cm.getGlobalConfiguration().getAsyncTransportExecutorFactoryClass());
+    }
+  }
+);
 }

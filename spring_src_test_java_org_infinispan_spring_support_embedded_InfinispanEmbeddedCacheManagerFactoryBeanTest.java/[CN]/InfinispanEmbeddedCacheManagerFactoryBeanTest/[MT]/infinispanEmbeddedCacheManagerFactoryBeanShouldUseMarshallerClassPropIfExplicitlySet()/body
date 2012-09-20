@@ -1,9 +1,12 @@
 {
   final String expectedMarshallerClass=new VersionAwareMarshaller().getClass().getName();
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setMarshallerClass(expectedMarshallerClass);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",expectedMarshallerClass,embeddedCacheManager.getGlobalConfiguration().getMarshallerClass());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set MarshallerClass. However, it didn't.",expectedMarshallerClass,cm.getGlobalConfiguration().getMarshallerClass());
+    }
+  }
+);
 }

@@ -1,8 +1,11 @@
 {
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER.name());
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",ShutdownHookBehavior.DONT_REGISTER,embeddedCacheManager.getGlobalConfiguration().getShutdownHookBehavior());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ShutdownHookBehavior. However, it didn't.",ShutdownHookBehavior.DONT_REGISTER,cm.getGlobalConfiguration().getShutdownHookBehavior());
+    }
+  }
+);
 }

@@ -1,9 +1,12 @@
 {
   final String expectedRackId="expected.rack.Id";
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setRackId(expectedRackId);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",expectedRackId,embeddedCacheManager.getGlobalConfiguration().getRackId());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set RackId. However, it didn't.",expectedRackId,cm.getGlobalConfiguration().getRackId());
+    }
+  }
+);
 }

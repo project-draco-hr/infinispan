@@ -1,9 +1,12 @@
 {
   final String expectedCacheManagerName="expected.cache.manager.Name";
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setCacheManagerName(expectedCacheManagerName);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",expectedCacheManagerName,embeddedCacheManager.getGlobalConfiguration().getCacheManagerName());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set CacheManagerName. However, it didn't.",expectedCacheManagerName,cm.getGlobalConfiguration().getCacheManagerName());
+    }
+  }
+);
 }

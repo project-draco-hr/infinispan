@@ -1,9 +1,12 @@
 {
   final long expectedDistributedSyncTimeout=123456L;
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setDistributedSyncTimeout(expectedDistributedSyncTimeout);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",expectedDistributedSyncTimeout,embeddedCacheManager.getGlobalConfiguration().getDistributedSyncTimeout());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set DistributedSyncTimeout. However, it didn't.",expectedDistributedSyncTimeout,cm.getGlobalConfiguration().getDistributedSyncTimeout());
+    }
+  }
+);
 }

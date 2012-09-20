@@ -1,9 +1,12 @@
 {
   final String expectedEvictionScheduledExecutorFactoryClass=MockScheduleExecutorFactory.class.getName();
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setEvictionScheduledExecutorFactoryClass(expectedEvictionScheduledExecutorFactoryClass);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",expectedEvictionScheduledExecutorFactoryClass,embeddedCacheManager.getGlobalConfiguration().getEvictionScheduledExecutorFactoryClass());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set EvictionScheduledExecutorFactoryClass. However, it didn't.",expectedEvictionScheduledExecutorFactoryClass,cm.getGlobalConfiguration().getEvictionScheduledExecutorFactoryClass());
+    }
+  }
+);
 }

@@ -1,10 +1,13 @@
 {
   final Properties expectedAsyncListenerExecutorProperties=new Properties();
   expectedAsyncListenerExecutorProperties.setProperty("key","value");
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setAsyncListenerExecutorProperties(expectedAsyncListenerExecutorProperties);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",expectedAsyncListenerExecutorProperties,embeddedCacheManager.getGlobalConfiguration().getAsyncListenerExecutorProperties());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set AsyncListenerExecutorProperties. However, it didn't.",expectedAsyncListenerExecutorProperties,cm.getGlobalConfiguration().getAsyncListenerExecutorProperties());
+    }
+  }
+);
 }

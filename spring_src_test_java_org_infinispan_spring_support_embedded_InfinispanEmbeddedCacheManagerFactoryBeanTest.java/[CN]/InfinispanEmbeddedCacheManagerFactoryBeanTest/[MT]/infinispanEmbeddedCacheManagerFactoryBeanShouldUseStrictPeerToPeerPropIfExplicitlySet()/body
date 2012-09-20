@@ -1,9 +1,12 @@
 {
   final boolean expectedStrictPeerToPeer=true;
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setStrictPeerToPeer(expectedStrictPeerToPeer);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",expectedStrictPeerToPeer,embeddedCacheManager.getGlobalConfiguration().isStrictPeerToPeer());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set StrictPeerToPeer. However, it didn't.",expectedStrictPeerToPeer,cm.getGlobalConfiguration().isStrictPeerToPeer());
+    }
+  }
+);
 }

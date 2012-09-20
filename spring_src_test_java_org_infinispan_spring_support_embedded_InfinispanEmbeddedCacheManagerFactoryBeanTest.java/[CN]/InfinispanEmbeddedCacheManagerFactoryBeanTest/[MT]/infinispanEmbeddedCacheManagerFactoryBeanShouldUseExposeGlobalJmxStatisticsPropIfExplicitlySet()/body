@@ -1,14 +1,12 @@
 {
   final boolean expectedExposeGlobalJmxStatistics=true;
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean(){
-    @Override protected EmbeddedCacheManager createCacheManager(    GlobalConfigurationBuilder globalBuilder,    ConfigurationBuilder builder){
-      return TestCacheManagerFactory.createCacheManager(globalBuilder,builder);
-    }
-  }
-;
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setExposeGlobalJmxStatistics(expectedExposeGlobalJmxStatistics);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",expectedExposeGlobalJmxStatistics,embeddedCacheManager.getGlobalConfiguration().isExposeGlobalJmxStatistics());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ExposeGlobalJmxStatistics. However, it didn't.",expectedExposeGlobalJmxStatistics,cm.getGlobalConfiguration().isExposeGlobalJmxStatistics());
+    }
+  }
+);
 }

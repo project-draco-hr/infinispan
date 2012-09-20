@@ -1,9 +1,13 @@
 {
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.afterPropertiesSet();
   final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
   embeddedCacheManager.getCache();
   objectUnderTest.destroy();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should stop the created EmbeddedCacheManager when being destroyed. " + "However, the created EmbeddedCacheManager is still not terminated.",ComponentStatus.TERMINATED,embeddedCacheManager.getStatus());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should stop the created EmbeddedCacheManager when being destroyed. " + "However, the created EmbeddedCacheManager is still not terminated.",ComponentStatus.TERMINATED,embeddedCacheManager.getStatus());
+    }
+  }
+);
 }

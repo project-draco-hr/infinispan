@@ -1,7 +1,10 @@
 {
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("getObjectType() should return the most derived class of the actual EmbeddedCacheManager " + "implementation returned from getObject(). However, it didn't.",embeddedCacheManager.getClass(),objectUnderTest.getObjectType());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("getObjectType() should return the most derived class of the actual EmbeddedCacheManager " + "implementation returned from getObject(). However, it didn't.",cm.getClass(),objectUnderTest.getObjectType());
+    }
+  }
+);
 }

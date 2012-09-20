@@ -1,9 +1,12 @@
 {
   final String expectedTransportClass=MockTransport.class.getName();
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setTransportClass(expectedTransportClass);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",expectedTransportClass,embeddedCacheManager.getGlobalConfiguration().getTransportClass());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set TransportClass. However, it didn't.",expectedTransportClass,cm.getGlobalConfiguration().getTransportClass());
+    }
+  }
+);
 }

@@ -1,10 +1,13 @@
 {
   final Properties expectedReplicationQueueScheduledExecutorProperties=new Properties();
   expectedReplicationQueueScheduledExecutorProperties.setProperty("key","value");
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setReplicationQueueScheduledExecutorProperties(expectedReplicationQueueScheduledExecutorProperties);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",expectedReplicationQueueScheduledExecutorProperties,embeddedCacheManager.getGlobalConfiguration().getReplicationQueueScheduledExecutorProperties());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ReplicationQueueScheduledExecutorProperties. However, it didn't.",expectedReplicationQueueScheduledExecutorProperties,cm.getGlobalConfiguration().getReplicationQueueScheduledExecutorProperties());
+    }
+  }
+);
 }

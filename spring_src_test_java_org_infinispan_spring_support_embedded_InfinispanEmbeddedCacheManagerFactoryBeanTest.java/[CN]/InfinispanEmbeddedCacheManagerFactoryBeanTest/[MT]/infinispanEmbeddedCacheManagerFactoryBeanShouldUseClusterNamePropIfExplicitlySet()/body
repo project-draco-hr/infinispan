@@ -1,9 +1,12 @@
 {
   final String expectedClusterName="expected.cluster.Name";
-  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new InfinispanEmbeddedCacheManagerFactoryBean();
+  final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest=new TestInfinispanEmbeddedCacheManagerFactoryBean();
   objectUnderTest.setClusterName(expectedClusterName);
   objectUnderTest.afterPropertiesSet();
-  final EmbeddedCacheManager embeddedCacheManager=objectUnderTest.getObject();
-  assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",expectedClusterName,embeddedCacheManager.getGlobalConfiguration().getClusterName());
-  embeddedCacheManager.stop();
+  withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()){
+    @Override public void call(){
+      assertEquals("SpringEmbeddedCacheManagerFactoryBean should have used explicitly set ClusterName. However, it didn't.",expectedClusterName,cm.getGlobalConfiguration().getClusterName());
+    }
+  }
+);
 }
