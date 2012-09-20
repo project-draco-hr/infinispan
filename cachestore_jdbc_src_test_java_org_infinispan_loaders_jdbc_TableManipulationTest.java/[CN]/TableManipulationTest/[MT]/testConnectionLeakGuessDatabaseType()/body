@@ -1,0 +1,13 @@
+{
+  TableManipulation tableManipulation=UnitTestDatabaseManager.buildStringTableManipulation();
+  tableManipulation.databaseType=null;
+  tableManipulation.setCacheName("GuessDatabaseType");
+  PooledConnectionFactory factory=new PooledConnectionFactory();
+  ConnectionFactoryConfig config=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+  factory.start(config,Thread.currentThread().getContextClassLoader());
+  tableManipulation.start(factory);
+  tableManipulation.getUpdateRowSql();
+  assertEquals(factory.getPooledDataSource().getNumBusyConnections(),0);
+  tableManipulation.stop();
+  factory.stop();
+}

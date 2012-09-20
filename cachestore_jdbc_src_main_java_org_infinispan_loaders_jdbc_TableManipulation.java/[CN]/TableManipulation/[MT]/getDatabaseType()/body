@@ -1,20 +1,29 @@
 {
   if (databaseType == null) {
+    Connection connection=null;
     try {
-      String dbProduct=connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+      connection=connectionFactory.getConnection();
+      String dbProduct=connection.getMetaData().getDatabaseProductName();
       databaseType=guessDatabaseType(dbProduct);
     }
  catch (    Exception e) {
       log.debug("Unable to guess database type from JDBC metadata.",e);
     }
+ finally {
+      connectionFactory.releaseConnection(connection);
+    }
     if (databaseType == null) {
       log.debug("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
       try {
+        connection=connectionFactory.getConnection();
         String dbProduct=connectionFactory.getConnection().getMetaData().getDriverName();
         databaseType=guessDatabaseType(dbProduct);
       }
  catch (      Exception e) {
         log.debug("Unable to guess database type from JDBC driver name.",e);
+      }
+ finally {
+        connectionFactory.releaseConnection(connection);
       }
     }
     if (databaseType == null) {
