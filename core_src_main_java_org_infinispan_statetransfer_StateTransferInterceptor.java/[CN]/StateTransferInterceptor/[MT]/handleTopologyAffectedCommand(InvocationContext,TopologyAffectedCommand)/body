@@ -1,6 +1,10 @@
 {
+  final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
+  boolean cacheModeLocal=false;
+  if (command instanceof FlagAffectedCommand) {
+    cacheModeLocal=((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);
+  }
   if (cacheModeLocal) {
-    final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
     try {
       if (isTxCommand) {
         stateTransferLock.transactionsSharedLock();
@@ -13,17 +17,16 @@
       }
     }
   }
-  Set<Address> newTargets=null;
   stateTransferLock.commandsSharedLock();
-  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  final CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
   final int topologyId=cacheTopology.getTopologyId();
   final ConsistentHash readCh=cacheTopology.getReadConsistentHash();
   final ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
+  Set<Address> newTargets=null;
   if (command.getTopologyId() == -1) {
     command.setTopologyId(cacheTopology.getTopologyId());
   }
   try {
-    final boolean isTxCommand=command instanceof TransactionBoundaryCommand;
     if (isTxCommand) {
       stateTransferLock.transactionsSharedLock();
     }
