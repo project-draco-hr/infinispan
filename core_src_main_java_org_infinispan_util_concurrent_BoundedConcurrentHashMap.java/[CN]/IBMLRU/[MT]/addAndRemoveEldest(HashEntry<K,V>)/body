@@ -1,0 +1,13 @@
+{
+  ((LRUHashEntry<K,V>)entry).addBefore(head);
+  if (isAboveThreshold()) {
+    remove(head.nextEntry);
+    LRUHashEntry<K,V> evictedEntry=head.nextEntry;
+    head.nextEntry.remove();
+    boolean evict=segment.evictionListener.onEntryChosenForEviction(evictedEntry.value);
+    if (evict) {
+      segment.remove(evictedEntry.key,evictedEntry.hash,null);
+      evicted.add(evictedEntry);
+    }
+  }
+}
