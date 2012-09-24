@@ -8,11 +8,9 @@
   this.cacheTopology=cacheTopology;
   stateTransferLock.setTopologyId(cacheTopology.getTopologyId());
   try {
-    Set<Integer> addedSegments=null;
+    Set<Integer> addedSegments;
     if (previousCh == null) {
-      if (fetchEnabled) {
-        addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
-      }
+      addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
     }
  else {
       Set<Integer> previousSegments=getOwnedSegments(previousCh);
@@ -23,19 +21,17 @@
         log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",removedSegments,newSegments,previousSegments);
       }
       discardSegments(removedSegments);
-      if (fetchEnabled) {
-        Set<Integer> currentSegments=getOwnedSegments(cacheTopology.getReadConsistentHash());
-        addedSegments=new HashSet<Integer>(newSegments);
-        addedSegments.removeAll(currentSegments);
-        Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+      Set<Integer> currentSegments=getOwnedSegments(cacheTopology.getReadConsistentHash());
+      addedSegments=new HashSet<Integer>(newSegments);
+      addedSegments.removeAll(currentSegments);
+      Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
 synchronized (this) {
-          for (          Address source : transfersBySource.keySet()) {
-            if (!members.contains(source)) {
-              List<InboundTransferTask> inboundTransfers=transfersBySource.remove(source);
-              if (inboundTransfers != null) {
-                for (                InboundTransferTask inboundTransfer : inboundTransfers) {
-                  transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
-                }
+        for (        Address source : transfersBySource.keySet()) {
+          if (!members.contains(source)) {
+            List<InboundTransferTask> inboundTransfers=transfersBySource.remove(source);
+            if (inboundTransfers != null) {
+              for (              InboundTransferTask inboundTransfer : inboundTransfers) {
+                transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
               }
             }
           }

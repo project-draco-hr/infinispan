@@ -49,10 +49,15 @@ synchronized (this) {
           continue;
         }
       }
-      if (!inboundTransfer.requestSegments()) {
-        log.errorf("Failed to request segments %s from node %s (node will be blacklisted)",segmentsFromSource,source);
-        failedSegments.addAll(segmentsFromSource);
-        blacklistedSources.add(source);
+      if (fetchEnabled) {
+        if (!inboundTransfer.requestSegments()) {
+          log.errorf("Failed to request segments %s from node %s (node will be blacklisted)",segmentsFromSource,source);
+          failedSegments.addAll(segmentsFromSource);
+          blacklistedSources.add(source);
+          removeTransfer(inboundTransfer);
+        }
+      }
+ else {
         removeTransfer(inboundTransfer);
       }
     }
