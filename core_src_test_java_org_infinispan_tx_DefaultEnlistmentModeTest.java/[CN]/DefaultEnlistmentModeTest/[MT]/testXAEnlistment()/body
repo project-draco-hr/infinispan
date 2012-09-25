@@ -1,0 +1,10 @@
+{
+  ConfigurationBuilder builder=getLocalBuilder();
+  builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(false);
+  dcm=new DefaultCacheManager(getGlobalConfig(),builder.build());
+  Cache<Object,Object> cache=dcm.getCache();
+  assertFalse(cache.getCacheConfiguration().transaction().useSynchronization());
+  assertTrue(cache.getCacheConfiguration().transaction().recovery().enabled());
+  cache.put("k","v");
+  assertEquals("v",cache.get("k"));
+}
