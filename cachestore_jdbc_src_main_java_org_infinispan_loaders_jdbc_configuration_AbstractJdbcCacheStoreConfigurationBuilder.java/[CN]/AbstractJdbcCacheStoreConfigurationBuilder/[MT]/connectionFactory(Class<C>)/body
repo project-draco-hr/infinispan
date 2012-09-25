@@ -1,0 +1,14 @@
+{
+  if (connectionFactory != null) {
+    throw new IllegalStateException("A ConnectionFactory has already been configured for this store");
+  }
+  try {
+    Constructor<C> constructor=klass.getDeclaredConstructor(AbstractJdbcCacheStoreConfigurationBuilder.class);
+    C builder=constructor.newInstance(this);
+    this.connectionFactory=(ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration>)builder;
+    return builder;
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException("Could not instantiate loader configuration builder '" + klass.getName() + "'",e);
+  }
+}
