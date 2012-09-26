@@ -1,0 +1,14 @@
+{
+  if (getAddress().equals(getExecutionTarget())) {
+    this.invokeLocally();
+  }
+ else {
+    log.tracef("Sending %s to remote execution at node %s",f,getExecutionTarget());
+    try {
+      rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()),getCommand(),false,(DistributedTaskPart<Object>)this,getOwningTask().timeout());
+    }
+ catch (    Throwable e) {
+      log.remoteExecutionFailed(getExecutionTarget(),e);
+    }
+  }
+}

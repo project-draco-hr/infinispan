@@ -1,0 +1,34 @@
+{
+  DistributionManager dm=cache.getDistributionManager();
+  Map<Address,List<K>> addressToKey=new HashMap<Address,List<K>>(input.length * 2);
+  boolean usingREPLMode=dm == null;
+  List<Address> members=null;
+  if (usingREPLMode) {
+    members=new ArrayList<Address>(cache.getRpcManager().getTransport().getMembers());
+    members=filterMembers(policy,members);
+  }
+  for (  K key : input) {
+    Address ownerOfKey=null;
+    if (usingREPLMode) {
+      Collections.shuffle(members);
+      ownerOfKey=members.get(0);
+    }
+ else {
+      List<Address> owners=dm.locate(key);
+      List<Address> filtered=filterMembers(policy,owners);
+      if (!filtered.isEmpty()) {
+        ownerOfKey=filtered.get(0);
+      }
+ else {
+        ownerOfKey=owners.get(0);
+      }
+    }
+    List<K> keysAtNode=addressToKey.get(ownerOfKey);
+    if (keysAtNode == null) {
+      keysAtNode=new LinkedList<K>();
+      addressToKey.put(ownerOfKey,keysAtNode);
+    }
+    keysAtNode.add(key);
+  }
+  return addressToKey;
+}

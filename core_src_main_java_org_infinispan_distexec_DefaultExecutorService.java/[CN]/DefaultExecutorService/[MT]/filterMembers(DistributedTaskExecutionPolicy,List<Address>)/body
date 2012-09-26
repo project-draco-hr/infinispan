@@ -1,0 +1,33 @@
+{
+  NodeFilter filter=null;
+switch (policy) {
+case SAME_MACHINE:
+    filter=SAME_MACHINE_FILTER;
+  break;
+case SAME_SITE:
+filter=SAME_SITE_FILTER;
+break;
+case SAME_RACK:
+filter=SAME_RACK_FILTER;
+break;
+case ALL:
+filter=ALL_FILTER;
+break;
+default :
+filter=ALL_FILTER;
+break;
+}
+List<Address> result=new ArrayList<Address>();
+for (Address address : members) {
+if (address instanceof TopologyAwareAddress) {
+TopologyAwareAddress taa=(TopologyAwareAddress)address;
+if (filter.include(taa,(TopologyAwareAddress)getAddress())) {
+result.add(address);
+}
+}
+ else {
+result.add(address);
+}
+}
+return result;
+}

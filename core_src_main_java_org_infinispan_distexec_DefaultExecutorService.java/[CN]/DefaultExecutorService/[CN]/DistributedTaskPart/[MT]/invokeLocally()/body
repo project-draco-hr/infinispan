@@ -1,0 +1,31 @@
+{
+  log.debugf("Sending %s to self",this);
+  try {
+    Callable<Object> call=new Callable<Object>(){
+      @Override public Object call() throws Exception {
+        Object result=null;
+        getCommand().init(cache);
+        DistributedTaskLifecycleService taskLifecycleService=DistributedTaskLifecycleService.getInstance();
+        try {
+          taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+          result=getCommand().perform(null);
+          return Collections.singletonMap(getAddress(),SuccessfulResponse.create(result));
+        }
+ catch (        Throwable e) {
+          return e;
+        }
+ finally {
+          taskLifecycleService.onPostExecute(getCommand().getCallable());
+          notifyDone();
+        }
+      }
+    }
+;
+    final FutureTask<Object> task=new FutureTask<Object>(call);
+    setNetworkFuture((Future<V>)task);
+    localExecutorService.submit(task);
+  }
+ catch (  Throwable e1) {
+    log.localExecutionFailed(e1);
+  }
+}

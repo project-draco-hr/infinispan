@@ -1,0 +1,19 @@
+{
+  if (task == null)   throw new NullPointerException();
+  List<Address> members=executionCandidates(task);
+  List<Future<T>> futures=new ArrayList<Future<T>>(members.size() - 1);
+  Address me=getAddress();
+  for (  Address target : members) {
+    DistributedExecuteCommand<T> c=null;
+    if (target.equals(me)) {
+      c=factory.buildDistributedExecuteCommand(clone(task.getCallable()),me,null);
+    }
+ else {
+      c=factory.buildDistributedExecuteCommand(task.getCallable(),me,null);
+    }
+    DistributedTaskPart<T> f=createDistributedTaskPart(task,c,target);
+    futures.add(f);
+    execute(f);
+  }
+  return futures;
+}

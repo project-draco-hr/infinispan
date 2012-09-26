@@ -1,16 +1,16 @@
 {
   if (!isShutdown.get()) {
-    DistributedRunnableFuture<Object> cmd;
-    if (command instanceof DistributedRunnableFuture<?>) {
-      cmd=(DistributedRunnableFuture<Object>)command;
+    DistributedTaskPart<Object> cmd;
+    if (command instanceof DistributedTaskPart<?>) {
+      cmd=(DistributedTaskPart<Object>)command;
     }
  else     if (command instanceof Serializable) {
-      cmd=(DistributedRunnableFuture<Object>)newTaskFor(command,null);
+      cmd=(DistributedTaskPart<Object>)newTaskFor(command,null);
     }
  else {
       throw new IllegalArgumentException("Runnable command is not Serializable  " + command);
     }
-    executeFuture(selectExecutionNode(),cmd);
+    cmd.execute();
   }
  else {
     throw new RejectedExecutionException();
