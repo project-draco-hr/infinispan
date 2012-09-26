@@ -1,6 +1,6 @@
 {
   long deductFromTimeout=NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
-  errors=new HashMap<String,Exception>(syncBackupCalls.size());
+  errors=new HashMap<String,Throwable>(syncBackupCalls.size());
   long elapsedTime=0;
   for (  Map.Entry<XSiteBackup,Future<Object>> entry : syncBackupCalls.entrySet()) {
     long timeout=entry.getKey().getTimeout();
@@ -17,6 +17,10 @@
     }
  catch (    TimeoutException te) {
       errors.put(siteName,newTimeoutException(entry,entry.getKey().getTimeout()));
+    }
+catch (    ExecutionException ue) {
+      log.tracef(ue.getCause(),"Communication error with site %s",siteName);
+      errors.put(siteName,ue.getCause());
     }
  finally {
       elapsedTime+=NANOSECONDS.toMillis(System.nanoTime() - startNanos);
