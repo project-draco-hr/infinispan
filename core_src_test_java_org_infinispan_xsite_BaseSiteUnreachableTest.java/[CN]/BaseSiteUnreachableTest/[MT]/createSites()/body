@@ -1,7 +1,8 @@
 {
   GlobalConfigurationBuilder lonGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
-  lonGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("LON");
+  lonGc.sites().localSite("LON");
   ConfigurationBuilder lon=getLonActiveConfig();
-  lon.sites().addBackup().site("NYC").backupFailurePolicy(lonBackupFailurePolicy).strategy(lonBackupStrategy).failurePolicyClass(lonCustomFailurePolicyClass);
+  lon.sites().addBackup().site("NYC").backupFailurePolicy(lonBackupFailurePolicy).replicationTimeout(100).takeOffline().afterFailures(failures).backup().strategy(lonBackupStrategy).failurePolicyClass(lonCustomFailurePolicyClass);
+  lon.sites().addInUseBackupSite("NYC");
   createSite("LON",2,lonGc,lon);
 }

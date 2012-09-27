@@ -1,0 +1,43 @@
+{
+  ComponentRegistry registry=cache("LON",0).getAdvancedCache().getComponentRegistry();
+  Transport transport=registry.getComponent(Transport.class);
+  DelegatingTransport delegatingTransport=new DelegatingTransport(transport);
+  registry.getGlobalComponentRegistry().registerComponent(delegatingTransport,Transport.class);
+  BackupSenderImpl bs=(BackupSenderImpl)registry.getComponent(BackupSender.class);
+  registry.rewire();
+  OfflineStatus offlineStatus=bs.getOfflineStatus("NYC");
+  delegatingTransport.fail=true;
+  for (int i=0; i < FAILURES; i++) {
+    try {
+      cache("LON",0).put("k" + i,"v" + i);
+      fail("This should have failed");
+    }
+ catch (    Exception e) {
+    }
+  }
+  for (int i=0; i < FAILURES; i++) {
+    cache("LON",0).put("k" + i,"v" + i);
+  }
+  for (int i=0; i < FAILURES; i++) {
+    assertEquals("v" + i,cache("LON",0).get("k" + i));
+  }
+  assertEquals(BackupSender.BringSiteOnlineResponse.BROUGHT_ONLINE,bs.bringSiteOnline("NYC"));
+  for (int i=0; i < FAILURES - 1; i++) {
+    try {
+      cache("LON",0).put("k" + i,"v" + i);
+      fail("This should have failed");
+    }
+ catch (    Exception e) {
+    }
+  }
+  delegatingTransport.fail=false;
+  assertEquals(FAILURES - 1,offlineStatus.getFailureCount());
+  cache("LON",0).put("ki","vi");
+  assertEquals(0,offlineStatus.getFailureCount());
+  for (int i=0; i < FAILURES * 10; i++) {
+    cache("LON",0).put("k" + i,"v" + i);
+  }
+  for (int i=0; i < FAILURES * 10; i++) {
+    assertEquals("v" + i,cache("LON",0).get("k" + i));
+  }
+}

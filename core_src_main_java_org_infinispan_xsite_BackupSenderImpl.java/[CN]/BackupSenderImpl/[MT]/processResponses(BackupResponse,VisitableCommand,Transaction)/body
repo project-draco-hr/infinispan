@@ -1,18 +1,5 @@
 {
   backupResponse.waitForBackupToFinish();
-  SitesConfiguration sitesConfiguration=config.sites();
-  Map<String,Throwable> failures=backupResponse.getFailedBackups();
-  for (  Map.Entry<String,Throwable> failure : failures.entrySet()) {
-    BackupFailurePolicy policy=sitesConfiguration.getFailurePolicy(failure.getKey());
-    if (policy == BackupFailurePolicy.CUSTOM) {
-      CustomFailurePolicy customFailurePolicy=siteFailurePolicy.get(failure.getKey());
-      command.acceptVisitor(null,new CustomBackupPolicyInvoker(failure.getKey(),customFailurePolicy,transaction));
-    }
-    if (policy == BackupFailurePolicy.WARN) {
-      log.warnXsiteBackupFailed(cacheName,failure.getKey(),failure.getValue());
-    }
- else     if (policy == BackupFailurePolicy.FAIL) {
-      throw new BackupFailureException(failure.getValue(),failure.getKey(),cacheName);
-    }
-  }
+  updateOfflineSites(backupResponse);
+  processFailedResponses(backupResponse,command,transaction);
 }

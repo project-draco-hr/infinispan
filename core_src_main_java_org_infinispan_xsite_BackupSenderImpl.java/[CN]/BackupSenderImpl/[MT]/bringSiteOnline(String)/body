@@ -1,0 +1,17 @@
+{
+  if (!config.sites().hasInUseBackup(siteName)) {
+    log.tryingToBringOnlineUnexistentSite(siteName);
+    return BringSiteOnlineResponse.NO_SUCH_SITE;
+  }
+ else {
+    OfflineStatus offline=offlineStatus.get(siteName);
+    if (offline == null) {
+      log.tracef("The site %s doesn't have enabled the 'takeOffline' functionality",siteName);
+      return BringSiteOnlineResponse.OFFLINE_NOT_ENABLED;
+    }
+ else {
+      boolean broughtOnline=offline.bringOnline();
+      return broughtOnline ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
+    }
+  }
+}

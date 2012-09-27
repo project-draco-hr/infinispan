@@ -15,12 +15,14 @@
     try {
       value=entry.getValue().get(timeout,MILLISECONDS);
     }
- catch (    TimeoutException te) {
+ catch (    java.util.concurrent.TimeoutException te) {
       errors.put(siteName,newTimeoutException(entry,entry.getKey().getTimeout()));
+      addCommunicationError(siteName);
     }
 catch (    ExecutionException ue) {
       log.tracef(ue.getCause(),"Communication error with site %s",siteName);
       errors.put(siteName,ue.getCause());
+      addCommunicationError(siteName);
     }
  finally {
       elapsedTime+=NANOSECONDS.toMillis(System.nanoTime() - startNanos);

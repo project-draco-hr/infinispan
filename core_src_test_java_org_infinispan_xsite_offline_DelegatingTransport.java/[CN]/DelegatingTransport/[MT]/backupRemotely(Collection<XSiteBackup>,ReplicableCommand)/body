@@ -1,0 +1,31 @@
+{
+  return new BackupResponse(){
+    final long creationTime=System.currentTimeMillis();
+    @Override public void waitForBackupToFinish() throws Exception {
+    }
+    @Override public Map<String,Throwable> getFailedBackups(){
+      if (fail) {
+        Map<String,Throwable> result=new HashMap<String,Throwable>();
+        for (        XSiteBackup xSiteBackup : backups) {
+          result.put(xSiteBackup.getSiteName(),new TimeoutException());
+        }
+        return result;
+      }
+ else {
+        return Collections.emptyMap();
+      }
+    }
+    @Override public Set<String> getCommunicationErrors(){
+      if (fail) {
+        return Collections.singleton("NYC");
+      }
+ else {
+        return Collections.emptySet();
+      }
+    }
+    @Override public long getSendTimeMillis(){
+      return creationTime;
+    }
+  }
+;
+}
