@@ -1,0 +1,20 @@
+{
+  hSearchQuery.maxResults(getNodeMaxResults());
+switch (fetchOptions.getFetchMode()) {
+case EAGER:
+{
+      ClusteredQueryCommand command=ClusteredQueryCommand.createEagerIterator(hSearchQuery,cache);
+      HashMap<UUID,ClusteredTopDocs> topDocsResponses=broadcastQuery(command);
+      return new DistributedIterator(sort,fetchOptions.getFetchSize(),this.resultSize,maxResults,firstResult,topDocsResponses,cache);
+    }
+case LAZY:
+{
+    UUID lazyItId=UUID.randomUUID();
+    ClusteredQueryCommand command=ClusteredQueryCommand.createLazyIterator(hSearchQuery,cache,lazyItId);
+    HashMap<UUID,ClusteredTopDocs> topDocsResponses=broadcastQuery(command);
+    return new DistributedLazyIterator(sort,fetchOptions.getFetchSize(),this.resultSize,maxResults,firstResult,lazyItId,topDocsResponses,asyncExecutor,cache);
+  }
+default :
+throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
+}
+}

@@ -1,25 +1,15 @@
 {
-  cache=mock(AdvancedCache.class);
-  when(cache.get(anyObject())).thenAnswer(new Answer<Person>(){
-    @Override public Person answer(    InvocationOnMock invocation) throws Throwable {
-      String key=invocation.getArguments()[0].toString();
-      return dummyDataMap.get(key);
-    }
-  }
-);
-  when(cache.getClassLoader()).thenReturn(Thread.currentThread().getContextClassLoader());
-  when(cache.getAdvancedCache()).thenReturn(cache);
+  super.setUp();
   extractor=mock(DocumentExtractor.class);
-  HSQuery hsQuery=mock(HSQuery.class);
-  when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-  when(hsQuery.queryResultSize()).thenReturn(dummyDataMap.size());
   when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>(){
     @Override public EntityInfo answer(    InvocationOnMock invocation) throws Throwable {
       int index=(Integer)invocation.getArguments()[0];
-      String keyString=keyList.get(index);
-      return new EntityInfoImpl(Person.class,keyString,keyString,new String[0]);
+      return entityInfos.get(index);
     }
   }
 );
-  iterator=new LazyIterator(hsQuery,new EntityLoader(cache,new KeyTransformationHandler()),fetchSize);
+  HSQuery hsQuery=mock(HSQuery.class);
+  when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
+  when(hsQuery.queryResultSize()).thenReturn(entityInfos.size());
+  iterator=new LazyIterator(hsQuery,new EntityLoader(cache,new KeyTransformationHandler()),getFetchSize());
 }

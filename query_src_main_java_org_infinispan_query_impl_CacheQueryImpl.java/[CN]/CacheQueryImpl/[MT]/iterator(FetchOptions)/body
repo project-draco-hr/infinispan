@@ -1,0 +1,13 @@
+{
+  if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.EAGER) {
+    hSearchQuery.getTimeoutManager().start();
+    List<EntityInfo> entityInfos=hSearchQuery.queryEntityInfos();
+    return new EagerIterator(entityInfos,getResultLoader(),fetchOptions.getFetchSize());
+  }
+ else   if (fetchOptions.getFetchMode() == FetchOptions.FetchMode.LAZY) {
+    return new LazyIterator(hSearchQuery,getResultLoader(),fetchOptions.getFetchSize());
+  }
+ else {
+    throw new IllegalArgumentException("Unknown FetchMode " + fetchOptions.getFetchMode());
+  }
+}
