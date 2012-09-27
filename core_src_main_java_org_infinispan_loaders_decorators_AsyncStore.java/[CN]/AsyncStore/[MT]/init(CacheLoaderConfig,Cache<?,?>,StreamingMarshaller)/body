@@ -1,11 +1,10 @@
 {
   super.init(config,cache,m);
-  changesDeque=new LinkedBlockingQueue<Modification>(asyncStoreConfig.getModificationQueueSize());
-  Configuration cacheCfg=cache != null ? cache.getConfiguration() : null;
-  concurrencyLevel=cacheCfg != null ? cacheCfg.getConcurrencyLevel() : 16;
-  int cacheStopTimeout=cacheCfg != null ? cacheCfg.getCacheStopTimeout() : 30000;
+  Configuration cacheCfg=cache != null ? cache.getCacheConfiguration() : null;
+  concurrencyLevel=cacheCfg != null ? cacheCfg.locking().concurrencyLevel() : 16;
+  long cacheStopTimeout=cacheCfg != null ? cacheCfg.transaction().cacheStopTimeout() : 30000;
   Long configuredAsyncStopTimeout=asyncStoreConfig.getShutdownTimeout();
-  cacheName=cacheCfg != null ? cacheCfg.getName() : null;
+  cacheName=cache != null ? cache.getName() : null;
   if (configuredAsyncStopTimeout >= cacheStopTimeout) {
     shutdownTimeout=Math.round(cacheStopTimeout * 0.90);
     log.asyncStoreShutdownTimeoutTooHigh(configuredAsyncStopTimeout,cacheStopTimeout,shutdownTimeout);
@@ -13,6 +12,5 @@
  else {
     shutdownTimeout=configuredAsyncStopTimeout;
   }
-  lockContainer=new ReleaseAllLockContainer(concurrencyLevel);
   transactions=ConcurrentMapFactory.makeConcurrentMap(64,concurrencyLevel);
 }

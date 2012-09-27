@@ -1,9 +1,10 @@
 {
-  stopped.set(true);
+  stateLock.writeLock(1);
+  state.stopped=true;
+  stateLock.writeUnlock();
   try {
-    changesDeque.put(QUIT_SIGNAL);
-    boolean finished=executor.awaitTermination(shutdownTimeout,TimeUnit.MILLISECONDS);
-    if (!finished)     log.error("Async store executor did not stop properly");
+    coordinator.join(shutdownTimeout);
+    if (coordinator.isAlive())     log.error("Async store executor did not stop properly");
   }
  catch (  InterruptedException e) {
     log.interruptedWaitingAsyncStorePush(e);

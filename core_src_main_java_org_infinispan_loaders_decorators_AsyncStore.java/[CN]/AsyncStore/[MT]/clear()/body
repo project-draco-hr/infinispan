@@ -1,6 +1,10 @@
 {
-  Clear clear=new Clear();
-  checkNotStopped();
-  changesDeque.clear();
-  enqueue(clear);
+  stateLock.writeLock(1);
+  try {
+    state=newState(true,state.next);
+  }
+  finally {
+    stateLock.reset(1);
+    stateLock.writeUnlock();
+  }
 }

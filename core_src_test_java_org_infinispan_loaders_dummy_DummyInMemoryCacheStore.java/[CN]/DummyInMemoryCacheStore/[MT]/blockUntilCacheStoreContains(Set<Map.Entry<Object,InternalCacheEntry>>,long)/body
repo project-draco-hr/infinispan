@@ -1,0 +1,23 @@
+{
+  long killTime=System.currentTimeMillis() + timeout;
+  Set<Map.Entry<Object,InternalCacheEntry>> notStored=null;
+  Set<Map.Entry<Object,InternalCacheEntry>> notRemoved=null;
+  while (System.currentTimeMillis() < killTime) {
+    Set<Map.Entry<Object,InternalCacheEntry>> storeEntries=store.entrySet();
+    notRemoved=InfinispanCollections.difference(storeEntries,expectedState);
+    notStored=InfinispanCollections.difference(expectedState,storeEntries);
+    if (!notStored.isEmpty() || !notRemoved.isEmpty()) {
+      TestingUtil.sleepThread(5000);
+    }
+ else     if (notStored.isEmpty() && notRemoved.isEmpty()) {
+      break;
+    }
+  }
+  if ((notStored != null && !notStored.isEmpty()) || (notRemoved != null && !notRemoved.isEmpty())) {
+    if (log.isTraceEnabled()) {
+      log.tracef("Entries still not stored: %s",notStored);
+      log.tracef("Entries still not removed: %s",notRemoved);
+    }
+    throw new RuntimeException(String.format("Timed out waiting (%d ms) for cache store to be flushed. entries-not-stored=[%s], entries-not-removed=[%s]",timeout,notStored,notRemoved));
+  }
+}

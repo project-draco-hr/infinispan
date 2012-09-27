@@ -1,0 +1,14 @@
+{
+  try {
+    if (containsModificationForKey(1,mods) && !isSkip(findModificationForKey(1,mods))) {
+      log.tracef("Wait to apply modifications: %s",mods);
+      lockedWaitLatch.countDown();
+      modApplyLatch.await(60,TimeUnit.SECONDS);
+      log.tracef("Apply modifications: %s",mods);
+    }
+    super.applyModificationsSync(mods);
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+}

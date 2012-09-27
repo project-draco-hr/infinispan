@@ -1,17 +1,18 @@
 {
-  state=newStateMap();
   log.debugf("Async cache loader starting %s",this);
-  stopped.set(false);
-  lastAsyncProcessorShutsDownExecutor=false;
+  state=newState(false,null);
+  stateLock=new BufferLock(asyncStoreConfig.getModificationQueueSize());
   super.start();
   int poolSize=asyncStoreConfig.getThreadPoolSize();
-  executor=new ThreadPoolExecutor(poolSize,poolSize,0L,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(poolSize + 1),new ThreadFactory(){
+  executor=new ThreadPoolExecutor(0,poolSize,120L,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),new ThreadFactory(){
     @Override public Thread newThread(    Runnable r){
-      Thread t=new Thread(r,"CoalescedAsyncStore-" + threadId.getAndIncrement());
+      Thread t=new Thread(r,"AsyncStoreProcessor-" + cacheName + "-"+ threadId.getAndIncrement());
       t.setDaemon(true);
       return t;
     }
   }
-,new ThreadPoolExecutor.DiscardPolicy());
-  startStoreCoordinator();
+);
+  coordinator=new Thread(new AsyncStoreCoordinator(),"AsyncStoreCoordinator-" + cacheName);
+  coordinator.setDaemon(true);
+  coordinator.start();
 }

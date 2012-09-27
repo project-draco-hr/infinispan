@@ -1,0 +1,19 @@
+{
+  return new Operation<String,Integer>(store,"PUT"){
+    @Override public boolean call(    final String key,    long run){
+      final int value=(int)run;
+      final InternalCacheEntry entry=entryFactory.create(key,value,(EntryVersion)null);
+      boolean result=withStore(key,new Callable<Boolean>(){
+        @Override public Boolean call() throws Exception {
+          store.store(entry);
+          expectedState.put(key,entry);
+          if (trace)           log.tracef("Expected state updated with key=%s, value=%s",key,value);
+          return true;
+        }
+      }
+);
+      return result;
+    }
+  }
+;
+}

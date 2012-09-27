@@ -1,0 +1,19 @@
+{
+  return new Operation<String,Integer>(store,"REMOVE"){
+    @Override public boolean call(    final String key,    long run){
+      boolean result=withStore(key,new Callable<Boolean>(){
+        @Override public Boolean call() throws Exception {
+          boolean removed=store.remove(key);
+          if (removed) {
+            expectedState.remove(key);
+            if (trace)             log.tracef("Expected state removed key=%s",key);
+          }
+          return true;
+        }
+      }
+);
+      return result;
+    }
+  }
+;
+}

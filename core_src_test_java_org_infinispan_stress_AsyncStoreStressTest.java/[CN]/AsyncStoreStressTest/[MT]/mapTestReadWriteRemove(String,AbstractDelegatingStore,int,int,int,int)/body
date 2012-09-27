@@ -1,0 +1,25 @@
+{
+  DummyInMemoryCacheStore delegate=(DummyInMemoryCacheStore)store.getDelegate();
+  try {
+    System.out.printf("[store=%s] Warming up\n",name);
+    runMapTestReadWriteRemove(name,store,readerThreads,writerThreads,removerThreads,1000);
+    System.out.printf("[store=%s] Testing...\n",name);
+    TotalStats perf=runMapTestReadWriteRemove(name,store,readerThreads,writerThreads,removerThreads,RUNNING_TIME);
+    System.out.printf("[store=%s] Verify contents\n",name);
+    TestingUtil.sleepThread(10000);
+    delegate.blockUntilCacheStoreContains(expectedState.entrySet(),60000);
+    System.out.printf("Container %-12s  ",name);
+    System.out.printf("Ops/s %10.2f  ",perf.getTotalOpsPerSec());
+    System.out.printf("Gets/s %10.2f  ",perf.getOpsPerSec("GET"));
+    System.out.printf("Puts/s %10.2f  ",perf.getOpsPerSec("PUT"));
+    System.out.printf("Removes/s %10.2f  ",perf.getOpsPerSec("REMOVE"));
+    System.out.printf("HitRatio %10.2f  ",perf.getTotalHitRatio() * 100);
+    System.out.printf("Size %10d  ",store.loadAllKeys(null).size());
+    double stdDev=computeStdDev(store,numKeys);
+    System.out.printf("StdDev %10.2f\n",stdDev);
+  }
+  finally {
+    expectedState.clear();
+    delegate.clear();
+  }
+}
