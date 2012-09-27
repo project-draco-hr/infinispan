@@ -1,0 +1,14 @@
+{
+  V response=null;
+  try {
+    Address target=getOwningTask().getTaskFailoverPolicy().failover(getExecutionTarget(),executionCandidates(getOwningTask()),cause);
+    DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,target,failedOverCount);
+    part.execute();
+    response=part.get();
+    if (response == null)     throw new ExecutionException("Failover execution failed",new Exception("Failover execution failed",cause));
+  }
+ catch (  Exception e2) {
+    throw new ExecutionException("Failover execution failed",new Exception("Failover execution failed",e2));
+  }
+  return response;
+}

@@ -1,4 +1,12 @@
 {
-  V response=f.get(timeout,unit);
-  return retrieveResult(response);
+  V response=null;
+  try {
+    response=retrieveResult(f.get(timeout,unit));
+  }
+ catch (  Exception e) {
+    if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
+      response=retrieveResult(failoverExecution(e));
+    }
+  }
+  return response;
 }

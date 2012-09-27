@@ -1,4 +1,12 @@
 {
-  V response=f.get();
-  return retrieveResult(response);
+  V response=null;
+  try {
+    response=retrieveResult(f.get());
+  }
+ catch (  Exception e) {
+    if (failedOverCount++ <= getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts()) {
+      response=retrieveResult(failoverExecution(e));
+    }
+  }
+  return response;
 }
