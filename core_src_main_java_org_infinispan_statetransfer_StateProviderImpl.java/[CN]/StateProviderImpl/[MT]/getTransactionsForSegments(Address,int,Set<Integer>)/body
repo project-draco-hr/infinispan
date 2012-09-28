@@ -1,13 +1,16 @@
 {
   if (trace) {
-    log.tracef("Received request for transactions from node %s for segments %s with topology id %d",destination,segments,topologyId);
+    log.tracef("Received request for transactions from node %s for segments %s with topology id %d",destination,segments,requestTopologyId);
   }
   if (readCh == null) {
     throw new IllegalStateException("No cache topology received yet");
   }
-  if (topologyId != this.topolopyId) {
-    log.warnf("Transactions were requested by a node with topology (%d) that does not match local topology (%d).",topologyId,this.topolopyId);
-    stateTransferLock.waitForTopology(topologyId);
+  if (requestTopologyId < topologyId) {
+    log.warnf("Transactions were requested by node %s with topology %d, smaller than the local " + "topology (%d)",destination,requestTopologyId,topologyId);
+  }
+ else   if (requestTopologyId > topologyId) {
+    log.tracef("Transactions were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",destination,requestTopologyId,topologyId,requestTopologyId);
+    stateTransferLock.waitForTopology(requestTopologyId);
   }
   Set<Integer> ownedSegments=readCh.getSegmentsForOwner(rpcManager.getAddress());
   if (!ownedSegments.containsAll(segments)) {
@@ -16,16 +19,10 @@
   }
   List<TransactionInfo> transactions=new ArrayList<TransactionInfo>();
   if (configuration.transaction().transactionMode().isTransactional()) {
-    stateTransferLock.transactionsExclusiveLock();
-    try {
-      collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments);
-      collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments);
-      if (trace) {
-        log.tracef("Found %d transaction(s) to transfer",transactions.size());
-      }
-    }
-  finally {
-      stateTransferLock.transactionsExclusiveUnlock();
+    collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments);
+    collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments);
+    if (trace) {
+      log.tracef("Found %d transaction(s) to transfer",transactions.size());
     }
   }
   return transactions;

@@ -1,11 +1,13 @@
 {
-  if (trace) {
-    log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d",segments,destination,topologyId);
+  log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d",segments,destination,requestTopologyId);
+  if (requestTopologyId < topologyId) {
+    log.warnf("Segments were requested by node %s with topology %d, smaller than the local " + "topology (%d)",destination,requestTopologyId,topologyId);
   }
-  if (topologyId != this.topolopyId) {
-    log.warnf("Segments were requested by a node with topology (%d) that does not match local topology (%d).",topologyId,this.topolopyId);
+ else   if (requestTopologyId > topologyId) {
+    log.tracef("Segments were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",destination,requestTopologyId,topologyId,requestTopologyId);
+    stateTransferLock.waitForTopology(requestTopologyId);
   }
-  OutboundTransferTask outboundTransfer=new OutboundTransferTask(destination,segments,chunkSize,topologyId,readCh,this,dataContainer,cacheLoaderManager,rpcManager,configuration,commandsFactory,timeout);
+  OutboundTransferTask outboundTransfer=new OutboundTransferTask(destination,segments,chunkSize,requestTopologyId,readCh,this,dataContainer,cacheLoaderManager,rpcManager,configuration,commandsFactory,timeout);
   addTransfer(outboundTransfer);
   outboundTransfer.execute(executorService);
 }

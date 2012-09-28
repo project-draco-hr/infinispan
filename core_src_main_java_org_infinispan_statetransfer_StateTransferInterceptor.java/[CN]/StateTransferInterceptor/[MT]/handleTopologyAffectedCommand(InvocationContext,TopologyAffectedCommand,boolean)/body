@@ -1,0 +1,34 @@
+{
+  boolean cacheModeLocal=false;
+  if (command instanceof FlagAffectedCommand) {
+    cacheModeLocal=((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);
+  }
+  if (originLocal || cacheModeLocal) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  if (command.getTopologyId() == -1) {
+    command.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
+  }
+  int cmdTopologyId=command.getTopologyId();
+  stateTransferLock.waitForTransactionData(cmdTopologyId);
+  Object localResult=invokeNextInterceptor(ctx,command);
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  int localTopologyId=cacheTopology.getTopologyId();
+  if (cmdTopologyId < localTopologyId) {
+    if (command instanceof TransactionBoundaryCommand || command instanceof LockControlCommand || (command instanceof WriteCommand && !ctx.isInTxScope())) {
+      ConsistentHash pendingCh=cacheTopology.getPendingCH();
+      if (pendingCh != null && cmdTopologyId < localTopologyId + 1) {
+        ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
+        Set<Object> affectedKeys=getAffectedKeys(ctx,command);
+        Set<Address> newTargets=writeCh.locateAllOwners(affectedKeys);
+        newTargets.remove(rpcManager.getAddress());
+        if (!newTargets.isEmpty()) {
+          command.setTopologyId(localTopologyId);
+          log.tracef("Forwarding command %s to new targets %s",command,newTargets);
+          rpcManager.invokeRemotely(newTargets,command,true,false);
+        }
+      }
+    }
+  }
+  return localResult;
+}

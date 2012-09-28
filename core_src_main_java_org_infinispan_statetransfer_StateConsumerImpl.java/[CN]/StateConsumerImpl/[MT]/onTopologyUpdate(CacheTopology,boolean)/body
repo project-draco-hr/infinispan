@@ -5,8 +5,10 @@
     rebalanceInProgress.set(true);
   }
   ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
+  stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
-  stateTransferLock.setTopologyId(cacheTopology.getTopologyId());
+  stateTransferLock.releaseExclusiveTopologyLock();
+  stateTransferLock.topologyInstalled(cacheTopology.getTopologyId());
   try {
     Set<Integer> addedSegments;
     if (previousCh == null) {
@@ -39,16 +41,11 @@ synchronized (this) {
       }
     }
     if (addedSegments != null && !addedSegments.isEmpty()) {
-      stateTransferLock.commandsExclusiveLock();
-      try {
-        addTransfers(addedSegments);
-      }
-  finally {
-        stateTransferLock.commandsExclusiveUnlock();
-      }
+      addTransfers(addedSegments);
     }
   }
   finally {
+    stateTransferLock.transactionDataReceived(cacheTopology.getTopologyId());
     if (activeTopologyUpdates.decrementAndGet() == 0 && !isStateTransferInProgress()) {
       notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
     }
