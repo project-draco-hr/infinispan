@@ -1,14 +1,14 @@
 {
   GlobalConfigurationBuilder lonGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
-  lonGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("LON");
+  lonGc.sites().localSite("LON");
   ConfigurationBuilder lon=getLonActiveConfig();
-  lon.sites().addBackup().site("NYC").backupFailurePolicy(lonBackupFailurePolicy).strategy(lonBackupStrategy).failurePolicyClass(lonCustomFailurePolicyClass);
+  lon.sites().addBackup().site("NYC").backupFailurePolicy(lonBackupFailurePolicy).strategy(lonBackupStrategy).failurePolicyClass(lonCustomFailurePolicyClass).sites().addInUseBackupSite("NYC");
   ConfigurationBuilder nycBackup=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false);
   nycBackup.sites().backupFor().remoteSite("NYC").defaultRemoteCache();
   GlobalConfigurationBuilder nycGc=GlobalConfigurationBuilder.defaultClusteredBuilder();
-  nycGc.sites().addSite().name("LON").sites().addSite().name("NYC").sites().localSite("NYC");
+  nycGc.sites().localSite("NYC");
   ConfigurationBuilder nyc=getNycActiveConfig();
-  nyc.sites().addBackup().site("LON").strategy(BackupConfiguration.BackupStrategy.SYNC);
+  nyc.sites().addBackup().site("LON").strategy(BackupConfiguration.BackupStrategy.SYNC).sites().addInUseBackupSite("LON");
   ConfigurationBuilder lonBackup=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,isLonBackupTransactional);
   lonBackup.sites().backupFor().remoteSite("LON").defaultRemoteCache();
   createSite("LON",2,lonGc,lon);
