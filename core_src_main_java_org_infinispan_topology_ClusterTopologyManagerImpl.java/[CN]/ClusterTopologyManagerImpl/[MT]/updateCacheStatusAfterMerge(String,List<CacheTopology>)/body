@@ -23,10 +23,23 @@
       if (topology.getPendingCH() != null)       pendingCHUnion=chFactory.union(pendingCHUnion,topology.getPendingCH());
     }
   }
+  unionTopologyId+=2;
+  CacheTopology cacheTopology=new CacheTopology(unionTopologyId,currentCHUnion,pendingCHUnion);
+  boolean wasRebalanceInProgress=pendingCHUnion != null;
 synchronized (cacheStatus) {
-    CacheTopology cacheTopology=new CacheTopology(unionTopologyId,currentCHUnion,pendingCHUnion);
     cacheStatus.setMembers(cacheTopology.getMembers());
-    cacheStatus.updateCacheTopology(cacheTopology);
+    if (wasRebalanceInProgress) {
+      cacheStatus.startRebalance(cacheTopology);
+    }
+ else {
+      cacheStatus.updateCacheTopology(cacheTopology);
+    }
   }
   broadcastConsistentHashUpdate(cacheName,cacheStatus);
+  if (wasRebalanceInProgress) {
+    broadcastRebalanceStart(cacheName,cacheStatus);
+  }
+ else {
+    triggerRebalance(cacheName);
+  }
 }

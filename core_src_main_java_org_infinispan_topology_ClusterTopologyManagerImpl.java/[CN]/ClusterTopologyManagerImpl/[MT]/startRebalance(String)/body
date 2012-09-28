@@ -17,6 +17,12 @@ synchronized (cacheStatus) {
     int newTopologyId=cacheTopology.getTopologyId() + 1;
     ConsistentHash currentCH=cacheTopology.getCurrentCH();
     if (currentCH == null) {
+      log.tracef("Ignoring request to rebalance cache %s, it doesn't have a consistent hash",cacheName);
+      return;
+    }
+    if (!newMembers.containsAll(currentCH.getMembers())) {
+      newMembers.removeAll(currentCH.getMembers());
+      log.tracef("Ignoring request to rebalance cache %s, we have new leavers: %s",cacheName,newMembers);
       return;
     }
     ConsistentHashFactory chFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();

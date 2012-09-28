@@ -3,15 +3,17 @@
   ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),viewId);
   Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout());
   HashMap<String,List<CacheTopology>> clusterCacheMap=new HashMap<String,List<CacheTopology>>();
-  for (  Object o : statusResponses.values()) {
-    Map<String,Object[]> nodeStatus=(Map<String,Object[]>)o;
-    for (    Map.Entry<String,Object[]> e : nodeStatus.entrySet()) {
-      String cacheName=e.getKey();
-      CacheJoinInfo joinInfo=(CacheJoinInfo)e.getValue()[0];
-      CacheTopology cacheTopology=(CacheTopology)e.getValue()[1];
+  for (  Map.Entry<Address,Object> responseEntry : statusResponses.entrySet()) {
+    Address sender=responseEntry.getKey();
+    Map<String,Object[]> nodeStatus=(Map<String,Object[]>)responseEntry.getValue();
+    for (    Map.Entry<String,Object[]> statusEntry : nodeStatus.entrySet()) {
+      String cacheName=statusEntry.getKey();
+      CacheJoinInfo joinInfo=(CacheJoinInfo)statusEntry.getValue()[0];
+      CacheTopology cacheTopology=(CacheTopology)statusEntry.getValue()[1];
       List<CacheTopology> topologyList=clusterCacheMap.get(cacheName);
       if (topologyList == null) {
         initCacheStatusIfAbsent(cacheName,joinInfo);
+        cacheStatusMap.get(cacheName).addMember(sender);
         topologyList=new ArrayList<CacheTopology>();
         clusterCacheMap.put(cacheName,topologyList);
       }
