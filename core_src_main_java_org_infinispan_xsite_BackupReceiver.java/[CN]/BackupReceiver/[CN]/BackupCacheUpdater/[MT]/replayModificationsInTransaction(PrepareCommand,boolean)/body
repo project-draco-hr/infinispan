@@ -1,15 +1,27 @@
 {
   TransactionManager tm=txManager();
-  tm.begin();
-  replayModifications(command);
-  LocalTransaction localTx=txTable().getLocalTransaction(tm.getTransaction());
-  localTx.setFromRemoteSite(true);
-  if (onePhaseCommit) {
-    log.tracef("Committing remotely originated tx %s as it is 1PC",command.getGlobalTransaction());
-    tm.commit();
+  boolean replaySuccessful=false;
+  try {
+    tm.begin();
+    replayModifications(command);
+    replaySuccessful=true;
   }
+  finally {
+    LocalTransaction localTx=txTable().getLocalTransaction(tm.getTransaction());
+    localTx.setFromRemoteSite(true);
+    if (onePhaseCommit) {
+      if (replaySuccessful) {
+        log.tracef("Committing remotely originated tx %s as it is 1PC",command.getGlobalTransaction());
+        tm.commit();
+      }
  else {
-    remote2localTx.put(command.getGlobalTransaction(),localTx.getGlobalTransaction());
+        log.tracef("Rolling back remotely originated tx %s",command.getGlobalTransaction());
+        tm.rollback();
+      }
+    }
+ else {
+      remote2localTx.put(command.getGlobalTransaction(),localTx.getGlobalTransaction());
+      tm.suspend();
+    }
   }
-  tm.suspend();
 }

@@ -1,4 +1,10 @@
 {
-  completeTransaction(command.getGlobalTransaction(),false);
+  if (!isTransactional()) {
+    log.cannotRespondToRollback(command.getGlobalTransaction(),backupCache.getName());
+  }
+ else {
+    log.tracef("Rolling back remote transaction %s",command.getGlobalTransaction());
+    completeTransaction(command.getGlobalTransaction(),false);
+  }
   return null;
 }

@@ -1,6 +1,9 @@
 {
   boolean isTransactional=isTransactional();
   if (isTransactional) {
+    if (!command.hasModifications()) {
+      throw new IllegalStateException("TxInvocationContext has no modifications!");
+    }
     replayModificationsInTransaction(command,command.isOnePhaseCommit());
   }
  else {
