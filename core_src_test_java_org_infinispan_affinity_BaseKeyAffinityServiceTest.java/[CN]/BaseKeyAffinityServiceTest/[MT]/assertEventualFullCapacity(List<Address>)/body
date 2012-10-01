@@ -1,13 +1,20 @@
 {
   Map<Address,BlockingQueue<Object>> blockingQueueMap=keyAffinityService.getAddress2KeysMapping();
-  long maxWaitTime=60 * 1000;
   for (  Address addr : addresses) {
-    BlockingQueue<Object> queue=blockingQueueMap.get(addr);
-    long giveupTime=System.currentTimeMillis() + maxWaitTime;
-    while (queue.size() != 100 && System.currentTimeMillis() < giveupTime)     Thread.sleep(100);
-    assertEquals(100,queue.size());
+    final BlockingQueue<Object> queue=blockingQueueMap.get(addr);
+    eventually(new Condition(){
+      @Override public boolean isSatisfied(){
+        return queue.size() == 100;
+      }
+    }
+,60 * 1000);
   }
-  assertEquals(keyAffinityService.getMaxNumberOfKeys(),keyAffinityService.existingKeyCount.get());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied(){
+      return keyAffinityService.getMaxNumberOfKeys() == keyAffinityService.existingKeyCount.get();
+    }
+  }
+);
   assertEquals(addresses.size() * 100,keyAffinityService.existingKeyCount.get());
   Thread.sleep(200);
   assertEquals(false,keyAffinityService.isKeyGeneratorThreadActive());
