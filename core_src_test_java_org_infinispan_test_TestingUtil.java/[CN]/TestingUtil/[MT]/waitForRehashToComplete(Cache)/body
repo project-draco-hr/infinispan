@@ -3,11 +3,11 @@
   int gracetime=90000;
   long giveup=System.currentTimeMillis() + gracetime;
   for (  Cache c : caches) {
-    LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(c.getCacheManager(),LocalTopologyManager.class);
+    StateTransferManager stateTransferManager=TestingUtil.extractComponent(c,StateTransferManager.class);
     DefaultRebalancePolicy rebalancePolicy=(DefaultRebalancePolicy)TestingUtil.extractGlobalComponent(c.getCacheManager(),RebalancePolicy.class);
-    RpcManager rpcManager=TestingUtil.extractComponent(c,RpcManager.class);
+    Address cacheAddress=c.getAdvancedCache().getRpcManager().getAddress();
     while (true) {
-      CacheTopology cacheTopology=localTopologyManager.getCacheTopology(c.getName());
+      CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
       boolean chContainsAllMembers=cacheTopology.getCurrentCH().getMembers().size() == caches.length;
       boolean chIsBalanced=rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
       boolean stateTransferInProgress=cacheTopology.getPendingCH() != null;
@@ -19,7 +19,7 @@
           for (int i=0; i < caches.length; i++) {
             addresses[i]=caches[i].getCacheManager().getAddress();
           }
-          message=String.format("Timed out waiting for rebalancing to complete on node %s, " + "expected member list is %s, current member list is %s!",rpcManager.getAddress(),Arrays.toString(addresses),cacheTopology.getCurrentCH().getMembers());
+          message=String.format("Timed out waiting for rebalancing to complete on node %s, " + "expected member list is %s, current member list is %s!",cacheAddress,Arrays.toString(addresses),cacheTopology.getCurrentCH().getMembers());
         }
  else {
           message=String.format("Timed out waiting for rebalancing to complete on node %s, " + "current topology is %s",c.getCacheManager().getAddress(),cacheTopology);
@@ -29,6 +29,6 @@
       }
       LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
     }
-    log.trace("Node " + rpcManager.getAddress() + " finished state transfer.");
+    log.trace("Node " + cacheAddress + " finished state transfer.");
   }
 }
