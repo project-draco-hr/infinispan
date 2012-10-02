@@ -27,17 +27,23 @@
       processAction(goButton,true);
       asyncExecutor.execute(new Runnable(){
         @Override public void run(){
-          if (putEntryRadioButton.isSelected()) {
-            cache.put(keyTextField.getText(),valueTextField.getText(),lifespan(),TimeUnit.MILLISECONDS,maxIdle(),TimeUnit.MILLISECONDS);
+          try {
+            if (putEntryRadioButton.isSelected()) {
+              cache.put(keyTextField.getText(),valueTextField.getText(),lifespan(),TimeUnit.MILLISECONDS,maxIdle(),TimeUnit.MILLISECONDS);
+            }
+ else             if (removeEntryRadioButton.isSelected()) {
+              cache.remove(keyTextField.getText());
+            }
+ else             if (getEntryRadioButton.isSelected()) {
+              cache.get(keyTextField.getText());
+            }
           }
- else           if (removeEntryRadioButton.isSelected()) {
-            cache.remove(keyTextField.getText());
+ catch (          Throwable t) {
           }
- else           if (getEntryRadioButton.isSelected()) {
-            cache.get(keyTextField.getText());
+ finally {
+            dataViewTab.repaint();
+            processAction(goButton,false);
           }
-          dataViewTab.repaint();
-          processAction(goButton,false);
           lifespanSpinner.setValue(cache.getCacheConfiguration().expiration().lifespan());
           maxIdleSpinner.setValue(cache.getCacheConfiguration().expiration().maxIdle());
           mainPane.setSelectedIndex(1);
