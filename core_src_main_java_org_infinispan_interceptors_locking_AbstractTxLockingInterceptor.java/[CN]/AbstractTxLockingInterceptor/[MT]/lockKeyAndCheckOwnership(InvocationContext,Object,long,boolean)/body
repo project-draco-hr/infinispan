@@ -1,5 +1,4 @@
 {
-  boolean checkForPendingLocks=false;
   if (!ctx.isInTxScope()) {
     lockManager.acquireLock(ctx,key,lockTimeout,skipLocking);
     return;
@@ -7,6 +6,7 @@
   TxInvocationContext txContext=(TxInvocationContext)ctx;
   int transactionViewId=-1;
   boolean useStrictComparison=true;
+  boolean checkForPendingLocks=false;
   if (clustered) {
     transactionViewId=txContext.getCacheTransaction().getViewId();
     if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
@@ -16,19 +16,9 @@
   }
   if (checkForPendingLocks) {
     getLog().tracef("Checking for pending locks and then locking key %s",key);
-    long expectedEndTime=nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
-    for (    CacheTransaction ct : txTable.getLocalTransactions()) {
-      if (isFromOlderTopology(ct.getViewId(),transactionViewId,useStrictComparison)) {
-        long remaining=expectedEndTime - nowMillis();
-        if (remaining < 0 || !ct.waitForLockRelease(key,remaining))         throw newTimeoutException(key,txContext);
-      }
-    }
-    for (    CacheTransaction ct : txTable.getRemoteTransactions()) {
-      if (isFromOlderTopology(ct.getViewId(),transactionViewId,useStrictComparison)) {
-        long remaining=expectedEndTime - nowMillis();
-        if (remaining < 0 || !ct.waitForLockRelease(key,remaining))         throw newTimeoutException(key,txContext);
-      }
-    }
+    final long expectedEndTime=nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
+    waitForTransactionsToComplete(txContext,txTable.getLocalTransactions(),key,transactionViewId,useStrictComparison,expectedEndTime);
+    waitForTransactionsToComplete(txContext,txTable.getRemoteTransactions(),key,transactionViewId,useStrictComparison,expectedEndTime);
     final long remaining=expectedEndTime - nowMillis();
     if (remaining <= 0) {
       throw newTimeoutException(key,txContext);

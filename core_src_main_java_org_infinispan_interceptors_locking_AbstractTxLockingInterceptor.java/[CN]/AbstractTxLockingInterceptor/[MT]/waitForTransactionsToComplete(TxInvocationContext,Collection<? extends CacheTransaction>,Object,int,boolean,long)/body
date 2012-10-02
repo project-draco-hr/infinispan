@@ -1,0 +1,17 @@
+{
+  for (  CacheTransaction tx : transactions) {
+    if (isFromOlderTopology(tx.getViewId(),transactionViewId,useStrictComparison)) {
+      boolean txCompleted=false;
+      long remaining;
+      while ((remaining=expectedEndTime - nowMillis()) > 0) {
+        if (tx.waitForLockRelease(key,remaining)) {
+          txCompleted=true;
+          break;
+        }
+      }
+      if (!txCompleted) {
+        throw newTimeoutException(key,txContext);
+      }
+    }
+  }
+}
