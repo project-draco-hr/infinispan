@@ -1,6 +1,8 @@
 {
-  CacheTopology cacheTopology=cacheStatus.getCacheTopology();
-  log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",cacheName,cacheTopology);
-  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.CH_UPDATE,transport.getAddress(),cacheTopology,transport.getViewId());
-  executeOnClusterSync(command,getGlobalTimeout());
+synchronized (cacheStatus) {
+    CacheTopology cacheTopology=cacheStatus.getCacheTopology();
+    log.debugf("Updating cluster-wide consistent hash for cache %s, topology = %s",cacheName,cacheTopology);
+    ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.CH_UPDATE,transport.getAddress(),cacheTopology,transport.getViewId());
+    executeOnClusterSync(command,getGlobalTimeout());
+  }
 }

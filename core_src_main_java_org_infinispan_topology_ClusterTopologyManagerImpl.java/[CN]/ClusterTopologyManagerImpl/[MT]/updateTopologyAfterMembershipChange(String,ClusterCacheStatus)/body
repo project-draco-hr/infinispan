@@ -5,12 +5,14 @@ synchronized (cacheStatus) {
     ConsistentHash currentCH=cacheStatus.getCacheTopology().getCurrentCH();
     ConsistentHash pendingCH=cacheStatus.getCacheTopology().getPendingCH();
     if (!cacheStatus.needConsistentHashUpdate()) {
+      log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",cacheName,cacheStatus.getCacheTopology());
       return false;
     }
     List<Address> newCurrentMembers=cacheStatus.pruneInvalidMembers(currentCH.getMembers());
     if (newCurrentMembers.isEmpty()) {
       CacheTopology newTopology=new CacheTopology(topologyId + 1,null,null);
       cacheStatus.updateCacheTopology(newTopology);
+      log.tracef("Initial topology installed for cache %s: %s",cacheName,newTopology);
       return false;
     }
     ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers);
@@ -21,6 +23,7 @@ synchronized (cacheStatus) {
     }
     CacheTopology newTopology=new CacheTopology(topologyId,newCurrentCH,newPendingCH);
     cacheStatus.updateCacheTopology(newTopology);
+    log.tracef("Cache %s topology updated: %s",cacheName,newTopology);
     return true;
   }
 }
