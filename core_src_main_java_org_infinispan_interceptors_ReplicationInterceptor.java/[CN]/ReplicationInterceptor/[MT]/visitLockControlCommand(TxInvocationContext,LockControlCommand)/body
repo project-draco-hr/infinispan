@@ -1,0 +1,9 @@
+{
+  Object retVal=invokeNextInterceptor(ctx,command);
+  if (ctx.isOriginLocal()) {
+    boolean sync=!command.isUnlock();
+    ((LocalTxInvocationContext)ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+    rpcManager.broadcastRpcCommand(command,sync,false);
+  }
+  return retVal;
+}
