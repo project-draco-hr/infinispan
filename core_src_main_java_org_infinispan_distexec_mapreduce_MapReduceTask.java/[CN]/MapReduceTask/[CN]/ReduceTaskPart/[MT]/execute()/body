@@ -1,0 +1,26 @@
+{
+  if (locallyExecuted()) {
+    Callable<Map<Address,? extends Response>> callable=new Callable<Map<Address,? extends Response>>(){
+      @Override public Map<Address,? extends Response> call() throws Exception {
+        Cache<Object,Object> dstCache=cache.getCacheManager().getCache(cacheName);
+        Map<KOut,VOut> result=invokeReduceLocally(dstCache);
+        return Collections.singletonMap(getAddress(),SuccessfulResponse.create(result));
+      }
+    }
+;
+    FutureTask<V> futureTask=new FutureTask<V>((Callable<V>)callable);
+    setNetworkFuture(futureTask);
+    localExecutorService.submit(futureTask);
+  }
+ else {
+    RpcManager rpc=cache.getRpcManager();
+    try {
+      log.debugf("Invoking %s on %s",rc,getExecutionTarget());
+      rpc.invokeRemotelyInFuture(Collections.singleton(getExecutionTarget()),rc,(NotifyingNotifiableFuture<Object>)this);
+      log.debugf("Invoked %s on %s ",rc,getExecutionTarget());
+    }
+ catch (    Exception ex) {
+      throw new CacheException("Could not invoke map phase of MapReduceTask on remote node " + getExecutionTarget(),ex);
+    }
+  }
+}

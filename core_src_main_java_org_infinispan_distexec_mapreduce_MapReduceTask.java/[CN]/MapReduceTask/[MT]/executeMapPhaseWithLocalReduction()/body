@@ -1,15 +1,20 @@
 {
   RpcManager rpc=cache.getRpcManager();
   MapCombineCommand<KIn,VIn,KOut,VOut> cmd=null;
-  Map<Address,Response> mapPhaseResponses=new HashMap<Address,Response>();
   Map<KOut,List<VOut>> mapPhasesResult=new HashMap<KOut,List<VOut>>();
-  List<MapReduceFuture> futures=new ArrayList<MapReduceFuture>();
+  List<MapTaskPart<Map<KOut,List<VOut>>>> futures=new ArrayList<MapTaskPart<Map<KOut,List<VOut>>>>();
   if (inputTaskKeysEmpty()) {
-    cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,null,false,false);
-    Map<Address,Response> map=invokeEverywhere(cmd);
-    mapPhaseResponses.putAll(map);
-    Map<KOut,List<VOut>> localResult=invokeMapCombineLocallyForLocalReduction(cmd);
-    mapPhasesResult.putAll(localResult);
+    for (    Address target : rpc.getTransport().getMembers()) {
+      if (target.equals(rpc.getAddress())) {
+        cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),null,false,false);
+      }
+ else {
+        cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,null,false,false);
+      }
+      MapTaskPart<Map<KOut,List<VOut>>> part=createTaskMapPart(cmd,target,false);
+      part.execute();
+      futures.add(part);
+    }
   }
  else {
     Map<Address,List<KIn>> keysToNodes=mapKeysToNodes(keys);
@@ -18,21 +23,18 @@
       List<KIn> keys=e.getValue();
       if (address.equals(rpc.getAddress())) {
         cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),keys,false,false);
-        Map<KOut,List<VOut>> localResult=invokeMapCombineLocallyForLocalReduction(cmd);
-        mapPhasesResult.putAll(localResult);
       }
  else {
         cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,keys,false,false);
-        MapReduceFuture future=invokeRemotely(cmd,address);
-        futures.add(future);
       }
+      MapTaskPart<Map<KOut,List<VOut>>> part=createTaskMapPart(cmd,address,false);
+      part.execute();
+      futures.add(part);
     }
-    Map<Address,Response> resultsFromFutures=extractResultsFromFutures(futures);
-    mapPhaseResponses.putAll(resultsFromFutures);
   }
   Map<KOut,VOut> reducedResult=new HashMap<KOut,VOut>();
-  for (  Entry<Address,Response> response : mapPhaseResponses.entrySet()) {
-    mergeResponse(mapPhasesResult,response);
+  for (  MapTaskPart<Map<KOut,List<VOut>>> mapTaskPart : futures) {
+    mergeResponse(mapPhasesResult,mapTaskPart.get());
   }
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
   log.tracef("For m/r task %s invoking %s locally",taskId,reducer);

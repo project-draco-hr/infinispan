@@ -12,7 +12,10 @@
       Set<KOut> allMapPhasesResponses=executeMapPhase(useCompositeKeys);
       return executeReducePhase(allMapPhasesResponses,useCompositeKeys);
     }
-  finally {
+ catch (    Exception cause) {
+      throw new CacheException(cause);
+    }
+ finally {
       if (useIntermediatePerTaskCache()) {
         EmbeddedCacheManager cm=cache.getCacheManager();
         cm.getCache(intermediateCacheName).clear();
@@ -21,6 +24,11 @@
     }
   }
  else {
-    return executeMapPhaseWithLocalReduction();
+    try {
+      return executeMapPhaseWithLocalReduction();
+    }
+ catch (    Exception cause) {
+      throw new CacheException(cause);
+    }
   }
 }

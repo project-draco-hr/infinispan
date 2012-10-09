@@ -1,33 +1,32 @@
 {
   RpcManager rpc=cache.getRpcManager();
-  String destinationCache=null;
-  if (emitCompositeIntermediateKeys) {
-    destinationCache=DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
+  String destCache=null;
+  if (useCompositeKeys) {
+    destCache=DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
   }
  else {
-    destinationCache=taskId.toString();
+    destCache=taskId.toString();
   }
-  Cache<Object,Object> dstCache=cache.getCacheManager().getCache(destinationCache);
-  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(),allMapPhasesResponses,emitCompositeIntermediateKeys);
+  Cache<Object,Object> dstCache=cache.getCacheManager().getCache(destCache);
+  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(),allMapPhasesResponses,useCompositeKeys);
   Map<KOut,VOut> reduceResult=new HashMap<KOut,VOut>();
-  List<MapReduceFuture> reduceFutures=new ArrayList<MapReduceFuture>();
+  List<ReduceTaskPart<Map<KOut,VOut>>> reduceTasks=new ArrayList<ReduceTaskPart<Map<KOut,VOut>>>();
   ReduceCommand<KOut,VOut> reduceCommand=null;
   for (  Entry<Address,List<KOut>> e : keysToNodes.entrySet()) {
     Address address=e.getKey();
     List<KOut> keys=e.getValue();
     if (address.equals(rpc.getAddress())) {
-      reduceCommand=buildReduceCommand(taskId.toString(),destinationCache,clone(reducer),keys,emitCompositeIntermediateKeys);
-      Map<KOut,VOut> reduceLocally=invokeReduceLocally(reduceCommand,dstCache);
-      reduceResult.putAll(reduceLocally);
+      reduceCommand=buildReduceCommand(taskId.toString(),destCache,clone(reducer),keys,useCompositeKeys);
     }
  else {
-      reduceCommand=buildReduceCommand(taskId.toString(),destinationCache,reducer,keys,emitCompositeIntermediateKeys);
-      MapReduceFuture future=invokeRemotely(reduceCommand,address);
-      reduceFutures.add(future);
+      reduceCommand=buildReduceCommand(taskId.toString(),destCache,reducer,keys,useCompositeKeys);
     }
+    ReduceTaskPart<Map<KOut,VOut>> part=createReducePart(reduceCommand,address,destCache);
+    part.execute();
+    reduceTasks.add(part);
   }
-  Map<Address,Response> reducePhaseResults=extractResultsFromFutures(reduceFutures);
-  Map<KOut,VOut> responses=extractMapFromResponses(reducePhaseResults);
-  reduceResult.putAll(responses);
+  for (  ReduceTaskPart<Map<KOut,VOut>> reduceTaskPart : reduceTasks) {
+    reduceResult.putAll(reduceTaskPart.get());
+  }
   return reduceResult;
 }

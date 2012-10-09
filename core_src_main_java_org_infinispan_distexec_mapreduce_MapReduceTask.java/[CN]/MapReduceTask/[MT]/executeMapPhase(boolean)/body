@@ -1,15 +1,20 @@
 {
   RpcManager rpc=cache.getRpcManager();
   MapCombineCommand<KIn,VIn,KOut,VOut> cmd=null;
-  Map<Address,Response> mapPhaseResponses=new HashMap<Address,Response>();
   Set<KOut> mapPhasesResult=new HashSet<KOut>();
-  List<MapReduceFuture> futures=new ArrayList<MapReduceFuture>();
+  List<MapTaskPart<Set<KOut>>> futures=new ArrayList<MapTaskPart<Set<KOut>>>();
   if (inputTaskKeysEmpty()) {
-    cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,null,true,useCompositeKeys);
-    Map<Address,Response> map=invokeEverywhere(cmd);
-    mapPhaseResponses.putAll(map);
-    Set<KOut> localResult=invokeMapCombineLocally(cmd);
-    mapPhasesResult.addAll(localResult);
+    for (    Address target : rpc.getTransport().getMembers()) {
+      if (target.equals(rpc.getAddress())) {
+        cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),null,true,useCompositeKeys);
+      }
+ else {
+        cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,null,true,useCompositeKeys);
+      }
+      MapTaskPart<Set<KOut>> part=createTaskMapPart(cmd,target,true);
+      part.execute();
+      futures.add(part);
+    }
   }
  else {
     Map<Address,List<KIn>> keysToNodes=mapKeysToNodes(keys);
@@ -18,19 +23,17 @@
       List<KIn> keys=e.getValue();
       if (address.equals(rpc.getAddress())) {
         cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),keys,true,useCompositeKeys);
-        Set<KOut> localResult=invokeMapCombineLocally(cmd);
-        mapPhasesResult.addAll(localResult);
       }
  else {
         cmd=buildMapCombineCommand(taskId.toString(),mapper,combiner,keys,true,useCompositeKeys);
-        MapReduceFuture future=invokeRemotely(cmd,address);
-        futures.add(future);
       }
+      MapTaskPart<Set<KOut>> part=createTaskMapPart(cmd,address,true);
+      part.execute();
+      futures.add(part);
     }
-    Map<Address,Response> resultsFromFutures=extractResultsFromFutures(futures);
-    mapPhaseResponses.putAll(resultsFromFutures);
   }
-  Set<KOut> responses=extractSetFromResponses(mapPhaseResponses);
-  mapPhasesResult.addAll(responses);
+  for (  MapTaskPart<Set<KOut>> mapTaskPart : futures) {
+    mapPhasesResult.addAll(mapTaskPart.get());
+  }
   return mapPhasesResult;
 }
