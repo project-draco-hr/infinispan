@@ -1,0 +1,28 @@
+{
+  if (startTime == -1) {
+    throw new IllegalStateException("markStartTime() must be called before verifyEviction(..)");
+  }
+  final long pollInterval=50;
+  try {
+    assertEquals(expectedValue,c.get(key));
+    eventually(new Condition(){
+      @Override public boolean isSatisfied(){
+        if (touchKey) {
+          return !c.containsKey(key);
+        }
+ else {
+          return !c.keySet().contains(key);
+        }
+      }
+    }
+,3 * expectedLifetime,(int)(3 * expectedLifetime / pollInterval) + 1);
+    long waitTime=Util.currentMillisFromNanotime() - startTime;
+    assertNull(c.get(key));
+    long lowerBound=expectedLifetime - expectedLifetime / 4;
+    long upperBound=expectedLifetime * 3;
+    assertTrue("Wait time (" + waitTime + ") not within expected bounds ["+ lowerBound+ ", "+ upperBound+ "]",lowerBound <= waitTime && waitTime <= upperBound);
+  }
+  finally {
+    startTime=-1;
+  }
+}
