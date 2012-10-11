@@ -1,9 +1,7 @@
 {
-  Configuration config=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-  config.setL1CacheEnabled(false);
-  config.setNumOwners(3);
-  config.setUseLockStriping(false);
-  createCluster(config,4);
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  builder.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().clustering().stateTransfer().fetchInMemoryState(true).locking().useLockStriping(false).clustering().hash().numOwners(3).numSegments(60);
+  createCluster(builder,4);
   c0=cache(0);
   c1=cache(1);
   c2=cache(2);

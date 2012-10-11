@@ -1,2 +1,59 @@
 {
+  final int num=1000;
+  for (int i=0; i < num; i++) {
+    BigObject bigObject=createBigObject(i,"prefix");
+    cache.put(i,bigObject);
+    c0.put(i,bigObject);
+  }
+  for (int i=0; i < num; i++) {
+    assertTrue(c0.get(i) instanceof BigObject);
+    assertTrue(c1.get(i) instanceof BigObject);
+    assertTrue(c2.get(i) instanceof BigObject);
+    assertTrue(c3.get(i) instanceof BigObject);
+  }
+  log.info("Before stopping a cache!");
+  fork(new Runnable(){
+    @Override public void run(){
+      log.info("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
+      c3.stop();
+      c3.getCacheManager().stop();
+      log.info("Cache stopped async!");
+    }
+  }
+,false);
+  int failureCount=0;
+  for (int i=0; i < num; i++) {
+    log.info("----Running a get on " + i);
+    try {
+      Object o=c0.get(i);
+      assertValue(i,o);
+    }
+ catch (    TimeoutException e) {
+      log.error("Exception received",e);
+      failureCount++;
+    }
+    try {
+      Object o=c1.get(i);
+      assertValue(i,o);
+    }
+ catch (    TimeoutException e) {
+      failureCount++;
+    }
+    try {
+      Object o=c2.get(i);
+      assertValue(i,o);
+    }
+ catch (    TimeoutException e) {
+      failureCount++;
+    }
+    if (i % 100 == 0)     log.debug("i = " + i);
+  }
+  log.info("failureCount = " + failureCount);
+  log.info("Before stopping cache managers!");
+  TestingUtil.killCacheManagers(manager(2));
+  log.info("2 killed");
+  TestingUtil.killCacheManagers(manager(1));
+  log.info("1 killed");
+  TestingUtil.killCacheManagers(manager(0));
+  log.info("0 killed");
 }
