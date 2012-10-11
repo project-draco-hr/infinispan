@@ -9,12 +9,13 @@
       lastValue=value;
       cache.put("counter",value);
       transactionManager.commit();
-      unique=uniqueValuesSet.add(value);
       success=true;
+      boolean unique=uniqueValuesSet.add(value);
+      assertTrue("Duplicate value found (value=" + lastValue + ")",unique);
     }
  catch (    Exception e) {
       failuresCounter++;
-      Assert.assertTrue(failuresCounter < 10 * counterMaxValue,"Too many failures incrementing the counter");
+      assertTrue("Too many failures incrementing the counter",failuresCounter < 10 * counterMaxValue);
     }
  finally {
       if (!success) {
@@ -25,8 +26,6 @@
           log.trace("Exception during rollback",t);
         }
       }
-      Assert.assertTrue(unique,"Duplicate value found (value=" + lastValue + ")");
     }
   }
-  return unique;
 }
