@@ -1,17 +1,12 @@
 {
   long killTime=System.currentTimeMillis() + timeout;
-  Set<Map.Entry<Object,InternalCacheEntry>> notStored=null;
-  Set<Map.Entry<Object,InternalCacheEntry>> notRemoved=null;
+  Set<Object> notStored=null;
+  Set<Object> notRemoved=null;
   while (System.currentTimeMillis() < killTime) {
-    Set<Map.Entry<Object,InternalCacheEntry>> storeEntries=store.entrySet();
-    notRemoved=InfinispanCollections.difference(storeEntries,expectedState);
-    notStored=InfinispanCollections.difference(expectedState,storeEntries);
-    if (!notStored.isEmpty() || !notRemoved.isEmpty()) {
-      TestingUtil.sleepThread(5000);
-    }
- else     if (notStored.isEmpty() && notRemoved.isEmpty()) {
-      break;
-    }
+    notRemoved=InfinispanCollections.difference(store.keySet(),expectedState);
+    notStored=InfinispanCollections.difference(expectedState,store.keySet());
+    if (notStored.isEmpty() && notRemoved.isEmpty())     break;
+    TestingUtil.sleepThread(100);
   }
   if ((notStored != null && !notStored.isEmpty()) || (notRemoved != null && !notRemoved.isEmpty())) {
     if (log.isTraceEnabled()) {
