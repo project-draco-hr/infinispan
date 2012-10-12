@@ -1,0 +1,12 @@
+{
+  log.tracef("handleTopologyAffectedCommand for command %s, originLocal=%s, cacheModeLocal=%s",command,originLocal);
+  if (isLocal(command,originLocal)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand)command);
+  Object localResult=invokeNextInterceptor(ctx,command);
+  if (command instanceof TransactionBoundaryCommand || (command instanceof WriteCommand && !ctx.isInTxScope())) {
+    stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command),getAffectedKeys(ctx,command),true);
+  }
+  return localResult;
+}

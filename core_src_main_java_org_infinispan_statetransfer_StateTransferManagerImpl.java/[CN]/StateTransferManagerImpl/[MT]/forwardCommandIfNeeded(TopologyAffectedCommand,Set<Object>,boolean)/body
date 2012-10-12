@@ -1,0 +1,16 @@
+{
+  int cmdTopologyId=command.getTopologyId();
+  CacheTopology cacheTopology=getCacheTopology();
+  int localTopologyId=cacheTopology.getTopologyId();
+  log.tracef("CommandTopologyId=%s, localTopologyId=%s",cmdTopologyId,localTopologyId);
+  if (cmdTopologyId < localTopologyId) {
+    ConsistentHash writeCh=cacheTopology.getWriteConsistentHash();
+    Set<Address> newTargets=writeCh.locateAllOwners(affectedKeys);
+    newTargets.remove(rpcManager.getAddress());
+    if (!newTargets.isEmpty()) {
+      command.setTopologyId(localTopologyId);
+      log.tracef("Forwarding command %s to new targets %s",command,newTargets);
+      rpcManager.invokeRemotely(newTargets,command,sync,false);
+    }
+  }
+}
