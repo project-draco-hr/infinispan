@@ -1,5 +1,5 @@
 {
-  int[][] nodeChanges={{1,0},{2,0},{0,1},{0,2},{1,1},{2,2},{10,0},{0,10},{10,10}};
+  int[][] nodeChanges={{1,0},{2,0},{0,1},{0,2},{1,1},{1,2},{2,1},{10,0},{0,10}};
   assertSame(baseCH,chf.updateMembers(baseCH,baseCH.getMembers()));
   assertSame(baseCH,chf.rebalance(baseCH));
   int nodeIndex=baseCH.getMembers().size();
@@ -21,20 +21,22 @@
         assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
       }
     }
-    DefaultConsistentHash inclRebalancedCH=chf.rebalance(updatedMembersCH);
-    checkDistribution(inclRebalancedCH,false);
-    int actualNumOwners=Math.min(inclRebalancedCH.getMembers().size(),inclRebalancedCH.getNumOwners());
-    for (int l=0; l < inclRebalancedCH.getNumSegments(); l++) {
-      assertTrue(inclRebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
+    DefaultConsistentHash rebalancedCH=chf.rebalance(updatedMembersCH);
+    checkDistribution(rebalancedCH,false);
+    int actualNumOwners=Math.min(rebalancedCH.getMembers().size(),rebalancedCH.getNumOwners());
+    for (int l=0; l < rebalancedCH.getNumSegments(); l++) {
+      assertTrue(rebalancedCH.locateOwnersForSegment(l).size() >= actualNumOwners);
     }
-    DefaultConsistentHash exclRebalancedCH=chf.rebalance(updatedMembersCH);
-    DefaultConsistentHash exclRebalancedCH2=chf.rebalance(inclRebalancedCH);
-    assertEquals(exclRebalancedCH2,exclRebalancedCH);
-    checkDistribution(exclRebalancedCH,false);
-    assertEquals(exclRebalancedCH.getNumSegments(),baseCH.getNumSegments());
-    assertEquals(exclRebalancedCH.getNumOwners(),baseCH.getNumOwners());
-    assertEquals(exclRebalancedCH.getMembers(),newMembers);
-    baseCH=exclRebalancedCH;
+    checkMovedSegments(baseCH,rebalancedCH,nodesToAdd);
+    DefaultConsistentHash unionCH=chf.union(updatedMembersCH,rebalancedCH);
+    for (int l=0; l < updatedMembersCH.getNumSegments(); l++) {
+      assertTrue(unionCH.locateOwnersForSegment(l).containsAll(updatedMembersCH.locateOwnersForSegment(l)));
+      assertTrue(unionCH.locateOwnersForSegment(l).containsAll(rebalancedCH.locateOwnersForSegment(l)));
+    }
+    assertEquals(rebalancedCH.getNumSegments(),baseCH.getNumSegments());
+    assertEquals(rebalancedCH.getNumOwners(),baseCH.getNumOwners());
+    assertEquals(rebalancedCH.getMembers(),newMembers);
+    baseCH=rebalancedCH;
     iterationCount++;
   }
 }
