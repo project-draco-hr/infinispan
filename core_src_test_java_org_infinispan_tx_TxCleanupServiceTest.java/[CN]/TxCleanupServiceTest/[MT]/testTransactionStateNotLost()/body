@@ -1,0 +1,77 @@
+{
+  ComponentRegistry componentRegistry=advancedCache(1).getComponentRegistry();
+  final ControlledCommandFactory ccf=new ControlledCommandFactory(componentRegistry.getCommandsFactory(),CommitCommand.class);
+  TestingUtil.replaceField(ccf,"commandsFactory",componentRegistry,ComponentRegistry.class);
+  advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry,EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+  ccf.gate.close();
+  final Map<Object,DummyTransaction> keys2Tx=new HashMap<Object,DummyTransaction>(TX_COUNT);
+  int viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
+  log.tracef("Viewid before %s",viewId);
+  fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      for (int i=0; i < TX_COUNT; i++) {
+        Object k=getKeyForCache(1);
+        tm(0).begin();
+        cache(0).put(k,k);
+        DummyTransaction transaction=((DummyTransactionManager)tm(0)).getTransaction();
+        keys2Tx.put(k,transaction);
+        tm(0).commit();
+      }
+      return null;
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return ccf.receivedCommands.get() == TX_COUNT;
+    }
+  }
+);
+  log.tracef("Viewid middle %s",viewId);
+  addClusterEnabledCacheManager(dcc);
+  waitForClusterToForm();
+  viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
+  log.tracef("Viewid after before %s",viewId);
+  final Map<Object,DummyTransaction> migratedTx=new HashMap<Object,DummyTransaction>(TX_COUNT);
+  for (  Object key : keys2Tx.keySet()) {
+    if (keyMapsToNode(key,2)) {
+      migratedTx.put(key,keys2Tx.get(key));
+    }
+  }
+  log.tracef("Number of migrated tx is %s",migratedTx.size());
+  if (migratedTx.size() == 0)   return;
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == migratedTx.size();
+    }
+  }
+);
+  log.trace("Releasing the gate");
+  ccf.gate.open();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 0;
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      boolean allZero=true;
+      for (int i=0; i < 3; i++) {
+        TransactionTable tt=TestingUtil.getTransactionTable(cache(i));
+        int local=tt.getLocalTxCount();
+        int remote=tt.getRemoteTxCount();
+        log.tracef("For cache %i , localTxCount=%s, remoteTxCount=%s",i,local,remote);
+        System.out.println(String.format("For cache %s , localTxCount=%s, remoteTxCount=%s",i,local,remote));
+        allZero=allZero && (local == 0);
+        allZero=allZero && (remote == 0);
+      }
+      return allZero;
+    }
+  }
+);
+  for (  Object key : keys2Tx.keySet()) {
+    assertNotLocked(key);
+    assertEquals(key,cache(0).get(key));
+  }
+}

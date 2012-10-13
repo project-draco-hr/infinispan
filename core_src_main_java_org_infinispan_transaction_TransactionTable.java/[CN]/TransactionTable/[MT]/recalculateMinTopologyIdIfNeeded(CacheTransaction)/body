@@ -1,0 +1,12 @@
+{
+  if (removedTransaction == null)   throw new IllegalArgumentException("Transaction cannot be null!");
+  if (currentTopologyId != CACHE_STOPPED_TOPOLOGY_ID) {
+    int removedTransactionTopologyId=removedTransaction.getTopologyId();
+    if (removedTransactionTopologyId < minTxTopologyId) {
+      log.tracef("A transaction has a topology ID (%s) that is smaller than the smallest transaction topology ID (%s) this node knows about!  This can happen if a concurrent thread recalculates the minimum topology ID after the current transaction has been removed from the transaction table.",removedTransactionTopologyId,minTxTopologyId);
+    }
+ else     if (removedTransactionTopologyId == minTxTopologyId && removedTransactionTopologyId < currentTopologyId) {
+      calculateMinTopologyId(removedTransactionTopologyId);
+    }
+  }
+}

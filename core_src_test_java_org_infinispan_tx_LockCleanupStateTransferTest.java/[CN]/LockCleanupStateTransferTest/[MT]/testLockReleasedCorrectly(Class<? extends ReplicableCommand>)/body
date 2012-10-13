@@ -20,12 +20,21 @@
 );
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
+      log.tracef("receivedCommands == %s",ccf.receivedCommands.get());
       return ccf.receivedCommands.get() == 1;
     }
   }
 );
+  if (toBlock == TxCompletionNotificationCommand.class) {
+    DataContainer dc=advancedCache(1).getDataContainer();
+    for (    Object k : keys) {
+      assertEquals(k,dc.get(k).getValue());
+    }
+  }
+  log.trace("Before state transfer");
   addClusterEnabledCacheManager(dcc);
   waitForClusterToForm();
+  log.trace("After state transfer");
   final Set<Object> migratedKeys=new HashSet<Object>(KEY_SET_SIZE);
   for (  Object key : keys) {
     if (keyMapsToNode(key,2)) {
@@ -36,7 +45,9 @@
   if (migratedKeys.size() == 0)   return;
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 1;
+      int remoteTxCount=TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+      log.tracef("remoteTxCount=%s",remoteTxCount);
+      return remoteTxCount == 1;
     }
   }
 );

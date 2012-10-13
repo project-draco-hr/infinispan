@@ -1,0 +1,26 @@
+{
+  minTopologyRecalculationLock.lock();
+  try {
+    if (idOfRemovedTransaction == -1 || (idOfRemovedTransaction == minTxTopologyId && idOfRemovedTransaction < currentTopologyId)) {
+      int minTopologyIdFound=currentTopologyId;
+      for (      CacheTransaction ct : localTransactions.values()) {
+        int topologyId=ct.getTopologyId();
+        if (topologyId < minTopologyIdFound)         minTopologyIdFound=topologyId;
+      }
+      for (      CacheTransaction ct : remoteTransactions.values()) {
+        int topologyId=ct.getTopologyId();
+        if (topologyId < minTopologyIdFound)         minTopologyIdFound=topologyId;
+      }
+      if (minTopologyIdFound != minTxTopologyId) {
+        log.tracef("Changing minimum topology ID from %s to %s",minTxTopologyId,minTopologyIdFound);
+        minTxTopologyId=minTopologyIdFound;
+      }
+ else {
+        log.tracef("Minimum topology ID still is %s; nothing to change",minTopologyIdFound);
+      }
+    }
+  }
+  finally {
+    minTopologyRecalculationLock.unlock();
+  }
+}

@@ -4,21 +4,21 @@
     return;
   }
   TxInvocationContext txContext=(TxInvocationContext)ctx;
-  int transactionViewId=-1;
+  int transactionTopologyId=-1;
   boolean useStrictComparison=true;
   boolean checkForPendingLocks=false;
   if (clustered) {
-    transactionViewId=txContext.getCacheTransaction().getViewId();
-    if (transactionViewId != TransactionTable.CACHE_STOPPED_VIEW_ID) {
+    transactionTopologyId=txContext.getCacheTransaction().getTopologyId();
+    if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
       useStrictComparison=txTable.useStrictTopologyIdComparison();
-      checkForPendingLocks=isFromOlderTopology(txTable.getMinViewId(),transactionViewId,useStrictComparison);
+      checkForPendingLocks=isFromOlderTopology(txTable.getMinTopologyId(),transactionTopologyId,useStrictComparison);
     }
   }
   if (checkForPendingLocks) {
     getLog().tracef("Checking for pending locks and then locking key %s",key);
     final long expectedEndTime=nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
-    waitForTransactionsToComplete(txContext,txTable.getLocalTransactions(),key,transactionViewId,useStrictComparison,expectedEndTime);
-    waitForTransactionsToComplete(txContext,txTable.getRemoteTransactions(),key,transactionViewId,useStrictComparison,expectedEndTime);
+    waitForTransactionsToComplete(txContext,txTable.getLocalTransactions(),key,transactionTopologyId,useStrictComparison,expectedEndTime);
+    waitForTransactionsToComplete(txContext,txTable.getRemoteTransactions(),key,transactionTopologyId,useStrictComparison,expectedEndTime);
     final long remaining=expectedEndTime - nowMillis();
     if (remaining <= 0) {
       throw newTimeoutException(key,txContext);
