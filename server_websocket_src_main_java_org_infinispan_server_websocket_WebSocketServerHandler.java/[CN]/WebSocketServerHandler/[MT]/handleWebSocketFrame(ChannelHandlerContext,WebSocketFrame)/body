@@ -1,14 +1,26 @@
 {
-  try {
-    JSONObject payload=new JSONObject(frame.getTextData());
-    String opCode=(String)payload.get(OpHandler.OP_CODE);
-    String cacheName=(String)payload.opt(OpHandler.CACHE_NAME);
-    Cache<Object,Object> cache=getCache(cacheName);
-    OpHandler handler=operationHandlers.get(opCode);
-    if (handler != null) {
-      handler.handleOp(payload,cache,ctx);
-    }
+  if (frame instanceof PingWebSocketFrame) {
+    ctx.getChannel().write(new PongWebSocketFrame(frame.getBinaryData()));
   }
- catch (  JSONException e) {
+ else   if (frame instanceof CloseWebSocketFrame) {
+    handshaker.close(ctx.getChannel(),(CloseWebSocketFrame)frame);
+  }
+ else {
+    try {
+      ChannelBuffer binaryData=frame.getBinaryData();
+      if (binaryData == null) {
+        return;
+      }
+      JSONObject payload=new JSONObject(binaryData.toString(CharsetUtil.UTF_8));
+      String opCode=(String)payload.get(OpHandler.OP_CODE);
+      String cacheName=(String)payload.opt(OpHandler.CACHE_NAME);
+      Cache<Object,Object> cache=getCache(cacheName);
+      OpHandler handler=operationHandlers.get(opCode);
+      if (handler != null) {
+        handler.handleOp(payload,cache,ctx);
+      }
+    }
+ catch (    JSONException e) {
+    }
   }
 }

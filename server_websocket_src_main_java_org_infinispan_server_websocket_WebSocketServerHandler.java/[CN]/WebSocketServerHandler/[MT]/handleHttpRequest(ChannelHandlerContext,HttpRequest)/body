@@ -9,43 +9,25 @@
     sendHttpResponse(ctx,req,res);
     return;
   }
- else   if (Values.UPGRADE.equalsIgnoreCase(req.getHeader(CONNECTION)) && WEBSOCKET.equalsIgnoreCase(req.getHeader(Names.UPGRADE))) {
-    HttpResponse res=new DefaultHttpResponse(HTTP_1_1,new HttpResponseStatus(101,"Web Socket Protocol Handshake"));
-    res.addHeader(Names.UPGRADE,Values.WEBSOCKET);
-    res.addHeader(Names.CONNECTION,Values.UPGRADE);
-    if (req.containsHeader(Names.SEC_WEBSOCKET_KEY1) && req.containsHeader(Names.SEC_WEBSOCKET_KEY2)) {
-      res.addHeader(Names.SEC_WEBSOCKET_ORIGIN,req.getHeader(Names.ORIGIN));
-      res.addHeader(Names.SEC_WEBSOCKET_LOCATION,getWebSocketLocation(req));
-      String protocol=req.getHeader(Names.SEC_WEBSOCKET_PROTOCOL);
-      if (protocol != null) {
-        res.addHeader(Names.SEC_WEBSOCKET_PROTOCOL,protocol);
-      }
-      String key1=req.getHeader(Names.SEC_WEBSOCKET_KEY1);
-      String key2=req.getHeader(Names.SEC_WEBSOCKET_KEY2);
-      int a=(int)(Long.parseLong(key1.replaceAll("[^0-9]","")) / key1.replaceAll("[^ ]","").length());
-      int b=(int)(Long.parseLong(key2.replaceAll("[^0-9]","")) / key2.replaceAll("[^ ]","").length());
-      long c=req.getContent().readLong();
-      ChannelBuffer input=ChannelBuffers.buffer(16);
-      input.writeInt(a);
-      input.writeInt(b);
-      input.writeLong(c);
-      ChannelBuffer output=ChannelBuffers.wrappedBuffer(MessageDigest.getInstance("MD5").digest(input.array()));
-      res.setContent(output);
+ else {
+    WebSocketServerHandshakerFactory wsFactory=new WebSocketServerHandshakerFactory(getWebSocketLocation(req),null,false);
+    handshaker=wsFactory.newHandshaker(req);
+    if (handshaker == null) {
+      wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
     }
  else {
-      res.addHeader(Names.WEBSOCKET_ORIGIN,req.getHeader(Names.ORIGIN));
-      res.addHeader(Names.WEBSOCKET_LOCATION,getWebSocketLocation(req));
-      String protocol=req.getHeader(Names.WEBSOCKET_PROTOCOL);
-      if (protocol != null) {
-        res.addHeader(Names.WEBSOCKET_PROTOCOL,protocol);
+      handshaker.handshake(ctx.getChannel(),req).addListener(new ChannelFutureListener(){
+        @Override public void operationComplete(        ChannelFuture future) throws Exception {
+          if (!future.isSuccess()) {
+            Channels.fireExceptionCaught(future.getChannel(),future.getCause());
+          }
+ else {
+            connectionUpgraded=true;
+          }
+        }
       }
+);
     }
-    ChannelPipeline p=ctx.getChannel().getPipeline();
-    p.remove("aggregator");
-    p.replace("decoder","wsdecoder",new WebSocketFrameDecoder());
-    ctx.getChannel().write(res);
-    p.replace("encoder","wsencoder",new WebSocketFrameEncoder());
     return;
   }
-  sendHttpResponse(ctx,req,new DefaultHttpResponse(HTTP_1_1,FORBIDDEN));
 }
