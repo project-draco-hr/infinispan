@@ -15,9 +15,11 @@
   addClusterEnabledCacheManager(dccc);
   waitForClusterToForm();
   Object migratedKey=null;
+  ConsistentHash ch=advancedCache(2).getDistributionManager().getConsistentHash();
   for (  Object key : key2Tx.keySet()) {
-    if (advancedCache(2).getDistributionManager().getConsistentHash().locatePrimaryOwner(key).equals(address(2))) {
+    if (ch.locatePrimaryOwner(key).equals(address(2))) {
       migratedKey=key;
+      break;
     }
   }
   if (migratedKey == null) {
@@ -42,6 +44,6 @@
   }
   for (  Object key : key2Tx.keySet()) {
     Object value=getValue(key);
-    assertEquals(value,key);
+    assertEquals(key,value);
   }
 }

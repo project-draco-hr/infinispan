@@ -1,0 +1,83 @@
+{
+  Map<Object,Transaction> key2Tx=new HashMap<Object,Transaction>();
+  for (int i=0; i < NUM_KEYS; i++) {
+    Object key=getKeyForCache(0);
+    if (key2Tx.containsKey(key))     continue;
+    cache(nodeThatPuts).put(key,key);
+    tm(nodeThatPuts).begin();
+    Transaction tx=tm(nodeThatPuts).getTransaction();
+    advancedCache(nodeThatPuts).lock(key);
+    tm(nodeThatPuts).suspend();
+    key2Tx.put(key,tx);
+    assertLocked(0,key);
+  }
+  log.trace("Lock transfer happens here");
+  addClusterEnabledCacheManager(dccc);
+  waitForClusterToForm();
+  Object migratedKey=null;
+  Transaction migratedTransaction=null;
+  ConsistentHash consistentHash=advancedCache(2).getDistributionManager().getConsistentHash();
+  for (  Object key : key2Tx.keySet()) {
+    if (consistentHash.locatePrimaryOwner(key).equals(address(2))) {
+      migratedKey=key;
+      migratedTransaction=key2Tx.get(key);
+      log.trace("Migrated key = " + migratedKey);
+      log.trace("Migrated transaction = " + ((DummyTransaction)migratedTransaction).getEnlistedResources());
+      break;
+    }
+  }
+  log.trace("Committing all transactions except the migrated one.");
+  for (  Object key : key2Tx.keySet()) {
+    if (!key.equals(migratedKey)) {
+      Transaction tx=key2Tx.get(key);
+      tm(nodeThatPuts).resume(tx);
+      tm(nodeThatPuts).commit();
+    }
+  }
+  if (migratedKey == null) {
+    log.trace("No key migrated to new owner - test cannot be performed!");
+  }
+ else {
+    tm(nodeThatPuts).resume(migratedTransaction);
+    if (commit) {
+      tm(nodeThatPuts).commit();
+    }
+ else {
+      tm(nodeThatPuts).rollback();
+    }
+    assertNotLocked(cache(0),migratedKey);
+    assertNotLocked(cache(1),migratedKey);
+    assertNotLocked(cache(2),migratedKey);
+    tm(nodeThatPuts).begin();
+    cache(nodeThatPuts).put(migratedKey,"someValue");
+    tm(nodeThatPuts).commit();
+  }
+  log.trace("Checking the values from caches...");
+  for (  Object key : key2Tx.keySet()) {
+    log.tracef("Checking key: %s",key);
+    Object expectedValue=key;
+    if (key.equals(migratedKey)) {
+      expectedValue="someValue";
+    }
+    InternalCacheEntry d0=advancedCache(0).getDataContainer().get(key);
+    InternalCacheEntry d1=advancedCache(1).getDataContainer().get(key);
+    InternalCacheEntry d2=advancedCache(2).getDataContainer().get(key);
+    int c=0;
+    if (d0 != null) {
+      assertEquals(expectedValue,d0.getValue());
+      c++;
+    }
+    if (d1 != null) {
+      assertEquals(expectedValue,d1.getValue());
+      c++;
+    }
+    if (d2 != null) {
+      assertEquals(expectedValue,d2.getValue());
+      c++;
+    }
+    assertEquals(1,c);
+    assertEquals(expectedValue,cache(0).get(key));
+    assertEquals(expectedValue,cache(1).get(key));
+    assertEquals(expectedValue,cache(2).get(key));
+  }
+}
