@@ -1,12 +1,9 @@
 {
-  ComponentRegistry componentRegistry=advancedCache(1).getComponentRegistry();
-  final ControlledCommandFactory ccf=new ControlledCommandFactory(componentRegistry.getCommandsFactory(),CommitCommand.class);
-  TestingUtil.replaceField(ccf,"commandsFactory",componentRegistry,ComponentRegistry.class);
-  advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry,EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+  final ControlledCommandFactory ccf=ControlledCommandFactory.registerControlledCommandFactory(cache(1),CommitCommand.class);
   ccf.gate.close();
   final Map<Object,DummyTransaction> keys2Tx=new HashMap<Object,DummyTransaction>(TX_COUNT);
   int viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
-  log.tracef("Viewid before %s",viewId);
+  log.tracef("ViewId before %s",viewId);
   fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       for (int i=0; i < TX_COUNT; i++) {

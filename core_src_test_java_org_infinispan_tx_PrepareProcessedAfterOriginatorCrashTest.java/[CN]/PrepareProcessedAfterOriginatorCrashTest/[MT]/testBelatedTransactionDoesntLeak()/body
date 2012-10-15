@@ -1,0 +1,36 @@
+{
+  ComponentRegistry componentRegistry=advancedCache(1).getComponentRegistry();
+  final ControlledCommandFactory ccf=new ControlledCommandFactory(componentRegistry.getCommandsFactory(),PrepareCommand.class);
+  TestingUtil.replaceField(ccf,"commandsFactory",componentRegistry,ComponentRegistry.class);
+  advancedCache(1).getComponentRegistry().getGlobalComponentRegistry().registerNamedComponentRegistry(componentRegistry,EmbeddedCacheManager.DEFAULT_CACHE_NAME);
+  ccf.gate.close();
+  Cache receiver=cache(1);
+  BlockingPrepareInterceptor interceptor=new BlockingPrepareInterceptor();
+  advancedCache(1).addInterceptor(interceptor,1);
+  final Object key=getKeyForCache(1);
+  fork(new Runnable(){
+    @Override public void run(){
+      try {
+        cache(0).put(key,"v");
+      }
+ catch (      Throwable e) {
+      }
+    }
+  }
+,false);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return ccf.blockTypeCommandsReceived.get() == 1;
+    }
+  }
+);
+  killMember(0);
+  Thread.sleep(5000);
+  ccf.gate.open();
+  interceptor.prepareExecuted.await();
+  log.trace("Finished waiting for belated prepare to complete");
+  final TransactionTable transactionTable=TestingUtil.getTransactionTable(receiver);
+  assertEquals(0,transactionTable.getRemoteTxCount());
+  assertEquals(0,transactionTable.getLocalTxCount());
+  assertFalse(receiver.getAdvancedCache().getLockManager().isLocked(key));
+}

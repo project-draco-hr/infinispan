@@ -5,7 +5,12 @@
   }
   updateTopologyIdAndWaitForTransactionData((TopologyAffectedCommand)command);
   Object localResult=invokeNextInterceptor(ctx,command);
-  if (command instanceof TransactionBoundaryCommand || (command instanceof WriteCommand && !ctx.isInTxScope())) {
+  boolean isNonTransactionalWrite=!ctx.isInTxScope() && command instanceof WriteCommand;
+  boolean isTransactionalAndNotRolledBack=false;
+  if (ctx.isInTxScope()) {
+    isTransactionalAndNotRolledBack=!((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
+  }
+  if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {
     stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command),getAffectedKeys(ctx,command),true);
   }
   return localResult;
