@@ -8,7 +8,26 @@
       cacheManagers.put(unquote(mbean.getObjectName().getKeyProperty("name")),mbean);
     }
   }
-  cacheManagers=Collections.unmodifiableMap(cacheManagers);
-  activeCacheManager=cacheManagers.keySet().iterator().next();
+  if (cacheManagers.size() == 0) {
+    throw new IllegalArgumentException("The remote server does not expose any CacheManagers");
+  }
   sessions=new HashMap<String,String>();
+  cacheManagers=Collections.unmodifiableMap(cacheManagers);
+  activeCacheManager=serviceUrl.getContainer();
+  if (activeCacheManager == null) {
+    activeCacheManager=cacheManagers.keySet().iterator().next();
+  }
+ else   if (!cacheManagers.containsKey(activeCacheManager)) {
+    throw new Exception("No such container: " + activeCacheManager);
+  }
+  activeCache=serviceUrl.getCache();
+  if (activeCache != null) {
+    try {
+      getSession(cacheManagers.get(activeCacheManager));
+    }
+ catch (    MBeanException e) {
+      Throwable ue=unwrapException(e);
+      throw new Exception(ue.getMessage(),ue);
+    }
+  }
 }

@@ -1,14 +1,16 @@
 {
   ObjectInstance manager=cacheManagers.get(activeCacheManager);
-  String sessionId=sessions.get(activeCacheManager);
   try {
-    if (sessionId == null) {
-      sessionId=(String)mbsc.invoke(manager.getObjectName(),"createSessionId",new Object[0],new String[0]);
-      sessions.put(activeCacheManager,sessionId);
+    String sessionId=getSession(manager);
+    Map<String,String> response=(Map<String,String>)mbsc.invoke(manager.getObjectName(),"execute",new String[]{sessionId,context.getCommandBuffer().toString()},new String[]{String.class.getName(),String.class.getName()});
+    if (response.containsKey("OUTPUT")) {
+      context.println(response.get("OUTPUT"));
     }
-    String result=(String)mbsc.invoke(manager.getObjectName(),"execute",new String[]{sessionId,context.getCommandBuffer().toString()},new String[]{String.class.getName(),String.class.getName()});
-    if (result != null) {
-      context.println(result);
+    if (response.containsKey("ERROR")) {
+      context.error(response.get("ERROR"));
+    }
+    if (response.containsKey("CACHE")) {
+      activeCache=response.get("CACHE");
     }
   }
  catch (  InstanceNotFoundException e) {

@@ -1,14 +1,13 @@
 {
-  if (sessionId == null || !sessions.containsKey(sessionId)) {
-    throw new IllegalArgumentException("Invalid session ID");
-  }
-  CharStream stream=new ANTLRStringStream(s);
-  IspnQLLexer lexer=new IspnQLLexer(stream);
-  CommonTokenStream tokens=new CommonTokenStream(lexer);
-  IspnQLParser parser=new IspnQLParser(tokens);
-  ClassLoader oldCL=SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
   Session session=null;
+  ClassLoader oldCL=SysPropertyActions.setThreadContextClassLoader(cacheManager.getCacheManagerConfiguration().classLoader());
+  Map<String,String> response=new HashMap<String,String>();
   try {
+    session=validateSession(sessionId);
+    CharStream stream=new ANTLRStringStream(s);
+    IspnQLLexer lexer=new IspnQLLexer(stream);
+    CommonTokenStream tokens=new CommonTokenStream(lexer);
+    IspnQLParser parser=new IspnQLParser(tokens);
     parser.statements();
     session=sessions.get(sessionId);
     StringBuilder output=new StringBuilder();
@@ -18,18 +17,24 @@
         output.append(result.getResult());
       }
     }
-    return output.length() == 0 ? null : output.toString();
+    if (output.length() > 0) {
+      response.put("OUTPUT",output.toString());
+    }
   }
  catch (  Exception e) {
     log.interpreterError(e);
-    Exception exception=new Exception(e.getMessage());
-    exception.setStackTrace(e.getStackTrace());
-    throw exception;
+    response.put("ERROR",e.getMessage());
+    StringWriter sw=new StringWriter();
+    PrintWriter pw=new PrintWriter(sw);
+    e.printStackTrace(pw);
+    response.put("STACKTRACE",sw.toString());
   }
  finally {
     if (session != null) {
       session.reset();
+      response.put("CACHE",session.getCurrentCacheName());
     }
     SysPropertyActions.setThreadContextClassLoader(oldCL);
   }
+  return response;
 }
