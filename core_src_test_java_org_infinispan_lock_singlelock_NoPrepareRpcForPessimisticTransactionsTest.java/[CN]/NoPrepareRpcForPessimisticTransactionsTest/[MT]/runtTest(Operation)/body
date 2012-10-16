@@ -1,0 +1,14 @@
+{
+  log.trace("Here is where the fun starts..");
+  tm(0).begin();
+  o.execute();
+  assertKeyLockedCorrectly(k1);
+  assertEquals(commandFactory.remoteCommandsReceived.get(),2,"2 = cluster get + lock");
+  tm(0).commit();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return commandFactory.remoteCommandsReceived.get() == 4;
+    }
+  }
+);
+}

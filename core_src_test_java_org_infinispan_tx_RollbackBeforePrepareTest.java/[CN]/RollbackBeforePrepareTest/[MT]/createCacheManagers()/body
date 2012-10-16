@@ -1,0 +1,10 @@
+{
+  cacheMode=CacheMode.REPL_SYNC;
+  ConfigurationBuilder config=getDefaultClusteredCacheConfig(cacheMode,true);
+  numOwners=3;
+  config.locking().lockAcquisitionTimeout(LOCK_TIMEOUT).clustering().sync().replTimeout(REPL_TIMEOUT).clustering().hash().numOwners(numOwners).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
+  createCluster(config,3);
+  waitForClusterToForm();
+  failPrepareInterceptor=new FailPrepareInterceptor();
+  advancedCache(2).addInterceptor(failPrepareInterceptor,1);
+}

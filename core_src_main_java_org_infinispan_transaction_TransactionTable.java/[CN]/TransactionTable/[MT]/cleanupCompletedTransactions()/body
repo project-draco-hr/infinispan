@@ -1,0 +1,17 @@
+{
+  log.debugf("About to cleanup completed transaction. Initial size is %s",completedTransactions.size());
+  Iterator<Map.Entry<GlobalTransaction,Long>> iterator=completedTransactions.entrySet().iterator();
+  long timeout=configuration.transaction().completedTxTimeout();
+  int removedEntries=0;
+  long beginning=System.nanoTime();
+  while (iterator.hasNext()) {
+    Map.Entry<GlobalTransaction,Long> e=iterator.next();
+    long ageNanos=System.nanoTime() - e.getValue();
+    if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
+      iterator.remove();
+      removedEntries++;
+    }
+  }
+  long duration=System.nanoTime() - beginning;
+  log.debugf("Finished cleaning up completed transactions. %s transactions were removed, total duration was %s millis, " + "current number of completed transactions is %",removedEntries,TimeUnit.NANOSECONDS.toMillis(duration),completedTransactions.size());
+}

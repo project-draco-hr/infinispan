@@ -1,0 +1,10 @@
+{
+  final Configuration c=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC,true);
+  c.fluent().transaction().lockingMode(LockingMode.PESSIMISTIC);
+  c.fluent().hash().numOwners(1);
+  c.fluent().l1().disable();
+  createCluster(c,2);
+  waitForClusterToForm();
+  k1=getKeyForCache(1);
+  commandFactory=ControlledCommandFactory.registerControlledCommandFactory(cache(1),CommitCommand.class);
+}

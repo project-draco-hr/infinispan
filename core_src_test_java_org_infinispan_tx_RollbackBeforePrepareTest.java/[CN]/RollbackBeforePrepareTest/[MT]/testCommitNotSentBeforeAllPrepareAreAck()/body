@@ -1,0 +1,20 @@
+{
+  ControlledCommandFactory ccf=ControlledCommandFactory.registerControlledCommandFactory(cache(1),PrepareCommand.class);
+  ccf.gate.close();
+  try {
+    cache(0).put("k","v");
+    fail();
+  }
+ catch (  Exception e) {
+  }
+  allowRollbackToRun();
+  ccf.gate.open();
+  allowRollbackToRun();
+  assertEquals(0,TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount());
+  assertEquals(0,TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount());
+  assertEquals(0,TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
+  assertNull(cache(0).get("k"));
+  assertNull(cache(1).get("k"));
+  assertNull(cache(2).get("k"));
+  assertNotLocked("k");
+}

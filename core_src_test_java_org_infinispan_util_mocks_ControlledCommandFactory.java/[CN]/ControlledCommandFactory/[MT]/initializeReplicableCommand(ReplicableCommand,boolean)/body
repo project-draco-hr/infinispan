@@ -1,13 +1,15 @@
 {
-  if (isRemote && command.getClass().isAssignableFrom(toBlock)) {
-    log.tracef("Received command %s. gate.isOpened() %s?",command,gate.isOpened());
-    receivedCommands.incrementAndGet();
-    try {
-      gate.await();
-      log.tracef("gate is opened, processing the lock cleanup:  %s",command);
-    }
- catch (    InterruptedException e) {
-      throw new RuntimeException(e);
+  if (isRemote) {
+    remoteCommandsReceived.incrementAndGet();
+    if (toBlock != null && command.getClass().isAssignableFrom(toBlock)) {
+      blockTypeCommandsReceived.incrementAndGet();
+      try {
+        gate.await();
+        log.tracef("gate is opened, processing the lock cleanup:  %s",command);
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
   actual.initializeReplicableCommand(command,isRemote);
