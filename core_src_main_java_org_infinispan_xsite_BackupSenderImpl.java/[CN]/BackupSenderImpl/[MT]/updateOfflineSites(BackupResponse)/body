@@ -3,12 +3,15 @@
   Set<String> communicationErrors=backupResponse.getCommunicationErrors();
   for (  Map.Entry<String,OfflineStatus> statusEntry : offlineStatus.entrySet()) {
     OfflineStatus status=statusEntry.getValue();
+    if (!status.isEnabled()) {
+      continue;
+    }
     if (communicationErrors.contains(statusEntry.getKey())) {
       status.updateOnCommunicationFailure(backupResponse.getSendTimeMillis());
       log.tracef("OfflineStatus updated %s",status);
     }
  else     if (!status.isOffline()) {
-      status.updateOnCommunicationSuccess();
+      status.reset();
     }
   }
 }

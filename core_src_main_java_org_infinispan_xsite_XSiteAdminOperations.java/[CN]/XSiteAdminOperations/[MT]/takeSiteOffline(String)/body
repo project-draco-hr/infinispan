@@ -1,0 +1,11 @@
+{
+  OfflineStatus offlineStatus=backupSender.getOfflineStatus(site);
+  if (offlineStatus == null)   return incorrectSiteName(site);
+  backupSender.takeSiteOffline(site);
+  log.tracef("Is site offline in node %s? %s",rpcManager.getAddress(),offlineStatus.isOffline());
+  XSiteAdminCommand command=new XSiteAdminCommand(cache.getName(),site,XSiteAdminCommand.AdminOperation.TAKE_OFFLINE,null,null);
+  Map<Address,Response> responses=invokeRemotely(command);
+  List<Address> failed=checkForErrors(responses);
+  String prefix="Could not take the site offline on nodes:";
+  return returnFailureOrSuccess(failed,prefix);
+}

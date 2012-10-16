@@ -1,0 +1,43 @@
+{
+  OfflineStatus offlineStatus=backupSender.getOfflineStatus(site);
+  if (offlineStatus == null)   return "Incorrect site name: " + offlineStatus;
+  log.tracef("This node's status is %s",offlineStatus);
+  XSiteAdminCommand command=new XSiteAdminCommand(cache.getName(),site,XSiteAdminCommand.AdminOperation.SITE_STATUS,null,null);
+  Map<Address,Response> responses=invokeRemotely(command);
+  List<Address> online=new ArrayList<Address>(responses.size());
+  List<Address> offline=new ArrayList<Address>(responses.size());
+  List<Address> failed=new ArrayList<Address>(responses.size());
+  for (  Map.Entry<Address,Response> e : responses.entrySet()) {
+    if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
+      failed.add(e.getKey());
+      continue;
+    }
+    SuccessfulResponse response=(SuccessfulResponse)e.getValue();
+    log.tracef("Got status %s from node %s",response.getResponseValue(),e.getKey());
+    if (response.getResponseValue() == XSiteAdminCommand.Status.OFFLINE) {
+      offline.add(e.getKey());
+    }
+ else     if (response.getResponseValue() == XSiteAdminCommand.Status.ONLINE) {
+      online.add(e.getKey());
+    }
+ else {
+      throw new IllegalStateException("Unknown response: " + response.getResponseValue());
+    }
+  }
+  if (!failed.isEmpty()) {
+    return rpcError(failed,"Could not query nodes ");
+  }
+  if (offlineStatus.isOffline()) {
+    offline.add(rpcManager.getAddress());
+  }
+ else {
+    online.add(rpcManager.getAddress());
+  }
+  if (offline.isEmpty()) {
+    return ONLINE;
+  }
+  if (online.isEmpty()) {
+    return OFFLINE;
+  }
+  return "Site appears online on nodes:" + online + " and offline on nodes: "+ offline;
+}

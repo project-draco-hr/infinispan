@@ -1,0 +1,17 @@
+{
+  assertEquals(admin("LON",0).status("NYC"),XSiteAdminOperations.ONLINE);
+  assertEquals(admin("LON",1).status("NYC"),XSiteAdminOperations.ONLINE);
+  BackupSenderImpl bs=backupSender("LON",0);
+  OfflineStatus offlineStatus=bs.getOfflineStatus("NYC");
+  assertEquals(offlineStatus.getTakeOffline(),new TakeOfflineConfiguration(0,0));
+  assertEquals(XSiteAdminOperations.SUCCESS,admin("LON",1).amendTakeOffline("NYC",7,12));
+  assertEquals(offlineStatus.getTakeOffline(),new TakeOfflineConfiguration(7,12));
+  assertEquals(XSiteAdminOperations.SUCCESS,admin("LON",1).setTakeOfflineAfterFailures("NYC",8));
+  assertEquals(offlineStatus.getTakeOffline(),new TakeOfflineConfiguration(8,12));
+  assertEquals(XSiteAdminOperations.SUCCESS,admin("LON",1).setTakeOfflineMinTimeToWait("NYC",13));
+  assertEquals(offlineStatus.getTakeOffline(),new TakeOfflineConfiguration(8,13));
+  assertEquals(admin("LON",0).getTakeOfflineAfterFailures("NYC"),"8");
+  assertEquals(admin("LON",0).getTakeOfflineMinTimeToWait("NYC"),"13");
+  assertEquals(admin("LON",1).getTakeOfflineAfterFailures("NYC"),"8");
+  assertEquals(admin("LON",1).getTakeOfflineMinTimeToWait("NYC"),"13");
+}

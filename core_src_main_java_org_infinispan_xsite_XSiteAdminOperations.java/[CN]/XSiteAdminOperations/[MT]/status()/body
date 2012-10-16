@@ -1,0 +1,49 @@
+{
+  Map<String,Boolean> localNodeStatus=backupSender.status();
+  XSiteAdminCommand command=new XSiteAdminCommand(cache.getName(),null,XSiteAdminCommand.AdminOperation.STATUS,null,null);
+  Map<Address,Response> responses=invokeRemotely(command);
+  List<Address> errors=checkForErrors(responses);
+  if (!errors.isEmpty()) {
+    return rpcError(errors,"Failure invoking 'status()' on nodes: ");
+  }
+  Map<String,List<Address>> result=new HashMap<String,List<Address>>();
+  for (  Map.Entry<String,Boolean> e : localNodeStatus.entrySet()) {
+    ArrayList<Address> failedSites=new ArrayList<Address>();
+    result.put(e.getKey(),failedSites);
+    if (!e.getValue()) {
+      failedSites.add(rpcManager.getAddress());
+    }
+  }
+  for (  Map.Entry<Address,Response> response : responses.entrySet()) {
+    Map<String,Boolean> status=(Map<String,Boolean>)((SuccessfulResponse)response.getValue()).getResponseValue();
+    for (    Map.Entry<String,Boolean> entry : status.entrySet()) {
+      List<Address> addresses=result.get(entry.getKey());
+      if (addresses == null)       throw new IllegalStateException("All sites must be defined on all the nodes of the cluster!");
+      if (!entry.getValue()) {
+        addresses.add(rpcManager.getAddress());
+      }
+    }
+  }
+  int clusterSize=rpcManager.getTransport().getMembers().size();
+  StringBuilder resultStr=new StringBuilder();
+  boolean first=true;
+  for (  Map.Entry<String,List<Address>> e : result.entrySet()) {
+    if (!first) {
+      resultStr.append("\n");
+    }
+ else     first=false;
+    resultStr.append(e.getKey()).append("[");
+    List<Address> value=e.getValue();
+    if (value.isEmpty()) {
+      resultStr.append("ONLINE");
+    }
+ else     if (value.size() == clusterSize) {
+      resultStr.append("OFFLINE");
+    }
+ else {
+      resultStr.append("MIXED, offline on nodes: ").append(value);
+    }
+    resultStr.append("]");
+  }
+  return resultStr.toString();
+}

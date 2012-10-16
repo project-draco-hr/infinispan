@@ -1,0 +1,9 @@
+{
+  OfflineStatus offlineStatus=backupSender.getOfflineStatus(site);
+  if (offlineStatus == null)   return incorrectSiteName(site);
+  XSiteAdminCommand command=new XSiteAdminCommand(cache.getName(),site,XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE,afterFailures,minTimeToWait);
+  Map<Address,Response> responses=invokeRemotely(command);
+  offlineStatus.amend(afterFailures,minTimeToWait);
+  List<Address> failed=checkForErrors(responses);
+  return returnFailureOrSuccess(failed,"Could not amend for nodes:");
+}
