@@ -1,0 +1,19 @@
+{
+  final Action<K> action=this.action;
+  if (action == null)   return abortOnNullFunction();
+  try {
+    int b=batch(), c;
+    while (b > 1 && baseIndex != baseLimit) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      new ForEachKeyTask<K,V>(map,this,b>>>=1,action).fork();
+    }
+    while (advance() != null)     action.apply((K)nextKey);
+    tryComplete();
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}

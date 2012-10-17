@@ -1,0 +1,36 @@
+{
+  final ObjectToDouble<? super K> transformer=this.transformer;
+  final DoubleByDoubleToDouble reducer=this.reducer;
+  if (transformer == null || reducer == null)   return abortOnNullFunction();
+  try {
+    final double id=this.basis;
+    for (int c, b=batch(); b > 1 && baseIndex != baseLimit; ) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      (rights=new MapReduceKeysToDoubleTask<K,V>(map,this,b>>>=1,rights,transformer,id,reducer)).fork();
+    }
+    double r=id;
+    while (advance() != null)     r=reducer.apply(r,transformer.apply((K)nextKey));
+    result=r;
+    for (MapReduceKeysToDoubleTask<K,V> t=this, s; ; ) {
+      int c;
+      BulkTask<K,V,?> par;
+      if ((c=t.pending) == 0) {
+        for (s=t.rights; s != null; s=t.rights=s.nextRight) {
+          t.result=reducer.apply(t.result,s.result);
+        }
+        if ((par=t.parent) == null || !(par instanceof MapReduceKeysToDoubleTask)) {
+          t.quietlyComplete();
+          break;
+        }
+        t=(MapReduceKeysToDoubleTask<K,V>)par;
+      }
+ else       if (t.casPending(c,c - 1))       break;
+    }
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}

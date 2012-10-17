@@ -1,0 +1,24 @@
+{
+  final Fun<? super V,? extends U> transformer=this.transformer;
+  final Action<U> action=this.action;
+  if (transformer == null || action == null)   return abortOnNullFunction();
+  try {
+    int b=batch(), c;
+    while (b > 1 && baseIndex != baseLimit) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      new ForEachTransformedValueTask<K,V,U>(map,this,b>>>=1,transformer,action).fork();
+    }
+    Object v;
+    U u;
+    while ((v=advance()) != null) {
+      if ((u=transformer.apply((V)v)) != null)       action.apply(u);
+    }
+    tryComplete();
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}

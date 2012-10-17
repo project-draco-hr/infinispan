@@ -1,0 +1,26 @@
+{
+  AtomicReference<U> result=this.result;
+  final Fun<? super K,? extends U> searchFunction=this.searchFunction;
+  if (searchFunction == null || result == null)   return abortOnNullFunction();
+  try {
+    int b=batch(), c;
+    while (b > 1 && baseIndex != baseLimit && result.get() == null) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      new SearchKeysTask<K,V,U>(map,this,b>>>=1,searchFunction,result).fork();
+    }
+    U u;
+    while (result.get() == null && advance() != null) {
+      if ((u=searchFunction.apply((K)nextKey)) != null) {
+        if (result.compareAndSet(null,u))         tryCompleteComputation(null);
+        break;
+      }
+    }
+    tryComplete();
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}

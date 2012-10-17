@@ -1,0 +1,38 @@
+{
+  final Fun<? super K,? extends U> transformer=this.transformer;
+  final BiFun<? super U,? super U,? extends U> reducer=this.reducer;
+  if (transformer == null || reducer == null)   return abortOnNullFunction();
+  try {
+    for (int c, b=batch(); b > 1 && baseIndex != baseLimit; ) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      (rights=new MapReduceKeysTask<K,V,U>(map,this,b>>>=1,rights,transformer,reducer)).fork();
+    }
+    U r=null, u;
+    while (advance() != null) {
+      if ((u=transformer.apply((K)nextKey)) != null)       r=(r == null) ? u : reducer.apply(r,u);
+    }
+    result=r;
+    for (MapReduceKeysTask<K,V,U> t=this, s; ; ) {
+      int c;
+      BulkTask<K,V,?> par;
+      U tr, sr;
+      if ((c=t.pending) == 0) {
+        for (s=t.rights; s != null; s=t.rights=s.nextRight) {
+          if ((sr=s.result) != null)           t.result=(tr=t.result) == null ? sr : reducer.apply(tr,sr);
+        }
+        if ((par=t.parent) == null || !(par instanceof MapReduceKeysTask)) {
+          t.quietlyComplete();
+          break;
+        }
+        t=(MapReduceKeysTask<K,V,U>)par;
+      }
+ else       if (t.casPending(c,c - 1))       break;
+    }
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}

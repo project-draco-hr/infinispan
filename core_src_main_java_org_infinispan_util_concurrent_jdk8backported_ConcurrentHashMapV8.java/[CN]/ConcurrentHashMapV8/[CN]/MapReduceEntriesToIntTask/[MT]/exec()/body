@@ -1,0 +1,37 @@
+{
+  final ObjectToInt<Map.Entry<K,V>> transformer=this.transformer;
+  final IntByIntToInt reducer=this.reducer;
+  if (transformer == null || reducer == null)   return abortOnNullFunction();
+  try {
+    final int id=this.basis;
+    for (int c, b=batch(); b > 1 && baseIndex != baseLimit; ) {
+      do {
+      }
+ while (!casPending(c=pending,c + 1));
+      (rights=new MapReduceEntriesToIntTask<K,V>(map,this,b>>>=1,rights,transformer,id,reducer)).fork();
+    }
+    int r=id;
+    Object v;
+    while ((v=advance()) != null)     r=reducer.apply(r,transformer.apply(entryFor((K)nextKey,(V)v)));
+    result=r;
+    for (MapReduceEntriesToIntTask<K,V> t=this, s; ; ) {
+      int c;
+      BulkTask<K,V,?> par;
+      if ((c=t.pending) == 0) {
+        for (s=t.rights; s != null; s=t.rights=s.nextRight) {
+          t.result=reducer.apply(t.result,s.result);
+        }
+        if ((par=t.parent) == null || !(par instanceof MapReduceEntriesToIntTask)) {
+          t.quietlyComplete();
+          break;
+        }
+        t=(MapReduceEntriesToIntTask<K,V>)par;
+      }
+ else       if (t.casPending(c,c - 1))       break;
+    }
+  }
+ catch (  Throwable ex) {
+    return tryCompleteComputation(ex);
+  }
+  return false;
+}
