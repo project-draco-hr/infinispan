@@ -1,0 +1,35 @@
+{
+  Set<Object> keys=new HashSet<Object>();
+  for (int i=0; i < NUM_KEYS; i++) {
+    Object key=getKeyForCache(0);
+    if (!keys.add(key))     continue;
+    cache(0).put(key,key);
+  }
+  log.trace("State transfer happens here");
+  addClusterEnabledCacheManager(dccc);
+  waitForClusterToForm();
+  log.trace("Checking the values from caches...");
+  for (  Object key : keys) {
+    log.tracef("Checking key: %s",key);
+    InternalCacheEntry d0=advancedCache(0).getDataContainer().get(key);
+    InternalCacheEntry d1=advancedCache(1).getDataContainer().get(key);
+    InternalCacheEntry d2=advancedCache(2).getDataContainer().get(key);
+    int c=0;
+    if (d0 != null) {
+      assertEquals(key,d0.getValue());
+      c++;
+    }
+    if (d1 != null) {
+      assertEquals(key,d1.getValue());
+      c++;
+    }
+    if (d2 != null) {
+      assertEquals(key,d2.getValue());
+      c++;
+    }
+    assertEquals(1,c);
+    assertEquals(key,cache(0).get(key));
+    assertEquals(key,cache(1).get(key));
+    assertEquals(key,cache(2).get(key));
+  }
+}

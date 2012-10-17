@@ -1,0 +1,8 @@
+{
+  dccc=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true,true);
+  dccc.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(true).syncRollbackPhase(true);
+  dccc.clustering().hash().numOwners(1).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+  dccc.clustering().stateTransfer().fetchInMemoryState(true);
+  createCluster(dccc,2);
+  waitForClusterToForm();
+}
