@@ -1,4 +1,14 @@
 {
-  L l=locks.remove(key);
-  if (l != null)   unlock(l,lockOwner);
+  locks.computeIfPresent(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
+    @Override public L apply(    Object key,    L value){
+      boolean remove=false;
+      if (value != null) {
+        remove=value.getReferenceCounter().get() == 0;
+        unlock(value,lockOwner);
+        getLog().tracef("Unlocking lock instance for key %s",key);
+      }
+      return remove ? null : value;
+    }
+  }
+);
 }
