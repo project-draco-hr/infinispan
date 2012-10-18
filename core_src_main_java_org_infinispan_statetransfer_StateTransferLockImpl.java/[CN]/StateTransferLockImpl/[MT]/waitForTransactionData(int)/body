@@ -1,9 +1,14 @@
 {
   if (transactionDataTopologyId >= expectedTopologyId)   return;
-  log.tracef("Waiting for transaction data for topology %d, current topology is %d",expectedTopologyId,transactionDataTopologyId);
+  if (trace) {
+    log.tracef("Waiting for transaction data for topology %d, current topology is %d",expectedTopologyId,transactionDataTopologyId);
+  }
 synchronized (transactionDataLock) {
     while (transactionDataTopologyId < expectedTopologyId) {
       transactionDataLock.wait();
     }
+  }
+  if (trace) {
+    log.tracef("Received transaction data for topology %d, expected topology was %d",transactionDataTopologyId,expectedTopologyId);
   }
 }

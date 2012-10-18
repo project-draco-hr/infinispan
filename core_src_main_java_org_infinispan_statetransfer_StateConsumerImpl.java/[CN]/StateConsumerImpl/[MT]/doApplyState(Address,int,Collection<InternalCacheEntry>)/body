@@ -1,11 +1,11 @@
 {
-  log.debugf("Applying new state for segment %d from %s: received %d cache entries",segmentId,sender,cacheEntries.size());
+  log.debugf("Applying new state for segment %d of cache %s from node %s: received %d cache entries",segmentId,cacheName,sender,cacheEntries.size());
   if (trace) {
     List<Object> keys=new ArrayList<Object>(cacheEntries.size());
     for (    InternalCacheEntry e : cacheEntries) {
       keys.add(e.getKey());
     }
-    log.tracef("Received keys: %s",keys);
+    log.tracef("Received keys %s for segment %d of cache %s from node %s",keys,segmentId,cacheName,sender);
   }
   EnumSet<Flag> flags=EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING,IGNORE_RETURN_VALUES,SKIP_SHARED_CACHE_STORE,SKIP_OWNERSHIP_CHECK,SKIP_XSITE_BACKUP);
   for (  InternalCacheEntry e : cacheEntries) {
@@ -19,4 +19,5 @@
       log.problemApplyingStateForKey(ex.getMessage(),e.getKey());
     }
   }
+  log.debugf("Finished applying state for segment %d of cache %s",segmentId,cacheName);
 }

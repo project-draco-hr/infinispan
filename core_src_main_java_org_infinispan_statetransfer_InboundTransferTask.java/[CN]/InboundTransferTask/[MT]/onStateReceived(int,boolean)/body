@@ -1,10 +1,11 @@
 {
-  if (!isCancelled && segments.contains(segmentId)) {
-    if (isLastChunk) {
-      finishedSegments.add(segmentId);
-      if (finishedSegments.containsAll(segments)) {
-        stateConsumer.onTaskCompletion(this);
+  if (!isCancelled && isLastChunk && segments.contains(segmentId)) {
+    finishedSegments.add(segmentId);
+    if (finishedSegments.containsAll(segments)) {
+      if (trace) {
+        log.tracef("Finished receiving state for segments %s of cache %s",segments,cacheName);
       }
+      stateConsumer.onTaskCompletion(this);
     }
   }
 }

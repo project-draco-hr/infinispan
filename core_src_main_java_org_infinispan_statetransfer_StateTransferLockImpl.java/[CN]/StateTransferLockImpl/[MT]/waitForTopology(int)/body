@@ -1,9 +1,14 @@
 {
   if (topologyId >= expectedTopologyId)   return;
-  log.tracef("Waiting for topology %d to be installed, current topology is %d",expectedTopologyId,topologyId);
+  if (trace) {
+    log.tracef("Waiting for topology %d to be installed, current topology is %d",expectedTopologyId,topologyId);
+  }
 synchronized (topologyLock) {
     while (topologyId < expectedTopologyId) {
       topologyLock.wait();
     }
+  }
+  if (trace) {
+    log.tracef("Topology %d is now installed, expected topology was %d",topologyId,expectedTopologyId);
   }
 }

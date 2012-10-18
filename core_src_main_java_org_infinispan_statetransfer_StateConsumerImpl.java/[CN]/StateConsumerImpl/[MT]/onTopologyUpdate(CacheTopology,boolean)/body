@@ -1,31 +1,33 @@
 {
-  if (trace)   log.tracef("Received new CH: %s",cacheTopology.getWriteConsistentHash());
+  if (trace)   log.tracef("Received new CH %s for cache %s",cacheTopology.getWriteConsistentHash(),cacheName);
   activeTopologyUpdates.incrementAndGet();
   if (isRebalance) {
     rebalanceInProgress.set(true);
   }
-  ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
+  final ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
   stateTransferLock.releaseExclusiveTopologyLock();
-  stateTransferLock.topologyInstalled(cacheTopology.getTopologyId());
+  stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
   try {
     Set<Integer> addedSegments;
     if (previousCh == null) {
       addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+      if (trace) {
+        log.tracef("On cache %s we have: added segments: %s",cacheName,addedSegments);
+      }
     }
  else {
       Set<Integer> previousSegments=getOwnedSegments(previousCh);
       Set<Integer> newSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
       Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
       removedSegments.removeAll(newSegments);
+      addedSegments=new HashSet<Integer>(newSegments);
+      addedSegments.removeAll(previousSegments);
       if (trace) {
-        log.tracef("Discarding removed segments: %s; new segments: %s; old segments: %s",removedSegments,newSegments,previousSegments);
+        log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
       }
       discardSegments(removedSegments);
-      Set<Integer> currentSegments=getOwnedSegments(cacheTopology.getReadConsistentHash());
-      addedSegments=new HashSet<Integer>(newSegments);
-      addedSegments.removeAll(currentSegments);
       Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
 synchronized (this) {
         for (Iterator<Address> it=transfersBySource.keySet().iterator(); it.hasNext(); ) {
@@ -44,15 +46,16 @@ synchronized (this) {
             }
           }
         }
+        addedSegments.removeAll(transfersBySegment.keySet());
       }
     }
-    if (addedSegments != null && !addedSegments.isEmpty()) {
+    if (!addedSegments.isEmpty()) {
       addTransfers(addedSegments);
     }
   }
   finally {
-    stateTransferLock.transactionDataReceived(cacheTopology.getTopologyId());
-    if (activeTopologyUpdates.decrementAndGet() == 0 && !isStateTransferInProgress()) {
+    stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
+    if (activeTopologyUpdates.decrementAndGet() == 0) {
       notifyEndOfTopologyUpdate(cacheTopology.getTopologyId());
     }
   }

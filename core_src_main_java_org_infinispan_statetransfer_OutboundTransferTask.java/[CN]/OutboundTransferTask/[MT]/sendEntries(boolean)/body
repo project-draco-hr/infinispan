@@ -1,27 +1,39 @@
 {
   List<StateChunk> chunks=new ArrayList<StateChunk>();
+  for (  Map.Entry<Integer,List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
+    List<InternalCacheEntry> entries=e.getValue();
+    if (!entries.isEmpty()) {
+      chunks.add(new StateChunk(e.getKey(),new ArrayList<InternalCacheEntry>(entries),isLast));
+      entries.clear();
+    }
+  }
   if (isLast) {
     for (    int segmentId : segments) {
       List<InternalCacheEntry> entries=entriesBySegment.get(segmentId);
       if (entries == null) {
-        entries=InfinispanCollections.emptyList();
-      }
-      chunks.add(new StateChunk(segmentId,entries,isLast));
-    }
-  }
- else {
-    for (    Map.Entry<Integer,List<InternalCacheEntry>> e : entriesBySegment.entrySet()) {
-      List<InternalCacheEntry> entries=e.getValue();
-      if (!entries.isEmpty()) {
-        chunks.add(new StateChunk(e.getKey(),entries,isLast));
+        chunks.add(new StateChunk(segmentId,InfinispanCollections.<InternalCacheEntry>emptyList(),true));
       }
     }
   }
-  if (!chunks.isEmpty() || isLast) {
+  if (!chunks.isEmpty()) {
     if (trace) {
-      log.tracef("Sending %d cache entries from segments %s to node %s",accumulatedEntries,entriesBySegment.keySet(),destination);
+      if (isLast) {
+        log.tracef("Sending last chunk containing %d cache entries from segments %s of cache %s to node %s",accumulatedEntries,segments,cacheName,destination);
+      }
+ else {
+        log.tracef("Sending %d cache entries from segments %s of cache %s to node %s",accumulatedEntries,entriesBySegment.keySet(),cacheName,destination);
+      }
     }
     StateResponseCommand cmd=commandsFactory.buildStateResponseCommand(rpcManager.getAddress(),topologyId,chunks);
-    rpcManager.invokeRemotelyInFuture(Collections.singleton(destination),cmd,false,sendFuture,timeout);
+    try {
+      rpcManager.invokeRemotely(Collections.singleton(destination),cmd,ResponseMode.SYNCHRONOUS,timeout,false,null);
+    }
+ catch (    SuspectException e) {
+      log.errorf(e,"Node %s left cache %s: %s",destination,cacheName,e.getMessage());
+      cancel();
+    }
+catch (    Exception e) {
+      log.errorf(e,"Failed to send entries to node %s : %s",destination,e.getMessage());
+    }
   }
 }

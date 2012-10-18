@@ -1,28 +1,27 @@
 {
   if (!cacheTopology.getWriteConsistentHash().getSegmentsForOwner(rpcManager.getAddress()).contains(segmentId)) {
     if (trace) {
-      log.warnf("Discarding received cache entries for segment %d because they do not belong to this node.",segmentId);
+      log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.",segmentId,cacheName);
     }
     return;
-  }
-  if (cacheEntries != null) {
-    doApplyState(sender,segmentId,cacheEntries);
   }
   InboundTransferTask inboundTransfer;
 synchronized (this) {
     inboundTransfer=transfersBySegment.get(segmentId);
   }
   if (inboundTransfer != null) {
+    if (cacheEntries != null) {
+      doApplyState(sender,segmentId,cacheEntries);
+    }
     inboundTransfer.onStateReceived(segmentId,isLastChunk);
+    if (trace) {
+      log.tracef("After applying the received state the data container of cache %s has %d keys",cacheName,dataContainer.size());
+synchronized (this) {
+        log.tracef("Segments not received yet for cache %s: %s",cacheName,transfersBySource);
+      }
+    }
   }
  else {
-    log.debugf("Received unsolicited state for segment %d from node %s",segmentId,sender);
-    return;
-  }
-  if (trace) {
-    log.tracef("After applying the received state the data container has %d keys",dataContainer.size());
-synchronized (this) {
-      log.tracef("Segments not received yet: %s",transfersBySource);
-    }
+    log.warnf("Received unsolicited state from node %s for segment %d of cache %s",sender,segmentId,cacheName);
   }
 }

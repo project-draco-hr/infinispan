@@ -1,16 +1,21 @@
 {
   if (trace) {
-    log.tracef("Installing new cache topology %s",newCacheTopology);
+    log.tracef("Installing new cache topology %s on cache %s",newCacheTopology,cacheName);
   }
   newCacheTopology=addGrouping(newCacheTopology);
   CacheTopology oldCacheTopology=stateConsumer.getCacheTopology();
+  if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
+    throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new="+ newCacheTopology);
+  }
   ConsistentHash oldCH=oldCacheTopology != null ? oldCacheTopology.getWriteConsistentHash() : null;
   ConsistentHash newCH=newCacheTopology.getWriteConsistentHash();
   cacheNotifier.notifyTopologyChanged(oldCH,newCH,newCacheTopology.getTopologyId(),true);
   stateConsumer.onTopologyUpdate(newCacheTopology,isRebalance);
   stateProvider.onTopologyUpdate(newCacheTopology,isRebalance);
   cacheNotifier.notifyTopologyChanged(oldCH,newCH,newCacheTopology.getTopologyId(),false);
-  if (newCacheTopology.getCurrentCH().getMembers().contains(rpcManager.getAddress())) {
+  boolean isJoined=stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
+  if (initialStateTransferComplete.getCount() > 0 && isJoined) {
     initialStateTransferComplete.countDown();
+    log.tracef("Initial state transfer complete for cache %s on node %s",cacheName,rpcManager.getAddress());
   }
 }
