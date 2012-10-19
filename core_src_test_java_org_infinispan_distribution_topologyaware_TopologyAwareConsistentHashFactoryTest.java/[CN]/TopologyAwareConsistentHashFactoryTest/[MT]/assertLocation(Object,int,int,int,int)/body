@@ -1,0 +1,28 @@
+{
+  List<Address> received=ch.locateOwners(key);
+  assertEquals(received.size(),expectedOwners);
+  Set<Address> receivedUnique=new HashSet<Address>(received);
+  assertEquals(receivedUnique.size(),expectedOwners);
+  Set<String> receivedMachines=new HashSet<String>();
+  for (  Address a : received) {
+    TopologyAwareAddress taa=(TopologyAwareAddress)a;
+    receivedMachines.add(taa.getMachineId() + "|" + taa.getRackId()+ "|"+ taa.getSiteId());
+  }
+  assertEquals(receivedMachines.size(),expectedMachines);
+  Set<String> receivedRacks=new HashSet<String>();
+  for (  Address a : received) {
+    TopologyAwareAddress taa=(TopologyAwareAddress)a;
+    receivedRacks.add(taa.getRackId() + "|" + taa.getSiteId());
+  }
+  assertEquals(receivedRacks.size(),expectedRacks);
+  Set<String> receivedSites=new HashSet<String>();
+  for (  Address a : received) {
+    receivedSites.add(((TopologyAwareAddress)a).getSiteId());
+  }
+  assertEquals(receivedSites.size(),expectedSites);
+  for (  Address testAddress : testAddresses) {
+    boolean shouldBeLocal=received.contains(testAddress);
+    boolean isLocal=ch.isKeyLocalToNode(testAddress,key);
+    assertEquals(isLocal,shouldBeLocal);
+  }
+}

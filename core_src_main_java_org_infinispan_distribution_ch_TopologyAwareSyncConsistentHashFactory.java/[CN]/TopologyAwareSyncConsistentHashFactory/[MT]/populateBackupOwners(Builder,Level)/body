@@ -1,0 +1,16 @@
+{
+  boolean modified=false;
+  for (  Address member : builder.getSortedMembers()) {
+    int initSegment=normalizedHash(builder.getHashFunction(),member.hashCode()) / builder.getSegmentSize();
+    for (int i=0; i < builder.getNumSegments(); i++) {
+      int segment=(builder.getNumSegments() + initSegment - i) % builder.getNumSegments();
+      List<Address> owners=builder.getOwners(segment);
+      if (owners.size() < builder.getActualNumOwners() && locationAlreadyAdded(member,owners,level)) {
+        owners.add(member);
+        modified=true;
+        break;
+      }
+    }
+  }
+  return modified;
+}

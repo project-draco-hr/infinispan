@@ -1,0 +1,25 @@
+{
+  int collisions=0;
+  int numSegments=builder.getNumSegments();
+  int numVirtualNodes=(int)(Math.log(numSegments + 1) / Math.log(2));
+  int numNodes=builder.getSortedMembers().size();
+  Map<Integer,Address> primarySegments=new HashMap<Integer,Address>(numNodes * numVirtualNodes);
+  for (int virtualNode=0; virtualNode < numVirtualNodes; virtualNode++) {
+    for (    Address member : builder.getSortedMembers()) {
+      int virtualNodeHash=normalizedHash(builder.getHashFunction(),member.hashCode());
+      if (virtualNode != 0) {
+        virtualNodeHash=normalizedHash(builder.getHashFunction(),virtualNodeHash + virtualNode);
+      }
+      int initSegment=virtualNodeHash / builder.getSegmentSize();
+      for (int i=0; i < numSegments; i++) {
+        int segment=(initSegment + i) % numSegments;
+        if (!primarySegments.containsKey(segment)) {
+          primarySegments.put(segment,member);
+          if (segment != initSegment)           collisions++;
+          break;
+        }
+      }
+    }
+  }
+  return new TreeMap<Integer,Address>(primarySegments);
+}

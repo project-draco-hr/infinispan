@@ -1,72 +1,11 @@
 {
-  int numMembers=members.size();
-  int actualNumOwners=Math.min(numOwners,numMembers);
-  List<Address> sortedMembers=sort(members);
-  int segmentSize=(int)Math.ceil((double)Integer.MAX_VALUE / numSegments);
-  SortedMap<Integer,Address> primarySegments=new TreeMap<Integer,Address>();
-  int numVirtualNodes=(int)Math.sqrt(numSegments);
-  for (int virtualNode=0; virtualNode < numVirtualNodes; virtualNode++) {
-    for (    Address member : sortedMembers) {
-      int virtualNodeHash=31 * member.hashCode() + virtualNode;
-      int normalizedHash=hashFunction.hash(virtualNodeHash) & Integer.MAX_VALUE;
-      int initSegment=normalizedHash / segmentSize;
-      for (int i=0; i < numSegments; i++) {
-        int segment=(initSegment + i) % numSegments;
-        if (!primarySegments.containsKey(segment)) {
-          primarySegments.put(segment,member);
-          break;
-        }
-      }
-    }
-  }
-  List<Address>[] segmentOwners=new List[numSegments];
-  if (numSegments >= numMembers) {
-    for (int i=0; i < numSegments; i++) {
-      ArrayList<Address> owners=new ArrayList<Address>(actualNumOwners);
-      for (      Address a : primarySegments.tailMap(i).values()) {
-        if (owners.size() >= actualNumOwners)         break;
-        if (!owners.contains(a)) {
-          owners.add(a);
-        }
-      }
-      for (      Address a : primarySegments.headMap(i).values()) {
-        if (owners.size() >= actualNumOwners)         break;
-        if (!owners.contains(a)) {
-          owners.add(a);
-        }
-      }
-      segmentOwners[i]=owners;
-    }
+  Builder builder=new Builder(hashFunction,numOwners,numSegments,members);
+  SortedMap<Integer,Address> primarySegments=populatePrimarySegments(builder);
+  if (numSegments >= members.size()) {
+    populateOwnersManySegments(builder,primarySegments);
   }
  else {
-    for (    Map.Entry<Integer,Address> e : primarySegments.entrySet()) {
-      Integer segment=e.getKey();
-      Address primaryOwner=e.getValue();
-      segmentOwners[segment]=new ArrayList<Address>(actualNumOwners);
-      segmentOwners[segment].add(primaryOwner);
-    }
-    boolean haveEnoughOwners=false;
-    while (!haveEnoughOwners) {
-      for (      Address member : sortedMembers) {
-        int normalizedHash=hashFunction.hash(member.hashCode()) & Integer.MAX_VALUE;
-        int initSegment=normalizedHash / segmentSize;
-        for (int i=0; i < numSegments; i++) {
-          int segment=(numSegments + initSegment - i) % numSegments;
-          List<Address> owners=segmentOwners[segment];
-          if (owners.size() < actualNumOwners && !owners.contains(member)) {
-            owners.add(member);
-            break;
-          }
-        }
-      }
-      haveEnoughOwners=true;
-      for (int i=0; i < numSegments; i++) {
-        if (segmentOwners[i].size() < actualNumOwners) {
-          haveEnoughOwners=false;
-          break;
-        }
-      }
-    }
+    populateOwnersFewSegments(builder,primarySegments);
   }
-  return new DefaultConsistentHash(hashFunction,numSegments,numOwners,members,segmentOwners);
+  return new DefaultConsistentHash(hashFunction,numSegments,numOwners,members,builder.getAllOwners());
 }
