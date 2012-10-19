@@ -1,0 +1,18 @@
+{
+  boolean sufficientOwners=true;
+  boolean modified=false;
+  for (int segment=0; segment < builder.getNumSegments(); segment++) {
+    List<Address> owners=builder.getOwners(segment);
+    for (    Address candidate : builder.getMembers()) {
+      if (owners.size() >= builder.getActualNumOwners())       break;
+      if (builder.getOwned(candidate) < maxSegments) {
+        if (!locationAlreadyAdded(owners,candidate,null,level)) {
+          builder.addOwner(segment,candidate);
+          modified=true;
+        }
+      }
+    }
+    sufficientOwners&=owners.size() >= builder.getActualNumOwners();
+  }
+  return !sufficientOwners && modified;
+}

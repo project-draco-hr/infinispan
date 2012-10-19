@@ -1,0 +1,15 @@
+{
+  boolean tooManyOwners=false;
+  for (int segment=0; segment < builder.getNumSegments(); segment++) {
+    List<Address> owners=builder.getOwners(segment);
+    for (int ownerIdx=owners.size() - 1; ownerIdx >= 1; ownerIdx--) {
+      if (owners.size() <= builder.getActualNumOwners())       break;
+      Address owner=owners.get(ownerIdx);
+      if (builder.getOwned(owner) > maxSegments) {
+        builder.removeOwner(segment,owner);
+      }
+    }
+    tooManyOwners|=builder.getOwners(segment).size() > builder.getActualNumOwners();
+  }
+  return tooManyOwners;
+}

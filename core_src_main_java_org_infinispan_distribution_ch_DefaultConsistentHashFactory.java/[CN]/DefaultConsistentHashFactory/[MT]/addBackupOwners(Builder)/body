@@ -1,0 +1,14 @@
+{
+  int minSegments=builder.getActualNumOwners() * builder.getNumSegments() / builder.getNumNodes();
+  removeExtraBackupOwners(builder,minSegments);
+  boolean insufficientOwners=true;
+  int maxSegments=minSegments;
+  while (insufficientOwners) {
+    insufficientOwners=doAddBackupOwners(builder,maxSegments);
+    maxSegments++;
+  }
+  for (maxSegments=builder.getNumSegments() - 1; maxSegments >= minSegments; maxSegments--) {
+    replaceBackupOwners(builder,maxSegments);
+  }
+  replaceBackupOwners(builder,minSegments + 1);
+}

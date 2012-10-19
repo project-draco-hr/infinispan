@@ -1,4 +1,15 @@
 {
-  if (newMembers.equals(baseCH.getMembers()))   return baseCH;
-  return removeLeavers(baseCH,newMembers);
+  if (actualMembers.equals(baseCH.getMembers()))   return baseCH;
+  Builder builder=new Builder(baseCH,actualMembers);
+  Builder balancedBuilder=null;
+  for (int segment=0; segment < baseCH.getNumSegments(); segment++) {
+    if (builder.getOwners(segment).isEmpty()) {
+      if (balancedBuilder == null) {
+        balancedBuilder=new Builder(builder);
+        rebalanceBuilder(balancedBuilder);
+      }
+      builder.addOwners(segment,balancedBuilder.getOwners(segment));
+    }
+  }
+  return builder.build(baseCH.getHashFunction());
 }

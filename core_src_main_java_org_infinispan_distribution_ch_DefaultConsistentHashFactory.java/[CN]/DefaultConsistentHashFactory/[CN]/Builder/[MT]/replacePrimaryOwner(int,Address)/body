@@ -1,0 +1,23 @@
+{
+  List<Address> segmentOwners=this.segmentOwners[segment];
+  int ownerIndex=segmentOwners.indexOf(newPrimaryOwner);
+  if (ownerIndex == 0) {
+    throw new IllegalStateException("Can't replace a primary owner with itself");
+  }
+  if (segmentOwners.isEmpty()) {
+    segmentOwners.add(newPrimaryOwner);
+    stats.incOwned(newPrimaryOwner);
+    stats.incPrimaryOwned(newPrimaryOwner);
+    return;
+  }
+  Address oldPrimaryOwner=segmentOwners.get(0);
+  if (ownerIndex == -1) {
+    stats.incOwned(newPrimaryOwner);
+  }
+ else {
+    segmentOwners.remove(ownerIndex);
+  }
+  segmentOwners.add(0,newPrimaryOwner);
+  stats.decPrimaryOwned(oldPrimaryOwner);
+  stats.incPrimaryOwned(newPrimaryOwner);
+}

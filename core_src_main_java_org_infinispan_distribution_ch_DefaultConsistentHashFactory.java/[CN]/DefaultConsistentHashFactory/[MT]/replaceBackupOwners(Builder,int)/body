@@ -1,0 +1,15 @@
+{
+  for (int ownerIdx=builder.getActualNumOwners() - 1; ownerIdx >= 0; ownerIdx--) {
+    for (int segment=builder.getNumSegments() - 1; segment >= 0; segment--) {
+      List<Address> owners=builder.getOwners(segment);
+      Address owner=owners.get(ownerIdx);
+      if (builder.getOwned(owner) > maxSegments) {
+        Address replacement=findNewBackupOwner(builder,owners,maxSegments);
+        if (replacement != null) {
+          builder.removeOwner(segment,owner);
+          builder.addOwner(segment,replacement);
+        }
+      }
+    }
+  }
+}
