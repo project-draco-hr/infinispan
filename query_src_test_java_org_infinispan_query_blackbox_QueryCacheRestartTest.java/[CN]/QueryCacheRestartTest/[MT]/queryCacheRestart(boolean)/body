@@ -1,15 +1,19 @@
 {
   ConfigurationBuilder builder=new ConfigurationBuilder();
   builder.indexing().enable().indexLocalOnly(localOnly).addProperty("hibernate.search.default.directory_provider","ram").addProperty("hibernate.search.lucene_version","LUCENE_CURRENT");
+  final NoOpInterceptor noOpInterceptor=new NoOpInterceptor();
+  builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor);
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
     @Override public void call(){
       Cache<Object,Object> cache=cm.getCache();
       addABook(cache);
       assertFindBook(cache);
       cache.stop();
+      assertCacheHasCustomInterceptor(cache,noOpInterceptor);
       cache.start();
       addABook(cache);
       assertFindBook(cache);
+      assertCacheHasCustomInterceptor(cache,noOpInterceptor);
     }
     protected void addABook(    Cache<Object,Object> cache){
       cache.put("1",new Book("Infinispan Data Grid Platform","Francesco Marchioni and Manik Surtani","Packt Publishing"));
