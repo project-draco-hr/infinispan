@@ -1,15 +1,14 @@
 {
   boolean needsVersionAwareComponents=configuration.transaction().transactionMode().isTransactional() && configuration.locking().writeSkewCheck() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled();
+  InterceptorChain interceptorChain=new InterceptorChain(componentRegistry.getComponentMetadataRepo());
+  componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   boolean invocationBatching=configuration.invocationBatching().enabled();
-  CommandInterceptor first;
   if (invocationBatching) {
-    first=createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class);
+    interceptorChain.setFirstInChain(createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class));
   }
  else {
-    first=createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class);
+    interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class));
   }
-  InterceptorChain interceptorChain=new InterceptorChain(first,componentRegistry.getComponentMetadataRepo());
-  componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   if (isUsingMarshalledValues(configuration) || configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
   if (invocationBatching) {
     interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class),false);
