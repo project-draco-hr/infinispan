@@ -24,11 +24,20 @@
       for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode,rsvp),opts));
       retval=new RspList<Object>();
       for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
+        Address target=entry.getKey();
         try {
-          retval.addRsp(entry.getKey(),entry.getValue().get(timeout,MILLISECONDS));
+          retval.addRsp(target,entry.getValue().get(timeout,MILLISECONDS));
         }
  catch (        java.util.concurrent.TimeoutException te) {
-          throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),entry.getKey()));
+          throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),target));
+        }
+catch (        ExecutionException e) {
+          if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
+            log.tracef(formatString("Ignoring node %s that left during the remote call",target));
+          }
+ else {
+            throw e;
+          }
         }
       }
     }
