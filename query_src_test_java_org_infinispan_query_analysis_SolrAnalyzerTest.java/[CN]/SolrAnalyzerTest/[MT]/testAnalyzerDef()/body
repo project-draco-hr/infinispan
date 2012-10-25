@@ -1,0 +1,14 @@
+{
+  Team team=new Team();
+  team.setDescription("This is a D\u00E0scription");
+  team.setLocation("Atlanta");
+  team.setName("ATL team");
+  cache.put("id",team);
+  SearchManager searchManager=Search.getSearchManager(cache);
+  TermQuery query=new TermQuery(new Term("description","D\u00E0scription"));
+  assertEquals("iso latin filter should work.  ??? should be a now",0,searchManager.getQuery(query).list().size());
+  query=new TermQuery(new Term("description","is"));
+  assertEquals("stop word filter should work. is should be removed",0,searchManager.getQuery(query).list().size());
+  query=new TermQuery(new Term("description","dascript"));
+  assertEquals("snowball stemmer should work. 'dascription' should be stemmed to 'dascript'",1,searchManager.getQuery(query).list().size());
+}
