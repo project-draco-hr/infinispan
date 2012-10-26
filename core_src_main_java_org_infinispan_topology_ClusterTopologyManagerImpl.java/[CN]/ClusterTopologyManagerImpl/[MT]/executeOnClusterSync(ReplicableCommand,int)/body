@@ -5,18 +5,17 @@
     }
   }
 );
-  Future<Object> localFuture=asyncTransportExecutor.submit(new Callable<Object>(){
-    @Override public Object call() throws Exception {
-      gcr.wireDependencies(command);
-      try {
-        return command.perform(null);
-      }
- catch (      Throwable t) {
-        throw new Exception(t);
-      }
-    }
+  gcr.wireDependencies(command);
+  Response localResponse;
+  try {
+    localResponse=(Response)command.perform(null);
   }
-);
+ catch (  Throwable throwable) {
+    throw new Exception(throwable);
+  }
+  if (!localResponse.isSuccessful()) {
+    throw new CacheException("Unsuccessful local response");
+  }
   Map<Address,Response> responseMap=remoteFuture.get(timeout,TimeUnit.MILLISECONDS);
   Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
   for (  Map.Entry<Address,Response> entry : responseMap.entrySet()) {
@@ -27,10 +26,6 @@
       throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
     }
     responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
-  }
-  Response localResponse=(Response)localFuture.get(timeout,TimeUnit.MILLISECONDS);
-  if (!localResponse.isSuccessful()) {
-    throw new CacheException("Unsuccessful local response");
   }
   responseValues.put(transport.getAddress(),((SuccessfulResponse)localResponse).getResponseValue());
   return responseValues;
