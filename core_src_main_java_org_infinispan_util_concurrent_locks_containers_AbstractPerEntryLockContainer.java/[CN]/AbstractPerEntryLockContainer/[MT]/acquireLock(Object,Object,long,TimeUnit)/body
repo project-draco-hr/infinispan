@@ -1,81 +1,35 @@
 {
-  L lock=null;
-  final AtomicBoolean newLockCreatedAndAcquired=new AtomicBoolean(false);
-  while (lock == null) {
-    lock=locks.computeIfAbsent(key,new ConcurrentHashMapV8.Fun<Object,L>(){
-      @Override public L apply(      Object key){
+  final ByRef<Boolean> lockAcquired=ByRef.create(Boolean.FALSE);
+  L lock=locks.compute(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
+    @Override public L apply(    Object key,    L lock){
+      if (lock == null) {
         getLog().tracef("Creating and acquiring new lock instance for key %s",key);
-        L lock=newLock();
+        lock=newLock();
         lock(lock,lockOwner);
-        newLockCreatedAndAcquired.set(true);
+        lockAcquired.set(Boolean.TRUE);
         return lock;
       }
-    }
-);
-  }
-  boolean locked=false;
-  boolean refCounterIncremented=false;
-  try {
-    boolean attemptLock=true;
-    while (attemptLock) {
-      if (!newLockCreatedAndAcquired.get()) {
-        while (!tryIncrementReferences(lock)) {
-          if (lock.getReferenceCounter().compareAndSet(0,1)) {
-            L existing=locks.putIfAbsent(key,lock);
-            if (existing != null && existing != lock)             lock=existing;
- else             break;
-          }
-        }
-        locked=tryLock(lock,timeout,unit,lockOwner);
+      int refCount=lock.getReferenceCounter().incrementAndGet();
+      if (refCount <= 1) {
+        throw new IllegalStateException("Lock " + key + " acquired although it should have been removed: "+ lock);
       }
- else {
-        locked=true;
-      }
-      refCounterIncremented=true;
-      if (locked) {
-        lock.getReferenceCounter().decrementAndGet();
-        refCounterIncremented=false;
-        final L acquiredLock=lock;
-        L existing=locks.compute(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
-          @Override public L apply(          Object key,          L lockInMap){
-            if (lockInMap == null) {
-              return acquiredLock;
-            }
- else {
-              return lockInMap;
-            }
-          }
-        }
-);
-        if (existing != null && existing != lock) {
-          safeRelease(lock,lockOwner);
-          locked=false;
-          lock=existing;
-        }
- else {
-          attemptLock=false;
-        }
-      }
- else {
-        attemptLock=false;
-        if (refCounterIncremented)         lock.getReferenceCounter().decrementAndGet();
-      }
+      return lock;
     }
   }
- catch (  InterruptedException ie) {
-    getLog().tracef("Interrupted when trying to lock %s",key);
-    safeRelease(lock,lockOwner);
-    if (refCounterIncremented)     lock.getReferenceCounter().decrementAndGet();
-    throw ie;
+);
+  if (!lockAcquired.get()) {
+    lockAcquired.set(tryLock(lock,timeout,unit,lockOwner));
   }
-catch (  Throwable th) {
-    getLog().tracef("Caught a Throwable when trying to lock %s",key,th);
-    if (refCounterIncremented)     lock.getReferenceCounter().decrementAndGet();
-    locked=false;
-  }
-  if (locked)   return lock;
+  if (lockAcquired.get())   return lock;
  else {
     getLog().tracef("Timed out attempting to acquire lock for key %s after %s",key,Util.prettyPrintTime(timeout,unit));
+    locks.computeIfPresent(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
+      @Override public L apply(      Object key,      L lock){
+        boolean remove=lock.getReferenceCounter().decrementAndGet() == 0;
+        return remove ? null : lock;
+      }
+    }
+);
     return null;
   }
 }
