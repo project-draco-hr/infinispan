@@ -1,0 +1,36 @@
+{
+  ActivationManager activation=TestingUtil.extractComponent(cache,ActivationManager.class);
+  PassivationManager passivation=TestingUtil.extractComponent(cache,PassivationManager.class);
+  cache.addListener(new SlowPassivator());
+  assertEquals(0,activation.getActivationCount());
+  assertEquals(0,passivation.getPassivationCount());
+  cache.put(1,"v1");
+  assertEquals(0,activation.getActivationCount());
+  assertEquals(0,passivation.getPassivationCount());
+  ExecutorService exec=Executors.newFixedThreadPool(2);
+  Future<Object> passivatorFuture=exec.submit(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      log.debug("Store another entry and force previous to be passivated");
+      cache.put(2,"v2");
+      return null;
+    }
+  }
+);
+  Future<Object> activatorFuture=exec.submit(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      log.debug("Retrieve entry and force activation");
+      activationWait.await(60,TimeUnit.SECONDS);
+      assertEquals("v1",cache.get(1));
+      return null;
+    }
+  }
+);
+  activatorFuture.get(30,TimeUnit.SECONDS);
+  assertEquals(0,activation.getActivationCount());
+  assertEquals(1,passivation.getPassivationCount());
+  passivateWait.countDown();
+  passivatorFuture.get(30,TimeUnit.SECONDS);
+  assertEquals("v1",cache.get(1));
+  assertEquals(1,activation.getActivationCount());
+  assertEquals(2,passivation.getPassivationCount());
+}

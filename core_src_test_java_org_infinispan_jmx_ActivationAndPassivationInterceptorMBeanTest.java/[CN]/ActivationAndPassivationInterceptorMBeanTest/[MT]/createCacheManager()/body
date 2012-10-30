@@ -1,21 +1,8 @@
 {
-  GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
-  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-  globalConfiguration.setJmxDomain(JMX_DOMAIN);
-  globalConfiguration.setExposeGlobalJmxStatistics(true);
-  cacheManager=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
-  DummyInMemoryCacheStore.Cfg cfg=new DummyInMemoryCacheStore.Cfg();
-  CacheLoaderManagerConfig clManagerConfig=new CacheLoaderManagerConfig();
-  clManagerConfig.setPassivation(true);
-  clManagerConfig.addCacheLoaderConfig(cfg);
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-  configuration.setExposeJmxStatistics(true);
-  configuration.setCacheLoaderManagerConfig(clManagerConfig);
-  cacheManager.defineConfiguration("test",configuration);
-  cache=cacheManager.getCache("test");
-  activationInterceptorObjName=getCacheObjectName(JMX_DOMAIN,"test(local)","Activation");
-  passivationInterceptorObjName=getCacheObjectName(JMX_DOMAIN,"test(local)","Passivation");
+  GlobalConfigurationBuilder globalBuilder=new GlobalConfigurationBuilder();
+  globalBuilder.globalJmxStatistics().mBeanServerLookup(new PerThreadMBeanServerLookup()).jmxDomain(JMX_DOMAIN).enable();
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1).jmxStatistics().enable().loaders().passivation(true).addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
   threadMBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
-  cacheStore=TestingUtil.extractComponent(cache,CacheLoaderManager.class).getCacheStore();
-  return cacheManager;
+  return TestCacheManagerFactory.createCacheManager(globalBuilder,builder,true);
 }
