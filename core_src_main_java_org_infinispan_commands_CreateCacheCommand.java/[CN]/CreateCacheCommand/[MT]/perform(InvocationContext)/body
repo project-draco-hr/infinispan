@@ -1,11 +1,14 @@
 {
   Configuration cacheConfig=cacheManager.getCacheConfiguration(cacheConfigurationName);
   if (cacheConfig == null) {
-    cacheConfig=new ConfigurationBuilder().clustering().stateTransfer().fetchInMemoryState(false).unsafe().unreliableReturnValues(true).expiration().lifespan(2,TimeUnit.MINUTES).maxIdle(2,TimeUnit.MINUTES).wakeUpInterval(30,TimeUnit.SECONDS).enableReaper().clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().transaction().transactionMode(TransactionMode.TRANSACTIONAL).syncCommitPhase(true).syncRollbackPhase(true).lockingMode(LockingMode.PESSIMISTIC).build();
+    cacheConfig=new ConfigurationBuilder().clustering().stateTransfer().fetchInMemoryState(false).unsafe().unreliableReturnValues(true).expiration().lifespan(2,TimeUnit.MINUTES).maxIdle(2,TimeUnit.MINUTES).wakeUpInterval(30,TimeUnit.SECONDS).enableReaper().clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
     cacheManager.defineConfiguration(cacheNameToCreate,cacheConfig);
-    log.debug("Using default tmp cache configuration, defined as " + cacheNameToCreate);
+    log.debugf("Using default tmp cache configuration, defined as ",cacheNameToCreate);
   }
-  cacheManager.getCache(cacheNameToCreate);
-  log.debug("Defined and started cache " + cacheNameToCreate);
+  Cache<Object,Object> cache=cacheManager.getCache(cacheNameToCreate);
+  if (start) {
+    waitForClusterToForm(cache);
+  }
+  log.debugf("Defined and started cache %s",cacheNameToCreate);
   return true;
 }

@@ -1,15 +1,19 @@
 {
   RpcManager rpc=cache.getRpcManager();
   CommandsFactory factory=cache.getComponentRegistry().getComponent(CommandsFactory.class);
-  CreateCacheCommand ccc=factory.buildCreateCacheCommand(tmpCacheName,DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
-  try {
-    log.debugf("Invoking %s across entire cluster ",ccc);
-    Map<Address,Response> map=rpc.invokeRemotely(null,ccc,true,false);
-    ccc.init(cache.getCacheManager());
-    ccc.perform(null);
-    log.debugf("Invoked %s across entire cluster, results are %s",ccc,map);
+  final CreateCacheCommand ccc=factory.buildCreateCacheCommand(tmpCacheName,DEFAULT_TMP_CACHE_CONFIGURATION_NAME,true,rpc.getMembers().size());
+  log.debugf("Invoking %s across members %s ",ccc,cache.getRpcManager().getMembers());
+  mapReduceManager.getExecutorService().submit(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      ccc.init(cache.getCacheManager());
+      try {
+        return ccc.perform(null);
+      }
+ catch (      Throwable e) {
+        throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
+      }
+    }
   }
- catch (  Throwable e) {
-    throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
-  }
+);
+  rpc.invokeRemotely(cache.getRpcManager().getMembers(),ccc,true,false);
 }

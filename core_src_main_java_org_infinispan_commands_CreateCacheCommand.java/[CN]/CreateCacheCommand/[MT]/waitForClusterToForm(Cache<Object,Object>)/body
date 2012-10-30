@@ -1,0 +1,19 @@
+{
+  RpcManager rpcManager=cache.getAdvancedCache().getRpcManager();
+  while (rpcManager.getMembers().size() != size) {
+    Thread.sleep(50);
+  }
+  Address localAddress=cacheManager.getTransport().getAddress();
+  for (int i=0; i < 300; i++) {
+    cache.getAdvancedCache().withFlags(Flag.SKIP_LOCKING,Flag.FORCE_ASYNCHRONOUS,Flag.SKIP_REMOTE_LOOKUP).put(localAddress,"0");
+    boolean clusterFormed=true;
+    for (    Address a : rpcManager.getMembers()) {
+      if (!cache.containsKey(a)) {
+        clusterFormed=false;
+        break;
+      }
+    }
+    if (clusterFormed)     break;
+    Thread.sleep(50);
+  }
+}
