@@ -4,11 +4,19 @@
   try {
     if (trace)     log.tracef("Calling perform() on %s",cmd);
     ResponseGenerator respGen=cr.getResponseGenerator();
+    if (cmd instanceof CancellableCommand) {
+      cancelService.register(Thread.currentThread(),((CancellableCommand)cmd).getUUID());
+    }
     Object retval=cmd.perform(null);
     return respGen.getResponse(cmd,retval);
   }
  catch (  Exception e) {
     log.trace("Exception executing command",e);
     return new ExceptionResponse(e);
+  }
+ finally {
+    if (cmd instanceof CancellableCommand) {
+      cancelService.unregister(((CancellableCommand)cmd).getUUID());
+    }
   }
 }

@@ -13,9 +13,12 @@
  else {
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,localAddress);
+    int interruptCount=0;
     try {
       taskLifecycleService.onPreExecute(reducer,cache);
       for (      KOut key : keys) {
+        interruptCount++;
+        if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())         throw new InterruptedException();
         List<VOut> value=null;
         if (useIntermediateKeys) {
           value=tmpCache.get(new IntermediateCompositeKey<KOut>(taskId,key));

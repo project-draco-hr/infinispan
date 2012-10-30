@@ -15,9 +15,11 @@
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
   DefaultCollector<KOut,VOut> collector=new DefaultCollector<KOut,VOut>();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,inputKeys);
+  int interruptCount=0;
   try {
     taskLifecycleService.onPreExecute(mapper,cache);
     for (    KIn key : inputKeys) {
+      if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())       throw new InterruptedException();
       VIn value=cache.get(key);
       mapper.map(key,value,collector);
       if (inputKeysSpecified) {
@@ -32,7 +34,9 @@
       keysFromCacheLoader=filterLocalPrimaryOwner(loadAllKeysFromCacheLoaderUsingFilter(inputKeys),dm);
     }
     log.tracef("For m/r task %s cache loader input keys %s",mcc.getTaskId(),keysFromCacheLoader);
+    interruptCount=0;
     for (    KIn key : keysFromCacheLoader) {
+      if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())       throw new InterruptedException();
       VIn value=loadValueFromCacheLoader(key);
       if (value != null) {
         mapper.map(key,value,collector);

@@ -1,0 +1,26 @@
+{
+  V response=null;
+  try {
+    if (timeout > 0) {
+      response=retrieveResult(f.get(timeout,unit));
+    }
+ else {
+      response=retrieveResult(f.get());
+    }
+  }
+ catch (  Exception e) {
+    boolean canFailover=failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
+    if (canFailover) {
+      try {
+        response=retrieveResult(failoverExecution(e));
+      }
+ catch (      Exception failedOver) {
+        throw new ExecutionException(failedOver);
+      }
+    }
+ else {
+      throw new ExecutionException(e);
+    }
+  }
+  return response;
+}

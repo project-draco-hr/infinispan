@@ -1,10 +1,12 @@
 {
   log.debugf("Invoking %s locally",mcc);
   try {
+    cancellationService.register(Thread.currentThread(),mcc.getUUID());
     mcc.init(mapReduceManager);
     return mapReduceManager.mapAndCombineForLocalReduction(mcc);
   }
   finally {
+    cancellationService.unregister(mcc.getUUID());
     log.debugf("Invoked %s locally",mcc);
   }
 }

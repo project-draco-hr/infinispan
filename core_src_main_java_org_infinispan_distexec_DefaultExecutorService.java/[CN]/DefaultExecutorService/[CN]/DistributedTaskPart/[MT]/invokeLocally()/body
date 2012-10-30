@@ -3,11 +3,15 @@
   try {
     Callable<Object> call=new Callable<Object>(){
       @Override public Object call() throws Exception {
+        return doLocalInvoke();
+      }
+      private Object doLocalInvoke(){
         Object result=null;
         getCommand().init(cache);
         DistributedTaskLifecycleService taskLifecycleService=DistributedTaskLifecycleService.getInstance();
         try {
           taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+          cancellationService.register(Thread.currentThread(),getCommand().getUUID());
           result=getCommand().perform(null);
           return Collections.singletonMap(getAddress(),SuccessfulResponse.create(result));
         }
@@ -16,6 +20,7 @@
         }
  finally {
           taskLifecycleService.onPostExecute(getCommand().getCallable());
+          cancellationService.unregister(getCommand().getUUID());
           notifyDone();
         }
       }

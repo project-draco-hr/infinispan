@@ -33,8 +33,13 @@
     }
   }
   Map<KOut,VOut> reducedResult=new HashMap<KOut,VOut>();
-  for (  MapTaskPart<Map<KOut,List<VOut>>> mapTaskPart : futures) {
-    mergeResponse(mapPhasesResult,mapTaskPart.get());
+  try {
+    for (    MapTaskPart<Map<KOut,List<VOut>>> mapTaskPart : futures) {
+      mergeResponse(mapPhasesResult,mapTaskPart.get());
+    }
+  }
+  finally {
+    cancellableTasks.clear();
   }
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
   log.tracef("For m/r task %s invoking %s locally",taskId,reducer);

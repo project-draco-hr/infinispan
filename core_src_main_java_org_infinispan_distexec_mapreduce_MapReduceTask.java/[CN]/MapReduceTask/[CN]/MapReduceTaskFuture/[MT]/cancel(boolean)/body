@@ -1,0 +1,23 @@
+{
+  RpcManager rpc=cache.getRpcManager();
+synchronized (cancellableTasks) {
+    for (    CancellableTaskPart task : cancellableTasks) {
+      boolean sendingToSelf=task.getExecutionTarget().equals(rpc.getTransport().getAddress());
+      CancelCommand cc=buildCancelCommand(task);
+      if (sendingToSelf) {
+        cc.init(cancellationService);
+        try {
+          cc.perform(null);
+        }
+ catch (        Throwable e) {
+          log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+        }
+      }
+ else {
+        rpc.invokeRemotely(Collections.singletonList(task.getExecutionTarget()),cc,true);
+      }
+      cancelled=true;
+    }
+  }
+  return cancelled;
+}

@@ -1,3 +1,19 @@
 {
-  return f.cancel(mayInterruptIfRunning);
+  boolean sendToSelf=getExecutionTarget().equals(getAddress());
+  CancelCommand ccc=factory.buildCancelCommandCommand(distCommand.getUUID());
+  if (sendToSelf) {
+    ccc.init(cancellationService);
+    try {
+      ccc.perform(null);
+    }
+ catch (    Throwable e) {
+      log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+    }
+  }
+ else {
+    rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()),ccc,true);
+  }
+  cancelled=true;
+  done=true;
+  return cancelled;
 }
