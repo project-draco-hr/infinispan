@@ -8,7 +8,10 @@
   }
  else {
     InternalCacheEntry ice=(icEntry == null ? getFromContainer(key) : icEntry);
-    if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ))     return null;
+    if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      ctx.putLookedUpEntry(key,null);
+      return null;
+    }
     mvccEntry=ice != null ? wrapInternalCacheEntryForPut(ctx,key,ice) : newMvccEntryForPut(ctx,key);
   }
   mvccEntry.copyForUpdate(container,localModeWriteSkewCheck);
