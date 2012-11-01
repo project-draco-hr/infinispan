@@ -7,11 +7,11 @@
       continue;
     }
     boolean isSync=bc.strategy() == BackupConfiguration.BackupStrategy.SYNC;
-    if (backupFilter == BackupFilter.KEEP_ASYNC_ONLY) {
-      if (isSync)       continue;
+    if (backupFilter == BackupFilter.KEEP_1PC_ONLY) {
+      if (isSync && bc.isTwoPhaseCommit())       continue;
     }
-    if (backupFilter == BackupFilter.KEEP_SYNC_ONLY) {
-      if (!isSync)       continue;
+    if (backupFilter == BackupFilter.KEEP_2PC_ONLY) {
+      if (!isSync || (isSync && !bc.isTwoPhaseCommit()))       continue;
     }
     if (isOffline(bc.site())) {
       log.tracef("The site '%s' is offline, not backing up information to it",bc.site());
