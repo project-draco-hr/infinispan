@@ -1,0 +1,16 @@
+{
+  super();
+  if (masterCacheNode == null)   throw new IllegalArgumentException("Can not use null cache for DefaultExecutorService");
+ else   if (localExecutorService == null)   throw new IllegalArgumentException("Can not use null instance of ExecutorService");
+ else   if (localExecutorService.isShutdown())   throw new IllegalArgumentException("Can not use an instance of ExecutorService which is shutdown");
+  ensureProperCacheState(masterCacheNode.getAdvancedCache());
+  this.cache=masterCacheNode.getAdvancedCache();
+  ComponentRegistry registry=cache.getComponentRegistry();
+  this.rpc=cache.getRpcManager();
+  this.invoker=registry.getComponent(InterceptorChain.class);
+  this.factory=registry.getComponent(CommandsFactory.class);
+  this.marshaller=registry.getComponent(StreamingMarshaller.class,CACHE_MARSHALLER);
+  this.cancellationService=registry.getComponent(CancellationService.class);
+  this.localExecutorService=localExecutorService;
+  this.takeExecutorOwnership=takeExecutorOwnership;
+}
