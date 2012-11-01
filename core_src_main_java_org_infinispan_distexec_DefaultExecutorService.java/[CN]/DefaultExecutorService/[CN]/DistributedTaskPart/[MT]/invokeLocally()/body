@@ -8,9 +8,9 @@
       private Object doLocalInvoke(){
         Object result=null;
         getCommand().init(cache);
-        DistributedTaskLifecycleService taskLifecycleService=DistributedTaskLifecycleService.getInstance();
+        DistributedTaskLifecycleService lifecycle=DistributedTaskLifecycleService.getInstance();
         try {
-          taskLifecycleService.onPreExecute(getCommand().getCallable(),cache);
+          lifecycle.onPreExecute(getCommand().getCallable(),cache);
           cancellationService.register(Thread.currentThread(),getCommand().getUUID());
           result=getCommand().perform(null);
           return Collections.singletonMap(getAddress(),SuccessfulResponse.create(result));
@@ -19,16 +19,14 @@
           return e;
         }
  finally {
-          taskLifecycleService.onPostExecute(getCommand().getCallable());
+          lifecycle.onPostExecute(getCommand().getCallable());
           cancellationService.unregister(getCommand().getUUID());
           notifyDone();
         }
       }
     }
 ;
-    final FutureTask<Object> task=new FutureTask<Object>(call);
-    setNetworkFuture((Future<V>)task);
-    localExecutorService.submit(task);
+    setNetworkFuture((Future<V>)localExecutorService.submit(call));
   }
  catch (  Throwable e1) {
     log.localExecutionFailed(e1);
