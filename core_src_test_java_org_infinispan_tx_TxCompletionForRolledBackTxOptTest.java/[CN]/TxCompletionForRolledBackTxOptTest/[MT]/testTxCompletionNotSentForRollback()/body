@@ -1,0 +1,21 @@
+{
+  ControlledCommandFactory cf=ControlledCommandFactory.registerControlledCommandFactory(cache(1),null);
+  tm(0).begin();
+  Object k1=getKeyForCache(1);
+  Object k2=getKeyForCache(2);
+  cache(0).put(k1,k1);
+  cache(0).put(k2,k2);
+  try {
+    tm(0).commit();
+    fail();
+  }
+ catch (  Throwable t) {
+  }
+  assertNotLocked(k1);
+  assertNotLocked(k2);
+  assertNull(cache(0).get(k1));
+  assertNull(cache(0).get(k2));
+  assertEquals(cf.received(PrepareCommand.class),1);
+  assertEquals(cf.received(RollbackCommand.class),2);
+  assertEquals(cf.received(TxCompletionNotificationCommand.class),0);
+}

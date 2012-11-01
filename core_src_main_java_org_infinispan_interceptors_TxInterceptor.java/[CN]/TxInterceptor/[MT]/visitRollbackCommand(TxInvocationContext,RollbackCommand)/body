@@ -3,5 +3,13 @@
   if (!ctx.isOriginLocal()) {
     txTable.remoteTransactionRollback(command.getGlobalTransaction());
   }
-  return invokeNextInterceptor(ctx,command);
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    if (recoveryManager != null) {
+      GlobalTransaction gtx=command.getGlobalTransaction();
+      recoveryManager.removeRecoveryInformation(((RecoverableTransactionIdentifier)gtx).getXid());
+    }
+  }
 }
