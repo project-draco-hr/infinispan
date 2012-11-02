@@ -1,0 +1,13 @@
+{
+  Cache<Object,Object> cache1=cache(0,cacheName());
+  DistributedExecutorService des=createDES(cache1);
+  Address target=cache1.getAdvancedCache().getRpcManager().getAddress();
+  Future<Boolean> future=des.submit(target,new SimpleDistributedCallable(false));
+  Boolean r=future.get();
+  assert r;
+  DistributedTaskBuilder<Boolean> taskBuilder=des.createDistributedTaskBuilder(new SimpleDistributedCallable(false));
+  DistributedTask<Boolean> distributedTask=taskBuilder.build();
+  future=des.submit(target,distributedTask);
+  r=future.get();
+  assert r;
+}
