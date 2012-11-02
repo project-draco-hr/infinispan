@@ -1,13 +1,13 @@
 {
   locks.computeIfPresent(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
     @Override public L apply(    Object key,    L lock){
+      getLog().tracef("Unlocking lock instance for key %s",key);
+      unlock(lock,lockOwner);
       int refCount=lock.getReferenceCounter().decrementAndGet();
+      boolean remove=refCount == 0;
       if (refCount < 0) {
         throw new IllegalStateException("Negative reference count for lock " + key + ": "+ lock);
       }
-      boolean remove=refCount == 0;
-      getLog().tracef("Unlocking lock instance for key %s",key);
-      unlock(lock,lockOwner);
       return remove ? null : lock;
     }
   }
