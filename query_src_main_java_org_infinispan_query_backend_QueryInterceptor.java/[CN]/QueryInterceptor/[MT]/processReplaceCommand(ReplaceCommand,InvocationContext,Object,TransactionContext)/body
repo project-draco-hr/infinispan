@@ -1,0 +1,18 @@
+{
+  if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command,ctx)) {
+    Object[] parameters=command.getParameters();
+    Object p1=extractValue(parameters[1]);
+    Object p2=extractValue(parameters[2]);
+    boolean originalIsIndexed=updateKnownTypesIfNeeded(p1);
+    boolean newValueIsIndexed=updateKnownTypesIfNeeded(p2);
+    Object key=extractValue(command.getKey());
+    if (p1 != null && originalIsIndexed) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      removeFromIndexes(p1,key,transactionContext);
+    }
+    if (newValueIsIndexed) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      updateIndexes(p2,key,transactionContext);
+    }
+  }
+}

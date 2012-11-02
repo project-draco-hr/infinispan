@@ -1,0 +1,44 @@
+{
+  final WriteCommand[] writeCommands=command.getModifications();
+  final Object[] stateBeforePrepare=new Object[writeCommands.length];
+  for (int i=0; i < writeCommands.length; i++) {
+    final WriteCommand writeCommand=writeCommands[i];
+    if (writeCommand instanceof PutKeyValueCommand) {
+      InternalCacheEntry internalCacheEntry=dataContainer.get(((PutKeyValueCommand)writeCommand).getKey());
+      stateBeforePrepare[i]=internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+    }
+ else     if (writeCommand instanceof PutMapCommand) {
+    }
+ else     if (writeCommand instanceof RemoveCommand) {
+      InternalCacheEntry internalCacheEntry=dataContainer.get(((RemoveCommand)writeCommand).getKey());
+      stateBeforePrepare[i]=internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+    }
+ else     if (writeCommand instanceof ReplaceCommand) {
+      InternalCacheEntry internalCacheEntry=dataContainer.get(((ReplaceCommand)writeCommand).getKey());
+      stateBeforePrepare[i]=internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+    }
+  }
+  final Object toReturn=super.visitPrepareCommand(ctx,command);
+  if (ctx.isTransactionValid()) {
+    final TransactionContext transactionContext=makeTransactionalEventContext();
+    for (int i=0; i < writeCommands.length; i++) {
+      final WriteCommand writeCommand=writeCommands[i];
+      if (writeCommand instanceof PutKeyValueCommand) {
+        processPutKeyValueCommand((PutKeyValueCommand)writeCommand,ctx,stateBeforePrepare[i],transactionContext);
+      }
+ else       if (writeCommand instanceof PutMapCommand) {
+        processPutMapCommand((PutMapCommand)writeCommand,ctx,transactionContext);
+      }
+ else       if (writeCommand instanceof RemoveCommand) {
+        processRemoveCommand((RemoveCommand)writeCommand,ctx,stateBeforePrepare[i],transactionContext);
+      }
+ else       if (writeCommand instanceof ReplaceCommand) {
+        processReplaceCommand((ReplaceCommand)writeCommand,ctx,stateBeforePrepare[i],transactionContext);
+      }
+ else       if (writeCommand instanceof ClearCommand) {
+        processClearCommand((ClearCommand)writeCommand,ctx,transactionContext);
+      }
+    }
+  }
+  return toReturn;
+}

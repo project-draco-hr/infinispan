@@ -1,0 +1,12 @@
+{
+  if (shouldModifyIndexes(command,ctx)) {
+    Map<Object,Object> dataMap=command.getMap();
+    for (    Map.Entry<Object,Object> entry : dataMap.entrySet()) {
+      final Object value=extractValue(entry.getValue());
+      if (updateKnownTypesIfNeeded(value)) {
+        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+        updateIndexes(value,extractValue(entry.getKey()),transactionContext);
+      }
+    }
+  }
+}

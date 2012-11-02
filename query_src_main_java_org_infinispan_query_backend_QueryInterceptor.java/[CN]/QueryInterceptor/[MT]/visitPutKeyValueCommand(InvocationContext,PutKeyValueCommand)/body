@@ -1,18 +1,5 @@
 {
   Object toReturn=invokeNextInterceptor(ctx,command);
-  Object value=extractValue(command.getValue());
-  if (updateKnownTypesIfNeeded(value)) {
-    if (shouldModifyIndexes(command,ctx)) {
-      getLog().debug("Infinispan Query indexing is triggered");
-      updateIndexes(value,extractValue(command.getKey()));
-    }
-  }
- else {
-    if (updateKnownTypesIfNeeded(toReturn)) {
-      if (shouldModifyIndexes(command,ctx)) {
-        removeFromIndexes(toReturn,extractValue(command.getKey()));
-      }
-    }
-  }
+  processPutKeyValueCommand(command,ctx,toReturn,null);
   return toReturn;
 }

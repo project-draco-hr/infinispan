@@ -1,18 +1,5 @@
 {
   Object valueReplaced=invokeNextInterceptor(ctx,command);
-  if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command,ctx)) {
-    Object[] parameters=command.getParameters();
-    Object p1=extractValue(parameters[1]);
-    Object p2=extractValue(parameters[2]);
-    boolean originalIsIndexed=updateKnownTypesIfNeeded(p1);
-    boolean newValueIsIndexed=updateKnownTypesIfNeeded(p2);
-    Object key=extractValue(command.getKey());
-    if (p1 != null && originalIsIndexed) {
-      removeFromIndexes(p1,key);
-    }
-    if (newValueIsIndexed) {
-      updateIndexes(p2,key);
-    }
-  }
+  processReplaceCommand(command,ctx,valueReplaced,null);
   return valueReplaced;
 }

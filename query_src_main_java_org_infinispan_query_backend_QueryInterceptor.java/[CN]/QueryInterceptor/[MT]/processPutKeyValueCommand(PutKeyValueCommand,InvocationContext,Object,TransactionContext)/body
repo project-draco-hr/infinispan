@@ -1,0 +1,15 @@
+{
+  Object value=extractValue(command.getValue());
+  if (updateKnownTypesIfNeeded(value)) {
+    if (shouldModifyIndexes(command,ctx)) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      updateIndexes(value,extractValue(command.getKey()),transactionContext);
+    }
+  }
+ else   if (updateKnownTypesIfNeeded(previousValue)) {
+    if (shouldModifyIndexes(command,ctx)) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      removeFromIndexes(previousValue,extractValue(command.getKey()),transactionContext);
+    }
+  }
+}
