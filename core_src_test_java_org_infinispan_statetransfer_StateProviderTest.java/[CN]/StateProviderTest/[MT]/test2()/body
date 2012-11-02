@@ -29,7 +29,7 @@
   }
 ).when(rpcManager).invokeRemotelyInFuture(any(Collection.class),any(ReplicableCommand.class),anyBoolean(),any(NotifyingNotifiableFuture.class),anyLong());
   StateProviderImpl stateProvider=new StateProviderImpl();
-  stateProvider.init(cache,pooledExecutorService,configuration,rpcManager,commandsFactory,cacheNotifier,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock);
+  stateProvider.init(cache,pooledExecutorService,configuration,rpcManager,commandsFactory,cacheNotifier,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock,stateConsumer);
   final List<InternalCacheEntry> cacheEntries=new ArrayList<InternalCacheEntry>();
   Object key1=new TestKey("key1",0,ch1);
   Object key2=new TestKey("key2",0,ch1);
@@ -47,7 +47,8 @@
 );
   when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
   when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
-  stateProvider.onTopologyUpdate(new CacheTopology(1,ch1,ch1),false);
+  cacheTopology=new CacheTopology(1,ch1,ch1);
+  stateProvider.onTopologyUpdate(cacheTopology,false);
   log.debug("ch1: " + ch1);
   Set<Integer> segmentsToRequest=ch1.getSegmentsForOwner(members1.get(0));
   List<TransactionInfo> transactions=stateProvider.getTransactionsForSegments(members1.get(0),1,segmentsToRequest);
@@ -62,7 +63,8 @@
   stateProvider.startOutboundTransfer(F,1,Collections.singleton(0));
   assertTrue(stateProvider.isStateTransferInProgress());
   log.debug("ch2: " + ch2);
-  stateProvider.onTopologyUpdate(new CacheTopology(2,ch1,ch2),false);
+  cacheTopology=new CacheTopology(2,ch1,ch2);
+  stateProvider.onTopologyUpdate(cacheTopology,false);
   assertFalse(stateProvider.isStateTransferInProgress());
   stateProvider.startOutboundTransfer(E,1,Collections.singleton(0));
   assertTrue(stateProvider.isStateTransferInProgress());

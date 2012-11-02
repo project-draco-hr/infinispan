@@ -2,14 +2,19 @@
   if (trace) {
     log.tracef("Received request for transactions from node %s for segments %s of cache %s with topology id %d",destination,segments,cacheName,requestTopologyId);
   }
-  if (readCh == null) {
+  final CacheTopology cacheTopology=stateConsumer.getCacheTopology();
+  if (cacheTopology == null) {
     throw new IllegalStateException("No cache topology received yet");
   }
+  final ConsistentHash readCh=cacheTopology.getReadConsistentHash();
+  final int topologyId=cacheTopology.getTopologyId();
   if (requestTopologyId < topologyId) {
     log.warnf("Transactions were requested by node %s with topology %d, smaller than the local " + "topology (%d)",destination,requestTopologyId,topologyId);
   }
  else   if (requestTopologyId > topologyId) {
-    log.tracef("Transactions were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",destination,requestTopologyId,topologyId,requestTopologyId);
+    if (trace) {
+      log.tracef("Transactions were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",destination,requestTopologyId,topologyId,requestTopologyId);
+    }
     stateTransferLock.waitForTopology(requestTopologyId);
   }
   Set<Integer> ownedSegments=readCh.getSegmentsForOwner(rpcManager.getAddress());
@@ -19,8 +24,8 @@
   }
   List<TransactionInfo> transactions=new ArrayList<TransactionInfo>();
   if (configuration.transaction().transactionMode().isTransactional()) {
-    collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments);
-    collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments);
+    collectTransactionsToTransfer(transactions,transactionTable.getRemoteTransactions(),segments,readCh);
+    collectTransactionsToTransfer(transactions,transactionTable.getLocalTransactions(),segments,readCh);
     if (trace) {
       log.tracef("Found %d transaction(s) to transfer",transactions.size());
     }
