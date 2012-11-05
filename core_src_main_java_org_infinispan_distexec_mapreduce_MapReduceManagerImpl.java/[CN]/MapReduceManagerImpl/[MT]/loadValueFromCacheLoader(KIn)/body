@@ -5,7 +5,13 @@
     try {
       InternalCacheEntry entry=cl.load(key);
       if (entry != null) {
-        value=(KOut)entry.getValue();
+        Object loadedValue=entry.getValue();
+        if (loadedValue instanceof MarshalledValue) {
+          value=(KOut)((MarshalledValue)loadedValue).get();
+        }
+ else {
+          value=(KOut)loadedValue;
+        }
       }
     }
  catch (    CacheLoaderException e) {
