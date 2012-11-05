@@ -1,0 +1,33 @@
+{
+  Cache<Object,Object> cache=session.getCache(siteData.getCacheName());
+  String siteName=siteData.getSiteName();
+  XSiteAdminOperations xsiteAdmin=cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+  for (  Option opt : options) {
+switch (opt.toEnum(Options.class)) {
+case STATUS:
+{
+        String status=siteName == null ? xsiteAdmin.status() : xsiteAdmin.siteStatus(siteName);
+        return new StringResult(status);
+      }
+case ONLINE:
+{
+      if (siteName != null) {
+        return new StringResult(xsiteAdmin.bringSiteOnline(siteName));
+      }
+ else {
+        throw log.siteNameNotSpecified();
+      }
+    }
+case OFFLINE:
+{
+    if (siteName != null) {
+      return new StringResult(xsiteAdmin.takeSiteOffline(siteName));
+    }
+ else {
+      throw log.siteNameNotSpecified();
+    }
+  }
+}
+}
+return EmptyResult.RESULT;
+}
