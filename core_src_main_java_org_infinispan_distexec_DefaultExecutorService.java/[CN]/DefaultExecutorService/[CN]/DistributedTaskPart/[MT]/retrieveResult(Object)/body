@@ -1,2 +1,22 @@
 {
+  V result=null;
+  if (response instanceof Exception) {
+    throw ((Exception)response);
+  }
+  if (response == null || !(response instanceof Map<?,?>)) {
+    throw new IllegalStateException("Invalid response received " + response);
+  }
+  Map<Address,Response> mapResult=(Map<Address,Response>)response;
+  if (mapResult.size() == 1) {
+    for (    Entry<Address,Response> e : mapResult.entrySet()) {
+      Response value=e.getValue();
+      if (value instanceof SuccessfulResponse) {
+        result=(V)((SuccessfulResponse)value).getResponseValue();
+      }
+    }
+  }
+ else {
+    throw new IllegalStateException("Invalid response " + response);
+  }
+  return result;
 }
