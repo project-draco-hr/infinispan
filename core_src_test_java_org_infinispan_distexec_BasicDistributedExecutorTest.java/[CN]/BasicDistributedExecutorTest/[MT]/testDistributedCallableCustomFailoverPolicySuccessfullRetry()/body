@@ -1,0 +1,29 @@
+{
+  Configuration config=TestCacheManagerFactory.getDefaultConfiguration(true,Configuration.CacheMode.REPL_SYNC);
+  EmbeddedCacheManager cacheManager=TestCacheManagerFactory.createClusteredCacheManager(config);
+  DistributedExecutorService des=null;
+  try {
+    Cache<Object,Object> cache1=cacheManager.getCache();
+    cache1.put("key1","value1");
+    cache1.put("key2","value2");
+    des=new DefaultExecutorService(cache1);
+    DistributedTaskBuilder<Integer> taskBuilder=des.createDistributedTaskBuilder(new FailOnlyOnceCallable());
+    taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy(){
+      @Override public Address failover(      Address failedExecution,      List<Address> executionCandidates,      Exception cause){
+        return failedExecution;
+      }
+      @Override public int maxFailoverAttempts(){
+        return 1;
+      }
+    }
+);
+    DistributedTask<Integer> task=taskBuilder.build();
+    AssertJUnit.assertEquals(1,task.getTaskFailoverPolicy().maxFailoverAttempts());
+    Future<Integer> val=des.submit(task,new String[]{"key1"});
+    AssertJUnit.assertEquals(new Integer(1),val.get());
+  }
+  finally {
+    des.shutdownNow();
+    TestingUtil.killCacheManagers(cacheManager);
+  }
+}
