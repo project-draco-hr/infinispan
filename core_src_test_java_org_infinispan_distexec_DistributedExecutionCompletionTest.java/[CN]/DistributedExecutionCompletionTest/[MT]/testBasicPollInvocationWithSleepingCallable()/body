@@ -1,7 +1,12 @@
 {
   DistributedExecutorService des=new DefaultExecutorService(c1);
   DistributedExecutionCompletionService<Integer> decs=new DistributedExecutionCompletionService<Integer>(des);
-  decs.submit(new SimpleCallable(true));
-  NotifyingFuture<Integer> callable=decs.poll();
-  AssertJUnit.assertNull(callable);
+  try {
+    decs.submit(new SimpleCallable(true,5000));
+    NotifyingFuture<Integer> callable=decs.poll();
+    AssertJUnit.assertNull(callable);
+  }
+  finally {
+    des.shutdownNow();
+  }
 }

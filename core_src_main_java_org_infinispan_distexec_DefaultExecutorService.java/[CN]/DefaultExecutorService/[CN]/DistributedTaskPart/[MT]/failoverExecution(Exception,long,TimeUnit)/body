@@ -1,8 +1,24 @@
 {
   V response=null;
+  final List<Address> executionCandidates=executionCandidates(getOwningTask());
+  FailoverContext fc=new FailoverContext(){
+    @Override public <K>List<K> inputKeys(){
+      return (List<K>)getInputKeys();
+    }
+    @Override public Address executionFailureLocation(){
+      return getExecutionTarget();
+    }
+    @Override public List<Address> executionCandidates(){
+      return executionCandidates;
+    }
+    @Override public Exception cause(){
+      return cause;
+    }
+  }
+;
   try {
-    Address target=getOwningTask().getTaskFailoverPolicy().failover(getExecutionTarget(),executionCandidates(getOwningTask()),cause);
-    DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,target,failedOverCount);
+    Address target=getOwningTask().getTaskFailoverPolicy().failover(fc);
+    DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,getInputKeys(),target,failedOverCount);
     part.execute();
     response=part.get(timeout,unit);
     if (response == null)     throw new ExecutionException("Failover execution failed",new Exception("Failover execution failed",cause));

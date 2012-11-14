@@ -1,2 +1,13 @@
 {
+  DistributedExecutorService des=new DefaultExecutorService(c1);
+  try {
+    DistributedExecutionCompletionService<Integer> decs=new DistributedExecutionCompletionService<Integer>(des);
+    decs.submit(new SimpleCallable());
+    NotifyingFuture<Integer> future=decs.take();
+    Integer r=future.get();
+    AssertJUnit.assertEquals(1,r.intValue());
+  }
+  finally {
+    des.shutdownNow();
+  }
 }

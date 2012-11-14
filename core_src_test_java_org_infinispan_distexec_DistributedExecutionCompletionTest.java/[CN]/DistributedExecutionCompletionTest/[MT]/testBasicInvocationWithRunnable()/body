@@ -1,9 +1,14 @@
 {
   DistributedExecutorService des=new DefaultExecutorService(c1);
-  DistributedExecutionCompletionService<Integer> decs=new DistributedExecutionCompletionService<Integer>(des);
-  Integer result=5;
-  decs.submit(new SimpleRunnable(),result);
-  NotifyingFuture<Integer> future=decs.take();
-  Integer r=future.get();
-  AssertJUnit.assertEquals(result,r);
+  try {
+    DistributedExecutionCompletionService<Integer> decs=new DistributedExecutionCompletionService<Integer>(des);
+    Integer result=5;
+    decs.submit(new SimpleRunnable(),result);
+    NotifyingFuture<Integer> future=decs.take();
+    Integer r=future.get();
+    AssertJUnit.assertEquals(result,r);
+  }
+  finally {
+    des.shutdownNow();
+  }
 }
