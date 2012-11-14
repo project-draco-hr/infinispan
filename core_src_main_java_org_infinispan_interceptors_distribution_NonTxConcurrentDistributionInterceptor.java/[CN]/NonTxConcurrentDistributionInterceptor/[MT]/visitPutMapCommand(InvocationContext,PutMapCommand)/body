@@ -1,0 +1,28 @@
+{
+  if (ctx.isOriginLocal()) {
+    Set<Address> primaryOwners=new HashSet<Address>(command.getAffectedKeys().size());
+    for (    Object k : command.getAffectedKeys()) {
+      primaryOwners.add(cdl.getPrimaryOwner(k));
+    }
+    primaryOwners.remove(rpcManager.getAddress());
+    if (!primaryOwners.isEmpty()) {
+      rpcManager.invokeRemotely(primaryOwners,command,isSynchronous(command));
+    }
+  }
+ else {
+    if (!command.isForwarded()) {
+      Set keysIOwn=new HashSet(command.getAffectedKeys());
+      for (      Object k : command.getAffectedKeys())       if (cdl.localNodeIsPrimaryOwner(k)) {
+        keysIOwn.add(k);
+      }
+      Collection<Address> backupOwners=cdl.getOwners(keysIOwn);
+      if (!backupOwners.isEmpty()) {
+        command.setFlags(Flag.SKIP_LOCKING);
+        command.setForwarded(true);
+        rpcManager.invokeRemotely(backupOwners,command,isSynchronous(command));
+        command.setForwarded(false);
+      }
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

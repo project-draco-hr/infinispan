@@ -1,0 +1,20 @@
+{
+  if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
+    log.tracef("Skipping ownership check and wrapping key %s",key);
+    return true;
+  }
+  boolean result;
+  if (cacheConfiguration.transaction().transactionMode().isTransactional()) {
+    result=true;
+  }
+ else {
+    if (isUsingLockDelegation) {
+      result=cdl.localNodeIsPrimaryOwner(key) || (cdl.localNodeIsOwner(key) && !ctx.isOriginLocal());
+    }
+ else {
+      result=cdl.localNodeIsOwner(key);
+    }
+  }
+  log.tracef("Wrapping entry '%s'? %s",key,result);
+  return result;
+}

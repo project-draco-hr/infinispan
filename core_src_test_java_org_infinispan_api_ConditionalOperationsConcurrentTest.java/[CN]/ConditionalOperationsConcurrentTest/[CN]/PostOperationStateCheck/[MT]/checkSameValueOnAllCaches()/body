@@ -1,0 +1,12 @@
+{
+  final Object currentStored=caches.get(0).get(SHARED_KEY);
+  log.tracef("Value seen by (first) cache %s is %s ",caches.get(0).getAdvancedCache().getRpcManager().getAddress(),currentStored);
+  for (  Cache c : caches) {
+    Object v=c.get(SHARED_KEY);
+    log.tracef("Value seen by cache %s is %s",c.getAdvancedCache().getRpcManager().getAddress(),v);
+    boolean sameValue=v == null ? currentStored == null : v.equals(currentStored);
+    if (!sameValue) {
+      fail("Not all the caches see the same value");
+    }
+  }
+}

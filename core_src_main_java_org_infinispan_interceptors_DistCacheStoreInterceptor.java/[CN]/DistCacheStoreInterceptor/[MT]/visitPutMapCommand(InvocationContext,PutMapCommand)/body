@@ -2,11 +2,13 @@
   Object returnValue=invokeNextInterceptor(ctx,command);
   if (skip(ctx,command) || ctx.isInTxScope())   return returnValue;
   Map<Object,Object> map=command.getMap();
-  for (  Object key : map.keySet()) {
-    if (!skipKey(key)) {
-      InternalCacheEntry se=getStoredEntry(key,ctx);
-      store.store(se);
-      log.tracef("Stored entry %s under key %s",se,key);
+  if (!(command.isForwarded() && loaderConfig.shared())) {
+    for (    Object key : map.keySet()) {
+      if (!skipKey(key)) {
+        InternalCacheEntry se=getStoredEntry(key,ctx);
+        store.store(se);
+        log.tracef("Stored entry %s under key %s",se,key);
+      }
     }
   }
   if (getStatisticsEnabled())   cacheStores.getAndAdd(map.size());

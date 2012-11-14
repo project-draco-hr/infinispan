@@ -1,7 +1,18 @@
 {
-  assertKeyValueNotNull(key,newValue);
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,1);
-  ctx.setUseFutureReturnType(true);
-  ReplaceCommand command=commandsFactory.buildReplaceCommand(key,oldValue,newValue,lifespanUnit.toMillis(lifespan),maxIdleUnit.toMillis(maxIdle),explicitFlags);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<Boolean> result=new NotifyingFutureAdaptor<Boolean>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,1);
+  Future<Boolean> returnValue=asyncExecutor.submit(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        return replaceInternal(key,oldValue,newValue,lifespan,lifespanUnit,maxIdle,maxIdleUnit,explicitFlags,ctx);
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }

@@ -30,7 +30,7 @@
     }
   }
  else {
-    if (configuration.locking().isolationLevel() != IsolationLevel.NONE)     interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(),NonTransactionalLockingInterceptor.class),false);
+    if (configuration.locking().supportsConcurrentUpdates())     interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(),NonTransactionalLockingInterceptor.class),false);
   }
   if (!configuration.sites().inUseBackups().isEmpty() && !configuration.sites().disableBackups()) {
     if ((configuration.transaction().transactionMode() == TransactionMode.TRANSACTIONAL)) {
@@ -70,6 +70,9 @@ default :
 if (configuration.deadlockDetection().enabled()) {
 interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(),DeadlockDetectingInterceptor.class),false);
 }
+if (configuration.clustering().l1().enabled() && !configuration.transaction().transactionMode().isTransactional()) {
+interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(),L1NonTxInterceptor.class),false);
+}
 switch (configuration.clustering().cacheMode()) {
 case REPL_SYNC:
 if (needsVersionAwareComponents) {
@@ -89,7 +92,17 @@ interceptorChain.appendInterceptor(createInterceptor(new VersionedDistributionIn
 break;
 }
 case DIST_ASYNC:
-interceptorChain.appendInterceptor(createInterceptor(new DistributionInterceptor(),DistributionInterceptor.class),false);
+if (configuration.transaction().transactionMode().isTransactional()) {
+interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(),TxDistributionInterceptor.class),false);
+}
+ else {
+if (configuration.locking().supportsConcurrentUpdates()) {
+interceptorChain.appendInterceptor(createInterceptor(new NonTxConcurrentDistributionInterceptor(),NonTxConcurrentDistributionInterceptor.class),false);
+}
+ else {
+interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterceptor(),NonTxDistributionInterceptor.class),false);
+}
+}
 break;
 case LOCAL:
 }

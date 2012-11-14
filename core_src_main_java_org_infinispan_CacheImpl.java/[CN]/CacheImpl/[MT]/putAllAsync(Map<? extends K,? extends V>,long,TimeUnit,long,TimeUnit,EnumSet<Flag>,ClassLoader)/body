@@ -1,7 +1,19 @@
 {
-  assertKeysNotNull(data);
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,data.size());
-  ctx.setUseFutureReturnType(true);
-  PutMapCommand command=commandsFactory.buildPutMapCommand(data,lifespanUnit.toMillis(lifespan),maxIdleUnit.toMillis(maxIdle),explicitFlags);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<Void> result=new NotifyingFutureAdaptor<Void>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,data.size());
+  Future<Void> returnValue=asyncExecutor.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        putAllInternal(data,lifespan,lifespanUnit,maxIdle,maxIdleUnit,explicitFlags,ctx);
+        return null;
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }

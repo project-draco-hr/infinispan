@@ -1,3 +1,8 @@
 {
-  return ctx.isOriginLocal() && (ctx.hasModifications() || !((LocalTxInvocationContext)ctx).getRemoteLocksAcquired().isEmpty());
+  boolean shouldInvokeRemotely=ctx.isOriginLocal() && (ctx.hasModifications() || !((LocalTxInvocationContext)ctx).getRemoteLocksAcquired().isEmpty());
+  if (getLog().isTraceEnabled()) {
+    boolean hasRemoteLocksAcquired=ctx.isOriginLocal() && !((LocalTxInvocationContext)ctx).getRemoteLocksAcquired().isEmpty();
+    getLog().tracef("Should invoke remotely? %s. isLocal=%s, hasModifications=%s, hasRemoteLocksAcquired=%s",shouldInvokeRemotely,ctx.isOriginLocal(),ctx.hasModifications(),hasRemoteLocksAcquired);
+  }
+  return shouldInvokeRemotely;
 }

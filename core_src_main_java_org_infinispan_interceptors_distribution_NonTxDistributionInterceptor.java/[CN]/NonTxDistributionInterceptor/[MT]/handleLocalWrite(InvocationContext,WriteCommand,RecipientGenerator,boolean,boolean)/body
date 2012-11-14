@@ -1,0 +1,18 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (!isSingleOwnerAndLocal(rg)) {
+    List<Address> recipients=rg.generateRecipients();
+    if (recipients.contains(rpcManager.getAddress()) && (!command.isSuccessful())) {
+      log.trace("Skipping remote invocation as the command hasn't executed correctly on owner");
+    }
+ else {
+      Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,command,sync);
+      Address mainOwner;
+      boolean equals=(mainOwner=recipients.get(0)).equals(rpcManager.getAddress());
+      if (sync && !recipients.isEmpty() && !equals) {
+        returnValue=getResponseFromPrimaryOwner(mainOwner,responseMap);
+      }
+    }
+  }
+  return returnValue;
+}

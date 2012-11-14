@@ -1,0 +1,9 @@
+{
+  if (ctx.isOriginLocal()) {
+    final Collection<Address> affectedNodes=dm.getAffectedNodes(command.getKeys());
+    ((LocalTxInvocationContext)ctx).remoteLocksAcquired(affectedNodes);
+    log.tracef("Registered remote locks acquired %s",affectedNodes);
+    rpcManager.invokeRemotely(affectedNodes,command,true,true);
+  }
+  return invokeNextInterceptor(ctx,command);
+}

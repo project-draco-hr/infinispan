@@ -1,0 +1,21 @@
+{
+  Future<Object> invalidationFuture=null;
+  Set<Object> keys=command.getMap().keySet();
+  Set<Object> toInvalidate=new HashSet<Object>(keys.size());
+  for (  Object k : keys) {
+    if (cdl.localNodeIsOwner(k)) {
+      toInvalidate.add(k);
+    }
+  }
+  if (!toInvalidate.isEmpty()) {
+    invalidationFuture=l1Manager.flushCache(toInvalidate,ctx.getOrigin(),true);
+  }
+  Object result=invokeNextInterceptor(ctx,command);
+  processInvalidationResult(ctx,command,invalidationFuture);
+  for (  Object o : command.getAffectedKeys()) {
+    if (!cdl.localNodeIsOwner(o)) {
+      removeFromL1(ctx,o);
+    }
+  }
+  return result;
+}

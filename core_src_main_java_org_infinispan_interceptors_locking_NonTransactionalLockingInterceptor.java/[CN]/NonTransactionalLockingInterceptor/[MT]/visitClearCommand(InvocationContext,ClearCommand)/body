@@ -1,0 +1,15 @@
+{
+  boolean skipLocking=hasSkipLocking(command);
+  long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
+  for (  Object key : dataContainer.keySet()) {
+    if (shouldLock(key,command)) {
+      lockKey(ctx,key,lockTimeout,skipLocking);
+    }
+  }
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    lockManager.unlockAll(ctx);
+  }
+}

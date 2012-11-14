@@ -1,8 +1,18 @@
 {
-  assertKeyValueNotNull(key,value);
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,1);
-  ctx.setUseFutureReturnType(true);
-  PutKeyValueCommand command=commandsFactory.buildPutKeyValueCommand(key,value,lifespanUnit.toMillis(lifespan),maxIdleUnit.toMillis(maxIdle),explicitFlags);
-  command.setPutIfAbsent(true);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<V> result=new NotifyingFutureAdaptor<V>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,1);
+  Future<V> returnValue=asyncExecutor.submit(new Callable<V>(){
+    @Override public V call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        return putIfAbsentInternal(key,value,lifespan,lifespanUnit,maxIdle,maxIdleUnit,explicitFlags,ctx);
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }

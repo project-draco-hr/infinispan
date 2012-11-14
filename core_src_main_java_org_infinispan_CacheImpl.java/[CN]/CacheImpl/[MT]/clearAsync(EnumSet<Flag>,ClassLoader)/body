@@ -1,6 +1,19 @@
 {
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,UNBOUNDED);
-  ctx.setUseFutureReturnType(true);
-  ClearCommand command=commandsFactory.buildClearCommand(explicitFlags);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<Void> result=new NotifyingFutureAdaptor<Void>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,UNBOUNDED);
+  Future<Void> returnValue=asyncExecutor.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        clearInternal(explicitFlags,ctx);
+        return null;
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }

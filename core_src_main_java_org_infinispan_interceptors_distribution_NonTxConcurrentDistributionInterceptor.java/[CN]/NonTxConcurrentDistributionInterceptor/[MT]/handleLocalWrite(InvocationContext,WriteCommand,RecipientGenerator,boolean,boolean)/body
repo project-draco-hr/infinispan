@@ -1,0 +1,20 @@
+{
+  Object key=((DataCommand)command).getKey();
+  Address primaryOwner=cdl.getPrimaryOwner(key);
+  if (primaryOwner.equals(rpcManager.getAddress())) {
+    List<Address> recipients=rg.generateRecipients();
+    log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.",recipients);
+    Object result=invokeNextInterceptor(ctx,command);
+    if (!isSingleOwnerAndLocal(rg)) {
+      rpcManager.invokeRemotely(recipients,command,sync);
+    }
+    return result;
+  }
+ else {
+    log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
+    Object localResult=invokeNextInterceptor(ctx,command);
+    Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,sync);
+    if (!sync)     return localResult;
+    return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+  }
+}

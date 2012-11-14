@@ -1,7 +1,18 @@
 {
-  assertKeyValueNotNull(key,value);
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,1);
-  ctx.setUseFutureReturnType(true);
-  RemoveCommand command=commandsFactory.buildRemoveCommand(key,value,explicitFlags);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<Boolean> result=new NotifyingFutureAdaptor<Boolean>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,1);
+  Future<Boolean> returnValue=asyncExecutor.submit(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        return removeInternal(key,value,explicitFlags,ctx);
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }

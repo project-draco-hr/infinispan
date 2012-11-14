@@ -1,0 +1,37 @@
+{
+  int cachePickIndex=threadIndex;
+  liveWorkers.incrementAndGet();
+  try {
+    for (int moveToIndex=threadIndex; (moveToIndex < validMoves.length) && (!barrier.isBroken() && (!failed.get()) && !quit.get()); moveToIndex+=THREAD_COUNT) {
+      operation.beforeOperation(caches.get(0));
+      cachePickIndex=++cachePickIndex % caches.size();
+      Cache cache=caches.get(cachePickIndex);
+      Object existing=cache.get(SHARED_KEY);
+      String targetValue=validMoves[moveToIndex];
+      state.beforeOperation(threadIndex,existing,targetValue);
+      blockAtTheBarrier();
+      boolean successful=operation.execute(cache,SHARED_KEY,existing,targetValue);
+      state.afterOperation(threadIndex,existing,targetValue,successful);
+      blockAtTheBarrier();
+    }
+    quit.set(true);
+    barrier.reset();
+  }
+ catch (  InterruptedException e) {
+    log.error("Caught exception %s",e);
+    fail(e);
+  }
+catch (  BrokenBarrierException e) {
+    log.error("Caught exception %s",e);
+    print("Broken barrier!");
+  }
+catch (  RuntimeException e) {
+    log.error("Caught exception %s",e);
+    fail(e);
+  }
+ finally {
+    int andGet=liveWorkers.decrementAndGet();
+    barrier.reset();
+    print("Thread #" + threadIndex + " terminating. Still "+ andGet+ " threads alive");
+  }
+}

@@ -1,6 +1,4 @@
 {
-  final Transaction tx=getOngoingTransaction();
-  final NotifyingNotifiableFuture<V> f=new DeferredReturnFuture<V>();
   if (asyncSkipsThread(explicitFlags,key)) {
     return wrapInFuture(get(key,explicitFlags,explicitClassLoader));
   }
@@ -13,18 +11,19 @@
       appliedFlags=explicitFlags.clone();
       explicitFlags.clear();
     }
+    final NotifyingFutureAdaptor<V> f=new NotifyingFutureAdaptor<V>();
     Callable<V> c=new Callable<V>(){
       @Override public V call() throws Exception {
-        assertKeyNotNull(key);
-        InvocationContext ctx=getInvocationContextForRead(tx,explicitClassLoader,1);
-        GetKeyValueCommand command=commandsFactory.buildGetKeyValueCommand(key,appliedFlags);
-        Object ret=invoker.invoke(ctx,command);
-        f.notifyDone();
-        return (V)ret;
+        try {
+          return get(key,appliedFlags,explicitClassLoader);
+        }
+  finally {
+          f.notifyDone();
+        }
       }
     }
 ;
-    f.setNetworkFuture(asyncExecutor.submit(c));
+    f.setActual(asyncExecutor.submit(c));
     return f;
   }
 }

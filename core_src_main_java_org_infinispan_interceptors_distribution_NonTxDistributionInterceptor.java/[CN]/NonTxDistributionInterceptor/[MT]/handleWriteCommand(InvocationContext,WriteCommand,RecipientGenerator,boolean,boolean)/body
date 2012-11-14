@@ -1,0 +1,13 @@
+{
+  if (isLocalModeForced(command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  if (!ctx.isOriginLocal()) {
+    Object returnValue=invokeNextInterceptor(ctx,command);
+    handleRemoteWrite(ctx,command,recipientGenerator,skipL1Invalidation,isSynchronous(command));
+    return returnValue;
+  }
+ else {
+    return handleLocalWrite(ctx,command,recipientGenerator,skipL1Invalidation,isSynchronous(command));
+  }
+}

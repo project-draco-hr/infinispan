@@ -1,9 +1,8 @@
 {
   assertNonTransactional(ctx);
   try {
-    boolean skipLocking=hasSkipLocking(command);
-    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
-    lockKey(ctx,command.getKey(),lockTimeout,skipLocking);
+    if (!shouldLock(command.getKey(),command))     return invokeNextInterceptor(ctx,command);
+    lockKey(ctx,command);
     return invokeNextInterceptor(ctx,command);
   }
  catch (  Throwable te) {

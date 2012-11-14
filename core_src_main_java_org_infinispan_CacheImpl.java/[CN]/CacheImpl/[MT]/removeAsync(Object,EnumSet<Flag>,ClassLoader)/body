@@ -1,7 +1,18 @@
 {
-  assertKeyNotNull(key);
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,1);
-  ctx.setUseFutureReturnType(true);
-  RemoveCommand command=commandsFactory.buildRemoveCommand(key,null,explicitFlags);
-  return wrapInFuture(executeCommandAndCommitIfNeeded(ctx,command));
+  final NotifyingFutureAdaptor<V> result=new NotifyingFutureAdaptor<V>();
+  final InvocationContext ctx=getInvocationContextWithImplicitTransactionForAsyncOps(false,explicitClassLoader,1);
+  Future<V> returnValue=asyncExecutor.submit(new Callable<V>(){
+    @Override public V call() throws Exception {
+      try {
+        associateImplicitTransactionWithCurrentThread(ctx);
+        return removeInternal(key,explicitFlags,ctx);
+      }
+  finally {
+        result.notifyDone();
+      }
+    }
+  }
+);
+  result.setActual(returnValue);
+  return result;
 }
