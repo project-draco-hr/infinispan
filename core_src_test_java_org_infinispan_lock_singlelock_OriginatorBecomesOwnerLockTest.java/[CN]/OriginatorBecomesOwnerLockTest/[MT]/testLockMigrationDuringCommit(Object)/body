@@ -1,0 +1,28 @@
+{
+  ControlledRpcManager controlledRpcManager=installControlledRpcManager();
+  controlledRpcManager.blockBefore(CommitCommand.class);
+  final DummyTransactionManager tm=dummyTm(ORIGINATOR_INDEX);
+  Future<DummyTransaction> f=fork(new Callable<DummyTransaction>(){
+    @Override public DummyTransaction call() throws Exception {
+      tm.begin();
+      originatorCache.put(key,"value");
+      final DummyTransaction tx=tm.getTransaction();
+      final boolean success=tx.runPrepare();
+      assert success;
+      log.trace("About to commit transaction.");
+      tx.runCommitTx();
+      return null;
+    }
+  }
+);
+  Thread.sleep(2000);
+  log.trace("Lock transfer happens here");
+  killCache();
+  log.trace("Allow the commit RPC to proceed");
+  controlledRpcManager.stopBlocking();
+  f.get();
+  log.tracef("Commit finished");
+  checkValue(key,"value");
+  assertNoLocksOrTxs(key,originatorCache);
+  assertNoLocksOrTxs(key,otherCache);
+}

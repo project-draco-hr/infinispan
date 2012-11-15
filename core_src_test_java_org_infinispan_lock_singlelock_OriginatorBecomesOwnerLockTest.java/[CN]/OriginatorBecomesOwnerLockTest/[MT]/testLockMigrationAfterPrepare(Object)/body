@@ -1,0 +1,16 @@
+{
+  final DummyTransactionManager tm=dummyTm(ORIGINATOR_INDEX);
+  tm.begin();
+  originatorCache.put(key,"value");
+  DummyTransaction tx=tm.getTransaction();
+  boolean prepareSuccess=tx.runPrepare();
+  assert prepareSuccess;
+  tm.suspend();
+  log.trace("Lock transfer happens here");
+  killCache();
+  checkNewTransactionFails(key);
+  log.trace("About to commit existing transaction.");
+  tm.resume(tx);
+  tx.runCommitTx();
+  checkValue(key,"value");
+}
