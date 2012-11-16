@@ -1,0 +1,23 @@
+{
+  codecs=new HashMap<String,Codec>();
+  ServiceLoader<Codec> services=ServiceLoader.load(Codec.class,cl);
+  Iterator<Codec> it=services.iterator();
+  for (; ; ) {
+    try {
+      Codec codec=it.next();
+      String name=codec.getName();
+      if (codecs.containsKey(name)) {
+        log.duplicateCodec(codec.getClass().getName(),codecs.get(name).getClass().getName());
+      }
+ else {
+        codecs.put(name,codec);
+      }
+    }
+ catch (    ServiceConfigurationError e) {
+      log.loadingCodecFailed(e);
+    }
+catch (    NoSuchElementException e) {
+      break;
+    }
+  }
+}

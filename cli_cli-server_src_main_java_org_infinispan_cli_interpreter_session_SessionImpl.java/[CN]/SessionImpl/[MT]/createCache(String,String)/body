@@ -3,7 +3,7 @@
   if (baseCacheName != null) {
     configuration=cacheManager.getCacheConfiguration(baseCacheName);
     if (configuration == null) {
-      throw new IllegalArgumentException("A cache named " + baseCacheName + " doesn't exist");
+      throw log.nonExistentCache(baseCacheName);
     }
   }
  else {
@@ -11,7 +11,7 @@
     baseCacheName=BasicCacheContainer.DEFAULT_CACHE_NAME;
   }
   if (cacheManager.cacheExists(cacheName)) {
-    throw new IllegalArgumentException("A cache named " + cacheName + " already exists");
+    throw log.cacheAlreadyExists(cacheName);
   }
   if (configuration.clustering().cacheMode().isClustered()) {
     AdvancedCache<?,?> clusteredCache=cacheManager.getCache(baseCacheName).getAdvancedCache();
@@ -24,7 +24,7 @@
       ccc.perform(null);
     }
  catch (    Throwable e) {
-      throw new CacheException("Could not create cache on all clustered nodes",e);
+      throw log.cannotCreateClusteredCaches(e,cacheName);
     }
   }
  else {

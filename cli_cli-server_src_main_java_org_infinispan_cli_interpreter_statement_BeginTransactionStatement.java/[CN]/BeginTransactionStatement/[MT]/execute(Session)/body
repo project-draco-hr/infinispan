@@ -1,16 +1,16 @@
 {
   TransactionManager tm=getTransactionManager(session);
   if (tm == null) {
-    throw new StatementException("Cannot retrieve a transaction manager for the cache");
+    throw log.noTransactionManager();
   }
   try {
     tm.begin();
     return EmptyResult.RESULT;
   }
  catch (  NotSupportedException e) {
-    throw new StatementException("The TransactionManager does not support nested transactions");
+    throw log.noNestedTransactions();
   }
 catch (  SystemException e) {
-    throw new StatementException("Unexpected error while starting transaction: " + e.getMessage());
+    throw log.unexpectedTransactionError(e);
   }
 }

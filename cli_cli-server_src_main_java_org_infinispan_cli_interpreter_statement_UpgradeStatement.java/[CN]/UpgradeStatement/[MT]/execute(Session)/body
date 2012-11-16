@@ -3,69 +3,82 @@
   UpgradeMode mode=UpgradeMode.NONE;
   String migratorName=null;
   for (  Option opt : options) {
-    if ("all".equals(opt.getName())) {
-      all=true;
-    }
- else     if ("dumpkeys".equals(opt.getName())) {
-      mode=UpgradeMode.DUMPKEYS;
-    }
- else     if ("synchronize".equals(opt.getName())) {
-      mode=UpgradeMode.SYNCHRONIZE;
-      migratorName=opt.getParameter();
-      if (migratorName == null) {
-        throw log.missingMigrator();
+switch (opt.toEnum(Options.class)) {
+case ALL:
+{
+        all=true;
+        break;
       }
-    }
- else     if ("disconnectsource".equals(opt.getName())) {
-      mode=UpgradeMode.DISCONNECTSOURCE;
-      migratorName=opt.getParameter();
-      if (migratorName == null) {
-        throw log.missingMigrator();
-      }
-    }
- else {
-      throw new StatementException("Unknown option " + opt.getName());
-    }
-  }
-switch (mode) {
 case DUMPKEYS:
 {
-      for (      Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
-        RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-        upgradeManager.recordKnownGlobalKeyset();
-      }
+      mode=UpgradeMode.DUMPKEYS;
       break;
     }
 case SYNCHRONIZE:
 {
-    for (    Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
-      RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-      try {
-        upgradeManager.synchronizeData(migratorName);
-      }
- catch (      Exception e) {
-        throw new StatementException(e.getMessage());
-      }
+    mode=UpgradeMode.SYNCHRONIZE;
+    migratorName=opt.getParameter();
+    if (migratorName == null) {
+      throw log.missingMigrator();
     }
     break;
   }
 case DISCONNECTSOURCE:
 {
-  for (  Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
-    RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-    try {
-      upgradeManager.disconnectSource(migratorName);
-    }
- catch (    Exception e) {
-      throw new StatementException(e.getMessage());
-    }
+  mode=UpgradeMode.DISCONNECTSOURCE;
+  migratorName=opt.getParameter();
+  if (migratorName == null) {
+    throw log.missingMigrator();
   }
-  break;
 }
-case NONE:
+}
+}
+StringBuilder sb=new StringBuilder();
+switch (mode) {
+case DUMPKEYS:
+{
+for (Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+upgradeManager.recordKnownGlobalKeyset();
+sb.append(MSG.dumpedKeys(cache.getName()));
+sb.append("\n");
+}
+break;
+}
+case SYNCHRONIZE:
+{
+for (Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+try {
+long count=upgradeManager.synchronizeData(migratorName);
+sb.append(MSG.synchronizedEntries(count,migratorName,cache.getName()));
+sb.append("\n");
+}
+ catch (Exception e) {
+throw log.dataSynchronizationError(e,migratorName,cache.getName());
+}
+}
+break;
+}
+case DISCONNECTSOURCE:
+{
+for (Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+try {
+upgradeManager.disconnectSource(migratorName);
+sb.append(MSG.disonnectedSource(migratorName,cache.getName()));
+sb.append("\n");
+}
+ catch (Exception e) {
+throw log.sourceDisconnectionError(e,migratorName,cache.getName());
+}
+}
+break;
+}
+default :
 {
 throw log.missingUpgradeAction();
 }
 }
-return EmptyResult.RESULT;
+return new StringResult(sb.toString());
 }

@@ -1,28 +1,48 @@
 {
   Cache<Object,Object> cache=session.getCache(keyData.getCacheName());
-  if (expires == null) {
-    if (oldValue != null) {
-      cache.replace(keyData.getKey(),oldValue,newValue);
-    }
+  Codec codec=session.getCodec();
+  if (options.size() > 0) {
+    for (    Option option : options) {
+switch (option.toEnum(Options.class)) {
+case CODEC:
+{
+          if (option.getParameter() == null) {
+            throw log.missingOptionParameter(option.getName());
+          }
  else {
-      cache.replace(keyData.getKey(),newValue);
+            codec=session.getCodec(option.getParameter());
+          }
+          break;
+        }
     }
   }
- else   if (maxIdle == null) {
-    if (oldValue != null) {
-      cache.replace(keyData.getKey(),oldValue,newValue,expires,TimeUnit.MILLISECONDS);
-    }
- else {
-      cache.replace(keyData.getKey(),newValue,expires,TimeUnit.MILLISECONDS);
-    }
+}
+Object encodedKey=codec.encodeKey(keyData.getKey());
+Object encodedOldValue=codec.encodeValue(oldValue);
+Object encodedNewValue=codec.encodeValue(newValue);
+if (expires == null) {
+  if (oldValue != null) {
+    cache.replace(encodedKey,encodedOldValue,encodedNewValue);
   }
  else {
-    if (oldValue != null) {
-      cache.replace(keyData.getKey(),oldValue,newValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
-    }
- else {
-      cache.replace(keyData.getKey(),newValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
-    }
+    cache.replace(encodedKey,encodedNewValue);
   }
-  return EmptyResult.RESULT;
+}
+ else if (maxIdle == null) {
+  if (oldValue != null) {
+    cache.replace(encodedKey,encodedOldValue,encodedNewValue,expires,TimeUnit.MILLISECONDS);
+  }
+ else {
+    cache.replace(encodedKey,encodedNewValue,expires,TimeUnit.MILLISECONDS);
+  }
+}
+ else {
+  if (oldValue != null) {
+    cache.replace(encodedKey,encodedOldValue,encodedNewValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
+  }
+ else {
+    cache.replace(encodedKey,encodedNewValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
+  }
+}
+return EmptyResult.RESULT;
 }

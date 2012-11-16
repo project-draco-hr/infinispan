@@ -1,0 +1,15 @@
+{
+  Cache<ByteArrayKey,CacheValue> cache=cacheManager.getCache();
+  RemoteCache<String,String> remoteCache=remoteCacheManager.getCache();
+  remoteCache.put("k1","v1");
+  GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
+  ByteArrayKey k1=new ByteArrayKey(marshaller.objectToByteBuffer("k1"));
+  assertTrue(cache.containsKey(k1));
+  String sessionId=interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  interpreter.execute(sessionId,"encoding hotrod;");
+  Map<String,String> response=interpreter.execute(sessionId,"get k1;");
+  assertEquals("v1",response.get(ResultKeys.OUTPUT.toString()));
+  interpreter.execute(sessionId,"put k2 v2;");
+  String v2=remoteCache.get("k2");
+  assertEquals("v2",v2);
+}
