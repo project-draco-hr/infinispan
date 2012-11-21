@@ -1,0 +1,9 @@
+{
+  DistributedExecutorService des=createDES(getCache());
+  List<Address> members=new ArrayList<Address>(getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+  members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
+  DistributedTaskBuilder<Integer> tb=des.createDistributedTaskBuilder(new LongRunningCallable());
+  final Future<Integer> future=des.submit(members.get(0),tb.build());
+  future.cancel(true);
+  future.get();
+}
