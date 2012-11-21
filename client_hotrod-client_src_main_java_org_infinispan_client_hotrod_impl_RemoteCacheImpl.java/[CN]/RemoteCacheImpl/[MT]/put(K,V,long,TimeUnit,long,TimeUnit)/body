@@ -2,10 +2,11 @@
   assertRemoteCacheManagerIsStarted();
   int lifespanSecs=toSeconds(lifespan,lifespanUnit);
   int maxIdleSecs=toSeconds(maxIdleTime,maxIdleTimeUnit);
+  applyDefaultExpirationFlags(lifespan,maxIdleTime);
   if (log.isTraceEnabled()) {
     log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d",key,value,lifespanSecs,maxIdleSecs);
   }
   PutOperation op=operationsFactory.newPutKeyValueOperation(obj2bytes(key,true),obj2bytes(value,false),lifespanSecs,maxIdleSecs);
-  byte[] result=(byte[])op.execute();
+  byte[] result=op.execute();
   return (V)bytes2obj(result);
 }

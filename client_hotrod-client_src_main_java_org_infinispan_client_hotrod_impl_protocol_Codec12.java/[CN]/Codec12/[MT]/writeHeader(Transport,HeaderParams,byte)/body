@@ -1,0 +1,19 @@
+{
+  transport.writeByte(HotRodConstants.REQUEST_MAGIC);
+  transport.writeVLong(params.messageId(MSG_ID.incrementAndGet()).messageId);
+  transport.writeByte(version);
+  transport.writeByte(params.opCode);
+  transport.writeArray(params.cacheName);
+  int flagInt=0;
+  if (params.flags != null) {
+    for (    Flag flag : params.flags) {
+      flagInt=flag.getFlagInt() | flagInt;
+    }
+  }
+  transport.writeVInt(flagInt);
+  transport.writeByte(params.clientIntel);
+  transport.writeVInt(params.topologyId.get());
+  transport.writeByte(params.txMarker);
+  getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",params.messageId,params.opCode,flagInt);
+  return params;
+}
