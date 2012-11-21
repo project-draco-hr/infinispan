@@ -4,12 +4,8 @@
     searchFactoriesToShutdown.put(cacheName,searchFactoryImplementor);
     cr.registerComponent(REMOVED_REGISTRY_COMPONENT,SearchFactoryIntegrator.class);
   }
-  if (mbeanServer != null && statsObjName != null) {
-    try {
-      JmxUtil.unregisterMBean(statsObjName,mbeanServer);
-    }
- catch (    Exception e) {
-      throw new CacheException("Failure unregistering query module mbeans",e);
-    }
+  if (mbeanServer != null) {
+    String queryMBeanFilter="*:type=Query,name=" + ObjectName.quote(cacheName) + ",*";
+    JmxUtil.unregisterMBeans(queryMBeanFilter,mbeanServer);
   }
 }

@@ -1,0 +1,15 @@
+{
+  try {
+    ObjectName filterObjName=new ObjectName(filter);
+    Set<ObjectInstance> mbeans=mBeanServer.queryMBeans(filterObjName,null);
+    for (    ObjectInstance mbean : mbeans) {
+      ObjectName name=mbean.getObjectName();
+      if (log.isTraceEnabled())       log.trace("Unregistering mbean with name: " + name);
+      mBeanServer.unregisterMBean(name);
+    }
+    return mbeans.size();
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to register mbeans with filter=" + filter,e);
+  }
+}

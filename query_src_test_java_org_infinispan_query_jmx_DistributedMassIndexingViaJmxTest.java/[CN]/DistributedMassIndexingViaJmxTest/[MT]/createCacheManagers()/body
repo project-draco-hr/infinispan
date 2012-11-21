@@ -1,0 +1,14 @@
+{
+  server=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  for (int i=0; i < NUM_NODES; i++) {
+    InputStream is=FileLookupFactory.newInstance().lookupFileStrict("dynamic-indexing-distribution.xml",Thread.currentThread().getContextClassLoader());
+    ParserRegistry parserRegistry=new ParserRegistry(Thread.currentThread().getContextClassLoader());
+    ConfigurationBuilderHolder holder=parserRegistry.parse(is);
+    holder.getGlobalConfigurationBuilder().globalJmxStatistics().jmxDomain(BASE_JMX_DOMAIN + i).mBeanServerLookup(new PerThreadMBeanServerLookup());
+    EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(holder,true);
+    registerCacheManager(cm);
+    Cache cache=cm.getCache();
+    caches.add(cache);
+  }
+  waitForClusterToForm(neededCacheNames);
+}

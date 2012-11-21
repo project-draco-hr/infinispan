@@ -1,0 +1,27 @@
+{
+  Configuration cfg=cache.getCacheConfiguration();
+  SearchFactoryIntegrator sf=getSearchFactory(cfg.indexing().properties(),cr);
+  GlobalConfiguration globalCfg=cr.getGlobalComponentRegistry().getGlobalConfiguration();
+  mbeanServer=JmxUtil.lookupMBeanServer(globalCfg);
+  String queryGroupName="type=Query,name=" + ObjectName.quote(cacheName);
+  String jmxDomain=JmxUtil.buildJmxDomain(globalCfg,mbeanServer,queryGroupName);
+  Statistics stats=sf.getStatistics();
+  stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
+  try {
+    ObjectName statsObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component=Statistics");
+    JmxUtil.registerMBean(new StatisticsInfo(stats),statsObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to register query module statistics mbean",e);
+  }
+  ManageableComponentMetadata metadata=metadataRepo.findComponentMetadata(MassIndexer.class).toManageableComponentMetadata();
+  try {
+    MapReduceMassIndexer maxIndexer=new MapReduceMassIndexer(cache,sf);
+    ResourceDMBean mbean=new ResourceDMBean(maxIndexer,metadata);
+    ObjectName massIndexerObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component="+ metadata.getJmxObjectName());
+    JmxUtil.registerMBean(mbean,massIndexerObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to create ",e);
+  }
+}
