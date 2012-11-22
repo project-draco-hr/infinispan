@@ -1,5 +1,12 @@
 {
-  joinerManager=addClusterEnabledCacheManager();
-  joinerManager.defineConfiguration(cacheName,configuration);
-  joiner=joinerManager.getCache(cacheName);
+  joinerManager1=addClusterEnabledCacheManager();
+  joinerManager1.defineConfiguration(cacheName,configuration.build());
+  joiner1=joinerManager1.getCache(cacheName);
+  joinerManager2=addClusterEnabledCacheManager();
+  joinerManager2.defineConfiguration(cacheName,configuration.build());
+  joiner2=joinerManager2.getCache(cacheName);
+  TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(10),c1,c2,c3,joiner1,joiner2);
+  TestingUtil.waitForRehashToComplete(c1,c2,c3,joiner1,joiner2);
+  caches.add(joiner1);
+  caches.add(joiner2);
 }

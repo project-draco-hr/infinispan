@@ -1,9 +1,14 @@
 {
-  List<MagicKey> keys=new ArrayList<MagicKey>(Arrays.asList(new MagicKey("k1",c1),new MagicKey("k2",c2)));
-  int i=0;
-  for (  Cache<Object,String> c : caches)   c.put(keys.get(i++),"v" + i);
-  i=0;
-  for (  MagicKey key : keys)   assertOnAllCachesAndOwnership(key,"v" + ++i);
+  List<MagicKey> keys=new ArrayList<MagicKey>(Arrays.asList(new MagicKey("k1",c1),new MagicKey("k2",c3),new MagicKey("k3",c2)));
+  for (int i=0; i < keys.size(); i++) {
+    Cache<Object,String> c=cache(i,cacheName);
+    c.put(keys.get(i),"v" + (i + 1));
+  }
+  for (int i=0; i < keys.size(); i++) {
+    Object key=keys.get(i);
+    assertOwnershipAndNonOwnership(key,l1CacheEnabled);
+    assertOnAllCaches(key,"v" + (i + 1));
+  }
   log.infof("Initialized with keys %s",keys);
   return keys;
 }

@@ -1,0 +1,16 @@
+{
+synchronized (this) {
+    List<Integer> segmentsToCancel=new ArrayList<Integer>(removedSegments);
+    while (!segmentsToCancel.isEmpty()) {
+      int segmentId=segmentsToCancel.remove(0);
+      InboundTransferTask inboundTransfer=transfersBySegment.remove(segmentId);
+      if (inboundTransfer != null) {
+        log.debugf("Cancelling inbound state transfer for segment %d of cache %s",segmentId,cacheName);
+        Set<Integer> cancelledSegments=new HashSet<Integer>(segmentsToCancel);
+        cancelledSegments.retainAll(inboundTransfer.getSegments());
+        segmentsToCancel.removeAll(cancelledSegments);
+        inboundTransfer.cancelSegments(cancelledSegments);
+      }
+    }
+  }
+}

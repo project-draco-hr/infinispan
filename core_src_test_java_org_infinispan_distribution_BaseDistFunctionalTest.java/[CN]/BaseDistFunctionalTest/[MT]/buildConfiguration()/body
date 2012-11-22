@@ -1,24 +1,24 @@
 {
-  Configuration configuration=getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC,tx);
-  configuration.setRehashEnabled(performRehashing);
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC,tx);
+  configuration.clustering().stateTransfer().fetchInMemoryState(performRehashing);
   if (lockingMode != null) {
-    configuration.fluent().transaction().lockingMode(lockingMode);
+    configuration.transaction().lockingMode(lockingMode);
   }
-  configuration.setNumOwners(numOwners);
+  configuration.clustering().hash().numOwners(numOwners);
   if (!testRetVals) {
-    configuration.setUnsafeUnreliableReturnValues(true);
-    configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+    configuration.unsafe().unreliableReturnValues(true);
+    configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
   }
-  configuration.setInvocationBatchingEnabled(batchingEnabled);
-  configuration.setSyncReplTimeout(60,TimeUnit.SECONDS);
-  configuration.setLockAcquisitionTimeout(lockTimeout,TimeUnit.SECONDS);
-  configuration.setL1CacheEnabled(l1CacheEnabled);
-  configuration.fluent().clustering().hash().numVirtualNodes(numVirtualNodes);
+  if (tx) {
+    configuration.invocationBatching().enable();
+  }
+  if (sync)   configuration.clustering().sync().replTimeout(60,TimeUnit.SECONDS);
+  configuration.locking().lockAcquisitionTimeout(lockTimeout,TimeUnit.SECONDS);
+  configuration.clustering().l1().enabled(l1CacheEnabled);
   if (groupsEnabled) {
-    configuration.fluent().hash().groups().enabled(true);
-    configuration.fluent().hash().groups().groupers(groupers);
+    configuration.clustering().hash().groups().enabled(true);
+    configuration.clustering().hash().groups().withGroupers(groupers);
   }
-  if (l1CacheEnabled)   configuration.setL1OnRehash(l1OnRehash);
-  if (l1CacheEnabled)   configuration.setL1InvalidationThreshold(l1Threshold);
+  if (l1CacheEnabled)   configuration.clustering().l1().onRehash(l1OnRehash).invalidationThreshold(l1Threshold);
   return configuration;
 }

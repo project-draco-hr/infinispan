@@ -1,0 +1,63 @@
+{
+  Set<Object> keysToL1=new HashSet<Object>();
+  Set<Object> keysToRemove=new HashSet<Object>();
+  for (  InternalCacheEntry ice : dataContainer) {
+    Object key=ice.getKey();
+    int keySegment=getSegment(key);
+    if (segmentsToRemove.contains(keySegment)) {
+      keysToL1.add(key);
+    }
+ else     if (segmentsToL1.contains(keySegment)) {
+      keysToRemove.add(key);
+    }
+  }
+  CacheStore cacheStore=getCacheStore();
+  if (cacheStore != null) {
+    try {
+      Set<Object> storedKeys=cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
+      for (      Object key : storedKeys) {
+        int keySegment=getSegment(key);
+        if (segmentsToRemove.contains(keySegment)) {
+          keysToL1.add(key);
+        }
+ else         if (segmentsToL1.contains(keySegment)) {
+          keysToRemove.add(key);
+        }
+      }
+    }
+ catch (    CacheLoaderException e) {
+      log.failedLoadingKeysFromCacheStore(e);
+    }
+  }
+  if (configuration.clustering().l1().onRehash()) {
+    log.debugf("Moving to L1 state for segments %s of cache %s",segmentsToL1,cacheName);
+  }
+ else {
+    log.debugf("Removing state for segments %s of cache %s",segmentsToL1,cacheName);
+  }
+  if (!keysToL1.isEmpty()) {
+    try {
+      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(true,EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToL1);
+      InvocationContext ctx=icc.createNonTxInvocationContext();
+      interceptorChain.invoke(ctx,invalidateCmd);
+      log.debugf("Invalidated %d keys, data container now has %d keys",keysToL1.size(),dataContainer.size());
+      if (trace)       log.tracef("Invalidated keys: %s",keysToL1);
+    }
+ catch (    CacheException e) {
+      log.failedToInvalidateKeys(e);
+    }
+  }
+  log.debugf("Removing L1 state for segments %s of cache %s",segmentsToRemove,cacheName);
+  if (!keysToRemove.isEmpty()) {
+    try {
+      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(false,EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove);
+      InvocationContext ctx=icc.createNonTxInvocationContext();
+      interceptorChain.invoke(ctx,invalidateCmd);
+      log.debugf("Invalidated %d keys, data container of cache %s now has %d keys",keysToRemove.size(),cacheName,dataContainer.size());
+      if (trace)       log.tracef("Invalidated keys: %s",keysToRemove);
+    }
+ catch (    CacheException e) {
+      log.failedToInvalidateKeys(e);
+    }
+  }
+}

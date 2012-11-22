@@ -1,14 +1,12 @@
 {
-  Configuration cfg=super.buildConfiguration();
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  clmc.setShared(shared);
+  ConfigurationBuilder cfg=super.buildConfiguration();
+  cfg.loaders().shared(shared);
   if (shared) {
-    clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName()));
+    cfg.loaders().addStore(new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders()).storeName(getClass().getSimpleName()));
   }
  else {
-    clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
+    cfg.loaders().addStore(new DummyInMemoryCacheStoreConfigurationBuilder(cfg.loaders()));
   }
-  clmc.setPreload(preload);
-  cfg.setCacheLoaderManagerConfig(clmc);
+  cfg.loaders().preload(preload);
   return cfg;
 }

@@ -1,0 +1,33 @@
+{
+  Future<Void> node3Join=null;
+  int opCount=100;
+  for (int i=0; i < opCount; i++) {
+    cache(0).put("k" + i,"some data");
+    if (i == (opCount / 2)) {
+      node3Join=fork(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          EmbeddedCacheManager cm=addClusterEnabledCacheManager(builder,new TransportFlags().withMerge(true));
+          cm.getCache();
+          return null;
+        }
+      }
+);
+    }
+    Thread.sleep(10);
+  }
+  if (node3Join == null)   throw new Exception("Node 3 not joined");
+  node3Join.get();
+  for (int i=0; i < opCount; i++) {
+    cache(0).remove("k" + i);
+    Thread.sleep(10);
+  }
+  for (int i=0; i < opCount; i++) {
+    String key="k" + i;
+    assertFalse(cache(0).containsKey(key));
+    assertFalse("Key: " + key + " is present in cache at "+ cache(1),cache(1).containsKey(key));
+    assertFalse("Key: " + key + " is present in cache at "+ cache(2),cache(2).containsKey(key));
+  }
+  assertEquals(0,cache(0).size());
+  assertEquals(0,cache(1).size());
+  assertEquals(0,cache(2).size());
+}

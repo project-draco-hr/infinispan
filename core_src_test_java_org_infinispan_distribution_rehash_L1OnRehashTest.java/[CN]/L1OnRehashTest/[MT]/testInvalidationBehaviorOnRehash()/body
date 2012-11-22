@@ -1,8 +1,19 @@
 {
   List<MagicKey> keys=init();
   performRehashEvent();
-  int joinerPos=waitForJoinCompletion();
   for (  MagicKey key : keys) {
+    assertOwnershipAndNonOwnership(key,true);
+  }
+  for (int i=0; i < keys.size(); i++) {
+    Object key=keys.get(i);
+    Cache<Object,String> owner=getLockOwner(key,cacheName);
+    owner.put(keys.get(i),"nv" + (i + 1));
+  }
+  for (int i=0; i < keys.size(); i++) {
+    Object key=keys.get(i);
     assertOwnershipAndNonOwnership(key,l1OnRehash);
+    if (!l1OnRehash) {
+      assertOnAllCaches(key,"nv" + (i + 1));
+    }
   }
 }

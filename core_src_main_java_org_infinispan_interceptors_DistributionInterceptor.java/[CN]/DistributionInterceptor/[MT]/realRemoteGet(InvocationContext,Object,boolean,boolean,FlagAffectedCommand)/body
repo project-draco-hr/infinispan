@@ -12,6 +12,12 @@
   if (ice != null) {
     if (storeInL1) {
       if (isL1CacheEnabled) {
+        List<Address> readOwners=dm.getReadConsistentHash().locateOwners(key);
+        List<Address> writeOwners=dm.getWriteConsistentHash().locateOwners(key);
+        if (!readOwners.equals(writeOwners)) {
+          if (trace)           log.tracef("State transfer in progress for key %s, not storing to L1");
+          return ice.getValue();
+        }
         if (trace)         log.tracef("Caching remotely retrieved entry for key %s in L1",key);
         try {
           long l1Lifespan=cacheConfiguration.clustering().l1().lifespan();
