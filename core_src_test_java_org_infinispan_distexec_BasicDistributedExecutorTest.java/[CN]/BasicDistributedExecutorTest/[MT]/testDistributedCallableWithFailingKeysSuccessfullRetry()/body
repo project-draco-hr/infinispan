@@ -1,0 +1,47 @@
+{
+  Configuration config=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC,true);
+  config.setNumOwners(1);
+  EmbeddedCacheManager cacheManager1=TestCacheManagerFactory.createClusteredCacheManager(config);
+  EmbeddedCacheManager cacheManager2=TestCacheManagerFactory.createClusteredCacheManager(config);
+  DistributedExecutorService des=null;
+  try {
+    Cache<Object,Object> cache1=cacheManager1.getCache("cache1");
+    cache1.put("key1","value1");
+    cache1.put("key2","value2");
+    cache1.put("key3","value3");
+    Cache<Object,Object> cache2=cacheManager2.getCache("cache1");
+    cache2.put("key4","value4");
+    cache2.put("key5","value5");
+    cache2.put("key6","value6");
+    cache2.put("key7","value7");
+    cache2.put("key8","value8");
+    des=new DefaultExecutorService(cache1);
+    DistributedTaskBuilder<Boolean> taskBuilder=des.createDistributedTaskBuilder(new FailOnlyOnceDistributedCallable());
+    taskBuilder.failoverPolicy(new DistributedTaskFailoverPolicy(){
+      @Override public Address failover(      FailoverContext context){
+        List<Address> candidates=context.executionCandidates();
+        Address returnAddress=null;
+        for (        Address candidate : candidates) {
+          if (!candidate.equals(context.executionFailureLocation())) {
+            returnAddress=candidate;
+            break;
+          }
+        }
+        return returnAddress;
+      }
+      @Override public int maxFailoverAttempts(){
+        return 1;
+      }
+    }
+);
+    DistributedTask<Boolean> task=taskBuilder.build();
+    AssertJUnit.assertEquals(1,task.getTaskFailoverPolicy().maxFailoverAttempts());
+    Future<Boolean> val=des.submit(task,new String[]{"key1","key5"});
+    AssertJUnit.assertEquals(new Boolean(true),val.get());
+  }
+  finally {
+    des.shutdownNow();
+    TestingUtil.killCacheManagers(cacheManager1);
+    TestingUtil.killCacheManagers(cacheManager2);
+  }
+}
