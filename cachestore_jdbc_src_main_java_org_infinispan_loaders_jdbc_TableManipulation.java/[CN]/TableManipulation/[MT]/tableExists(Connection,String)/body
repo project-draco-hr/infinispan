@@ -1,45 +1,16 @@
 {
-  assertNotNull(getTableName(),"table name is mandatory");
-  Statement stmt=null;
+  assertNotNull(tableName,"table name is mandatory");
   ResultSet rs=null;
   try {
-    stmt=connection.createStatement();
-    String query;
-switch (getDatabaseType()) {
-case ORACLE:
-      query="SELECT count(*) from (SELECT 1 FROM " + tableName + " WHERE ROWNUM = 1) T";
-    break;
-case DB2:
-case DB2_390:
-case DERBY:
-  query="SELECT count(*) from (SELECT 1 FROM " + tableName + " FETCH FIRST 1 ROWS ONLY) T";
-break;
-case INFORMIX:
-case INTERBASE:
-case FIREBIRD:
-query="SELECT count(*) from (SELECT FIRST 1 1 FROM " + tableName + ") T";
-break;
-case SQL_SERVER:
-query="SELECT count(*) from (SELECT TOP (1) 1 FROM " + tableName + ") T";
-break;
-case ACCESS:
-case HSQL:
-case SYBASE:
-query="SELECT count(*) from (SELECT TOP 1 1 FROM " + tableName + ") T";
-break;
-default :
-query="SELECT count(*) from (SELECT 1 FROM " + tableName + " LIMIT 1) T";
-break;
-}
-rs=stmt.executeQuery(query);
-return rs.next();
-}
- catch (SQLException e) {
-if (log.isTraceEnabled()) log.tracef(e,"SQLException occurs while checking the table %s",tableName);
-return false;
-}
+    DatabaseMetaData metaData=connection.getMetaData();
+    rs=metaData.getTables(null,null,tableName,new String[]{"TABLE"});
+    return rs.next();
+  }
+ catch (  SQLException e) {
+    if (log.isTraceEnabled())     log.tracef(e,"SQLException occurs while checking the table %s",tableName);
+    return false;
+  }
  finally {
-JdbcUtil.safeClose(rs);
-JdbcUtil.safeClose(stmt);
-}
+    JdbcUtil.safeClose(rs);
+  }
 }
