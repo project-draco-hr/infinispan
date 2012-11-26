@@ -1,0 +1,11 @@
+{
+  incrementInvalidations();
+  final InvalidateCommand invalidateCommand=commandsFactory.buildInvalidateCommand(InfinispanCollections.<Flag>emptySet(),keys);
+  if (log.isDebugEnabled())   log.debug("Cache [" + rpcManager.getAddress() + "] replicating "+ invalidateCommand);
+  ReplicableCommand command=invalidateCommand;
+  if (ctx.isInTxScope()) {
+    TxInvocationContext txCtx=(TxInvocationContext)ctx;
+    command=commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),Collections.<WriteCommand>singletonList(invalidateCommand),true);
+  }
+  rpcManager.invokeRemotely(null,command,rpcManager.getDefaultRpcOptions(synchronous));
+}
