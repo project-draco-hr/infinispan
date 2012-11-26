@@ -1,6 +1,6 @@
 {
   if (!cfg.isLazyPurgingOnly()) {
-    acquireGlobalLock(false);
+    boolean success=acquireGlobalLock(false);
     try {
       if (multiThreadedPurge) {
         purgerService.execute(new Runnable(){
@@ -20,7 +20,9 @@
       }
     }
   finally {
-      releaseGlobalLock(false);
+      if (success) {
+        releaseGlobalLock(false);
+      }
     }
   }
 }

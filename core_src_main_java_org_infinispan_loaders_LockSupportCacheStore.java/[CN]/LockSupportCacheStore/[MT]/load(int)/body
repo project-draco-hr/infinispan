@@ -2,11 +2,13 @@
   if (maxEntries < 0) {
     return loadAll();
   }
-  acquireGlobalLock(false);
+  boolean success=acquireGlobalLock(false);
   try {
     return loadLockSafe(maxEntries);
   }
   finally {
-    releaseGlobalLock(false);
+    if (success) {
+      releaseGlobalLock(false);
+    }
   }
 }

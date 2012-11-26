@@ -2,11 +2,13 @@
   if (trace) {
     log.trace("Clearing store");
   }
+  boolean success=acquireGlobalLock(true);
   try {
-    acquireGlobalLock(true);
     clearLockSafe();
   }
   finally {
-    releaseGlobalLock(true);
+    if (success) {
+      releaseGlobalLock(true);
+    }
   }
 }
