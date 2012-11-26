@@ -1,0 +1,14 @@
+{
+  ConfigurationBuilder serverBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED).expiration().wakeUpInterval(10L);
+  serverCacheManager=TestCacheManagerFactory.createCacheManager(serverBuilder);
+  serverCache=serverCacheManager.getCache();
+  hrServer=TestHelper.startHotRodServer(serverCacheManager);
+  ConfigurationBuilder clientBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  clientBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).rawValues(true).addServer().host("localhost").port(hrServer.getPort());
+  clientCacheManager=TestCacheManagerFactory.createCacheManager(clientBuilder);
+  clientCache=clientCacheManager.getCache();
+  remoteCacheManager=new RemoteCacheManager("localhost",hrServer.getPort());
+  remoteCacheManager.start();
+  remoteCache=remoteCacheManager.getCache();
+}

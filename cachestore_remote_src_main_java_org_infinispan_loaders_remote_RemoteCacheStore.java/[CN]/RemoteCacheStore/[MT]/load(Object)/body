@@ -1,3 +1,10 @@
 {
-  return (InternalCacheEntry)remoteCache.get(key);
+  if (config.isRawValues()) {
+    MetadataValue<?> value=remoteCache.getWithMetadata(key);
+    if (value != null)     return iceFactory.create(key,value.getValue(),null,value.getCreated(),TimeUnit.SECONDS.toMillis(value.getLifespan()),value.getLastUsed(),TimeUnit.SECONDS.toMillis(value.getMaxIdle()));
+ else     return null;
+  }
+ else {
+    return (InternalCacheEntry)remoteCache.get(key);
+  }
 }

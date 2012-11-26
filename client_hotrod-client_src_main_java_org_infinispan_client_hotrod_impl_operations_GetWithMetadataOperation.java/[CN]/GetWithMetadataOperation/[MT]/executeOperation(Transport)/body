@@ -1,0 +1,29 @@
+{
+  short status=sendKeyOperation(key,transport,GET_WITH_METADATA,GET_WITH_METADATA_RESPONSE);
+  MetadataValue<byte[]> result=null;
+  if (status == KEY_DOES_NOT_EXIST_STATUS) {
+    result=null;
+  }
+ else   if (status == NO_ERROR_STATUS) {
+    short flags=transport.readByte();
+    long creation=-1;
+    int lifespan=-1;
+    long lastUsed=-1;
+    int maxIdle=-1;
+    if ((flags & INFINITE_LIFESPAN) != INFINITE_LIFESPAN) {
+      creation=transport.readLong();
+      lifespan=transport.readVInt();
+    }
+    if ((flags & INFINITE_MAXIDLE) != INFINITE_MAXIDLE) {
+      lastUsed=transport.readLong();
+      maxIdle=transport.readVInt();
+    }
+    long version=transport.readLong();
+    if (log.isTraceEnabled()) {
+      log.tracef("Received version: %d",version);
+    }
+    byte[] value=transport.readArray();
+    result=new MetadataValueImpl<byte[]>(creation,lifespan,lastUsed,maxIdle,version,value);
+  }
+  return result;
+}

@@ -1,10 +1,18 @@
 {
   super.start();
-  StreamingMarshaller marshaller=getMarshaller();
-  if (marshaller == null) {
-    throw new IllegalStateException("Null marshaller not allowed!");
+  if (config.getHotRodClientProperties().containsKey(ConfigurationProperties.MARSHALLER)) {
+    remoteCacheManager=new RemoteCacheManager(config.getHotRodClientProperties(),true,config.getClassLoader(),config.getAsyncExecutorFactory());
   }
-  remoteCacheManager=new RemoteCacheManager(marshaller,config.getHotRodClientProperties(),true,config.getClassLoader(),config.getAsyncExecutorFactory());
+ else {
+    Marshaller marshaller=config.isRawValues() ? new GenericJBossMarshaller() : getMarshaller();
+    if (marshaller == null) {
+      throw new IllegalStateException("Null marshaller not allowed!");
+    }
+    remoteCacheManager=new RemoteCacheManager(marshaller,config.getHotRodClientProperties(),true,config.getClassLoader(),config.getAsyncExecutorFactory());
+  }
   if (config.getRemoteCacheName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME))   remoteCache=remoteCacheManager.getCache();
  else   remoteCache=remoteCacheManager.getCache(config.getRemoteCacheName());
+  if (config.isRawValues() && iceFactory == null) {
+    iceFactory=cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
+  }
 }
