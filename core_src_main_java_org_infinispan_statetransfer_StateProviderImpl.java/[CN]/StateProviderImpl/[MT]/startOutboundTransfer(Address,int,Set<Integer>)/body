@@ -2,22 +2,8 @@
   if (trace) {
     log.tracef("Starting outbound transfer of segments %s to node %s with topology id %d",segments,destination,requestTopologyId);
   }
-  final CacheTopology cacheTopology=stateConsumer.getCacheTopology();
-  if (cacheTopology == null) {
-    throw new IllegalStateException("No cache topology received yet");
-  }
-  final ConsistentHash readCh=cacheTopology.getReadConsistentHash();
-  final int topologyId=cacheTopology.getTopologyId();
-  if (requestTopologyId < topologyId) {
-    log.warnf("Segments were requested by node %s with topology %d, smaller than the local " + "topology (%d)",destination,requestTopologyId,topologyId);
-  }
- else   if (requestTopologyId > topologyId) {
-    if (trace) {
-      log.tracef("Segments were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",destination,requestTopologyId,topologyId,requestTopologyId);
-    }
-    stateTransferLock.waitForTopology(requestTopologyId);
-  }
-  OutboundTransferTask outboundTransfer=new OutboundTransferTask(destination,segments,chunkSize,topologyId,readCh,this,dataContainer,cacheLoaderManager,rpcManager,commandsFactory,timeout,cacheName);
+  final CacheTopology cacheTopology=getCacheTopology(requestTopologyId,destination,false);
+  OutboundTransferTask outboundTransfer=new OutboundTransferTask(destination,segments,chunkSize,cacheTopology.getTopologyId(),cacheTopology.getReadConsistentHash(),this,dataContainer,cacheLoaderManager,rpcManager,commandsFactory,timeout,cacheName);
   addTransfer(outboundTransfer);
   outboundTransfer.execute(executorService);
 }

@@ -1,0 +1,18 @@
+{
+  CacheTopology cacheTopology=stateConsumer.getCacheTopology();
+  if (cacheTopology == null) {
+    throw new IllegalStateException("No cache topology received yet");
+  }
+  if (requestTopologyId < cacheTopology.getTopologyId()) {
+    if (isReqForTransactions)     log.transactionsRequestedByNodeWithOlderTopology(destination,requestTopologyId,cacheTopology.getTopologyId());
+ else     log.segmentsRequestedByNodeWithOlderTopology(destination,requestTopologyId,cacheTopology.getTopologyId());
+  }
+ else   if (requestTopologyId > cacheTopology.getTopologyId()) {
+    if (trace) {
+      log.tracef("%s were requested by node %s with topology %d, greater than the local " + "topology (%d). Waiting for topology %d to be installed locally.",isReqForTransactions ? "Transactions" : "Segments",destination,requestTopologyId,cacheTopology.getTopologyId(),requestTopologyId);
+    }
+    stateTransferLock.waitForTopology(requestTopologyId);
+    cacheTopology=stateConsumer.getCacheTopology();
+  }
+  return cacheTopology;
+}
