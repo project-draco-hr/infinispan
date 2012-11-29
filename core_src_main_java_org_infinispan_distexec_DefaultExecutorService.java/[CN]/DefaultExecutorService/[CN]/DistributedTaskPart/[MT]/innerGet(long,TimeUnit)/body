@@ -2,8 +2,17 @@
   if (isCancelled())   throw new CancellationException("Task already cancelled");
   V response=null;
   try {
-    if (timeout > 0) {
-      response=retrieveResult(f.get(timeout,unit));
+    long taskTimeout=getOwningTask().timeout();
+    long futureTimeout=TimeUnit.MILLISECONDS.convert(timeout,unit);
+    long actualTimeout=0;
+    if (taskTimeout > 0 && futureTimeout > 0) {
+      actualTimeout=Math.min(taskTimeout,futureTimeout);
+    }
+ else {
+      actualTimeout=Math.max(taskTimeout,futureTimeout);
+    }
+    if (actualTimeout > 0) {
+      response=retrieveResult(f.get(actualTimeout,TimeUnit.MILLISECONDS));
     }
  else {
       response=retrieveResult(f.get());
