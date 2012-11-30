@@ -1,0 +1,36 @@
+{
+  try {
+    sharedCacheLoader.set(true);
+    EmbeddedCacheManager cm1=createCacheManager();
+    Cache<Object,Object> cache1=cm1.getCache(cacheName);
+    verifyNoDataOnLoader(cache1);
+    verifyNoData(cache1);
+    cache1.put("A",new DelayedUnmarshal());
+    cache1.put("B",new DelayedUnmarshal());
+    cache1.put("C",new DelayedUnmarshal());
+    assertEquals(cache1.size(),3);
+    cm1.stop();
+    final ConfigurationBuilder defaultConfigurationBuilder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+    final EmbeddedCacheManager cm2=super.createCacheManager();
+    cm2.defineConfiguration("initialCache",defaultConfigurationBuilder.build());
+    cm2.startCaches("initialCache");
+    EmbeddedCacheManager cm3=super.createCacheManager();
+    cm3.defineConfiguration("initialCache",defaultConfigurationBuilder.build());
+    cm3.startCaches("initialCache");
+    TestingUtil.blockUntilViewsReceived(60000,cm2.getCache("initialCache"),cm3.getCache("initialCache"));
+    Thread worker=new Thread(){
+      @Override public void run(){
+        cm2.startCaches(cacheName);
+      }
+    }
+;
+    worker.start();
+    TestingUtil.sleepThread(1000);
+    worker.join();
+    cm3.startCaches(cacheName);
+    assertEquals(cm3.getCache(cacheName).size(),3);
+  }
+  finally {
+    sharedCacheLoader.set(false);
+  }
+}

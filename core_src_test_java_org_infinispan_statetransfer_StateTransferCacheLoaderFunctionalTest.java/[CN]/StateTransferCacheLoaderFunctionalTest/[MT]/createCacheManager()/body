@@ -1,9 +1,9 @@
 {
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  CacheStoreConfig clc=new DummyInMemoryCacheStore.Cfg("store number " + id++);
-  clmc.addCacheLoaderConfig(clc);
-  clc.setFetchPersistentState(true);
-  clmc.setShared(sharedCacheLoader.get());
-  config.setCacheLoaderManagerConfig(clmc);
+  configurationBuilder.loaders().clearCacheLoaders();
+  DummyInMemoryCacheStoreConfigurationBuilder dimcs=new DummyInMemoryCacheStoreConfigurationBuilder(configurationBuilder.loaders());
+  dimcs.storeName("store number " + id++);
+  dimcs.fetchPersistentState(true);
+  configurationBuilder.loaders().addLoader(dimcs);
+  configurationBuilder.loaders().shared(sharedCacheLoader.get()).preload(true);
   return super.createCacheManager();
 }

@@ -1,13 +1,9 @@
 {
-  FileCacheStoreConfig cfg=new FileCacheStoreConfig();
-  cfg.setLocation(tmpDirectory);
-  cfg.setPurgeSynchronously(true);
-  cfg.setFetchPersistentState(true);
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  clmc.addCacheLoaderConfig(cfg);
-  clmc.setShared(sharedCacheLoader.get());
-  config.setCacheLoaderManagerConfig(clmc);
+  configurationBuilder.loaders().clearCacheLoaders();
+  configurationBuilder.loaders().shared(sharedCacheLoader.get());
+  FileCacheStoreConfigurationBuilder fcsBuilder=configurationBuilder.loaders().addFileCacheStore();
+  fcsBuilder.purgeSynchronously(true).fetchPersistentState(true).purgeOnStartup(false).location(tmpDirectory);
   EmbeddedCacheManager cm=addClusterEnabledCacheManager();
-  cm.defineConfiguration(cacheName,config.clone());
+  cm.defineConfiguration(cacheName,configurationBuilder.build());
   return cm;
 }

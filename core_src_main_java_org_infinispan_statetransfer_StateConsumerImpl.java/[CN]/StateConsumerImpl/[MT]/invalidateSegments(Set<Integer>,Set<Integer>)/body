@@ -4,10 +4,10 @@
   for (  InternalCacheEntry ice : dataContainer) {
     Object key=ice.getKey();
     int keySegment=getSegment(key);
-    if (segmentsToRemove.contains(keySegment)) {
+    if (segmentsToL1.contains(keySegment)) {
       keysToL1.add(key);
     }
- else     if (segmentsToL1.contains(keySegment)) {
+ else     if (!newSegments.contains(keySegment)) {
       keysToRemove.add(key);
     }
   }
@@ -17,10 +17,10 @@
       Set<Object> storedKeys=cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
       for (      Object key : storedKeys) {
         int keySegment=getSegment(key);
-        if (segmentsToRemove.contains(keySegment)) {
+        if (segmentsToL1.contains(keySegment)) {
           keysToL1.add(key);
         }
- else         if (segmentsToL1.contains(keySegment)) {
+ else         if (!newSegments.contains(keySegment)) {
           keysToRemove.add(key);
         }
       }
@@ -47,7 +47,7 @@
       log.failedToInvalidateKeys(e);
     }
   }
-  log.debugf("Removing L1 state for segments %s of cache %s",segmentsToRemove,cacheName);
+  log.debugf("Removing L1 state for segments not in %s or %s for cache %s",newSegments,segmentsToL1,cacheName);
   if (!keysToRemove.isEmpty()) {
     try {
       InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(false,EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove);

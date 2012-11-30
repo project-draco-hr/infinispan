@@ -24,21 +24,11 @@
       removedSegments.removeAll(newSegments);
       addedSegments=new HashSet<Integer>(newSegments);
       addedSegments.removeAll(previousSegments);
-      Set<Integer> invalidL1Segments=new HashSet<Integer>();
-      for (int segment=0; segment < cacheTopology.getCurrentCH().getNumSegments(); segment++) {
-        if (!previousSegments.contains(segment) && newSegments.contains(segment)) {
-          List<Address> previousOwners=previousCh.locateOwnersForSegment(segment);
-          List<Address> newOwners=cacheTopology.getWriteConsistentHash().locateOwnersForSegment(segment);
-          if (!newOwners.containsAll(previousOwners)) {
-            invalidL1Segments.add(segment);
-          }
-        }
-      }
       if (trace) {
         log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
       }
       cancelTransfers(removedSegments);
-      invalidateSegments(removedSegments,invalidL1Segments);
+      invalidateSegments(newSegments,removedSegments);
       Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
 synchronized (this) {
         for (Iterator<Address> it=transfersBySource.keySet().iterator(); it.hasNext(); ) {
