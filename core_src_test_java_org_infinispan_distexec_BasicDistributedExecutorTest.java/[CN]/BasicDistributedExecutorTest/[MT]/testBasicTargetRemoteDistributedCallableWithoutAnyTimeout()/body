@@ -1,0 +1,23 @@
+{
+  ConfigurationBuilder confBuilder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false);
+  confBuilder.clustering().sync().replTimeout(0L);
+  EmbeddedCacheManager cacheManager=TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+  EmbeddedCacheManager cacheManager1=TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
+  Cache<Object,Object> cache1=cacheManager.getCache();
+  Cache<Object,Object> cache2=cacheManager1.getCache();
+  DistributedExecutorService des=null;
+  try {
+    des=new DefaultExecutorService(cache1);
+    Address target=cache2.getAdvancedCache().getRpcManager().getAddress();
+    DistributedTaskBuilder builder=des.createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
+    Future<Integer> future=des.submit(target,builder.build());
+    AssertJUnit.assertEquals((Integer)1,future.get());
+  }
+ catch (  Exception ex) {
+    ex.printStackTrace();
+  }
+ finally {
+    des.shutdown();
+    TestingUtil.killCacheManagers(cacheManager,cacheManager1);
+  }
+}

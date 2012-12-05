@@ -1,0 +1,10 @@
+{
+  Cache<Object,Object> cache1=cache(0,cacheName());
+  Cache<Object,Object> cache2=cache(1,cacheName());
+  DistributedExecutorService des=createDES(cache1);
+  Address target=cache2.getAdvancedCache().getRpcManager().getAddress();
+  DistributedTaskBuilder builder=des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+  builder.timeout(10000,TimeUnit.MILLISECONDS);
+  Future<Integer> future=des.submit(target,builder.build());
+  future.get(1000,TimeUnit.MILLISECONDS);
+}
