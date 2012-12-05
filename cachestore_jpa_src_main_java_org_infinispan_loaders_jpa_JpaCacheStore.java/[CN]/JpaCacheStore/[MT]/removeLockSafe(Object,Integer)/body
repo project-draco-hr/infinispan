@@ -1,0 +1,26 @@
+{
+  if (!isValidKeyType(key)) {
+    return false;
+  }
+  EntityManager em=emf.createEntityManager();
+  try {
+    Object o=em.find(config.getEntityClass(),key);
+    if (o == null) {
+      return false;
+    }
+    EntityTransaction txn=em.getTransaction();
+    try {
+      txn.begin();
+      em.remove(o);
+      txn.commit();
+      return true;
+    }
+ catch (    Exception e) {
+      if (txn != null && txn.isActive())       txn.rollback();
+      throw new CacheLoaderException("Exception caught in removeLockSafe()",e);
+    }
+  }
+  finally {
+    em.close();
+  }
+}

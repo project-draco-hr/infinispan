@@ -1,0 +1,17 @@
+{
+synchronized (this) {
+    if (!registry.containsKey(persistenceUnitName)) {
+      return;
+    }
+    int count=decrementUsage(persistenceUnitName);
+    if (count == 0) {
+      EntityManagerFactory emf=registry.remove(persistenceUnitName);
+      try {
+        if (emf.isOpen())         emf.close();
+      }
+ catch (      IllegalStateException e) {
+        log.warn("Entity manager factory was already closed: " + persistenceUnitName);
+      }
+    }
+  }
+}

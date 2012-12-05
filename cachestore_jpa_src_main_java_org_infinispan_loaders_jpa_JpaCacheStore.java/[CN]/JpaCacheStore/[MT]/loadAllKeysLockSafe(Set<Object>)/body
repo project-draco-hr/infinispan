@@ -1,0 +1,23 @@
+{
+  EntityManager em=emf.createEntityManager();
+  try {
+    CriteriaBuilder cb=em.getCriteriaBuilder();
+    CriteriaQuery<Tuple> cq=cb.createTupleQuery();
+    Root root=cq.from(config.getEntityClass());
+    Type idType=root.getModel().getIdType();
+    SingularAttribute idAttr=root.getModel().getId(idType.getJavaType());
+    cq.multiselect(root.get(idAttr));
+    List<Tuple> tuples=em.createQuery(cq).getResultList();
+    Set<Object> keys=new HashSet<Object>();
+    for (    Tuple t : tuples) {
+      Object id=t.get(0);
+      if (includeKey(id,keysToExclude)) {
+        keys.add(id);
+      }
+    }
+    return keys;
+  }
+  finally {
+    em.close();
+  }
+}
