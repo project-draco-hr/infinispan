@@ -8,8 +8,18 @@
 switch (c) {
 case 'c':
       Connection connection=ConnectionFactory.getConnection(g.getOptarg());
-    connection.connect(context);
-  context.setConnection(connection);
+    String password=null;
+  if (connection.needsCredentials()) {
+    java.io.Console sysConsole=System.console();
+    if (sysConsole != null) {
+      password=new String(sysConsole.readPassword("Password: "));
+    }
+ else {
+      exitWithError("Cannot read password non-interactively");
+    }
+  }
+connection.connect(context,password);
+context.setConnection(connection);
 break;
 case 'f':
 inputFile=g.getOptarg();
