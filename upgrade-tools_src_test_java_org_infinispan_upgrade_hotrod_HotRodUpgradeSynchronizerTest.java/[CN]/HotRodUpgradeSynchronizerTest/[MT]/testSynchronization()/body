@@ -1,0 +1,15 @@
+{
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    sourceRemoteCache.put(s,s);
+  }
+  assertEquals("A",targetRemoteCache.get("A"));
+  RollingUpgradeManager sourceUpgradeManager=sourceServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  sourceUpgradeManager.recordKnownGlobalKeyset();
+  RollingUpgradeManager targetUpgradeManager=targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  targetUpgradeManager.synchronizeData("hotrod");
+  assertEquals(sourceServerCache.size() - 1,targetServerCache.size());
+  targetUpgradeManager.disconnectSource("hotrod");
+  CacheLoaderManager loaderManager=targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
+  assertFalse(loaderManager.isEnabled());
+}

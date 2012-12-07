@@ -1,13 +1,71 @@
 {
-  Cache<Object,Object> cache=session.getCache(cacheName);
-  RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  boolean all=false;
+  UpgradeMode mode=UpgradeMode.NONE;
+  String migratorName=null;
   for (  Option opt : options) {
-    if ("dumpkeys".equals(opt.getName())) {
-      upgradeManager.recordKnownGlobalKeyset();
+    if ("all".equals(opt.getName())) {
+      all=true;
+    }
+ else     if ("dumpkeys".equals(opt.getName())) {
+      mode=UpgradeMode.DUMPKEYS;
+    }
+ else     if ("synchronize".equals(opt.getName())) {
+      mode=UpgradeMode.SYNCHRONIZE;
+      migratorName=opt.getParameter();
+      if (migratorName == null) {
+        throw log.missingMigrator();
+      }
+    }
+ else     if ("disconnectsource".equals(opt.getName())) {
+      mode=UpgradeMode.DISCONNECTSOURCE;
+      migratorName=opt.getParameter();
+      if (migratorName == null) {
+        throw log.missingMigrator();
+      }
     }
  else {
       throw new StatementException("Unknown option " + opt.getName());
     }
   }
-  return EmptyResult.RESULT;
+switch (mode) {
+case DUMPKEYS:
+{
+      for (      Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+        RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+        upgradeManager.recordKnownGlobalKeyset();
+      }
+      break;
+    }
+case SYNCHRONIZE:
+{
+    for (    Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+      RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      try {
+        upgradeManager.synchronizeData(migratorName);
+      }
+ catch (      Exception e) {
+        throw new StatementException(e.getMessage());
+      }
+    }
+    break;
+  }
+case DISCONNECTSOURCE:
+{
+  for (  Cache<?,?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
+    RollingUpgradeManager upgradeManager=cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+    try {
+      upgradeManager.disconnectSource(migratorName);
+    }
+ catch (    Exception e) {
+      throw new StatementException(e.getMessage());
+    }
+  }
+  break;
+}
+case NONE:
+{
+throw log.missingUpgradeAction();
+}
+}
+return EmptyResult.RESULT;
 }

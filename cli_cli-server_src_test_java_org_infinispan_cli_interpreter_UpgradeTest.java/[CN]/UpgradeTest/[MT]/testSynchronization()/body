@@ -1,0 +1,17 @@
+{
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    sourceRemoteCache.put(s,s);
+  }
+  Interpreter sourceInterpreter=getInterpreter(sourceContainer);
+  String sourceSessionId=sourceInterpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  Map<String,String> dumpKeysResult=sourceInterpreter.execute(sourceSessionId,"upgrade --dumpkeys --all;");
+  checkNoErrors(dumpKeysResult);
+  Interpreter targetInterpreter=getInterpreter(targetContainer);
+  String targetSessionId=targetInterpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  Map<String,String> synchronizeResult=targetInterpreter.execute(targetSessionId,"upgrade --synchronize=hotrod --all;");
+  checkNoErrors(synchronizeResult);
+  Map<String,String> disconnectResult=targetInterpreter.execute(targetSessionId,"upgrade --disconnectsource=hotrod --all;");
+  checkNoErrors(disconnectResult);
+  assertEquals(sourceServerCache.size() - 1,targetServerCache.size());
+}

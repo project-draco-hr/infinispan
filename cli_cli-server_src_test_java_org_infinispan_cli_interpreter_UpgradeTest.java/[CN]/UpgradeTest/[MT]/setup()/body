@@ -1,0 +1,17 @@
+{
+  ConfigurationBuilder serverBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  sourceContainer=TestCacheManagerFactory.createCacheManager(serverBuilder);
+  sourceServerCache=sourceContainer.getCache();
+  sourceServer=TestHelper.startHotRodServer(sourceContainer);
+  ConfigurationBuilder targetConfigurationBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  targetConfigurationBuilder.loaders().addStore(RemoteCacheStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
+  targetContainer=TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
+  targetServerCache=targetContainer.getCache();
+  targetServer=TestHelper.startHotRodServer(targetContainer);
+  sourceRemoteCacheManager=new RemoteCacheManager("localhost",sourceServer.getPort());
+  sourceRemoteCacheManager.start();
+  sourceRemoteCache=sourceRemoteCacheManager.getCache();
+  targetRemoteCacheManager=new RemoteCacheManager("localhost",targetServer.getPort());
+  targetRemoteCacheManager.start();
+  targetRemoteCache=targetRemoteCacheManager.getCache();
+}

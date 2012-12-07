@@ -1,0 +1,55 @@
+{
+  int threads=Runtime.getRuntime().availableProcessors();
+  ComponentRegistry cr=cache.getAdvancedCache().getComponentRegistry();
+  CacheLoaderManager loaderManager=cr.getComponent(CacheLoaderManager.class);
+  List<RemoteCacheStore> stores=loaderManager.getCacheLoaders(RemoteCacheStore.class);
+  Marshaller marshaller=new GenericJBossMarshaller();
+  ByteArrayKey knownKeys;
+  try {
+    knownKeys=new ByteArrayKey(marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS));
+  }
+ catch (  Exception e) {
+    throw new CacheException(e);
+  }
+  for (  RemoteCacheStore store : stores) {
+    final RemoteCache<Object,Object> storeCache=store.getRemoteCache();
+    if (storeCache.containsKey(knownKeys)) {
+      RemoteCacheStoreConfig storeConfig=(RemoteCacheStoreConfig)store.getCacheStoreConfig();
+      if (!storeConfig.isHotRodWrapping()) {
+        throw log.remoteStoreNoHotRodWrapping(cache.getName());
+      }
+      Set<ByteArrayKey> keys;
+      try {
+        keys=(Set<ByteArrayKey>)marshaller.objectFromByteBuffer((byte[])storeCache.get(knownKeys));
+      }
+ catch (      Exception e) {
+        throw new CacheException(e);
+      }
+      ExecutorService es=Executors.newFixedThreadPool(threads);
+      final AtomicInteger count=new AtomicInteger(0);
+      for (      final ByteArrayKey key : keys) {
+        es.submit(new Runnable(){
+          @Override public void run(){
+            try {
+              cache.get(key);
+              int i=count.getAndIncrement();
+              if (log.isDebugEnabled() && i % 100 == 0)               log.debugf(">>    Moved %s keys\n",i);
+            }
+ catch (            Exception e) {
+            }
+          }
+        }
+);
+      }
+      es.shutdown();
+      try {
+        while (!es.awaitTermination(500,TimeUnit.MILLISECONDS))         ;
+      }
+ catch (      InterruptedException e) {
+        throw new CacheException(e);
+      }
+      return count.longValue();
+    }
+  }
+  throw log.missingMigrationData(cache.getName());
+}
