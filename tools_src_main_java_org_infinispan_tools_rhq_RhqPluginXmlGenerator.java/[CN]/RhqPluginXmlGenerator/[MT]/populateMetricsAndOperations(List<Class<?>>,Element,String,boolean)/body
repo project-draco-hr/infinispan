@@ -1,0 +1,101 @@
+{
+  Set<String> uniqueOperations=new HashSet<String>();
+  Document doc=root.getOwnerDocument();
+  Element parent=doc.createElement(parentName);
+  for (  Class<?> clazz : classes) {
+    MBean mbean=clazz.getAnnotation(MBean.class);
+    String prefix=withNamePrefix ? mbean.objectName() + '.' : "";
+    CtClass ctClass=classPool.get(clazz.getName());
+    CtMethod[] ctMethods=ctClass.getMethods();
+    for (    CtMethod ctMethod : ctMethods) {
+      ManagedAttribute managedAttr=(ManagedAttribute)ctMethod.getAnnotation(ManagedAttribute.class);
+      ManagedOperation managedOp=(ManagedOperation)ctMethod.getAnnotation(ManagedOperation.class);
+      if (managedAttr != null) {
+        String property=prefix + getPropertyFromBeanConvention(ctMethod);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ managedAttr.displayName() : managedAttr.displayName();
+        validateDisplayName(displayName);
+        Element metric=doc.createElement("metric");
+        metric.setAttribute("property",property);
+        metric.setAttribute("displayName",displayName);
+        metric.setAttribute("displayType",managedAttr.displayType().toString());
+        metric.setAttribute("dataType",managedAttr.dataType().toString());
+        metric.setAttribute("units",managedAttr.units().toString());
+        metric.setAttribute("description",managedAttr.description());
+        parent.appendChild(metric);
+      }
+      if (managedOp != null) {
+        String name;
+        if (!managedOp.name().isEmpty()) {
+          name=prefix + managedOp.name();
+        }
+ else {
+          name=prefix + ctMethod.getName();
+        }
+        if (uniqueOperations.contains(name)) {
+          throw new RuntimeException("Duplicate operation name: " + name);
+        }
+        uniqueOperations.add(name);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ managedOp.displayName() : managedOp.displayName();
+        validateDisplayName(displayName);
+        Element operation=doc.createElement("operation");
+        operation.setAttribute("name",name);
+        operation.setAttribute("displayName",displayName);
+        if (managedAttr != null) {
+          operation.setAttribute("description",managedAttr.description());
+        }
+ else {
+          operation.setAttribute("description",managedOp.description());
+        }
+        Object[][] paramAnnotations=ctMethod.getParameterAnnotations();
+        Element parameters=doc.createElement("parameters");
+        for (        Object[] paramAnnotationsInEach : paramAnnotations) {
+          boolean annotatedParameter=false;
+          for (          Object annot : paramAnnotationsInEach) {
+            if (annot instanceof Parameter) {
+              Parameter param=(Parameter)annot;
+              Element prop=doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION,"simple-property");
+              prop.setAttribute("name",param.name());
+              prop.setAttribute("description",param.description());
+              parameters.appendChild(prop);
+              annotatedParameter=true;
+            }
+          }
+          if (!annotatedParameter) {
+            throw new RuntimeException("Duplicate operation name: " + name);
+          }
+        }
+        if (parameters.hasChildNodes()) {
+          operation.appendChild(parameters);
+        }
+        CtClass returnType=ctMethod.getReturnType();
+        if (!returnType.equals(CtClass.voidType) && !returnType.equals(Void.TYPE)) {
+          Element results=doc.createElement("results");
+          Element prop=doc.createElementNS(URN_XMLNS_RHQ_CONFIGURATION,"simple-property");
+          prop.setAttribute("name","operationResult");
+          results.appendChild(prop);
+          operation.appendChild(results);
+        }
+        parent.appendChild(operation);
+      }
+    }
+    CtField[] ctFields=ctClass.getDeclaredFields();
+    for (    CtField ctField : ctFields) {
+      ManagedAttribute managedAttr=(ManagedAttribute)ctField.getAnnotation(ManagedAttribute.class);
+      if (managedAttr != null) {
+        String property=prefix + getPropertyFromBeanConvention(ctField);
+        Element metric=doc.createElement("metric");
+        metric.setAttribute("property",property);
+        String displayName=withNamePrefix ? "[" + mbean.objectName() + "] "+ managedAttr.displayName() : managedAttr.displayName();
+        validateDisplayName(displayName);
+        metric.setAttribute("property",property);
+        metric.setAttribute("displayName",displayName);
+        metric.setAttribute("displayType",managedAttr.displayType().toString());
+        metric.setAttribute("dataType",managedAttr.dataType().toString());
+        metric.setAttribute("units",managedAttr.units().toString());
+        metric.setAttribute("description",managedAttr.description());
+        parent.appendChild(metric);
+      }
+    }
+  }
+  root.appendChild(parent);
+}

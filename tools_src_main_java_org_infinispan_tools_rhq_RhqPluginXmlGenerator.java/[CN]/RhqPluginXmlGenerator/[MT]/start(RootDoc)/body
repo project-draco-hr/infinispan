@@ -5,55 +5,30 @@
   for (  Class<?> clazz : mbeanIspnClasses) {
     Scope scope=clazz.getAnnotation(Scope.class);
     if (scope != null && scope.value() == Scopes.GLOBAL) {
-      debug("Add as global class " + clazz);
       globalClasses.add(clazz);
     }
  else {
-      debug("Add as named cache class " + clazz);
       namedCacheClasses.add(clazz);
     }
   }
   classPool=ClassPool.getDefault();
   classPool.insertClassPath(new ClassClassPath(RhqPluginXmlGenerator.class));
-  PluginGen pg=new PluginGen();
-  Props root=new Props();
-  root.setPluginName("Infinispan");
-  root.setPluginDescription("Supports management and monitoring of Infinispan");
-  root.setManualAddOfResourceType(true);
-  root.setName("Infinispan Cache Manager");
-  root.setPkg("org.infinispan.rhq");
-  root.setDependsOnJmxPlugin(true);
-  root.setDiscoveryClass("CacheManagerDiscovery");
-  root.setComponentClass("CacheManagerComponent");
-  root.setSingleton(false);
-  root.setCategory(ResourceCategory.SERVICE);
-  Set<TypeKey> servers=new HashSet<TypeKey>();
-  servers.add(new TypeKey("JMX Server","JMX"));
-  servers.add(new TypeKey("JBossAS Server","JBossAS"));
-  servers.add(new TypeKey("JBossAS Server","JBossAS5"));
-  root.setRunsInsides(servers);
-  SimpleProperty pc=new SimpleProperty("name");
-  pc.setType("string");
-  pc.setDescription("Name");
-  pc.setDefaultValue("Infinispan Cache Manager");
-  pc.setReadOnly(true);
-  root.getSimpleProps().add(pc);
-  populateMetricsAndOperations(globalClasses,root,false);
-  Props cache=new Props();
-  cache.setName("Infinispan Cache");
-  cache.setPkg("org.infinispan.rhq");
-  cache.setDependsOnJmxPlugin(true);
-  cache.setDiscoveryClass("CacheDiscovery");
-  cache.setComponentClass("CacheComponent");
-  cache.setSingleton(false);
-  cache.setCategory(ResourceCategory.SERVICE);
-  populateMetricsAndOperations(namedCacheClasses,cache,true);
-  root.getChildren().add(cache);
-  String metaInfDir="../../../src/main/resources/META-INF";
-  new File(metaInfDir).mkdirs();
+  DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+  dbf.setNamespaceAware(true);
+  DocumentBuilder db=dbf.newDocumentBuilder();
+  Document doc=db.newDocument();
+  Element root=doc.createElement("plugin");
+  root.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:c",URN_XMLNS_RHQ_CONFIGURATION);
+  doc.appendChild(root);
+  populateMetricsAndOperations(globalClasses,root,"cacheManager",false);
+  populateMetricsAndOperations(namedCacheClasses,root,"cache",true);
   String targetMetaInfDir="../../../target/classes/META-INF";
   new File(targetMetaInfDir).mkdirs();
-  pg.createFile(root,"ispnDescriptor","rhq-plugin.xml",metaInfDir);
-  copyFile(new File(metaInfDir + "/rhq-plugin.xml"),new File(targetMetaInfDir + "/rhq-plugin.xml"));
+  TransformerFactory tf=TransformerFactory.newInstance();
+  StreamSource xslt=new StreamSource(RhqPluginXmlGenerator.class.getResourceAsStream("/META-INF/rhq-plugin.xslt"));
+  Transformer transformer=tf.newTransformer(xslt);
+  transformer.setOutputProperty(OutputKeys.INDENT,"yes");
+  Result output=new StreamResult(new File(targetMetaInfDir + "/rhq-plugin.xml"));
+  transformer.transform(new DOMSource(doc),output);
   return true;
 }
