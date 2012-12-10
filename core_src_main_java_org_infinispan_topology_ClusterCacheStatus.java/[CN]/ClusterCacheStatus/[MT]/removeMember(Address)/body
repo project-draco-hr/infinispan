@@ -1,8 +1,12 @@
 {
 synchronized (this) {
-    if (!members.contains(leaver))     return false;
+    if (!members.contains(leaver)) {
+      if (trace)       log.tracef("Trying to remove node %s from cache %s, but it is not a member: " + "members = %s",leaver,cacheName,members);
+      return false;
+    }
     members=immutableRemove(members,leaver);
     joiners=immutableRemove(joiners,leaver);
+    if (trace)     log.tracef("Removed node %s from cache %s: members = %s, joiners = %s",leaver,cacheName,members,joiners);
     return true;
   }
 }

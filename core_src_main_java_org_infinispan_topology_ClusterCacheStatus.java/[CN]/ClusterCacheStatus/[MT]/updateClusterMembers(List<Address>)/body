@@ -1,8 +1,12 @@
 {
 synchronized (this) {
-    if (newClusterMembers.containsAll(members))     return false;
+    if (newClusterMembers.containsAll(members)) {
+      if (trace)       log.tracef("Cluster members updated for cache %s, no leavers detected: " + "cache members = %s",members,newClusterMembers);
+      return false;
+    }
     members=immutableRetainAll(members,newClusterMembers);
     joiners=immutableRetainAll(joiners,newClusterMembers);
+    if (trace)     log.tracef("Cluster members updated for cache %s: members = %s, joiners = %s",cacheName,members,joiners);
     return true;
   }
 }

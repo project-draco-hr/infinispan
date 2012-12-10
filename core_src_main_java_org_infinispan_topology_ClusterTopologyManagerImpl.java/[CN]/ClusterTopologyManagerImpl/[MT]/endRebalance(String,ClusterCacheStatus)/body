@@ -1,9 +1,12 @@
 {
-  CacheTopology currentTopology=cacheStatus.getCacheTopology();
-  int currentTopologyId=currentTopology.getTopologyId();
-  log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,currentTopologyId);
-  int newTopologyId=currentTopologyId + 1;
-  ConsistentHash newCurrentCH=currentTopology.getPendingCH();
-  CacheTopology newTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
-  cacheStatus.endRebalance(newTopology);
+synchronized (cacheStatus) {
+    CacheTopology currentTopology=cacheStatus.getCacheTopology();
+    int currentTopologyId=currentTopology.getTopologyId();
+    log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,currentTopologyId);
+    int newTopologyId=currentTopologyId + 1;
+    ConsistentHash newCurrentCH=currentTopology.getPendingCH();
+    CacheTopology newTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
+    cacheStatus.updateCacheTopology(newTopology);
+    cacheStatus.endRebalance();
+  }
 }

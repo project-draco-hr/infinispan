@@ -1,8 +1,12 @@
 {
 synchronized (this) {
     this.cacheTopology=newTopology;
-    if (newTopology.getCurrentCH() != null) {
-      joiners=immutableRemoveAll(joiners,newTopology.getCurrentCH().getMembers());
+    if (!members.containsAll(cacheTopology.getMembers())) {
+      throw new IllegalStateException(String.format("Trying to set a topology with invalid members " + "for cache %s: members = %s, topology = %s",cacheName,members,cacheTopology));
     }
+    if (newTopology.getCurrentCH() != null) {
+      joiners=immutableRemoveAll(members,newTopology.getCurrentCH().getMembers());
+    }
+    if (trace)     log.tracef("Cache %s topology updated: members = %s, joiners = %s, topology = %s",cacheName,members,joiners,cacheTopology);
   }
 }
