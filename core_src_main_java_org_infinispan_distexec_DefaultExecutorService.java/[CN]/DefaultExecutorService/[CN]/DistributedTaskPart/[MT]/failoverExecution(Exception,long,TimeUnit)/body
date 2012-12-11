@@ -1,5 +1,4 @@
 {
-  V response=null;
   final List<Address> executionCandidates=executionCandidates(getOwningTask());
   FailoverContext fc=new FailoverContext(){
     @Override public <K>List<K> inputKeys(){
@@ -11,20 +10,13 @@
     @Override public List<Address> executionCandidates(){
       return executionCandidates;
     }
-    @Override public Exception cause(){
+    @Override public Throwable cause(){
       return cause;
     }
   }
 ;
-  try {
-    Address target=getOwningTask().getTaskFailoverPolicy().failover(fc);
-    DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,getInputKeys(),target,failedOverCount);
-    part.execute();
-    response=part.get(timeout,unit);
-    if (response == null)     throw new ExecutionException("Failover execution failed",new Exception("Failover execution failed",cause));
-  }
- catch (  Exception e2) {
-    throw new ExecutionException("Failover execution failed",new Exception("Failover execution failed",e2));
-  }
-  return response;
+  Address target=getOwningTask().getTaskFailoverPolicy().failover(fc);
+  DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,getInputKeys(),target,failedOverCount);
+  part.execute();
+  return part.get(timeout,unit);
 }
