@@ -1,0 +1,20 @@
+{
+  log.info("Starting HBase cluster");
+  Configuration conf=HBaseConfiguration.create();
+  conf.setInt("hbase.master.assignment.timeoutmonitor.period",2000);
+  conf.setInt("hbase.master.assignment.timeoutmonitor.timeout",5000);
+  conf.setInt("hbase.master.info.port",masterPort.get());
+  conf.set("hbase.master.dns.interface","lo");
+  conf.set("hbase.regionserver.dns.interface","lo");
+  testUtil=new HBaseTestingUtility(conf);
+  try {
+    testUtil.startMiniCluster();
+    MiniHBaseCluster cluster=testUtil.getHBaseCluster();
+    log.info("Waiting for active/ready HBase master");
+    cluster.waitForActiveAndReadyMaster();
+    zooKeeperPort=testUtil.getConfiguration().getInt(HConstants.ZOOKEEPER_CLIENT_PORT,-1);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unable to start HBase cluster",e);
+  }
+}
