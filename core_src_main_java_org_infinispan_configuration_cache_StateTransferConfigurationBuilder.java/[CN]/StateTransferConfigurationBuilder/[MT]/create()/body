@@ -1,15 +1,26 @@
 {
   CacheMode cacheMode=getClusteringBuilder().cacheMode();
   boolean _fetchInMemoryState;
-  if ((cacheMode.isReplicated() || cacheMode.isDistributed()) && fetchInMemoryState == null) {
+  if (fetchInMemoryState != null) {
+    _fetchInMemoryState=fetchInMemoryState;
+  }
+ else   if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
     log.trace("Cache is distributed or replicated but state transfer was not defined, enabling it by default");
     _fetchInMemoryState=true;
-  }
- else   if (fetchInMemoryState != null) {
-    _fetchInMemoryState=fetchInMemoryState;
   }
  else {
     _fetchInMemoryState=false;
   }
-  return new StateTransferConfiguration(_fetchInMemoryState,fetchInMemoryState,timeout,chunkSize);
+  boolean _waitForInitialStateTransferToComplete;
+  if (waitForInitialStateTransferToComplete != null) {
+    _waitForInitialStateTransferToComplete=waitForInitialStateTransferToComplete;
+  }
+ else   if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
+    log.trace("Cache is distributed or replicated but waitForInitialStateTransferToComplete was not defined, enabling it by default");
+    _waitForInitialStateTransferToComplete=true;
+  }
+ else {
+    _waitForInitialStateTransferToComplete=false;
+  }
+  return new StateTransferConfiguration(_fetchInMemoryState,fetchInMemoryState,timeout,chunkSize,_waitForInitialStateTransferToComplete,waitForInitialStateTransferToComplete);
 }
