@@ -4,11 +4,14 @@
     for (    Object k : c.getAffectedKeys()) {
       if (ksl.performCheckOnKey(k)) {
         ClusteredRepeatableReadEntry entry=(ClusteredRepeatableReadEntry)context.lookupEntry(k);
+        if (entry == null) {
+          continue;
+        }
         if (!context.isOriginLocal()) {
           EntryVersion versionSeen=prepareCommand.getVersionsSeen().get(k);
           if (versionSeen != null)           entry.setVersion(versionSeen);
         }
-        if (entry.performWriteSkewCheck(dataContainer)) {
+        if (entry.performWriteSkewCheck(dataContainer,context)) {
           IncrementableEntryVersion newVersion=entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion)entry.getVersion());
           uv.put(k,newVersion);
         }

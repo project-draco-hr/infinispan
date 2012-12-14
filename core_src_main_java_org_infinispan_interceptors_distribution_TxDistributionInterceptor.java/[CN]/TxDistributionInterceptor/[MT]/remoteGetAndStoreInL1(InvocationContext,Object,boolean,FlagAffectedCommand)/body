@@ -1,6 +1,6 @@
 {
   DataLocality locality=dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(),key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
-  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key)) {
+  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || isStateTransferInProgressForKey(key)) {
     if (trace)     log.tracef("Doing a remote get for key %s",key);
     boolean acquireRemoteLock=false;
     if (ctx.isInTxScope()) {
@@ -12,6 +12,9 @@
       ((TxInvocationContext)ctx).addAffectedKey(key);
     }
     if (ice != null) {
+      if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+        ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getVersion());
+      }
       if (isL1CacheEnabled) {
         List<Address> readOwners=dm.getReadConsistentHash().locateOwners(key);
         List<Address> writeOwners=dm.getWriteConsistentHash().locateOwners(key);
