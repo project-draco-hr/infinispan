@@ -1,12 +1,15 @@
 {
   if (trace)   log.tracef("Received new CH %s for cache %s",cacheTopology.getWriteConsistentHash(),cacheName);
-  activeTopologyUpdates.incrementAndGet();
+  int numStartedTopologyUpdates=activeTopologyUpdates.incrementAndGet();
   if (isRebalance) {
     rebalanceInProgress.set(true);
   }
   final ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
+  if (numStartedTopologyUpdates == 1) {
+    updatedKeys=new ConcurrentHashSet<Object>();
+  }
   stateTransferLock.releaseExclusiveTopologyLock();
   stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
   try {

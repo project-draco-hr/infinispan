@@ -1,0 +1,21 @@
+{
+  if (entry == null) {
+    if (key != null && !isPutForStateTransfer && stateConsumer != null) {
+      stateConsumer.addUpdatedKey(key);
+    }
+    return false;
+  }
+  if (isPutForStateTransfer && stateConsumer.isKeyUpdated(key)) {
+    entry.rollback();
+    return false;
+  }
+  if (entry.isChanged()) {
+    log.tracef("About to commit entry %s",entry);
+    commitContextEntry(entry,ctx,skipOwnershipCheck);
+    if (!isPutForStateTransfer && stateConsumer != null) {
+      stateConsumer.addUpdatedKey(key);
+    }
+    return true;
+  }
+  return false;
+}

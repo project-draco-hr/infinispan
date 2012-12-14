@@ -7,16 +7,47 @@
     }
     log.tracef("Received keys %s for segment %d of cache %s from node %s",keys,segmentId,cacheName,sender);
   }
-  EnumSet<Flag> flags=EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING,IGNORE_RETURN_VALUES,SKIP_SHARED_CACHE_STORE,SKIP_OWNERSHIP_CHECK,SKIP_XSITE_BACKUP);
+  EnumSet<Flag> flags=EnumSet.of(PUT_FOR_STATE_TRANSFER,CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_OWNERSHIP_CHECK,SKIP_XSITE_BACKUP);
   for (  InternalCacheEntry e : cacheEntries) {
-    InvocationContext ctx=icc.createRemoteInvocationContext(sender);
     try {
+      InvocationContext ctx;
+      if (transactionManager != null) {
+        transactionManager.begin();
+        Transaction transaction=transactionManager.getTransaction();
+        ctx=icc.createInvocationContext(transaction);
+        ((TxInvocationContext)ctx).setImplicitTransaction(true);
+      }
+ else {
+        ctx=icc.createSingleKeyNonTxInvocationContext();
+      }
       PutKeyValueCommand put=useVersionedPut ? commandsFactory.buildVersionedPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),e.getVersion(),flags) : commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getLifespan(),e.getMaxIdle(),flags);
-      put.setPutIfAbsent(true);
-      interceptorChain.invoke(ctx,put);
+      boolean success=false;
+      try {
+        interceptorChain.invoke(ctx,put);
+        success=true;
+      }
+  finally {
+        if (ctx.isInTxScope()) {
+          if (success) {
+            ((LocalTransaction)((TxInvocationContext)ctx).getCacheTransaction()).setFromStateTransfer(true);
+            try {
+              transactionManager.commit();
+            }
+ catch (            Throwable ex) {
+              log.errorf(ex,"Could not commit transaction created by state transfer of key %s",e.getKey());
+              if (transactionManager.getTransaction() != null) {
+                transactionManager.rollback();
+              }
+            }
+          }
+ else {
+            transactionManager.rollback();
+          }
+        }
+      }
     }
  catch (    Exception ex) {
-      log.problemApplyingStateForKey(ex.getMessage(),e.getKey());
+      log.problemApplyingStateForKey(ex.getMessage(),e.getKey(),ex);
     }
   }
   log.debugf("Finished applying state for segment %d of cache %s",segmentId,cacheName);

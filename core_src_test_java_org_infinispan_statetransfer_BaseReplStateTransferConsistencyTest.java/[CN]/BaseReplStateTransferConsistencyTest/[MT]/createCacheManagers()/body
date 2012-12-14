@@ -1,0 +1,14 @@
+{
+  cacheConfigBuilder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true,true);
+  cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup()).syncCommitPhase(true).syncRollbackPhase(true);
+  if (isOptimistic) {
+    cacheConfigBuilder.transaction().lockingMode(LockingMode.OPTIMISTIC).locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ).versioning().enable().scheme(VersioningScheme.SIMPLE);
+  }
+ else {
+    cacheConfigBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+  }
+  cacheConfigBuilder.clustering().l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+  cacheConfigBuilder.clustering().hash().numSegments(10).stateTransfer().fetchInMemoryState(true).waitForInitialStateTransferToComplete(false);
+  createCluster(cacheConfigBuilder,2);
+  waitForClusterToForm();
+}
