@@ -8,7 +8,12 @@
   conf.set("hbase.regionserver.dns.interface","lo");
   testUtil=new HBaseTestingUtility(conf);
   try {
-    testUtil.startMiniCluster();
+    try {
+      testUtil.startMiniCluster();
+    }
+ catch (    NullPointerException e) {
+      throw new IllegalStateException("Hadoop expects default umask " + "to be 022, seems like your system has a different one",e);
+    }
     MiniHBaseCluster cluster=testUtil.getHBaseCluster();
     log.info("Waiting for active/ready HBase master");
     cluster.waitForActiveAndReadyMaster();
