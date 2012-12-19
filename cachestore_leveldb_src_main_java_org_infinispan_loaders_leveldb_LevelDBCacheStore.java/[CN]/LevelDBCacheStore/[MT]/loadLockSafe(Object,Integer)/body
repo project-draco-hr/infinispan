@@ -1,0 +1,13 @@
+{
+  try {
+    InternalCacheEntry ice=(InternalCacheEntry)unmarshall(db.get(marshall(key)),key);
+    if (ice != null && ice.isExpired(System.currentTimeMillis())) {
+      removeLockSafe(key,lockingKey);
+      return null;
+    }
+    return ice;
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+}

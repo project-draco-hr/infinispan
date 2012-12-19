@@ -1,0 +1,23 @@
+{
+  Set<Object> keys=new HashSet<Object>();
+  DBIterator it=db.iterator(new ReadOptions().fillCache(false));
+  try {
+    for (it.seekToFirst(); it.hasNext(); ) {
+      Map.Entry<byte[],byte[]> entry=it.next();
+      Object key=unmarshall(entry.getKey());
+      if (keysToExclude == null || keysToExclude.isEmpty() || !keysToExclude.contains(key))       keys.add(key);
+    }
+    return keys;
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    try {
+      it.close();
+    }
+ catch (    IOException e) {
+      log.warn("unable to close iterator",e);
+    }
+  }
+}

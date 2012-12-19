@@ -1,0 +1,22 @@
+{
+  Set<InternalCacheEntry> entries=new HashSet<InternalCacheEntry>();
+  DBIterator it=db.iterator(new ReadOptions().fillCache(false));
+  try {
+    for (it.seekToFirst(); it.hasNext(); ) {
+      Map.Entry<byte[],byte[]> entry=it.next();
+      entries.add(unmarshall(entry));
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    try {
+      it.close();
+    }
+ catch (    IOException e) {
+      log.warn("unable to close iterator",e);
+    }
+  }
+  return entries;
+}
