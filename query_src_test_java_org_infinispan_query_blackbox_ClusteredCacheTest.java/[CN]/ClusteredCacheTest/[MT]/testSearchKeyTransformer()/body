@@ -1,0 +1,28 @@
+{
+  Cache cache1=caches().get(0);
+  Cache cache2=caches().get(1);
+  SearchManager manager=Search.getSearchManager(cache1);
+  SearchManager manager1=Search.getSearchManager(cache2);
+  manager.registerKeyTransformer(CustomKey3.class,CustomKey3Transformer.class);
+  manager1.registerKeyTransformer(CustomKey3.class,CustomKey3Transformer.class);
+  prepareTestedObjects();
+  TransactionManager transactionManager=cache1.getAdvancedCache().getTransactionManager();
+  CustomKey3 customeKey1=new CustomKey3(key1);
+  CustomKey3 customeKey2=new CustomKey3(key2);
+  CustomKey3 customeKey3=new CustomKey3(key3);
+  if (transactionsEnabled())   transactionManager.begin();
+  cache1.put(customeKey1,person1);
+  cache1.put(customeKey2,person2);
+  cache2.put(customeKey3,person3);
+  if (transactionsEnabled())   transactionManager.commit();
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("Eats");
+  CacheQuery cacheQuery=manager.getQuery(luceneQuery);
+  ResultIterator found=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+  int counter=0;
+  while (found.hasNext()) {
+    found.next();
+    counter++;
+  }
+  AssertJUnit.assertEquals(2,counter);
+}

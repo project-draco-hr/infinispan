@@ -1,0 +1,12 @@
+{
+  loadTestingData();
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("Eats");
+  CacheQuery cacheQuery=Search.getSearchManager(cache).getQuery(luceneQuery);
+  int matchCounter=0;
+  for (int i=0; i < 4; i++) {
+    Explanation found=cacheQuery.explain(i);
+    if (found.isMatch())     matchCounter++;
+  }
+  AssertJUnit.assertEquals(3,matchCounter);
+}

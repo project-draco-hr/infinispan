@@ -1,0 +1,15 @@
+{
+  prepareTestData();
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("eats");
+  CacheQuery query=Search.getSearchManager(cache1).getQuery(luceneQuery);
+  FullTextFilter filter=query.enableFullTextFilter("personFilter");
+  filter.setParameter("blurbText","cheese");
+  AssertJUnit.assertEquals(1,query.getResultSize());
+  List result=query.list();
+  Person person=(Person)result.get(0);
+  AssertJUnit.assertEquals("MiniGoat",person.getName());
+  AssertJUnit.assertEquals("Eats cheese",person.getBlurb());
+  query.disableFullTextFilter("personFilter");
+  AssertJUnit.assertEquals(2,query.getResultSize());
+}

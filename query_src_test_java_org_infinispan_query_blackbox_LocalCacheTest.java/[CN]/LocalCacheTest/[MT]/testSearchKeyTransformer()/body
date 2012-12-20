@@ -1,0 +1,15 @@
+{
+  SearchManager manager=Search.getSearchManager(cache);
+  manager.registerKeyTransformer(CustomKey3.class,CustomKey3Transformer.class);
+  loadTestingDataWithCustomKey();
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("Eats");
+  CacheQuery cacheQuery=manager.getQuery(luceneQuery);
+  ResultIterator found=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+  int counter=0;
+  while (found.hasNext()) {
+    found.next();
+    counter++;
+  }
+  AssertJUnit.assertEquals(3,counter);
+}
