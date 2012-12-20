@@ -1,0 +1,11 @@
+{
+  CacheMode cacheMode=cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode();
+  boolean keysAreLocal=!cacheMode.isClustered() || cacheMode.isReplicated();
+  if (keysAreLocal || scope == LOCAL_SCOPE) {
+    return cache.keySet();
+  }
+ else {
+    MapReduceTask<ByteArrayKey,CacheValue,ByteArrayKey,Object> task=new MapReduceTask<ByteArrayKey,CacheValue,ByteArrayKey,Object>(cache).mappedWith(new KeyMapper()).reducedWith(new KeyReducer());
+    return task.execute(new KeysCollator());
+  }
+}
