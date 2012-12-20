@@ -5,7 +5,7 @@
   Configuration dcc=cacheManager.getDefaultCacheConfiguration();
   if (isBackupForRemoteCache(remoteSite,remoteCache,dcc,EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
     Cache<Object,Object> cache=cacheManager.getCache();
-    backupReceivers.putIfAbsent(toLookFor,new BackupReceiver(cache));
+    backupReceivers.putIfAbsent(toLookFor,new BackupReceiverImpl(cache));
     return backupReceivers.get(toLookFor);
   }
   Set<String> cacheNames=cacheManager.getCacheNames();
@@ -13,12 +13,12 @@
     Configuration cacheConfiguration=cacheManager.getCacheConfiguration(name);
     if (isBackupForRemoteCache(remoteSite,remoteCache,cacheConfiguration,name)) {
       Cache<Object,Object> cache=cacheManager.getCache(name);
-      backupReceivers.putIfAbsent(toLookFor,new BackupReceiver(cache));
+      backupReceivers.putIfAbsent(toLookFor,new BackupReceiverImpl(cache));
       return backupReceivers.get(toLookFor);
     }
   }
   log.debugf("Did not find any backup explicitly configured backup cache for remote cache/site: %s/%s. Using %s",remoteSite,remoteCache,remoteCache);
   Cache<Object,Object> cache=cacheManager.getCache(remoteCache);
-  backupReceivers.putIfAbsent(toLookFor,new BackupReceiver(cache));
+  backupReceivers.putIfAbsent(toLookFor,new BackupReceiverImpl(cache));
   return backupReceivers.get(toLookFor);
 }
