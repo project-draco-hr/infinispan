@@ -1,0 +1,33 @@
+{
+  cache.put(1,"v1");
+  cache.put(2,"v1");
+  cache.put(3,"v1");
+  final CyclicBarrier after=new CyclicBarrier(2);
+  final CountDownLatch afterContinue=new CountDownLatch(1);
+  final CountDownLatch before=new CountDownLatch(1);
+  cache.addListener(new CacheClearListener(before,afterContinue,after));
+  assertEquals("v1",cache.get(1));
+  assertEquals("v1",cache.get(2));
+  assertEquals("v1",cache.get(3));
+  Future<Void> ignore=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.clear();
+      return null;
+    }
+  }
+);
+  boolean signalled=before.await(30,TimeUnit.SECONDS);
+  assertTrue("Timed out while waiting for before listener notification",signalled);
+  assertEquals("v1",cache.get(1));
+  assertEquals("v1",cache.get(2));
+  assertEquals("v1",cache.get(3));
+  afterContinue.countDown();
+  after.await(30,TimeUnit.SECONDS);
+  assertEquals(null,cache.get(1));
+  after.await(30,TimeUnit.SECONDS);
+  assertEquals(null,cache.get(2));
+  after.await(30,TimeUnit.SECONDS);
+  assertEquals(null,cache.get(3));
+  assertTrue(cache.isEmpty());
+  ignore.get(5,TimeUnit.SECONDS);
+}

@@ -1,0 +1,18 @@
+{
+  cache.put(1,"v1");
+  final CountDownLatch after=new CountDownLatch(1);
+  Object listener=isCacheEntriesEvicted ? new EntriesEvictedListener(after) : new EntryListener(null,null,after);
+  cache.addListener(listener);
+  assertEquals("v1",cache.get(1));
+  Future<Void> ignore=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.evict(1);
+      return null;
+    }
+  }
+);
+  boolean signalled=after.await(30,TimeUnit.SECONDS);
+  assertTrue("Timed out while waiting for after listener notification",signalled);
+  assertEquals(null,cache.get(1));
+  ignore.get(5,TimeUnit.SECONDS);
+}

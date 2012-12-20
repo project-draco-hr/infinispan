@@ -1,2 +1,12 @@
 {
+  Cache<String,String> cache=cache(0,"timestamps");
+  cache.addListener(new CacheListener());
+  try {
+    cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).put("k","v");
+    fail("Should have failed with an exception");
+  }
+ catch (  CacheException ce) {
+    Throwable cause=ce.getCause();
+    assertTrue("Unexpected exception cause " + cause,cause instanceof RollbackException);
+  }
 }

@@ -1,0 +1,17 @@
+{
+  if (!e.isPre()) {
+    log.info("Cache entry touched, now check in different thread");
+    after.countDown();
+    TestingUtil.sleepThread(1000);
+  }
+ else {
+    before.countDown();
+    try {
+      boolean signalled=afterContinue.await(30,TimeUnit.SECONDS);
+      assertTrue("Timed out while waiting for post listener event to execute",signalled);
+    }
+ catch (    InterruptedException e1) {
+      Thread.currentThread().interrupt();
+    }
+  }
+}

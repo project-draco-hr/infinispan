@@ -1,0 +1,28 @@
+{
+  if (!e.isPre()) {
+    log.infof("Cache entry removed, event is: %s",e);
+    try {
+      after.await(30,TimeUnit.SECONDS);
+    }
+ catch (    InterruptedException e1) {
+      Thread.currentThread().interrupt();
+    }
+catch (    BrokenBarrierException e1) {
+      throw new IllegalStateException(e1);
+    }
+catch (    TimeoutException e1) {
+      throw new IllegalStateException(e1);
+    }
+    TestingUtil.sleepThread(1000);
+  }
+ else {
+    before.countDown();
+    try {
+      boolean signalled=afterContinue.await(30,TimeUnit.SECONDS);
+      assertTrue("Timed out while waiting for post listener event to execute",signalled);
+    }
+ catch (    InterruptedException e1) {
+      Thread.currentThread().interrupt();
+    }
+  }
+}

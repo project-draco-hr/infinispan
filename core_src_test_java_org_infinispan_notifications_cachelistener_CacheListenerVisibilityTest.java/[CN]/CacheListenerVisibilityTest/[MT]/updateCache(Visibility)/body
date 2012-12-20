@@ -1,0 +1,47 @@
+{
+  final String key="k-" + visibility;
+  final String value="k-" + visibility;
+  final CountDownLatch after=new CountDownLatch(1);
+  final CountDownLatch afterContinue=new CountDownLatch(1);
+  final CountDownLatch before=new CountDownLatch(1);
+  cache.addListener(new EntryListener(before,afterContinue,after));
+switch (visibility) {
+case SIZE:
+    assertEquals(0,cache.size());
+  break;
+case GET:
+assertNull(cache.get(key));
+break;
+}
+Future<Void> ignore=fork(new Callable<Void>(){
+@Override public Void call() throws Exception {
+cache.put(key,value);
+return null;
+}
+}
+);
+boolean signalled=before.await(30,TimeUnit.SECONDS);
+assertTrue("Timed out while waiting for before listener notification",signalled);
+switch (visibility) {
+case SIZE:
+assertEquals(0,cache.size());
+break;
+case GET:
+assertNull(cache.get(key));
+break;
+}
+afterContinue.countDown();
+signalled=after.await(30,TimeUnit.SECONDS);
+assertTrue("Timed out while waiting for after listener notification",signalled);
+switch (visibility) {
+case SIZE:
+assertEquals(1,cache.size());
+break;
+case GET:
+Object retVal=cache.get(key);
+assertNotNull(retVal);
+assertEquals(retVal,value);
+break;
+}
+ignore.get(5,TimeUnit.SECONDS);
+}
