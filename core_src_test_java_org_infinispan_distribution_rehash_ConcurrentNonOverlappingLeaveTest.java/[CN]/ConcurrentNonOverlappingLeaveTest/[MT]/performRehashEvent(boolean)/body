@@ -1,8 +1,19 @@
 {
   l1=addressOf(c2);
   l2=addressOf(c4);
+  List<Address> killedNodes=Arrays.asList(l1,l2);
   CacheContainer cm2=c2.getCacheManager();
   CacheContainer cm4=c4.getCacheManager();
+  Set<Integer> overlappingSegments=new HashSet<Integer>();
+  ConsistentHash ch=getConsistentHash(c1);
+  for (int segment=0; segment < ch.getNumSegments(); segment++) {
+    List<Address> owners=ch.locateOwnersForSegment(segment);
+    if (owners.containsAll(killedNodes)) {
+      overlappingSegments.add(segment);
+    }
+  }
+  lostSegments=overlappingSegments;
+  log.tracef("These segments will be lost after killing nodes %s: %s",killedNodes,lostSegments);
   cacheManagers.removeAll(Arrays.asList(cm2,cm4));
   caches.removeAll(Arrays.asList(c2,c4));
   TestingUtil.killCacheManagers(cm2,cm4);
