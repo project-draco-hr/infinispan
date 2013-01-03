@@ -1,19 +1,30 @@
 {
   JdbcStringBasedCacheStoreConfigurationBuilder builder=new JdbcStringBasedCacheStoreConfigurationBuilder(loadersBuilder);
-  parseCommonJdbcStoreAttributes(reader,builder);
-  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-    Element element=Element.forName(reader.getLocalName());
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case KEY_TO_STRING_MAPPER:
+      builder.key2StringMapper(value);
+    break;
+default :
+  Parser52.parseCommonStoreAttributes(reader,i,builder);
+break;
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
 switch (element) {
 case STRING_KEYED_TABLE:
 {
-        parseTable(reader,builder.table());
-        break;
-      }
+parseTable(reader,builder.table());
+break;
+}
 default :
 {
-      parseCommonJdbcStoreElements(reader,element,builder);
-      break;
-    }
+parseCommonJdbcStoreElements(reader,element,builder);
+break;
+}
 }
 }
 loadersBuilder.addStore(builder);

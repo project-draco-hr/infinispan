@@ -1,2 +1,11 @@
 {
+  String config=INFINISPAN_START_TAG + "   <default>\n" + "     <loaders>\n"+ "       <binaryKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:5.2\" ignoreModifications=\"true\">\n"+ "         <simpleConnection connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" />\n"+ "         <binaryKeyedTable prefix=\"bucket\" fetchSize=\"34\" batchSize=\"99\">\n"+ "           <idColumn name=\"id\" type=\"BINARY\" />\n"+ "           <dataColumn name=\"datum\" type=\"BINARY\" />\n"+ "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n"+ "         </binaryKeyedTable>\n"+ "         <singletonStore enabled=\"true\" />\n"+ "       </binaryKeyedJdbcStore>\n"+ "     </loaders>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  JdbcBinaryCacheStoreConfiguration store=(JdbcBinaryCacheStoreConfiguration)buildCacheManagerWithCacheStore(config);
+  assertTrue(store.ignoreModifications());
+  assertEquals("bucket",store.table().tableNamePrefix());
+  assertEquals(99,store.table().batchSize());
+  assertEquals(34,store.table().fetchSize());
+  assertEquals("BINARY",store.table().dataColumnType());
+  assertEquals("version",store.table().timestampColumnName());
+  assertTrue(store.singletonStore().enabled());
 }
