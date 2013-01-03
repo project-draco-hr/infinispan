@@ -1,5 +1,6 @@
 {
 synchronized (this) {
+    taskQueue.remove(inboundTransfer);
     List<InboundTransferTask> transfers=transfersBySource.get(inboundTransfer.getSource());
     if (transfers != null) {
       if (transfers.remove(inboundTransfer)) {
@@ -7,7 +8,9 @@ synchronized (this) {
           transfersBySource.remove(inboundTransfer.getSource());
         }
         transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
+        return true;
       }
     }
   }
+  return false;
 }

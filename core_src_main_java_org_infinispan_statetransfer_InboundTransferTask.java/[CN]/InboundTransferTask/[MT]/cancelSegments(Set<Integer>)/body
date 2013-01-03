@@ -1,4 +1,7 @@
 {
+  if (isCancelled) {
+    throw new IllegalArgumentException("The task is already cancelled.");
+  }
   if (cancelledSegments.retainAll(segments)) {
     throw new IllegalArgumentException("Some of the specified segments cannot be cancelled because they were not previously requested");
   }
@@ -10,6 +13,6 @@
   StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.CANCEL_STATE_TRANSFER,rpcManager.getAddress(),topologyId,cancelledSegments);
   rpcManager.invokeRemotely(Collections.singleton(source),cmd,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout);
   if (isCancelled) {
-    stateConsumer.onTaskCompletion(this);
+    notifyCompletion();
   }
 }

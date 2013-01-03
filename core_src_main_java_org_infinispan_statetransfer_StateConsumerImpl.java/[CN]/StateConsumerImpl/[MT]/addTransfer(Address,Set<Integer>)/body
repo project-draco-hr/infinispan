@@ -1,0 +1,22 @@
+{
+synchronized (this) {
+    segmentsFromSource.removeAll(transfersBySegment.keySet());
+    if (!segmentsFromSource.isEmpty()) {
+      InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
+      for (      int segmentId : segmentsFromSource) {
+        transfersBySegment.put(segmentId,inboundTransfer);
+      }
+      List<InboundTransferTask> inboundTransfers=transfersBySource.get(inboundTransfer.getSource());
+      if (inboundTransfers == null) {
+        inboundTransfers=new ArrayList<InboundTransferTask>();
+        transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
+      }
+      inboundTransfers.add(inboundTransfer);
+      taskQueue.add(inboundTransfer);
+      return inboundTransfer;
+    }
+ else {
+      return null;
+    }
+  }
+}

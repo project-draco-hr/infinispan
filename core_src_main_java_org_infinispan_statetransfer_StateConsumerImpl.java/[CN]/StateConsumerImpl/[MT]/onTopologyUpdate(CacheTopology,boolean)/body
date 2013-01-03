@@ -13,49 +13,51 @@
   stateTransferLock.releaseExclusiveTopologyLock();
   stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
   try {
-    Set<Integer> addedSegments;
-    if (previousCh == null) {
-      addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
-      if (trace) {
-        log.tracef("On cache %s we have: added segments: %s",cacheName,addedSegments);
+    if (isTransactional || isFetchEnabled) {
+      Set<Integer> addedSegments;
+      if (previousCh == null) {
+        addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+        if (trace) {
+          log.tracef("On cache %s we have: added segments: %s",cacheName,addedSegments);
+        }
       }
-    }
  else {
-      Set<Integer> previousSegments=getOwnedSegments(previousCh);
-      Set<Integer> newSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
-      Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
-      removedSegments.removeAll(newSegments);
-      addedSegments=new HashSet<Integer>(newSegments);
-      addedSegments.removeAll(previousSegments);
-      if (trace) {
-        log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
-      }
-      cancelTransfers(removedSegments);
-      invalidateSegments(newSegments,removedSegments);
-      Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+        Set<Integer> previousSegments=getOwnedSegments(previousCh);
+        Set<Integer> newSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+        Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
+        removedSegments.removeAll(newSegments);
+        addedSegments=new HashSet<Integer>(newSegments);
+        addedSegments.removeAll(previousSegments);
+        if (trace) {
+          log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
+        }
+        cancelTransfers(removedSegments);
+        invalidateSegments(newSegments,removedSegments);
+        Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
 synchronized (this) {
-        for (Iterator<Address> it=transfersBySource.keySet().iterator(); it.hasNext(); ) {
-          Address source=it.next();
-          if (!members.contains(source)) {
-            if (trace) {
-              log.tracef("Removing inbound transfers from source %s for cache %s",source,cacheName);
-            }
-            List<InboundTransferTask> inboundTransfers=transfersBySource.get(source);
-            it.remove();
-            for (            InboundTransferTask inboundTransfer : inboundTransfers) {
+          for (Iterator<Address> it=transfersBySource.keySet().iterator(); it.hasNext(); ) {
+            Address source=it.next();
+            if (!members.contains(source)) {
               if (trace) {
-                log.tracef("Removing inbound transfers for segments %s from source %s for cache %s",inboundTransfer.getSegments(),source,cacheName);
+                log.tracef("Removing inbound transfers from source %s for cache %s",source,cacheName);
               }
-              transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
-              addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
+              List<InboundTransferTask> inboundTransfers=transfersBySource.get(source);
+              it.remove();
+              for (              InboundTransferTask inboundTransfer : inboundTransfers) {
+                if (trace) {
+                  log.tracef("Removing inbound transfers for segments %s from source %s for cache %s",inboundTransfer.getSegments(),source,cacheName);
+                }
+                transfersBySegment.keySet().removeAll(inboundTransfer.getSegments());
+                addedSegments.addAll(inboundTransfer.getUnfinishedSegments());
+              }
             }
           }
+          addedSegments.removeAll(transfersBySegment.keySet());
         }
-        addedSegments.removeAll(transfersBySegment.keySet());
       }
-    }
-    if (!addedSegments.isEmpty()) {
-      addTransfers(addedSegments);
+      if (!addedSegments.isEmpty()) {
+        addTransfers(addedSegments);
+      }
     }
   }
   finally {

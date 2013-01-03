@@ -1,0 +1,28 @@
+{
+  findSources(segments,sources,excludedSources);
+  boolean seenFailures=false;
+  while (true) {
+    Set<Integer> failedSegments=new HashSet<Integer>();
+    for (    Map.Entry<Address,Set<Integer>> e : sources.entrySet()) {
+      Address source=e.getKey();
+      Set<Integer> segmentsFromSource=e.getValue();
+      List<TransactionInfo> transactions=getTransactions(source,segmentsFromSource,cacheTopology.getTopologyId());
+      if (transactions != null) {
+        applyTransactions(source,transactions);
+      }
+ else {
+        failedSegments.addAll(segmentsFromSource);
+        excludedSources.add(source);
+      }
+    }
+    if (failedSegments.isEmpty()) {
+      break;
+    }
+    seenFailures=true;
+    sources.clear();
+    findSources(failedSegments,sources,excludedSources);
+  }
+  if (seenFailures) {
+    sources.clear();
+  }
+}

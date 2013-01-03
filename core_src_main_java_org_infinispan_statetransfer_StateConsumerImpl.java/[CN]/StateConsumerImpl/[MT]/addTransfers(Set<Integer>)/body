@@ -1,72 +1,12 @@
 {
   log.debugf("Adding inbound state transfer for segments %s of cache %s",segments,cacheName);
-  Set<Integer> segmentsToProcess=new HashSet<Integer>(segments);
-  Set<Address> faultysources=new HashSet<Address>();
-  for (Iterator<Integer> it=segmentsToProcess.iterator(); it.hasNext(); ) {
-    Integer segmentId=it.next();
-    Address source=pickSourceOwner(segmentId,faultysources);
-    if (source == null) {
-      it.remove();
-    }
+  Set<Address> excludedSources=new HashSet<Address>();
+  Map<Address,Set<Integer>> sources=new HashMap<Address,Set<Integer>>();
+  if (isTransactional) {
+    requestTransactions(segments,sources,excludedSources);
   }
-  while (!segmentsToProcess.isEmpty()) {
-    Map<Address,Set<Integer>> segmentsBySource=new HashMap<Address,Set<Integer>>();
-    for (    int segmentId : segmentsToProcess) {
-synchronized (this) {
-        if (transfersBySegment.containsKey(segmentId)) {
-          continue;
-        }
-      }
-      Address source=pickSourceOwner(segmentId,faultysources);
-      if (source != null) {
-        Set<Integer> segmentsFromSource=segmentsBySource.get(source);
-        if (segmentsFromSource == null) {
-          segmentsFromSource=new HashSet<Integer>();
-          segmentsBySource.put(source,segmentsFromSource);
-        }
-        segmentsFromSource.add(segmentId);
-      }
-    }
-    Set<Integer> failedSegments=new HashSet<Integer>();
-    for (    Address source : segmentsBySource.keySet()) {
-      Set<Integer> segmentsFromSource=segmentsBySource.get(source);
-      InboundTransferTask inboundTransfer;
-synchronized (this) {
-        segmentsFromSource.removeAll(transfersBySegment.keySet());
-        if (segmentsFromSource.isEmpty()) {
-          continue;
-        }
-        inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
-        for (        int segmentId : segmentsFromSource) {
-          transfersBySegment.put(segmentId,inboundTransfer);
-        }
-        List<InboundTransferTask> inboundTransfers=transfersBySource.get(inboundTransfer.getSource());
-        if (inboundTransfers == null) {
-          inboundTransfers=new ArrayList<InboundTransferTask>();
-          transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
-        }
-        inboundTransfers.add(inboundTransfer);
-      }
-      if (configuration.transaction().transactionMode().isTransactional()) {
-        if (!inboundTransfer.requestTransactions()) {
-          failedSegments.addAll(segmentsFromSource);
-          faultysources.add(source);
-          removeTransfer(inboundTransfer);
-          continue;
-        }
-      }
-      if (fetchEnabled) {
-        if (!inboundTransfer.requestSegments()) {
-          failedSegments.addAll(segmentsFromSource);
-          faultysources.add(source);
-          removeTransfer(inboundTransfer);
-        }
-      }
- else {
-        removeTransfer(inboundTransfer);
-      }
-    }
-    segmentsToProcess=failedSegments;
+  if (isFetchEnabled) {
+    requestSegments(segments,sources,excludedSources);
   }
   log.debugf("Finished adding inbound state transfer for segments %s of cache %s",segments,cacheName);
 }

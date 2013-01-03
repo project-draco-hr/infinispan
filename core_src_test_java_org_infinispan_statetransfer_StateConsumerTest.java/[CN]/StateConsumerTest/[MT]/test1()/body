@@ -18,10 +18,16 @@
   log.debug(ch2);
   Cache cache=mock(Cache.class);
   when(cache.getName()).thenReturn("testCache");
-  StateProvider stateProvider=mock(StateProvider.class);
+  ThreadFactory threadFactory=new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      String name="PooledExecutorThread-" + getClass().getSimpleName() + "-"+ r.hashCode();
+      return new Thread(r,name);
+    }
+  }
+;
+  ExecutorService pooledExecutorService=new ThreadPoolExecutor(10,20,0L,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(),threadFactory,new ThreadPoolExecutor.CallerRunsPolicy());
   StateTransferManager stateTransferManager=mock(StateTransferManager.class);
   CacheNotifier cacheNotifier=mock(CacheNotifier.class);
-  ExecutorService mockExecutorService=mock(ExecutorService.class);
   RpcManager rpcManager=mock(RpcManager.class);
   Transport transport=mock(Transport.class);
   CommandsFactory commandsFactory=mock(CommandsFactory.class);
@@ -31,12 +37,6 @@
   StateTransferLock stateTransferLock=mock(StateTransferLock.class);
   InterceptorChain interceptorChain=mock(InterceptorChain.class);
   InvocationContextContainer icc=mock(InvocationContextContainer.class);
-  when(mockExecutorService.submit(any(Runnable.class))).thenAnswer(new Answer<Future<?>>(){
-    @Override public Future<?> answer(    InvocationOnMock invocation){
-      return null;
-    }
-  }
-);
   when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class),any(Address.class),anyInt(),any(Set.class))).thenAnswer(new Answer<StateRequestCommand>(){
     @Override public StateRequestCommand answer(    InvocationOnMock invocation){
       return new StateRequestCommand("cache1",(StateRequestCommand.Type)invocation.getArguments()[0],(Address)invocation.getArguments()[1],(Integer)invocation.getArguments()[2],(Set)invocation.getArguments()[3]);
@@ -70,7 +70,7 @@
   }
 );
   StateConsumerImpl stateConsumer=new StateConsumerImpl();
-  stateConsumer.init(cache,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock);
+  stateConsumer.init(cache,pooledExecutorService,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock);
   stateConsumer.start();
   final List<InternalCacheEntry> cacheEntries=new ArrayList<InternalCacheEntry>();
   Object key1=new TestKey("key1",0,ch1);

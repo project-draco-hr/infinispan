@@ -1,0 +1,61 @@
+{
+  if (isTransferThreadRunning.compareAndSet(false,true)) {
+    executorService.submit(new Runnable(){
+      @Override public void run(){
+        try {
+          while (true) {
+            List<InboundTransferTask> failedTasks=new ArrayList<InboundTransferTask>();
+            while (true) {
+              InboundTransferTask task;
+              try {
+                task=taskQueue.pollFirst(1,TimeUnit.SECONDS);
+                if (task == null) {
+                  break;
+                }
+              }
+ catch (              InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+              }
+              if (!task.requestSegments()) {
+                failedTasks.add(task);
+              }
+ else {
+                try {
+                  task.awaitCompletion();
+                }
+ catch (                InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  return;
+                }
+              }
+            }
+            if (failedTasks.isEmpty()) {
+              break;
+            }
+synchronized (StateConsumerImpl.this) {
+              Set<Integer> failedSegments=new HashSet<Integer>();
+              for (              InboundTransferTask task : failedTasks) {
+                if (removeTransfer(task)) {
+                  excludedSources.add(task.getSource());
+                  failedSegments.addAll(task.getSegments());
+                }
+              }
+              failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
+              failedSegments.removeAll(getOwnedSegments(cacheTopology.getReadConsistentHash()));
+              Map<Address,Set<Integer>> sources=new HashMap<Address,Set<Integer>>();
+              findSources(failedSegments,sources,excludedSources);
+              for (              Map.Entry<Address,Set<Integer>> e : sources.entrySet()) {
+                addTransfer(e.getKey(),e.getValue());
+              }
+            }
+          }
+        }
+  finally {
+          isTransferThreadRunning.set(false);
+        }
+      }
+    }
+);
+  }
+}
