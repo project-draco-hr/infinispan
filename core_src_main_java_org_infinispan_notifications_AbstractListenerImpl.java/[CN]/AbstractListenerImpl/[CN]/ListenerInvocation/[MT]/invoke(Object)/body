@@ -1,6 +1,10 @@
 {
   Runnable r=new Runnable(){
     @Override public void run(){
+      ClassLoader contextClassLoader=null;
+      if (classLoader != null) {
+        contextClassLoader=setContextClassLoader(classLoader);
+      }
       try {
         method.invoke(target,event);
       }
@@ -16,6 +20,11 @@
 catch (      IllegalAccessException exception) {
         getLog().unableToInvokeListenerMethod(method,target,exception);
         removeListener(target);
+      }
+ finally {
+        if (classLoader != null) {
+          setContextClassLoader(contextClassLoader);
+        }
       }
     }
   }
