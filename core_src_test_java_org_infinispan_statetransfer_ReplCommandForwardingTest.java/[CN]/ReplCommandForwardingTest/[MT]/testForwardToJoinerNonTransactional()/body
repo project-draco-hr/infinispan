@@ -1,0 +1,45 @@
+{
+  EmbeddedCacheManager cm1=addClusterEnabledCacheManager(buildConfig(false));
+  final Cache<Object,Object> c1=cm1.getCache();
+  DelayInterceptor di1=findInterceptor(c1,DelayInterceptor.class);
+  EmbeddedCacheManager cm2=addClusterEnabledCacheManager(buildConfig(false));
+  Cache<Object,Object> c2=cm2.getCache();
+  DelayInterceptor di2=findInterceptor(c2,DelayInterceptor.class);
+  waitForStateTransfer(2,c1,c2);
+  Future<Object> f=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      log.tracef("Initiating a put command on %s",c1);
+      c1.put("k","v");
+      return null;
+    }
+  }
+);
+  EmbeddedCacheManager cm3=addClusterEnabledCacheManager(buildConfig(false));
+  Cache<Object,Object> c3=cm3.getCache();
+  DelayInterceptor di3=findInterceptor(c3,DelayInterceptor.class);
+  waitForStateTransfer(4,c1,c2,c3);
+  log.tracef("Forwarding the command from %s",c2);
+  di2.unblock();
+  Thread.sleep(1000);
+  di1.unblock();
+  di2.unblock();
+  EmbeddedCacheManager cm4=addClusterEnabledCacheManager(buildConfig(false));
+  Cache<Object,Object> c4=cm4.getCache();
+  DelayInterceptor di4=findInterceptor(c4,DelayInterceptor.class);
+  waitForStateTransfer(6,c1,c2,c3,c4);
+  log.tracef("Forwarding the command from %s",c3);
+  di3.unblock();
+  di1.unblock();
+  di4.unblock();
+  log.tracef("Forwarding the command from %s for a second time",c3);
+  di3.unblock();
+  di2.unblock();
+  di4.unblock();
+  log.tracef("Waiting for the put command to finish on %s",c1);
+  f.get(10,TimeUnit.SECONDS);
+  log.tracef("Put command finished on %s",c1);
+  assertEquals(di1.getCounter(),2);
+  assertEquals(di2.getCounter(),3);
+  assertEquals(di3.getCounter(),2);
+  assertEquals(di4.getCounter(),2);
+}

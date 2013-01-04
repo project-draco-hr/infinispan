@@ -1,0 +1,10 @@
+{
+  Object result=super.visitPrepareCommand(ctx,command);
+  if (!ctx.isOriginLocal() || !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) {
+    log.tracef("Delaying command %s",command);
+    counter.incrementAndGet();
+    Object pollResult=barrier.poll(3,TimeUnit.SECONDS);
+    assertNotNull(pollResult,"Timed out waiting for unblock() call");
+  }
+  return result;
+}
