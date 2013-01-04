@@ -1,10 +1,11 @@
 {
-  List<T> matchingLoaders=new ArrayList<T>();
+  Set<T> matchingLoaders=new LinkedHashSet<T>();
   for (  CacheStore cs : stores.keySet()) {
-    if (loaderClass.isInstance(cs))     matchingLoaders.add((T)cs);
+    CacheLoader ucs=undelegateCacheLoader(cs);
+    if (loaderClass.isInstance(ucs))     matchingLoaders.add((T)ucs);
   }
   for (  CacheLoader cl : loaders.keySet()) {
     if (loaderClass.isInstance(cl))     matchingLoaders.add((T)cl);
   }
-  return matchingLoaders;
+  return new ArrayList<T>(matchingLoaders);
 }

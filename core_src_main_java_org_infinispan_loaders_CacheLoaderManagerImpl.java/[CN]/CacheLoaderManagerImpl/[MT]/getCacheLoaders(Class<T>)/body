@@ -4,11 +4,14 @@
     ChainingCacheStore ccs=(ChainingCacheStore)loader;
     loaders=ccs.getCacheLoaders(loaderClass);
   }
- else   if (loaderClass.isInstance(loader)) {
-    loaders=Collections.singletonList((T)loader);
-  }
  else {
-    loaders=Collections.emptyList();
+    CacheLoader cl=undelegateCacheLoader(loader);
+    if (loaderClass.isInstance(cl)) {
+      loaders=Collections.singletonList((T)cl);
+    }
+ else {
+      loaders=Collections.emptyList();
+    }
   }
   return loaders;
 }
