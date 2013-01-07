@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.transaction().invocationBatching().enable();
+  EmbeddedCacheManager cm=new DefaultCacheManager(builder.build());
+  Cache<String,String> cache=cm.getCache();
+  TreeCacheFactory tcf=new TreeCacheFactory();
+  TreeCache<String,String> tree=tcf.createTreeCache(cache);
+  Fqn leafFqn=Fqn.fromElements("branch","leaf");
+  Node<String,String> leaf=tree.getRoot().addChild(leafFqn);
+  leaf.put("fruit","orange");
+  cm.stop();
+}
