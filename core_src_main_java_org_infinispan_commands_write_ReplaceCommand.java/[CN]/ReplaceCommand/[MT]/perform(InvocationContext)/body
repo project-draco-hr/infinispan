@@ -2,7 +2,10 @@
   MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
   if (e != null) {
     if (ctx.isOriginLocal()) {
-      if (e.isNull() || e.getValue() == null)       return returnValue(null,false,ctx);
+      if (e.isNull() || e.getValue() == null) {
+        e.setChanged(false);
+        return returnValue(null,false,ctx);
+      }
     }
     if (oldValue == null || oldValue.equals(e.getValue())) {
       Object old=e.setValue(newValue);
@@ -10,7 +13,7 @@
       e.setMaxIdle(maxIdleTimeMillis);
       return returnValue(old,true,ctx);
     }
-    return returnValue(null,false,ctx);
+    e.setChanged(false);
   }
   return returnValue(null,false,ctx);
 }
