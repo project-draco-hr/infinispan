@@ -1,0 +1,59 @@
+{
+  addClusterEnabledCacheManager(cfgBuilder,new TransportFlags().withFD(true));
+  addClusterEnabledCacheManager(gcfgBuilder,cfgBuilder,new TransportFlags().withFD(true));
+  log.info("waiting for cluster { c0, c1 }");
+  waitForClusterToForm();
+  log.info("putting in data");
+  final Cache<Object,Object> c0=cache(0);
+  final Cache<Object,Object> c1=cache(1);
+  for (int k=0; k < 1000; k++) {
+    c0.put(k,k);
+  }
+  waitForStateTransfer(c0,c1);
+  assertEquals(1000,c0.entrySet().size());
+  assertEquals(1000,c1.entrySet().size());
+  mockTransport.callOnStateResponseCommand=new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      fork(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          log.info("KILLING the c1 cache");
+          try {
+            DISCARD d3=TestingUtil.getDiscardForCache(c1);
+            d3.setDiscardAll(true);
+            d3.setExcludeItself(true);
+            TestingUtil.killCacheManagers(manager(c1));
+          }
+ catch (          Exception e) {
+            log.info("there was some exception while killing cache");
+          }
+          return null;
+        }
+      }
+);
+      try {
+        Thread.sleep(20000);
+      }
+ catch (      InterruptedException e) {
+        log.info("Interrupted as expected.");
+        Thread.currentThread().interrupt();
+      }
+      return null;
+    }
+  }
+;
+  log.info("adding cache c2");
+  addClusterEnabledCacheManager(cfgBuilder,new TransportFlags().withFD(true));
+  log.info("get c2");
+  final Cache<Object,Object> c2=cache(2);
+  log.info("waiting for cluster { c0, c2 }");
+  TestingUtil.blockUntilViewsChanged(10000,2,c0,c2);
+  log.infof("c0 entrySet size before : %d",c0.entrySet().size());
+  log.infof("c2 entrySet size before : %d",c2.entrySet().size());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return c0.entrySet().size() == 1000 && c2.entrySet().size() == 1000;
+    }
+  }
+);
+  log.info("Ending the test");
+}
