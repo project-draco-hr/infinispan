@@ -3,13 +3,13 @@
   final boolean potentiallyLocked=hasLockOrIsLockBackup(key);
   if (trace)   log.tracef("Transaction gtx=%s potentially locks key %s? %s",tx,key,potentiallyLocked);
   if (potentiallyLocked) {
-synchronized (this) {
+synchronized (lockReleaseNotifier) {
       needToNotifyWaiters=true;
       if (txComplete) {
         needToNotifyWaiters=false;
         return true;
       }
-      this.wait(lockAcquisitionTimeout);
+      lockReleaseNotifier.wait(lockAcquisitionTimeout);
       return txComplete;
     }
   }
