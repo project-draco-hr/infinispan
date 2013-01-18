@@ -1,0 +1,13 @@
+{
+  RICacheEntryEvent<K,V> jsrEvent=new RICacheEntryEvent<K,V>(cache,e.getKey(),null);
+  List<CacheEntryEvent<K,V>> events=new ArrayList<CacheEntryEvent<K,V>>();
+  events.add(jsrEvent);
+  for (  CacheEntryListenerRegistration<? super K,? super V> registration : cache.getListeners().values()) {
+    CacheEntryEventFilter<? super K,? super V> filter=registration.getCacheEntryFilter();
+    Iterable<CacheEntryEvent<K,V>> iterable=filter == null ? events : new RICacheEntryEventFilteringIterable<K,V>(events,filter);
+    CacheEntryListener<? super K,? super V> listener=registration.getCacheEntryListener();
+    if (listener instanceof CacheEntryCreatedListener) {
+      ((CacheEntryCreatedListener)listener).onCreated(iterable);
+    }
+  }
+}

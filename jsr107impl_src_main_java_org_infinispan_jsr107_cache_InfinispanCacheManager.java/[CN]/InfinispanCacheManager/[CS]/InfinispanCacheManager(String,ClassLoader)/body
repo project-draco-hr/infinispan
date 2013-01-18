@@ -1,0 +1,26 @@
+{
+  if (classLoader == null) {
+    throw new IllegalArgumentException("Classloader cannot be null");
+  }
+  if (name == null || name.length() == 0) {
+    throw new IllegalArgumentException("Invalid CacheManager name " + name);
+  }
+  this.name=name;
+  this.classLoader=classLoader;
+  ConfigurationBuilderHolder cbh=null;
+  try {
+    InputStream configurationStream=FileLookupFactory.newInstance().lookupFileStrict(name,classLoader);
+    cbh=new ParserRegistry(classLoader).parse(configurationStream);
+  }
+ catch (  FileNotFoundException e) {
+    cbh=new ConfigurationBuilderHolder(classLoader);
+    cbh.getGlobalConfigurationBuilder().transport().defaultTransport().build();
+    cbh.getGlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true);
+  }
+  cmDelegate=new DefaultCacheManager(cbh,true);
+  Set<String> cacheNames=cmDelegate.getCacheNames();
+  for (  String cacheName : cacheNames) {
+    caches.put(cacheName,new InfinispanCache<Object,Object>(cmDelegate.getCache(cacheName),this,classLoader,null));
+  }
+  status=Status.STARTED;
+}
