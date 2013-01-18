@@ -1,0 +1,35 @@
+{
+  final AtomicInteger clientTopologyId=(AtomicInteger)TestingUtil.extractField(remoteCacheManager,"topologyId");
+  final int topologyIdBeforeJoin=clientTopologyId.get();
+  log.tracef("Starting test with client topology id %d",topologyIdBeforeJoin);
+  EmbeddedCacheManager cm5=addClusterEnabledCacheManager(buildConfiguration());
+  HotRodServer hotRodServer5=TestHelper.startHotRodServer(cm5);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      log.tracef("Client topology id is %d, waiting for it to become %d",clientTopologyId.get(),topologyIdBeforeJoin + 2);
+      remoteCache.put("k","v");
+      return clientTopologyId.get() >= topologyIdBeforeJoin + 2;
+    }
+  }
+);
+  resetHitInterceptors();
+  runTest(0);
+  runTest(1);
+  runTest(2);
+  runTest(3);
+  stopServer(hotRodServer5);
+  TestingUtil.killCacheManagers(cm5);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      log.tracef("Client topology id is %d, waiting for it to become %d",clientTopologyId.get(),topologyIdBeforeJoin + 4);
+      remoteCache.put("k","v");
+      return clientTopologyId.get() >= topologyIdBeforeJoin + 4;
+    }
+  }
+);
+  resetHitInterceptors();
+  runTest(0);
+  runTest(1);
+  runTest(2);
+  runTest(3);
+}
