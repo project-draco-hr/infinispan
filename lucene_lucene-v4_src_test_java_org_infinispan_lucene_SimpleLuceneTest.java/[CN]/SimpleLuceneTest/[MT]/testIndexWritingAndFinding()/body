@@ -1,0 +1,21 @@
+{
+  final String indexName="indexName";
+  final Cache cache0=cache(0,"lucene");
+  final Cache cache1=cache(1,"lucene");
+  Directory dirA=new InfinispanDirectory(cache0,indexName);
+  Directory dirB=new InfinispanDirectory(cache1,indexName);
+  writeTextToIndex(dirA,0,"hi from node A");
+  assertTextIsFoundInIds(dirA,"hi",0);
+  assertTextIsFoundInIds(dirB,"hi",0);
+  writeTextToIndex(dirB,1,"hello node A, how are you?");
+  assertTextIsFoundInIds(dirA,"hello",1);
+  assertTextIsFoundInIds(dirB,"hello",1);
+  assertTextIsFoundInIds(dirA,"node",1,0);
+  assertTextIsFoundInIds(dirB,"node",1,0);
+  removeByTerm(dirA,"from");
+  assertTextIsFoundInIds(dirB,"node",1);
+  dirA.close();
+  dirB.close();
+  DirectoryIntegrityCheck.verifyDirectoryStructure(cache0,"indexName");
+  DirectoryIntegrityCheck.verifyDirectoryStructure(cache1,"indexName");
+}

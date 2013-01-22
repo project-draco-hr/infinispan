@@ -1,0 +1,14 @@
+{
+  Set<String> strings=new HashSet<String>();
+  int numElements=state.stringsInIndex.drainTo(strings,50);
+  refreshIndexReader();
+  for (  String term : strings) {
+    Query query=new TermQuery(new Term("main",term));
+    TopDocs docs=searcher.search(query,null,1);
+    if (docs.totalHits != 1) {
+      throw new RuntimeException("String '" + term + "' should exist but was not found in index");
+    }
+  }
+  state.stringsInIndex.addAll(strings);
+  state.incrementIndexSearchesCount(numElements);
+}

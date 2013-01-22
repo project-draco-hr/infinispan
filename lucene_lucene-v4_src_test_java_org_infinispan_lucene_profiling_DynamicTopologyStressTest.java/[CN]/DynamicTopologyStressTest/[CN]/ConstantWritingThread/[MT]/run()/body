@@ -1,0 +1,36 @@
+{
+  while (lastWrittenTermId < (SECONDS_TOTAL * WRITES_PER_SECOND) && failed.get() == false) {
+    IndexWriter writer=null;
+    try {
+      int toWrite=lastWrittenTermId + 1;
+      writer=LuceneSettings.openWriter(masterDirectory,3);
+      Document doc=new Document();
+      Field field=new Field(FIELDNAME,"HA" + toWrite,Store.YES,Index.NOT_ANALYZED);
+      doc.add(field);
+      writer.addDocument(doc);
+      writer.commit();
+      lastWrittenTermId=toWrite;
+      if (VISUAL_PROGRESS_FEEDBACK)       System.out.println("Written: " + doc);
+      Thread.sleep(1000 / WRITES_PER_SECOND);
+    }
+ catch (    IOException e) {
+      failed(e);
+      return;
+    }
+catch (    InterruptedException e) {
+      failed(e);
+      return;
+    }
+ finally {
+      try {
+        if (writer != null) {
+          writer.close();
+        }
+      }
+ catch (      IOException e) {
+        failed(e);
+        return;
+      }
+    }
+  }
+}

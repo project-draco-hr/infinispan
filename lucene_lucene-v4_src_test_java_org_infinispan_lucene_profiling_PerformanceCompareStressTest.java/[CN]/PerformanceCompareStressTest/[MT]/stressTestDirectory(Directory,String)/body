@@ -1,0 +1,20 @@
+{
+  SharedState state=new SharedState(DICTIONARY_SIZE);
+  CacheTestSupport.initializeDirectory(dir);
+  ExecutorService e=Executors.newFixedThreadPool(READER_THREADS + WRITER_THREADS);
+  for (int i=0; i < READER_THREADS; i++) {
+    e.execute(new LuceneReaderThread(dir,state));
+  }
+  for (int i=0; i < WRITER_THREADS; i++) {
+    e.execute(new LuceneWriterThread(dir,state));
+  }
+  e.shutdown();
+  state.startWaitingThreads();
+  Thread.sleep(DURATION_MS);
+  long searchesCount=state.incrementIndexSearchesCount(0);
+  long writerTaskCount=state.incrementIndexWriterTaskCount(0);
+  state.quit();
+  boolean terminatedCorrectly=e.awaitTermination(20,TimeUnit.SECONDS);
+  Assert.assertTrue(terminatedCorrectly);
+  System.out.println("Test " + testLabel + " run in "+ DURATION_MS+ "ms:\n\tSearches: "+ searchesCount+ "\n\t"+ "Writes: "+ writerTaskCount);
+}

@@ -1,0 +1,16 @@
+{
+  cache=cacheManager.getCache();
+  Directory dir=new InfinispanDirectory(cache,INDEX_NAME);
+  writeTextToIndex(dir,0,"hello database");
+  assertTextIsFoundInIds(dir,"hello",0);
+  writeTextToIndex(dir,1,"you have to store my index segments");
+  writeTextToIndex(dir,2,"so that I can shut down all nodes");
+  writeTextToIndex(dir,3,"and restart later keeping the index around");
+  assertTextIsFoundInIds(dir,"index",1,3);
+  removeByTerm(dir,"and");
+  assertTextIsFoundInIds(dir,"index",1);
+  dir.close();
+  cacheCopy.putAll(cache);
+  cache.stop();
+  cacheManager.stop();
+}

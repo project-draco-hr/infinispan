@@ -1,0 +1,22 @@
+{
+  Transaction tx=null;
+  try {
+    if ((tx=tm.getTransaction()) != null) {
+      tm.suspend();
+    }
+    clearLock();
+  }
+ catch (  Exception e) {
+    log.errorSuspendingTransaction(e);
+  }
+ finally {
+    if (tx != null) {
+      try {
+        tm.resume(tx);
+      }
+ catch (      Exception e) {
+        throw new CacheException("Unable to resume suspended transaction " + tx,e);
+      }
+    }
+  }
+}

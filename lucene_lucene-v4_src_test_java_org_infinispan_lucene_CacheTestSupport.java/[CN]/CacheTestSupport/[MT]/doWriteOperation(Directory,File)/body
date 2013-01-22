@@ -1,0 +1,21 @@
+{
+  IndexWriter writer=null;
+  try {
+    writer=LuceneSettings.openWriter(d,2000);
+    log.info("IndexWriter was constructed");
+    Document doc=new Document();
+    doc.add(new Field("path",document.getPath(),Field.Store.YES,Field.Index.NOT_ANALYZED));
+    doc.add(new Field("modified",DateTools.timeToString(document.lastModified(),DateTools.Resolution.MINUTE),Field.Store.YES,Field.Index.NOT_ANALYZED));
+    doc.add(new Field("contents",new FileReader(document)));
+    doc.add(new Field("info","good",Field.Store.YES,Field.Index.ANALYZED));
+    writer.addDocument(doc);
+  }
+ catch (  LockObtainFailedException lofe) {
+  }
+ finally {
+    if (writer != null) {
+      writer.close();
+      log.info("IndexWriter was closed");
+    }
+  }
+}

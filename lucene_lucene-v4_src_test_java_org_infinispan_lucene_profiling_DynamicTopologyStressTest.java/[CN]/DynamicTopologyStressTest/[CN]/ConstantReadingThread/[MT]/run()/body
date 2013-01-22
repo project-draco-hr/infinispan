@@ -1,0 +1,39 @@
+{
+  while (lastWrittenTermId < (SECONDS_TOTAL * WRITES_PER_SECOND) && failed.get() == false) {
+    IndexReader indexReader=null;
+    try {
+      int i=lastWrittenTermId;
+      indexReader=IndexReader.open(masterDirectory,true);
+      IndexSearcher indexSearcher=new IndexSearcher(indexReader);
+      if (i == 0)       continue;
+      String termValue="HA" + i;
+      Query query=new TermQuery(new Term(FIELDNAME,termValue));
+      TopDocs docs=indexSearcher.search(query,null,1);
+      if (docs.totalHits != 1) {
+        failed.set(true);
+        log.error("String '" + termValue + "' should exist but was not found in index");
+      }
+      if (VISUAL_PROGRESS_FEEDBACK)       System.out.print(".");
+      Thread.sleep(1);
+    }
+ catch (    IOException e) {
+      failed(e);
+      return;
+    }
+catch (    InterruptedException e) {
+      failed(e);
+      return;
+    }
+ finally {
+      try {
+        if (indexReader != null) {
+          indexReader.close();
+        }
+      }
+ catch (      IOException e) {
+        failed(e);
+        return;
+      }
+    }
+  }
+}

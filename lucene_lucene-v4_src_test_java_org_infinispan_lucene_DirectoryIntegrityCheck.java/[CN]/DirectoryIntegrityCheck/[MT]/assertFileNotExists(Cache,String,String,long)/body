@@ -1,0 +1,18 @@
+{
+  Set<String> fileList=(Set<String>)cache.get(new FileListCacheKey(indexName));
+  Assert.assertNotNull(fileList);
+  Assert.assertFalse(fileList.contains(fileName));
+  boolean allok=false;
+  while (maxWaitForCondition >= 0 && !allok) {
+    Thread.sleep(10);
+    maxWaitForCondition-=10;
+    allok=true;
+    FileMetadata metadata=(FileMetadata)cache.get(new FileCacheKey(indexName,fileName));
+    if (metadata != null)     allok=false;
+    for (int i=0; i < 100; i++) {
+      ChunkCacheKey key=new ChunkCacheKey(indexName,fileName,i,0);
+      if (cache.get(key) != null)       allok=false;
+    }
+  }
+  Assert.assertTrue(allok);
+}

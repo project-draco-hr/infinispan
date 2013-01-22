@@ -1,0 +1,23 @@
+{
+  Set<String> fileList=(Set<String>)cache.get(new FileListCacheKey(indexName));
+  Assert.assertNotNull(fileList);
+  Assert.assertTrue(fileList.contains(fileName) == expectRegisteredInFat);
+  FileMetadata metadata=(FileMetadata)cache.get(new FileCacheKey(indexName,fileName));
+  Assert.assertNotNull(metadata);
+  long totalFileSize=metadata.getSize();
+  int chunkNumbers=(int)(totalFileSize / chunkSize);
+  for (int i=0; i < chunkNumbers; i++) {
+    Assert.assertNotNull(cache.get(new ChunkCacheKey(indexName,fileName,i,metadata.getBufferSize())));
+  }
+  FileReadLockKey readLockKey=new FileReadLockKey(indexName,fileName);
+  Object value=cache.get(readLockKey);
+  if (expectedReadcount == 1) {
+    Assert.assertTrue(value == null || Integer.valueOf(1).equals(value),"readlock value is " + value);
+  }
+ else {
+    Assert.assertNotNull(value);
+    Assert.assertTrue(value instanceof Integer);
+    int v=(Integer)value;
+    Assert.assertEquals(v,expectedReadcount);
+  }
+}

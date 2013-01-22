@@ -1,0 +1,21 @@
+{
+  verifyBoth(cache0,cache1);
+  IndexOutput indexOutput=dirA.createOutput(filename);
+  indexOutput.writeString("no need to write, nobody ever will read this");
+  indexOutput.flush();
+  indexOutput.close();
+  assertFileExistsHavingRLCount(filename,1,true);
+  IndexInput openInput=dirB.openInput(filename);
+  assertFileExistsHavingRLCount(filename,2,true);
+  dirA.deleteFile(filename);
+  assertFileExistsHavingRLCount(filename,1,false);
+  IndexInput clone=(IndexInput)openInput.clone();
+  assertFileExistsHavingRLCount(filename,1,false);
+  clone.close();
+  assertFileExistsHavingRLCount(filename,1,false);
+  openInput.close();
+  assertFileNotExists(filename);
+  dirA.close();
+  dirB.close();
+  verifyBoth(cache0,cache1);
+}

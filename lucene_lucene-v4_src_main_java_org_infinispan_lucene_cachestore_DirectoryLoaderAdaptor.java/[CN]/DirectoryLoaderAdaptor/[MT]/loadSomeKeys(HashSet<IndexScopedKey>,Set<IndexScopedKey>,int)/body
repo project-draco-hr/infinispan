@@ -1,0 +1,38 @@
+{
+  if (maxElements <= 0) {
+    return;
+  }
+  int collectedKeys=0;
+  FileListCacheKey rootKey=new FileListCacheKey(indexName);
+  if (!keysToExclude.contains(rootKey)) {
+    if (keysCollector.add(rootKey)) {
+      collectedKeys++;
+    }
+  }
+  try {
+    String[] listAll=directory.listAll();
+    for (    String fileName : listAll) {
+      if (collectedKeys >= maxElements)       return;
+      FileCacheKey key=new FileCacheKey(indexName,fileName);
+      if (!keysToExclude.contains(key)) {
+        if (keysCollector.add(key)) {
+          if (++collectedKeys >= maxElements)           return;
+        }
+      }
+    }
+    for (    String fileName : listAll) {
+      int numChunksInt=figureChunksNumber(fileName);
+      for (int i=0; i < numChunksInt; i++) {
+        ChunkCacheKey key=new ChunkCacheKey(indexName,fileName,i,autoChunkSize);
+        if (!keysToExclude.contains(key)) {
+          if (keysCollector.add(key)) {
+            if (++collectedKeys >= maxElements)             return;
+          }
+        }
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw log.exceptionInCacheLoader(e);
+  }
+}

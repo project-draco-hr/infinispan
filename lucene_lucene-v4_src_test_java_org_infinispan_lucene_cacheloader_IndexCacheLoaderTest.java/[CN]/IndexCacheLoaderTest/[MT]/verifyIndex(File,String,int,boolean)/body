@@ -1,0 +1,23 @@
+{
+  File indexDir=new File(rootDir,indexName);
+  Directory directory=FSDirectory.open(indexDir);
+  try {
+    verifyOnDirectory(directory,indexName,termsAdded,inverted);
+  }
+  finally {
+    directory.close();
+  }
+  EmbeddedCacheManager cacheManager=initializeInfinispan(rootDir,indexName);
+  try {
+    directory=new InfinispanDirectory(cacheManager.getCache(),indexName);
+    try {
+      verifyOnDirectory(directory,indexName,termsAdded,inverted);
+    }
+  finally {
+      directory.close();
+    }
+  }
+  finally {
+    TestingUtil.killCacheManagers(cacheManager);
+  }
+}
