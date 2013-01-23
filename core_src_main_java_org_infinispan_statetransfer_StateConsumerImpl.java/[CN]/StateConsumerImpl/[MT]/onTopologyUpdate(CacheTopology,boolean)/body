@@ -1,8 +1,10 @@
 {
-  if (trace)   log.tracef("Received new CH %s for cache %s (isRebalance=%b)",cacheTopology.getWriteConsistentHash(),cacheName,isRebalance);
+  if (trace)   log.tracef("Received new topology for cache %s, isRebalance = %s, topology = %s",cacheTopology.getWriteConsistentHash(),cacheName);
   int numStartedTopologyUpdates=activeTopologyUpdates.incrementAndGet();
   if (isRebalance) {
     rebalanceInProgress.set(true);
+    waitingForState.set(true);
+    cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),true);
   }
   final ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
@@ -59,6 +61,15 @@ synchronized (this) {
       }
       if (!addedSegments.isEmpty()) {
         addTransfers(addedSegments);
+      }
+    }
+    log.tracef("Topology update processed, rebalanceInProgress = %s, isRebalance = %s, pending CH = %s",rebalanceInProgress.get(),isRebalance,cacheTopology.getPendingCH());
+    if (rebalanceInProgress.get()) {
+      if (!isRebalance && cacheTopology.getPendingCH() == null) {
+        boolean changed=rebalanceInProgress.compareAndSet(true,false);
+        if (changed) {
+          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),false);
+        }
       }
     }
   }

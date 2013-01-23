@@ -3,6 +3,11 @@
     return false;
   }
 synchronized (this) {
-    return cacheTopology != null && transfersBySegment.containsKey(getSegment(key));
+    CacheTopology localCacheTopology=cacheTopology;
+    if (localCacheTopology == null || localCacheTopology.getPendingCH() == null)     return false;
+    Address address=rpcManager.getAddress();
+    boolean keyWillBeLocal=localCacheTopology.getPendingCH().isKeyLocalToNode(address,key);
+    boolean keyIsLocal=localCacheTopology.getCurrentCH().isKeyLocalToNode(address,key);
+    return keyWillBeLocal && !keyIsLocal;
   }
 }

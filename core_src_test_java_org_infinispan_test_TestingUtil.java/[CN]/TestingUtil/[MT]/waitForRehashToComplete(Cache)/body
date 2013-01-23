@@ -4,22 +4,14 @@
   for (  Cache c : caches) {
     StateTransferManager stateTransferManager=extractComponent(c,StateTransferManager.class);
     StateConsumer stateConsumer=extractComponent(c,StateConsumer.class);
-    StateTransferLock stateTransferLock=extractComponent(c,StateTransferLock.class);
     DefaultRebalancePolicy rebalancePolicy=(DefaultRebalancePolicy)TestingUtil.extractGlobalComponent(c.getCacheManager(),RebalancePolicy.class);
     Address cacheAddress=c.getAdvancedCache().getRpcManager().getAddress();
     while (true) {
       CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+      boolean rebalanceInProgress=stateTransferManager.isStateTransferInProgress();
+      boolean chIsBalanced=!rebalanceInProgress && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
       boolean chContainsAllMembers=cacheTopology.getCurrentCH().getMembers().size() == caches.length;
-      boolean chIsBalanced=cacheTopology.getPendingCH() == null && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
-      if (chContainsAllMembers && chIsBalanced) {
-        try {
-          stateTransferLock.waitForTransactionData(cacheTopology.getTopologyId());
-        }
- catch (        InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-        break;
-      }
+      if (chIsBalanced && chContainsAllMembers)       break;
       if (System.currentTimeMillis() > giveup) {
         String message;
         if (!chContainsAllMembers) {
