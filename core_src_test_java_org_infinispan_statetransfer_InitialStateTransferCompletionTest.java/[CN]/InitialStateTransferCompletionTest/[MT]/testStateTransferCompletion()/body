@@ -1,0 +1,44 @@
+{
+  final int numKeys=100;
+  Cache<Object,Object> cache0=cache(0);
+  for (int i=0; i < numKeys; i++) {
+    cache0.put("k" + i,"v" + i);
+  }
+  final AtomicBoolean ignoreFurtherStateTransfer=new AtomicBoolean();
+  final AtomicInteger transferredKeys=new AtomicInteger();
+  cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class).interceptor(new CommandInterceptor(){
+    @Override protected Object handleDefault(    InvocationContext ctx,    VisitableCommand cmd) throws Throwable {
+      if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand)cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+        if (ignoreFurtherStateTransfer.get()) {
+          return null;
+        }
+        Object result=super.handleDefault(ctx,cmd);
+        transferredKeys.incrementAndGet();
+        return result;
+      }
+      return super.handleDefault(ctx,cmd);
+    }
+  }
+);
+  log.trace("Adding new member ...");
+  addClusterEnabledCacheManager(cacheConfigBuilder);
+  Cache<String,String> cache2=cache(2);
+  ignoreFurtherStateTransfer.set(true);
+  log.trace("Successfully added a new member");
+  int actualTransferredKeys=transferredKeys.get();
+  assertEquals(numKeys,actualTransferredKeys);
+  CacheTopology cacheTopology=cache2.getAdvancedCache().getComponentRegistry().getStateTransferManager().getCacheTopology();
+  assertNull(cacheTopology.getPendingCH());
+  ConsistentHash readCh=cacheTopology.getReadConsistentHash();
+  assertTrue(readCh.getMembers().contains(address(2)));
+  DataContainer dc2=cache(2).getAdvancedCache().getDataContainer();
+  assertEquals(numKeys,dc2.size());
+  for (int i=0; i < numKeys; i++) {
+    String key="k" + i;
+    String expectedValue="v" + i;
+    assertTrue(readCh.isKeyLocalToNode(address(2),key));
+    InternalCacheEntry entry=dc2.get(key);
+    assertNotNull(entry);
+    assertEquals(expectedValue,entry.getValue());
+  }
+}
