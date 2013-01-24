@@ -13,9 +13,11 @@
   stateConsumer.onTopologyUpdate(newCacheTopology,isRebalance);
   stateProvider.onTopologyUpdate(newCacheTopology,isRebalance);
   cacheNotifier.notifyTopologyChanged(oldCH,newCH,newCacheTopology.getTopologyId(),false);
-  boolean isJoined=stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
-  if (initialStateTransferComplete.getCount() > 0 && isJoined) {
-    initialStateTransferComplete.countDown();
-    log.tracef("Initial state transfer complete for cache %s on node %s",cacheName,rpcManager.getAddress());
+  if (initialStateTransferComplete.getCount() > 0) {
+    boolean isJoined=stateConsumer.getCacheTopology().getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
+    if (isJoined) {
+      initialStateTransferComplete.countDown();
+      log.tracef("Initial state transfer complete for cache %s on node %s",cacheName,rpcManager.getAddress());
+    }
   }
 }
