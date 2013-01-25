@@ -1,0 +1,17 @@
+{
+  final int numKeys=300;
+  for (int i=0; i < numKeys; i++) {
+    cache(0).put(i,i);
+  }
+  log.info("Finished putting keys");
+  for (int i=0; i < numKeys; i++) {
+    assertEquals(i,cache(0).get(i));
+  }
+  log.info("Adding a new node ..");
+  builder.loaders().clearCacheLoaders().addFileCacheStore().location("./target/tmp/store_1").fetchPersistentState(true).purgerThreads(3).purgeSynchronously(true).ignoreModifications(false).purgeOnStartup(false);
+  addClusterEnabledCacheManager(builder);
+  log.info("Added a new node");
+  for (int i=0; i < numKeys; i++) {
+    assertEquals(i,cache(1).get(i));
+  }
+}

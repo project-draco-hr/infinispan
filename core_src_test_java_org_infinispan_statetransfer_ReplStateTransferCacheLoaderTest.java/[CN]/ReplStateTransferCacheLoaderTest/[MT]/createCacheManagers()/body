@@ -1,0 +1,7 @@
+{
+  TestingUtil.recursiveFileRemove("./target/tmp");
+  builder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true,true);
+  builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new DummyTransactionManagerLookup()).eviction().maxEntries(1000).strategy(EvictionStrategy.LIRS).locking().lockAcquisitionTimeout(20000).concurrencyLevel(5000).useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED).dataContainer().storeAsBinary().clustering().sync().replTimeout(20000).stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(0).loaders().passivation(false).shared(false).preload(false).addFileCacheStore().location("./target/tmp/store_0").fetchPersistentState(true).purgerThreads(3).purgeSynchronously(true).ignoreModifications(false).purgeOnStartup(false);
+  createCluster(builder,1);
+  waitForClusterToForm();
+}

@@ -5,7 +5,9 @@
     return null;
   }
   RemoteTransaction remoteTransaction=txTable.getOrCreateRemoteTransaction(globalTx,modifications);
-  remoteTransaction.setModifications(getModifications());
+  if (hasModifications()) {
+    remoteTransaction.setModifications(Arrays.asList(modifications));
+  }
   RemoteTxInvocationContext ctx=icc.createRemoteTxInvocationContext(remoteTransaction,getOrigin());
   if (trace)   log.tracef("Invoking remotely originated prepare: %s with invocation context: %s",this,ctx);
   notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(),ctx);

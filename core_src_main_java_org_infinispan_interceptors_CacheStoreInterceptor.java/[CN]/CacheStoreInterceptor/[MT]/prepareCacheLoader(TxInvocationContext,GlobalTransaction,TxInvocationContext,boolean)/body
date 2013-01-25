@@ -2,14 +2,18 @@
   if (transactionContext == null) {
     throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
   }
-  List<WriteCommand> modifications=transactionContext.getModifications();
-  if (!transactionContext.hasModifications()) {
+  List<WriteCommand> modifications=transactionContext.getCacheTransaction().getAllModifications();
+  if (modifications.isEmpty()) {
     if (getLog().isTraceEnabled())     getLog().trace("Transaction has not logged any modifications!");
     return;
   }
   if (getLog().isTraceEnabled())   getLog().tracef("Cache loader modification list: %s",modifications);
   StoreModificationsBuilder modsBuilder=new StoreModificationsBuilder(getStatisticsEnabled(),modifications.size());
-  for (  WriteCommand cacheCommand : modifications)   cacheCommand.acceptVisitor(ctx,modsBuilder);
+  for (  WriteCommand cacheCommand : modifications) {
+    if (!skip(ctx,cacheCommand)) {
+      cacheCommand.acceptVisitor(ctx,modsBuilder);
+    }
+  }
   int numMods=modsBuilder.modifications.size();
   if (getLog().isTraceEnabled())   getLog().tracef("Converted method calls to cache loader modifications.  List size: %s",numMods);
   if (numMods > 0) {
