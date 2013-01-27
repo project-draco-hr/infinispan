@@ -3,14 +3,17 @@
   this.obj=instance;
   this.objectClass=instance.getClass();
   this.mBeanMetadata=mBeanMetadata;
-  InvokableMBeanAttributeInfo info;
   int i=0;
   attInfos=new MBeanAttributeInfo[mBeanMetadata.getAttributeMetadata().size()];
   for (  JmxAttributeMetadata attributeMetadata : mBeanMetadata.getAttributeMetadata()) {
-    info=toJmxInfo(attributeMetadata);
-    atts.put(info.getMBeanAttributeInfo().getName(),info);
+    String attributeName=attributeMetadata.getName();
+    InvokableMBeanAttributeInfo info=toJmxInfo(attributeMetadata);
+    if (atts.containsKey(attributeName)) {
+      throw new IllegalArgumentException("Component " + mBeanMetadata.getName() + " metadata has a duplicate attribute: "+ attributeName);
+    }
+    atts.put(attributeName,info);
     attInfos[i++]=info.getMBeanAttributeInfo();
-    if (trace)     log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]",info.getMBeanAttributeInfo().getName(),info.getMBeanAttributeInfo().isReadable(),info.getMBeanAttributeInfo().isWritable(),info.getMBeanAttributeInfo().isIs(),info.getMBeanAttributeInfo().getType());
+    if (trace)     log.tracef("Attribute %s [r=%b,w=%b,is=%b,type=%s]",attributeName,info.getMBeanAttributeInfo().isReadable(),info.getMBeanAttributeInfo().isWritable(),info.getMBeanAttributeInfo().isIs(),info.getMBeanAttributeInfo().getType());
   }
   MBeanOperationInfo op;
   opInfos=new MBeanOperationInfo[mBeanMetadata.getOperationMetadata().size()];

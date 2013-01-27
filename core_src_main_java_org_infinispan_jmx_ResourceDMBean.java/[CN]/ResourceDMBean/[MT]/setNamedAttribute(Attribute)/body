@@ -1,5 +1,4 @@
 {
-  boolean result=false;
   if (log.isDebugEnabled())   log.debugf("Invoking set on attribute %s with value %s",attribute.getName(),attribute.getValue());
   String name=attribute.getName();
   InvokableMBeanAttributeInfo i=atts.get(name);
@@ -13,14 +12,14 @@
   if (i != null) {
     try {
       i.invoke(attribute);
-      result=true;
     }
  catch (    Exception e) {
       log.errorWritingValueForAttribute(name,e);
+      throw new MBeanException(e,"Error invoking setter for attribute " + name);
     }
   }
  else {
     log.couldNotInvokeSetOnAttribute(name,attribute.getValue());
+    throw new AttributeNotFoundException("Could not find attribute " + name);
   }
-  return result;
 }
