@@ -6,7 +6,8 @@
     waitingForState.set(true);
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),true);
   }
-  final ConsistentHash previousCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
+  final ConsistentHash previousReadCh=this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
+  final ConsistentHash previousWriteCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
   if (numStartedTopologyUpdates == 1) {
@@ -17,14 +18,14 @@
   try {
     if (isTransactional || isFetchEnabled) {
       Set<Integer> addedSegments;
-      if (previousCh == null) {
+      if (previousWriteCh == null) {
         addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
         if (trace) {
           log.tracef("On cache %s we have: added segments: %s",cacheName,addedSegments);
         }
       }
  else {
-        Set<Integer> previousSegments=getOwnedSegments(previousCh);
+        Set<Integer> previousSegments=getOwnedSegments(previousWriteCh);
         Set<Integer> newSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
         Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
         removedSegments.removeAll(newSegments);
@@ -68,7 +69,7 @@ synchronized (this) {
       if (!isRebalance && cacheTopology.getPendingCH() == null) {
         boolean changed=rebalanceInProgress.compareAndSet(true,false);
         if (changed) {
-          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),false);
+          cacheNotifier.notifyDataRehashed(previousReadCh,cacheTopology.getCurrentCH(),cacheTopology.getTopologyId(),false);
         }
       }
     }
