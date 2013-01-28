@@ -1,16 +1,17 @@
 {
+  ensureOpen();
   final FileCacheKey fromKey=new FileCacheKey(indexName,from);
   final FileMetadata metadata=(FileMetadata)metadataCache.get(fromKey);
   final int bufferSize=metadata.getBufferSize();
   int i=-1;
   Object ob;
   do {
-    final ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i,bufferSize);
+    ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i,bufferSize);
     ob=chunksCache.get(fromChunkKey);
     if (ob == null) {
       break;
     }
-    final ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i,bufferSize);
+    ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i,bufferSize);
     chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey,ob);
   }
  while (true);
