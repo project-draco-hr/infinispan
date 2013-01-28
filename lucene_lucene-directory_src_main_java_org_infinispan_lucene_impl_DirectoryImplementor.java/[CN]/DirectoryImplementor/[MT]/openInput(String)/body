@@ -5,13 +5,13 @@
     throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
   }
  else   if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
-    return new SingleChunkIndexInput(chunksCache,fileKey,fileMetadata);
+    return new IndexInputContext(chunksCache,fileKey,fileMetadata,null);
   }
  else {
     boolean locked=readLocks.acquireReadLock(name);
     if (!locked) {
       throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
     }
-    return new InfinispanIndexInput(chunksCache,fileKey,fileMetadata,readLocks);
+    return new IndexInputContext(chunksCache,fileKey,fileMetadata,readLocks);
   }
 }
