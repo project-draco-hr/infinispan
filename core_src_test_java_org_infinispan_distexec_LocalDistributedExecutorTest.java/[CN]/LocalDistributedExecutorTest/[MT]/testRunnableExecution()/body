@@ -1,2 +1,17 @@
 {
+  final String uuid=UUID.randomUUID().toString();
+  try {
+    DistributedExecutorService des=createDES(getCache());
+    BoringRunnable runnable=new BoringRunnable(uuid);
+    des.execute(runnable);
+    eventually(new Condition(){
+      @Override public boolean isSatisfied() throws Exception {
+        return counterMap.get(uuid) != null && counterMap.get(uuid).get() >= 1;
+      }
+    }
+);
+  }
+  finally {
+    counterMap.remove(uuid);
+  }
 }
