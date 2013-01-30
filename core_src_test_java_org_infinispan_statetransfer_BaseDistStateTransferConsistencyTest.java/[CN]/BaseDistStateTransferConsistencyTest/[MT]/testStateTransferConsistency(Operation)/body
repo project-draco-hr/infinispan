@@ -107,8 +107,6 @@
  else   if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
     ConsistentHash ch=advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
     for (int i=0; i < numKeys; i++) {
-      assertEquals("after_st_" + i,cache(0).get(i));
-      assertEquals("after_st_" + i,cache(2).get(i));
       int owners=0;
       if (dc0.get(i) != null) {
         owners++;
@@ -117,13 +115,13 @@
         owners++;
       }
       assertEquals("Wrong number of owners",ch.locateOwners(i).size(),owners);
+      assertEquals("after_st_" + i,cache(0).get(i));
+      assertEquals("after_st_" + i,cache(2).get(i));
     }
   }
  else {
+    ConsistentHash ch=advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
     for (int i=0; i < numKeys; i++) {
-      ConsistentHash ch=advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
-      assertEquals("before_st_" + i,cache(0).get(i));
-      assertEquals("before_st_" + i,cache(2).get(i));
       int owners=0;
       if (dc0.get(i) != null) {
         owners++;
@@ -132,6 +130,8 @@
         owners++;
       }
       assertEquals("Wrong number of owners",ch.locateOwners(i).size(),owners);
+      assertEquals("before_st_" + i,cache(0).get(i));
+      assertEquals("before_st_" + i,cache(2).get(i));
     }
   }
 }
