@@ -1,35 +1,26 @@
 {
-  Cache cache1=cache(0,"replSync");
-  Cache cache2=cache(1,"replSync");
-  Transport mockTransport=mock(Transport.class);
-  RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
+  Cache<String,String> cache1=cache(0,"replSync");
+  Cache<String,String> cache2=cache(1,"replSync");
   Transport originalTransport=TestingUtil.extractComponent(cache1,Transport.class);
+  Transport mockTransport=spy(originalTransport);
+  doThrow(new RuntimeException("Barf!")).when(mockTransport).invokeRemotely(anyAddresses(),(CacheRpcCommand)anyObject(),anyResponseMode(),anyLong(),anyBoolean(),(ResponseFilter)anyObject());
+  RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
+  rpcManager.setTransport(mockTransport);
   try {
-    Address mockAddress1=mock(Address.class);
-    Address mockAddress2=mock(Address.class);
-    List<Address> memberList=new ArrayList<Address>(2);
-    memberList.add(mockAddress1);
-    memberList.add(mockAddress2);
-    rpcManager.setTransport(mockTransport);
-    when(mockTransport.getMembers()).thenReturn(memberList);
-    when(mockTransport.getViewId()).thenReturn(originalTransport.getViewId());
-    when(mockTransport.invokeRemotely(anyAddresses(),(CacheRpcCommand)anyObject(),anyResponseMode(),anyLong(),anyBoolean(),(ResponseFilter)anyObject())).thenThrow(new RuntimeException("Barf!"));
-    try {
-      cache1.put(key,value);
-      fail("Should have barfed");
-    }
- catch (    RuntimeException re) {
-    }
-    try {
-      cache1.remove(key);
-      fail("Should have barfed");
-    }
- catch (    RuntimeException re) {
-    }
-    assertNull("Should have cleaned up",cache1.get(key));
-    cache1.putForExternalRead(key,value);
+    cache1.put(key,value);
+    fail("Should have barfed");
   }
-  finally {
-    if (rpcManager != null)     rpcManager.setTransport(originalTransport);
+ catch (  RuntimeException re) {
   }
+  try {
+    cache1.remove(key);
+    fail("Should have barfed");
+  }
+ catch (  RuntimeException re) {
+  }
+  assertNull("Should have cleaned up",cache1.get(key));
+  assertNull("Should have cleaned up",cache1.getAdvancedCache().getDataContainer().get(key));
+  assertNull("Should have cleaned up",cache2.get(key));
+  assertNull("Should have cleaned up",cache2.getAdvancedCache().getDataContainer().get(key));
+  cache1.putForExternalRead(key,value);
 }
