@@ -2,6 +2,7 @@
   final Log localLog=getLog();
   boolean isTrace=localLog.isTraceEnabled();
   if (isTrace)   localLog.tracef("Received operation status: %#x",status);
+  try {
 switch (status) {
 case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
 case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
@@ -10,23 +11,34 @@ case HotRodConstants.SERVER_ERROR_STATUS:
 case HotRodConstants.COMMAND_TIMEOUT_STATUS:
 case HotRodConstants.UNKNOWN_VERSION_STATUS:
 {
-      readNewTopologyIfPresent(transport,params);
-      String msgFromServer=transport.readString();
-      if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
-        localLog.tracef("Server-side timeout performing operation: %s",msgFromServer);
-      }
-      if (msgFromServer.contains("SuspectException") || msgFromServer.contains("SuspectedException")) {
-        if (isTrace)         localLog.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",params.messageId,msgFromServer);
-        throw new RemoteNodeSuspecException(msgFromServer,params.messageId,status);
-      }
+        String msgFromServer=transport.readString();
+        if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+          localLog.tracef("Server-side timeout performing operation: %s",msgFromServer);
+        }
+        if (msgFromServer.contains("SuspectException") || msgFromServer.contains("SuspectedException")) {
+          if (isTrace)           localLog.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",params.messageId,msgFromServer);
+          throw new RemoteNodeSuspectException(msgFromServer,params.messageId,status);
+        }
  else {
-        localLog.errorFromServer(msgFromServer);
+          localLog.errorFromServer(msgFromServer);
+        }
+        throw new HotRodClientException(msgFromServer,params.messageId,status);
       }
-      throw new HotRodClientException(msgFromServer,params.messageId,status);
-    }
 default :
 {
-    throw new IllegalStateException(String.format("Unknown status: %#04x",status));
+      throw new IllegalStateException(String.format("Unknown status: %#04x",status));
+    }
+}
+}
+  finally {
+switch (status) {
+case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+case HotRodConstants.UNKNOWN_VERSION_STATUS:
+{
+    transport.invalidate();
   }
+}
 }
 }

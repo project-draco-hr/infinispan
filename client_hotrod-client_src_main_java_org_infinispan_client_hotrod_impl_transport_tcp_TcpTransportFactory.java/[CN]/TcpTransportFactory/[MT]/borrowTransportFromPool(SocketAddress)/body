@@ -1,12 +1,12 @@
 {
-  KeyedObjectPool pool=getConnectionPool();
+  KeyedObjectPool<SocketAddress,TcpTransport> pool=getConnectionPool();
   try {
-    return (Transport)pool.borrowObject(server);
+    return pool.borrowObject(server);
   }
  catch (  Exception e) {
     String message="Could not fetch transport";
     log.couldNotFetchTransport(e);
-    throw new TransportException(message,e);
+    throw new TransportException(message,e,server);
   }
  finally {
     logConnectionInfo(server);

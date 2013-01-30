@@ -1,0 +1,18 @@
+{
+  super(transportFactory);
+  this.serverAddress=serverAddress;
+  try {
+    socketChannel=SocketChannel.open();
+    socket=socketChannel.socket();
+    socket.connect(serverAddress,transportFactory.getConnectTimeout());
+    socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
+    socket.setSoTimeout(transportFactory.getSoTimeout());
+    socketInputStream=new BufferedInputStream(socket.getInputStream(),socket.getReceiveBufferSize());
+    socketOutputStream=new BufferedOutputStream(socket.getOutputStream(),socket.getSendBufferSize());
+  }
+ catch (  IOException e) {
+    String message=String.format("Could not connect to server: %s",serverAddress);
+    log.tracef(e,"Could not connect to server: %s",serverAddress);
+    throw new TransportException(message,e,serverAddress);
+  }
+}

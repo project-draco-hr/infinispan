@@ -17,14 +17,14 @@
   }
   localLog.tracef("Received response for message id: %d",receivedMessageId);
   short receivedOpCode=transport.readByte();
+  short status=transport.readByte();
+  readNewTopologyIfPresent(transport,params);
   if (receivedOpCode != params.opRespCode) {
     if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
-      checkForErrorsInResponseStatus(transport,params,transport.readByte());
+      checkForErrorsInResponseStatus(transport,params,status);
     }
     throw new InvalidResponseException(String.format("Invalid response operation. Expected %#x and received %#x",params.opRespCode,receivedOpCode));
   }
   localLog.tracef("Received operation code is: %#04x",receivedOpCode);
-  short status=transport.readByte();
-  readNewTopologyIfPresent(transport,params);
   return status;
 }

@@ -1,0 +1,13 @@
+{
+  GenericKeyedObjectPoolFactory<Integer,String> poolFactory=BasicPoolFactory.createPoolFactory();
+  KeyedObjectPool<Integer,String> pool=poolFactory.createPool();
+  try {
+    pool.borrowObject(Integer.MAX_VALUE);
+    fail("Should have thrown a TooHighException");
+  }
+ catch (  TooHighException e) {
+    pool.invalidateObject(Integer.MAX_VALUE,null);
+    BasicPoolFactory basicPoolFactory=(BasicPoolFactory)poolFactory.getFactory();
+    assertEquals("destroyed",basicPoolFactory.getState(Integer.MAX_VALUE));
+  }
+}
