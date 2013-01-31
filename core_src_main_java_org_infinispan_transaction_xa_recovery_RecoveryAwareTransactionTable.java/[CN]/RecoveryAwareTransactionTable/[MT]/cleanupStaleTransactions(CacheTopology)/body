@@ -1,0 +1,15 @@
+{
+  if (getMinTopologyId() >= cacheTopology.getTopologyId())   return;
+  Iterator<RemoteTransaction> it=getRemoteTransactions().iterator();
+  while (it.hasNext()) {
+    RecoveryAwareRemoteTransaction recTx=(RecoveryAwareRemoteTransaction)it.next();
+    if (recTx.getTopologyId() < cacheTopology.getTopologyId()) {
+      recTx.computeOrphan(cacheTopology.getMembers());
+      if (recTx.isInDoubt()) {
+        recoveryManager.registerInDoubtTransaction(recTx);
+        it.remove();
+      }
+    }
+  }
+  super.cleanupStaleTransactions(cacheTopology);
+}

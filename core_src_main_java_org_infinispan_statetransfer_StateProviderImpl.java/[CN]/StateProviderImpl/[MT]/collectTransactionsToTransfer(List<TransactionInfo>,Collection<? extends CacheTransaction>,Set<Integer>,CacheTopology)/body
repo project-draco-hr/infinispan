@@ -1,5 +1,9 @@
 {
+  int topologyId=cacheTopology.getTopologyId();
+  List<Address> members=cacheTopology.getMembers();
+  ConsistentHash readCh=cacheTopology.getReadConsistentHash();
   for (  CacheTransaction tx : transactions) {
+    if (tx.getTopologyId() < topologyId && !members.contains(tx.getGlobalTransaction().getAddress()))     continue;
     Set<Object> filteredLockedKeys=new HashSet<Object>();
     Set<Object> lockedKeys=tx.getLockedKeys();
 synchronized (lockedKeys) {
