@@ -1,7 +1,20 @@
 {
   for (  Cache c : caches) {
     LockManager lockManager=c.getAdvancedCache().getComponentRegistry().getComponent(LockManager.class);
-    if (lockManager.isLocked(SHARED_KEY)) {
+    boolean isLocked=true;
+    for (int i=0; i < 30; i++) {
+      if (!lockManager.isLocked(SHARED_KEY)) {
+        isLocked=false;
+        break;
+      }
+      try {
+        Thread.currentThread().sleep(500);
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    if (isLocked) {
       fail("lock on the entry wasn't cleaned up");
     }
   }

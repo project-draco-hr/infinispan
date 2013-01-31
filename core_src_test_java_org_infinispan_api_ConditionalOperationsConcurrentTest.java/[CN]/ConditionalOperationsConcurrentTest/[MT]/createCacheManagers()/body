@@ -1,5 +1,11 @@
 {
   ConfigurationBuilder dcc=getDefaultClusteredCacheConfig(mode,transactional);
+  dcc.transaction().lockingMode(lockingMode);
+  if (writeSkewCheck) {
+    dcc.transaction().locking().writeSkewCheck(true);
+    dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+    dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
+  }
   createCluster(dcc,NODES_NUM);
   waitForClusterToForm();
 }

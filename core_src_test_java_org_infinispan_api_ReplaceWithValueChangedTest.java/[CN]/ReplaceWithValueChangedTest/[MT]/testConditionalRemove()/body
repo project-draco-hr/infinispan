@@ -1,0 +1,14 @@
+{
+  Object k1=getKeyForCache(0);
+  cache(0).put(k1,"v1");
+  tm(0).begin();
+  assertTrue(cache(0).remove(k1,"v1"));
+  Transaction suspendedTx=tm(0).suspend();
+  cache(0).put(k1,"v2");
+  assertEquals(cache(0).get(k1),"v2");
+  assertEquals(cache(1).get(k1),"v2");
+  log.trace("here it is");
+  suspendedTx.commit();
+  assertNull(cache(0).get(k1));
+  assertNull(cache(1).get(k1));
+}
