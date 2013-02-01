@@ -1,5 +1,4 @@
 {
-  Object key=command.getKey();
   if (trace) {
     log.tracef("Key %s is not yet available on %s, so we may need to look elsewhere",key,rpcManager.getAddress());
   }
@@ -12,5 +11,16 @@
   if (acquireRemoteLock) {
     ((TxInvocationContext)ctx).addAffectedKey(key);
   }
-  return ice != null ? ice.getValue() : null;
+  if (ice != null) {
+    if (!ctx.replaceValue(key,ice.getValue())) {
+      if (isWrite) {
+        lockAndWrap(ctx,key,ice,command);
+      }
+ else {
+        ctx.putLookedUpEntry(key,ice);
+      }
+    }
+    return ice.getValue();
+  }
+  return null;
 }

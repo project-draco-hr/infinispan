@@ -1,0 +1,12 @@
+{
+  if (command instanceof AbstractDataCommand && (isNeedReliableReturnValues(command) || command.isConditional())) {
+    AbstractDataCommand singleKeyCommand=(AbstractDataCommand)command;
+    Object returnValue=null;
+    if (needsRemoteGet(ctx,singleKeyCommand)) {
+      returnValue=remoteGet(ctx,singleKeyCommand.getKey(),singleKeyCommand,true);
+    }
+    if (returnValue == null) {
+      localGet(ctx,singleKeyCommand.getKey(),true,command);
+    }
+  }
+}

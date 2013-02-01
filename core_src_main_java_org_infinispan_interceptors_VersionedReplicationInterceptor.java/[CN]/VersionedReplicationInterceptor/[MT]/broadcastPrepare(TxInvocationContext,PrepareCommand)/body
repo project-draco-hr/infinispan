@@ -1,8 +1,9 @@
 {
-  if (!rpcManager.getTransport().isCoordinator()) {
+  Address primaryOwner=getPrimaryOwner();
+  if (!primaryOwner.equals(rpcManager.getAddress())) {
     setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,context);
     Map<Address,Response> resps=rpcManager.invokeRemotely(null,command,true,true);
-    Response r=resps.get(rpcManager.getTransport().getCoordinator());
+    Response r=resps.get(primaryOwner);
     readVersionsFromResponse(r,context.getCacheTransaction());
   }
  else {

@@ -1,0 +1,70 @@
+{
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.clustering().cacheMode(CacheMode.REPL_SYNC);
+  GlobalConfigurationBuilder gcb=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  Configuration configuration=cb.build();
+  ReplicationInterceptor replInterceptor=new ReplicationInterceptor();
+  CommandInterceptor nextInterceptor=mock(CommandInterceptor.class);
+  when(nextInterceptor.visitGetKeyValueCommand(any(InvocationContext.class),any(GetKeyValueCommand.class))).thenReturn(null);
+  replInterceptor.setNext(nextInterceptor);
+  CommandsFactory commandsFactory=mock(CommandsFactory.class);
+  when(commandsFactory.buildClusteredGetCommand(any(Object.class),any(Set.class),anyBoolean(),any(GlobalTransaction.class))).thenAnswer(new Answer<ClusteredGetCommand>(){
+    @Override public ClusteredGetCommand answer(    InvocationOnMock invocation){
+      Object key=invocation.getArguments()[0];
+      Set<Flag> flags=(Set<Flag>)invocation.getArguments()[1];
+      boolean acquireRemoteLock=(Boolean)invocation.getArguments()[2];
+      GlobalTransaction gtx=(GlobalTransaction)invocation.getArguments()[3];
+      return new ClusteredGetCommand(key,"cache1",flags,acquireRemoteLock,gtx);
+    }
+  }
+);
+  EntryFactory entryFactory=mock(EntryFactory.class);
+  DataContainer dataContainer=mock(DataContainer.class);
+  LockManager lockManager=mock(LockManager.class);
+  StateTransferManager stateTransferManager=mock(StateTransferManager.class);
+  TestAddress A=new TestAddress(0,"A");
+  TestAddress B=new TestAddress(1,"B");
+  List<Address> members1=new ArrayList<Address>();
+  List<Address> members2=new ArrayList<Address>();
+  members1.add(A);
+  members2.add(A);
+  members2.add(B);
+  ReplicatedConsistentHash readCh=new ReplicatedConsistentHash(members1);
+  ReplicatedConsistentHash writeCh=new ReplicatedConsistentHash(members2);
+  final CacheTopology cacheTopology=new CacheTopology(1,readCh,writeCh);
+  when(stateTransferManager.getCacheTopology()).thenAnswer(new Answer<CacheTopology>(){
+    @Override public CacheTopology answer(    InvocationOnMock invocation){
+      return cacheTopology;
+    }
+  }
+);
+  replInterceptor.init(commandsFactory,entryFactory,dataContainer,lockManager,stateTransferManager);
+  RpcManager rpcManager=mock(RpcManager.class);
+  Transport transport=mock(Transport.class);
+  when(rpcManager.getAddress()).thenReturn(B);
+  when(rpcManager.getTransport()).thenReturn(transport);
+  when(transport.getMembers()).thenReturn(members2);
+  replInterceptor.inject(rpcManager);
+  replInterceptor.injectConfiguration(configuration);
+  when(rpcManager.invokeRemotely(any(Collection.class),any(ClusteredGetCommand.class),any(ResponseMode.class),anyLong(),anyBoolean(),any(ResponseFilter.class))).thenAnswer(new Answer<Map<Address,Response>>(){
+    @Override public Map<Address,Response> answer(    InvocationOnMock invocation){
+      Collection<Address> recipients=(Collection<Address>)invocation.getArguments()[0];
+      ClusteredGetCommand clusteredGetCommand=(ClusteredGetCommand)invocation.getArguments()[1];
+      if (clusteredGetCommand.getKey().equals("theKey")) {
+        Map<Address,Response> results=new HashMap<Address,Response>();
+        for (        Address recipient : recipients) {
+          results.put(recipient,SuccessfulResponse.create(new ImmortalCacheValue("theValue")));
+        }
+        return results;
+      }
+      return Collections.emptyMap();
+    }
+  }
+);
+  InvocationContext ctx=mock(InvocationContext.class);
+  when(ctx.isOriginLocal()).thenReturn(true);
+  when(ctx.isInTxScope()).thenReturn(false);
+  GetKeyValueCommand getKeyValueCommand=new GetKeyValueCommand("theKey",null);
+  Object retVal=replInterceptor.visitGetKeyValueCommand(ctx,getKeyValueCommand);
+  assertEquals("theValue",retVal);
+}
