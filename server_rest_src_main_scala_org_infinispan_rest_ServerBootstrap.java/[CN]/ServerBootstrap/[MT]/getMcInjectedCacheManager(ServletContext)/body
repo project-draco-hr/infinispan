@@ -1,0 +1,28 @@
+{
+  try {
+    boolean isDebug=log.isDebugEnabled();
+    Object kernel=servletContext.getAttribute("jboss.kernel:service=Kernel");
+    if (kernel != null) {
+      Class<?> kernelCl=loadClass("org.jboss.kernel.Kernel");
+      Object kernelReg=kernelCl.getMethod("getRegistry").invoke(kernel);
+      Class<?> kernelRegCl=loadClass("org.jboss.kernel.spi.registry.KernelRegistry");
+      String beanName=servletContext.getInitParameter("infinispan.cachemanager.bean");
+      if (beanName == null)       beanName="DefaultCacheManager";
+      Object kernelRegEntry=kernelRegCl.getMethod("findEntry",Object.class).invoke(kernelReg,beanName);
+      if (kernelRegEntry != null) {
+        Class<?> kernelRegEntryCl=loadClass("org.jboss.kernel.spi.registry.KernelRegistryEntry");
+        if (isDebug)         log.debug("Retrieving cache manager from JBoss Microcontainer");
+        return (EmbeddedCacheManager)kernelRegEntryCl.getMethod("getTarget").invoke(kernelRegEntry);
+      }
+ else {
+        if (isDebug)         log.debug("Running within JBoss Microcontainer but cache manager bean not present");
+        return null;
+      }
+    }
+    return null;
+  }
+ catch (  Exception e) {
+    log.errorRetrievingCacheManagerFromMC(e);
+    return null;
+  }
+}

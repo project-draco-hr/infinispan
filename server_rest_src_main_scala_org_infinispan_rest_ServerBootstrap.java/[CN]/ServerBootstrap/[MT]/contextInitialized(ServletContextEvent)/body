@@ -1,0 +1,25 @@
+{
+  EmbeddedCacheManager cm=getManager(sce);
+  if (cm == null) {
+    cm=getMcInjectedCacheManager(sce.getServletContext());
+    setManager(sce,cm);
+  }
+  if (cm == null) {
+    String cfgFile=sce.getServletContext().getInitParameter("infinispan.config");
+    if (cfgFile == null) {
+      cm=new DefaultCacheManager();
+    }
+ else {
+      try {
+        cm=new DefaultCacheManager(cfgFile);
+      }
+ catch (      IOException e) {
+        log.errorReadingConfigurationFile(e,cfgFile);
+        cm=new DefaultCacheManager();
+      }
+    }
+    setManager(sce,cm);
+  }
+  for (  String cacheName : cm.getCacheNames())   cm.getCache(cacheName);
+  cm.getCache();
+}
