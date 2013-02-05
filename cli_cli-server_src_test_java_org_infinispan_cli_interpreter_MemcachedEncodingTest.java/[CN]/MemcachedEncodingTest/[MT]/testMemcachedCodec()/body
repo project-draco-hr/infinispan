@@ -1,0 +1,11 @@
+{
+  Cache<ByteArrayKey,CacheValue> cache=cacheManager.getCache(MEMCACHED_CACHE);
+  memcachedClient.set("k1",3600,"v1").get();
+  assertTrue(cache.containsKey("k1"));
+  String sessionId=interpreter.createSessionId(MEMCACHED_CACHE);
+  Map<String,String> response=interpreter.execute(sessionId,"get --codec=memcached k1;");
+  assertEquals("v1",response.get(ResultKeys.OUTPUT.toString()));
+  interpreter.execute(sessionId,"put --codec=memcached k2 v2;");
+  String v2=(String)memcachedClient.get("k2");
+  assertEquals("v2",v2);
+}
