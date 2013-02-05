@@ -1,0 +1,7 @@
+{
+  cacheStoreDir=new File(TestingUtil.tmpDirectory(this));
+  TestingUtil.recursiveFileRemove(cacheStoreDir);
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.LOCAL,true,true);
+  builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new DummyTransactionManagerLookup()).eviction().maxEntries(1000).strategy(EvictionStrategy.LIRS).locking().lockAcquisitionTimeout(20000).concurrencyLevel(5000).useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED).dataContainer().storeAsBinary().loaders().passivation(passivationEnabled).preload(false).addFileCacheStore().location(cacheStoreDir.getAbsolutePath()).fetchPersistentState(true).purgerThreads(3).purgeSynchronously(true).ignoreModifications(false).purgeOnStartup(false);
+  return TestCacheManagerFactory.createCacheManager(builder);
+}
