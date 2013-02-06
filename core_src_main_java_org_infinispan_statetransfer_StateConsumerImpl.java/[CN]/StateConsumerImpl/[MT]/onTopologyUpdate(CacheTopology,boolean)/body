@@ -1,6 +1,6 @@
 {
   if (trace)   log.tracef("Received new topology for cache %s, isRebalance = %b, topology = %s",cacheName,isRebalance,cacheTopology);
-  int numStartedTopologyUpdates=activeTopologyUpdates.incrementAndGet();
+  activeTopologyUpdates.incrementAndGet();
   if (isRebalance) {
     rebalanceInProgress.set(true);
     waitingForState.set(true);
@@ -10,7 +10,7 @@
   final ConsistentHash previousWriteCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
-  if (numStartedTopologyUpdates == 1) {
+  if (isRebalance) {
     updatedKeys=new ConcurrentHashSet<Object>();
   }
   stateTransferLock.releaseExclusiveTopologyLock();
