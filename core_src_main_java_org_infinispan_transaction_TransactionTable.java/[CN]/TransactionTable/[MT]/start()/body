@@ -8,4 +8,21 @@
     notifier.addListener(this);
     clustered=true;
   }
+  ThreadFactory tf=new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      String address=rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
+      Thread th=new Thread(r,"TxCleanupService," + cacheName + ","+ address);
+      th.setDaemon(true);
+      return th;
+    }
+  }
+;
+  executorService=Executors.newSingleThreadScheduledExecutor(tf);
+  long interval=configuration.transaction().reaperWakeUpInterval();
+  executorService.scheduleAtFixedRate(new Runnable(){
+    @Override public void run(){
+      cleanupCompletedTransactions();
+    }
+  }
+,interval,interval,TimeUnit.MILLISECONDS);
 }
