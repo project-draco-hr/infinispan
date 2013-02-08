@@ -1,0 +1,44 @@
+{
+  checkStartedStatus();
+  if (cacheName == null || cacheName.length() == 0) {
+    throw new NullPointerException("cacheName specified is invalid " + cacheName);
+  }
+  if (c == null) {
+    throw new NullPointerException("configuration specified is invalid " + c);
+  }
+  boolean noIsolationWithTx=c.getTransactionIsolationLevel() == IsolationLevel.NONE && c.getTransactionMode() != Mode.NONE;
+  boolean isolationWithNoTx=c.getTransactionIsolationLevel() != IsolationLevel.NONE && c.getTransactionMode() == Mode.NONE;
+  if (noIsolationWithTx || isolationWithNoTx) {
+    throw new IllegalArgumentException("Incompatible IsolationLevel " + c.getTransactionIsolationLevel() + " and tx mode "+ c.getTransactionMode());
+  }
+synchronized (caches) {
+    Cache<?,?> cache=caches.get(cacheName);
+    if (cache == null) {
+      ConfigurationAdapter<K,V> adapter=new ConfigurationAdapter<K,V>(c);
+      cm.defineConfiguration(cacheName,adapter.build());
+      AdvancedCache<K,V> ispnCache=cm.<K,V>getCache(cacheName).getAdvancedCache();
+      if (!ispnCache.getStatus().allowInvocations())       ispnCache.start();
+      CacheLoader<K,? extends V> cacheLoader=c.getCacheLoader();
+      if (cacheLoader != null) {
+        CacheLoaderManager loaderManager=ispnCache.getComponentRegistry().getComponent(CacheLoaderManager.class);
+        JCacheLoaderAdapter ispnCacheLoader=(JCacheLoaderAdapter)loaderManager.getCacheLoader();
+        ispnCacheLoader.setCacheLoader(cacheLoader);
+      }
+      CacheWriter<? super K,? super V> cacheWriter=c.getCacheWriter();
+      if (cacheWriter != null) {
+        CacheLoaderManager loaderManager=ispnCache.getComponentRegistry().getComponent(CacheLoaderManager.class);
+        JCacheWriterAdapter ispnCacheStore=(JCacheWriterAdapter)loaderManager.getCacheStore();
+        ispnCacheStore.setCacheWriter(cacheWriter);
+      }
+      cache=new JCache<K,V>(ispnCache,this,c);
+      cache.start();
+      caches.put(cache.getName(),cache);
+    }
+ else {
+      if (!cache.getConfiguration().equals(c)) {
+        throw new CacheException("Cache " + cacheName + " already registered with configuration "+ cache.getConfiguration()+ ", and can not be registered again with a new given configuration "+ c);
+      }
+    }
+    return (Cache<K,V>)cache;
+  }
+}

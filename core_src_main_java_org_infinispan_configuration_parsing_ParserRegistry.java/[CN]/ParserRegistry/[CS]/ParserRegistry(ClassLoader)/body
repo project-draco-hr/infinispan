@@ -1,7 +1,7 @@
 {
   xmlMapper=XMLMapper.Factory.create();
-  this.cl=classLoader;
-  ServiceLoader<ConfigurationParser> parsers=ServiceLoader.load(ConfigurationParser.class,cl);
+  this.cl=new WeakReference<ClassLoader>(classLoader);
+  ServiceLoader<ConfigurationParser> parsers=ServiceLoader.load(ConfigurationParser.class,cl.get());
   for (  ConfigurationParser<?> parser : parsers) {
     for (    Namespace ns : parser.getSupportedNamespaces()) {
       xmlMapper.registerRootElement(new QName(ns.getUri(),ns.getRootElement()),parser);

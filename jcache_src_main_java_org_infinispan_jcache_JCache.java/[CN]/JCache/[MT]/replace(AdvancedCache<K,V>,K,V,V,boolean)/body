@@ -1,0 +1,23 @@
+{
+  boolean exists=cache.containsKey(key);
+  if (exists) {
+    Entry<K,V> entry=new JCacheEntry<K,V>(key,value);
+    Configuration.Duration ttl=expiryPolicy.getTTLForModifiedEntry(entry,null);
+    if (ttl == null || ttl.isEternal()) {
+      return isConditional ? cache.replace(key,oldValue,value) : cache.replace(key,value) != null;
+    }
+ else     if (ttl.equals(Configuration.Duration.ZERO)) {
+      return cache.remove(key) != null;
+    }
+ else {
+      long duration=ttl.getDurationAmount();
+      TimeUnit timeUnit=ttl.getTimeUnit();
+      return isConditional ? cache.replace(key,oldValue,value,duration,timeUnit) : cache.replace(key,value,duration,timeUnit) != null;
+    }
+  }
+  if (isConditional) {
+    verifyOldValue(oldValue);
+  }
+  verifyNewValue(value);
+  return false;
+}

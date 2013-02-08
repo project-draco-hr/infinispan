@@ -1,0 +1,17 @@
+{
+  checkStarted();
+  List<Future<V>> futures=new ArrayList<Future<V>>();
+  for (  Cache.Entry<K,V> entry : this)   futures.add(cache.removeAsync(entry.getKey()));
+  for (  Future<V> future : futures) {
+    try {
+      future.get(10,TimeUnit.SECONDS);
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new CacheException("Interrupted while waiting for remove to complete");
+    }
+catch (    Exception e) {
+      throw new CacheException("Removing all entries from cache failed",e);
+    }
+  }
+}

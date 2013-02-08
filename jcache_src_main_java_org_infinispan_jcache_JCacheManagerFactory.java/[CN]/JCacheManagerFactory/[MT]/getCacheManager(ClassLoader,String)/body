@@ -1,0 +1,19 @@
+{
+  if (classLoader == null)   throw new NullPointerException("Invalid classloader specified " + classLoader);
+  if (name == null)   throw new NullPointerException("Invalid cache name specified " + name);
+synchronized (cacheManagers) {
+    Map<String,JCacheManager> map=cacheManagers.get(classLoader);
+    if (map == null) {
+      if (log.isTraceEnabled())       log.tracef("No cache managers registered under '%s'",name);
+      map=new HashMap<String,JCacheManager>();
+      cacheManagers.put(classLoader,map);
+    }
+    JCacheManager cacheManager=map.get(name);
+    if (cacheManager == null) {
+      cacheManager=createCacheManager(classLoader,name);
+      if (log.isTraceEnabled())       log.tracef("Created '%s' cache manager",name);
+      map.put(name,cacheManager);
+    }
+    return cacheManager;
+  }
+}

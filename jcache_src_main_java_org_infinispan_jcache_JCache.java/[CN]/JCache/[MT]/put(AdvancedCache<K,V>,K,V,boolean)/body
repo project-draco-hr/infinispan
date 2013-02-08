@@ -1,0 +1,25 @@
+{
+  boolean isCreated=!cache.containsKey(key);
+  V ret;
+  Configuration.Duration ttl;
+  Entry<K,V> entry=new JCacheEntry<K,V>(key,value);
+  if (isCreated) {
+    ttl=expiryPolicy.getTTLForCreatedEntry(entry);
+  }
+ else {
+    ttl=expiryPolicy.getTTLForModifiedEntry(entry,null);
+  }
+  if (ttl == null || ttl.isEternal()) {
+    ret=isPutIfAbsent ? cache.putIfAbsent(key,value) : cache.put(key,value);
+  }
+ else   if (ttl.equals(Configuration.Duration.ZERO)) {
+    if (!isCreated)     ret=cache.remove(key);
+ else     ret=null;
+  }
+ else {
+    long duration=ttl.getDurationAmount();
+    TimeUnit timeUnit=ttl.getTimeUnit();
+    ret=isPutIfAbsent ? cache.putIfAbsent(key,value,duration,timeUnit) : cache.put(key,value,duration,timeUnit);
+  }
+  return ret;
+}

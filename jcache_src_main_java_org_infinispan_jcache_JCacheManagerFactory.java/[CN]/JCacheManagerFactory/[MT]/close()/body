@@ -1,0 +1,18 @@
+{
+synchronized (cacheManagers) {
+    Map<CacheManager,Exception> failures=new IdentityHashMap<CacheManager,Exception>();
+    for (    Map<String,JCacheManager> map : cacheManagers.values()) {
+      try {
+        shutdown(map);
+      }
+ catch (      CachingShutdownException e) {
+        failures.putAll(e.getFailures());
+      }
+    }
+    cacheManagers.clear();
+    if (log.isTraceEnabled())     log.tracef("All cache managers have been removed");
+    if (!failures.isEmpty()) {
+      throw new CachingShutdownException(failures);
+    }
+  }
+}

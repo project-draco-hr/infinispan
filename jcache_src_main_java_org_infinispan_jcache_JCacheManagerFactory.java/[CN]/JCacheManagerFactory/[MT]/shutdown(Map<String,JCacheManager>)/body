@@ -1,0 +1,15 @@
+{
+  IdentityHashMap<CacheManager,Exception> failures=new IdentityHashMap<CacheManager,Exception>();
+  for (  CacheManager cacheManager : map.values()) {
+    try {
+      cacheManager.shutdown();
+      if (log.isTraceEnabled())       log.tracef("Shutdown cache manager '%s'",cacheManager.getName());
+    }
+ catch (    Exception e) {
+      failures.put(cacheManager,e);
+    }
+  }
+  if (!failures.isEmpty()) {
+    throw new CachingShutdownException(failures);
+  }
+}

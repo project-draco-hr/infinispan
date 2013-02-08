@@ -1,0 +1,18 @@
+{
+synchronized (cacheManagers) {
+    if (name != null) {
+      Map<String,JCacheManager> map=cacheManagers.get(classLoader);
+      JCacheManager cacheManager=map.remove(name);
+      if (map.isEmpty())       cacheManagers.remove(classLoader);
+      if (cacheManager == null)       return false;
+      cacheManager.shutdown();
+      return true;
+    }
+ else {
+      Map<String,JCacheManager> map=cacheManagers.remove(classLoader);
+      if (map == null)       return false;
+      shutdown(map);
+      return true;
+    }
+  }
+}

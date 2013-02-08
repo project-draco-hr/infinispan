@@ -1,0 +1,18 @@
+{
+  checkStarted();
+  final CacheLoader<K,? extends V> cacheLoader=configuration.getCacheLoader();
+  verifyKey(key);
+  if (cacheLoader == null || containsKey(key)) {
+    return null;
+  }
+  FutureTask<V> task=new FutureTask<V>(new Callable<V>(){
+    @Override public V call() throws Exception {
+      Entry<K,? extends V> entry=cacheLoader.load(key);
+      put(entry.getKey(),entry.getValue());
+      return entry.getValue();
+    }
+  }
+);
+  executorService.submit(task);
+  return task;
+}

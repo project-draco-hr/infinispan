@@ -1,0 +1,15 @@
+{
+  super();
+  this.cache=cache;
+  this.ignoreReturnValuesCache=cache.withFlags(Flag.IGNORE_RETURN_VALUES);
+  this.skipCacheLoadCache=cache.withFlags(Flag.SKIP_CACHE_LOAD);
+  this.cacheManager=cacheManager;
+  this.configuration=new SimpleConfiguration<K,V>(c);
+  this.mxBean=new RIDelegatingCacheMXBean<K,V>(this);
+  this.stats=new RICacheStatistics(this);
+  this.expiryPolicy=configuration.getExpiryPolicy();
+  for (  CacheEntryListenerRegistration<? super K,? super V> r : c.getCacheEntryListenerRegistrations()) {
+    RICacheEntryListenerRegistration<K,V> lr=new RICacheEntryListenerRegistration<K,V>(r.getCacheEntryListener(),r.getCacheEntryFilter(),r.isOldValueRequired(),r.isSynchronous());
+    listeners.put(r.getCacheEntryListener(),lr);
+  }
+}

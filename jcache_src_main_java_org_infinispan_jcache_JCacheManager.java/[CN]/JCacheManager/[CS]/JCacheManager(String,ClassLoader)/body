@@ -1,0 +1,20 @@
+{
+  this.allocationStackTrace=Thread.currentThread().getStackTrace();
+  if (classLoader == null) {
+    throw new IllegalArgumentException("Classloader cannot be null");
+  }
+  if (name == null || name.length() == 0) {
+    throw new IllegalArgumentException("Invalid CacheManager name " + name);
+  }
+  this.name=name;
+  ConfigurationBuilderHolder cbh=getConfigurationBuilderHolder(classLoader);
+  GlobalConfigurationBuilder globalBuilder=cbh.getGlobalConfigurationBuilder();
+  String cacheManagerName=name + "/classloader=" + classLoader.toString();
+  globalBuilder.classLoader(classLoader).globalJmxStatistics().cacheManagerName(cacheManagerName);
+  cm=new DefaultCacheManager(cbh,true);
+  Set<String> cacheNames=cm.getCacheNames();
+  for (  String cacheName : cacheNames) {
+    caches.put(cacheName,new JCache<Object,Object>(cm.getCache(cacheName).getAdvancedCache(),this,null));
+  }
+  status=Status.STARTED;
+}
