@@ -2,15 +2,17 @@
   final TransactionTable tt0=TestingUtil.getTransactionTable(cache(0));
   final TransactionTable tt1=TestingUtil.getTransactionTable(cache(1));
   StateTransferManager stateTransferManager0=TestingUtil.extractComponent(cache(0),StateTransferManager.class);
-  final int viewId=stateTransferManager0.getCacheTopology().getTopologyId();
-  assertEquals(tt0.getMinTopologyId(),viewId);
-  assertEquals(tt1.getMinTopologyId(),viewId);
+  final int topologyId=stateTransferManager0.getCacheTopology().getTopologyId();
+  assertEquals(tt0.getMinTopologyId(),topologyId);
+  assertEquals(tt1.getMinTopologyId(),topologyId);
+  log.trace("Adding new node ..");
   addClusterEnabledCacheManager(c);
   waitForClusterToForm();
-  final int viewId2=stateTransferManager0.getCacheTopology().getTopologyId();
-  assertTrue(viewId2 > viewId);
-  assertEquals(tt0.getMinTopologyId(),viewId2);
-  assertEquals(tt1.getMinTopologyId(),viewId2);
+  log.trace("New node added.");
+  final int topologyId2=stateTransferManager0.getCacheTopology().getTopologyId();
+  assertTrue(topologyId2 > topologyId);
+  assertEquals(tt0.getMinTopologyId(),topologyId2);
+  assertEquals(tt1.getMinTopologyId(),topologyId2);
   final TransactionTable tt2=TestingUtil.getTransactionTable(cache(1));
-  assertEquals(tt2.getMinTopologyId(),viewId2);
+  assertEquals(tt2.getMinTopologyId(),topologyId2);
 }
