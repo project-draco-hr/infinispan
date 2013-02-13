@@ -2,9 +2,10 @@
   Object result=super.visitPutKeyValueCommand(ctx,command);
   if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
     log.tracef("Delaying command %s",command);
-    counter.incrementAndGet();
-    Object pollResult=barrier.poll(3,TimeUnit.SECONDS);
-    assertNotNull(pollResult,"Timed out waiting for unblock() call");
+    Integer myCount=counter.incrementAndGet();
+    Object pollResult=barrier.poll(15,TimeUnit.SECONDS);
+    assertEquals(pollResult,myCount,String.format("Timed out waiting for unblock(%d) call on cache %s",myCount,cache));
+    log.tracef("Command unblocked: %s",command);
   }
   return result;
 }
