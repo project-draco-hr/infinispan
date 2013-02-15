@@ -1,0 +1,17 @@
+{
+  remoteCache.put("key","value");
+  remoteCache.get("key");
+  RemoteCacheImpl impl=(RemoteCacheImpl)remoteCache;
+  ByteArrayKey keyOnServer=new ByteArrayKey(impl.obj2bytes("key",true));
+  List<Address> owners=cache(0).getAdvancedCache().getDistributionManager().locate(keyOnServer);
+  Collection<String> ownersOnClient=remoteCache.locate("key");
+  Set<String> ownerEndpoints=new HashSet<String>();
+  for (  Address a : owners) {
+    for (    HotRodServer hrs : Arrays.asList(hotRodServer1,hotRodServer2,hotRodServer3,hotRodServer4)) {
+      if (hrs.getCacheManager().getAddress().equals(a)) {
+        ownerEndpoints.add(hrs.getAddress().toString());
+      }
+    }
+  }
+  assertEquals("Client's locate() method returned different results from the server's locate()!",ownerEndpoints,ownersOnClient);
+}
