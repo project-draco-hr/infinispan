@@ -2,7 +2,7 @@
   final ControlledCommandFactory ccf=ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1),toBlock);
   ccf.gate.close();
   final Set<Object> keys=new HashSet<Object>(KEY_SET_SIZE);
-  fork(new Callable<Object>(){
+  Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       tm(0).begin();
       for (int i=0; i < KEY_SET_SIZE; i++) {
@@ -50,19 +50,24 @@
 );
   log.trace("Releasing the gate");
   ccf.gate.open();
-  eventually(new Condition(){
-    @Override public boolean isSatisfied() throws Exception {
-      int remoteTxCount=TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-      log.trace("remoteTxCount==" + remoteTxCount);
-      return remoteTxCount == 0;
-    }
-  }
-);
+  future.get(10,TimeUnit.SECONDS);
   for (int i=0; i < 3; i++) {
     TransactionTable tt=TestingUtil.getTransactionTable(cache(i));
     assertEquals("For cache " + i,0,tt.getLocalTxCount());
-    assertEquals("For cache " + i,0,tt.getRemoteTxCount());
   }
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      boolean success=true;
+      for (int i=0; i < 3; i++) {
+        TransactionTable tt=TestingUtil.getTransactionTable(cache(i));
+        int remoteTxCount=tt.getRemoteTxCount();
+        log.tracef("For cache %s, remoteTxCount==%d",cache(i),remoteTxCount);
+        success&=remoteTxCount == 0;
+      }
+      return success;
+    }
+  }
+);
   for (  Object key : keys) {
     assertNotLocked(key);
     assertEquals(key,cache(0).get(key));
