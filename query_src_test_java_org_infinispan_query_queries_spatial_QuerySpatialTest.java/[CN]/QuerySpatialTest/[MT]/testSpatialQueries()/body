@@ -1,0 +1,13 @@
+{
+  loadData();
+  double centerLatitude=24;
+  double centerLongitude=31.5;
+  Query query=Search.getSearchManager(cache).buildQueryBuilderForClass(CitySpatial.class).get().spatial().onCoordinates("city_location").within(50,Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
+  CacheQuery cacheQuery=Search.getSearchManager(cache).getQuery(query);
+  List<Object> found=cacheQuery.list();
+  Assert.assertEquals(0,found.size());
+  query=Search.getSearchManager(cache).buildQueryBuilderForClass(CitySpatial.class).get().spatial().onCoordinates("city_location").within(51,Unit.KM).ofLatitude(centerLatitude).andLongitude(centerLongitude).createQuery();
+  cacheQuery=Search.getSearchManager(cache).getQuery(query);
+  found=cacheQuery.list();
+  Assert.assertEquals(1,found.size());
+}
