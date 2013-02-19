@@ -6,6 +6,7 @@
   if (isBackupForRemoteCache(remoteSite,remoteCache,dcc,EmbeddedCacheManager.DEFAULT_CACHE_NAME)) {
     Cache<Object,Object> cache=cacheManager.getCache();
     backupReceivers.putIfAbsent(toLookFor,new BackupReceiverImpl(cache));
+    toLookFor.setLocalCacheName(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
     return backupReceivers.get(toLookFor);
   }
   Set<String> cacheNames=cacheManager.getCacheNames();
@@ -13,6 +14,7 @@
     Configuration cacheConfiguration=cacheManager.getCacheConfiguration(name);
     if (isBackupForRemoteCache(remoteSite,remoteCache,cacheConfiguration,name)) {
       Cache<Object,Object> cache=cacheManager.getCache(name);
+      toLookFor.setLocalCacheName(name);
       backupReceivers.putIfAbsent(toLookFor,new BackupReceiverImpl(cache));
       return backupReceivers.get(toLookFor);
     }

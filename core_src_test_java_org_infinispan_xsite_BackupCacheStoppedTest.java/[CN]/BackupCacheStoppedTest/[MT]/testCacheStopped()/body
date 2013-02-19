@@ -1,0 +1,25 @@
+{
+  final String site="LON";
+  String key=key(site);
+  String val=val(site);
+  cache(site,0).put(key,val);
+  Cache<Object,Object> backup=backup(site);
+  final GlobalComponentRegistry gcr=backup.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry();
+  assertTrue(backup.getName().contains("lonBackup"));
+  assertEquals(backup.get(key),val);
+  assertTrue(backup.getStatus().allowInvocations());
+  backup.stop();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      BackupReceiverRepositoryImpl component=(BackupReceiverRepositoryImpl)gcr.getComponent(BackupReceiverRepository.class);
+      return component.getBackupReceiver(site,EmbeddedCacheManager.DEFAULT_CACHE_NAME) == null;
+    }
+  }
+);
+  assertFalse(backup.getStatus().allowInvocations());
+  backup.start();
+  log.trace("About to put the 2nd value");
+  cache(site,0).put(key,"v2");
+  assertEquals(backup(site).get(key),"v2");
+  assertTrue(backup.getStatus().allowInvocations());
+}
