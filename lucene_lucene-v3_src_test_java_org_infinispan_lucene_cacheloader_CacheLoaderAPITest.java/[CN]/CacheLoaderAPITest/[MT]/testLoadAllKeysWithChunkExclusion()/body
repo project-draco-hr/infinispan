@@ -1,0 +1,13 @@
+{
+  TestHelper.createIndex(rootDir,indexName,elementCount,true);
+  LuceneCacheLoader cacheLoader=(LuceneCacheLoader)TestingUtil.extractComponent(cacheManager.getCache(),CacheLoaderManager.class).getCacheLoader();
+  HashSet exclusionSet=new HashSet();
+  String[] fileNames=TestHelper.getFileNamesFromDir(rootDir,indexName);
+  for (  String fileName : fileNames) {
+    exclusionSet.add(new ChunkCacheKey(indexName,fileName,0,110));
+  }
+  Set keyList=cacheLoader.loadAllKeys(null);
+  checkIfExists(keyList,exclusionSet,true,false);
+  keyList=cacheLoader.loadAllKeys(exclusionSet);
+  checkIfExists(keyList,exclusionSet,false,true);
+}
