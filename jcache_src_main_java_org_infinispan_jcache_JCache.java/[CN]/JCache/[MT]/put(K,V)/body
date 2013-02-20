@@ -1,4 +1,15 @@
 {
   checkStarted();
-  put(ignoreReturnValuesCache,key,value,false);
+  if (lockRequired(key)) {
+    new WithProcessorLock<Void>().call(key,new Callable<Void>(){
+      @Override public Void call(){
+        doPut(key,value);
+        return null;
+      }
+    }
+);
+  }
+ else {
+    doPut(key,value);
+  }
 }

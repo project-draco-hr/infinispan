@@ -3,5 +3,19 @@
   if (inputMap == null || inputMap.containsKey(null) || inputMap.containsValue(null)) {
     throw new NullPointerException("inputMap is null or keys/values contain a null entry: " + inputMap);
   }
-  for (  Map.Entry<? extends K,? extends V> e : inputMap.entrySet())   put(ignoreReturnValuesCache,e.getKey(),e.getValue(),false);
+  for (  Map.Entry<? extends K,? extends V> e : inputMap.entrySet()) {
+    final K key=e.getKey();
+    if (lockRequired(key)) {
+      new WithProcessorLock<Void>().call(key,new Callable<Void>(){
+        @Override public Void call(){
+          doPut(key,e.getValue());
+          return null;
+        }
+      }
+);
+    }
+ else {
+      doPut(key,e.getValue());
+    }
+  }
 }

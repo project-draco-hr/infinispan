@@ -1,6 +1,12 @@
 {
   checkStarted();
-  V value=cache.get(key);
-  if (value != null)   updateTTLForAccessed(cache,new JCacheEntry<K,V>(key,value));
-  return value;
+  if (lockRequired(key)) {
+    return new WithProcessorLock<V>().call(key,new Callable<V>(){
+      @Override public V call(){
+        return doGet(key);
+      }
+    }
+);
+  }
+  return doGet(key);
 }

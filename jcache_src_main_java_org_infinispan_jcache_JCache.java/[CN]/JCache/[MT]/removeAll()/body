@@ -1,7 +1,21 @@
 {
   checkStarted();
   List<Future<V>> futures=new ArrayList<Future<V>>();
-  for (  Cache.Entry<K,V> entry : this)   futures.add(cache.removeAsync(entry.getKey()));
+  for (  Cache.Entry<K,V> entry : this) {
+    final K key=entry.getKey();
+    if (lockRequired(key)) {
+      new WithProcessorLock<Void>().call(key,new Callable<Void>(){
+        @Override public Void call(){
+          cache.remove(key);
+          return null;
+        }
+      }
+);
+    }
+ else {
+      futures.add(cache.removeAsync(key));
+    }
+  }
   for (  Future<V> future : futures) {
     try {
       future.get(10,TimeUnit.SECONDS);

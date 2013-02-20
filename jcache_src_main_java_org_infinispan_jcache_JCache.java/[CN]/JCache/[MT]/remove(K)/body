@@ -1,5 +1,12 @@
 {
   checkStarted();
-  V remove=cache.remove(key);
-  return remove != null;
+  if (lockRequired(key)) {
+    return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
+      @Override public Boolean call(){
+        return cache.remove(key) != null;
+      }
+    }
+);
+  }
+  return cache.remove(key) != null;
 }

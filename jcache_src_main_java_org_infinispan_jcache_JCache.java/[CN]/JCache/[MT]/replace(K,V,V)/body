@@ -1,4 +1,12 @@
 {
   checkStarted();
+  if (lockRequired(key)) {
+    return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
+      @Override public Boolean call(){
+        return replace(skipCacheLoadCache,key,oldValue,newValue,true);
+      }
+    }
+);
+  }
   return replace(skipCacheLoadCache,key,oldValue,newValue,true);
 }
