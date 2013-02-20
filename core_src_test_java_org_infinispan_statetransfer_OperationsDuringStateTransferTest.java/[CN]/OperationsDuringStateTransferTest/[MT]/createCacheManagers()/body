@@ -1,0 +1,32 @@
+{
+  cacheConfigBuilder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,isTransactional,true);
+  if (isTransactional) {
+    cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup()).syncCommitPhase(true).syncRollbackPhase(true);
+    if (isOptimistic) {
+      cacheConfigBuilder.transaction().lockingMode(LockingMode.OPTIMISTIC).locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ).versioning().enable().scheme(VersioningScheme.SIMPLE);
+    }
+ else {
+      cacheConfigBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+    }
+  }
+  cacheConfigBuilder.clustering().hash().numSegments(10).numOwners(2).l1().disable().onRehash(false).locking().lockAcquisitionTimeout(1000l);
+  cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
+  transportGate=new ReclosableLatch(true);
+  GlobalConfigurationBuilder globalConfigurationBuilder=new GlobalConfigurationBuilder();
+  globalConfigurationBuilder.transport().transport(new JGroupsTransport(){
+    @Override public Map<Address,Response> invokeRemotely(    Collection<Address> recipients,    ReplicableCommand rpcCommand,    ResponseMode mode,    long timeout,    boolean usePriorityQueue,    ResponseFilter responseFilter) throws Exception {
+      if (rpcCommand instanceof CacheTopologyControlCommand) {
+        try {
+          transportGate.await();
+        }
+ catch (        InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return super.invokeRemotely(recipients,rpcCommand,mode,timeout,usePriorityQueue,responseFilter);
+    }
+  }
+);
+  addClusterEnabledCacheManager(globalConfigurationBuilder,cacheConfigBuilder);
+  waitForClusterToForm();
+}

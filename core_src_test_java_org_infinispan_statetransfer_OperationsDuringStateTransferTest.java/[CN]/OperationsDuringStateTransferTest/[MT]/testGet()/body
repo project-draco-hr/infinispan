@@ -1,0 +1,54 @@
+{
+  cache(0).put("myKey","myValue");
+  final CountDownLatch applyStateProceedLatch=new CountDownLatch(1);
+  final CountDownLatch applyStateStartedLatch=new CountDownLatch(1);
+  cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class).interceptor(new CommandInterceptor(){
+    @Override protected Object handleDefault(    InvocationContext ctx,    VisitableCommand cmd) throws Throwable {
+      if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand)cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+        applyStateStartedLatch.countDown();
+        if (!applyStateProceedLatch.await(15,TimeUnit.SECONDS)) {
+          throw new TimeoutException();
+        }
+      }
+      return super.handleDefault(ctx,cmd);
+    }
+  }
+);
+  final CountDownLatch getKeyStartedLatch=new CountDownLatch(1);
+  final CountDownLatch getKeyProceedLatch=new CountDownLatch(1);
+  cacheConfigBuilder.customInterceptors().addInterceptor().before(CallInterceptor.class).interceptor(new CommandInterceptor(){
+    @Override protected Object handleDefault(    InvocationContext ctx,    VisitableCommand cmd) throws Throwable {
+      if (cmd instanceof GetKeyValueCommand) {
+        getKeyStartedLatch.countDown();
+        if (!getKeyProceedLatch.await(15,TimeUnit.SECONDS)) {
+          throw new TimeoutException();
+        }
+      }
+      return super.handleDefault(ctx,cmd);
+    }
+  }
+);
+  log.info("Adding a new node ..");
+  addClusterEnabledCacheManager(cacheConfigBuilder);
+  log.info("Added a new node");
+  assertTrue(cache(1).keySet().isEmpty());
+  if (!applyStateStartedLatch.await(15,TimeUnit.SECONDS)) {
+    throw new TimeoutException();
+  }
+  assertTrue(cache(1).keySet().isEmpty());
+  Future<Object> getFuture=fork(new Callable<Object>(){
+    @Override public Object call(){
+      return cache(1).get("myKey");
+    }
+  }
+);
+  if (!getKeyStartedLatch.await(15,TimeUnit.SECONDS)) {
+    throw new TimeoutException();
+  }
+  applyStateProceedLatch.countDown();
+  TestingUtil.waitForRehashToComplete(cache(0),cache(1));
+  assertEquals(1,cache(1).keySet().size());
+  getKeyProceedLatch.countDown();
+  Object value=getFuture.get(15,TimeUnit.SECONDS);
+  assertEquals("myValue",value);
+}

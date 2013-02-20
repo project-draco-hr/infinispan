@@ -1,9 +1,14 @@
 {
   try {
     Object returnValue=invokeNextInterceptor(ctx,command);
-    if (needsRemoteGet(ctx,command,returnValue == null)) {
+    if (returnValue == null) {
       Object key=command.getKey();
-      returnValue=shouldFetchFromRemote(ctx,key) ? remoteGet(ctx,key,command) : null;
+      if (needsRemoteGet(ctx,command)) {
+        returnValue=remoteGet(ctx,key,command);
+      }
+      if (returnValue == null) {
+        returnValue=localGet(ctx,key,false,command);
+      }
     }
     return returnValue;
   }
