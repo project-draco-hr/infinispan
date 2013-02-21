@@ -1,8 +1,14 @@
 {
   checkClosed();
-  long count=0;
-  while (len != count && read() != -1) {
-    count++;
+  if (len <= 0)   return 0;
+  int bytesToSkip=Math.min((int)len,getBytesRemainingInStream());
+  index+=bytesToSkip;
+  if (bytesToSkip <= getBytesRemainingInChunk()) {
+    localIndex+=bytesToSkip;
   }
-  return count;
+ else {
+    fetchChunk();
+    localIndex=index % getChunkSize();
+  }
+  return bytesToSkip;
 }
