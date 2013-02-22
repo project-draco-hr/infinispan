@@ -1,2 +1,12 @@
 {
+  AdvancedCache<Object,Object> advancedCache=cache.getAdvancedCache();
+  for (int i=0; i < 512; i++) {
+    advancedCache.startBatch();
+    cache.put("key-" + (i + 1),"value-" + (i + 1),1,TimeUnit.MINUTES);
+    advancedCache.endBatch(true);
+  }
+  Thread.sleep(1000);
+  int cacheSize=cache.size();
+  assertTrue("no data in cache! all state lost?",cacheSize != 0);
+  assertTrue("cache size too big: " + cacheSize,cacheSize < 512);
 }
