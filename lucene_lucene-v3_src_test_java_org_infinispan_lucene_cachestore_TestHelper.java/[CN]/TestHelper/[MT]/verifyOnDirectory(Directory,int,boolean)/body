@@ -1,2 +1,26 @@
 {
+  IndexReader indexReader=IndexReader.open(directory);
+  IndexSearcher searcher=new IndexSearcher(indexReader);
+  try {
+    for (int i=0; i <= termsAdded; i++) {
+      String term=String.valueOf(i);
+      final Query queryToFind;
+      final Query queryNotToFind;
+      if (i % 2 == 0 ^ inverted) {
+        queryToFind=new TermQuery(new Term("main",term));
+        queryNotToFind=new TermQuery(new Term("secondaryField",term));
+      }
+ else {
+        queryToFind=new TermQuery(new Term("secondaryField",term));
+        queryNotToFind=new TermQuery(new Term("main",term));
+      }
+      TopDocs docs=searcher.search(queryToFind,null,2);
+      Assert.assertEquals("String '" + term + "' should exist but was not found in index",1,docs.totalHits);
+      docs=searcher.search(queryNotToFind,null,1);
+      Assert.assertEquals("String '" + term + "' should NOT exist but was found in index",0,docs.totalHits);
+    }
+  }
+  finally {
+    indexReader.close();
+  }
 }

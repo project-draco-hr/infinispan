@@ -1,0 +1,22 @@
+{
+  Set<String> fileList=(Set<String>)cache.get(new FileListCacheKey(INDEX_NAME));
+  Assert.assertNotNull(fileList);
+  Assert.assertFalse(fileList.contains(filename));
+  FileMetadata metadata=(FileMetadata)cache.get(new FileCacheKey(INDEX_NAME,filename));
+  Assert.assertNotNull(metadata);
+  long totalFileSize=metadata.getSize();
+  int chunkNumbers=(int)(totalFileSize / CHUNK_SIZE);
+  for (int i=0; i < chunkNumbers; i++) {
+    Assert.assertNotNull(cache.get(new ChunkCacheKey(INDEX_NAME,filename,CHUNK_SIZE,0)));
+  }
+  boolean fileNameExistsInCache=false;
+  for (  Object key : cache.keySet()) {
+    if (key instanceof FileCacheKey) {
+      FileCacheKey keyObj=(FileCacheKey)key;
+      if (keyObj.getFileName().contains(filename)) {
+        fileNameExistsInCache=true;
+      }
+    }
+  }
+  Assert.assertTrue(fileNameExistsInCache);
+}

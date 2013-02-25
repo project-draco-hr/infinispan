@@ -1,0 +1,17 @@
+{
+  File file=new File("test.txt");
+  boolean created=file.createNewFile();
+  file.deleteOnExit();
+  assert created;
+  EmbeddedCacheManager cacheManager=null;
+  try {
+    cacheManager=initializeInfinispan(file);
+    Cache cache=cacheManager.getCache();
+    Directory directory=DirectoryBuilder.newDirectoryInstance(cache,cache,cache,indexName).create();
+  }
+  finally {
+    if (cacheManager != null) {
+      TestingUtil.killCacheManagers(cacheManager);
+    }
+  }
+}
