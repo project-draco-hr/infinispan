@@ -1,2 +1,31 @@
 {
+  failed.set(false);
+  quit.set(false);
+  caches.get(0).put(SHARED_KEY,"initialValue");
+  final SharedState state=new SharedState(THREAD_COUNT);
+  final PostOperationStateCheck stateCheck=new PostOperationStateCheck(caches,state,operation);
+  final CyclicBarrier barrier=new CyclicBarrier(THREAD_COUNT,stateCheck);
+  final String className=getClass().getSimpleName();
+  ExecutorService exec=Executors.newFixedThreadPool(THREAD_COUNT,new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      return new Thread(r,className + "-" + threadIndex.getAndIncrement());
+    }
+  }
+);
+  for (int threadIndex=0; threadIndex < THREAD_COUNT; threadIndex++) {
+    Runnable validMover=new ValidMover(caches,barrier,threadIndex,state,operation);
+    exec.execute(validMover);
+  }
+  exec.shutdown();
+  try {
+    boolean finished=exec.awaitTermination(5,TimeUnit.MINUTES);
+    Assert.assertTrue("Test took too long",finished);
+  }
+ catch (  InterruptedException e) {
+    Assert.fail("Thread interrupted!");
+  }
+ finally {
+    exec.shutdownNow();
+  }
+  Assert.assertFalse(failureMessage,failed.get());
 }

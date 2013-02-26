@@ -1,6 +1,6 @@
 {
   DataLocality locality=dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(),key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
-  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || isStateTransferInProgressForKey(key)) {
+  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
     if (trace)     log.tracef("Doing a remote get for key %s",key);
     boolean acquireRemoteLock=false;
     if (ctx.isInTxScope()) {
@@ -36,15 +36,9 @@
         }
       }
  else {
-        CacheEntry ce=ctx.lookupEntry(key);
-        if (ce == null || ce.isNull() || ce.isLockPlaceholder() || ce.getValue() == null) {
-          if (ce != null && ce.isChanged()) {
-            ce.setValue(ice.getValue());
-          }
- else {
-            if (isWrite)             lockAndWrap(ctx,key,ice,command);
- else             ctx.putLookedUpEntry(key,ice);
-          }
+        if (!ctx.replaceValue(key,ice.getValue())) {
+          if (isWrite)           lockAndWrap(ctx,key,ice,command);
+ else           ctx.putLookedUpEntry(key,ice);
         }
       }
       return ice.getValue();
