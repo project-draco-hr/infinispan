@@ -9,15 +9,20 @@
     if (trace)     log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: "+ beans);
     Set<DiscoveredResourceDetails> discoveredResources=new HashSet<DiscoveredResourceDetails>();
     for (    EmsBean bean : beans) {
-      String managerName=bean.getBeanName().getCanonicalName();
-      String resourceName=bean.getAttribute("Name").getValue().toString();
-      String version=bean.getAttribute("Version").getValue().toString();
-      if (trace)       log.trace("Add resource with version '" + version + "' and type "+ ctx.getResourceType());
-      DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",pluginConfiguration,null);
-      if (log.isInfoEnabled()) {
-        log.info(String.format("Discovered Infinispan instance with key %s and name %s",resourceName,managerName));
+      if (CacheManagerComponent.isCacheManagerComponent(bean)) {
+        String managerName=bean.getBeanName().getCanonicalName();
+        String resourceName=bean.getAttribute("Name").getValue().toString();
+        String version=bean.getAttribute("Version").getValue().toString();
+        if (trace)         log.trace("Add resource with version '" + version + "' and type "+ ctx.getResourceType());
+        DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",pluginConfiguration,null);
+        if (log.isInfoEnabled()) {
+          log.info(String.format("Discovered Infinispan instance with key %s and name %s",resourceName,managerName));
+        }
+        discoveredResources.add(detail);
       }
-      discoveredResources.add(detail);
+ else {
+        log.warn(String.format("MBeanServer returned spurious object %s",bean.getBeanName().getCanonicalName()));
+      }
     }
     return discoveredResources;
   }

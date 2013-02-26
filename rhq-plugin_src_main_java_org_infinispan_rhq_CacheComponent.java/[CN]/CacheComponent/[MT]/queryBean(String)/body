@@ -4,14 +4,14 @@
   if (log.isTraceEnabled())   log.trace("Pattern to query is " + pattern);
   ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(pattern);
   List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-  if (beans.size() > 1) {
-    if (log.isWarnEnabled()) {
-      log.warn(String.format("More than one bean returned from applying %s pattern: %s",pattern,beans));
+  for (  EmsBean bean : beans) {
+    if (isCacheComponent(bean)) {
+      return bean;
+    }
+ else {
+      log.warn(String.format("MBeanServer returned spurious object %s",bean.getBeanName().getCanonicalName()));
     }
   }
-  EmsBean bean=beans.size() > 0 ? beans.get(0) : null;
-  if (bean == null) {
-    if (log.isTraceEnabled())     log.trace("No mbean found with name " + pattern);
-  }
-  return bean;
+  if (log.isTraceEnabled())   log.trace("No mbean found with name " + pattern);
+  return null;
 }
