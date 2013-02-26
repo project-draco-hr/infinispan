@@ -5,7 +5,7 @@
   if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
   return new WithProcessorLock<T>().call(key,new Callable<T>(){
     @Override public T call() throws Exception {
-      V oldValue=cache.get(key);
+      V oldValue=skipListenerCache.get(key);
       MutableJCacheEntry<K,V> mutable=new MutableJCacheEntry<K,V>(cache,key,oldValue);
       T ret=entryProcessor.process(mutable);
       if (mutable.isRemoved()) {

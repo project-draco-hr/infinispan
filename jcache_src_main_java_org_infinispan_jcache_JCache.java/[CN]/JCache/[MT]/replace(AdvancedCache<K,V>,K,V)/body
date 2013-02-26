@@ -1,0 +1,20 @@
+{
+  boolean exists=cache.containsKey(key);
+  if (exists) {
+    Entry<K,V> entry=new JCacheEntry<K,V>(key,value);
+    Configuration.Duration ttl=expiryPolicy.getTTLForModifiedEntry(entry,null);
+    if (ttl == null || ttl.isEternal()) {
+      return cache.replace(key,value);
+    }
+ else     if (ttl.equals(Configuration.Duration.ZERO)) {
+      return cache.remove(key);
+    }
+ else {
+      long duration=ttl.getDurationAmount();
+      TimeUnit timeUnit=ttl.getTimeUnit();
+      return cache.replace(key,value,duration,timeUnit);
+    }
+  }
+  verifyNewValue(value);
+  return null;
+}
