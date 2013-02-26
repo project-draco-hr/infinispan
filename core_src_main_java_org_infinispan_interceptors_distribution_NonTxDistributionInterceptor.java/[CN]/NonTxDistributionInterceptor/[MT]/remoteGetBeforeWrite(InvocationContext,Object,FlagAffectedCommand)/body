@@ -1,0 +1,16 @@
+{
+  if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+    if (trace)     log.tracef("Doing a remote get for key %s",key);
+    InternalCacheEntry ice=dm.retrieveFromRemoteSource(key,ctx,false,command);
+    if (ice != null) {
+      if (!ctx.replaceValue(key,ice.getValue())) {
+        entryFactory.wrapEntryForPut(ctx,key,ice,false,command);
+      }
+      return ice.getValue();
+    }
+  }
+ else {
+    if (trace)     log.tracef("Not doing a remote get for key %s since entry is not affected by rehash or is already in data container. We are %s, owners are %s",key,rpcManager.getAddress(),dm.locate(key));
+  }
+  return null;
+}

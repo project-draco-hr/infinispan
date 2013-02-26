@@ -1,0 +1,53 @@
+{
+  cache(0).put("myKey","myValue");
+  final CountDownLatch removeStartedLatch=new CountDownLatch(1);
+  final CountDownLatch removeProceedLatch=new CountDownLatch(1);
+  boolean isVersioningEnabled=cache(0).getCacheConfiguration().versioning().enabled();
+  cacheConfigBuilder.customInterceptors().addInterceptor().after(isVersioningEnabled ? VersionedEntryWrappingInterceptor.class : EntryWrappingInterceptor.class).interceptor(new CommandInterceptor(){
+    @Override protected Object handleDefault(    InvocationContext ctx,    VisitableCommand cmd) throws Throwable {
+      if (cmd instanceof RemoveCommand) {
+        removeStartedLatch.countDown();
+        if (!removeProceedLatch.await(15,TimeUnit.SECONDS)) {
+          throw new TimeoutException();
+        }
+      }
+      return super.handleDefault(ctx,cmd);
+    }
+  }
+);
+  transportGate.close();
+  log.info("Adding a new node ..");
+  addClusterEnabledCacheManager(cacheConfigBuilder);
+  log.info("Added a new node");
+  CacheTopology cacheTopology=advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
+  assertNull(cacheTopology.getPendingCH());
+  assertTrue(cacheTopology.getMembers().contains(address(0)));
+  assertFalse(cacheTopology.getMembers().contains(address(1)));
+  assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
+  assertTrue(cache(1).keySet().isEmpty());
+  Future<Object> getFuture=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      try {
+        return cache(1).remove("myKey");
+      }
+ catch (      Exception e) {
+        log.errorf(e,"PUT failed: %s",e.getMessage());
+        throw e;
+      }
+    }
+  }
+);
+  if (!removeStartedLatch.await(15,TimeUnit.SECONDS)) {
+    throw new TimeoutException();
+  }
+  assertTrue(cache(1).keySet().isEmpty());
+  transportGate.open();
+  TestingUtil.waitForRehashToComplete(cache(0),cache(1));
+  assertEquals(1,cache(1).keySet().size());
+  removeProceedLatch.countDown();
+  Object oldVal=getFuture.get(15,TimeUnit.SECONDS);
+  assertNotNull(oldVal);
+  assertEquals("myValue",oldVal);
+  assertNull(cache(0).get("myKey"));
+  assertNull(cache(1).get("myKey"));
+}
