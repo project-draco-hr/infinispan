@@ -2,16 +2,19 @@
   boolean added=false;
   CacheEntryListener<? super K,? super V> listener=reg.getCacheEntryListener();
   if (listener instanceof CacheEntryCreatedListener) {
-    if (!ifAbsent || !containsListener(listener,createdListeners))     added=createdListeners.add(reg);
+    added=addListener(addIfAbsent,reg,listener,createdListeners);
   }
   if (listener instanceof CacheEntryUpdatedListener) {
-    if (!ifAbsent || !containsListener(listener,updatedListeners))     added=updatedListeners.add(reg);
+    added=addListener(addIfAbsent,reg,listener,updatedListeners);
   }
   if (listener instanceof CacheEntryRemovedListener) {
-    if (!ifAbsent || !containsListener(listener,removedListeners))     added=removedListeners.add(reg);
+    added=addListener(addIfAbsent,reg,listener,removedListeners);
   }
   if (listener instanceof CacheEntryReadListener) {
-    if (!ifAbsent || !containsListener(listener,readListeners))     added=readListeners.add(reg);
+    added=addListener(addIfAbsent,reg,listener,readListeners);
+  }
+  if (listener instanceof CacheEntryExpiredListener) {
+    added=addListener(addIfAbsent,reg,listener,expiredListeners);
   }
   return added;
 }
