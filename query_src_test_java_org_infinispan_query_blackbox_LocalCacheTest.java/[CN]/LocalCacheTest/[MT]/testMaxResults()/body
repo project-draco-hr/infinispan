@@ -1,0 +1,11 @@
+{
+  loadTestingData();
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("eats");
+  CacheQuery cacheQuery=Search.getSearchManager(cache).getQuery(luceneQuery).maxResults(1);
+  Assert.assertEquals(3,cacheQuery.getResultSize());
+  Assert.assertEquals(1,cacheQuery.list().size());
+  Assert.assertEquals(1,countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER))));
+  Assert.assertEquals(1,countElements(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))));
+  Assert.assertEquals(1,countElements(cacheQuery.iterator()));
+}

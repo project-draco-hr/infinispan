@@ -1,6 +1,7 @@
 {
   super.setUp();
   extractor=mock(DocumentExtractor.class);
+  when(extractor.getMaxIndex()).thenReturn(entityInfos.size() - 1);
   when(extractor.extract(anyInt())).thenAnswer(new Answer<EntityInfo>(){
     @Override public EntityInfo answer(    InvocationOnMock invocation) throws Throwable {
       int index=(Integer)invocation.getArguments()[0];
@@ -10,6 +11,5 @@
 );
   HSQuery hsQuery=mock(HSQuery.class);
   when(hsQuery.queryDocumentExtractor()).thenReturn(extractor);
-  when(hsQuery.queryResultSize()).thenReturn(entityInfos.size());
   iterator=new LazyIterator(hsQuery,new EntityLoader(cache,new KeyTransformationHandler()),getFetchSize());
 }
