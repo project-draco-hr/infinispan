@@ -1,7 +1,7 @@
 {
   final CyclicBarrier barrier=new CyclicBarrier(NUM_THREADS + 1);
   List<Future<Void>> futures=new ArrayList<Future<Void>>(NUM_THREADS);
-  ExecutorService executorService=Executors.newFixedThreadPool(NUM_THREADS);
+  ExecutorService executorService=Executors.newFixedThreadPool(NUM_THREADS,getTestThreadFactory("Worker"));
   for (int i=0; i < NUM_THREADS; i++) {
     log.debug("Schedule execution");
     final String name="cache" + (i % NUM_CACHES);
@@ -9,7 +9,9 @@
       @Override public Void call() throws Exception {
         try {
           barrier.await();
-          cacheManager.getCache(name).put("a","b");
+          log.tracef("Creating cache %s",name);
+          Cache<Object,Object> cache=cacheManager.getCache(name);
+          cache.put("a","b");
           return null;
         }
  catch (        Throwable t) {
