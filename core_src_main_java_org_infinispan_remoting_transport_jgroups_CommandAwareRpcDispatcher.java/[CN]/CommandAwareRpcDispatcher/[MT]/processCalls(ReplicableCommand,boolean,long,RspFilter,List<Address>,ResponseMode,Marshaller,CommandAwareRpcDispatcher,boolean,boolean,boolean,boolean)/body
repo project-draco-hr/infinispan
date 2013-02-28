@@ -5,7 +5,7 @@
   Buffer buf;
   if (totalOrder && distribution) {
     buf=marshallCall(marshaller,command);
-    Message message=constructMessage(buf,null,oob,mode,rsvp,totalOrder);
+    Message message=constructMessage(buf,null,oob,rsvp,totalOrder);
     AnycastAddress address=new AnycastAddress(dests);
     message.setDest(address);
     retval=card.castMessage(dests,message,new RequestOptions(mode,timeout,false,filter));
@@ -16,7 +16,7 @@
     if (!totalOrder) {
       opts.setExclusionList(card.getChannel().getAddress());
     }
-    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode,rsvp,totalOrder),opts);
+    retval=card.castMessage(dests,constructMessage(buf,null,oob,rsvp,totalOrder),opts);
   }
  else {
     RequestOptions opts=new RequestOptions(mode,timeout);
@@ -26,14 +26,14 @@
     if (filter != null) {
       FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout);
       for (      Address a : dests) {
-        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode,rsvp,false),opts);
+        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,rsvp,false),opts);
         futureCollator.watchFuture(f,a);
       }
       retval=futureCollator.getResponseList();
     }
  else     if (mode == ResponseMode.GET_ALL) {
       Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(dests.size());
-      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode,rsvp,false),opts));
+      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,rsvp,false),opts));
       retval=new RspList<Object>();
       for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
         Address target=entry.getKey();
@@ -54,7 +54,7 @@ catch (        ExecutionException e) {
       }
     }
  else     if (mode == ResponseMode.GET_NONE) {
-      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode,rsvp,false),opts);
+      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,rsvp,false),opts);
     }
   }
   if (mode != ResponseMode.GET_NONE) {
