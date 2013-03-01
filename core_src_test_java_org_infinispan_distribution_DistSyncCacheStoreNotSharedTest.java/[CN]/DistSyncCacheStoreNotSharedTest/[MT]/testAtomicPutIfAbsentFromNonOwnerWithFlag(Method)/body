@@ -1,0 +1,12 @@
+{
+  String key=k(m), value="value";
+  String replaced=getFirstNonOwner(key).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(key,value);
+  assertNull(replaced);
+  replaced=getFirstNonOwner(key).putIfAbsent(key,value);
+  assertEquals(replaced,value);
+  for (  Cache<Object,String> c : caches) {
+    assertEquals(replaced,c.get(key));
+    CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+    assertFalse(store.containsKey(key));
+  }
+}

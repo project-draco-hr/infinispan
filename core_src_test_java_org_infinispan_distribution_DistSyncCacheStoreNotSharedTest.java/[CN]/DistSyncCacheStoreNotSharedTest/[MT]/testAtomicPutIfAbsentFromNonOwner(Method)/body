@@ -1,0 +1,15 @@
+{
+  String key=k(m), value="value", value2="v2";
+  String replaced=getFirstNonOwner(key).putIfAbsent(key,value);
+  assertNull(replaced);
+  replaced=getFirstNonOwner(key).putIfAbsent(key,value2);
+  assertEquals(replaced,value);
+  for (  Cache<Object,String> c : caches) {
+    assertEquals(replaced,c.get(key));
+    if (isOwner(c,key)) {
+      CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+      assertTrue(store.containsKey(key));
+      assertEquals(value,store.load(key).getValue());
+    }
+  }
+}
