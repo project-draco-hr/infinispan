@@ -1,0 +1,15 @@
+{
+  String cacheName="testRemoteMapReduce";
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
+  defineInAll(cacheName,builder);
+  RemoteCache<String,String> cache=clients.get(0).getCache(cacheName);
+  RemoteCache<String,String> scriptCache=clients.get(0).getCache(SCRIPT_CACHE);
+  loadData(cache,"/macbeth.txt");
+  loadScript(scriptCache,"/wordCountMapper.js");
+  loadScript(scriptCache,"/wordCountReducer.js");
+  loadScript(scriptCache,"/wordCountCollator.js");
+  LinkedHashMap<String,Double> results=cache.execute("wordCountMapper.js",new HashMap<String,String>());
+  assertEquals(20,results.size());
+  assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
+}

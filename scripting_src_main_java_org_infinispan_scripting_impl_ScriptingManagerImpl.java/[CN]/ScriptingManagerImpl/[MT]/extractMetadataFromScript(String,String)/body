@@ -1,0 +1,50 @@
+{
+  ScriptMetadata.Builder metadataBuilder=new ScriptMetadata.Builder();
+  metadataBuilder.property(MetadataProperties.NAME,name);
+  metadataBuilder.property(MetadataProperties.MODE,ExecutionMode.LOCAL.toString().toLowerCase());
+  int s=name.lastIndexOf(".") + 1;
+  if (s == 0 || s == name.length())   metadataBuilder.property(MetadataProperties.EXTENSION,DEFAULT_SCRIPT_EXTENSION);
+ else   metadataBuilder.property(MetadataProperties.EXTENSION,name.substring(s));
+  if (script.startsWith("//")) {
+    int state=KEY;
+    String key=null;
+    String value=null;
+    StringBuilder sb=new StringBuilder();
+    char ch=0;
+    for (int pos=2; ch != 10 && ch != 13 && pos < script.length(); pos++) {
+      ch=script.charAt(pos);
+switch (state) {
+case KEY:
+switch (ch) {
+case '=':
+          key=sb.toString().toUpperCase();
+        sb=new StringBuilder();
+      state=VALUE;
+    break;
+case ' ':
+  break;
+default :
+sb.append(ch);
+}
+break;
+case VALUE:
+switch (ch) {
+case ',':
+case 10:
+case 13:
+value=sb.toString();
+metadataBuilder.property(MetadataProperties.valueOf(key),value);
+sb=new StringBuilder();
+state=KEY;
+break;
+case ' ':
+break;
+default :
+sb.append(ch);
+}
+break;
+}
+}
+}
+return metadataBuilder.build();
+}

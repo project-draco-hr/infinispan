@@ -1,0 +1,18 @@
+{
+  String cacheName="testEmbeddedScriptRemoteExecution";
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
+  defineInAll(cacheName,builder);
+  ScriptingManager scriptingManager=manager(0).getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+  try (InputStream is=this.getClass().getResourceAsStream("/test.js")){
+    String script=TestingUtil.loadFileAsString(is);
+    scriptingManager.addScript("testEmbeddedScriptRemoteExecution.js",script);
+  }
+   populateCache(cacheName);
+  assertEquals(SIZE,clients.get(0).getCache(cacheName).size());
+  Map<String,String> params=new HashMap<>();
+  params.put("parameter","guinness");
+  Integer result=clients.get(0).getCache(cacheName).execute("testEmbeddedScriptRemoteExecution.js",params);
+  assertEquals(SIZE + 1,result.intValue());
+  assertEquals("guinness",clients.get(0).getCache(cacheName).get("parameter"));
+}

@@ -1,0 +1,12 @@
+{
+  HeaderParams params=writeHeader(transport,EXEC_REQUEST);
+  transport.writeString(taskName);
+  transport.writeVInt(marshalledParams.size());
+  for (  Entry<String,byte[]> entry : marshalledParams.entrySet()) {
+    transport.writeString(entry.getKey());
+    transport.writeArray(entry.getValue());
+  }
+  transport.flush();
+  readHeaderAndValidate(transport,params);
+  return transport.readArray();
+}

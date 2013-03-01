@@ -1,0 +1,11 @@
+{
+  GlobalConfiguration globalConfiguration=cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+  CacheMode cacheMode=globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
+  ConfigurationBuilder cfg=new ConfigurationBuilder();
+  cfg.clustering().cacheMode(cacheMode).sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).compatibility().enable().marshaller(new GenericJBossMarshaller()).customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
+  if (globalConfiguration.security().authorization().enabled()) {
+    globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE,new CacheRoleImpl(SCRIPT_MANAGER_ROLE,AuthorizationPermission.ALL));
+    cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);
+  }
+  return cfg;
+}

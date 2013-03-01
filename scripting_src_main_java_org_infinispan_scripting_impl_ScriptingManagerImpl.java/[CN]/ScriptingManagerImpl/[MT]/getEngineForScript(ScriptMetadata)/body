@@ -1,0 +1,34 @@
+{
+  String language=metadata.property(MetadataProperties.LANGUAGE);
+  if (language != null) {
+    if (scriptEnginesByLanguage.containsKey(language)) {
+      return scriptEnginesByLanguage.get(language);
+    }
+ else {
+      ScriptEngine engine=scriptEngineManager.getEngineByName(language);
+      if (engine == null) {
+        throw log.noEngineForScript(metadata.name());
+      }
+ else {
+        scriptEnginesByLanguage.put(language,engine);
+        return engine;
+      }
+    }
+  }
+ else {
+    String extension=metadata.property(MetadataProperties.EXTENSION);
+    if (scriptEnginesByExtension.containsKey(extension)) {
+      return scriptEnginesByExtension.get(extension);
+    }
+ else {
+      ScriptEngine engine=scriptEngineManager.getEngineByExtension(extension);
+      if (engine == null) {
+        throw log.noEngineForScript(metadata.name());
+      }
+ else {
+        scriptEnginesByExtension.put(extension,engine);
+        return engine;
+      }
+    }
+  }
+}

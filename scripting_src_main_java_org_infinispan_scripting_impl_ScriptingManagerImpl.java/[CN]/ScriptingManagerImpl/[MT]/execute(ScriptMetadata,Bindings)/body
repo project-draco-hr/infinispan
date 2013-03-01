@@ -1,0 +1,17 @@
+{
+  CompiledScript compiled=compiledScripts.get(metadata.name());
+  try {
+    if (compiled != null) {
+      T result=(T)compiled.eval(bindings);
+      return new NoOpFuture<T>(result);
+    }
+ else {
+      ScriptEngine engine=getEngineForScript(metadata);
+      T result=(T)engine.eval(scriptCache.get(metadata.name()),bindings);
+      return new NoOpFuture<T>(result);
+    }
+  }
+ catch (  ScriptException e) {
+    throw log.scriptExecutionError(e);
+  }
+}

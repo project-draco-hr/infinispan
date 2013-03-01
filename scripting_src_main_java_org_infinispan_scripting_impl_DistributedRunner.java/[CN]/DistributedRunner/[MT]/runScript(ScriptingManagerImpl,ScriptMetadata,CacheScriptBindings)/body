@@ -1,0 +1,19 @@
+{
+  Cache<?,?> masterCacheNode=(Cache<?,?>)binding.get(SystemBindings.CACHE.toString());
+  if (masterCacheNode == null) {
+    throw log.distributedTaskNeedCacheInBinding(metadata.name());
+  }
+  DefaultExecutorService des=new DefaultExecutorService(masterCacheNode);
+  try {
+    List<Future<T>> tasks=des.submitEverywhere(new DistributedScript<T>(metadata));
+    List<NotifyingFuture<T>> notifyingTasks=new ArrayList<>(tasks.size());
+    for (    Future<T> task : tasks) {
+      notifyingTasks.add((NotifyingFuture<T>)task);
+    }
+    NotifyingFuture<List<T>> combinedFutures=CompositeNotifyingFuture.combine(notifyingTasks);
+    return (NotifyingFuture<T>)combinedFutures;
+  }
+  finally {
+    des.shutdown();
+  }
+}

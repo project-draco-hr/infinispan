@@ -1,0 +1,12 @@
+{
+  ScriptingManager scriptingManager=getScriptingManager(manager(0));
+  Cache<String,String> cache=cache(0);
+  loadData(cache,"/macbeth.txt");
+  loadScript(scriptingManager,"/wordCountMapper.js");
+  loadScript(scriptingManager,"/wordCountReducer.js");
+  loadScript(scriptingManager,"/wordCountCollator.js");
+  NotifyingFuture<Object> resultFuture=scriptingManager.runScript("wordCountMapper.js",cache);
+  LinkedHashMap<String,Double> results=(LinkedHashMap<String,Double>)resultFuture.get();
+  assertEquals(20,results.size());
+  assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
+}
