@@ -1,5 +1,7 @@
 {
   boolean trace=log.isTraceEnabled();
+  int paramSep=fullName.indexOf('|');
+  String fullOpName=paramSep < 0 ? fullName : fullName.substring(0,paramSep);
   EmsBean bean=queryComponentBean(fullOpName);
   String opName=fullOpName.substring(fullOpName.indexOf(".") + 1);
   EmsOperation ops=bean.getOperation(opName);
@@ -12,6 +14,7 @@
   }
   if (ops == null)   throw new Exception("Operation " + fullOpName + " can't be found");
   Object result=ops.invoke(realParams);
-  if (trace)   log.trace("Returning operation result containing " + result != null ? result.toString() : "");
-  return new OperationResult(result != null ? result.toString() : "");
+  String sResult=result != null ? result.toString() : "";
+  if (trace)   log.trace("Returning operation result containing " + sResult);
+  return new OperationResult(sResult);
 }

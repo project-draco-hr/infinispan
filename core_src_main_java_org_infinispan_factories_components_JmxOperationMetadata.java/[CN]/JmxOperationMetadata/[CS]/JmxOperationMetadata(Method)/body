@@ -1,9 +1,24 @@
 {
   methodName=m.getName();
+  returnType=m.getReturnType().getName();
   Class<?>[] params=m.getParameterTypes();
-  methodParameters=ReflectionUtil.toStringArray(params);
-  ManagedOperation mo=m.getAnnotation(ManagedOperation.class);
-  if (mo != null) {
-    description=mo.description();
+  Annotation[][] annots=m.getParameterAnnotations();
+  methodParameters=new JmxOperationParameter[params.length];
+  for (int i=0; i < params.length; i++) {
+    Parameter annot=null;
+    for (int j=0; j < annots[i].length; j++) {
+      if (annots[i][j] instanceof Parameter) {
+        annot=(Parameter)annots[i][j];
+        break;
+      }
+    }
+    if (annot == null) {
+      methodParameters[i]=new JmxOperationParameter("p" + i,params[i].getName(),null);
+    }
+ else {
+      methodParameters[i]=new JmxOperationParameter(annot.name(),params[i].getName(),annot.description());
+    }
   }
+  ManagedOperation mo=m.getAnnotation(ManagedOperation.class);
+  description=mo != null ? mo.description() : null;
 }
