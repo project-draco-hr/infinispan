@@ -1,11 +1,7 @@
 {
-  if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
-    for (    WriteCommand c : command.getModifications()) {
-      c.acceptVisitor(ctx,entryWrappingVisitor);
-    }
-  }
+  wrapEntriesForPrepare(ctx,command);
   Object result=invokeNextInterceptor(ctx,command);
-  if (command.isOnePhaseCommit()) {
+  if (shouldCommitDuringPrepare(command,ctx)) {
     commitContextEntries(ctx,null);
   }
   return result;

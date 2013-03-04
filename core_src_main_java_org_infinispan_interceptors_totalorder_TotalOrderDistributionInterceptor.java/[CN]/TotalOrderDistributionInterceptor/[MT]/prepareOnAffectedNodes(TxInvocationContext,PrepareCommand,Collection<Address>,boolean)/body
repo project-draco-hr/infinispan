@@ -1,0 +1,17 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Total Order Anycast transaction %s with Total Order",command.getGlobalTransaction().globalId());
+  }
+  if (!ctx.hasModifications()) {
+    return;
+  }
+  if (!ctx.isOriginLocal()) {
+    throw new IllegalStateException("Expected a local context while TO-Anycast prepare command");
+  }
+  try {
+    totalOrderAnycastPrepare(recipients,command,isSyncCommitPhase() ? null : getSelfDeliverFilter());
+  }
+  finally {
+    totalOrderTxPrepare(ctx);
+  }
+}

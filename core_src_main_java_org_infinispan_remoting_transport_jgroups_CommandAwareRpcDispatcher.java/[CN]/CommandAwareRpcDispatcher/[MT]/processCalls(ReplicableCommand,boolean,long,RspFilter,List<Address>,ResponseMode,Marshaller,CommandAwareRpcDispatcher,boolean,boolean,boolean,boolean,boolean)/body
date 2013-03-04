@@ -1,0 +1,65 @@
+{
+  if (trace)   log.tracef("Replication task sending %s to addresses %s with response mode %s",command,dests,mode);
+  boolean rsvp=command instanceof CacheTopologyControlCommand || isRsvpCommand(command);
+  RspList<Object> retval=null;
+  Buffer buf;
+  if (totalOrder && distribution) {
+    buf=marshallCall(marshaller,command);
+    Message message=constructMessage(buf,null,oob,mode,rsvp,totalOrder);
+    AnycastAddress address=new AnycastAddress(dests);
+    message.setDest(address);
+    retval=card.castMessage(dests,message,new RequestOptions(mode,timeout,false,filter));
+  }
+ else   if (broadcast || FORCE_MCAST || totalOrder) {
+    buf=marshallCall(marshaller,command);
+    RequestOptions opts=new RequestOptions(mode,timeout,false,filter);
+    if (!totalOrder) {
+      opts.setExclusionList(card.getChannel().getAddress());
+    }
+    retval=card.castMessage(dests,constructMessage(buf,null,oob,mode,rsvp,totalOrder),opts);
+  }
+ else {
+    RequestOptions opts=new RequestOptions(mode,timeout);
+    opts.setExclusionList(card.getChannel().getAddress());
+    if (dests.isEmpty())     return new RspList<Object>();
+    buf=marshallCall(marshaller,command);
+    if (filter != null) {
+      FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout);
+      for (      Address a : dests) {
+        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,oob,mode,rsvp,false),opts);
+        futureCollator.watchFuture(f,a);
+      }
+      retval=futureCollator.getResponseList();
+    }
+ else     if (mode == ResponseMode.GET_ALL) {
+      Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(dests.size());
+      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode,rsvp,false),opts));
+      retval=new RspList<Object>();
+      for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
+        Address target=entry.getKey();
+        try {
+          retval.addRsp(target,entry.getValue().get(timeout,MILLISECONDS));
+        }
+ catch (        java.util.concurrent.TimeoutException te) {
+          throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),target));
+        }
+catch (        ExecutionException e) {
+          if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
+            log.tracef(formatString("Ignoring node %s that left during the remote call",target));
+          }
+ else {
+            throw e;
+          }
+        }
+      }
+    }
+ else     if (mode == ResponseMode.GET_NONE) {
+      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,oob,mode,rsvp,false),opts);
+    }
+  }
+  if (mode != ResponseMode.GET_NONE) {
+    if (trace)     log.tracef("Responses: %s",retval);
+    if (retval == null)     throw new NotSerializableException("RpcDispatcher returned a null.  This is most often caused by args for " + command.getClass().getSimpleName() + " not being serializable.");
+  }
+  return retval;
+}

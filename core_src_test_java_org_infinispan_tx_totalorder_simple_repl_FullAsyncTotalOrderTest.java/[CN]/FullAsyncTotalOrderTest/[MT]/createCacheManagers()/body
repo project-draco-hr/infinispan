@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder dcc=getDefaultClusteredCacheConfig(mode,true);
+  dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(syncCommit).syncRollbackPhase(syncCommit);
+  dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(writeSkew);
+  dcc.transaction().useSynchronization(useSynchronization);
+  if (writeSkew) {
+    dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
+  }
+  dcc.transaction().recovery().disable();
+  createCluster(dcc,clusterSize);
+  waitForClusterToForm();
+}

@@ -1,0 +1,17 @@
+{
+  if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
+    ClusteredRepeatableReadEntry clusterMvccEntry=(ClusteredRepeatableReadEntry)entry;
+    EntryVersion existingVersion=clusterMvccEntry.getVersion();
+    EntryVersion newVersion;
+    if (existingVersion == null) {
+      newVersion=versionGenerator.generateNew();
+    }
+ else {
+      newVersion=versionGenerator.increment((IncrementableEntryVersion)existingVersion);
+    }
+    cdl.commitEntry(entry,newVersion,command,ctx);
+  }
+ else {
+    cdl.commitEntry(entry,entry.getVersion(),command,ctx);
+  }
+}

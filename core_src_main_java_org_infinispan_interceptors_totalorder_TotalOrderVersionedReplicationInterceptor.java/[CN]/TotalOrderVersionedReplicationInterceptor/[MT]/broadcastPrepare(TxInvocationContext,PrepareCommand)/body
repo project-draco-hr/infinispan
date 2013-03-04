@@ -1,0 +1,18 @@
+{
+  if (!context.hasModifications()) {
+    return;
+  }
+  if (!context.isOriginLocal()) {
+    throw new IllegalStateException("Expected a local context before TO-Broadcast prepare command");
+  }
+  if (!(command instanceof VersionedPrepareCommand)) {
+    throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
+  }
+  setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,context);
+  try {
+    totalOrderBroadcastPrepare(command,isSyncCommitPhase() ? null : getSelfDeliverFilter());
+  }
+  finally {
+    totalOrderTxPrepare(context);
+  }
+}

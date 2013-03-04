@@ -1,4 +1,18 @@
 {
   if (reaperWakeUpInterval < 0)   throw new CacheConfigurationException("reaperWakeUpInterval must be > 0, we got " + reaperWakeUpInterval);
   if (completedTxTimeout < 0)   throw new CacheConfigurationException("completedTxTimeout must be > 0, we got " + reaperWakeUpInterval);
+  if (transactionProtocol == TransactionProtocol.TOTAL_ORDER) {
+    if (transactionMode != TransactionMode.TRANSACTIONAL) {
+      throw new ConfigurationException("Total Order based protocol not available in " + transactionMode + " cache");
+    }
+    if (!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
+      throw new ConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
+    }
+    if (recovery.create().enabled()) {
+      throw new ConfigurationException("Total Order based protocol not available with recovery");
+    }
+    if (lockingMode != LockingMode.OPTIMISTIC) {
+      throw new ConfigurationException("Total Order based protocol not available with " + lockingMode);
+    }
+  }
 }

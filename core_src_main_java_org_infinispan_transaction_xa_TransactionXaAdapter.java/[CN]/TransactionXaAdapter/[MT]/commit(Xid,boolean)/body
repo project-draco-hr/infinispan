@@ -1,7 +1,10 @@
 {
   Xid xid=convertXid(externalXid);
   LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
-  if (isOnePhase) {
+  if (isOnePhase && onePhaseTotalOrder) {
+    txCoordinator.commit(localTransaction,true);
+  }
+ else   if (isOnePhase) {
     txCoordinator.prepare(localTransaction);
     txCoordinator.commit(localTransaction,false);
   }

@@ -37,6 +37,7 @@
   StateTransferLock stateTransferLock=mock(StateTransferLock.class);
   InterceptorChain interceptorChain=mock(InterceptorChain.class);
   InvocationContextContainer icc=mock(InvocationContextContainer.class);
+  TotalOrderManager totalOrderManager=mock(TotalOrderManager.class);
   when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class),any(Address.class),anyInt(),any(Set.class))).thenAnswer(new Answer<StateRequestCommand>(){
     @Override public StateRequestCommand answer(    InvocationOnMock invocation){
       return new StateRequestCommand("cache1",(StateRequestCommand.Type)invocation.getArguments()[0],(Address)invocation.getArguments()[1],(Integer)invocation.getArguments()[2],(Set)invocation.getArguments()[3]);
@@ -46,7 +47,7 @@
   when(transport.getViewId()).thenReturn(1);
   when(rpcManager.getAddress()).thenReturn(new TestAddress(0));
   when(rpcManager.getTransport()).thenReturn(transport);
-  when(rpcManager.invokeRemotely(any(Collection.class),any(ReplicableCommand.class),any(ResponseMode.class),anyLong())).thenAnswer(new Answer<Map<Address,Response>>(){
+  when(rpcManager.invokeRemotely(any(Collection.class),any(ReplicableCommand.class),any(ResponseMode.class),anyLong(),anyBoolean())).thenAnswer(new Answer<Map<Address,Response>>(){
     @Override public Map<Address,Response> answer(    InvocationOnMock invocation){
       Collection<Address> recipients=(Collection<Address>)invocation.getArguments()[0];
       ReplicableCommand rpcCommand=(ReplicableCommand)invocation.getArguments()[1];
@@ -70,7 +71,7 @@
   }
 );
   StateConsumerImpl stateConsumer=new StateConsumerImpl();
-  stateConsumer.init(cache,pooledExecutorService,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock,cacheNotifier);
+  stateConsumer.init(cache,pooledExecutorService,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,cacheLoaderManager,dataContainer,transactionTable,stateTransferLock,cacheNotifier,totalOrderManager);
   stateConsumer.start();
   final List<InternalCacheEntry> cacheEntries=new ArrayList<InternalCacheEntry>();
   Object key1=new TestKey("key1",0,ch1);

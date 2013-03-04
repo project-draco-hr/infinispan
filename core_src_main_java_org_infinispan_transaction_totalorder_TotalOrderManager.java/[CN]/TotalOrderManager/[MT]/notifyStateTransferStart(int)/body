@@ -1,0 +1,15 @@
+{
+  List<TotalOrderLatch> preparingTransactions=new ArrayList<TotalOrderLatch>(keysLocked.size());
+  preparingTransactions.addAll(keysLocked.values());
+  TotalOrderLatch clearBlock=clear.get();
+  if (clearBlock != null) {
+    preparingTransactions.add(clearBlock);
+  }
+  if (stateTransferInProgress.get() == null) {
+    stateTransferInProgress.set(new TotalOrderLatchImpl("StateTransfer-" + topologyId));
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("State Transfer start. It will wait for %s",preparingTransactions);
+  }
+  return preparingTransactions;
+}

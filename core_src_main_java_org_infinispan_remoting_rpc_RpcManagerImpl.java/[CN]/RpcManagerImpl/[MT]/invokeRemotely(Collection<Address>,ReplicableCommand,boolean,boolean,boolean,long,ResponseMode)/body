@@ -1,0 +1,16 @@
+{
+  if (trace)   log.tracef("%s broadcasting call %s to recipient list %s",t.getAddress(),rpc,recipients);
+  if (useReplicationQueue(sync)) {
+    replicationQueue.add(rpc);
+    return null;
+  }
+ else {
+    if (!(rpc instanceof CacheRpcCommand)) {
+      rpc=cf.buildSingleRpcCommand(rpc);
+    }
+    Map<Address,Response> rsps=invokeRemotely(recipients,rpc,responseMode,timeout,usePriorityQueue,totalOrder);
+    if (trace)     log.tracef("Response(s) to %s is %s",rpc,rsps);
+    if (sync)     checkResponses(rsps);
+    return rsps;
+  }
+}

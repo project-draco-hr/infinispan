@@ -1,0 +1,30 @@
+{
+  GlobalTransaction gtx=command.getGlobalTransaction();
+  if (log.isTraceEnabled()) {
+    log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s",commit,gtx.globalId(),context.isOriginLocal());
+  }
+  TotalOrderRemoteTransactionState state=getTransactionState(context);
+  try {
+    if (!processSecondCommand(state,commit)) {
+      return null;
+    }
+    return invokeNextInterceptor(context,command);
+  }
+ catch (  Throwable exception) {
+    if (log.isDebugEnabled()) {
+      log.debugf(exception,"Exception while rollback transaction %s",gtx.globalId());
+    }
+    throw exception;
+  }
+ finally {
+    if (state != null && state.isFinished()) {
+      totalOrderManager.release(state);
+      if (commit) {
+        transactionTable.remoteTransactionCommitted(command.getGlobalTransaction());
+      }
+ else {
+        transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
+      }
+    }
+  }
+}

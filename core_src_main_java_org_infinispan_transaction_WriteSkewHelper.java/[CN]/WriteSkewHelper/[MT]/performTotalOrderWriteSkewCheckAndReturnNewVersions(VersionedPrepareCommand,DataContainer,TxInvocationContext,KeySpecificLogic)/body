@@ -1,0 +1,22 @@
+{
+  EntryVersionsMap uv=new EntryVersionsMap();
+  for (  WriteCommand c : prepareCommand.getModifications()) {
+    for (    Object k : c.getAffectedKeys()) {
+      if (ksl.performCheckOnKey(k)) {
+        ClusteredRepeatableReadEntry entry=(ClusteredRepeatableReadEntry)context.lookupEntry(k);
+        if (entry == null) {
+          continue;
+        }
+        EntryVersion versionSeen=prepareCommand.getVersionsSeen().get(k);
+        entry.setVersion(versionSeen);
+        if (entry.performWriteSkewCheck(dataContainer,context,c.wasPreviousRead())) {
+          uv.put(k,null);
+        }
+ else {
+          throw new WriteSkewException("Write skew detected on key " + k + " for transaction "+ context.getTransaction());
+        }
+      }
+    }
+  }
+  return uv;
+}

@@ -1,0 +1,18 @@
+{
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  final int topologyId=cacheTopology.getTopologyId();
+  ((RemoteTransaction)ctx.getCacheTransaction()).setMissingLookedUpEntries(false);
+  if (log.isTraceEnabled()) {
+    log.tracef("Remote transaction received %s. Tx topology id is %s and current topology is is %s",ctx.getGlobalTransaction().globalId(),command.getTopologyId(),topologyId);
+  }
+  if (command.getTopologyId() < topologyId) {
+    if (log.isDebugEnabled()) {
+      log.debugf("Transaction %s delivered in new topology Id. Discard it because it should be retransmitted",ctx.getGlobalTransaction().globalId());
+    }
+    throw new RetryPrepareException();
+  }
+ else   if (command.getTopologyId() > topologyId) {
+    throw new IllegalStateException("This should never happen");
+  }
+  return invokeNextInterceptor(ctx,command);
+}

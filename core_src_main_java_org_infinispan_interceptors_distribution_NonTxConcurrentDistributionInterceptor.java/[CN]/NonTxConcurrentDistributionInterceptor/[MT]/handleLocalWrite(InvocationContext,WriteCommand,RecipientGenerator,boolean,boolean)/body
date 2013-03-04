@@ -6,14 +6,14 @@
     log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.",recipients);
     Object result=invokeNextInterceptor(ctx,command);
     if (!isSingleOwnerAndLocal(rg)) {
-      rpcManager.invokeRemotely(recipients,command,sync);
+      rpcManager.invokeRemotely(recipients,command,sync,false);
     }
     return result;
   }
  else {
     log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
     Object localResult=invokeNextInterceptor(ctx,command);
-    Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,sync);
+    Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,sync,false);
     if (!sync)     return localResult;
     return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
   }

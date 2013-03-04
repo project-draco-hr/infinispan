@@ -1,0 +1,25 @@
+{
+  boolean needsToPrepare=true;
+  Object retVal=null;
+  while (needsToPrepare) {
+    try {
+      CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+      command.setTopologyId(cacheTopology.getTopologyId());
+      if (log.isTraceEnabled()) {
+        log.tracef("Local transaction received %s. setting topology Id to %s",command.getGlobalTransaction().globalId(),command.getTopologyId());
+      }
+      retVal=invokeNextInterceptor(ctx,command);
+      needsToPrepare=false;
+    }
+ catch (    Throwable throwable) {
+      needsToPrepare=needsToRePrepare(throwable);
+      if (log.isDebugEnabled()) {
+        log.tracef("Exception caught while preparing transaction %s (cause = %s). Needs to retransmit? %s",command.getGlobalTransaction().globalId(),throwable.getCause(),needsToPrepare);
+      }
+      if (!needsToPrepare) {
+        throw throwable;
+      }
+    }
+  }
+  return retVal;
+}

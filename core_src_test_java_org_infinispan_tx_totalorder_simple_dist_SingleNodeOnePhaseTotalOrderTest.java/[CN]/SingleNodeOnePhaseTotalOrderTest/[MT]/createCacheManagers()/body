@@ -1,0 +1,13 @@
+{
+  ConfigurationBuilder dcc=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(true).syncRollbackPhase(true).recovery().disable();
+  if (onePhaseTotalOrder) {
+    dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
+  }
+ else {
+    dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
+    dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
+  }
+  createCluster(dcc,1);
+  waitForClusterToForm();
+}

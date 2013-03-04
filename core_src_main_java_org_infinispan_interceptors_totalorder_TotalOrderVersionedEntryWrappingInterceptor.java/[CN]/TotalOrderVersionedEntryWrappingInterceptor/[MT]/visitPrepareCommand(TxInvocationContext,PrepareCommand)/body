@@ -1,0 +1,20 @@
+{
+  if (ctx.isOriginLocal()) {
+    ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
+    Object retVal=invokeNextInterceptor(ctx,command);
+    if (shouldCommitDuringPrepare(command,ctx)) {
+      commitContextEntries(ctx,null);
+    }
+    return retVal;
+  }
+  wrapEntriesForPrepare(ctx,command);
+  Object retVal=invokeNextInterceptor(ctx,command);
+  EntryVersionsMap versionsMap=cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator,ctx,(VersionedPrepareCommand)command);
+  if (command.isOnePhaseCommit()) {
+    commitContextEntries(ctx,null);
+  }
+ else {
+    if (trace)     log.tracef("Transaction %s will be committed in the 2nd phase",ctx.getGlobalTransaction().globalId());
+  }
+  return versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet());
+}

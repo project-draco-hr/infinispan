@@ -1,0 +1,30 @@
+{
+  if (modifications == null) {
+    return EMPTY_ARRAY;
+  }
+  Set<Object> set=new HashSet<Object>(modifications.length);
+  for (  WriteCommand wc : modifications) {
+switch (wc.getCommandId()) {
+case ClearCommand.COMMAND_ID:
+      return null;
+case PutKeyValueCommand.COMMAND_ID:
+case RemoveCommand.COMMAND_ID:
+case ReplaceCommand.COMMAND_ID:
+    set.add(((DataWriteCommand)wc).getKey());
+  break;
+case PutMapCommand.COMMAND_ID:
+set.addAll(wc.getAffectedKeys());
+break;
+case ApplyDeltaCommand.COMMAND_ID:
+ApplyDeltaCommand command=(ApplyDeltaCommand)wc;
+Object[] compositeKeys=command.getCompositeKeys();
+set.addAll(Arrays.asList(compositeKeys));
+break;
+}
+}
+Object[] sorted=set.toArray(new Object[set.size()]);
+if (sort) {
+TimSort.sort(sorted,KEY_COMPARATOR);
+}
+return sorted;
+}

@@ -1,0 +1,24 @@
+{
+  if (sender.equals(localAddress)) {
+    selfDelivered=true;
+  }
+  if (response instanceof SuccessfulResponse) {
+    Object retVal=((SuccessfulResponse)response).getResponseValue();
+    if (retVal instanceof Collection<?>) {
+      keysAwaitingValidation.removeAll((Collection<?>)retVal);
+      if (log.isTraceEnabled()) {
+        log.tracef("Received keys validated: %s. Awaiting validation of %s. Self Delivered? %s",retVal,keysAwaitingValidation,selfDelivered);
+      }
+    }
+ else     if (retVal instanceof EntryVersionsMap) {
+      keysAwaitingValidation.removeAll(((EntryVersionsMap)retVal).keySet());
+      if (log.isTraceEnabled()) {
+        log.tracef("Received keys validated: %s. Awaiting validation of %s. Self Delivered? %s",((EntryVersionsMap)retVal).keySet(),keysAwaitingValidation,selfDelivered);
+      }
+    }
+ else {
+      log.unexpectedResponse(retVal.getClass().toString(),"Collection or EntryVersionMap");
+    }
+  }
+  return true;
+}

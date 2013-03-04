@@ -1,0 +1,12 @@
+{
+  configurationBuilder=getDefaultClusteredCacheConfig(mode,true);
+  configurationBuilder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(syncCommit).useSynchronization(useSynchronization).recovery().disable();
+  if (writeSkew) {
+    configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
+    configurationBuilder.versioning().enable().scheme(VersioningScheme.SIMPLE);
+  }
+ else {
+    configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
+  }
+  configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+}

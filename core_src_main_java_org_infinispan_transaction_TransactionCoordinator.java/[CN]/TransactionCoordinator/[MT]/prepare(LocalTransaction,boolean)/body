@@ -1,10 +1,10 @@
 {
   validateNotMarkedForRollback(localTransaction);
-  if (Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction)) {
+  if (Configurations.isOnePhaseCommit(configuration) || is1PcForAutoCommitTransaction(localTransaction) || Configurations.isOnePhaseTotalOrderCommit(configuration)) {
     if (trace)     log.tracef("Received prepare for tx: %s. Skipping call as 1PC will be used.",localTransaction);
     return XA_OK;
   }
-  PrepareCommand prepareCommand=commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications());
+  PrepareCommand prepareCommand=commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),false);
   if (trace)   log.tracef("Sending prepare command through the chain: %s",prepareCommand);
   LocalTxInvocationContext ctx=icc.createTxInvocationContext();
   prepareCommand.setReplayEntryWrapping(replayEntryWrapping);

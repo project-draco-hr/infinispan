@@ -4,9 +4,48 @@
     reply(response,null);
     return;
   }
+ else   if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
+    reply(response,null);
+    return;
+  }
   CommandsFactory commandsFactory=cr.getCommandsFactory();
   commandsFactory.initializeReplicableCommand(cmd,true);
-  if (!preserveOrder && cmd.canBlock()) {
+  if (cmd instanceof TotalOrderPrepareCommand) {
+    final TotalOrderRemoteTransactionState state=((TotalOrderPrepareCommand)cmd).getOrCreateState();
+    final TotalOrderManager totalOrderManager=cr.getTotalOrderManager();
+    totalOrderManager.ensureOrder(state,((PrepareCommand)cmd).getAffectedKeysToLock(false));
+    totalOrderExecutorService.execute(new BlockingRunnable(){
+      @Override public boolean isReady(){
+        for (        TotalOrderLatch block : state.getConflictingTransactionBlocks()) {
+          if (block.isBlocked()) {
+            return false;
+          }
+        }
+        return true;
+      }
+      @Override public void run(){
+        Response resp;
+        try {
+          resp=handleInternal(cmd,cr);
+        }
+ catch (        RetryPrepareException retry) {
+          log.debugf(retry,"Prepare [%s] conflicted with state transfer",cmd);
+          resp=new ExceptionResponse(retry);
+        }
+catch (        Throwable throwable) {
+          log.exceptionHandlingCommand(cmd,throwable);
+          resp=new ExceptionResponse(new CacheException("Problems invoking command.",throwable));
+        }
+        if (resp instanceof ExceptionResponse) {
+          totalOrderManager.release(state);
+        }
+        reply(response,resp);
+      }
+    }
+);
+    return;
+  }
+ else   if (!preserveOrder && cmd.canBlock()) {
     remoteCommandsExecutor.execute(new Runnable(){
       @Override public void run(){
         Response resp;
@@ -14,7 +53,7 @@
           resp=handleInternal(cmd,cr);
         }
  catch (        Throwable throwable) {
-          log.warnf(throwable,"Problems invoking command %s",cmd);
+          log.exceptionHandlingCommand(cmd,throwable);
           resp=new ExceptionResponse(new CacheException("Problems invoking command.",throwable));
         }
         reply(response,resp);

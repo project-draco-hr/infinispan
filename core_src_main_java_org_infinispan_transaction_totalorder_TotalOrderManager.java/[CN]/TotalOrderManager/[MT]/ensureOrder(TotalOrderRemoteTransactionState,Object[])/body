@@ -1,0 +1,35 @@
+{
+  state.awaitUntilReset();
+  TotalOrderLatch transactionSynchronizedBlock=new TotalOrderLatchImpl(state.getGlobalTransaction().globalId());
+  state.setTransactionSynchronizedBlock(transactionSynchronizedBlock);
+  if (keysModified == null) {
+    TotalOrderLatch oldClear=clear.get();
+    if (oldClear != null) {
+      state.addSynchronizedBlock(oldClear);
+      clear.set(transactionSynchronizedBlock);
+    }
+    state.addAllSynchronizedBlocks(keysLocked.values());
+    keysLocked.clear();
+    state.addKeysLockedForClear();
+  }
+ else {
+    TotalOrderLatch clearTx=clear.get();
+    if (clearTx != null) {
+      state.addSynchronizedBlock(clearTx);
+    }
+    for (    Object key : keysModified) {
+      TotalOrderLatch prevTx=keysLocked.put(key,transactionSynchronizedBlock);
+      if (prevTx != null) {
+        state.addSynchronizedBlock(prevTx);
+      }
+      state.addLockedKey(key);
+    }
+  }
+  TotalOrderLatch stateTransfer=stateTransferInProgress.get();
+  if (stateTransfer != null) {
+    state.addSynchronizedBlock(stateTransfer);
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Transaction [%s] will wait for %s and locked %s",state.getGlobalTransaction().globalId(),state.getConflictingTransactionBlocks(),state.getLockedKeys() == null ? "[ClearCommand]" : state.getLockedKeys());
+  }
+}

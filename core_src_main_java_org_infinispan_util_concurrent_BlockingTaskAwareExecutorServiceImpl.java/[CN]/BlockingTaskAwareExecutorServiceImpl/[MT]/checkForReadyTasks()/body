@@ -1,0 +1,18 @@
+{
+  List<BlockingRunnable> runnableReadyList=new ArrayList<BlockingRunnable>(blockedTasks.size());
+synchronized (blockedTasks) {
+    for (Iterator<BlockingRunnable> iterator=blockedTasks.iterator(); iterator.hasNext(); ) {
+      BlockingRunnable runnable=iterator.next();
+      if (runnable.isReady()) {
+        iterator.remove();
+        runnableReadyList.add(runnable);
+      }
+    }
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Tasks executed=%s, still pending=%s",runnableReadyList.size(),blockedTasks.size());
+  }
+  for (  BlockingRunnable runnable : runnableReadyList) {
+    doExecute(runnable);
+  }
+}

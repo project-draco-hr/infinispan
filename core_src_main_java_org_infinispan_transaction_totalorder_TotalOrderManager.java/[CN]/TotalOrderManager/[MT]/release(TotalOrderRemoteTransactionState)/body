@@ -1,0 +1,18 @@
+{
+  TotalOrderLatch synchronizedBlock=state.getTransactionSynchronizedBlock();
+  Collection<Object> lockedKeys=state.getLockedKeys();
+  synchronizedBlock.unBlock();
+  if (lockedKeys == null) {
+    clear.compareAndSet(synchronizedBlock,null);
+  }
+ else {
+    for (    Object key : lockedKeys) {
+      keysLocked.remove(key,synchronizedBlock);
+    }
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Release %s and locked keys %s. Checking pending tasks!",synchronizedBlock,lockedKeys == null ? "[ClearCommand]" : lockedKeys);
+  }
+  state.reset();
+  totalOrderExecutor.checkForReadyTasks();
+}

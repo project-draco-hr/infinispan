@@ -1,11 +1,11 @@
 {
-  if (configuration.locking().writeSkewCheck() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC && configuration.versioning().enabled()) {
+  if (Configurations.isVersioningEnabled(configuration)) {
     commandCreator=new CommandCreator(){
       @Override public CommitCommand createCommitCommand(      GlobalTransaction gtx){
         return commandsFactory.buildVersionedCommitCommand(gtx);
       }
-      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications){
-        return commandsFactory.buildVersionedPrepareCommand(gtx,modifications,false);
+      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications,      boolean onePhaseCommit){
+        return commandsFactory.buildVersionedPrepareCommand(gtx,modifications,onePhaseCommit);
       }
     }
 ;
@@ -15,8 +15,8 @@
       @Override public CommitCommand createCommitCommand(      GlobalTransaction gtx){
         return commandsFactory.buildCommitCommand(gtx);
       }
-      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications){
-        return commandsFactory.buildPrepareCommand(gtx,modifications,false);
+      @Override public PrepareCommand createPrepareCommand(      GlobalTransaction gtx,      List<WriteCommand> modifications,      boolean onePhaseCommit){
+        return commandsFactory.buildPrepareCommand(gtx,modifications,onePhaseCommit);
       }
     }
 ;

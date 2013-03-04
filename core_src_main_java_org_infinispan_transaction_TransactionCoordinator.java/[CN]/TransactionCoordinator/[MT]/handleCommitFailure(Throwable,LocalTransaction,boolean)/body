@@ -7,7 +7,9 @@
     log.errorProcessing2pcCommitCommand(e);
   }
   try {
-    rollbackInternal(localTransaction);
+    if (!(onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder())) {
+      rollbackInternal(localTransaction);
+    }
   }
  catch (  Throwable e1) {
     log.couldNotRollbackPrepared1PcTransaction(localTransaction,e1);

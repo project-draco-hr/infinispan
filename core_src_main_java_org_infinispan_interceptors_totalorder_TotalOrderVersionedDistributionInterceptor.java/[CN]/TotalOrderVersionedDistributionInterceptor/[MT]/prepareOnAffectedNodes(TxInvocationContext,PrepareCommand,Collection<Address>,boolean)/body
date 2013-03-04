@@ -1,0 +1,25 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Total Order Anycast transaction %s with Total Order",command.getGlobalTransaction().globalId());
+  }
+  if (!ctx.hasModifications()) {
+    return;
+  }
+  if (!ctx.isOriginLocal()) {
+    throw new IllegalStateException("Expected a local context while TO-Anycast prepare command");
+  }
+  if (!(command instanceof VersionedPrepareCommand)) {
+    throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
+  }
+  try {
+    KeysValidateFilter responseFilter=ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ? null : new KeysValidateFilter(rpcManager.getAddress(),ctx.getAffectedKeys());
+    setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,ctx);
+    totalOrderAnycastPrepare(recipients,command,responseFilter);
+    if (responseFilter != null && !responseFilter.isAllKeysValidated()) {
+      throw new CacheException("Not all keys were validated. Possible member has left the cluster");
+    }
+  }
+  finally {
+    totalOrderTxPrepare(ctx);
+  }
+}
