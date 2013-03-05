@@ -1,0 +1,36 @@
+{
+  final String key="myKey";
+  final String value="myValue";
+  cache(0).put(key,value);
+  ConsistentHash ch=cache(0).getAdvancedCache().getComponentRegistry().getStateTransferManager().getCacheTopology().getCurrentCH();
+  List<Address> members=new ArrayList<Address>(ch.getMembers());
+  List<Address> owners=ch.locateOwners(key);
+  members.removeAll(owners);
+  int nonOwner=ch.getMembers().indexOf(members.get(0));
+  final Cache<Object,Object> c=cache(nonOwner);
+  List<Cache<Object,Object>> partition1=caches();
+  partition1.remove(c);
+  ControlledRpcManager controlledRpcManager=new ControlledRpcManager(c.getAdvancedCache().getRpcManager());
+  TestingUtil.replaceComponent(c,RpcManager.class,controlledRpcManager,true);
+  controlledRpcManager.blockBefore(ReplaceCommand.class);
+  Future<Boolean> future=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      return c.replace(key,value,"myNewValue");
+    }
+  }
+);
+  discard[nonOwner].setDiscardAll(true);
+  TestingUtil.blockUntilViewsReceived(30000,false,partition1.get(0),partition1.get(1));
+  TestingUtil.blockUntilViewsReceived(30000,false,c);
+  TestingUtil.waitForRehashToComplete(partition1.get(0),partition1.get(1));
+  TestingUtil.waitForRehashToComplete(c);
+  controlledRpcManager.stopBlocking();
+  try {
+    future.get();
+  }
+ catch (  ExecutionException e) {
+    Throwable cause=e.getCause();
+    assertTrue(cause instanceof SuspectException);
+    assertTrue(cause.getMessage().startsWith("One or more nodes have left the cluster while replicating command"));
+  }
+}

@@ -1,10 +1,12 @@
 {
   Response fromPrimaryOwner=addressResponseMap.get(primaryOwner);
   if (fromPrimaryOwner == null) {
+    log.tracef("Primary owner %s returned null",primaryOwner);
     return null;
   }
   if (!fromPrimaryOwner.isSuccessful()) {
-    throw new CacheException("Got unsuccessful response " + fromPrimaryOwner);
+    Throwable cause=fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+    throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner,cause);
   }
  else {
     return ((SuccessfulResponse)fromPrimaryOwner).getResponseValue();
