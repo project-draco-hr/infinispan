@@ -1,0 +1,23 @@
+{
+  RemoteCacheManager rcm=client(0);
+  RemoteCache<Object,Object> cache=rcm.getCache();
+  cache.put("k","v");
+  TcpTransportFactory transportFactory=(TcpTransportFactory)TestingUtil.extractField(rcm,"transportFactory");
+  ConsistentHash ch=transportFactory.getConsistentHash();
+  byte[][] keys=new byte[NUM_KEYS][];
+  for (int i=0; i < NUM_KEYS; i++) {
+    keys[i]=String.valueOf(i).getBytes("UTF-8");
+  }
+  SocketAddress aServer=null;
+  for (int i=0; i < ITERATIONS / 10; i++) {
+    SocketAddress server=ch.getServer(keys[i % keys.length]);
+    if (server != null)     aServer=server;
+  }
+  long startNanos=System.nanoTime();
+  for (int i=0; i < ITERATIONS; i++) {
+    SocketAddress server=ch.getServer(keys[i % keys.length]);
+    if (server != null)     aServer=server;
+  }
+  double duration=System.nanoTime() - startNanos;
+  log.infof("Test took %.3f s, average CH lookup was %.3f ns",duration / 1000000000L,duration / ITERATIONS);
+}
