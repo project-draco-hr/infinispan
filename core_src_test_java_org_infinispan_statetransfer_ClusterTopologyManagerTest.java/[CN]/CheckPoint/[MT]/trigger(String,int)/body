@@ -1,0 +1,17 @@
+{
+  lock.lock();
+  try {
+    Integer currentCount=events.get(event);
+    if (currentCount == null) {
+      currentCount=0;
+    }
+ else     if (currentCount < 0) {
+      throw new IllegalStateException("Thread already timed out waiting for event " + event);
+    }
+    events.put(event,currentCount + count);
+    unblockCondition.signalAll();
+  }
+  finally {
+    lock.unlock();
+  }
+}

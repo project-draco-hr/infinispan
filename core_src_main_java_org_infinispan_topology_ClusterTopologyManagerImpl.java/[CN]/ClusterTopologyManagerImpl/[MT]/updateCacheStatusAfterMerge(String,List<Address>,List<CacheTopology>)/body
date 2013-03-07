@@ -1,0 +1,34 @@
+{
+  log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",cacheName,partitionTopologies);
+  ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  if (partitionTopologies.isEmpty())   return;
+synchronized (cacheStatus) {
+    int unionTopologyId=0;
+    ConsistentHash currentCHUnion=null;
+    ConsistentHashFactory chFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();
+    for (    CacheTopology topology : partitionTopologies) {
+      if (topology.getTopologyId() > unionTopologyId) {
+        unionTopologyId=topology.getTopologyId();
+      }
+      if (currentCHUnion == null) {
+        currentCHUnion=topology.getCurrentCH();
+      }
+ else {
+        currentCHUnion=chFactory.union(currentCHUnion,topology.getCurrentCH());
+      }
+    }
+    List<Address> members=cacheStatus.getMembers();
+    cacheStatus.updateClusterMembers(clusterMembers);
+    if (currentCHUnion != null) {
+      currentCHUnion=chFactory.updateMembers(currentCHUnion,members);
+    }
+    unionTopologyId+=2;
+    CacheTopology cacheTopology=new CacheTopology(unionTopologyId,currentCHUnion,null);
+    if (cacheStatus.isRebalanceInProgress()) {
+      cacheStatus.endRebalance();
+    }
+    cacheStatus.updateCacheTopology(cacheTopology);
+  }
+  broadcastConsistentHashUpdate(cacheName,cacheStatus);
+  triggerRebalance(cacheName);
+}

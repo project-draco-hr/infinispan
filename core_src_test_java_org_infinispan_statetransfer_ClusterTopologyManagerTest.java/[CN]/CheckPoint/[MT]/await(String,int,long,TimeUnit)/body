@@ -1,0 +1,22 @@
+{
+  lock.lock();
+  try {
+    long waitNanos=unit.toNanos(timeout);
+    while (waitNanos > 0) {
+      Integer currentCount=events.get(event);
+      if (currentCount != null && currentCount >= count) {
+        events.put(event,currentCount - count);
+        break;
+      }
+      waitNanos=unblockCondition.awaitNanos(waitNanos);
+    }
+    if (waitNanos <= 0) {
+      events.put(event,-1);
+      return false;
+    }
+    return true;
+  }
+  finally {
+    lock.unlock();
+  }
+}
