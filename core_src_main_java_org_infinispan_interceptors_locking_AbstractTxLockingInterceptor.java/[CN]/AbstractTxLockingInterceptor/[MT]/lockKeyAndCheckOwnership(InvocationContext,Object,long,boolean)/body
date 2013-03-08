@@ -1,15 +1,15 @@
 {
-  if (!ctx.isInTxScope()) {
-    lockManager.acquireLock(ctx,key,lockTimeout,skipLocking);
-    return;
-  }
   TxInvocationContext txContext=(TxInvocationContext)ctx;
   int transactionTopologyId=-1;
   boolean checkForPendingLocks=false;
   if (clustered) {
-    transactionTopologyId=txContext.getCacheTransaction().getTopologyId();
-    if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
-      checkForPendingLocks=txTable.getMinTopologyId() < transactionTopologyId;
+    CacheTransaction tx=txContext.getCacheTransaction();
+    boolean isFromStateTransfer=txContext.isOriginLocal() && ((LocalTransaction)tx).isFromStateTransfer();
+    if (!isFromStateTransfer) {
+      transactionTopologyId=tx.getTopologyId();
+      if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
+        checkForPendingLocks=txTable.getMinTopologyId() < transactionTopologyId;
+      }
     }
   }
   if (checkForPendingLocks) {
