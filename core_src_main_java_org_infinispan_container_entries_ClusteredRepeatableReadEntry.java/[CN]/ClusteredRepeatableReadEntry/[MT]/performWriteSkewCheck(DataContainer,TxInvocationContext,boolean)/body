@@ -13,7 +13,10 @@
     prevVersion=ice.getVersion();
     if (prevVersion == null)     throw new IllegalStateException("Entries cannot have null versions!");
   }
-  if (version == null)   return true;
+  if (log.isTraceEnabled()) {
+    log.tracef("Is going to compare versions %s and %s for key %s. Was previously read? %s",prevVersion,version,key,previousRead);
+  }
+  if (version == null)   return !previousRead;
   log.tracef("Comparing versions %s and %s for key %s: %s",prevVersion,version,key,prevVersion.compareTo(version));
   return InequalVersionComparisonResult.AFTER != prevVersion.compareTo(version);
 }

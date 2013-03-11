@@ -1,0 +1,18 @@
+{
+  if (command instanceof AbstractDataWriteCommand) {
+    AbstractDataWriteCommand writeCommand=(AbstractDataWriteCommand)command;
+    if (context.isInTxScope() && context.isOriginLocal()) {
+      TxInvocationContext txInvocationContext=(TxInvocationContext)context;
+      if (!writeCommand.hasFlag(Flag.PUT_FOR_STATE_TRANSFER) && writeCommand.isConditional() || !writeCommand.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+        txInvocationContext.getCacheTransaction().addReadKey(key);
+      }
+      writeCommand.setPreviousRead(txInvocationContext.getCacheTransaction().keyRead(key));
+    }
+  }
+ else   if (command instanceof GetKeyValueCommand) {
+    if (context.isInTxScope() && context.isOriginLocal()) {
+      TxInvocationContext txInvocationContext=(TxInvocationContext)context;
+      txInvocationContext.getCacheTransaction().addReadKey(key);
+    }
+  }
+}

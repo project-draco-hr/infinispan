@@ -1,0 +1,19 @@
+{
+  tm(0).begin();
+  Assert.assertEquals(cache(0).get("NewKey"),null);
+  cache(0).put("NewKey","v1");
+  Transaction tx0=tm(0).suspend();
+  tm(1).begin();
+  Assert.assertEquals(cache(1).get("NewKey"),null);
+  cache(1).put("NewKey","v2");
+  tm(1).commit();
+  tm(0).resume(tx0);
+  try {
+    tm(0).commit();
+    Assert.fail("The transaction should rollback");
+  }
+ catch (  RollbackException expected) {
+  }
+  Assert.assertEquals(cache(0).get("NewKey"),"v2");
+  Assert.assertEquals(cache(1).get("NewKey"),"v2");
+}
