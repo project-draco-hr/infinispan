@@ -12,7 +12,7 @@
     V oldValue=null;
     if (e != null) {
       V v=e.value;
-      if (isEvict) {
+      if (isEvictionRemoval(isEvict,oldValue)) {
         evictionListener.onEntryChosenForEviction(v);
       }
       if (value == null || value.equals(v)) {
@@ -29,7 +29,8 @@
         count=c;
       }
     }
-    if (!isEvict) {
+    if (!isEvictionRemoval(isEvict,oldValue)) {
+      if (trace)       log.tracef("Entry removed (not evicting), so remove from cache store too");
       evictionListener.onEntryRemoved(key);
     }
     return oldValue;
