@@ -1,0 +1,48 @@
+{
+  GlobalConfigurationBuilder builder=holder.getGlobalConfigurationBuilder();
+  ParseUtils.requireNoAttributes(reader);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ADVANCED_EXTERNALIZER:
+{
+        int attributes=reader.getAttributeCount();
+        AdvancedExternalizer<?> advancedExternalizer=null;
+        Integer id=null;
+        ParseUtils.requireAttributes(reader,Attribute.EXTERNALIZER_CLASS.getLocalName());
+        for (int i=0; i < attributes; i++) {
+          String value=replaceProperties(reader.getAttributeValue(i));
+          Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case EXTERNALIZER_CLASS:
+{
+              advancedExternalizer=Util.getInstance(value,holder.getClassLoader());
+              break;
+            }
+case ID:
+{
+            id=Integer.valueOf(value);
+            break;
+          }
+default :
+{
+          throw ParseUtils.unexpectedAttribute(reader,i);
+        }
+    }
+  }
+  ParseUtils.requireNoContent(reader);
+  if (id != null) {
+    builder.serialization().addAdvancedExternalizer(id,advancedExternalizer);
+  }
+ else {
+    builder.serialization().addAdvancedExternalizer(advancedExternalizer);
+  }
+  break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}

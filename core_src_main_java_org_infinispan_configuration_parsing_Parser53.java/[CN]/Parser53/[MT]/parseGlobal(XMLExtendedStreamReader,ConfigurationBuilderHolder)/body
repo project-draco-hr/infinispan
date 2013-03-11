@@ -1,0 +1,73 @@
+{
+  GlobalConfigurationBuilder builder=holder.getGlobalConfigurationBuilder();
+  ParseUtils.requireNoAttributes(reader);
+  boolean transportParsed=false;
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ASYNC_LISTENER_EXECUTOR:
+{
+        parseAsyncListenerExecutor(reader,holder);
+        break;
+      }
+case ASYNC_TRANSPORT_EXECUTOR:
+{
+      parseAsyncTransportExecutor(reader,holder);
+      break;
+    }
+case EVICTION_SCHEDULED_EXECUTOR:
+{
+    parseEvictionScheduledExecutor(reader,holder);
+    break;
+  }
+case GLOBAL_JMX_STATISTICS:
+{
+  parseGlobalJMXStatistics(reader,holder);
+  break;
+}
+case MODULES:
+{
+parseModules(reader,holder);
+break;
+}
+case REPLICATION_QUEUE_SCHEDULED_EXECUTOR:
+{
+parseReplicationQueueScheduledExecutor(reader,holder);
+break;
+}
+case SERIALIZATION:
+{
+parseSerialization(reader,holder);
+break;
+}
+case SHUTDOWN:
+{
+parseShutdown(reader,holder);
+break;
+}
+case TRANSPORT:
+{
+parseTransport(reader,holder);
+transportParsed=true;
+break;
+}
+case SITE:
+{
+parseGlobalSites(reader,holder);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+if (!transportParsed) {
+builder.transport().transport(null);
+}
+ else {
+if (builder.transport().getTransport() == null) {
+builder.transport().defaultTransport();
+}
+}
+}

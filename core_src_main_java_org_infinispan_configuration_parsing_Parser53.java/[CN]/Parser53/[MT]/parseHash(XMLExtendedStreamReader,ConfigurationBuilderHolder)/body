@@ -1,0 +1,34 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case FACTORY:
+      builder.clustering().hash().consistentHashFactory(Util.<ConsistentHashFactory>getInstance(value,holder.getClassLoader()));
+    break;
+case HASH_FUNCTION_CLASS:
+  builder.clustering().hash().hash(Util.<Hash>getInstance(value,holder.getClassLoader()));
+break;
+case NUM_OWNERS:
+builder.clustering().hash().numOwners(Integer.parseInt(value));
+break;
+case NUM_SEGMENTS:
+builder.clustering().hash().numSegments(Integer.parseInt(value));
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case GROUPS:
+parseGroups(reader,holder);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}

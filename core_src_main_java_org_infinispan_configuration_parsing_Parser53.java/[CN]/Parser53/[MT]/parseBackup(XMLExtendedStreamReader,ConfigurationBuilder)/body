@@ -1,0 +1,34 @@
+{
+  BackupConfigurationBuilder backup=ccb.sites().addBackup();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case TIMEOUT:
+      backup.replicationTimeout(Long.parseLong(value));
+    break;
+case STRATEGY:
+  backup.strategy(BackupConfiguration.BackupStrategy.valueOf(value));
+break;
+case SITE:
+backup.site(value);
+break;
+case BACKUP_FAILURE_POLICY:
+backup.backupFailurePolicy(BackupFailurePolicy.valueOf(value));
+break;
+case USE_TWO_PHASE_COMMIT:
+backup.useTwoPhaseCommit(Boolean.parseBoolean(value));
+break;
+case FAILURE_POLICY_CLASS:
+backup.failurePolicyClass(value);
+break;
+case ENABLED:
+backup.enabled(Boolean.parseBoolean(value));
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+parseTakeOffline(reader,backup);
+}
