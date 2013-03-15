@@ -1,6 +1,6 @@
 {
-  DataLocality locality=dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(),key) ? DataLocality.LOCAL : DataLocality.NOT_LOCAL;
-  if (ctx.isOriginLocal() && !locality.isLocal() && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+  boolean isKeyLocalToNode=dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(),key);
+  if (ctx.isOriginLocal() && !isKeyLocalToNode && isNotInL1(key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
     if (trace)     log.tracef("Doing a remote get for key %s",key);
     boolean acquireRemoteLock=false;
     if (ctx.isInTxScope()) {
@@ -16,9 +16,7 @@
         ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getVersion());
       }
       if (isL1CacheEnabled) {
-        List<Address> readOwners=dm.getReadConsistentHash().locateOwners(key);
-        List<Address> writeOwners=dm.getWriteConsistentHash().locateOwners(key);
-        if (!readOwners.equals(writeOwners)) {
+        if (dm.isAffectedByRehash(key)) {
           if (trace)           log.tracef("State transfer in progress for key %s, not storing to L1");
           return ice.getValue();
         }
