@@ -1,35 +1,30 @@
 {
   for (boolean active=true; ; ) {
-    ForkJoinTask<?> localTask;
-    while ((localTask=w.nextLocalTask()) != null)     localTask.doExec();
-    WorkQueue q=findNonEmptyStealQueue(w);
-    if (q != null) {
-      ForkJoinTask<?> t;
-      int b;
+    long c;
+    WorkQueue q;
+    ForkJoinTask<?> t;
+    int b;
+    while ((t=w.nextLocalTask()) != null) {
+      if (w.base - w.top < 0)       signalWork(w);
+      t.doExec();
+    }
+    if ((q=findNonEmptyStealQueue(w.nextSeed())) != null) {
       if (!active) {
-        long c;
         active=true;
         do {
         }
  while (!U.compareAndSwapLong(this,CTL,c=ctl,c + AC_UNIT));
       }
-      if ((b=q.base) - q.top < 0 && (t=q.pollAt(b)) != null)       w.runSubtask(t);
-    }
- else {
-      long c;
-      if (active) {
-        active=false;
-        do {
-        }
- while (!U.compareAndSwapLong(this,CTL,c=ctl,c-=AC_UNIT));
-      }
- else       c=ctl;
-      if ((int)(c >> AC_SHIFT) + parallelism == 0) {
-        do {
-        }
- while (!U.compareAndSwapLong(this,CTL,c=ctl,c + AC_UNIT));
-        break;
+      if ((b=q.base) - q.top < 0 && (t=q.pollAt(b)) != null) {
+        if (q.base - q.top < 0)         signalWork(q);
+        w.runSubtask(t);
       }
     }
+ else     if (active) {
+      long nc=(c=ctl) - AC_UNIT;
+      if ((int)(nc >> AC_SHIFT) + (config & SMASK) == 0)       return;
+      if (U.compareAndSwapLong(this,CTL,c,nc))       active=false;
+    }
+ else     if ((int)((c=ctl) >> AC_SHIFT) + (config & SMASK) == 0 && U.compareAndSwapLong(this,CTL,c,c + AC_UNIT))     return;
   }
 }

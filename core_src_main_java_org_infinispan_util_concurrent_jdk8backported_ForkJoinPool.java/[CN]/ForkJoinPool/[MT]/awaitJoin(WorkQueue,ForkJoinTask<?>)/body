@@ -1,17 +1,20 @@
 {
-  int s;
-  if ((s=task.status) >= 0) {
+  int s=0;
+  if (joiner != null && task != null && (s=task.status) >= 0) {
     ForkJoinTask<?> prevJoin=joiner.currentJoin;
     joiner.currentJoin=task;
-    long startTime=0L;
-    for (int k=0; ; ) {
-      if ((s=(joiner.isEmpty() ? tryHelpStealer(joiner,task) : joiner.tryRemoveAndExec(task))) == 0 && (s=task.status) >= 0) {
-        if (k == 0) {
-          startTime=System.nanoTime();
-          tryPollForAndExec(joiner,task);
-        }
- else         if ((k & (MAX_HELP - 1)) == 0 && System.nanoTime() - startTime >= COMPENSATION_DELAY && tryCompensate(task,null)) {
-          if (task.trySetSignal()) {
+    do {
+    }
+ while ((s=task.status) >= 0 && !joiner.isEmpty() && joiner.tryRemoveAndExec(task));
+    if (s >= 0 && (s=task.status) >= 0) {
+      helpSignal(task,joiner.poolIndex);
+      if ((s=task.status) >= 0 && (task instanceof CountedCompleter))       s=helpComplete(task,LIFO_QUEUE);
+    }
+    while (s >= 0 && (s=task.status) >= 0) {
+      if ((!joiner.isEmpty() || (s=tryHelpStealer(joiner,task)) == 0) && (s=task.status) >= 0) {
+        helpSignal(task,joiner.poolIndex);
+        if ((s=task.status) >= 0 && tryCompensate()) {
+          if (task.trySetSignal() && (s=task.status) >= 0) {
 synchronized (task) {
               if (task.status >= 0) {
                 try {
@@ -29,12 +32,8 @@ synchronized (task) {
  while (!U.compareAndSwapLong(this,CTL,c=ctl,c + AC_UNIT));
         }
       }
-      if (s < 0 || (s=task.status) < 0) {
-        joiner.currentJoin=prevJoin;
-        break;
-      }
- else       if ((k++ & (MAX_HELP - 1)) == MAX_HELP >>> 1)       Thread.yield();
     }
+    joiner.currentJoin=prevJoin;
   }
   return s;
 }

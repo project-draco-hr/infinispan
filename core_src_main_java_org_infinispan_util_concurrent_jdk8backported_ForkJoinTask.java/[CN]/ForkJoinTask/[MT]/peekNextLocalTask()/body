@@ -1,3 +1,7 @@
 {
-  return ((ForkJoinWorkerThread)Thread.currentThread()).workQueue.peek();
+  Thread t;
+  ForkJoinPool.WorkQueue q;
+  if ((t=Thread.currentThread()) instanceof ForkJoinWorkerThread)   q=((ForkJoinWorkerThread)t).workQueue;
+ else   q=ForkJoinPool.commonSubmitterQueue();
+  return (q == null) ? null : q.peek();
 }

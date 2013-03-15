@@ -1,15 +1,19 @@
 {
+  if (Thread.interrupted())   throw new InterruptedException();
+  if (this == common) {
+    awaitQuiescence(timeout,unit);
+    return false;
+  }
   long nanos=unit.toNanos(timeout);
-  final Mutex lock=this.lock;
-  lock.lock();
-  try {
-    for (; ; ) {
-      if (isTerminated())       return true;
-      if (nanos <= 0)       return false;
-      nanos=termination.awaitNanos(nanos);
+  if (isTerminated())   return true;
+  long startTime=System.nanoTime();
+  boolean terminated=false;
+synchronized (this) {
+    for (long waitTime=nanos, millis=0L; ; ) {
+      if (terminated=isTerminated() || waitTime <= 0L || (millis=unit.toMillis(waitTime)) <= 0L)       break;
+      wait(millis);
+      waitTime=nanos - (System.nanoTime() - startTime);
     }
   }
-  finally {
-    lock.unlock();
-  }
+  return terminated;
 }
