@@ -1,0 +1,14 @@
+{
+  RpcManager rpcManager=cache(0,"testCache").getAdvancedCache().getRpcManager();
+  ReplicableCommand command=createReplicableCommandForTest(EXPECTED_RETURN_VALUE);
+  Map<Address,Response> remoteResponses=rpcManager.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,5000);
+  log.tracef("Responses were: %s",remoteResponses);
+  assertEquals(1,remoteResponses.size());
+  Response response=remoteResponses.values().iterator().next();
+  assertNotNull(response);
+  assertTrue(response.isValid());
+  assertTrue(response.isSuccessful());
+  assertTrue(response instanceof SuccessfulResponse);
+  Object value=((SuccessfulResponse)response).getResponseValue();
+  assertEquals(EXPECTED_RETURN_VALUE,value);
+}

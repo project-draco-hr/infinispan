@@ -11,6 +11,9 @@
             if (trace)             log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]",cmd,req.getSrc());
             gcr.wireDependencies(cmd);
             Object retVal=cmd.perform(null);
+            if (retVal != null && !(retVal instanceof Response)) {
+              retVal=SuccessfulResponse.create(retVal);
+            }
             reply(response,retVal);
           }
  catch (          InterruptedException e) {
@@ -29,6 +32,9 @@ catch (          Throwable throwable) {
       if (trace)       log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]",cmd,req.getSrc());
       gcr.wireDependencies(cmd);
       Object retVal=cmd.perform(null);
+      if (retVal != null && !(retVal instanceof Response)) {
+        retVal=SuccessfulResponse.create(retVal);
+      }
       reply(response,retVal);
     }
   }

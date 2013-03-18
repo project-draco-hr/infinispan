@@ -1,0 +1,15 @@
+{
+  RpcManager rpcManager=cache(0,"testCache").getAdvancedCache().getRpcManager();
+  ReplicableCommand command=createReplicableCommandForTest(new IllegalArgumentException("exception!"));
+  try {
+    rpcManager.invokeRemotely(null,command,true,true);
+    fail("Expected RemoteException not thrown");
+  }
+ catch (  RemoteException e) {
+    assertTrue(e.getCause() instanceof IllegalArgumentException);
+    assertEquals("exception!",e.getCause().getMessage());
+  }
+catch (  Exception ex) {
+    fail("Expected exception not thrown but instead we got : " + ex);
+  }
+}
