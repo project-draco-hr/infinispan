@@ -47,10 +47,10 @@
       log.failedToInvalidateKeys(e);
     }
   }
-  log.debugf("Removing L1 state for segments not in %s or %s for cache %s",newSegments,segmentsToL1,cacheName);
+  log.debugf("Removing state for segments not in %s or %s for cache %s",newSegments,segmentsToL1,cacheName);
   if (!keysToRemove.isEmpty()) {
     try {
-      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(false,EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove);
+      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove.toArray());
       InvocationContext ctx=icc.createNonTxInvocationContext();
       interceptorChain.invoke(ctx,invalidateCmd);
       log.debugf("Invalidated %d keys, data container of cache %s now has %d keys",keysToRemove.size(),cacheName,dataContainer.size());
