@@ -1,0 +1,22 @@
+{
+  final BiFun<Entry<K,V>,Entry<K,V>,? extends Entry<K,V>> reducer;
+  if ((reducer=this.reducer) != null) {
+    for (int b; (b=preSplit()) > 0; )     (rights=new ReduceEntriesTask<K,V>(map,this,b,rights,reducer)).fork();
+    Entry<K,V> r=null;
+    V v;
+    while ((v=advance()) != null) {
+      Entry<K,V> u=entryFor((K)nextKey,v);
+      r=(r == null) ? u : reducer.apply(r,u);
+    }
+    result=r;
+    CountedCompleter<?> c;
+    for (c=firstComplete(); c != null; c=c.nextComplete()) {
+      ReduceEntriesTask<K,V> t=(ReduceEntriesTask<K,V>)c, s=t.rights;
+      while (s != null) {
+        Entry<K,V> tr, sr;
+        if ((sr=s.result) != null)         t.result=(((tr=t.result) == null) ? sr : reducer.apply(tr,sr));
+        s=t.rights=s.nextRight;
+      }
+    }
+  }
+}
