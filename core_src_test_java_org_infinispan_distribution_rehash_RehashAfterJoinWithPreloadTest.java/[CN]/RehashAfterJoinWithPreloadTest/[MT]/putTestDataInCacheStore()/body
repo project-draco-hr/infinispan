@@ -1,13 +1,14 @@
 {
-  log.debug("Using cache store dir " + fileCacheStoreTmpDir);
+  final int numKeys=20;
+  log.debugf("Using cache store dir %s",fileCacheStoreTmpDir);
   EmbeddedCacheManager cmForCacheStoreInit=TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultConfiguration(true));
   try {
     cmForCacheStoreInit.defineConfiguration(testCacheName,buildCfg(false));
     Cache<String,String> cache=cmForCacheStoreInit.getCache(testCacheName);
-    cache.put("key1","one");
-    cache.put("key2","two");
-    cache.put("key3","three");
-    log.debug("added 3 entries to test cache");
+    for (int i=0; i < numKeys; i++) {
+      cache.put("key" + i,Integer.toString(i));
+    }
+    log.debugf("added %d entries to test cache",numKeys);
   }
   finally {
     TestingUtil.killCacheManagers(cmForCacheStoreInit);
