@@ -1,0 +1,26 @@
+{
+switch (policy) {
+case PIGGYBACK:
+case DEFAULT:
+    evictionListener=new DefaultEvictionListener();
+  break;
+default :
+throw new IllegalArgumentException("No such eviction thread policy " + strategy);
+}
+Eviction eviction;
+switch (strategy) {
+case FIFO:
+case UNORDERED:
+case LRU:
+eviction=Eviction.LRU;
+break;
+case LIRS:
+eviction=Eviction.LIRS;
+break;
+default :
+throw new IllegalArgumentException("No such eviction strategy " + strategy);
+}
+Comparing comparingKey=resolveComparingFunction(cfgComparingKey);
+Comparing comparingValue=resolveComparingFunction(cfgComparingValue);
+entries=new BoundedConcurrentHashMap<Object,InternalCacheEntry>(maxEntries,concurrencyLevel,eviction,evictionListener,comparingKey,comparingValue);
+}

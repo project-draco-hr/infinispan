@@ -10,7 +10,7 @@
     int index=hash & tab.length - 1;
     HashEntry<K,V> first=tab[index];
     HashEntry<K,V> e=first;
-    while (e != null && (e.hash != hash || !key.equals(e.key))) {
+    while (e != null && (e.hash != hash || !map.comparingKey.equals(key,e.key))) {
       e=e.next;
     }
     V oldValue;
@@ -26,7 +26,7 @@
       ++modCount;
       count=c;
       if (eviction.strategy() != Eviction.NONE) {
-        if (c > evictCap) {
+        if (c > map.evictCap) {
           evicted=eviction.execute();
           first=tab[index];
         }
@@ -44,7 +44,7 @@
  else {
         tab[index]=eviction.createNewEntry(key,hash,first,value);
       }
-      evictionListener.onEntryActivated(key);
+      map.evictionListener.onEntryActivated(key);
     }
     return oldValue;
   }

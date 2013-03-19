@@ -6,16 +6,16 @@
     int index=hash & tab.length - 1;
     HashEntry<K,V> first=tab[index];
     HashEntry<K,V> e=first;
-    while (e != null && (e.hash != hash || !key.equals(e.key))) {
+    while (e != null && (e.hash != hash || !map.comparingKey.equals(key,e.key))) {
       e=e.next;
     }
     V oldValue=null;
     if (e != null) {
       V v=e.value;
       if (isEvictionRemoval(isEvict,oldValue)) {
-        evictionListener.onEntryChosenForEviction(v);
+        map.evictionListener.onEntryChosenForEviction(v);
       }
-      if (value == null || value.equals(v)) {
+      if (value == null || map.comparingValue.equals(value,v)) {
         oldValue=v;
         ++modCount;
         eviction.onEntryRemove(e);
@@ -31,7 +31,7 @@
     }
     if (!isEvictionRemoval(isEvict,oldValue)) {
       if (trace)       log.tracef("Entry removed (not evicting), so remove from cache store too");
-      evictionListener.onEntryRemoved(key);
+      map.evictionListener.onEntryRemoved(key);
     }
     return oldValue;
   }
