@@ -1,0 +1,20 @@
+{
+  Map<String,String> metrics=new HashMap<String,String>();
+  long[] distribution=new long[LOOPS * numNodes];
+  long[] distributionPrimary=new long[LOOPS * numNodes];
+  int distIndex=0;
+  for (int i=0; i < LOOPS; i++) {
+    DefaultConsistentHash ch=createConsistentHash(numSegments,numOwners,numNodes);
+    OwnershipStatistics stats=new OwnershipStatistics(ch,ch.getMembers());
+    for (    Address node : ch.getMembers()) {
+      distribution[distIndex]=stats.getOwned(node);
+      distributionPrimary[distIndex]=stats.getPrimaryOwned(node);
+      distIndex++;
+    }
+  }
+  Arrays.sort(distribution);
+  Arrays.sort(distributionPrimary);
+  addMetrics(metrics,"Any owner:",numSegments,numOwners,numNodes,distribution,INTERVALS);
+  addMetrics(metrics,"Primary:",numSegments,1,numNodes,distributionPrimary,INTERVALS_PRIMARY);
+  return metrics;
+}

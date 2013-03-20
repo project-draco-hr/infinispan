@@ -1,0 +1,26 @@
+{
+  TopologyAwareAddress taa=(TopologyAwareAddress)node;
+  String siteId=taa.getSiteId();
+  String rackId=taa.getRackId();
+  String machineId=taa.getMachineId();
+  Site site=allSites.get(siteId);
+  Rack rack=site.racks.get(rackId);
+  Machine machine=rack.machines.get(machineId);
+  double maxSegments;
+  if (numOwners == 1) {
+    maxSegments=computeMaxSegmentsForNode(numSegments,numOwners,allNodesCount);
+  }
+ else   if (getAllNodesCount() <= numOwners) {
+    maxSegments=numSegments;
+  }
+ else   if (getAllMachinesCount() <= numOwners) {
+    maxSegments=computeMaxSegmentsForMachine(numSegments,numOwners,allMachines,machine);
+  }
+ else   if (getAllRacksCount() <= numOwners) {
+    maxSegments=computeMaxSegmentsForRack(numSegments,numOwners,allRacks,rack,machine);
+  }
+ else {
+    maxSegments=computeMaxSegmentsForSite(numSegments,numOwners,allSites.values(),site,rack,machine);
+  }
+  return (int)Math.ceil(maxSegments);
+}

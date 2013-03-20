@@ -1,0 +1,17 @@
+{
+  StringBuilder sb=new StringBuilder("TopologyAwareOwnershipStatistics{\n");
+  for (  String site : topologyInfo.getAllSites()) {
+    sb.append(String.format("  %s: %d/%d\n",site,getSitePrimaryOwned(site),getSiteOwned(site)));
+    for (    String rack : topologyInfo.getSiteRacks(site)) {
+      sb.append(String.format("    %s: %d/%d\n",rack,getRackPrimaryOwned(site,rack),getRackOwned(site,rack)));
+      for (      String machine : topologyInfo.getRackMachines(site,rack)) {
+        sb.append(String.format("      %s: %d/%d\n",machine,getMachinePrimaryOwned(site,rack,machine),getMachineOwned(site,rack,machine)));
+        for (        Address node : topologyInfo.getMachineNodes(site,rack,machine)) {
+          sb.append(String.format("        %s: %d/%d (%d)\n",node,stats.getPrimaryOwned(node),stats.getOwned(node),topologyInfo.computeMaxSegments(ch.getNumSegments(),ch.getNumOwners(),node)));
+        }
+      }
+    }
+  }
+  sb.append('}');
+  return sb.toString();
+}

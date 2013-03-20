@@ -1,0 +1,27 @@
+{
+  TopologyAwareAddress taNode=(TopologyAwareAddress)node;
+  String siteId=taNode.getSiteId();
+  String rackId=taNode.getRackId();
+  String machineId=taNode.getMachineId();
+  Site site=allSites.get(siteId);
+  if (site == null) {
+    site=new Site(siteId);
+    allSites.put(siteId,site);
+  }
+  Rack rack=site.racks.get(rackId);
+  if (rack == null) {
+    rack=new Rack(siteId,rackId);
+    site.racks.put(rackId,rack);
+    allRacks.add(rack);
+  }
+  Machine machine=rack.machines.get(machineId);
+  if (machine == null) {
+    machine=new Machine(siteId,rackId,machineId);
+    rack.machines.put(machineId,machine);
+    allMachines.add(machine);
+  }
+  machine.nodes.add(node);
+  rack.nodes.add(node);
+  site.nodes.add(node);
+  allNodesCount++;
+}

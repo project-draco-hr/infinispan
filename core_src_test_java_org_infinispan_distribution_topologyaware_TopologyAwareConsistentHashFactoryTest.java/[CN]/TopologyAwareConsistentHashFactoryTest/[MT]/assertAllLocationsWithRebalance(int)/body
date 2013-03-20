@@ -1,15 +1,15 @@
 {
+  ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers);
+  assertAllLocations(numOwners,chMembers);
+  assertDistribution(numOwners,chMembers);
   ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers.subList(0,1));
-  assertAllLocations(1,1,1,1);
-  for (int i=2; i < chMembers.size(); i++) {
+  assertAllLocations(numOwners,chMembers.subList(0,1));
+  for (int i=2; i <= chMembers.size(); i++) {
     List<Address> currentMembers=chMembers.subList(0,i);
-    int expectedOwners=Math.min(numOwners,i);
-    int expectedMachines=Math.min(expectedOwners,countMachines(currentMembers));
-    int expectedRacks=Math.min(expectedOwners,countRacks(currentMembers));
-    int expectedSites=Math.min(expectedOwners,countSites(currentMembers));
+    log.debugf("Created CH with numOwners %d, members %s",numOwners,currentMembers);
     ch=chf.updateMembers(ch,currentMembers);
     ch=chf.rebalance(ch);
-    assertAllLocations(expectedOwners,expectedMachines,expectedRacks,expectedSites);
+    assertAllLocations(numOwners,currentMembers);
+    assertDistribution(numOwners,currentMembers);
   }
-  log.debugf("Created CH with members %s",chMembers);
 }

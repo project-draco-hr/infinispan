@@ -1,0 +1,40 @@
+{
+  double mean=0;
+  long sum=0;
+  for (  long x : distribution)   sum+=x;
+  assertEquals(sum,(long)LOOPS * numOwners * numSegments);
+  mean=sum / numNodes / LOOPS;
+  double variance=0;
+  for (  long x : distribution)   variance+=(x - mean) * (x - mean);
+  double stdDev=sqrt(variance);
+  long max=distribution[distribution.length - 1];
+  addDoubleMetric(metrics,prefix + " max(num_keys(node)/mean)",(double)max / mean);
+  double[] intervalConfidence=new double[intervals.length];
+  int intervalIndex=0;
+  for (int i=0; i < distribution.length; i++) {
+    long x=distribution[i];
+    if (x > intervals[intervalIndex] * mean) {
+      intervalConfidence[intervalIndex]=(double)i / distribution.length;
+      intervalIndex++;
+      if (intervalIndex >= intervals.length)       break;
+    }
+  }
+  for (int i=intervalIndex; i < intervals.length; i++) {
+    intervalConfidence[i]=1.;
+  }
+  for (int i=0; i < intervals.length; i++) {
+    if (intervals[i] < 1) {
+      addPercentageMetric(metrics,String.format("%s P(num_keys(node) < %3.2f * mean)",prefix,intervals[i]),intervalConfidence[i]);
+    }
+ else {
+      addPercentageMetric(metrics,String.format("%s P(num_keys(node) > %3.2f * mean)",prefix,intervals[i]),1 - intervalConfidence[i]);
+    }
+  }
+  double[] percentiles=new double[PERCENTILES.length];
+  for (int i=0; i < PERCENTILES.length; i++) {
+    percentiles[i]=(double)distribution[(int)Math.ceil(PERCENTILES[i] * (LOOPS * numNodes + 1))] / mean;
+  }
+  for (int i=0; i < PERCENTILES.length; i++) {
+    addDoubleMetric(metrics,String.format("%s P(num_keys(node) <= x * mean) = %5.2f%% => x",prefix,PERCENTILES[i] * 100),percentiles[i]);
+  }
+}

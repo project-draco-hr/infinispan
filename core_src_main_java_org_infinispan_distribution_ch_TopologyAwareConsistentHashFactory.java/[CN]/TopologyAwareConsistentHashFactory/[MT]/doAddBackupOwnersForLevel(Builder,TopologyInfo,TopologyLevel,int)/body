@@ -1,0 +1,24 @@
+{
+  boolean sufficientOwners=true;
+  for (int segment=0; segment < builder.getNumSegments(); segment++) {
+    List<Address> owners=builder.getOwners(segment);
+    if (owners.size() >= builder.getActualNumOwners())     continue;
+    int maxDistinctLocations=topologyInfo.getDistinctLocationsCount(level,builder.getActualNumOwners());
+    int distinctLocations=new TopologyInfo(owners).getDistinctLocationsCount(level,builder.getActualNumOwners());
+    if (distinctLocations == maxDistinctLocations)     continue;
+    for (    Address candidate : builder.getMembers()) {
+      int maxSegments=topologyInfo.computeMaxSegments(builder.getNumSegments(),builder.getActualNumOwners(),candidate) + extraSegments;
+      if (builder.getOwned(candidate) < maxSegments) {
+        if (!owners.contains(candidate) && !locationIsDuplicate(owners,candidate,level)) {
+          builder.addOwner(segment,candidate);
+          distinctLocations++;
+          if (owners.size() >= builder.getActualNumOwners())           break;
+        }
+      }
+    }
+    if (distinctLocations < maxDistinctLocations && owners.size() < builder.getActualNumOwners()) {
+      sufficientOwners=false;
+    }
+  }
+  return !sufficientOwners;
+}
