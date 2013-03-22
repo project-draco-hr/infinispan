@@ -1,0 +1,20 @@
+{
+  final long startTime=System.nanoTime();
+  for (int i=1; i < TOTAL_LOOPS; i++) {
+    final String key="K" + i;
+    final Person value=new Person(key,key,i);
+    cache.put(key,value);
+    if (i % QUERY_PERIODICITY == 0) {
+      countElementsViaQuery(cache,i);
+    }
+    if (i % TIMESAMPLE_PERIODICITY == 0) {
+      final long currentTimeStamp=System.nanoTime();
+      final long elapsed=currentTimeStamp - startTime;
+      final double elementsWrittenPerSecond=((double)TimeUnit.NANOSECONDS.convert(i,TimeUnit.SECONDS)) / elapsed;
+      NumberFormat nf=NumberFormat.getNumberInstance();
+      nf.setMaximumFractionDigits(2);
+      nf.setGroupingUsed(true);
+      System.out.println("Transactions committed to index per second: " + nf.format(elementsWrittenPerSecond) + ". Total documents: "+ i+ " Total time: "+ Util.prettyPrintTime(elapsed,TimeUnit.NANOSECONDS));
+    }
+  }
+}
