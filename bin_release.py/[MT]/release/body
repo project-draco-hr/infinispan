@@ -61,11 +61,15 @@ def release():
     for p in async_processes:
         p.join()
     git.tag_for_release()
-    prettyprint('Step 9: Updating version number for next release', Levels.INFO)
-    update_versions(base_dir, version_next)
-    prettyprint('Step 9: Complete', Levels.INFO)
+    git.switch_to_branch()
+    if (version_next is not None):
+        prettyprint('Step 9: Updating version number for next release', Levels.INFO)
+        update_versions(base_dir, version_next)
+        prettyprint('Step 9: Complete', Levels.INFO)
     if (not settings['dry_run']):
-        git.push_to_origin()
+        git.push_tag_to_origin()
+        if (version_next is not None):
+            git.push_branch_to_origin()
         git.cleanup()
     else:
         prettyprint(('In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s.' % git.working_branch), Levels.DEBUG)
