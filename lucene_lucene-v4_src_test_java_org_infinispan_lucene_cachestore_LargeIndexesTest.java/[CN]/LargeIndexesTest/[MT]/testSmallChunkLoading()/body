@@ -1,0 +1,15 @@
+{
+  DirectoryLoaderAdaptor adaptor=new DirectoryLoaderAdaptor(new InternalDirectoryContractImpl(),INDEX_NAME,AUTO_BUFFER);
+  Object loaded=adaptor.load(new ChunkCacheKey(INDEX_NAME,FILE_NAME,0,AUTO_BUFFER));
+  Assert.assertTrue(loaded instanceof byte[]);
+  Assert.assertEquals(AUTO_BUFFER,((byte[])loaded).length);
+  loaded=adaptor.load(new ChunkCacheKey(INDEX_NAME,FILE_NAME,5,AUTO_BUFFER));
+  Assert.assertTrue(loaded instanceof byte[]);
+  Assert.assertEquals(AUTO_BUFFER,((byte[])loaded).length);
+  final int lastChunk=(int)(TEST_SIZE / AUTO_BUFFER);
+  final long lastChunkSize=TEST_SIZE % AUTO_BUFFER;
+  Assert.assertEquals(9,lastChunkSize);
+  loaded=adaptor.load(new ChunkCacheKey(INDEX_NAME,FILE_NAME,lastChunk,AUTO_BUFFER));
+  Assert.assertTrue(loaded instanceof byte[]);
+  Assert.assertEquals(lastChunkSize,((byte[])loaded).length);
+}
