@@ -7,8 +7,7 @@
   cache.put(1,"v1");
   assertEquals(0,activation.getActivationCount());
   assertEquals(0,passivation.getPassivationCount());
-  ExecutorService exec=Executors.newFixedThreadPool(2);
-  Future<Object> passivatorFuture=exec.submit(new Callable<Object>(){
+  Future<Object> passivatorFuture=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       log.debug("Store another entry and force previous to be passivated");
       cache.put(2,"v2");
@@ -16,7 +15,7 @@
     }
   }
 );
-  Future<Object> activatorFuture=exec.submit(new Callable<Object>(){
+  Future<Object> activatorFuture=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       log.debug("Retrieve entry and force activation");
       activationWait.await(60,TimeUnit.SECONDS);

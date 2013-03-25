@@ -2,8 +2,23 @@
   System.out.printf("Testing independent read/write/remove performance " + "with capacity %d, keys %d, readers %d, writers %d, removers %d\n",capacity,numKeys,readerThreads,writerThreads,removerThreads);
   generateKeyList(numKeys);
   Map<String,AbstractDelegatingStore> stores=createAsyncStores();
-  for (  Map.Entry<String,AbstractDelegatingStore> e : stores.entrySet()) {
-    mapTestReadWriteRemove(e.getKey(),e.getValue(),numKeys,readerThreads,writerThreads,removerThreads);
-    e.setValue(null);
+  try {
+    for (    Map.Entry<String,AbstractDelegatingStore> e : stores.entrySet()) {
+      mapTestReadWriteRemove(e.getKey(),e.getValue(),numKeys,readerThreads,writerThreads,removerThreads);
+      e.setValue(null);
+    }
   }
+  finally {
+    for (Iterator<AbstractDelegatingStore> it=stores.values().iterator(); it.hasNext(); ) {
+      AbstractDelegatingStore store=it.next();
+      try {
+        store.stop();
+        it.remove();
+      }
+ catch (      Exception ex) {
+        log.error("Failed to stop cache store",ex);
+      }
+    }
+  }
+  assertTrue("Not all stores were properly shut down",stores.isEmpty());
 }
