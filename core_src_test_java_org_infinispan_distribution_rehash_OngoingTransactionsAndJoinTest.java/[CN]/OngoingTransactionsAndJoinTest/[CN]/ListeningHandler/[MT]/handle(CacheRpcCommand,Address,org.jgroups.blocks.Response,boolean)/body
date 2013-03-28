@@ -1,0 +1,18 @@
+{
+  boolean notifyRehashStarted=false;
+  if (cmd instanceof CacheTopologyControlCommand) {
+    CacheTopologyControlCommand rcc=(CacheTopologyControlCommand)cmd;
+    log.debugf("Intercepted command: %s",cmd);
+switch (rcc.getType()) {
+case REBALANCE_START:
+      txsReady.await();
+    notifyRehashStarted=true;
+  break;
+case CH_UPDATE:
+joinEnded.countDown();
+break;
+}
+}
+delegate.handle(cmd,origin,response,preserveOrder);
+if (notifyRehashStarted) rehashStarted.countDown();
+}

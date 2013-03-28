@@ -1,0 +1,31 @@
+{
+  StateTransferManager stm=cr.getStateTransferManager();
+  if (!stm.isJoinComplete()) {
+    reply(response,null);
+    return;
+  }
+  CommandsFactory commandsFactory=cr.getCommandsFactory();
+  commandsFactory.initializeReplicableCommand(cmd,true);
+  if (!preserveOrder && cmd.canBlock()) {
+    remoteCommandsExecutor.execute(new Runnable(){
+      @Override public void run(){
+        Response resp;
+        try {
+          resp=handleInternal(cmd,cr);
+        }
+ catch (        Throwable throwable) {
+          log.warnf(throwable,"Problems invoking command %s",cmd);
+          resp=new ExceptionResponse(new CacheException("Problems invoking command.",throwable));
+        }
+        reply(response,resp);
+      }
+    }
+);
+    return;
+  }
+  Response resp=handleInternal(cmd,cr);
+  if (trace && resp != null && !resp.isValid()) {
+    log.tracef("Unable to execute command, got invalid response %s",resp);
+  }
+  reply(response,resp);
+}

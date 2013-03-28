@@ -1,0 +1,17 @@
+{
+  cmd.setOrigin(origin);
+  String cacheName=cmd.getCacheName();
+  ComponentRegistry cr=gcr.getNamedComponentRegistry(cacheName);
+  if (cr == null) {
+    if (!globalConfiguration.transport().strictPeerToPeer()) {
+      if (trace)       log.tracef("Strict peer to peer off, so silently ignoring that %s cache is not defined",cacheName);
+      reply(response,null);
+      return;
+    }
+    log.namedCacheDoesNotExist(cacheName);
+    Response retVal=new ExceptionResponse(new NamedCacheNotFoundException(cacheName,"Cache has not been started on node " + transport.getAddress()));
+    reply(response,retVal);
+    return;
+  }
+  handleWithWaitForBlocks(cmd,cr,response,preserveOrder);
+}

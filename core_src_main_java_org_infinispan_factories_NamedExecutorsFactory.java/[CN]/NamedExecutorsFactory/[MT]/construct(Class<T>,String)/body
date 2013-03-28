@@ -33,6 +33,14 @@ synchronized (this) {
       }
       return (T)asyncReplicationExecutor;
     }
+ else     if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
+synchronized (this) {
+        if (remoteCommandsExecutor == null) {
+          remoteCommandsExecutor=buildAndConfigureExecutorService(globalConfiguration.remoteCommandsExecutor().factory(),globalConfiguration.remoteCommandsExecutor().properties(),componentName,nodeName);
+        }
+      }
+      return (T)remoteCommandsExecutor;
+    }
  else {
       throw new ConfigurationException("Unknown named executor " + componentName);
     }

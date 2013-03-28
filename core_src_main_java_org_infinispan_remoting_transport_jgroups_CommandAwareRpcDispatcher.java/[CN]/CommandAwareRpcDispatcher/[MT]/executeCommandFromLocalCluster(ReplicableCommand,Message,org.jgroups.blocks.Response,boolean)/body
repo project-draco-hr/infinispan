@@ -1,0 +1,35 @@
+{
+  if (cmd instanceof CacheRpcCommand) {
+    if (trace)     log.tracef("Attempting to execute command: %s [sender=%s]",cmd,req.getSrc());
+    inboundInvocationHandler.handle((CacheRpcCommand)cmd,fromJGroupsAddress(req.getSrc()),response,preserveOrder);
+  }
+ else {
+    if (!preserveOrder && cmd.canBlock()) {
+      remoteCommandsExecutor.execute(new Runnable(){
+        @Override public void run(){
+          try {
+            if (trace)             log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]",cmd,req.getSrc());
+            gcr.wireDependencies(cmd);
+            Object retVal=cmd.perform(null);
+            reply(response,retVal);
+          }
+ catch (          InterruptedException e) {
+            log.warnf("Shutdown while handling command %s",cmd);
+            reply(response,new ExceptionResponse(new CacheException("Cache is shutting down")));
+          }
+catch (          Throwable throwable) {
+            log.warnf(throwable,"Problems invoking command %s",cmd);
+            reply(response,new ExceptionResponse(new CacheException("Problems invoking command.",throwable)));
+          }
+        }
+      }
+);
+    }
+ else {
+      if (trace)       log.tracef("Attempting to execute non-CacheRpcCommand command: %s [sender=%s]",cmd,req.getSrc());
+      gcr.wireDependencies(cmd);
+      Object retVal=cmd.perform(null);
+      reply(response,retVal);
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  GlobalConfigurationBuilder globalConfigurationBuilder=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  ConfigurationBuilder configurationBuilder=new ConfigurationBuilder();
+  DummyExecutorFactory factory=new DummyExecutorFactory();
+  globalConfigurationBuilder.remoteCommandsExecutor().factory(factory);
+  configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+  cacheManager=createClusteredCacheManager(globalConfigurationBuilder,configurationBuilder);
+  Cache<Object,Object> cache=cacheManager.getCache();
+  String cacheName=cache.getName();
+  Transport transport=extractGlobalComponent(cacheManager,Transport.class);
+  if (transport instanceof JGroupsTransport) {
+    commandAwareRpcDispatcher=((JGroupsTransport)transport).getCommandAwareRpcDispatcher();
+    address=((JGroupsTransport)transport).getChannel().getAddress();
+    marshaller=commandAwareRpcDispatcher.getMarshaller();
+  }
+ else {
+    Assert.fail("Expected a JGroups Transport");
+  }
+  commandsFactory=extractCommandsFactory(cache);
+  executorService=factory.getExecutorService();
+  GetKeyValueCommand getKeyValueCommand=new GetKeyValueCommand("key",InfinispanCollections.<Flag>emptySet());
+  PutKeyValueCommand putKeyValueCommand=new PutKeyValueCommand("key","value",false,null,-1,-1,InfinispanCollections.<Flag>emptySet());
+  blockingCacheRpcCommand=new ReduceCommand<Object,Object>(cacheName);
+  nonBlockingCacheRpcCommand=new ClusteredGetCommand(cacheName);
+  blockingNonCacheRpcCommand=new CacheTopologyControlCommand();
+  nonBlockingNonCacheRpcCommand=new GetKeyValueCommand("key",InfinispanCollections.<Flag>emptySet());
+  blockingSingleRpcCommand=new SingleRpcCommand(cacheName,putKeyValueCommand);
+  nonBlockingSingleRpcCommand=new SingleRpcCommand(cacheName,getKeyValueCommand);
+  blockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand,putKeyValueCommand),cacheName);
+  blockingMultipleRpcCommand2=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand,getKeyValueCommand),cacheName);
+  nonBlockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(getKeyValueCommand,getKeyValueCommand),cacheName);
+}

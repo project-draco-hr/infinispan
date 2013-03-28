@@ -1,0 +1,26 @@
+{
+  if (!(cmd instanceof SingleRpcCommand)) {
+    throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
+  }
+  if (preserveOrder) {
+    reply(response,backupReceiverRepository.handleRemoteCommand((SingleRpcCommand)cmd,src));
+    return;
+  }
+  remoteCommandsExecutor.execute(new Runnable(){
+    @Override public void run(){
+      try {
+        Object retVal=backupReceiverRepository.handleRemoteCommand((SingleRpcCommand)cmd,src);
+        reply(response,retVal);
+      }
+ catch (      InterruptedException e) {
+        log.warnf("Shutdown while handling command %s",cmd);
+        reply(response,new ExceptionResponse(new CacheException("Cache is shutting down")));
+      }
+catch (      Throwable throwable) {
+        log.warnf(throwable,"Problems invoking command %s",cmd);
+        reply(response,new ExceptionResponse(new CacheException("Problems invoking command.",throwable)));
+      }
+    }
+  }
+);
+}

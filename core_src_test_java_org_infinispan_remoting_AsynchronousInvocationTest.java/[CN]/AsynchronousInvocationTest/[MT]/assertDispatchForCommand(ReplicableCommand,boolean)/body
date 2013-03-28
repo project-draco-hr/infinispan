@@ -1,0 +1,20 @@
+{
+  log.debugf("Testing " + command.getClass().getCanonicalName());
+  commandsFactory.initializeReplicableCommand(command,true);
+  Message oobRequest=serialize(command,true,address);
+  if (oobRequest == null) {
+    log.debugf("Don't test " + command.getClass() + ". it is not Serializable");
+    return;
+  }
+  executorService.reset();
+  commandAwareRpcDispatcher.handle(oobRequest,null);
+  Assert.assertEquals(executorService.hasExecutedCommand,expected,"Command " + command.getClass() + " dispatched wrongly.");
+  Message nonOobRequest=serialize(command,false,address);
+  if (nonOobRequest == null) {
+    log.debugf("Don't test " + command.getClass() + ". it is not Serializable");
+    return;
+  }
+  executorService.reset();
+  commandAwareRpcDispatcher.handle(nonOobRequest,null);
+  Assert.assertFalse(executorService.hasExecutedCommand,"Command " + command.getClass() + " dispatched wrongly.");
+}

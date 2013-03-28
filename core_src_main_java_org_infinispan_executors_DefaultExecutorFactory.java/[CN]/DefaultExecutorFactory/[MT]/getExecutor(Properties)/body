@@ -2,9 +2,12 @@
   TypedProperties tp=TypedProperties.toTypedProperties(p);
   int maxThreads=tp.getIntProperty("maxThreads",1);
   int queueSize=tp.getIntProperty("queueSize",100000);
+  int coreThreads=queueSize == 0 ? 1 : tp.getIntProperty("coreThreads",maxThreads);
+  long keepAliveTime=tp.getLongProperty("keepAliveTime",60000);
   final int threadPrio=tp.getIntProperty("threadPriority",Thread.MIN_PRIORITY);
   final String threadNamePrefix=tp.getProperty("threadNamePrefix",tp.getProperty("componentName","Thread"));
   final String threadNameSuffix=tp.getProperty("threadNameSuffix","");
+  BlockingQueue<Runnable> queue=queueSize == 0 ? new SynchronousQueue<Runnable>() : new LinkedBlockingQueue<Runnable>(queueSize);
   ThreadFactory tf=new ThreadFactory(){
     @Override public Thread newThread(    Runnable r){
       String threadName=threadNamePrefix + "-" + counter.getAndIncrement()+ threadNameSuffix;
@@ -15,5 +18,5 @@
     }
   }
 ;
-  return new ThreadPoolExecutor(maxThreads,maxThreads,0L,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(queueSize),tf);
+  return new ThreadPoolExecutor(coreThreads,maxThreads,keepAliveTime,TimeUnit.MILLISECONDS,queue,tf,new ThreadPoolExecutor.CallerRunsPolicy());
 }

@@ -1,0 +1,28 @@
+{
+  if (isValid(req)) {
+    boolean preserveOrder=!req.isFlagSet(Message.Flag.OOB);
+    ReplicableCommand cmd=null;
+    try {
+      cmd=(ReplicableCommand)req_marshaller.objectFromBuffer(req.getRawBuffer(),req.getOffset(),req.getLength());
+      if (cmd == null)       throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+      if (req.getSrc() instanceof SiteAddress) {
+        executeCommandFromRemoteSite(cmd,(SiteAddress)req.getSrc(),response,preserveOrder);
+      }
+ else {
+        executeCommandFromLocalCluster(cmd,req,response,preserveOrder);
+      }
+    }
+ catch (    InterruptedException e) {
+      log.warnf("Shutdown while handling command %s",cmd);
+      reply(response,new ExceptionResponse(new CacheException("Cache is shutting down")));
+    }
+catch (    Throwable x) {
+      if (cmd == null)       log.warnf(x,"Problems unmarshalling remote command from byte buffer");
+ else       log.warnf(x,"Problems invoking command %s",cmd);
+      reply(response,new ExceptionResponse(new CacheException("Problems invoking command.",x)));
+    }
+  }
+ else {
+    reply(response,null);
+  }
+}
