@@ -1,18 +1,11 @@
 {
   if (isCancelled())   throw new CancellationException("Task already cancelled");
-  V response=null;
+  long timeoutNanos=computeTimeoutNanos(timeout,unit);
+  long endNanos=System.nanoTime() + timeoutNanos;
+  V response;
   try {
-    long taskTimeout=getOwningTask().timeout();
-    long futureTimeout=TimeUnit.MILLISECONDS.convert(timeout,unit);
-    long actualTimeout=0;
-    if (taskTimeout > 0 && futureTimeout > 0) {
-      actualTimeout=Math.min(taskTimeout,futureTimeout);
-    }
- else {
-      actualTimeout=Math.max(taskTimeout,futureTimeout);
-    }
-    if (actualTimeout > 0) {
-      response=retrieveResult(f.get(actualTimeout,TimeUnit.MILLISECONDS));
+    if (timeoutNanos > 0) {
+      response=retrieveResult(f.get(timeoutNanos,TimeUnit.NANOSECONDS));
     }
  else {
       response=retrieveResult(f.get());
@@ -22,10 +15,15 @@
     throw te;
   }
 catch (  Exception e) {
+    long remainingNanos=timeoutNanos > 0 ? endNanos - System.nanoTime() : timeoutNanos;
+    if (timeoutNanos > 0 && remainingNanos <= 0) {
+      if (trace)       log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception",e);
+      throw new TimeoutException();
+    }
     boolean canFailover=failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
     if (canFailover) {
       try {
-        response=failoverExecution(e,timeout,unit);
+        response=failoverExecution(e,timeoutNanos,TimeUnit.NANOSECONDS);
       }
  catch (      Exception failedOver) {
         throw wrapIntoExecutionException(failedOver);
