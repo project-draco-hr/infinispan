@@ -1,4 +1,5 @@
 {
+  log.tracef("Waiting for event %s * %d",event,count);
   lock.lock();
   try {
     long waitNanos=unit.toNanos(timeout);
@@ -11,6 +12,7 @@
       waitNanos=unblockCondition.awaitNanos(waitNanos);
     }
     if (waitNanos <= 0) {
+      log.tracef("Timed out waiting for event %s * %d",event,count);
       events.put(event,-1);
       return false;
     }

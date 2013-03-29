@@ -1,38 +1,40 @@
 {
-  if (newViewId <= viewId) {
-    log.tracef("Ignoring old cluster view notification: %s",newViewId);
-    return;
-  }
-  log.tracef("Received new cluster view: %s",newViewId);
-  boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
-  isCoordinator=transport.isCoordinator();
-  if ((isCoordinator && mergeView) || becameCoordinator) {
-    try {
-      Map<String,List<CacheTopology>> clusterCacheMap=recoverClusterStatus();
-      for (      Map.Entry<String,List<CacheTopology>> e : clusterCacheMap.entrySet()) {
-        String cacheName=e.getKey();
-        List<CacheTopology> topologyList=e.getValue();
-        updateCacheStatusAfterMerge(cacheName,newMembers,topologyList);
-      }
-    }
- catch (    InterruptedException e) {
-      log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+synchronized (viewHandlingLock) {
+    if (newViewId <= viewId) {
+      log.tracef("Ignoring old cluster view notification: %s",newViewId);
       return;
     }
-catch (    Exception e) {
-      log.failedToRecoverClusterState(e);
+    boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
+    isCoordinator=transport.isCoordinator();
+    log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s",newViewId,isCoordinator,becameCoordinator);
+    if ((isCoordinator && mergeView) || becameCoordinator) {
+      try {
+        Map<String,List<CacheTopology>> clusterCacheMap=recoverClusterStatus(newViewId);
+        for (        Map.Entry<String,List<CacheTopology>> e : clusterCacheMap.entrySet()) {
+          String cacheName=e.getKey();
+          List<CacheTopology> topologyList=e.getValue();
+          updateCacheStatusAfterMerge(cacheName,transport.getMembers(),topologyList);
+        }
+      }
+ catch (      InterruptedException e) {
+        log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+        return;
+      }
+catch (      Exception e) {
+        log.failedToRecoverClusterState(e);
+      }
     }
-  }
- else   if (isCoordinator) {
-    try {
-      updateClusterMembers(newMembers);
+ else     if (isCoordinator) {
+      try {
+        updateClusterMembers(transport.getMembers());
+      }
+ catch (      Exception e) {
+        log.errorUpdatingMembersList(e);
+      }
     }
- catch (    Exception e) {
-      log.errorUpdatingMembersList(e);
-    }
-  }
 synchronized (viewUpdateLock) {
-    viewId=newViewId;
-    viewUpdateLock.notifyAll();
+      viewId=newViewId;
+      viewUpdateLock.notifyAll();
+    }
   }
 }

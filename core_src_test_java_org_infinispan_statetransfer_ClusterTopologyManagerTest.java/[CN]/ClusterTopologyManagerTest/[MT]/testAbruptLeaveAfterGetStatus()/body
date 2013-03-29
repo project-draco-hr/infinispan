@@ -1,0 +1,26 @@
+{
+  final LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(manager(1),LocalTopologyManager.class);
+  final CheckPoint checkpoint=new CheckPoint();
+  LocalTopologyManager spyLocalTopologyManager=spy(localTopologyManager);
+  TestingUtil.replaceComponent(manager(1),LocalTopologyManager.class,spyLocalTopologyManager,true);
+  doAnswer(new Answer<Object>(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      int viewId=(Integer)invocation.getArguments()[0];
+      checkpoint.trigger("GET_STATUS_" + viewId);
+      log.debugf("Blocking the GET_STATUS command on the merge coordinator");
+      checkpoint.awaitStrict("3 left",10,TimeUnit.SECONDS);
+      return invocation.callRealMethod();
+    }
+  }
+).when(spyLocalTopologyManager).handleStatusRequest(anyInt());
+  log.debugf("Killing coordinator");
+  manager(0).stop();
+  TestingUtil.blockUntilViewsReceived(30000,false,manager(1),manager(2));
+  int viewId=manager(1).getTransport().getViewId();
+  checkpoint.awaitStrict("GET_STATUS_" + viewId,10,TimeUnit.SECONDS);
+  d3.setDiscardAll(true);
+  manager(2).stop();
+  TestingUtil.blockUntilViewsReceived(30000,false,manager(1));
+  checkpoint.trigger("3 left");
+  TestingUtil.waitForRehashToComplete(c2);
+}

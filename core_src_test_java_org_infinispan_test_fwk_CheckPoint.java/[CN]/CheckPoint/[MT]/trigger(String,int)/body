@@ -8,7 +8,9 @@
  else     if (currentCount < 0) {
       throw new IllegalStateException("Thread already timed out waiting for event " + event);
     }
-    events.put(event,currentCount + count);
+    int newCount=count != INFINITE ? currentCount + count : INFINITE;
+    log.tracef("Triggering event %s * %d, new count is %d",event,count,newCount);
+    events.put(event,newCount);
     unblockCondition.signalAll();
   }
   finally {
