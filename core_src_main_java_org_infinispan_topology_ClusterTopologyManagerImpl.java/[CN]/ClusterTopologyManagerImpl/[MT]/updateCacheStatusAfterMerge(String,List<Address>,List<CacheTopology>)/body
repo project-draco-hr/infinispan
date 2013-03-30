@@ -19,6 +19,10 @@ synchronized (cacheStatus) {
     }
     cacheStatus.updateClusterMembers(clusterMembers);
     List<Address> members=cacheStatus.getMembers();
+    if (members.isEmpty()) {
+      log.tracef("Cache %s has no members left, skipping topology update",cacheName);
+      return;
+    }
     if (currentCHUnion != null) {
       currentCHUnion=chFactory.updateMembers(currentCHUnion,members);
     }
