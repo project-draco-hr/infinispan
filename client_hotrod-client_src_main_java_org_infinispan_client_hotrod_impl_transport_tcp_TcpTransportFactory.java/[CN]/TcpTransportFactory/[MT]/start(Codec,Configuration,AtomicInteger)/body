@@ -1,0 +1,25 @@
+{
+synchronized (lock) {
+    hashFactory.init(configuration);
+    boolean pingOnStartup=configuration.pingOnStartup();
+    servers=new ArrayList<SocketAddress>();
+    for (    ServerConfiguration server : configuration.servers()) {
+      servers.add(new InetSocketAddress(server.host(),server.port()));
+    }
+    servers=Collections.unmodifiableCollection(servers);
+    balancer=Util.getInstance(configuration.balancingStrategy());
+    tcpNoDelay=configuration.tcpNoDelay();
+    soTimeout=configuration.socketTimeout();
+    connectTimeout=configuration.connectionTimeout();
+    if (log.isDebugEnabled()) {
+      log.debugf("Statically configured servers: %s",servers);
+      log.debugf("Load balancer class: %s",balancer.getClass().getName());
+      log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",tcpNoDelay,soTimeout,connectTimeout);
+    }
+    PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport> poolFactory=new PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport>(new TransportObjectFactory(codec,this,topologyId,pingOnStartup),configuration.connectionPool());
+    createAndPreparePool(poolFactory);
+    balancer.setServers(servers);
+    updateTransportCount();
+  }
+  if (configuration.pingOnStartup())   pingServers();
+}

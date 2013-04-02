@@ -1,17 +1,19 @@
 {
-  this.classLoader=Thread.currentThread().getContextClassLoader();
-  InputStream stream=FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES,classLoader);
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  ClassLoader cl=Thread.currentThread().getContextClassLoader();
+  builder.classLoader(cl);
+  InputStream stream=FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES,cl);
   if (stream == null) {
     log.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);
-    config=new ConfigurationProperties();
   }
  else {
     try {
-      loadFromStream(stream);
+      builder.withProperties(loadFromStream(stream));
     }
   finally {
       Util.close(stream);
     }
   }
+  this.configuration=builder.build();
   if (start)   start();
 }

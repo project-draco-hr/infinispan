@@ -4,14 +4,14 @@
   cache.getAdvancedCache().addInterceptor(new ConstantDelayTransportInterceptor(100),0);
   hotRodServer=TestHelper.startHotRodServer(cacheManager);
   Properties hotrodClientConf=new Properties();
-  hotrodClientConf.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer.getPort());
-  hotrodClientConf.put("timeBetweenEvictionRunsMillis","500");
-  hotrodClientConf.put("minEvictableIdleTimeMillis","100");
-  hotrodClientConf.put("numTestsPerEvictionRun","10");
-  hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup","true");
+  hotrodClientConf.setProperty("infinispan.client.hotrod.server_list","localhost:" + hotRodServer.getPort());
+  hotrodClientConf.setProperty("timeBetweenEvictionRunsMillis","500");
+  hotrodClientConf.setProperty("minEvictableIdleTimeMillis","100");
+  hotrodClientConf.setProperty("numTestsPerEvictionRun","10");
+  hotrodClientConf.setProperty("infinispan.client.hotrod.ping_on_startup","true");
   remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
   remoteCache=remoteCacheManager.getCache();
   TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)TestingUtil.extractField(remoteCacheManager,"transportFactory");
-  connectionPool=(GenericKeyedObjectPool)TestingUtil.extractField(tcpConnectionFactory,"connectionPool");
+  connectionPool=(GenericKeyedObjectPool<?,?>)TestingUtil.extractField(tcpConnectionFactory,"connectionPool");
   return cacheManager;
 }
