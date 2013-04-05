@@ -1,0 +1,30 @@
+{
+  withTx(nodeThatWrites,new Callable<Object>(){
+    public Object call(){
+      daa.createObject(cache(nodeThatWrites),KEY1);
+      daa.createObject(cache(nodeThatWrites),KEY2);
+      return null;
+    }
+  }
+);
+  assertInitialValues(daa,nodeThatWrites);
+  if (nodeThatReads != nodeThatWrites) {
+    assertInitialValues(daa,nodeThatReads);
+  }
+  withTx(nodeThatWrites,new Callable<Object>(){
+    public Object call() throws Exception {
+      Object obj1=daa.getObject(cache(nodeThatWrites),KEY1);
+      daa.setFirstComponent(obj1,"** UPDATED** first component of object with key=key1");
+      daa.putObject(cache(nodeThatWrites),KEY1,obj1);
+      Object obj2=daa.getObject(cache(nodeThatWrites),KEY2);
+      daa.setFirstComponent(obj2,"** UPDATED** first component of object with key=key2");
+      daa.putObject(cache(nodeThatWrites),KEY2,obj2);
+      return null;
+    }
+  }
+);
+  assertUpdatedValues(daa,nodeThatWrites);
+  if (nodeThatReads != nodeThatWrites) {
+    assertUpdatedValues(daa,nodeThatReads);
+  }
+}

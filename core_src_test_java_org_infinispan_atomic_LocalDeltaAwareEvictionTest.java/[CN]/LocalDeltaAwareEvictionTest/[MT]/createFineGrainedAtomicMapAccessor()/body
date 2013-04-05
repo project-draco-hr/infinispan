@@ -1,0 +1,29 @@
+{
+  return new DeltaAwareAccessor<Map<String,String>,String>(){
+    @Override public Map<String,String> createObject(    Cache cache,    String key){
+      Map<String,String> map=AtomicMapLookup.getFineGrainedAtomicMap(cache,key);
+      map.put("first","first component of object with key=" + key);
+      map.put("second","second component of object with key=" + key);
+      return map;
+    }
+    @Override public Map<String,String> getObject(    Cache cache,    String key){
+      return AtomicMapLookup.getFineGrainedAtomicMap(cache,key,false);
+    }
+    @Override public void putObject(    Cache cache,    String key,    Map<String,String> da){
+      assertTrue(da instanceof FineGrainedAtomicHashMapProxy);
+    }
+    @Override public String getFirstComponent(    Map<String,String> da){
+      return da.get("first");
+    }
+    @Override public void setFirstComponent(    Map<String,String> da,    String value){
+      da.put("first",value);
+    }
+    @Override public String getSecondComponent(    Map<String,String> da){
+      return da.get("second");
+    }
+    @Override public void setSecondComponent(    Map<String,String> da,    String value){
+      da.put("second",value);
+    }
+  }
+;
+}

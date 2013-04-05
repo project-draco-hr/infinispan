@@ -1,0 +1,8 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true,true);
+  builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new JBossStandaloneJTAManagerLookup()).eviction().maxEntries(1).strategy(EvictionStrategy.LRU).loaders().passivation(true).addStore().cacheStore(new DummyInMemoryCacheStore()).fetchPersistentState(false);
+  addClusterEnabledCacheManager(builder);
+  builder.loaders().clearCacheLoaders().addStore().cacheStore(new DummyInMemoryCacheStore()).fetchPersistentState(false);
+  addClusterEnabledCacheManager(builder);
+  waitForClusterToForm();
+}
