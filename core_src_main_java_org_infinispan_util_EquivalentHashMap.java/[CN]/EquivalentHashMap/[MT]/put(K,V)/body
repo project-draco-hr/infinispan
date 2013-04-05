@@ -1,0 +1,22 @@
+{
+  assertKeyNotNull(key);
+  Node<K,V>[] table=this.table;
+  int hash=spread(keyEq.hashCode(key));
+  int length=table.length;
+  int start=index(hash,length);
+  int index=start;
+  for (; ; ) {
+    Node<K,V> e=table[index];
+    if (e == null)     break;
+    if (e.hash == hash && keyEq.equals(e.key,key)) {
+      table[index]=new Node<K,V>(e.key,e.hash,value);
+      return e.value;
+    }
+    index=nextIndex(index,length);
+    if (index == start)     throw new IllegalStateException("Table is full!");
+  }
+  modCount++;
+  table[index]=new Node<K,V>(key,hash,value);
+  if (++size >= threshold)   resize(length);
+  return null;
+}

@@ -1,0 +1,20 @@
+{
+  assertKeyNotNull(key);
+  Node<K,V>[] table=this.table;
+  int length=table.length;
+  int hash=spread(keyEq.hashCode(key));
+  int start=index(hash,length);
+  for (int index=start; ; ) {
+    Node<K,V> e=table[index];
+    if (e == null)     return null;
+    if (e.hash == hash && keyEq.equals(e.key,key)) {
+      table[index]=null;
+      relocate(index);
+      modCount++;
+      size--;
+      return e.value;
+    }
+    index=nextIndex(index,length);
+    if (index == start)     return null;
+  }
+}

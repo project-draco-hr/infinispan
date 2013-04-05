@@ -12,8 +12,10 @@
       }
     }
   }
+  Log log=getLog();
+  boolean trace=log.isTraceEnabled();
   if (checkForPendingLocks) {
-    getLog().tracef("Checking for pending locks and then locking key %s",key);
+    if (trace)     log.tracef("Checking for pending locks and then locking key %s",toStr(key));
     final long expectedEndTime=nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
     waitForTransactionsToComplete(txContext,txTable.getLocalTransactions(),key,transactionTopologyId,expectedEndTime);
     waitForTransactionsToComplete(txContext,txTable.getRemoteTransactions(),key,transactionTopologyId,expectedEndTime);
@@ -22,12 +24,12 @@
       throw newTimeoutException(key,txContext);
     }
  else {
-      getLog().tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s",key);
+      if (trace)       log.tracef("Finished waiting for other potential lockers, trying to acquire the lock on %s",toStr(key));
       lockManager.acquireLock(ctx,key,remaining,skipLocking);
     }
   }
  else {
-    getLog().tracef("Locking key %s, no need to check for pending locks.",key);
+    if (trace)     log.tracef("Locking key %s, no need to check for pending locks.",toStr(key));
     lockManager.acquireLock(ctx,key,lockTimeout,skipLocking);
   }
 }

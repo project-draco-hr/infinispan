@@ -5,21 +5,21 @@
  else {
     EvictionStrategy st=configuration.eviction().strategy();
     int level=configuration.locking().concurrencyLevel();
-    Comparing comparingKey=configuration.dataContainer().comparingKey();
-    Comparing comparingValue=configuration.dataContainer().comparingValue();
+    Equivalence keyEquivalence=configuration.dataContainer().keyEquivalence();
+    Equivalence valueEquivalence=configuration.dataContainer().valueEquivalence();
 switch (st) {
 case NONE:
-      return (T)DefaultDataContainer.unBoundedDataContainer(level,comparingKey,comparingValue);
+      return (T)DefaultDataContainer.unBoundedDataContainer(level,keyEquivalence,valueEquivalence);
 case UNORDERED:
 case LRU:
 case FIFO:
 case LIRS:
     int maxEntries=configuration.eviction().maxEntries();
   if (maxEntries < 0) {
-    return (T)DefaultDataContainer.unBoundedDataContainer(level,comparingKey,comparingValue);
+    return (T)DefaultDataContainer.unBoundedDataContainer(level,keyEquivalence,valueEquivalence);
   }
 EvictionThreadPolicy policy=configuration.eviction().threadPolicy();
-return (T)DefaultDataContainer.boundedDataContainer(level,maxEntries,st,policy,comparingKey,comparingValue);
+return (T)DefaultDataContainer.boundedDataContainer(level,maxEntries,st,policy,keyEquivalence,valueEquivalence);
 default :
 throw new ConfigurationException("Unknown eviction strategy " + configuration.eviction().strategy());
 }
