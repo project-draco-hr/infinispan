@@ -46,7 +46,7 @@
   when(transport.getMembers()).thenReturn(members2);
   replInterceptor.inject(rpcManager,null);
   replInterceptor.injectConfiguration(configuration);
-  when(rpcManager.invokeRemotely(any(Collection.class),any(ClusteredGetCommand.class),any(ResponseMode.class),anyLong(),anyBoolean(),any(ResponseFilter.class),anyBoolean())).thenAnswer(new Answer<Map<Address,Response>>(){
+  when(rpcManager.invokeRemotely(any(Collection.class),any(ClusteredGetCommand.class),any(RpcOptions.class))).thenAnswer(new Answer<Map<Address,Response>>(){
     @Override public Map<Address,Response> answer(    InvocationOnMock invocation){
       Collection<Address> recipients=(Collection<Address>)invocation.getArguments()[0];
       ClusteredGetCommand clusteredGetCommand=(ClusteredGetCommand)invocation.getArguments()[1];
@@ -58,6 +58,20 @@
         return results;
       }
       return Collections.emptyMap();
+    }
+  }
+);
+  when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>(){
+    public RpcOptionsBuilder answer(    InvocationOnMock invocation){
+      Object[] args=invocation.getArguments();
+      return new RpcOptionsBuilder(10000,TimeUnit.MILLISECONDS,(ResponseMode)args[0],true);
+    }
+  }
+);
+  when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class),anyBoolean())).thenAnswer(new Answer<RpcOptionsBuilder>(){
+    public RpcOptionsBuilder answer(    InvocationOnMock invocation){
+      Object[] args=invocation.getArguments();
+      return new RpcOptionsBuilder(10000,TimeUnit.MILLISECONDS,(ResponseMode)args[0],(Boolean)args[1]);
     }
   }
 );

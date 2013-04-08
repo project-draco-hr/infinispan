@@ -10,13 +10,13 @@
       final InvalidateCommand ic=commandsFactory.buildInvalidateFromL1Command(origin,false,InfinispanCollections.<Flag>emptySet(),keys);
       if (useNotifyingFuture) {
         NotifyingNotifiableFuture<Object> future=new AggregatingNotifyingFutureImpl(retval,2);
-        rpcManager.broadcastRpcCommandInFuture(ic,future);
+        rpcManager.invokeRemotelyInFuture(null,ic,rpcManager.getDefaultRpcOptions(true),future);
         return future;
       }
  else {
         return asyncTransportExecutor.submit(new Callable<Object>(){
           @Override public Object call() throws Exception {
-            rpcManager.broadcastRpcCommand(ic,true,false);
+            rpcManager.invokeRemotely(null,ic,rpcManager.getDefaultRpcOptions(true));
             return retval;
           }
         }
@@ -28,13 +28,13 @@
       if (trace)       log.tracef("Keys %s needs invalidation on %s",keys,invalidationAddresses);
       if (useNotifyingFuture) {
         NotifyingNotifiableFuture<Object> future=new AggregatingNotifyingFutureImpl(retval,2);
-        rpcManager.invokeRemotelyInFuture(invalidationAddresses,rpc,true,future,rpcTimeout,true);
+        rpcManager.invokeRemotelyInFuture(invalidationAddresses,rpc,syncIgnoreLeaversRpcOptions,future);
         return future;
       }
  else {
         return asyncTransportExecutor.submit(new Callable<Object>(){
           @Override public Object call() throws Exception {
-            rpcManager.invokeRemotely(invalidationAddresses,rpc,ResponseMode.SYNCHRONOUS,rpcTimeout,true,false);
+            rpcManager.invokeRemotely(invalidationAddresses,rpc,syncRpcOptions);
             return retval;
           }
         }

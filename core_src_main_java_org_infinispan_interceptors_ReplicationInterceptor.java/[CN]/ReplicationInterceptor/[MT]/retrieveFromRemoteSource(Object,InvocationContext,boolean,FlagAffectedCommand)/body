@@ -3,7 +3,8 @@
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,command.getFlags(),acquireRemoteLock,gtx);
   List<Address> targets=Collections.singletonList(getPrimaryOwner());
   ResponseFilter filter=new ClusteredGetResponseValidityFilter(targets,rpcManager.getAddress());
-  Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,ResponseMode.WAIT_FOR_VALID_RESPONSE,cacheConfiguration.clustering().sync().replTimeout(),true,filter,false);
+  RpcOptions options=rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE,false).responseFilter(filter).build();
+  Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,options);
   if (!responses.isEmpty()) {
     for (    Response r : responses.values()) {
       if (r instanceof SuccessfulResponse) {

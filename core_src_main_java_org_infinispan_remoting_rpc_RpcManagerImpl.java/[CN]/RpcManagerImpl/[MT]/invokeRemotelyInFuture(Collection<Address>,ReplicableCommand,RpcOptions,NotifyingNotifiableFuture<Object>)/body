@@ -1,0 +1,27 @@
+{
+  if (trace)   log.tracef("%s invoking in future call %s to recipient list %s with options &s",t.getAddress(),rpc,recipients,options);
+  final CountDownLatch futureSet=new CountDownLatch(1);
+  Callable<Object> c=new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      Object result=null;
+      try {
+        result=invokeRemotely(recipients,rpc,options);
+      }
+  finally {
+        try {
+          futureSet.await();
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+ finally {
+          future.notifyDone();
+        }
+      }
+      return result;
+    }
+  }
+;
+  future.setNetworkFuture(asyncExecutor.submit(c));
+  futureSet.countDown();
+}

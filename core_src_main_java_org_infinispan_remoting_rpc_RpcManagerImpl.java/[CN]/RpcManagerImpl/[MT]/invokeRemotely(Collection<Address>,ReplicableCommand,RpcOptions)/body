@@ -1,0 +1,47 @@
+{
+  if (trace)   log.tracef("%s invoking %s to recipient list %s with options %s",t.getAddress(),rpc,recipients,options);
+  if (!options.skipReplicationQueue() && useReplicationQueue(options.responseMode().isSynchronous())) {
+    if (trace) {
+      log.tracef("Using replication queue for command [%s]",rpc);
+    }
+    replicationQueue.add(rpc);
+    return null;
+  }
+  if (!configuration.clustering().cacheMode().isClustered())   throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+  if (!(rpc instanceof CacheRpcCommand)) {
+    rpc=cf.buildSingleRpcCommand(rpc);
+  }
+  long startTimeNanos=0;
+  if (statisticsEnabled)   startTimeNanos=System.nanoTime();
+  try {
+    if (rpc instanceof TopologyAffectedCommand) {
+      TopologyAffectedCommand topologyAffectedCommand=(TopologyAffectedCommand)rpc;
+      if (topologyAffectedCommand.getTopologyId() == -1) {
+        topologyAffectedCommand.setTopologyId(stateTransferManager.getCacheTopology().getTopologyId());
+      }
+    }
+    Map<Address,Response> result=t.invokeRemotely(recipients,rpc,options.responseMode(),options.timeUnit().toMillis(options.timeout()),!options.fifoOrder(),options.responseFilter(),options.totalOrder(),configuration.clustering().cacheMode().isDistributed());
+    if (statisticsEnabled)     replicationCount.incrementAndGet();
+    if (trace)     log.tracef("Response(s) to %s is %s",rpc,result);
+    if (options.responseMode().isSynchronous()) {
+      checkResponses(result);
+    }
+    return result;
+  }
+ catch (  CacheException e) {
+    log.trace("replication exception: ",e);
+    if (statisticsEnabled)     replicationFailures.incrementAndGet();
+    throw e;
+  }
+catch (  Throwable th) {
+    log.unexpectedErrorReplicating(th);
+    if (statisticsEnabled)     replicationFailures.incrementAndGet();
+    throw new CacheException(th);
+  }
+ finally {
+    if (statisticsEnabled) {
+      long timeTaken=TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos,TimeUnit.NANOSECONDS);
+      totalReplicationTime.getAndAdd(timeTaken);
+    }
+  }
+}

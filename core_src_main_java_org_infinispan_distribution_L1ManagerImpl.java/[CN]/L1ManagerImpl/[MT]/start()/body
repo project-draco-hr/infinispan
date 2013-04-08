@@ -1,6 +1,5 @@
 {
   this.threshold=configuration.clustering().l1().invalidationThreshold();
-  this.rpcTimeout=configuration.clustering().sync().replTimeout();
   this.l1Lifespan=configuration.clustering().l1().lifespan();
   if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
     scheduledRequestorsCleanupTask=scheduledExecutor.scheduleAtFixedRate(new Runnable(){
@@ -13,4 +12,6 @@
  else {
     log.warn("Not using an L1 invalidation reaper thread. This could lead to memory leaks as the requestors map may grow indefinitely!");
   }
+  syncRpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS,false).build();
+  syncIgnoreLeaversRpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,false).build();
 }
