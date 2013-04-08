@@ -1,0 +1,12 @@
+{
+  InetSocketAddress address=new InetSocketAddress(configuration.host(),configuration.port());
+  Executor masterExecutor=Executors.newCachedThreadPool();
+  Executor workerExecutor=Executors.newCachedThreadPool();
+  NioServerSocketChannelFactory factory=new NioServerSocketChannelFactory(masterExecutor,workerExecutor,configuration.workerThreads());
+  ServerBootstrap bootstrap=new ServerBootstrap(factory);
+  bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager()));
+  bootstrap.setOption("child.tcpNoDelay",configuration.tcpNoDelay());
+  if (configuration.sendBufSize() > 0)   bootstrap.setOption("child.sendBufferSize",configuration.sendBufSize());
+  if (configuration.recvBufSize() > 0)   bootstrap.setOption("child.receiveBufferSize",configuration.recvBufSize());
+  bootstrap.bind(address);
+}

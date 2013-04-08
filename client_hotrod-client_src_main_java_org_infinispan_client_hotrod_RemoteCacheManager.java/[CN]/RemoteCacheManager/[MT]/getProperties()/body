@@ -2,6 +2,12 @@
   Properties properties=new Properties();
   if (configuration.asyncExecutorFactory().factoryClass() != null) {
     properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY,configuration.asyncExecutorFactory().factoryClass().getName());
+    TypedProperties aefProps=configuration.asyncExecutorFactory().properties();
+    for (    String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE,ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
+      if (aefProps.containsKey(key)) {
+        properties.setProperty(key,aefProps.getProperty(key));
+      }
+    }
   }
   properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY,configuration.balancingStrategy().getName());
   properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT,Integer.toString(configuration.connectionTimeout()));
