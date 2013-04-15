@@ -6,7 +6,11 @@
   return new WithProcessorLock<T>().call(key,new Callable<T>(){
     @Override public T call() throws Exception {
       V oldValue=skipListenerCache.get(key);
-      MutableJCacheEntry<K,V> mutable=new MutableJCacheEntry<K,V>(cache,key,oldValue);
+      V safeOldValue=oldValue;
+      if (configuration.isStoreByValue()) {
+        safeOldValue=safeCopy(oldValue);
+      }
+      MutableJCacheEntry<K,V> mutable=new MutableJCacheEntry<K,V>(cache,key,safeOldValue);
       T ret=entryProcessor.process(mutable);
       if (mutable.isRemoved()) {
         cache.remove(key);
