@@ -1,0 +1,24 @@
+{
+  prepareTestData();
+  person4=new Person();
+  person4.setName("ExtraGoat");
+  person4.setBlurb("Eats grass and is retired");
+  person4.setAge(70);
+  cache1.put("ExtraGoat",person4);
+  queryParser=createQueryParser("blurb");
+  Query luceneQuery=queryParser.parse("eats");
+  CacheQuery query=Search.getSearchManager(cache1).getQuery(luceneQuery);
+  FullTextFilter filter=query.enableFullTextFilter("personFilter");
+  filter.setParameter("blurbText","grass");
+  AssertJUnit.assertEquals(2,query.getResultSize());
+  FullTextFilter ageFilter=query.enableFullTextFilter("personAgeFilter");
+  ageFilter.setParameter("age",70);
+  AssertJUnit.assertEquals(1,query.getResultSize());
+  List result=query.list();
+  Person person=(Person)result.get(0);
+  AssertJUnit.assertEquals("ExtraGoat",person.getName());
+  AssertJUnit.assertEquals(70,person.getAge());
+  query.disableFullTextFilter("personFilter");
+  query.disableFullTextFilter("personAgeFilter");
+  AssertJUnit.assertEquals(3,query.getResultSize());
+}

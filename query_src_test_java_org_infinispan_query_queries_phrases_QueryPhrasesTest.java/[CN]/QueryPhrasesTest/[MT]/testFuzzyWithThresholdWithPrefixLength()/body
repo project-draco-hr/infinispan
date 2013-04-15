@@ -1,0 +1,15 @@
+{
+  person1=new Person("yyGiantHorse","Eat anything",10);
+  person2=new Person("yySmallHorse","Eat anything",10);
+  cache.put(key1,person1);
+  cache.put(key2,person2);
+  Query query=Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().withThreshold(.6f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+  List<Object> found=Search.getSearchManager(cache).getQuery(query).list();
+  AssertJUnit.assertEquals(1,found.size());
+  AssertJUnit.assertTrue(found.contains(person1));
+  Query queryReturnAll=Search.getSearchManager(cache).buildQueryBuilderForClass(Person.class).get().keyword().fuzzy().withThreshold(.5f).withPrefixLength(2).onField("name").matching("yyGreatHorse").createQuery();
+  List<Object> foundWithLowerThreshold=Search.getSearchManager(cache).getQuery(queryReturnAll).list();
+  AssertJUnit.assertEquals(2,foundWithLowerThreshold.size());
+  AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person1));
+  AssertJUnit.assertTrue(foundWithLowerThreshold.contains(person2));
+}
