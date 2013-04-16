@@ -1,0 +1,27 @@
+{
+  if (tableName == null) {
+    throw new NullPointerException("table name is mandatory");
+  }
+  ResultSet rs=null;
+  try {
+    DatabaseMetaData metaData=connection.getMetaData();
+    String schemaPattern=tableName.getSchema();
+    if (schemaPattern == null) {
+switch (getDatabaseType()) {
+case ORACLE:
+        schemaPattern=metaData.getUserName();
+      break;
+default :
+  }
+}
+rs=metaData.getTables(null,schemaPattern,tableName.getName(),new String[]{"TABLE"});
+return rs.next();
+}
+ catch (SQLException e) {
+if (log.isTraceEnabled()) log.tracef(e,"SQLException occurs while checking the table %s",tableName);
+return false;
+}
+ finally {
+JdbcUtil.safeClose(rs);
+}
+}
