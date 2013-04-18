@@ -1,2 +1,19 @@
 {
+  List<Modification> mods=new ArrayList<Modification>();
+  mods.add(new Store(TestInternalCacheEntryFactory.create("k1","v1")));
+  mods.add(new Store(TestInternalCacheEntryFactory.create("k2","v2")));
+  mods.add(new Remove("k1"));
+  GlobalTransaction tx=gtf.newGlobalTransaction(null,true);
+  cs.prepare(mods,tx,true);
+  assertEquals("v2",cs.load("k2").getValue());
+  assertFalse(cs.containsKey("k1"));
+  cs.clear();
+  mods=new ArrayList<Modification>();
+  mods.add(new Store(TestInternalCacheEntryFactory.create("k1","v1")));
+  mods.add(new Store(TestInternalCacheEntryFactory.create("k2","v2")));
+  mods.add(new Store(TestInternalCacheEntryFactory.create("k3","v3")));
+  cs.prepare(mods,tx,true);
+  assertTrue(cs.containsKey("k1"));
+  assertTrue(cs.containsKey("k2"));
+  assertTrue(cs.containsKey("k3"));
 }

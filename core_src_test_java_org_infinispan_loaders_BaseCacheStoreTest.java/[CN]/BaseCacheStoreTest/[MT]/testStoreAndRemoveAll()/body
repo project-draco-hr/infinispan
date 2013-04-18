@@ -1,2 +1,24 @@
 {
+  cs.store(TestInternalCacheEntryFactory.create("k1","v1"));
+  cs.store(TestInternalCacheEntryFactory.create("k2","v2"));
+  cs.store(TestInternalCacheEntryFactory.create("k3","v3"));
+  cs.store(TestInternalCacheEntryFactory.create("k4","v4"));
+  Set<InternalCacheEntry> set=cs.loadAll();
+  assertEquals(4,set.size());
+  Set expected=new HashSet();
+  expected.add("k1");
+  expected.add("k2");
+  expected.add("k3");
+  expected.add("k4");
+  for (  InternalCacheEntry se : set)   assertTrue(expected.remove(se.getKey()));
+  assertTrue(expected.isEmpty());
+  Set toRemove=new HashSet();
+  toRemove.add("k1");
+  toRemove.add("k2");
+  toRemove.add("k3");
+  cs.removeAll(toRemove);
+  set=cs.loadAll();
+  assertEquals(1,set.size());
+  set.remove("k4");
+  assertTrue(expected.isEmpty());
 }

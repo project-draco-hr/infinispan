@@ -1,2 +1,33 @@
 {
+  cs.store(TestInternalCacheEntryFactory.create("k1","v1"));
+  cs.store(TestInternalCacheEntryFactory.create("k2","v2"));
+  cs.store(TestInternalCacheEntryFactory.create("k3","v3"));
+  StreamingMarshaller marshaller=getMarshaller();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  ObjectOutput oo=marshaller.startObjectOutput(out,false,12);
+  try {
+    cs.toStream(new UnclosableObjectOutputStream(oo));
+  }
+  finally {
+    marshaller.finishObjectOutput(oo);
+    out.close();
+    cs.clear();
+  }
+  ByteArrayInputStream in=new ByteArrayInputStream(out.toByteArray());
+  ObjectInput oi=marshaller.startObjectInput(in,false);
+  try {
+    cs.fromStream(new UnclosableObjectInputStream(oi));
+  }
+  finally {
+    marshaller.finishObjectInput(oi);
+    in.close();
+  }
+  Set<InternalCacheEntry> set=cs.loadAll();
+  assertEquals(3,set.size());
+  Set expected=new HashSet();
+  expected.add("k1");
+  expected.add("k2");
+  expected.add("k3");
+  for (  InternalCacheEntry se : set)   assertTrue(expected.remove(se.getKey()));
+  assertTrue(expected.isEmpty());
 }

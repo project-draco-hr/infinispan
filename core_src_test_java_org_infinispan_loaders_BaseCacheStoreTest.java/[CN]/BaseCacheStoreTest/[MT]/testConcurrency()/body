@@ -1,2 +1,63 @@
 {
+  int numThreads=3;
+  final int loops=500;
+  final String[] keys=new String[10];
+  final String[] values=new String[10];
+  for (int i=0; i < 10; i++)   keys[i]="k" + i;
+  for (int i=0; i < 10; i++)   values[i]="v" + i;
+  final Random r=new Random();
+  final List<Exception> exceptions=new LinkedList<Exception>();
+  final Runnable store=new Runnable(){
+    @Override public void run(){
+      try {
+        int randomInt=r.nextInt(10);
+        cs.store(TestInternalCacheEntryFactory.create(keys[randomInt],values[randomInt]));
+      }
+ catch (      Exception e) {
+        exceptions.add(e);
+      }
+    }
+  }
+;
+  final Runnable remove=new Runnable(){
+    @Override public void run(){
+      try {
+        cs.remove(keys[r.nextInt(10)]);
+      }
+ catch (      Exception e) {
+        exceptions.add(e);
+      }
+    }
+  }
+;
+  final Runnable get=new Runnable(){
+    @Override public void run(){
+      try {
+        int randomInt=r.nextInt(10);
+        InternalCacheEntry se=cs.load(keys[randomInt]);
+        assertTrue(se == null || se.getValue().equals(values[randomInt]));
+        cs.loadAll();
+      }
+ catch (      Exception e) {
+        exceptions.add(e);
+      }
+    }
+  }
+;
+  Thread[] threads=new Thread[numThreads];
+  for (int i=0; i < numThreads; i++) {
+    threads[i]=new Thread(getClass().getSimpleName() + "-" + i){
+      @Override public void run(){
+        for (int i=0; i < loops; i++) {
+          store.run();
+          remove.run();
+          get.run();
+        }
+      }
+    }
+;
+  }
+  for (  Thread t : threads)   t.start();
+  for (  Thread t : threads)   t.join();
+  if (!exceptions.isEmpty())   throw exceptions.get(0);
 }

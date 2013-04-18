@@ -1,0 +1,14 @@
+{
+  org.mortbay.jetty.Server server=new org.mortbay.jetty.Server();
+  Connector connector=new SelectChannelConnector();
+  connector.setHost(host);
+  connector.setPort(port);
+  server.addConnector(connector);
+  context=new Context(server,"/",Context.SESSIONS);
+  context.setInitParams(Collections.singletonMap("resteasy.resources","org.infinispan.rest.Server"));
+  context.addEventListener(new ResteasyBootstrap());
+  context.addServlet(HttpServletDispatcher.class,"/rest/*");
+  ServletContext servletContext=context.getServletContext();
+  ServerBootstrap.setCacheManager(servletContext,cacheManager);
+  ServerBootstrap.setConfiguration(servletContext,configuration);
+}

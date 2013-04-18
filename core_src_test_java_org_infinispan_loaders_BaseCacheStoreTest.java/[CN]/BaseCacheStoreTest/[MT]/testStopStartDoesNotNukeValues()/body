@@ -1,2 +1,29 @@
 {
+  assertFalse(cs.containsKey("k1"));
+  assertFalse(cs.containsKey("k2"));
+  long lifespan=1;
+  long idle=1;
+  InternalCacheEntry se1=TestInternalCacheEntryFactory.create("k1","v1",lifespan);
+  InternalCacheEntry se2=TestInternalCacheEntryFactory.create("k2","v2");
+  InternalCacheEntry se3=TestInternalCacheEntryFactory.create("k3","v3",-1,idle);
+  InternalCacheEntry se4=TestInternalCacheEntryFactory.create("k4","v4",lifespan,idle);
+  cs.store(se1);
+  cs.store(se2);
+  cs.store(se3);
+  cs.store(se4);
+  sleepForStopStartTest();
+  cs.stop();
+  cs.start();
+  assertTrue(se1.isExpired(System.currentTimeMillis()));
+  assertNull(cs.load("k1"));
+  assertFalse(cs.containsKey("k1"));
+  assertNotNull(cs.load("k2"));
+  assertTrue(cs.containsKey("k2"));
+  assertEquals("v2",cs.load("k2").getValue());
+  assertTrue(se3.isExpired(System.currentTimeMillis()));
+  assertNull(cs.load("k3"));
+  assertFalse(cs.containsKey("k3"));
+  assertTrue(se3.isExpired(System.currentTimeMillis()));
+  assertNull(cs.load("k3"));
+  assertFalse(cs.containsKey("k3"));
 }

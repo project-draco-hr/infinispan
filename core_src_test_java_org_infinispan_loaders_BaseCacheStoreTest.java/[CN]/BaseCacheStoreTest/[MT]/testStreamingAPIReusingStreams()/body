@@ -1,2 +1,45 @@
 {
+  cs.store(TestInternalCacheEntryFactory.create("k1","v1"));
+  cs.store(TestInternalCacheEntryFactory.create("k2","v2"));
+  cs.store(TestInternalCacheEntryFactory.create("k3","v3"));
+  StreamingMarshaller marshaller=getMarshaller();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  byte[] dummyStartBytes={1,2,3,4,5,6,7,8};
+  byte[] dummyEndBytes={8,7,6,5,4,3,2,1};
+  ObjectOutput oo=marshaller.startObjectOutput(out,false,12);
+  try {
+    oo.write(dummyStartBytes);
+    cs.toStream(new UnclosableObjectOutputStream(oo));
+    oo.flush();
+    oo.write(dummyEndBytes);
+  }
+  finally {
+    marshaller.finishObjectOutput(oo);
+    out.close();
+    cs.clear();
+  }
+  byte[] dummy=new byte[8];
+  ByteArrayInputStream in=new ByteArrayInputStream(out.toByteArray());
+  ObjectInput oi=marshaller.startObjectInput(in,false);
+  try {
+    int bytesRead=oi.read(dummy,0,8);
+    assertEquals(8,bytesRead);
+    for (int i=1; i < 9; i++)     assertEquals("Start byte stream corrupted!",i,dummy[i - 1]);
+    cs.fromStream(new UnclosableObjectInputStream(oi));
+    bytesRead=oi.read(dummy,0,8);
+    assertEquals(8,bytesRead);
+    for (int i=8; i > 0; i--)     assertEquals("Start byte stream corrupted!",i,dummy[8 - i]);
+  }
+  finally {
+    marshaller.finishObjectInput(oi);
+    in.close();
+  }
+  Set<InternalCacheEntry> set=cs.loadAll();
+  assertEquals(3,set.size());
+  Set expected=new HashSet();
+  expected.add("k1");
+  expected.add("k2");
+  expected.add("k3");
+  for (  InternalCacheEntry se : set)   assertTrue(expected.remove(se.getKey()));
+  assertTrue(expected.isEmpty());
 }
