@@ -2,12 +2,12 @@
   try {
     Object returnValue=invokeNextInterceptor(ctx,command);
     if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal())     l1Manager.addRequestor(command.getKey(),ctx.getOrigin());
-    if (returnValue == null) {
+    if (returnValue == null && ctx.isOriginLocal()) {
       Object key=command.getKey();
       if (needsRemoteGet(ctx,command)) {
         returnValue=remoteGetAndStoreInL1(ctx,key,false,command);
       }
-      if (returnValue == null) {
+      if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
         returnValue=localGet(ctx,key,false,command);
       }
     }
