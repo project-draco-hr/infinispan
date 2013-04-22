@@ -1,0 +1,18 @@
+{
+  withTx(tm(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.remove("1");
+      Query query=createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+      ResultIterator iterator=searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
+      assertFalse(iterator.hasNext());
+      try {
+        iterator.next();
+        fail("Expected NoSuchElementException");
+      }
+ catch (      NoSuchElementException e) {
+      }
+      return null;
+    }
+  }
+);
+}

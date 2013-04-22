@@ -1,0 +1,15 @@
+{
+  withTx(tm(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache.remove("1");
+      Query query=createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
+      ResultIterator iterator=searchManager.getQuery(query).projection(ProjectionConstants.VALUE,"bar").iterator(new FetchOptions().fetchMode(LAZY));
+      assertTrue(iterator.hasNext());
+      Object[] projection=(Object[])iterator.next();
+      assertNull(projection[0]);
+      assertEquals("1",projection[1]);
+      return null;
+    }
+  }
+);
+}
