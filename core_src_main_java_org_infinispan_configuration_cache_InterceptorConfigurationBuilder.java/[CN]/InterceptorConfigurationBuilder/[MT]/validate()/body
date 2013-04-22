@@ -2,15 +2,20 @@
   int positions=0;
   if (before != null)   positions++;
   if (after != null)   positions++;
-  if (position != null)   positions++;
   if (index > -1)   positions++;
+  if (!position.equals(Position.OTHER_THAN_FIRST_OR_LAST))   positions++;
 switch (positions) {
 case 0:
-    position=Position.OTHER_THAN_FIRST_OR_LAST;
-  break;
+    throw log.missingCustomInterceptorPosition(interceptor.getClass().getName());
 case 1:
-break;
+  break;
 default :
-throw new ConfigurationException("You can only specify the position of a custom interceptor once.");
+throw log.multipleCustomInterceptorPositions(interceptor.getClass().getName());
+}
+if (interceptor == null) {
+throw log.customInterceptorMissingClass();
+}
+if (!(interceptor instanceof BaseCustomInterceptor)) {
+log.suggestCustomInterceptorInheritance(interceptor.getClass().getName());
 }
 }

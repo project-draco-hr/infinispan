@@ -1,0 +1,13 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.customInterceptors().addInterceptor().interceptor(new FooInterceptor()).position(Position.FIRST).addProperty("foo","bar");
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      final Cache<Object,Object> cache=cm.getCache();
+      CommandInterceptor i=cache.getAdvancedCache().getInterceptorChain().get(0);
+      assertTrue("Expecting FooInterceptor in the interceptor chain",i instanceof FooInterceptor);
+      assertEquals("bar",((FooInterceptor)i).getFoo());
+    }
+  }
+);
+}
