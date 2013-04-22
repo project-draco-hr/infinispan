@@ -4,9 +4,10 @@
   cfgBuilder.clustering().hash().numOwners(2);
   cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
   cfgBuilder.clustering().stateTransfer().timeout(20000);
-  addServer("1",8890,TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder));
-  addServer("2",8891,TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder));
+  RestServerConfigurationBuilder restCfgBuilder=new RestServerConfigurationBuilder();
+  addServer("1",8890,TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder),restCfgBuilder.build());
+  addServer("2",8891,TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder),restCfgBuilder.build());
   startServers();
-  TestingUtil.blockUntilViewsReceived(10000,getManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),getManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
+  TestingUtil.blockUntilViewsReceived(10000,getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),getCacheManager("2").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME));
   createClient();
 }
