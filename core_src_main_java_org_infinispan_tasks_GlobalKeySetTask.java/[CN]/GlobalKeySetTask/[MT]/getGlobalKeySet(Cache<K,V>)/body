@@ -1,0 +1,14 @@
+{
+  if (cache.getCacheConfiguration().clustering().cacheMode().isDistributed()) {
+    DefaultExecutorService des=new DefaultExecutorService(cache);
+    List<Future<Set<K>>> fk=des.submitEverywhere(new GlobalKeySetTask<K,V>());
+    Set<K> allKeys=new HashSet<K>();
+    for (    Future<Set<K>> f : fk) {
+      allKeys.addAll(f.get());
+    }
+    return allKeys;
+  }
+ else {
+    return new HashSet<K>(cache.keySet());
+  }
+}
