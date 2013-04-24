@@ -1,22 +1,23 @@
 {
   if (enabled) {
-    if (keyManagers == null && keyStoreFileName == null) {
-      throw log.noSSLKeyManagerConfiguration();
+    if (sslContext == null) {
+      if (keyStoreFileName == null) {
+        throw log.noSSLKeyManagerConfiguration();
+      }
+      if (keyStoreFileName != null && keyStorePassword == null) {
+        throw log.missingKeyStorePassword(keyStoreFileName);
+      }
+      if (trustStoreFileName == null) {
+        throw log.noSSLTrustManagerConfiguration();
+      }
+      if (trustStoreFileName != null && trustStorePassword == null) {
+        throw log.missingTrustStorePassword(trustStoreFileName);
+      }
     }
-    if (keyStoreFileName != null && keyStorePassword == null) {
-      throw log.missingKeyStorePassword(keyStoreFileName);
-    }
-    if (keyManagers != null && keyStoreFileName != null) {
-      throw log.xorKeyStoreConfiguration();
-    }
-    if (trustManagers == null && trustStoreFileName == null) {
-      throw log.noSSLTrustManagerConfiguration();
-    }
-    if (trustStoreFileName != null && trustStorePassword == null) {
-      throw log.missingTrustStorePassword(trustStoreFileName);
-    }
-    if (trustManagers != null && trustStoreFileName != null) {
-      throw log.xorTrustStoreConfiguration();
+ else {
+      if (keyStoreFileName != null || trustStoreFileName != null) {
+        throw log.xorSSLContext();
+      }
     }
   }
 }
