@@ -3,7 +3,7 @@
     ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
     Object retVal=invokeNextInterceptor(ctx,command);
     if (shouldCommitDuringPrepare(command,ctx)) {
-      commitContextEntries(ctx,null);
+      commitContextEntries(ctx,null,null);
     }
     return retVal;
   }
@@ -11,7 +11,7 @@
   Object retVal=invokeNextInterceptor(ctx,command);
   EntryVersionsMap versionsMap=cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator,ctx,(VersionedPrepareCommand)command);
   if (command.isOnePhaseCommit()) {
-    commitContextEntries(ctx,null);
+    commitContextEntries(ctx,null,null);
   }
  else {
     if (trace)     log.tracef("Transaction %s will be committed in the 2nd phase",ctx.getGlobalTransaction().globalId());

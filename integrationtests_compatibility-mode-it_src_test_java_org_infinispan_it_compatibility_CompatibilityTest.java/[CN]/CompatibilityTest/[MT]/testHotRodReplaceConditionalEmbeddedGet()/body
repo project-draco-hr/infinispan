@@ -1,0 +1,12 @@
+{
+  final Integer key=8;
+  Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
+  RemoteCache<Integer,String> remote=cacheFactory.getHotRodCache();
+  assertEquals(null,remote.put(key,"v1"));
+  VersionedValue<String> versioned=remote.getVersioned(key);
+  assertEquals("v1",versioned.getValue());
+  assertTrue(0 != versioned.getVersion());
+  assertFalse(remote.replaceWithVersion(key,"v2",Long.MAX_VALUE));
+  assertTrue(remote.replaceWithVersion(key,"v2",versioned.getVersion()));
+  assertEquals("v2",embedded.get(key));
+}

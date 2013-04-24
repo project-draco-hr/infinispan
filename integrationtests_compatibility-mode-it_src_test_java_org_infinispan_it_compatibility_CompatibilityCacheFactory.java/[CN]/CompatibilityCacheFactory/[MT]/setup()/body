@@ -1,7 +1,9 @@
 {
-  cacheManager=createLocalCacheManager(false);
+  org.infinispan.configuration.cache.ConfigurationBuilder builder=new org.infinispan.configuration.cache.ConfigurationBuilder();
+  builder.dataContainer().typeConverter(new MarshalledTypeConverter());
+  cacheManager=TestCacheManagerFactory.createCacheManager(builder);
   embeddedCache=cacheManager.getCache();
   hotrod=startHotRodServer(cacheManager);
-  hotrodClient=new RemoteCacheManager("localhost:" + hotrod.getPort(),true);
+  hotrodClient=new RemoteCacheManager(new ConfigurationBuilder().addServers("localhost:" + hotrod.getPort()).build());
   hotrodCache=hotrodClient.getCache();
 }
