@@ -4,10 +4,12 @@
     if (returnValue == null) {
       Object key=command.getKey();
       if (needsRemoteGet(ctx,command)) {
-        returnValue=remoteGetCacheEntry(ctx,key,command).getValue();
+        InternalCacheEntry remoteEntry=remoteGetCacheEntry(ctx,key,command);
+        if (remoteEntry != null)         returnValue=remoteEntry.getValue();
       }
       if (returnValue == null) {
-        returnValue=localGetCacheEntry(ctx,key,false,command).getValue();
+        InternalCacheEntry localEntry=localGetCacheEntry(ctx,key,false,command);
+        if (localEntry != null)         returnValue=localEntry.getValue();
       }
     }
     return returnValue;

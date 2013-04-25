@@ -1,6 +1,6 @@
 {
   final ByRef<Boolean> lockAcquired=ByRef.create(Boolean.FALSE);
-  L lock=locks.compute(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
+  L lock=locks.compute(key,new EquivalentConcurrentHashMapV8.BiFun<Object,L,L>(){
     @Override public L apply(    Object key,    L lock){
       if (lock == null) {
         Log log=getLog();
@@ -24,7 +24,7 @@
   if (lockAcquired.get())   return lock;
  else {
     getLog().tracef("Timed out attempting to acquire lock for key %s after %s",key,Util.prettyPrintTime(timeout,unit));
-    locks.computeIfPresent(key,new ConcurrentHashMapV8.BiFun<Object,L,L>(){
+    locks.computeIfPresent(key,new EquivalentConcurrentHashMapV8.BiFun<Object,L,L>(){
       @Override public L apply(      Object key,      L lock){
         boolean remove=lock.getReferenceCounter().decrementAndGet() == 0;
         return remove ? null : lock;
