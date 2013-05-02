@@ -1,8 +1,8 @@
 {
   if (log.isDebugEnabled())   log.debugf("Wait for on-going transactions to finish for %s.",Util.prettyPrintTime(configuration.transaction().cacheStopTimeout(),TimeUnit.MILLISECONDS));
-  long failTime=currentMillisFromNanotime() + configuration.transaction().cacheStopTimeout();
+  long failTime=timeService.expectedEndTime(configuration.transaction().cacheStopTimeout(),TimeUnit.MILLISECONDS);
   boolean txsOnGoing=areTxsOnGoing();
-  while (txsOnGoing && currentMillisFromNanotime() < failTime) {
+  while (txsOnGoing && !timeService.isTimeExpired(failTime)) {
     try {
       Thread.sleep(30);
       txsOnGoing=areTxsOnGoing();

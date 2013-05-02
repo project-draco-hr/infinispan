@@ -6,7 +6,7 @@
   CompletionService<T> ecs=new DistributedExecutionCompletionService<T>(this);
   try {
     ExecutionException ee=null;
-    long lastTime=(timed) ? System.nanoTime() : 0;
+    long lastTime=(timed) ? timeService.time() : 0;
     Iterator<? extends Callable<T>> it=tasks.iterator();
     futures.add(ecs.submit(it.next()));
     --ntasks;
@@ -23,8 +23,8 @@
  else         if (timed) {
           f=ecs.poll(nanos,TimeUnit.NANOSECONDS);
           if (f == null)           throw new TimeoutException();
-          long now=System.nanoTime();
-          nanos-=now - lastTime;
+          long now=timeService.time();
+          nanos-=timeService.timeDuration(lastTime,now,TimeUnit.NANOSECONDS);
           lastTime=now;
         }
  else         f=ecs.take();

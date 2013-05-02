@@ -1,7 +1,7 @@
 {
-  long realTimeout=System.nanoTime() + unit.toNanos(timeout);
+  final long endTime=timeService.expectedEndTime(timeout,unit);
 synchronized (blockedTasks) {
-    long waitTime=System.nanoTime() - realTimeout;
+    long waitTime=timeService.remainingTime(endTime,TimeUnit.MILLISECONDS);
     while (!blockedTasks.isEmpty() && waitTime > 0) {
       wait(waitTime);
     }

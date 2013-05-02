@@ -1,5 +1,5 @@
 {
-  long deductFromTimeout=NANOSECONDS.toMillis(System.nanoTime() - sendTimeNanos);
+  long deductFromTimeout=timeService.timeDuration(sendTimeNanos,MILLISECONDS);
   errors=new HashMap<String,Throwable>(syncBackupCalls.size());
   long elapsedTime=0;
   for (  Map.Entry<XSiteBackup,Future<Object>> entry : syncBackupCalls.entrySet()) {
@@ -15,7 +15,7 @@
         continue;
       }
     }
-    long startNanos=System.nanoTime();
+    long startNanos=timeService.time();
     Object value=null;
     try {
       value=entry.getValue().get(timeout,MILLISECONDS);
@@ -30,7 +30,7 @@ catch (    ExecutionException ue) {
       addCommunicationError(siteName);
     }
  finally {
-      elapsedTime+=NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+      elapsedTime+=timeService.timeDuration(startNanos,MILLISECONDS);
     }
     if (value instanceof ExceptionResponse) {
       Exception remoteException=((ExceptionResponse)value).getException();

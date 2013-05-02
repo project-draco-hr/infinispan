@@ -5,17 +5,17 @@
       Iterator<Map.Entry<GlobalTransaction,Long>> iterator=completedTransactions.entrySet().iterator();
       long timeout=configuration.transaction().completedTxTimeout();
       int removedEntries=0;
-      long beginning=System.nanoTime();
+      long beginning=timeService.time();
       while (iterator.hasNext()) {
         Map.Entry<GlobalTransaction,Long> e=iterator.next();
-        long ageNanos=System.nanoTime() - e.getValue();
-        if (TimeUnit.NANOSECONDS.toMillis(ageNanos) >= timeout) {
+        long ageMillis=timeService.timeDuration(e.getValue(),TimeUnit.MILLISECONDS);
+        if (ageMillis >= timeout) {
           iterator.remove();
           removedEntries++;
         }
       }
-      long duration=System.nanoTime() - beginning;
-      log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " + "current number of completed transactions is %d",removedEntries,TimeUnit.NANOSECONDS.toMillis(duration),completedTransactions.size());
+      long duration=timeService.timeDuration(beginning,TimeUnit.MILLISECONDS);
+      log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " + "current number of completed transactions is %d",removedEntries,duration,completedTransactions.size());
     }
  catch (    Exception e) {
       log.errorf(e,"Failed to cleanup completed transactions: %s",e.getMessage());

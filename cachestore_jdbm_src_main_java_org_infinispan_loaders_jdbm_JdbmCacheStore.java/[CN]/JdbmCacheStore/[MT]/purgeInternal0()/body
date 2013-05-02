@@ -22,7 +22,7 @@
   List<Object> keys=new ArrayList<Object>();
   while (browse.getNext(tuple)) {
     Long time=(Long)tuple.getKey();
-    if (time > System.currentTimeMillis())     break;
+    if (time > timeService.wallClockTime())     break;
     times.add(time);
     Object key=tuple.getValue();
     if (key instanceof List)     keys.addAll((List<?>)key);
@@ -33,7 +33,7 @@
   }
   if (!keys.isEmpty())   log.debugf("purge (up to) %d entries",keys.size());
   int count=0;
-  long currentTimeMillis=System.currentTimeMillis();
+  long currentTimeMillis=timeService.wallClockTime();
   for (  Object key : keys) {
     byte[] b=(byte[])tree.get(key);
     if (b == null)     continue;

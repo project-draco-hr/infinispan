@@ -4,7 +4,7 @@
       long start=0;
       boolean debugTiming=log.isDebugEnabled();
       if (debugTiming) {
-        start=System.nanoTime();
+        start=timeService.time();
         log.debugf("Preloading transient state from cache loader %s",loader);
       }
       Set<InternalCacheEntry> state;
@@ -25,8 +25,7 @@
       AdvancedCache<Object,Object> flaggedCache=cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
       for (      InternalCacheEntry e : state)       flaggedCache.put(e.getKey(),e.getValue(),e.getLifespan(),MILLISECONDS,e.getMaxIdle(),MILLISECONDS);
       if (debugTiming) {
-        final long stop=System.nanoTime();
-        log.debugf("Preloaded %s keys in %s",state.size(),Util.prettyPrintTime(stop - start,TimeUnit.NANOSECONDS));
+        log.debugf("Preloaded %s keys in %s",state.size(),Util.prettyPrintTime(timeService.timeDuration(start,MILLISECONDS)));
       }
     }
   }

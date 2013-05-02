@@ -5,7 +5,7 @@
   int viewId=transport.getViewId();
   ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.JOIN,transport.getAddress(),joinInfo,viewId);
   long timeout=joinInfo.getTimeout();
-  long endTime=System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+  long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
   while (true) {
     try {
       CacheTopology initialTopology=(CacheTopology)executeOnCoordinator(command,timeout);
@@ -16,7 +16,7 @@
     }
  catch (    Exception e) {
       log.debugf(e,"Error sending join request for cache %s to coordinator",cacheName);
-      if (endTime <= System.nanoTime()) {
+      if (timeService.isTimeExpired(endTime)) {
         throw e;
       }
       Thread.sleep(1000);

@@ -12,7 +12,7 @@
     rpc=cf.buildSingleRpcCommand(rpc);
   }
   long startTimeNanos=0;
-  if (statisticsEnabled)   startTimeNanos=System.nanoTime();
+  if (statisticsEnabled)   startTimeNanos=timeService.time();
   try {
     if (rpc instanceof TopologyAffectedCommand) {
       TopologyAffectedCommand topologyAffectedCommand=(TopologyAffectedCommand)rpc;
@@ -40,7 +40,7 @@ catch (  Throwable th) {
   }
  finally {
     if (statisticsEnabled) {
-      long timeTaken=TimeUnit.MILLISECONDS.convert(System.nanoTime() - startTimeNanos,TimeUnit.NANOSECONDS);
+      long timeTaken=timeService.timeDuration(startTimeNanos,TimeUnit.MILLISECONDS);
       totalReplicationTime.getAndAdd(timeTaken);
     }
   }

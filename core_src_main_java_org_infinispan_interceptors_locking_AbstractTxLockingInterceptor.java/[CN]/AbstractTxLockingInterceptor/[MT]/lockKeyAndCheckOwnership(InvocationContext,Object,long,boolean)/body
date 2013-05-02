@@ -16,10 +16,10 @@
   boolean trace=log.isTraceEnabled();
   if (checkForPendingLocks) {
     if (trace)     log.tracef("Checking for pending locks and then locking key %s",toStr(key));
-    final long expectedEndTime=nowMillis() + cacheConfiguration.locking().lockAcquisitionTimeout();
+    final long expectedEndTime=timeService.expectedEndTime(cacheConfiguration.locking().lockAcquisitionTimeout(),TimeUnit.MILLISECONDS);
     waitForTransactionsToComplete(txContext,txTable.getLocalTransactions(),key,transactionTopologyId,expectedEndTime);
     waitForTransactionsToComplete(txContext,txTable.getRemoteTransactions(),key,transactionTopologyId,expectedEndTime);
-    final long remaining=expectedEndTime - nowMillis();
+    final long remaining=timeService.remainingTime(expectedEndTime,TimeUnit.MILLISECONDS);
     if (remaining <= 0) {
       throw newTimeoutException(key,txContext);
     }

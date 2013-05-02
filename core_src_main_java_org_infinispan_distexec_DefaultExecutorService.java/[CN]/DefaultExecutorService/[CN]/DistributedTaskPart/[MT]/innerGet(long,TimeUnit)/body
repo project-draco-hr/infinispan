@@ -1,7 +1,7 @@
 {
   if (isCancelled())   throw new CancellationException("Task already cancelled");
   long timeoutNanos=computeTimeoutNanos(timeout,unit);
-  long endNanos=System.nanoTime() + timeoutNanos;
+  long endNanos=timeService.expectedEndTime(timeoutNanos,TimeUnit.NANOSECONDS);
   V response;
   try {
     if (timeoutNanos > 0) {
@@ -15,7 +15,7 @@
     throw te;
   }
 catch (  Exception e) {
-    long remainingNanos=timeoutNanos > 0 ? endNanos - System.nanoTime() : timeoutNanos;
+    long remainingNanos=timeoutNanos > 0 ? timeService.remainingTime(endNanos,TimeUnit.NANOSECONDS) : timeoutNanos;
     if (timeoutNanos > 0 && remainingNanos <= 0) {
       if (trace)       log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception",e);
       throw new TimeoutException();
