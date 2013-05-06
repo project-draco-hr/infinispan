@@ -1,6 +1,13 @@
 {
   try {
-    return tm.getTransaction();
+    Transaction transaction=null;
+    if (batchingEnabled) {
+      transaction=batchContainer.getBatchTransaction();
+    }
+    if (transaction == null) {
+      transaction=tm.getTransaction();
+    }
+    return transaction;
   }
  catch (  SystemException e) {
     throw new CacheException(e);
