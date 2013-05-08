@@ -1,2 +1,9 @@
 {
+  Configuration withRecoveryAndCache=cacheManager.getCache("withRecoveryAndCache").getCacheConfiguration();
+  assertTrue(withRecoveryAndCache.transaction().recovery().enabled(),"Recovery is supposed to be enabled.");
+  assertEquals(withRecoveryAndCache.transaction().recovery().recoveryInfoCacheName(),"noRecovery","Wrong recovery cache name.");
+  RecoveryManagerImpl recoveryManager=rm(cacheManager.getCache("withRecoveryAndCache"));
+  assertNotNull(recoveryManager,"RecoveryManager should be *not* null when recovery is enabled.");
+  Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction> preparedTransactions=(Cache<RecoveryInfoKey,RecoveryAwareRemoteTransaction>)recoveryManager.getInDoubtTransactionsMap();
+  assertEquals(preparedTransactions.getName(),"noRecovery","Wrong recovery cache name.");
 }

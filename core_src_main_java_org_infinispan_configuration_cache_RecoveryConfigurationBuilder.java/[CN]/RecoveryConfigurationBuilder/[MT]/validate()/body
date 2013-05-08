@@ -1,2 +1,11 @@
 {
+  if (!enabled || transaction().useSynchronization()) {
+    return;
+  }
+  if (!clustering().cacheMode().isSynchronous()) {
+    throw new ConfigurationException("Recovery not supported with Asynchronous " + clustering().cacheMode().friendlyCacheModeString() + " cache mode.");
+  }
+  if (!transaction().syncCommitPhase()) {
+    throw new ConfigurationException("Recovery not supported with asynchronous commit phase.");
+  }
 }
