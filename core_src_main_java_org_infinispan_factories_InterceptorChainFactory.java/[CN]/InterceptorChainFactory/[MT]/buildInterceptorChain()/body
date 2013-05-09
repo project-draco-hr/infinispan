@@ -108,29 +108,12 @@ if (configuration.clustering().l1().enabled() && !configuration.transaction().tr
 interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(),L1NonTxInterceptor.class),false);
 }
 switch (configuration.clustering().cacheMode()) {
-case REPL_SYNC:
-if (needsVersionAwareComponents) {
-if (isTotalOrder) {
-interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedReplicationInterceptor(),TotalOrderVersionedReplicationInterceptor.class),false);
-}
- else {
-interceptorChain.appendInterceptor(createInterceptor(new VersionedReplicationInterceptor(),VersionedReplicationInterceptor.class),false);
-}
-break;
-}
-case REPL_ASYNC:
-if (isTotalOrder) {
-interceptorChain.appendInterceptor(createInterceptor(new TotalOrderReplicationInterceptor(),TotalOrderReplicationInterceptor.class),false);
-}
- else {
-interceptorChain.appendInterceptor(createInterceptor(new ReplicationInterceptor(),ReplicationInterceptor.class),false);
-}
-break;
 case INVALIDATION_SYNC:
 case INVALIDATION_ASYNC:
 interceptorChain.appendInterceptor(createInterceptor(new InvalidationInterceptor(),InvalidationInterceptor.class),false);
 break;
 case DIST_SYNC:
+case REPL_SYNC:
 if (needsVersionAwareComponents) {
 if (isTotalOrder) {
 interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedDistributionInterceptor(),TotalOrderVersionedDistributionInterceptor.class),false);
@@ -141,6 +124,7 @@ interceptorChain.appendInterceptor(createInterceptor(new VersionedDistributionIn
 break;
 }
 case DIST_ASYNC:
+case REPL_ASYNC:
 if (configuration.transaction().transactionMode().isTransactional()) {
 if (isTotalOrder) {
 interceptorChain.appendInterceptor(createInterceptor(new TotalOrderDistributionInterceptor(),TotalOrderDistributionInterceptor.class),false);
