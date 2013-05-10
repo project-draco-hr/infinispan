@@ -1,0 +1,16 @@
+{
+  MagicKey key=new MagicKey("key",cache(0));
+  if (sync) {
+    cache(putOnPrimary ? 0 : 1).putAll(Collections.singletonMap(key,"value"));
+  }
+ else {
+    Future<Void> f=cache(putOnPrimary ? 0 : 1).putAllAsync(Collections.singletonMap(key,"value"));
+    assertNotNull(f);
+    assertNull(f.get());
+    assertTrue(f.isDone());
+    assertFalse(f.isCancelled());
+  }
+  assertEquals("value",cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+  assertEquals("value",cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+  assertEquals("value",cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+}
