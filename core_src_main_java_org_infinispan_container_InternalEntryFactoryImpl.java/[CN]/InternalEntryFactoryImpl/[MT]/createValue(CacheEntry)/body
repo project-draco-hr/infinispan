@@ -1,17 +1,17 @@
 {
-  EntryVersion version=cacheEntry.getVersion();
+  Metadata metadata=cacheEntry.getMetadata();
   long lifespan=cacheEntry.getLifespan();
   long maxIdle=cacheEntry.getMaxIdle();
-  if (version == null) {
+  if (!isStoreMetadata(metadata)) {
     if (lifespan < 0 && maxIdle < 0)     return new ImmortalCacheValue(cacheEntry.getValue());
     if (lifespan > -1 && maxIdle < 0)     return new MortalCacheValue(cacheEntry.getValue(),-1,lifespan);
     if (lifespan < 0 && maxIdle > -1)     return new TransientCacheValue(cacheEntry.getValue(),maxIdle,-1);
     return new TransientMortalCacheValue(cacheEntry.getValue(),-1,lifespan,maxIdle,-1);
   }
  else {
-    if (lifespan < 0 && maxIdle < 0)     return new VersionedImmortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion());
-    if (lifespan > -1 && maxIdle < 0)     return new VersionedMortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),-1,lifespan);
-    if (lifespan < 0 && maxIdle > -1)     return new VersionedTransientCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),maxIdle,-1);
-    return new VersionedTransientMortalCacheValue(cacheEntry.getValue(),cacheEntry.getVersion(),-1,lifespan,maxIdle,-1);
+    if (lifespan < 0 && maxIdle < 0)     return new MetadataImmortalCacheValue(cacheEntry.getValue(),cacheEntry.getMetadata());
+    if (lifespan > -1 && maxIdle < 0)     return new MetadataMortalCacheValue(cacheEntry.getValue(),cacheEntry.getMetadata(),-1);
+    if (lifespan < 0 && maxIdle > -1)     return new MetadataTransientCacheValue(cacheEntry.getValue(),cacheEntry.getMetadata(),-1);
+    return new MetadataTransientMortalCacheValue(cacheEntry.getValue(),cacheEntry.getMetadata(),-1,-1);
   }
 }

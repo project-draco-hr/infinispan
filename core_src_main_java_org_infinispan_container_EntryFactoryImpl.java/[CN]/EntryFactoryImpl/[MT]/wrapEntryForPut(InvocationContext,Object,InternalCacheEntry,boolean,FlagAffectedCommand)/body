@@ -2,8 +2,9 @@
   CacheEntry cacheEntry=getFromContext(ctx,key);
   MVCCEntry mvccEntry;
   if (cacheEntry != null && cacheEntry.isNull())   cacheEntry=null;
+  Metadata providedMetadata=extractMetadata(cmd);
   if (cacheEntry != null) {
-    mvccEntry=wrapMvccEntryForPut(ctx,key,cacheEntry);
+    mvccEntry=wrapMvccEntryForPut(ctx,key,cacheEntry,providedMetadata);
     mvccEntry.undelete(undeleteIfNeeded);
   }
  else {
@@ -12,7 +13,7 @@
       ctx.putLookedUpEntry(key,null);
       return null;
     }
-    mvccEntry=ice != null ? wrapInternalCacheEntryForPut(ctx,key,ice) : newMvccEntryForPut(ctx,key,cmd);
+    mvccEntry=ice != null ? wrapInternalCacheEntryForPut(ctx,key,ice,providedMetadata) : newMvccEntryForPut(ctx,key,cmd,providedMetadata);
   }
   mvccEntry.copyForUpdate(container,localModeWriteSkewCheck);
   return mvccEntry;

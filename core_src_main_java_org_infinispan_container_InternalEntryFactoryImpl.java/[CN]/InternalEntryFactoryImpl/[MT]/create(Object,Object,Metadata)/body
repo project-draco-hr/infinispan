@@ -1,0 +1,16 @@
+{
+  long lifespan=metadata.lifespan();
+  long maxIdle=metadata.maxIdle();
+  if (!isStoreMetadata(metadata)) {
+    if (lifespan < 0 && maxIdle < 0)     return new ImmortalCacheEntry(key,value);
+    if (lifespan > -1 && maxIdle < 0)     return new MortalCacheEntry(key,value,lifespan);
+    if (lifespan < 0 && maxIdle > -1)     return new TransientCacheEntry(key,value,maxIdle);
+    return new TransientMortalCacheEntry(key,value,maxIdle,lifespan);
+  }
+ else {
+    if (lifespan < 0 && maxIdle < 0)     return new MetadataImmortalCacheEntry(key,value,metadata);
+    if (lifespan > -1 && maxIdle < 0)     new MetadataMortalCacheEntry(key,value,metadata);
+    if (lifespan < 0 && maxIdle > -1)     new MetadataTransientCacheEntry(key,value,metadata);
+    return new MetadataTransientMortalCacheEntry(key,value,metadata);
+  }
+}

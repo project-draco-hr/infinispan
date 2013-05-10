@@ -1,0 +1,84 @@
+{
+  long lifespan=metadata.lifespan();
+  long maxIdle=metadata.maxIdle();
+  if (ice instanceof MetadataImmortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        ice.setMetadata(metadata);
+        return ice;
+      }
+ else {
+        return new MetadataTransientCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MetadataMortalCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new MetadataTransientMortalCacheEntry(ice.getKey(),ice.getValue(),metadata,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof MetadataMortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new MetadataImmortalCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+ else {
+        return new MetadataTransientCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        ice.setMetadata(metadata);
+        return ice;
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new MetadataTransientMortalCacheEntry(ice.getKey(),ice.getValue(),metadata,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof MetadataTransientCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new MetadataImmortalCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+ else {
+        ice.setMetadata(metadata);
+        return ice;
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MetadataMortalCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new MetadataTransientMortalCacheEntry(ice.getKey(),ice.getValue(),metadata,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof MetadataTransientMortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new MetadataImmortalCacheEntry(ice.getKey(),ice.getValue(),metadata);
+      }
+ else {
+        return new MetadataTransientCacheEntry(ice.getKey(),ice.getValue(),metadata,maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MetadataMortalCacheEntry(ice.getKey(),ice.getValue(),metadata,lifespan);
+      }
+ else {
+        ice.setMetadata(metadata);
+        return ice;
+      }
+    }
+  }
+  return ice;
+}

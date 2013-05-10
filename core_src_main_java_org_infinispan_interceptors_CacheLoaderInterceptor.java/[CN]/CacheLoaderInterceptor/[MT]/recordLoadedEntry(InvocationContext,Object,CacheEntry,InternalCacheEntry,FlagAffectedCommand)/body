@@ -15,8 +15,11 @@
     final Object value=loadedEntry.getValue();
     sendNotification(key,value,true,ctx,cmd);
     entry.setValue(value);
-    entry.setLifespan(loadedEntry.getLifespan());
-    entry.setMaxIdle(loadedEntry.getMaxIdle());
+    Metadata metadata=extractMetadata(cmd);
+    Metadata loadedMetadata=loadedEntry.getMetadata();
+    if (metadata != null && loadedMetadata != null)     metadata=metadata.builder().read(loadedMetadata).build();
+ else     if (metadata == null)     metadata=loadedMetadata;
+    entry.setMetadata(metadata);
     entry.setValid(true);
     entry.setLoaded(true);
     sendNotification(key,value,false,ctx,cmd);

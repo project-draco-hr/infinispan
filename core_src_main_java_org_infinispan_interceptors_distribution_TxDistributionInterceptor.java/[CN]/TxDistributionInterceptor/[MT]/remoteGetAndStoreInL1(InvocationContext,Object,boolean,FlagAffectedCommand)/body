@@ -13,7 +13,7 @@
     }
     if (ice != null) {
       if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-        ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getVersion());
+        ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getMetadata().version());
       }
       if (isL1CacheEnabled) {
         if (dm.isAffectedByRehash(key)) {
@@ -24,7 +24,8 @@
         try {
           long l1Lifespan=cacheConfiguration.clustering().l1().lifespan();
           long lifespan=ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(),l1Lifespan);
-          PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),lifespan,-1,command.getFlags());
+          Metadata newMetadata=ice.getMetadata().builder().lifespan(lifespan,TimeUnit.MILLISECONDS).maxIdle(-1,TimeUnit.MILLISECONDS).build();
+          PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),newMetadata,command.getFlags());
           lockAndWrap(ctx,key,ice,command);
           invokeNextInterceptor(ctx,put);
         }

@@ -1,0 +1,12 @@
+{
+  if (ctx.isInTxScope() && !isFromStateTransfer(ctx)) {
+    EntryVersion updatedEntryVersion=((TxInvocationContext)ctx).getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
+    Metadata commitMetadata;
+    if (metadata == null)     commitMetadata=new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
+ else     commitMetadata=metadata.builder().version(updatedEntryVersion).build();
+    cdl.commitEntry(entry,commitMetadata,command,ctx);
+  }
+ else {
+    cdl.commitEntry(entry,entry.getMetadata(),command,ctx);
+  }
+}

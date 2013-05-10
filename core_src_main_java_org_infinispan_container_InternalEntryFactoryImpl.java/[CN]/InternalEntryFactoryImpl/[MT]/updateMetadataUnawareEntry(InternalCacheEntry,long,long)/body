@@ -1,0 +1,83 @@
+{
+  if (ice instanceof ImmortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return ice;
+      }
+ else {
+        return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof MortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+      }
+ else {
+        return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        ((MortalCacheEntry)ice).setLifespan(lifespan);
+        return ice;
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof TransientCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+      }
+ else {
+        ((TransientCacheEntry)ice).setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+      }
+ else {
+        long ctm=System.currentTimeMillis();
+        return new TransientMortalCacheEntry(ice.getKey(),ice.getValue(),maxIdle,lifespan,ctm,ctm);
+      }
+    }
+  }
+ else   if (ice instanceof TransientMortalCacheEntry) {
+    if (lifespan < 0) {
+      if (maxIdle < 0) {
+        return new ImmortalCacheEntry(ice.getKey(),ice.getValue());
+      }
+ else {
+        return new TransientCacheEntry(ice.getKey(),ice.getValue(),maxIdle);
+      }
+    }
+ else {
+      if (maxIdle < 0) {
+        return new MortalCacheEntry(ice.getKey(),ice.getValue(),lifespan);
+      }
+ else {
+        TransientMortalCacheEntry transientMortalEntry=(TransientMortalCacheEntry)ice;
+        transientMortalEntry.setLifespan(lifespan);
+        transientMortalEntry.setMaxIdle(maxIdle);
+        return ice;
+      }
+    }
+  }
+  return ice;
+}

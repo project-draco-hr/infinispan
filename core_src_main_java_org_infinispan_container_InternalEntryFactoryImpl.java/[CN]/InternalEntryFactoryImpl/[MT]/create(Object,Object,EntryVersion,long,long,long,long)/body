@@ -6,9 +6,10 @@
     return new TransientMortalCacheEntry(key,value,maxIdle,lifespan,lastUsed,created);
   }
  else {
-    if (lifespan < 0 && maxIdle < 0)     return new VersionedImmortalCacheEntry(key,value,version);
-    if (lifespan > -1 && maxIdle < 0)     return new VersionedMortalCacheEntry(key,value,version,lifespan,created);
-    if (lifespan < 0 && maxIdle > -1)     return new VersionedTransientCacheEntry(key,value,version,maxIdle,lastUsed);
-    return new VersionedTransientMortalCacheEntry(key,value,version,maxIdle,lifespan,lastUsed,created);
+    Metadata metadata=new EmbeddedMetadata.Builder().lifespan(lifespan,TimeUnit.MILLISECONDS).maxIdle(maxIdle,TimeUnit.MILLISECONDS).version(version).build();
+    if (lifespan < 0 && maxIdle < 0)     return new MetadataImmortalCacheEntry(key,value,metadata);
+    if (lifespan > -1 && maxIdle < 0)     return new MetadataMortalCacheEntry(key,value,metadata,created);
+    if (lifespan < 0 && maxIdle > -1)     return new MetadataTransientCacheEntry(key,value,metadata,lastUsed);
+    return new MetadataTransientMortalCacheEntry(key,value,metadata,lastUsed,created);
   }
 }
