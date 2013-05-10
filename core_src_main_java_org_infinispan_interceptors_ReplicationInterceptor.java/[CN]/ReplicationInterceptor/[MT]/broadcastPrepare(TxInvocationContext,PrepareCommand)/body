@@ -1,4 +1,9 @@
 {
-  boolean async=cacheConfiguration.clustering().cacheMode() == CacheMode.REPL_ASYNC;
-  rpcManager.invokeRemotely(null,command,rpcManager.getDefaultRpcOptions(!async));
+  try {
+    boolean sync=cacheConfiguration.clustering().cacheMode().isSynchronous();
+    rpcManager.invokeRemotely(null,command,rpcManager.getDefaultRpcOptions(sync));
+  }
+  finally {
+    transactionRemotelyPrepared(context);
+  }
 }

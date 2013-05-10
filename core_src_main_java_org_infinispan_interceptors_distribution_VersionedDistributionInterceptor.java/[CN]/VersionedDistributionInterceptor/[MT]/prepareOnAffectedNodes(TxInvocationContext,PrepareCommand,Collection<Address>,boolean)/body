@@ -1,6 +1,11 @@
 {
   setVersionsSeenOnPrepareCommand((VersionedPrepareCommand)command,ctx);
-  Map<Address,Response> resps=rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(true,false));
-  CacheTransaction ct=ctx.getCacheTransaction();
-  for (  Response r : resps.values())   readVersionsFromResponse(r,ct);
+  try {
+    Map<Address,Response> resps=rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(true,false));
+    CacheTransaction ct=ctx.getCacheTransaction();
+    for (    Response r : resps.values())     readVersionsFromResponse(r,ct);
+  }
+  finally {
+    transactionRemotelyPrepared(ctx);
+  }
 }
