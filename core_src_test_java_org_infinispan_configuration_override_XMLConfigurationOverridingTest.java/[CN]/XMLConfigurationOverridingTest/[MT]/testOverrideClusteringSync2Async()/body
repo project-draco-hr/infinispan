@@ -1,0 +1,35 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
+    @Override public void call(){
+      Configuration cnf=cm.getCacheConfiguration(distCacheToChange);
+      Assert.assertEquals(CacheMode.DIST_SYNC,cnf.clustering().cacheMode());
+      Assert.assertEquals(2,cnf.clustering().hash().numOwners());
+      Configuration conf=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC).build();
+      cm.defineConfiguration(distCacheToChange,conf);
+      cnf=cm.getCacheConfiguration(distCacheToChange);
+      Assert.assertEquals(CacheMode.DIST_ASYNC,cnf.clustering().cacheMode());
+      EmbeddedCacheManager cm1=null;
+      try {
+        cm1=TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
+        cm1.defineConfiguration(distCacheToChange,conf);
+        Cache cache1=cm.getCache(distCacheToChange);
+        Cache cache2=cm1.getCache(distCacheToChange);
+        ReplListener replList2=new ReplListener(cache2,true,true);
+        String key="key1";
+        String value="value1";
+        replList2.expect(PutKeyValueCommand.class);
+        cache1.put(key,value);
+        replList2.waitForRpc();
+        assertEquals(value,cache1.get(key));
+        assertEquals(value,cache2.get(key));
+      }
+ catch (      Exception e) {
+        e.printStackTrace();
+      }
+ finally {
+        TestingUtil.killCacheManagers(cm1);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,36 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
+    @Override public void call(){
+      Assert.assertEquals(10000,cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
+      Assert.assertEquals(60000,cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
+      Assert.assertEquals(-1,cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
+      Configuration newConfig=new ConfigurationBuilder().expiration().lifespan(5000).wakeUpInterval(1000).maxIdle(2000).build();
+      cm.defineConfiguration(localCacheWithEviction,newConfig);
+      Assert.assertEquals(5000,cm.getCacheConfiguration(localCacheWithEviction).expiration().lifespan());
+      Assert.assertEquals(2000,cm.getCacheConfiguration(localCacheWithEviction).expiration().maxIdle());
+      Assert.assertEquals(1000,cm.getCacheConfiguration(localCacheWithEviction).expiration().wakeUpInterval());
+      for (int i=0; i < 10; i++) {
+        cm.getCache(localCacheWithEviction).put("test" + i,"value" + i);
+      }
+      long startTime=System.currentTimeMillis();
+      while ((System.currentTimeMillis() - startTime) <= 2000) {
+        for (int i=0; i < 5; i++) {
+          cm.getCache(localCacheWithEviction).get("test" + i);
+        }
+      }
+      eventually(new Condition(){
+        @Override public boolean isSatisfied() throws Exception {
+          return cm.getCache(localCacheWithEviction).size() == 5;
+        }
+      }
+,1000);
+      eventually(new Condition(){
+        @Override public boolean isSatisfied() throws Exception {
+          return cm.getCache(localCacheWithEviction).isEmpty();
+        }
+      }
+,3000);
+    }
+  }
+);
+}
