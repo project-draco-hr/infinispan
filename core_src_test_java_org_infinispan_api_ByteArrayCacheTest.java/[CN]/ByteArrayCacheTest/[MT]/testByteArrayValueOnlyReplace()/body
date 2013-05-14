@@ -1,0 +1,16 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.dataContainer().valueEquivalence(ByteArrayEquivalence.INSTANCE);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      Cache<Integer,byte[]> cache=cm.getCache();
+      final Integer key=2;
+      final byte[] value={1,2,3};
+      cache.put(key,value);
+      final byte[] oldValue={1,2,3};
+      final byte[] newValue={4,5,6};
+      assertTrue(cache.replace(key,oldValue,newValue));
+    }
+  }
+);
+}
