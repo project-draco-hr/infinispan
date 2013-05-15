@@ -1,19 +1,20 @@
 {
-  Object returnValue=invokeNextInterceptor(ctx,command);
-  if (!isSingleOwnerAndLocal(rg)) {
+  Object key=((DataCommand)command).getKey();
+  Address primaryOwner=cdl.getPrimaryOwner(key);
+  if (primaryOwner.equals(rpcManager.getAddress())) {
     List<Address> recipients=rg.generateRecipients();
-    if (!command.isSuccessful() && recipients.contains(rpcManager.getAddress())) {
-      log.tracef("Skipping remote invocation as the command hasn't executed correctly on owner %s",rpcManager.getAddress());
+    log.tracef("I'm the primary owner, sending the command to all (%s) the recipients in order to be applied.",recipients);
+    Object result=invokeNextInterceptor(ctx,command);
+    if (!isSingleOwnerAndLocal(rg)) {
+      rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(sync));
     }
- else {
-      Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(sync));
-      if (sync && !recipients.isEmpty()) {
-        Address primaryOwner=recipients.get(0);
-        if (!primaryOwner.equals(rpcManager.getAddress())) {
-          returnValue=getResponseFromPrimaryOwner(primaryOwner,responseMap);
-        }
-      }
-    }
+    return result;
   }
-  return returnValue;
+ else {
+    log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
+    Object localResult=invokeNextInterceptor(ctx,command);
+    Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,rpcManager.getDefaultRpcOptions(sync));
+    if (!sync)     return localResult;
+    return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+  }
 }
