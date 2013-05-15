@@ -1,0 +1,10 @@
+{
+  final String key="3";
+  RemoteCache<String,Object> remote=cacheFactory.getHotRodCache();
+  assertEquals(null,remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key,"v1"));
+  assertEquals("v1",cacheFactory.getEmbeddedCache().get(key));
+  HttpMethod get=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  cacheFactory.getRestClient().executeMethod(get);
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  assertEquals("v1",get.getResponseBodyAsString());
+}

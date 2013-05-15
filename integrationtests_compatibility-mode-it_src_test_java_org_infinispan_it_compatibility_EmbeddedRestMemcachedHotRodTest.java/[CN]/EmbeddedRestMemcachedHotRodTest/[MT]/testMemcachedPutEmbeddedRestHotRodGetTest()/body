@@ -1,0 +1,12 @@
+{
+  final String key="1";
+  Future<Boolean> f=cacheFactory.getMemcachedClient().set(key,0,"v1");
+  assertTrue(f.get(60,TimeUnit.SECONDS));
+  assertEquals("v1",cacheFactory.getEmbeddedCache().get(key));
+  HttpMethod get=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  cacheFactory.getRestClient().executeMethod(get);
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  assertEquals("text/plain",get.getResponseHeader("Content-Type").getValue());
+  assertEquals("v1",get.getResponseBodyAsString());
+  assertEquals("v1",cacheFactory.getHotRodCache().get(key));
+}

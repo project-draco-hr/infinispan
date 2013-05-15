@@ -1,0 +1,10 @@
+{
+  final String key="2";
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key,"v1"));
+  assertEquals("v1",cacheFactory.getMemcachedClient().get(key));
+  HttpMethod get=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  cacheFactory.getRestClient().executeMethod(get);
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  assertEquals("v1",get.getResponseBodyAsString());
+  assertEquals("v1",cacheFactory.getHotRodCache().get(key));
+}

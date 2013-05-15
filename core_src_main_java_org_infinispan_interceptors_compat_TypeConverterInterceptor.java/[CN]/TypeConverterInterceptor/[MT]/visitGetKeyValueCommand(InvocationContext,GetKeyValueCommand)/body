@@ -1,14 +1,15 @@
 {
   Object key=command.getKey();
-  command.setKey(typeConverter.boxKey(key));
+  TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
+  command.setKey(converter.boxKey(key));
   Object ret=invokeNextInterceptor(ctx,command);
   if (ret != null) {
     if (command.isReturnEntry()) {
       InternalCacheEntry entry=(InternalCacheEntry)ret;
-      Object returnValue=typeConverter.unboxValue(key,entry.getValue());
+      Object returnValue=converter.unboxValue(entry.getValue());
       return entryFactory.create(entry.getKey(),returnValue,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle());
     }
-    return typeConverter.unboxValue(key,ret);
+    return converter.unboxValue(ret);
   }
   return null;
 }

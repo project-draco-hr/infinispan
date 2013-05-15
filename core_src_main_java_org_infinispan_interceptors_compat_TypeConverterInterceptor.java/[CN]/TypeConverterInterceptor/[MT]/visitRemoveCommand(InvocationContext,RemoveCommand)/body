@@ -1,9 +1,10 @@
 {
   Object key=command.getKey();
-  command.setKey(typeConverter.boxKey(key));
+  TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
+  command.setKey(converter.boxKey(key));
   Object conditionalValue=command.getValue();
-  command.setValue(typeConverter.boxValue(key,conditionalValue));
+  command.setValue(converter.boxValue(conditionalValue));
   Object ret=invokeNextInterceptor(ctx,command);
   if (conditionalValue != null && ret instanceof Boolean)   return ret;
-  return typeConverter.unboxValue(key,ret);
+  return converter.unboxValue(ret);
 }

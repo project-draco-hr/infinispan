@@ -10,9 +10,9 @@
  else {
     interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class));
   }
-  TypeConverter typeConverter=configuration.dataContainer().typeConverter();
-  if (typeConverter != null) {
-    interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(typeConverter),TypeConverterInterceptor.class),false);
+  CompatibilityModeConfiguration compatibility=configuration.compatibility();
+  if (compatibility.enabled()) {
+    interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibility.marshaller()),TypeConverterInterceptor.class),false);
   }
   if (isUsingMarshalledValues(configuration) || configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
   if (invocationBatching) {

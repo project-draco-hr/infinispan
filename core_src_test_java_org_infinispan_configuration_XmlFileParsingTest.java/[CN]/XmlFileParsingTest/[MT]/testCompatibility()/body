@@ -1,0 +1,32 @@
+{
+  String config=INFINISPAN_START_TAG + "   <default>\n" + "      <compatibility enabled=\"false\"/>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  InputStream is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      Configuration cfg=cm.getDefaultCacheConfiguration();
+      Assert.assertFalse(cfg.compatibility().enabled());
+      Assert.assertNull(cfg.compatibility().marshaller());
+    }
+  }
+);
+  config=INFINISPAN_START_TAG + "   <default>\n" + "      <compatibility enabled=\"true\"/>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      Configuration cfg=cm.getDefaultCacheConfiguration();
+      Assert.assertTrue(cfg.compatibility().enabled());
+      Assert.assertNull(cfg.compatibility().marshaller());
+    }
+  }
+);
+  config=INFINISPAN_START_TAG + "   <default>\n" + "      <compatibility enabled=\"true\" marshallerClass=\"org.infinispan.marshall.jboss.GenericJBossMarshaller\"/>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      Configuration cfg=cm.getDefaultCacheConfiguration();
+      Assert.assertTrue(cfg.compatibility().enabled());
+      Assert.assertTrue(cfg.compatibility().marshaller() instanceof GenericJBossMarshaller);
+    }
+  }
+);
+}
