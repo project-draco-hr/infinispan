@@ -1,2 +1,21 @@
 {
+  final Cache<String,String> cache1=cache(0,CACHE_NAME);
+  final Cache<String,String> cache2=cache(1,CACHE_NAME);
+  assertFalse(cache1.containsKey(key));
+  assertFalse(cache2.containsKey(key));
+  ReplListener replListener2=replListener(cache2);
+  replListener2.expect(PutKeyValueCommand.class);
+  cache1.putForExternalRead(key,value);
+  replListener2.waitForRpc();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache1.containsKey(key) && cache2.containsKey(key);
+    }
+  }
+);
+  assertEquals("PFER updated cache1",value,cache1.get(key));
+  assertEquals("PFER propagated to cache2 as expected",value,cache2.get(key));
+  cache2.putForExternalRead(key,value + "0");
+  assertEquals("PFER updated cache2",value,cache2.get(key));
+  assertEquals("Cache1 should be unaffected",value,cache1.get(key));
 }

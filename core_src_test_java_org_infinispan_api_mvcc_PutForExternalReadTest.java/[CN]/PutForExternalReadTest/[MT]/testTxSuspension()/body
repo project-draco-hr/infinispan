@@ -1,6 +1,6 @@
 {
-  final Cache<String,String> cache1=cache(0,"replSync");
-  final Cache<String,String> cache2=cache(1,"replSync");
+  final Cache<String,String> cache1=cache(0,CACHE_NAME);
+  final Cache<String,String> cache2=cache(1,CACHE_NAME);
   cache1.put(key + "0",value);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
@@ -8,18 +8,18 @@
     }
   }
 );
-  tm(0,"replSync").begin();
+  tm(0,CACHE_NAME).begin();
   cache1.get(key + "0");
   cache1.putForExternalRead(key,value);
-  Transaction t=tm(0,"replSync").suspend();
+  Transaction t=tm(0,CACHE_NAME).suspend();
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return value.equals(cache1.get(key)) && value.equals(cache2.get(key));
     }
   }
 );
-  tm(0,"replSync").resume(t);
-  tm(0,"replSync").commit();
+  tm(0,CACHE_NAME).resume(t);
+  tm(0,CACHE_NAME).commit();
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0"));

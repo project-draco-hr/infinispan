@@ -1,6 +1,13 @@
 {
-  Cache<String,String> cache1=cache(0,"replSync");
+  final Cache<String,String> cache1=cache(0,CACHE_NAME);
+  final Cache<String,String> cache2=cache(1,CACHE_NAME);
   cache1.putForExternalRead(key,value);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache1.containsKey(key) && cache2.containsKey(key);
+    }
+  }
+);
   cache1.putForExternalRead(key,value2);
   assertEquals(value,cache1.get(key));
 }
