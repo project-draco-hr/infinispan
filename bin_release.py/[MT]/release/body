@@ -39,40 +39,42 @@ def release():
         if (not proceed.upper().startswith('Y')):
             prettyprint('... User Abort!', Levels.WARNING)
             sys.exit(1)
+    prettyprint('Step 1: Cleaning up working directory (un-tracked and modified files)', Levels.INFO)
     git.clean_release_directory()
-    prettyprint(('Step 1: Tagging %s in git as %s' % (branch, version)), Levels.INFO)
-    tag_release(version, branch)
     prettyprint('Step 1: Complete', Levels.INFO)
-    prettyprint('Step 2: Updating version number in source files', Levels.INFO)
-    version_next = update_versions(base_dir, version)
+    prettyprint(('Step 2: Tagging %s in git as %s' % (branch, version)), Levels.INFO)
+    tag_release(version, branch)
     prettyprint('Step 2: Complete', Levels.INFO)
-    prettyprint('Step 3: Build and test in Maven2', Levels.INFO)
-    maven_build_distribution(version)
+    prettyprint('Step 3: Updating version number in source files', Levels.INFO)
+    version_next = update_versions(base_dir, version)
     prettyprint('Step 3: Complete', Levels.INFO)
+    prettyprint('Step 4: Build and test in Maven2', Levels.INFO)
+    maven_build_distribution(version)
+    prettyprint('Step 4: Complete', Levels.INFO)
     if (not mvn_only):
         async_processes = []
         unzip_archive(version)
-        prettyprint('Step 4: Update Google Analytics tracker', Levels.INFO)
+        prettyprint('Step 5: Update Google Analytics tracker', Levels.INFO)
         update_javadoc_tracker(base_dir, version)
-        prettyprint('Step 4: Complete', Levels.INFO)
-        prettyprint('Step 5: Uploading Javadocs', Levels.INFO)
-        do_task(upload_javadocs, [base_dir, version], async_processes)
         prettyprint('Step 5: Complete', Levels.INFO)
-        prettyprint('Step 6: Uploading Artifacts', Levels.INFO)
+        prettyprint('Step 6: Uploading Javadocs', Levels.INFO)
+        do_task(upload_javadocs, [base_dir, version], async_processes)
+        prettyprint('Step 6: Complete', Levels.INFO)
+        prettyprint('Step 7: Uploading Artifacts', Levels.INFO)
         do_task(upload_artifacts, [base_dir, version], async_processes)
         do_task(upload_artifacts, [(base_dir + '/as-modules'), version], async_processes)
-        prettyprint('Step 6: Complete', Levels.INFO)
-        prettyprint('Step 7: Uploading to configuration XML schema', Levels.INFO)
-        do_task(upload_schema, [base_dir, version], async_processes)
         prettyprint('Step 7: Complete', Levels.INFO)
+        prettyprint('Step 8: Uploading to configuration XML schema', Levels.INFO)
+        do_task(upload_schema, [base_dir, version], async_processes)
+        prettyprint('Step 8: Complete', Levels.INFO)
         for p in async_processes:
             p.start()
         for p in async_processes:
             p.join()
     git.tag_for_release()
-    step_no = 8
+    step_no = 9
     if mvn_only:
-        step_no = 4
+        step_no = 5
     git.switch_to_branch()
     if (version_next is not None):
         prettyprint(('Step %s: Updating version number for next release' % step_no), Levels.INFO)
