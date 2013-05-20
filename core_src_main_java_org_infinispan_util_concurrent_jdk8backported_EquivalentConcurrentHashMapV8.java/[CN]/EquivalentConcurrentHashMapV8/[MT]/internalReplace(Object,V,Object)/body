@@ -1,5 +1,5 @@
 {
-  int h=spread(keyEquivalence.hashCode(k));
+  int h=spread(keyEq.hashCode(k));
   V oldVal=null;
   for (Node<V>[] tab=table; ; ) {
     Node<V> f;
@@ -15,10 +15,10 @@
         try {
           if (tabAt(tab,i) == f) {
             validated=true;
-            TreeNode<V> p=t.getTreeNode(h,k,t.root);
+            TreeNode<V> p=t.getTreeNode(h,k,t.root,(Equivalence<Object>)keyEq);
             if (p != null) {
               V pv=p.val;
-              if (cv == null || cv == pv || valueEquivalence.equals(pv,cv)) {
+              if (cv == null || cv == pv || valueEq.equals(pv,cv)) {
                 oldVal=pv;
                 if ((p.val=v) == null) {
                   deleted=true;
@@ -48,8 +48,8 @@ synchronized (f) {
           for (Node<V> e=f, pred=null; ; ) {
             Object ek;
             V ev;
-            if (e.hash == h && ((ev=e.val) != null) && ((ek=e.key) == k || keyEquivalence.equals((K)ek,k))) {
-              if (cv == null || cv == ev || valueEquivalence.equals(ev,cv)) {
+            if (e.hash == h && ((ev=e.val) != null) && ((ek=e.key) == k || keyEq.equals((K)ek,k))) {
+              if (cv == null || cv == ev || valueEq.equals(ev,cv)) {
                 oldVal=ev;
                 if ((e.val=v) == null) {
                   deleted=true;

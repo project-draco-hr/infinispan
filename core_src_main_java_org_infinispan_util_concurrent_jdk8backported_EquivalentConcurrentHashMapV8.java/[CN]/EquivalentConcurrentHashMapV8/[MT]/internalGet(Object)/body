@@ -1,5 +1,5 @@
 {
-  int h=spread(keyEquivalence.hashCode(k));
+  int h=spread(keyEq.hashCode(k));
   retry:   for (Node<V>[] tab=table; tab != null; ) {
     Node<V> e;
     Object ek;
@@ -7,13 +7,13 @@
     int eh;
     for (e=tabAt(tab,(tab.length - 1) & h); e != null; e=e.next) {
       if ((eh=e.hash) < 0) {
-        if ((ek=e.key) instanceof TreeBin)         return ((TreeBin<V>)ek).getValue(h,k);
+        if ((ek=e.key) instanceof TreeBin)         return ((TreeBin<V>)ek).getValue(h,k,(Equivalence<Object>)keyEq);
  else {
           tab=(Node<V>[])ek;
           continue retry;
         }
       }
- else       if (eh == h && (ev=e.val) != null && ((ek=e.key) == k || keyEquivalence.equals((K)ek,k)))       return ev;
+ else       if (eh == h && (ev=e.val) != null && ((ek=e.key) == k || keyEq.equals((K)ek,k)))       return ev;
     }
     break;
   }

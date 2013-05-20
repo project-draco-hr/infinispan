@@ -1,6 +1,6 @@
 {
   if (k == null || v == null || mf == null)   throw new NullPointerException();
-  int h=spread(keyEquivalence.hashCode(k));
+  int h=spread(keyEq.hashCode(k));
   V val=null;
   int delta=0;
   int len=0;
@@ -24,14 +24,14 @@
         try {
           if (tabAt(tab,i) == f) {
             len=1;
-            TreeNode<V> p=t.getTreeNode(h,k,t.root);
+            TreeNode<V> p=t.getTreeNode(h,k,t.root,(Equivalence<Object>)keyEq);
             val=(p == null) ? v : mf.apply(p.val,v);
             if (val != null) {
               if (p != null)               p.val=val;
  else {
                 len=2;
                 delta=1;
-                t.putTreeNode(h,k,val);
+                t.putTreeNode(h,k,val,(Equivalence<Object>)keyEq);
               }
             }
  else             if (p != null) {
@@ -54,7 +54,7 @@ synchronized (f) {
           for (Node<V> e=f, pred=null; ; ++len) {
             Object ek;
             V ev;
-            if (e.hash == h && (ev=e.val) != null && ((ek=e.key) == k || keyEquivalence.equals(k,ek))) {
+            if (e.hash == h && (ev=e.val) != null && ((ek=e.key) == k || keyEq.equals(k,ek))) {
               val=mf.apply(ev,v);
               if (val != null)               e.val=val;
  else {
