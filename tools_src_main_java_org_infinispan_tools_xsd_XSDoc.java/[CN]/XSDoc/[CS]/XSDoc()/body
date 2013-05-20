@@ -1,0 +1,21 @@
+{
+  TransformerFactory factory=TransformerFactory.newInstance();
+  factory.setURIResolver(new URIResolver(){
+    @Override public Source resolve(    String href,    String base) throws TransformerException {
+      Document doc=xmls.get(getBaseFileName(href));
+      if (doc != null) {
+        return new DOMSource(doc);
+      }
+ else {
+        return null;
+      }
+    }
+  }
+);
+  ClassLoader cl=XSDoc.class.getClassLoader();
+  InputStream xsl=cl.getResourceAsStream("xsd/xsdoc.xslt");
+  xslt=factory.newTransformer(new StreamSource(xsl));
+  DocumentBuilderFactory dbf=DocumentBuilderFactory.newInstance();
+  dbf.setNamespaceAware(true);
+  docBuilder=dbf.newDocumentBuilder();
+}

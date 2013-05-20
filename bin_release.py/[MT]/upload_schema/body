@@ -3,4 +3,8 @@ def upload_schema(base_dir, version):
     os.chdir(('%s/target/distribution/infinispan-%s-all/etc/schema' % (base_dir, version)))
     uploader.upload_rsync('.', 'infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas')
     uploader.upload_rsync('.', 'infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/')
+    version_short = get_version_major_minor(version)
+    os.chdir(('%s/target/site' % base_dir))
+    os.rename('configdocs', ('%s/configdocs' % version_short))
+    uploader.upload_rsync(version_short, 'infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan')
     os.chdir(base_dir)
