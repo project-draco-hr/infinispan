@@ -6,9 +6,8 @@
       ownsData=true;
     }
     rebalanceInProgress.set(true);
-    waitingForState.set(true);
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),true);
-    if (configuration.transaction().transactionProtocol().isTotalOrder()) {
+    if (isTotalOrder) {
       if (log.isTraceEnabled()) {
         log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
       }
@@ -39,6 +38,7 @@
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
   if (isRebalance) {
+    if (trace)     log.tracef("Start keeping track of keys for rebalance");
     updatedKeys=new ConcurrentHashSet<Object>();
   }
   stateTransferLock.releaseExclusiveTopologyLock();
@@ -81,13 +81,18 @@
           if (log.isTraceEnabled()) {
             log.tracef("Unlock State Transfer in Progress for topology ID %s",cacheTopology.getTopologyId());
           }
-          totalOrderManager.notifyStateTransferEnd();
+          if (isTotalOrder) {
+            totalOrderManager.notifyStateTransferEnd();
+          }
         }
       }
     }
   }
   finally {
     stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
+    if (isRebalance) {
+      waitingForState.set(true);
+    }
     notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
     if (transactionTable != null) {
       transactionTable.cleanupStaleTransactions(cacheTopology);
