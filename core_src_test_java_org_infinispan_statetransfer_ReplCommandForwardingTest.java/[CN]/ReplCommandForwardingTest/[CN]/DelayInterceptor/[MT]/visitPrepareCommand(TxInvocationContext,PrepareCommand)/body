@@ -1,7 +1,7 @@
 {
   Object result=super.visitPrepareCommand(ctx,command);
   if (!ctx.isOriginLocal() || !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) {
-    log.tracef("Delaying command %s",command);
+    log.tracef("Delaying command %s originating from %s",command,ctx.getOrigin());
     Integer myCount=counter.incrementAndGet();
     Object pollResult=barrier.poll(15,TimeUnit.SECONDS);
     assertEquals(pollResult,myCount,String.format("Timed out waiting for unblock(%d) call on cache %s",myCount,cache));

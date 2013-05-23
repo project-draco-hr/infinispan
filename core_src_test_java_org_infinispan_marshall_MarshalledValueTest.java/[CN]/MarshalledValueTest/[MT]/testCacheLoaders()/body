@@ -2,13 +2,11 @@
   Cache cache1=cache(0,"replSync");
   Cache cache2=cache(1,"replSync");
   tearDown();
-  Configuration cacheCofig=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-  cacheCofig.setUseLazyDeserialization(true);
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  DummyInMemoryCacheStore.Cfg clc=new DummyInMemoryCacheStore.Cfg();
-  clc.setStoreName(getClass().getSimpleName());
-  clmc.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)clc));
-  cacheCofig.setCacheLoaderManagerConfig(clmc);
+  ConfigurationBuilder cacheCofig=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,false);
+  cacheCofig.dataContainer().storeAsBinary().enable();
+  DummyInMemoryCacheStoreConfigurationBuilder dimcs=new DummyInMemoryCacheStoreConfigurationBuilder(cacheCofig.loaders());
+  dimcs.storeName(getClass().getSimpleName());
+  cacheCofig.loaders().addLoader(dimcs);
   defineConfigurationOnAllManagers("replSync2",cacheCofig);
   waitForClusterToForm("replSync2");
   cache1=cache(0,"replSync2");

@@ -1,12 +1,8 @@
 {
-  Configuration cfg=new Configuration();
-  cfg.setCacheMode(Configuration.CacheMode.REPL_ASYNC);
-  cfg.setUseReplQueue(true);
-  cfg.setReplQueueInterval(1000);
-  cfg.setReplQueueMaxElements(2);
-  cfg.setReplQueueClass(MockReplQueue.class.getName());
-  CacheContainer first=TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(),cfg);
-  CacheContainer second=TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(),cfg);
+  ConfigurationBuilder cfg=new ConfigurationBuilder();
+  cfg.clustering().cacheMode(CacheMode.REPL_ASYNC).async().useReplQueue(true).replQueueInterval(1000).replQueueMaxElements(2).replQueue(new MockReplQueue());
+  CacheContainer first=TestCacheManagerFactory.createClusteredCacheManager(cfg);
+  CacheContainer second=TestCacheManagerFactory.createClusteredCacheManager(cfg);
   registerCacheManager(first,second);
   waitForClusterToForm();
 }

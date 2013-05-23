@@ -1,12 +1,7 @@
 {
-  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
-  Configuration c=new Configuration();
-  c.setInvocationBatchingEnabled(true);
-  c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-  c.setSyncReplTimeout(30000);
-  c.setLockAcquisitionTimeout(60000);
-  c.setUseLockStriping(false);
-  c.setSyncCommitPhase(true);
+  GlobalConfigurationBuilder gc=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  ConfigurationBuilder c=new ConfigurationBuilder();
+  c.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(30000).transaction().invocationBatching().enable().transaction().syncCommitPhase(true).locking().lockAcquisitionTimeout(60000).useLockStriping(false);
   EmbeddedCacheManager container=TestCacheManagerFactory.createCacheManager(gc,c);
   cacheContainers.add(container);
   return container.getCache("TestCache");

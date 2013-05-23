@@ -1,15 +1,19 @@
 {
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+  configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
   createClusteredCaches(2,"syncReplCache",configuration);
   waitForClusterToForm("syncReplCache");
-  Configuration noTx=getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,false).fluent().locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l).build();
+  ConfigurationBuilder noTx=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,false);
+  noTx.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000l);
   defineConfigurationOnAllManagers("syncReplCacheNoTx",noTx);
-  Configuration replAsync=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true);
+  ConfigurationBuilder replAsync=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,true);
   defineConfigurationOnAllManagers("asyncReplCache",replAsync);
-  Configuration replAsyncNoTx=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,false);
+  ConfigurationBuilder replAsyncNoTx=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,false);
   defineConfigurationOnAllManagers("asyncReplCacheNoTx",replAsyncNoTx);
-  Configuration replQueue=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().useReplQueue(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
+  ConfigurationBuilder replQueue=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,true);
+  replQueue.clustering().async().useReplQueue(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
   defineConfigurationOnAllManagers("replQueueCache",replQueue);
-  Configuration asyncMarshall=getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC,true).fluent().clustering().async().asyncMarshalling(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).build();
+  ConfigurationBuilder asyncMarshall=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,true);
+  asyncMarshall.clustering().async().asyncMarshalling(true).transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
   defineConfigurationOnAllManagers("asyncMarshallCache",asyncMarshall);
 }
