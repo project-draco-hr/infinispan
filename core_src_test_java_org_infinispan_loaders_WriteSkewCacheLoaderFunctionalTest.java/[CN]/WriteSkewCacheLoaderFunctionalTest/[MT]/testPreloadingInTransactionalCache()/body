@@ -1,0 +1,33 @@
+{
+  assertTrue(cache.getCacheConfiguration().loaders().preload());
+  assertNotInCacheAndStore(cache,store,"k1","k2","k3","k4");
+  cache.put("k1","v1");
+  cache.put("k2","v2",LIFESPAN,MILLISECONDS);
+  cache.put("k3","v3");
+  cache.put("k4","v4",LIFESPAN,MILLISECONDS);
+  for (int i=1; i < 5; i++) {
+    if (i % 2 == 1)     assertInCacheAndStore(cache,store,"k" + i,"v" + i);
+ else     assertInCacheAndStore(cache,store,"k" + i,"v" + i,LIFESPAN);
+  }
+  DataContainer c=cache.getAdvancedCache().getDataContainer();
+  assertEquals(4,c.size());
+  cache.stop();
+  assertEquals(0,c.size());
+  cache.start();
+  assertTrue(cache.getCacheConfiguration().loaders().preload());
+  c=cache.getAdvancedCache().getDataContainer();
+  assertEquals(4,c.size());
+  store=TestingUtil.extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+  for (int i=1; i < 5; i++) {
+    if (i % 2 == 1)     assertInCacheAndStore(cache,store,"k" + i,"v" + i);
+ else     assertInCacheAndStore(cache,store,"k" + i,"v" + i,LIFESPAN);
+  }
+  withTx(cache.getAdvancedCache().getTransactionManager(),new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      assertEquals("v1",cache.get("k1"));
+      cache.put("k1","new-v1");
+      return null;
+    }
+  }
+);
+}
