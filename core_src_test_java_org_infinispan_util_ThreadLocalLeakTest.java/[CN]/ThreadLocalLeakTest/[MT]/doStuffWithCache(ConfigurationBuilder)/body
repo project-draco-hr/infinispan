@@ -1,0 +1,22 @@
+{
+  final EmbeddedCacheManager[] cm={new DefaultCacheManager(new GlobalConfigurationBuilder().nonClusteredDefault().build(),builder.build(),true)};
+  Thread forkedThread=null;
+  try {
+    final Cache<Object,Object> c=cm[0].getCache();
+    c.put("key","value");
+    forkedThread=fork(new Runnable(){
+      @Override public void run(){
+        Cache<Object,Object> c=cm[0].getCache();
+        c.put("key2","value2");
+        c=null;
+        TestingUtil.sleepThread(2000);
+      }
+    }
+,false);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
+  cm[0]=null;
+  return forkedThread;
+}

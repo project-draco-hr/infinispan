@@ -1,0 +1,38 @@
+{
+  Field threadLocalsField=Thread.class.getDeclaredField("threadLocals");
+  threadLocalsField.setAccessible(true);
+  Object threadLocalTable=threadLocalsField.get(thread);
+  Class threadLocalMapClass=Class.forName("java.lang.ThreadLocal$ThreadLocalMap");
+  Field tableField=threadLocalMapClass.getDeclaredField("table");
+  tableField.setAccessible(true);
+  Object table=null;
+  try {
+    table=tableField.get(threadLocalTable);
+  }
+ catch (  NullPointerException e) {
+    return null;
+  }
+  Field referentField=Reference.class.getDeclaredField("referent");
+  referentField.setAccessible(true);
+  Class<?> entryClass=Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
+  Field valueField=entryClass.getDeclaredField("value");
+  valueField.setAccessible(true);
+  Map<ThreadLocal<?>,Object> threadLocals=new HashMap<ThreadLocal<?>,Object>();
+  for (int i=0; i < Array.getLength(table); i++) {
+    Object entry=Array.get(table,i);
+    if (entry != null) {
+      ThreadLocal<?> threadLocal=(ThreadLocal<?>)referentField.get(entry);
+      if (threadLocal != null) {
+        if (filterThreadLocals(threadLocal)) {
+          log.error("Thread local leak: " + threadLocal);
+          threadLocals.put(threadLocal,threadLocal.get());
+        }
+      }
+ else {
+        Object value=valueField.get(entry);
+        log.warn("Thread local is not accessible, but it wasn't removed either: " + value);
+      }
+    }
+  }
+  return threadLocals;
+}

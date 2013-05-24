@@ -1,0 +1,24 @@
+{
+  final ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(4096).locking().concurrencyLevel(2048).loaders().passivation(false).shared(false).preload(true).addFileCacheStore().location(tmpDirectory).fsyncMode(FileCacheStoreConfigurationBuilder.FsyncMode.PER_WRITE);
+  Future<Map<String,Map<ThreadLocal<?>,Object>>> result=fork(new Callable<Map<String,Map<ThreadLocal<?>,Object>>>(){
+    @Override public Map<String,Map<ThreadLocal<?>,Object>> call() throws Exception {
+      Thread forkedThread=doStuffWithCache(builder);
+      beforeGC();
+      System.gc();
+      Thread.sleep(500);
+      System.gc();
+      afterGC();
+      List<Thread> threadSet=Arrays.asList(Thread.currentThread(),forkedThread);
+      Map<String,Map<ThreadLocal<?>,Object>> allThreadLocals=new HashMap<String,Map<ThreadLocal<?>,Object>>();
+      for (      Thread thread : threadSet) {
+        Map<ThreadLocal<?>,Object> threadLocalLeaks=findThreadLocalLeaks(thread);
+        if (threadLocalLeaks != null && !threadLocalLeaks.isEmpty())         allThreadLocals.put(thread.getName(),threadLocalLeaks);
+      }
+      return allThreadLocals;
+    }
+  }
+);
+  Map<String,Map<ThreadLocal<?>,Object>> allThreadLocals=result.get(30,TimeUnit.SECONDS);
+  if (!allThreadLocals.isEmpty())   throw new IllegalStateException("Thread locals still present: " + allThreadLocals);
+}
