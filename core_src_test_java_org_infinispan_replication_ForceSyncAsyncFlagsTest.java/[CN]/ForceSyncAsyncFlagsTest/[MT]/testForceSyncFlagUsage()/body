@@ -1,0 +1,16 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,false);
+  builder.clustering().async().asyncMarshalling(true);
+  createClusteredCaches(2,"replAsync",builder);
+  AdvancedCache cache1=cache(0,"replAsync").getAdvancedCache();
+  AdvancedCache cache2=cache(1,"replAsync").getAdvancedCache();
+  Transport originalTransport=TestingUtil.extractGlobalComponent(cache1.getCacheManager(),Transport.class);
+  RpcManagerImpl rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
+  Transport mockTransport=spy(originalTransport);
+  rpcManager.setTransport(mockTransport);
+  cache1.put("k","v");
+  verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean(),anyBoolean());
+  reset(mockTransport);
+  cache1.withFlags(Flag.FORCE_SYNCHRONOUS).put("k","v");
+  verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean(),anyBoolean());
+}
