@@ -13,6 +13,15 @@
     final String msg="Operation " + name + " not amongst operations in "+ opInfos;
     throw new MBeanException(new ServiceNotFoundException(msg),msg);
   }
+  for (int i=0; i < args.length; i++) {
+    if (log.isDebugEnabled())     log.debugf("Argument value before transformation: %s and its class: %s. " + "For method.invoke we need it to be class: %s",args[i],args[i].getClass(),sig[i]);
+    if (sig[i].equals(int.class.getCanonicalName())) {
+      args[i]=Integer.parseInt((String)args[i]);
+    }
+    if (sig[i].equals(long.class.getCanonicalName())) {
+      args[i]=Long.parseLong((String)args[i]);
+    }
+  }
   try {
     Class<?>[] classes=new Class[sig.length];
     for (int i=0; i < classes.length; i++) {
