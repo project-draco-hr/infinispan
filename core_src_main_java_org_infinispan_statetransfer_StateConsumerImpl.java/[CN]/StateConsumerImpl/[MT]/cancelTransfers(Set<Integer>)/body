@@ -3,11 +3,12 @@ synchronized (this) {
     List<Integer> segmentsToCancel=new ArrayList<Integer>(removedSegments);
     while (!segmentsToCancel.isEmpty()) {
       int segmentId=segmentsToCancel.remove(0);
-      InboundTransferTask inboundTransfer=transfersBySegment.remove(segmentId);
+      InboundTransferTask inboundTransfer=transfersBySegment.get(segmentId);
       if (inboundTransfer != null) {
         Set<Integer> cancelledSegments=new HashSet<Integer>(removedSegments);
         cancelledSegments.retainAll(inboundTransfer.getSegments());
         segmentsToCancel.removeAll(cancelledSegments);
+        transfersBySegment.keySet().removeAll(cancelledSegments);
         inboundTransfer.cancelSegments(cancelledSegments);
       }
     }
