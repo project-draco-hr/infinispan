@@ -1,7 +1,12 @@
 {
   CacheStore store=cacheLoaderManager.getCacheStore();
-  cacheManager.getCache(cacheName).stop();
+  Cache<Object,Object> cache=cacheManager.getCache(cacheName);
+  CacheJmxRegistration jmx=cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class);
+  cache.stop();
   if (store != null)   store.clear();
+  if (jmx != null) {
+    jmx.unregisterCacheMBean();
+  }
   registry.removeCache(cacheName);
   return null;
 }
