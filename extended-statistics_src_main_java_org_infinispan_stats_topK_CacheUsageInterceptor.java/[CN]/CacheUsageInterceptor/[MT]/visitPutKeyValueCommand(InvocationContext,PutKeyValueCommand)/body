@@ -1,0 +1,15 @@
+{
+  try {
+    if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
+      streamSummaryContainer.addPut(command.getKey(),isRemote(command.getKey()));
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  WriteSkewException wse) {
+    Object key=wse.getKey();
+    if (streamSummaryContainer.isEnabled() && key != null && ctx.isOriginLocal()) {
+      streamSummaryContainer.addWriteSkewFailed(key);
+    }
+    throw wse;
+  }
+}

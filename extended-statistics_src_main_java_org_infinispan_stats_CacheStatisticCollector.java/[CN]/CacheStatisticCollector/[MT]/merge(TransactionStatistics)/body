@@ -1,0 +1,28 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Merge transaction statistics %s to the node statistics",transactionStatistics);
+  }
+  ReservoirSampler reservoirSampler;
+  ExtendedStatistic percentileSample;
+  if (transactionStatistics.isLocalTransaction()) {
+    if (transactionStatistics.isReadOnly()) {
+      reservoirSampler=percentiles.get(RO_LOCAL_EXECUTION);
+      percentileSample=transactionStatistics.isCommitted() ? RO_TX_SUCCESSFUL_EXECUTION_TIME : RO_TX_ABORTED_EXECUTION_TIME;
+    }
+ else {
+      reservoirSampler=percentiles.get(WR_LOCAL_EXECUTION);
+      percentileSample=transactionStatistics.isCommitted() ? WR_TX_SUCCESSFUL_EXECUTION_TIME : WR_TX_ABORTED_EXECUTION_TIME;
+    }
+  }
+ else {
+    if (transactionStatistics.isReadOnly()) {
+      reservoirSampler=percentiles.get(RO_REMOTE_EXECUTION);
+      percentileSample=transactionStatistics.isCommitted() ? RO_TX_SUCCESSFUL_EXECUTION_TIME : RO_TX_ABORTED_EXECUTION_TIME;
+    }
+ else {
+      reservoirSampler=percentiles.get(WR_REMOTE_EXECUTION);
+      percentileSample=transactionStatistics.isCommitted() ? WR_TX_SUCCESSFUL_EXECUTION_TIME : WR_TX_ABORTED_EXECUTION_TIME;
+    }
+  }
+  doMerge(transactionStatistics,reservoirSampler,percentileSample);
+}

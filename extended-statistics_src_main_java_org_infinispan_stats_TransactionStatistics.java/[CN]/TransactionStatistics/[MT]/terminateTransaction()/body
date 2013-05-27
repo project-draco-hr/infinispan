@@ -1,0 +1,27 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Terminating transaction. Is read only? %s. Is commit? %s",readOnly,committed);
+  }
+  long execTime=timeService.timeDuration(initTime,NANOSECONDS);
+  if (readOnly) {
+    if (committed) {
+      incrementValue(NUM_COMMITTED_RO_TX);
+      addValue(RO_TX_SUCCESSFUL_EXECUTION_TIME,execTime);
+    }
+ else {
+      incrementValue(NUM_ABORTED_RO_TX);
+      addValue(RO_TX_ABORTED_EXECUTION_TIME,execTime);
+    }
+  }
+ else {
+    if (committed) {
+      incrementValue(NUM_COMMITTED_WR_TX);
+      addValue(WR_TX_SUCCESSFUL_EXECUTION_TIME,execTime);
+    }
+ else {
+      incrementValue(NUM_ABORTED_WR_TX);
+      addValue(WR_TX_ABORTED_EXECUTION_TIME,execTime);
+    }
+  }
+  terminate();
+}

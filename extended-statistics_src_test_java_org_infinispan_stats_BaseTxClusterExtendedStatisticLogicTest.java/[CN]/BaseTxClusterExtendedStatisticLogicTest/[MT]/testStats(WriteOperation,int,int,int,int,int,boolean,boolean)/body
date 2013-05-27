@@ -1,0 +1,126 @@
+{
+  final int txExecutor=executeOnCoordinator ? 0 : 1;
+  int localGetsReadTx=0;
+  int localGetsWriteTx=0;
+  int localPuts=0;
+  int remoteGetsReadTx=0;
+  int remoteGetsWriteTx=0;
+  int remotePuts=0;
+  int localLocks=0;
+  int remoteLocks=0;
+  int numOfLocalWriteTx=0;
+  int numOfRemoteWriteTx=0;
+  resetTxCounters();
+  boolean remote=false;
+  tm(txExecutor).begin();
+  for (int i=1; i <= (numOfReadsPerWriteTx + numOfWrites) * numOfWriteTx + numOfReadPerReadTx * numOfReadOnlyTx; ++i) {
+    cache(txExecutor).put(getKey(i),getInitValue(i));
+    if (isRemote(getKey(i),cache(txExecutor))) {
+      remote=true;
+    }
+  }
+  tm(txExecutor).commit();
+  assertTxSeen(txExecutor,1,replicated || remote ? 1 : 0,0,false);
+  resetStats();
+  resetTxCounters();
+  int keyIndex=0;
+  for (int tx=1; tx <= numOfWriteTx; ++tx) {
+    boolean involvesRemoteNode=cacheMode.isReplicated();
+    tm(txExecutor).begin();
+    for (int i=1; i <= numOfReadsPerWriteTx; ++i) {
+      keyIndex++;
+      Object key=getKey(keyIndex);
+      if (isRemote(key,cache(txExecutor))) {
+        remoteGetsWriteTx++;
+      }
+ else {
+        localGetsWriteTx++;
+      }
+      assertEquals(cache(txExecutor).get(key),getInitValue(keyIndex));
+    }
+    for (int i=1; i <= numOfWrites; ++i) {
+      keyIndex++;
+      Object key=operation == WriteOperation.PUT_IF ? getKey(-keyIndex) : getKey(keyIndex);
+switch (operation) {
+case PUT:
+        cache(txExecutor).put(key,getValue(keyIndex));
+      break;
+case PUT_IF:
+    cache(txExecutor).putIfAbsent(key,getValue(keyIndex));
+  break;
+case REPLACE:
+cache(txExecutor).replace(key,getValue(keyIndex));
+break;
+case REPLACE_IF:
+cache(txExecutor).replace(key,getInitValue(keyIndex),getValue(keyIndex));
+break;
+case REMOVE:
+cache(txExecutor).remove(key);
+break;
+case REMOVE_IF:
+cache(txExecutor).remove(key,getInitValue(keyIndex));
+break;
+default :
+}
+if (isRemote(key,cache(txExecutor))) {
+remotePuts++;
+involvesRemoteNode=true;
+if (operation != WriteOperation.PUT_IF && operation != WriteOperation.PUT) {
+localLocks++;
+}
+}
+ else {
+localPuts++;
+}
+if (isLockOwner(key,cache(txExecutor))) {
+if (!abort) {
+localLocks++;
+}
+}
+ else {
+if (!abort) {
+remoteLocks++;
+}
+}
+}
+if (involvesRemoteNode) {
+numOfRemoteWriteTx++;
+}
+numOfLocalWriteTx++;
+if (abort) {
+tm(txExecutor).rollback();
+}
+ else {
+tm(txExecutor).commit();
+}
+}
+for (int tx=1; tx <= numOfReadOnlyTx; ++tx) {
+tm(txExecutor).begin();
+for (int i=1; i <= numOfReadPerReadTx; ++i) {
+keyIndex++;
+Object key=getKey(keyIndex);
+if (isRemote(key,cache(txExecutor))) {
+remoteGetsReadTx++;
+}
+ else {
+localGetsReadTx++;
+}
+assertEquals(cache(txExecutor).get(key),getInitValue(keyIndex));
+}
+if (abort) {
+tm(txExecutor).rollback();
+}
+ else {
+tm(txExecutor).commit();
+}
+}
+assertTxSeen(txExecutor,numOfLocalWriteTx,replicated ? numOfLocalWriteTx : numOfRemoteWriteTx,numOfReadOnlyTx,abort);
+EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+assertTxValues(statsToValidate,numOfLocalWriteTx,numOfRemoteWriteTx,numOfReadOnlyTx,txExecutor,abort);
+assertLockingValues(statsToValidate,localLocks,remoteLocks,numOfLocalWriteTx,numOfRemoteWriteTx,txExecutor,abort);
+assertAccessesValues(statsToValidate,localGetsReadTx,remoteGetsReadTx,localGetsWriteTx,remoteGetsWriteTx,localPuts,remotePuts,numOfWriteTx,numOfReadOnlyTx,txExecutor,abort);
+assertAttributeValue(NUM_WRITE_SKEW,statsToValidate,0,0,txExecutor);
+assertAttributeValue(WRITE_SKEW_PROBABILITY,statsToValidate,0,0,txExecutor);
+assertAllStatsValidated(statsToValidate);
+resetStats();
+}

@@ -1,0 +1,24 @@
+{
+  for (int i=0; i < NUM_NODES; ++i) {
+    if (i == txExecutor) {
+      assertTrue(transactionTrackInterceptors[i].awaitForLocalCompletion(localTx,TX_TIMEOUT,TimeUnit.SECONDS));
+    }
+ else {
+      assertTrue(transactionTrackInterceptors[i].awaitForRemoteCompletion(remoteTx,TX_TIMEOUT,TimeUnit.SECONDS));
+    }
+    if (reset) {
+      transactionTrackInterceptors[i].reset();
+    }
+  }
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      for (      LockManager lockManager : lockManagers) {
+        if (lockManager.getNumberOfLocksHeld() != 0) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+);
+}

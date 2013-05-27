@@ -1,0 +1,11 @@
+{
+  List<CommandInterceptor> chain=cache.getAdvancedCache().getInterceptorChain();
+  for (  CommandInterceptor commandInterceptor : chain) {
+    if (commandInterceptor instanceof PrepareCommandBlocker) {
+      return (PrepareCommandBlocker)commandInterceptor;
+    }
+  }
+  PrepareCommandBlocker blocker=new PrepareCommandBlocker();
+  cache.getAdvancedCache().addInterceptorBefore(blocker,TxInterceptor.class);
+  return blocker;
+}

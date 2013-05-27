@@ -1,0 +1,30 @@
+{
+  for (int i=0; i < NUM_NODES; ++i) {
+    ConfigurationBuilder builder=getDefaultClusteredCacheConfig(cacheMode,true);
+    builder.transaction().syncCommitPhase(sync2ndPhase).syncRollbackPhase(sync2ndPhase);
+    if (totalOrder) {
+      builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
+    }
+    builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false).lockAcquisitionTimeout(0);
+    builder.clustering().hash().numOwners(1);
+    builder.transaction().recovery().disable();
+    extendedStatisticInterceptors[i]=new ExtendedStatisticInterceptor();
+    builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i]).after(TxInterceptor.class);
+    addClusterEnabledCacheManager(builder);
+  }
+  waitForClusterToForm();
+  for (int i=0; i < NUM_NODES; ++i) {
+    lockManagers[i]=extractLockManager(cache(i));
+    ExtendedStatisticInterceptor interceptor=extendedStatisticInterceptors[i];
+    CacheStatisticManager manager=(CacheStatisticManager)extractField(interceptor,"cacheStatisticManager");
+    CacheStatisticCollector collector=(CacheStatisticCollector)extractField(manager,"cacheStatisticCollector");
+    ConcurrentGlobalContainer globalContainer=(ConcurrentGlobalContainer)extractField(collector,"globalContainer");
+    replaceField(TEST_TIME_SERVICE,"timeService",manager,CacheStatisticManager.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",collector,CacheStatisticCollector.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",globalContainer,ConcurrentGlobalContainer.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",interceptor,ExtendedStatisticInterceptor.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",lockManagers[i],ExtendedStatisticLockManager.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",extractComponent(cache(i),RpcManager.class),ExtendedStatisticRpcManager.class);
+    transactionTrackInterceptors[i]=TransactionTrackInterceptor.injectInCache(cache(i));
+  }
+}

@@ -1,0 +1,9 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.LOCAL,true);
+  builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false).lockAcquisitionTimeout(0);
+  builder.clustering().hash().numOwners(1);
+  builder.transaction().recovery().disable();
+  extendedStatisticInterceptor=new ExtendedStatisticInterceptor();
+  builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptor).after(TxInterceptor.class);
+  return TestCacheManagerFactory.createCacheManager(builder);
+}

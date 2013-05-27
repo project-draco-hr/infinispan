@@ -1,0 +1,23 @@
+{
+  if (reset) {
+    values=create();
+    queue.clear();
+    reset=false;
+    values[0]=timeService.time();
+    flushing.set(false);
+    return;
+  }
+  final double[] copy=create();
+  System.arraycopy(values,0,copy,0,copy.length);
+  List<Mergeable> drain=new ArrayList<Mergeable>();
+  queue.drainTo(drain);
+  for (  Mergeable mergeable : drain) {
+    try {
+      mergeable.mergeTo(copy);
+    }
+ catch (    Throwable throwable) {
+    }
+  }
+  values=copy;
+  flushing.set(false);
+}

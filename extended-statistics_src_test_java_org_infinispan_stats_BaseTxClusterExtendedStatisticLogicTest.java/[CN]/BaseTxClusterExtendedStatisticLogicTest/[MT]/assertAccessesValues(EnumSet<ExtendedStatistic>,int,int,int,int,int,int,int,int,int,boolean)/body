@@ -1,0 +1,21 @@
+{
+  log.infof("Check accesses values. localGetsReadTx=%s, remoteGetsReadTx=%s, localGetsWriteTx=%s, remoteGetsWriteTx=%s, " + "localPuts=%s, remotePuts=%s, writeTx=%s, readTx=%s, txExecutor=%s, abort?=%s",localGetsReadTx,remoteGetsReadTx,localGetsWriteTx,remoteGetsWriteTx,localPuts,remotePuts,numOfWriteTx,numOfReadTx,txExecutor,abort);
+  assertAttributeValue(NUM_REMOTE_PUT,statsToValidate,remotePuts,0,txExecutor);
+  assertAttributeValue(LOCAL_PUT_EXECUTION,statsToValidate,0,0,txExecutor);
+  assertAttributeValue(REMOTE_PUT_EXECUTION,statsToValidate,remotePuts != 0 ? MICROSECONDS : 0,0,txExecutor);
+  assertAttributeValue(NUM_PUT,statsToValidate,remotePuts + localPuts,0,txExecutor);
+  assertAttributeValue(NUM_PUTS_WR_TX,statsToValidate,!abort && numOfWriteTx != 0 ? (localPuts + remotePuts * 1.0) / numOfWriteTx : 0,0,txExecutor);
+  assertAttributeValue(NUM_REMOTE_PUTS_WR_TX,statsToValidate,!abort && numOfWriteTx != 0 ? (remotePuts * 1.0) / numOfWriteTx : 0,0,txExecutor);
+  assertAttributeValue(NUM_REMOTE_GET,statsToValidate,remoteGetsReadTx + remoteGetsWriteTx,0,txExecutor);
+  assertAttributeValue(NUM_GET,statsToValidate,localGetsReadTx + localGetsWriteTx + remoteGetsReadTx+ remoteGetsWriteTx,0,txExecutor);
+  assertAttributeValue(NUM_GETS_RO_TX,statsToValidate,!abort && numOfReadTx != 0 ? (localGetsReadTx + remoteGetsReadTx * 1.0) / numOfReadTx : 0,0,txExecutor);
+  assertAttributeValue(NUM_GETS_WR_TX,statsToValidate,!abort && numOfWriteTx != 0 ? (localGetsWriteTx + remoteGetsWriteTx * 1.0) / numOfWriteTx : 0,0,txExecutor);
+  assertAttributeValue(NUM_REMOTE_GETS_WR_TX,statsToValidate,!abort && numOfWriteTx != 0 ? remoteGetsWriteTx * 1.0 / numOfWriteTx : 0,0,txExecutor);
+  assertAttributeValue(NUM_REMOTE_GETS_RO_TX,statsToValidate,!abort && numOfReadTx != 0 ? remoteGetsReadTx * 1.0 / numOfReadTx : 0,0,txExecutor);
+  assertAttributeValue(ALL_GET_EXECUTION,statsToValidate,remoteGetsReadTx + localGetsReadTx + localGetsWriteTx+ remoteGetsWriteTx,0,txExecutor);
+  assertAttributeValue(LOCAL_GET_EXECUTION,statsToValidate,(remoteGetsReadTx + remoteGetsWriteTx) < (localGetsReadTx + localGetsWriteTx) ? MICROSECONDS : 0,0,txExecutor);
+  assertAttributeValue(REMOTE_GET_EXECUTION,statsToValidate,remoteGetsReadTx != 0 || remoteGetsWriteTx != 0 ? MICROSECONDS : 0,0,txExecutor);
+  assertAttributeValue(NUM_SYNC_GET,statsToValidate,remoteGetsReadTx + remoteGetsWriteTx,0,txExecutor);
+  assertAttributeValue(SYNC_GET_TIME,statsToValidate,remoteGetsReadTx != 0 || remoteGetsWriteTx != 0 ? MICROSECONDS : 0,0,txExecutor);
+  assertAttributeValue(NUM_NODES_GET,statsToValidate,remoteGetsReadTx != 0 || remoteGetsWriteTx != 0 ? 1 : 0,0,txExecutor);
+}

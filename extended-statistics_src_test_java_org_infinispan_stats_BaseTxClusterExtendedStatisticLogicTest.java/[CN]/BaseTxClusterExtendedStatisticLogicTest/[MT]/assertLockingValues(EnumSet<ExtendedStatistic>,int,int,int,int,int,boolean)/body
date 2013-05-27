@@ -1,0 +1,27 @@
+{
+  log.infof("Check Locking value. localLocks=%s, remoteLocks=%s, localWriteTx=%s, remoteWriteTx=%s, txExecutor=%s, abort?=%s",numOfLocalLocks,numOfRemoteLocks,numOfLocalWriteTx,numOfRemoteWriteTx,txExecutor,abort);
+  if (totalOrder) {
+    assertAttributeValue(LOCK_HOLD_TIME_LOCAL,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME_REMOTE,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(NUM_LOCK_PER_LOCAL_TX,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(NUM_LOCK_PER_REMOTE_TX,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(NUM_HELD_LOCKS_SUCCESS_LOCAL_TX,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME_SUCCESS_LOCAL_TX,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(NUM_HELD_LOCKS,statsToValidate,0,0,txExecutor);
+  }
+ else {
+    assertAttributeValue(LOCK_HOLD_TIME_LOCAL,statsToValidate,numOfLocalLocks != 0 ? MICROSECONDS : 0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME_REMOTE,statsToValidate,0,numOfRemoteLocks != 0 ? MICROSECONDS : 0,txExecutor);
+    assertAttributeValue(NUM_LOCK_PER_LOCAL_TX,statsToValidate,numOfLocalWriteTx != 0 ? numOfLocalLocks * 1.0 / numOfLocalWriteTx : 0,0,txExecutor);
+    assertAttributeValue(NUM_LOCK_PER_REMOTE_TX,statsToValidate,0,numOfRemoteWriteTx != 0 ? numOfRemoteLocks * 1.0 / numOfRemoteWriteTx : 0,txExecutor);
+    assertAttributeValue(NUM_HELD_LOCKS_SUCCESS_LOCAL_TX,statsToValidate,!abort && numOfLocalWriteTx != 0 ? numOfLocalLocks * 1.0 / numOfLocalWriteTx : 0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME_SUCCESS_LOCAL_TX,statsToValidate,0,0,txExecutor);
+    assertAttributeValue(LOCK_HOLD_TIME,statsToValidate,numOfLocalLocks != 0 ? MICROSECONDS : 0,numOfRemoteLocks != 0 ? MICROSECONDS : 0,txExecutor);
+    assertAttributeValue(NUM_HELD_LOCKS,statsToValidate,numOfLocalLocks,numOfRemoteLocks,txExecutor);
+  }
+  assertAttributeValue(NUM_WAITED_FOR_LOCKS,statsToValidate,0,0,txExecutor);
+  assertAttributeValue(LOCK_WAITING_TIME,statsToValidate,0,0,txExecutor);
+  assertAttributeValue(NUM_LOCK_FAILED_TIMEOUT,statsToValidate,0,0,txExecutor);
+  assertAttributeValue(NUM_LOCK_FAILED_DEADLOCK,statsToValidate,0,0,txExecutor);
+}

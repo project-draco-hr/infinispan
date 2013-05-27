@@ -1,0 +1,35 @@
+{
+  for (int i=0; i < NUM_NODES; ++i) {
+    ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+    builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(60000);
+    builder.transaction().recovery().disable();
+    builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+    builder.deadlockDetection().enable();
+    extendedStatisticInterceptors[i]=new ExtendedStatisticInterceptor();
+    builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i]).after(TxInterceptor.class);
+    addClusterEnabledCacheManager(builder);
+  }
+  waitForClusterToForm();
+  for (int i=0; i < NUM_NODES; ++i) {
+    ExtendedStatisticInterceptor interceptor=extendedStatisticInterceptors[i];
+    CacheStatisticManager manager=(CacheStatisticManager)extractField(interceptor,"cacheStatisticManager");
+    CacheStatisticCollector collector=(CacheStatisticCollector)extractField(manager,"cacheStatisticCollector");
+    ConcurrentGlobalContainer globalContainer=(ConcurrentGlobalContainer)extractField(collector,"globalContainer");
+    ExtendedStatisticRpcManager rpcManager=(ExtendedStatisticRpcManager)extractComponent(cache(i),RpcManager.class);
+    ExtendedStatisticLockManager lockManager=(ExtendedStatisticLockManager)extractLockManager(cache(i));
+    lockManagers[i]=lockManager;
+    replaceField(TEST_TIME_SERVICE,"timeService",manager,CacheStatisticManager.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",collector,CacheStatisticCollector.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",globalContainer,ConcurrentGlobalContainer.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",interceptor,ExtendedStatisticInterceptor.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",lockManager,ExtendedStatisticLockManager.class);
+    replaceField(TEST_TIME_SERVICE,"timeService",rpcManager,ExtendedStatisticRpcManager.class);
+    controlledRpcManager[i]=new ControlledRpcManager(rpcManager);
+    replaceComponent(cache(i),RpcManager.class,controlledRpcManager[i],true);
+    transactionTrackInterceptors[i]=TransactionTrackInterceptor.injectInCache(cache(i));
+    if (i == 0) {
+      DeadlockDetectingLockManager dldLockManager=(DeadlockDetectingLockManager)lockManager.getActual();
+      dldLockManager.injectTimeService(lockManagerTimeService);
+    }
+  }
+}

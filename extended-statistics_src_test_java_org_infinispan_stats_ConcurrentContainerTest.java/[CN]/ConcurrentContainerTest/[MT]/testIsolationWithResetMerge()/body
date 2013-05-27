@@ -1,0 +1,24 @@
+{
+  final ConcurrentGlobalContainer globalContainer=new ConcurrentGlobalContainer(TIME_SERVICE);
+  final List<StatisticsSnapshot> snapshots=new ArrayList<StatisticsSnapshot>(4);
+  snapshots.add(globalContainer.getSnapshot());
+  final ExtendedStatistic localStat=ExtendedStatistic.PREPARE_COMMAND_SIZE;
+  final ExtendedStatistic remoteStat=ExtendedStatistic.NUM_COMMITTED_WR_TX;
+  Assert.assertTrue(localStat.isLocal());
+  Assert.assertTrue(remoteStat.isRemote());
+  globalContainer.add(localStat,10,true);
+  globalContainer.add(remoteStat,20,false);
+  snapshots.add(globalContainer.getSnapshot());
+  assertSnapshotValues(snapshots,Arrays.asList(0D,10D),localStat,true);
+  assertSnapshotValues(snapshots,Arrays.asList(0D,20D),remoteStat,false);
+  globalContainer.reset();
+  snapshots.add(globalContainer.getSnapshot());
+  assertSnapshotValues(snapshots,Arrays.asList(0D,10D,0D),localStat,true);
+  assertSnapshotValues(snapshots,Arrays.asList(0D,20D,0D),remoteStat,false);
+  globalContainer.add(localStat,10,true);
+  globalContainer.add(remoteStat,20,false);
+  snapshots.add(globalContainer.getSnapshot());
+  assertSnapshotValues(snapshots,Arrays.asList(0D,10D,0D,10D),localStat,true);
+  assertSnapshotValues(snapshots,Arrays.asList(0D,20D,0D,20D),remoteStat,false);
+  assertFinalState(globalContainer);
+}

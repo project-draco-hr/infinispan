@@ -1,0 +1,23 @@
+{
+  LockInfo lockInfo=new LockInfo(ctx);
+  updateContentionStats(key,lockInfo);
+  boolean locked=false;
+  long start=timeService.time();
+  try {
+    locked=actual.acquireLock(ctx,key,timeoutMillis,skipLocking);
+  }
+  finally {
+    long end=timeService.time();
+    lockInfo.lockTimeStamp=end;
+    if (lockInfo.contention) {
+      lockInfo.lockWaiting=timeService.timeDuration(start,end,NANOSECONDS);
+    }
+    if (locked) {
+      lockInfoMap.putIfAbsent(key,lockInfo);
+    }
+ else {
+      lockInfo.updateStats(-1);
+    }
+  }
+  return locked;
+}

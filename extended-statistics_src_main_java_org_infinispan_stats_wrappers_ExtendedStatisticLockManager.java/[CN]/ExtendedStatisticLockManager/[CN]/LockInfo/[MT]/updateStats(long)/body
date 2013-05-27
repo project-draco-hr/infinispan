@@ -1,0 +1,12 @@
+{
+  boolean locked=releaseTimeStamp != -1;
+  long holdTime=!locked ? 0 : timeService.timeDuration(lockTimeStamp,releaseTimeStamp,NANOSECONDS);
+  cacheStatisticManager.add(LOCK_HOLD_TIME,holdTime,owner,local);
+  if (lockWaiting != -1) {
+    cacheStatisticManager.add(LOCK_WAITING_TIME,lockWaiting,owner,local);
+    cacheStatisticManager.increment(NUM_WAITED_FOR_LOCKS,owner,local);
+  }
+  if (locked) {
+    cacheStatisticManager.increment(NUM_HELD_LOCKS,owner,local);
+  }
+}

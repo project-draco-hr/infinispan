@@ -1,0 +1,72 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Visit write command %s. Is it in transaction scope? %s. Is it local? %s",command,ctx.isInTxScope(),ctx.isOriginLocal());
+  }
+  Object ret;
+  if (ctx.isInTxScope()) {
+    long start=timeService.time();
+    long end;
+    try {
+      ret=invokeNextInterceptor(ctx,command);
+    }
+ catch (    TimeoutException e) {
+      if (ctx.isOriginLocal() && isLockTimeout(e)) {
+        initStatsIfNecessary(ctx);
+        cacheStatisticManager.increment(NUM_LOCK_FAILED_TIMEOUT,getGlobalTransaction(ctx),ctx.isOriginLocal());
+      }
+      throw e;
+    }
+catch (    DeadlockDetectedException e) {
+      if (ctx.isOriginLocal()) {
+        initStatsIfNecessary(ctx);
+        cacheStatisticManager.increment(NUM_LOCK_FAILED_DEADLOCK,getGlobalTransaction(ctx),ctx.isOriginLocal());
+      }
+      throw e;
+    }
+catch (    WriteSkewException e) {
+      if (ctx.isOriginLocal()) {
+        initStatsIfNecessary(ctx);
+        cacheStatisticManager.increment(NUM_WRITE_SKEW,getGlobalTransaction(ctx),ctx.isOriginLocal());
+      }
+      throw e;
+    }
+catch (    RemoteException remote) {
+      if (ctx.isOriginLocal()) {
+        ExtendedStatistic stat=null;
+        Throwable cause=remote.getCause();
+        while (cause != null) {
+          if (cause instanceof TimeoutException) {
+            stat=NUM_LOCK_FAILED_TIMEOUT;
+            break;
+          }
+ else           if (cause instanceof DeadlockDetectedException) {
+            stat=NUM_LOCK_FAILED_DEADLOCK;
+            break;
+          }
+ else           if (cause instanceof WriteSkewException) {
+            stat=NUM_WRITE_SKEW;
+            break;
+          }
+          cause=cause.getCause();
+        }
+        if (stat != null) {
+          initStatsIfNecessary(ctx);
+          cacheStatisticManager.increment(stat,getGlobalTransaction(ctx),true);
+        }
+      }
+      throw remote;
+    }
+ finally {
+      end=timeService.time();
+      initStatsIfNecessary(ctx);
+      cacheStatisticManager.increment(NUM_PUT,getGlobalTransaction(ctx),ctx.isOriginLocal());
+      cacheStatisticManager.markAsWriteTransaction(getGlobalTransaction(ctx),ctx.isOriginLocal());
+    }
+    if (isRemote(key)) {
+      cacheStatisticManager.add(REMOTE_PUT_EXECUTION,timeService.timeDuration(start,end,NANOSECONDS),getGlobalTransaction(ctx),ctx.isOriginLocal());
+      cacheStatisticManager.increment(NUM_REMOTE_PUT,getGlobalTransaction(ctx),ctx.isOriginLocal());
+    }
+    return ret;
+  }
+ else   return invokeNextInterceptor(ctx,command);
+}

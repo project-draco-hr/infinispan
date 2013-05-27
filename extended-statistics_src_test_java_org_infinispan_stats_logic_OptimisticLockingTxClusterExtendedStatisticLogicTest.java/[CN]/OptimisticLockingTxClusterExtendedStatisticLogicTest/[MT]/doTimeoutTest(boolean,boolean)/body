@@ -1,0 +1,51 @@
+{
+  final int txExecutor=executeOnOwner ? 0 : 1;
+  final int successTxExecutor=remoteContention ? 1 : 0;
+  cache(successTxExecutor).put(KEY_1,VALUE_1);
+  assertTxSeen(successTxExecutor,1,1,true);
+  resetStats();
+  tm(successTxExecutor).begin();
+  cache(successTxExecutor).put(KEY_1,VALUE_2);
+  final Transaction transaction=tm(successTxExecutor).suspend();
+  controlledRpcManager[successTxExecutor].blockBefore(CommitCommand.class,VersionedCommitCommand.class);
+  Future future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      tm(successTxExecutor).resume(transaction);
+      tm(successTxExecutor).commit();
+      return null;
+    }
+  }
+);
+  controlledRpcManager[successTxExecutor].waitForCommandToBlock();
+  lockManagerTimeService.triggerTimeout=true;
+  tm(txExecutor).begin();
+  cache(txExecutor).put(KEY_1,VALUE_3);
+  try {
+    tm(txExecutor).commit();
+    fail("Rollback Exception expected!");
+  }
+ catch (  RollbackException expected) {
+  }
+  tm(txExecutor).begin();
+  cache(txExecutor).put(KEY_1,VALUE_3);
+  try {
+    tm(txExecutor).commit();
+    fail("Rollback Exception expected!");
+  }
+ catch (  RollbackException expected) {
+  }
+  controlledRpcManager[successTxExecutor].stopBlocking();
+  future.get();
+  if (txExecutor == successTxExecutor) {
+    assertTxSeen(successTxExecutor,3,executeOnOwner ? 0 : 3,true);
+  }
+ else {
+    assertTxSeen(successTxExecutor,1,1,false);
+    assertTxSeen(txExecutor,2,executeOnOwner ? 0 : 2,true);
+  }
+  EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+  assertLockingValues(statsToValidate,remoteContention ? 0 : 1,0,remoteContention ? 1 : 0,remoteContention ? 0 : 1,executeOnOwner ? 2 : 0,remoteContention ? 1 : 0,executeOnOwner ? 0 : 2,remoteContention ? 0 : 2,remoteContention ? 2 : 0,executeOnOwner);
+  assertWriteSkewValues(statsToValidate,0,0,txExecutor);
+  assertAllStatsValidated(statsToValidate);
+  resetStats();
+}

@@ -1,0 +1,28 @@
+{
+  if (isReadOnly()) {
+    copyValue(NUM_GET,NUM_GETS_RO_TX);
+    copyValue(NUM_REMOTE_GET,NUM_REMOTE_GETS_RO_TX);
+  }
+ else {
+    copyValue(NUM_GET,NUM_GETS_WR_TX);
+    copyValue(NUM_REMOTE_GET,NUM_REMOTE_GETS_WR_TX);
+    copyValue(NUM_PUT,NUM_PUTS_WR_TX);
+    copyValue(NUM_REMOTE_PUT,NUM_REMOTE_PUTS_WR_TX);
+    if (isCommitted()) {
+      copyValue(NUM_HELD_LOCKS,NUM_HELD_LOCKS_SUCCESS_LOCAL_TX);
+      if (optimisticLockingScheme) {
+        copyValue(WR_TX_SUCCESSFUL_EXECUTION_TIME,LOCAL_EXEC_NO_CONT);
+      }
+ else {
+        try {
+          double localLockAcquisitionTime=getValue(LOCK_WAITING_TIME);
+          double totalLocalDuration=getValue(WR_TX_SUCCESSFUL_EXECUTION_TIME);
+          this.addValue(LOCAL_EXEC_NO_CONT,(totalLocalDuration - localLockAcquisitionTime));
+        }
+ catch (        ExtendedStatisticNotFoundException e) {
+          log.unableToCalculateLocalExecutionTimeWithoutContention(e);
+        }
+      }
+    }
+  }
+}

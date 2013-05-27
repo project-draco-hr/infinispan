@@ -1,0 +1,83 @@
+{
+  for (int i=1; i <= (numOfReadsPerWriteTx + numOfWrites) * numOfWriteTx + numOfReadPerReadTx * numOfReadOnlyTx; ++i) {
+    cache().put(getKey(i),getInitValue(i));
+  }
+  sleepThread(SLEEP_TIME);
+  resetStats();
+  int localGetsReadTx=0;
+  int localGetsWriteTx=0;
+  int localPuts=0;
+  int localLocks=0;
+  int numOfLocalWriteTx=0;
+  int keyIndex=0;
+  for (int tx=1; tx <= numOfWriteTx; ++tx) {
+    tm().begin();
+    for (int i=1; i <= numOfReadsPerWriteTx; ++i) {
+      keyIndex++;
+      Object key=getKey(keyIndex);
+      localGetsWriteTx++;
+      assertEquals(cache().get(key),getInitValue(keyIndex));
+    }
+    for (int i=1; i <= numOfWrites; ++i) {
+      keyIndex++;
+      Object key=operation == WriteOperation.PUT_IF ? getKey(-keyIndex) : getKey(keyIndex);
+switch (operation) {
+case PUT:
+        cache().put(key,getValue(keyIndex));
+      break;
+case PUT_IF:
+    cache().putIfAbsent(key,getValue(keyIndex));
+  break;
+case REPLACE:
+cache().replace(key,getValue(keyIndex));
+break;
+case REPLACE_IF:
+cache().replace(key,getInitValue(keyIndex),getValue(keyIndex));
+break;
+case REMOVE:
+cache().remove(key);
+break;
+case REMOVE_IF:
+cache().remove(key,getInitValue(keyIndex));
+break;
+default :
+}
+localPuts++;
+if (!abort) {
+localLocks++;
+}
+}
+numOfLocalWriteTx++;
+if (abort) {
+tm().rollback();
+}
+ else {
+tm().commit();
+}
+}
+sleepThread(SLEEP_TIME);
+for (int tx=1; tx <= numOfReadOnlyTx; ++tx) {
+tm().begin();
+for (int i=1; i <= numOfReadPerReadTx; ++i) {
+keyIndex++;
+Object key=getKey(keyIndex);
+localGetsReadTx++;
+assertEquals(cache().get(key),getInitValue(keyIndex));
+}
+if (abort) {
+tm().rollback();
+}
+ else {
+tm().commit();
+}
+}
+sleepThread(SLEEP_TIME);
+EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+assertTxValues(statsToValidate,numOfLocalWriteTx,numOfReadOnlyTx,abort);
+assertLockingValues(statsToValidate,localLocks,numOfLocalWriteTx,abort);
+assertAccessesValues(statsToValidate,localGetsReadTx,localGetsWriteTx,localPuts,numOfWriteTx,numOfReadOnlyTx,abort);
+assertAttributeValue(NUM_WRITE_SKEW,statsToValidate,0);
+assertAttributeValue(WRITE_SKEW_PROBABILITY,statsToValidate,0);
+assertAllStatsValidated(statsToValidate);
+resetStats();
+}

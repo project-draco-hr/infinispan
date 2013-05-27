@@ -1,0 +1,13 @@
+{
+  super.start();
+  log.startStreamSummaryInterceptor();
+  streamSummaryContainer=StreamSummaryContainer.getOrCreateStreamLibContainer(cache);
+  streamSummaryContainer.setEnabled(true);
+  distributionManager=cache.getAdvancedCache().getDistributionManager();
+  ComponentRegistry componentRegistry=cache.getAdvancedCache().getComponentRegistry();
+  LockManager oldLockManager=componentRegistry.getComponent(LockManager.class);
+  LockManager newLockManager=new TopKeyLockManager(oldLockManager,streamSummaryContainer);
+  log.replaceComponent("LockManager",oldLockManager,newLockManager);
+  componentRegistry.registerComponent(newLockManager,LockManager.class);
+  componentRegistry.rewire();
+}

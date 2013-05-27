@@ -1,0 +1,33 @@
+{
+  resetStreamSummary(cache(0));
+  resetStreamSummary(cache(1));
+  Cache<Object,Object> primary;
+  Cache<Object,Object> nonPrimary;
+  if (isPrimaryOwner(cache(0),"key")) {
+    primary=cache(0);
+    nonPrimary=cache(1);
+  }
+ else {
+    primary=cache(1);
+    nonPrimary=cache(0);
+  }
+  tm(primary).begin();
+  primary.put("key","value");
+  Transaction transaction=tm(primary).suspend();
+  primary.put("key","value");
+  try {
+    tm(primary).resume(transaction);
+    tm(primary).commit();
+    Assert.fail("The write skew should be detected");
+  }
+ catch (  Exception t) {
+  }
+  assertTopKeyAccesses(primary,"key",2,false);
+  assertTopKeyAccesses(primary,"key",0,true);
+  assertTopKeyAccesses(nonPrimary,"key",0,false);
+  assertTopKeyAccesses(nonPrimary,"key",0,true);
+  assertLockInformation(primary,"key",2,0,0);
+  assertLockInformation(nonPrimary,"key",0,0,0);
+  assertWriteSkew(primary,"key",1);
+  assertWriteSkew(nonPrimary,"key",0);
+}

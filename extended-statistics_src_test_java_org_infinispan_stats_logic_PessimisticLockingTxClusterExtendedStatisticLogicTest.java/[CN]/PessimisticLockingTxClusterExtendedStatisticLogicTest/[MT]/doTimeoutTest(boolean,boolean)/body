@@ -1,0 +1,45 @@
+{
+  final int txExecutor=executeOnOwner ? 0 : 1;
+  final int successTxExecutor=remoteContention ? 1 : 0;
+  cache(successTxExecutor).put(KEY_1,VALUE_1);
+  assertTxSeen(successTxExecutor,1,1,true);
+  resetStats();
+  tm(successTxExecutor).begin();
+  cache(successTxExecutor).put(KEY_1,VALUE_2);
+  final Transaction transaction=tm(successTxExecutor).suspend();
+  lockManagerTimeService.triggerTimeout=true;
+  tm(txExecutor).begin();
+  try {
+    cache(txExecutor).put(KEY_1,VALUE_3);
+    fail("Expected timeout exception");
+  }
+ catch (  Exception expected) {
+  }
+ finally {
+    safeRollback(txExecutor);
+  }
+  tm(txExecutor).begin();
+  try {
+    cache(txExecutor).put(KEY_1,VALUE_3);
+    fail("Expected timeout exception");
+  }
+ catch (  Exception expected) {
+  }
+ finally {
+    safeRollback(txExecutor);
+  }
+  tm(successTxExecutor).resume(transaction);
+  tm(successTxExecutor).commit();
+  if (txExecutor == successTxExecutor) {
+    assertTxSeen(successTxExecutor,3,1,true);
+  }
+ else {
+    assertTxSeen(successTxExecutor,1,1,false);
+    assertTxSeen(txExecutor,2,0,true);
+  }
+  EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+  assertLockingValues(statsToValidate,remoteContention ? 0 : 1,0,remoteContention ? 1 : 0,remoteContention ? 0 : 1,executeOnOwner ? 2 : 0,remoteContention ? 1 : 0,0,remoteContention ? 0 : 2,remoteContention ? 2 : 0,0,0,2,executeOnOwner);
+  assertWriteSkewValues(statsToValidate,0,0,txExecutor);
+  assertAllStatsValidated(statsToValidate);
+  resetStats();
+}

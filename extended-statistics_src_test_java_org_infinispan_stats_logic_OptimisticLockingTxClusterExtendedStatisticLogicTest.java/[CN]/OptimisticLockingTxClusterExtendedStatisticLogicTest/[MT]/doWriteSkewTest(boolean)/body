@@ -1,0 +1,48 @@
+{
+  final int txExecutor=executeOnOwner ? 0 : 1;
+  cache(0).put(KEY_1,VALUE_1);
+  assertTxSeen(0,1,1,true);
+  resetStats();
+  tm(txExecutor).begin();
+  assertEquals(cache(txExecutor).get(KEY_1),VALUE_1);
+  Transaction tx1=tm(txExecutor).suspend();
+  tm(txExecutor).begin();
+  assertEquals(cache(txExecutor).get(KEY_1),VALUE_1);
+  Transaction tx2=tm(txExecutor).suspend();
+  tm(txExecutor).begin();
+  cache(txExecutor).put(KEY_1,VALUE_2);
+  tm(txExecutor).commit();
+  tm(txExecutor).resume(tx1);
+  cache(txExecutor).put(KEY_1,VALUE_3);
+  try {
+    tm(txExecutor).commit();
+    fail("Rollback Exception expected!");
+  }
+ catch (  RollbackException expected) {
+  }
+  boolean allLocksReleased=false;
+  while (!allLocksReleased) {
+    allLocksReleased=true;
+    for (    LockManager lockManager : lockManagers) {
+      if (lockManager.getNumberOfLocksHeld() != 0) {
+        allLocksReleased=false;
+        TestingUtil.sleepThread(100);
+        break;
+      }
+    }
+  }
+  tm(txExecutor).resume(tx2);
+  cache(txExecutor).put(KEY_1,VALUE_3);
+  try {
+    tm(txExecutor).commit();
+    fail("Rollback Exception expected!");
+  }
+ catch (  RollbackException expected) {
+  }
+  assertTxSeen(txExecutor,3,executeOnOwner ? 0 : 3,true);
+  EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+  assertLockingValues(statsToValidate,executeOnOwner ? 1 : 0,executeOnOwner ? 2 : 0,executeOnOwner ? 0 : 3,executeOnOwner ? 1 : 0,executeOnOwner ? 2 : 0,executeOnOwner ? 0 : 1,executeOnOwner ? 0 : 2,0,0,executeOnOwner);
+  assertWriteSkewValues(statsToValidate,2,3,txExecutor);
+  assertAllStatsValidated(statsToValidate);
+  resetStats();
+}

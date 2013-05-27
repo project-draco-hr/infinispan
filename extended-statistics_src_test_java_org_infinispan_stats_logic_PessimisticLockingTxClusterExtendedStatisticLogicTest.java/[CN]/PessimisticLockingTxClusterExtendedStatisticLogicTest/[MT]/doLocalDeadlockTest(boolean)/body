@@ -1,0 +1,60 @@
+{
+  final int txExecutor=deadlockWithLocal ? 0 : 1;
+  cache(0).put(KEY_1,VALUE_1);
+  cache(0).put(KEY_2,VALUE_1);
+  assertTxSeen(0,2,2,true);
+  resetStats();
+  tm(0).begin();
+  cache(0).put(KEY_1,VALUE_2);
+  final Transaction tx1=tm(txExecutor).suspend();
+  tm(txExecutor).begin();
+  cache(txExecutor).put(KEY_2,VALUE_2);
+  final Transaction tx2=tm(txExecutor).suspend();
+  Future<Boolean> futureTx1=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      tm(0).resume(tx1);
+      try {
+        cache(0).put(KEY_2,VALUE_3);
+        tm(0).commit();
+        return Boolean.TRUE;
+      }
+ catch (      Exception e) {
+        safeRollback(0);
+      }
+      return Boolean.FALSE;
+    }
+  }
+);
+  Future<Boolean> futureTx2=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      tm(txExecutor).resume(tx2);
+      try {
+        cache(txExecutor).put(KEY_1,VALUE_3);
+        tm(txExecutor).commit();
+        return Boolean.TRUE;
+      }
+ catch (      Exception e) {
+        safeRollback(txExecutor);
+      }
+      return Boolean.FALSE;
+    }
+  }
+);
+  boolean tx1Outcome=futureTx1.get();
+  boolean tx2Outcome=futureTx2.get();
+  assertFalse(tx1Outcome && tx2Outcome,"Deadlock expected but both transactions has been committed.");
+  assertFalse(!tx1Outcome && !tx2Outcome,"Deadlock expected but both transaction has been aborted.");
+  assertTrue(tx1Outcome || tx2Outcome,"Expected one transaction to be committed.");
+  if (txExecutor == 0) {
+    assertTxSeen(0,2,1,true);
+  }
+ else {
+    assertTxSeen(0,1,tx1Outcome ? 1 : 0,false);
+    assertTxSeen(1,1,tx2Outcome ? 1 : 0,true);
+  }
+  EnumSet<ExtendedStatistic> statsToValidate=getStatsToValidate();
+  assertLockingValues(statsToValidate,deadlockWithLocal || tx1Outcome ? 2 : 0,deadlockWithLocal || !tx1Outcome ? 1 : 0,!deadlockWithLocal ? (tx2Outcome ? 2 : 1) : 0,deadlockWithLocal || tx1Outcome ? 1 : 0,deadlockWithLocal || !tx1Outcome ? 1 : 0,!deadlockWithLocal && tx2Outcome ? 1 : 0,0,0,0,deadlockWithLocal || !tx1Outcome ? 1 : 0,!deadlockWithLocal && !tx2Outcome ? 1 : 0,2,true);
+  assertWriteSkewValues(statsToValidate,0,0,txExecutor);
+  assertAllStatsValidated(statsToValidate);
+  resetStats();
+}

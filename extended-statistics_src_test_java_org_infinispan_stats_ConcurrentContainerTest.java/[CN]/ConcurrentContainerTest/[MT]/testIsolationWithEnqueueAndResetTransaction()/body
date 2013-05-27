@@ -1,0 +1,108 @@
+{
+  final ConcurrentGlobalContainer globalContainer=new ConcurrentGlobalContainer(TIME_SERVICE);
+  final List<StatisticsSnapshot> snapshots=new ArrayList<StatisticsSnapshot>(4);
+  snapshots.add(globalContainer.getSnapshot());
+  int localIndex;
+  int remoteIndex;
+  LocalTransactionStatistics localTransactionStatistics=new LocalTransactionStatistics(false,TIME_SERVICE);
+  RemoteTransactionStatistics remoteTransactionStatistics=new RemoteTransactionStatistics(TIME_SERVICE);
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      localTransactionStatistics.addValue(stats,localIndex++);
+    }
+    if (stats.isRemote()) {
+      remoteTransactionStatistics.addValue(stats,remoteIndex++);
+    }
+  }
+  globalContainer.flushing().set(true);
+  localTransactionStatistics.flushTo(globalContainer);
+  remoteTransactionStatistics.flushTo(globalContainer);
+  localTransactionStatistics.flushTo(globalContainer);
+  remoteTransactionStatistics.flushTo(globalContainer);
+  localTransactionStatistics.flushTo(globalContainer);
+  remoteTransactionStatistics.flushTo(globalContainer);
+  Assert.assertEquals(globalContainer.queue().size(),6);
+  snapshots.add(globalContainer.getSnapshot());
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D),stats,true);
+      localIndex++;
+    }
+    if (stats.isRemote()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D),stats,false);
+      remoteIndex++;
+    }
+  }
+  globalContainer.flushing().set(false);
+  snapshots.add(globalContainer.getSnapshot());
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D,3D * localIndex),stats,true);
+      localIndex++;
+    }
+    if (stats.isRemote()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D,3D * remoteIndex),stats,false);
+      remoteIndex++;
+    }
+  }
+  globalContainer.reset();
+  snapshots.clear();
+  snapshots.add(globalContainer.getSnapshot());
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D),stats,true);
+      localIndex++;
+    }
+    if (stats.isRemote()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D),stats,false);
+      remoteIndex++;
+    }
+  }
+  globalContainer.flushing().set(true);
+  localTransactionStatistics.flushTo(globalContainer);
+  remoteTransactionStatistics.flushTo(globalContainer);
+  localTransactionStatistics.flushTo(globalContainer);
+  remoteTransactionStatistics.flushTo(globalContainer);
+  localTransactionStatistics.flushTo(globalContainer);
+  globalContainer.reset();
+  remoteTransactionStatistics.flushTo(globalContainer);
+  snapshots.add(globalContainer.getSnapshot());
+  Assert.assertTrue(globalContainer.isReset());
+  Assert.assertEquals(globalContainer.queue().size(),6);
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D),stats,true);
+      localIndex++;
+    }
+    if (stats.isRemote()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D),stats,false);
+      remoteIndex++;
+    }
+  }
+  globalContainer.flushing().set(false);
+  snapshots.add(globalContainer.getSnapshot());
+  Assert.assertFalse(globalContainer.isReset());
+  localIndex=0;
+  remoteIndex=0;
+  for (  ExtendedStatistic stats : ExtendedStatistic.values()) {
+    if (stats.isLocal()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D,0D),stats,true);
+      localIndex++;
+    }
+    if (stats.isRemote()) {
+      assertSnapshotValues(snapshots,Arrays.<Double>asList(0D,0D,0D),stats,false);
+      remoteIndex++;
+    }
+  }
+  assertFinalState(globalContainer);
+}

@@ -1,0 +1,21 @@
+{
+  resetStreamSummary(cache());
+  cache().put("key","init");
+  tm().begin();
+  cache().get("key");
+  Transaction transaction=tm().suspend();
+  cache().put("key","value");
+  try {
+    tm().resume(transaction);
+    cache().put("key","value1");
+    tm().commit();
+    Assert.fail("The write skew should be detected");
+  }
+ catch (  Exception t) {
+    tm().rollback();
+  }
+  assertTopKeyAccesses(cache(),"key",3,false);
+  assertTopKeyAccesses(cache(),"key",1,true);
+  assertLockInformation(cache(),"key",2,0,0);
+  assertWriteSkew(cache(),"key",1);
+}

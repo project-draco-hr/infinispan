@@ -1,0 +1,25 @@
+{
+  if (globalTransaction == null) {
+    throw new NullPointerException("Global Transaction cannot be null");
+  }
+  TransactionStatistics ts=local ? localTransactionStatistics.get(globalTransaction) : remoteTransactionStatistics.get(globalTransaction);
+  if (ts != null) {
+    return ts;
+  }
+  if (local) {
+    if (log.isTraceEnabled()) {
+      log.tracef("Creating local statistic for %s",globalTransaction.globalId());
+    }
+    LocalTransactionStatistics lts=new LocalTransactionStatistics(isOptimisticLocking,timeService);
+    TransactionStatistics existing=localTransactionStatistics.putIfAbsent(globalTransaction,lts);
+    return existing == null ? lts : existing;
+  }
+ else {
+    if (log.isTraceEnabled()) {
+      log.tracef("Creating remote statistic for %s",globalTransaction.globalId());
+    }
+    RemoteTransactionStatistics rts=new RemoteTransactionStatistics(timeService);
+    TransactionStatistics existing=remoteTransactionStatistics.putIfAbsent(globalTransaction,rts);
+    return existing == null ? rts : existing;
+  }
+}

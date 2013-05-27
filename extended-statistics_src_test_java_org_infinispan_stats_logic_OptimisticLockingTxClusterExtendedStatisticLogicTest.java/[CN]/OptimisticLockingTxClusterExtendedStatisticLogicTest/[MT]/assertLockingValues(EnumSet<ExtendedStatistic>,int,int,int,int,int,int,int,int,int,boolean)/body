@@ -1,0 +1,16 @@
+{
+  log.infof("Check Locking value. localHeldLocks=%s, failLocalHeldLocks=%s, remoteHeldLocks=%s, successLocalTx=%s, " + "failLocalTx=%s, successRemoteTx=%s, failRemoteTx=%s, timeoutLocalLocks=%s, timeoutRemoteLocks=%s",localHeldLocks,failLocalHeldLocks,remoteHeldLocks,successLocalTx,failLocalTx,successRemoteTx,failRemoteTx,timeoutLocalLocks,timeoutRemoteLocks);
+  int totalLocalLocks=localHeldLocks + failLocalHeldLocks;
+  assertLockingValue(LOCK_HOLD_TIME_LOCAL,statsToValidate,totalLocalLocks != 0 ? MICROSECONDS : 0,0);
+  assertLockingValue(LOCK_HOLD_TIME_REMOTE,statsToValidate,remoteHeldLocks != 0 ? MICROSECONDS : 0,0);
+  assertLockingValue(NUM_LOCK_PER_LOCAL_TX,statsToValidate,successLocalTx != 0 || failLocalTx != 0 ? totalLocalLocks * 1.0 / (successLocalTx + failLocalTx) : 0,0);
+  assertLockingValue(NUM_LOCK_PER_REMOTE_TX,statsToValidate,successRemoteTx != 0 || failRemoteTx != 0 ? remoteHeldLocks * 1.0 / (successRemoteTx + failRemoteTx) : 0,0);
+  assertLockingValue(LOCK_HOLD_TIME_SUCCESS_LOCAL_TX,statsToValidate,0,0);
+  assertLockingValue(NUM_HELD_LOCKS_SUCCESS_LOCAL_TX,statsToValidate,successLocalTx != 0 ? localHeldLocks * 1.0 / successLocalTx : 0,0);
+  assertLockingValue(LOCK_HOLD_TIME,statsToValidate,totalLocalLocks != 0 || remoteHeldLocks != 0 ? MICROSECONDS : 0,0);
+  assertLockingValue(NUM_HELD_LOCKS,statsToValidate,totalLocalLocks + remoteHeldLocks,0);
+  assertLockingValue(NUM_WAITED_FOR_LOCKS,statsToValidate,timeoutLocalLocks + timeoutRemoteLocks,0);
+  assertLockingValue(LOCK_WAITING_TIME,statsToValidate,timeoutLocalLocks != 0 || timeoutRemoteLocks != 0 ? MICROSECONDS : 0,0);
+  assertLockingValue(NUM_LOCK_FAILED_TIMEOUT,statsToValidate,executeOnLockOnwer ? timeoutLocalLocks + timeoutRemoteLocks : 0,executeOnLockOnwer ? 0 : timeoutLocalLocks + timeoutRemoteLocks);
+  assertLockingValue(NUM_LOCK_FAILED_DEADLOCK,statsToValidate,0,0);
+}

@@ -1,0 +1,70 @@
+{
+  GlobalTransaction globalTransaction=command.getGlobalTransaction();
+  if (log.isTraceEnabled()) {
+    log.tracef("Visit Prepare command %s. Is it local?. Transaction is %s",command,ctx.isOriginLocal(),globalTransaction.globalId());
+  }
+  initStatsIfNecessary(ctx);
+  cacheStatisticManager.onPrepareCommand(globalTransaction,ctx.isOriginLocal());
+  if (command.hasModifications()) {
+    cacheStatisticManager.markAsWriteTransaction(globalTransaction,ctx.isOriginLocal());
+  }
+  boolean success=false;
+  try {
+    long start=timeService.time();
+    Object ret=invokeNextInterceptor(ctx,command);
+    long end=timeService.time();
+    updateTime(PREPARE_EXECUTION_TIME,NUM_PREPARE_COMMAND,start,end,globalTransaction,ctx.isOriginLocal());
+    success=true;
+    return ret;
+  }
+ catch (  TimeoutException e) {
+    if (ctx.isOriginLocal() && isLockTimeout(e)) {
+      cacheStatisticManager.increment(NUM_LOCK_FAILED_TIMEOUT,globalTransaction,ctx.isOriginLocal());
+    }
+    throw e;
+  }
+catch (  DeadlockDetectedException e) {
+    if (ctx.isOriginLocal()) {
+      cacheStatisticManager.increment(NUM_LOCK_FAILED_DEADLOCK,globalTransaction,ctx.isOriginLocal());
+    }
+    throw e;
+  }
+catch (  WriteSkewException e) {
+    if (ctx.isOriginLocal()) {
+      cacheStatisticManager.increment(NUM_WRITE_SKEW,globalTransaction,ctx.isOriginLocal());
+    }
+    throw e;
+  }
+catch (  RemoteException remote) {
+    if (ctx.isOriginLocal()) {
+      ExtendedStatistic stat=null;
+      Throwable cause=remote.getCause();
+      while (cause != null) {
+        if (cause instanceof TimeoutException) {
+          stat=NUM_LOCK_FAILED_TIMEOUT;
+          break;
+        }
+ else         if (cause instanceof DeadlockDetectedException) {
+          stat=NUM_LOCK_FAILED_DEADLOCK;
+          break;
+        }
+ else         if (cause instanceof WriteSkewException) {
+          stat=NUM_WRITE_SKEW;
+          break;
+        }
+        cause=cause.getCause();
+      }
+      if (stat != null) {
+        cacheStatisticManager.increment(stat,globalTransaction,true);
+      }
+    }
+    throw remote;
+  }
+ finally {
+    if (command.isOnePhaseCommit()) {
+      boolean local=ctx.isOriginLocal();
+      cacheStatisticManager.setTransactionOutcome(success,globalTransaction,ctx.isOriginLocal());
+      cacheStatisticManager.terminateTransaction(globalTransaction,local,!local);
+    }
+  }
+}
