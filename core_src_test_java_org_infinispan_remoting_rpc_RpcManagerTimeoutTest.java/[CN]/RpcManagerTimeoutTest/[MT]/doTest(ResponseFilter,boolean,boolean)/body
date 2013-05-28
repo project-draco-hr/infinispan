@@ -1,0 +1,16 @@
+{
+  RpcManager rpcManager=advancedCache(0,CACHE_NAME).getRpcManager();
+  RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(1000,TimeUnit.MILLISECONDS).totalOrder(totalOrder);
+  ArrayList<Address> recipients=null;
+  if (!broadcast) {
+    List<Address> members=rpcManager.getMembers();
+    recipients=new ArrayList<Address>(2);
+    recipients.add(members.get(2));
+    recipients.add(members.get(3));
+  }
+  if (filter != null) {
+    builder.responseFilter(filter);
+  }
+  rpcManager.invokeRemotely(recipients,new SleepingCacheRpcCommand(CACHE_NAME,5000),builder.build());
+  Assert.fail("Timeout exception wasn't thrown");
+}

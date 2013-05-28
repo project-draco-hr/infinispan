@@ -1,0 +1,18 @@
+{
+  RpcManager rpcManager=advancedCache(0,CACHE_NAME).getRpcManager();
+  final List<Address> members=rpcManager.getMembers();
+  ResponseFilter filter=new ResponseFilter(){
+    private int expectedResponses=2;
+    @Override public boolean isAcceptable(    Response response,    Address sender){
+      if (sender.equals(members.get(2)) || sender.equals(members.get(3))) {
+        expectedResponses--;
+      }
+      return true;
+    }
+    @Override public boolean needMoreResponses(){
+      return expectedResponses > 0;
+    }
+  }
+;
+  doTest(filter,false,false);
+}
