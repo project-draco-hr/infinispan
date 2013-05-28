@@ -1,0 +1,40 @@
+{
+  resetBeforeMethod();
+  final int txExecutor=executeOnLockOwner ? 0 : 1;
+  AtomicMap<Object,Object> map=AtomicMapLookup.getAtomicMap(cache(txExecutor),ahmKey);
+  tm(txExecutor).begin();
+  map.put("key1",VALUE);
+  map.put("key2",VALUE);
+  map.put("key3",VALUE);
+  final Transaction tx1=tm(txExecutor).suspend();
+  if (pessimistic) {
+    rpcManagers[txExecutor].blockBefore(PrepareCommand.class);
+  }
+ else {
+    rpcManagers[txExecutor].blockAfter(PrepareCommand.class);
+  }
+  Future<Boolean> txOutcome=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      try {
+        tm(txExecutor).resume(tx1);
+        tm(txExecutor).commit();
+        return Boolean.TRUE;
+      }
+ catch (      Exception e) {
+        return Boolean.FALSE;
+      }
+    }
+  }
+);
+  try {
+    rpcManagers[txExecutor].waitForCommandToBlock();
+    assertKeysLocked(0,ahmKey);
+    assertKeysLocked(1,EMPTY_ARRAY);
+    assertKeysLocked(2,EMPTY_ARRAY);
+    rpcManagers[txExecutor].stopBlocking();
+    Assert.assertTrue(txOutcome.get());
+  }
+  finally {
+    rpcManagers[txExecutor].stopBlocking();
+  }
+}
