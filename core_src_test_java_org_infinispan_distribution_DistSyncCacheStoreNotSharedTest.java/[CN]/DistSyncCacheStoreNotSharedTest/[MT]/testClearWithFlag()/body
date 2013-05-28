@@ -1,2 +1,15 @@
 {
+  prepareClearTest();
+  c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+  for (  Cache<Object,String> c : caches) {
+    DataContainer dc=c.getAdvancedCache().getDataContainer();
+    assertEquals("Data container " + c + " should be empty, instead it contains keys "+ dc.keySet(),0,dc.size());
+    CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+    for (int i=0; i < 5; i++) {
+      String key="k" + i;
+      if (isOwner(c,key)) {
+        assertTrue(store.containsKey(key));
+      }
+    }
+  }
 }

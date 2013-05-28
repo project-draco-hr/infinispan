@@ -1,2 +1,13 @@
 {
+  Map<String,String> data=makePutAllTestData();
+  c1.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).putAll(data);
+  for (  Cache<Object,String> c : caches) {
+    CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+    for (    String key : keys) {
+      assertFalse(store.containsKey(key));
+      if (isOwner(c,key)) {
+        assertIsInContainerImmortal(c,key);
+      }
+    }
+  }
 }

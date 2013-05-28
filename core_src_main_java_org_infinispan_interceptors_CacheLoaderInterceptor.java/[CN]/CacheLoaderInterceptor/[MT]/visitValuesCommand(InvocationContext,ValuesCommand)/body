@@ -1,0 +1,14 @@
+{
+  Object values=super.visitValuesCommand(ctx,command);
+  if (enabled && !shouldSkipCacheLoader(command)) {
+    Set<InternalCacheEntry> set=loader.loadAll();
+    Collection<Object> valueCollection=(Collection<Object>)values;
+    List<Object> valueList=new ArrayList<Object>(set.size() + valueCollection.size());
+    valueList.addAll(valueCollection);
+    for (    InternalCacheEntry ice : set) {
+      valueList.add(ice.getValue());
+    }
+    return Collections.unmodifiableList(valueList);
+  }
+  return values;
+}

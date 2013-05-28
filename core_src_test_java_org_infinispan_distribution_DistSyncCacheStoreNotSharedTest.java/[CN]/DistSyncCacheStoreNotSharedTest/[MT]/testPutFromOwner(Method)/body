@@ -1,2 +1,15 @@
 {
+  String key=k(m), value="value3";
+  getOwners(key)[0].put(key,value);
+  for (  Cache<Object,String> c : caches) {
+    CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+    if (isOwner(c,key)) {
+      assertIsInContainerImmortal(c,key);
+      assertTrue(store.containsKey(key));
+    }
+ else {
+      assertIsNotInL1(c,key);
+      assertFalse(store.containsKey(key));
+    }
+  }
 }

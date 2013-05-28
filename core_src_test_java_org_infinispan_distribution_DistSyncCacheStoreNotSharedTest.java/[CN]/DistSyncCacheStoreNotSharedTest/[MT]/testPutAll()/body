@@ -1,2 +1,15 @@
 {
+  c1.putAll(makePutAllTestData());
+  for (  Cache<Object,String> c : caches) {
+    CacheStore store=TestingUtil.extractComponent(c,CacheLoaderManager.class).getCacheStore();
+    for (    String key : keys) {
+      if (isOwner(c,key)) {
+        assertIsInContainerImmortal(c,key);
+        assertTrue(store.containsKey(key));
+      }
+ else {
+        assertFalse(store.containsKey(key));
+      }
+    }
+  }
 }

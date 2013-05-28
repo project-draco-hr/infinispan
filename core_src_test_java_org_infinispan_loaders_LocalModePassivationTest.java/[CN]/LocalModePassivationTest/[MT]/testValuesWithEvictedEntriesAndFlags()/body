@@ -1,0 +1,15 @@
+{
+  final int numKeys=300;
+  for (int i=0; i < numKeys; i++) {
+    cache.put(i,i);
+  }
+  AdvancedCache<Object,Object> flagCache=cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD);
+  DataContainer dc=flagCache.getDataContainer();
+  assertFalse("Data Container should not have all keys",numKeys == dc.size());
+  Collection<Object> values=flagCache.values();
+  assertEquals(dc.size(),values.size());
+  Collection<Object> dcValues=dc.values();
+  for (  Object dcValue : dcValues) {
+    assertTrue("Value: " + dcValue + " was not found!",values.contains(dcValue));
+  }
+}
