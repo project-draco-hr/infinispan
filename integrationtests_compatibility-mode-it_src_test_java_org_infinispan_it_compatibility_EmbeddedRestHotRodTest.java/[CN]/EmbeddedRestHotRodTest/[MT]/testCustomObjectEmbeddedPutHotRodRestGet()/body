@@ -1,0 +1,11 @@
+{
+  final String key="5";
+  Person p=new Person("Galder");
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key,p));
+  assertEquals(p,cacheFactory.getHotRodCache().get(key));
+  HttpMethod get=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  get.setRequestHeader("Accept","application/x-java-serialized-object");
+  cacheFactory.getRestClient().executeMethod(get);
+  assertEquals(get.getStatusText(),HttpServletResponse.SC_OK,get.getStatusCode());
+  assertEquals(p,new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
+}

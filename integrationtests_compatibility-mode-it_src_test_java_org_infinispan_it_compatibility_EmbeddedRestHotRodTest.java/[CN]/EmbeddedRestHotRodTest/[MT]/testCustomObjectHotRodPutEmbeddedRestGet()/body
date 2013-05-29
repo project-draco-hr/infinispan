@@ -1,0 +1,12 @@
+{
+  final String key="4";
+  Person p=new Person("Martin");
+  RemoteCache<String,Object> remote=cacheFactory.getHotRodCache();
+  assertEquals(null,remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key,p));
+  assertEquals(p,cacheFactory.getEmbeddedCache().get(key));
+  HttpMethod get=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  get.setRequestHeader("Accept","application/x-java-serialized-object");
+  cacheFactory.getRestClient().executeMethod(get);
+  assertEquals(get.getStatusText(),HttpServletResponse.SC_OK,get.getStatusCode());
+  assertEquals(p,new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
+}
