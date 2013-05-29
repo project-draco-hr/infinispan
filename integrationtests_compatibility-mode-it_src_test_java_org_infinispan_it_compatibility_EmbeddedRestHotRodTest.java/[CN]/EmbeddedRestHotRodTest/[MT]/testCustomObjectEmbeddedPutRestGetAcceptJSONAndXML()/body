@@ -1,0 +1,15 @@
+{
+  final String key="6";
+  final Person p=new Person("Anna");
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key,p));
+  HttpMethod getJson=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  getJson.setRequestHeader("Accept","application/json");
+  cacheFactory.getRestClient().executeMethod(getJson);
+  assertEquals(getJson.getStatusText(),HttpServletResponse.SC_OK,getJson.getStatusCode());
+  assertEquals("{\"name\":\"Anna\"}",getJson.getResponseBodyAsString());
+  HttpMethod getXml=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  getXml.setRequestHeader("Accept","application/xml");
+  cacheFactory.getRestClient().executeMethod(getXml);
+  assertEquals(getXml.getStatusText(),HttpServletResponse.SC_OK,getXml.getStatusCode());
+  assertTrue(getXml.getResponseBodyAsString().contains("<name>Anna</name>"));
+}
