@@ -1,16 +1,17 @@
 {
   lock.lock();
   try {
-    Integer currentCount=events.get(event);
-    if (currentCount == null) {
-      currentCount=0;
+    EventStatus status=events.get(event);
+    if (status == null) {
+      status=new EventStatus();
+      events.put(event,status);
     }
- else     if (currentCount < 0) {
+ else     if (status.available < 0) {
       throw new IllegalStateException("Thread already timed out waiting for event " + event);
     }
-    int newCount=count != INFINITE ? currentCount + count : INFINITE;
-    log.tracef("Triggering event %s * %d, new count is %d",event,count,newCount);
-    events.put(event,newCount);
+    status.available=count != INFINITE ? status.available + count : INFINITE;
+    status.total=count != INFINITE ? status.total + count : INFINITE;
+    log.tracef("Triggering event %s * %d (available = %d, total = %d)",event,count,status.available,status.total);
     unblockCondition.signalAll();
   }
   finally {

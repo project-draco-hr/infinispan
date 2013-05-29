@@ -2,20 +2,26 @@
   log.tracef("Waiting for event %s * %d",event,count);
   lock.lock();
   try {
+    EventStatus status=null;
     long waitNanos=unit.toNanos(timeout);
     while (waitNanos > 0) {
-      Integer currentCount=events.get(event);
-      if (currentCount != null && currentCount >= count) {
-        events.put(event,currentCount - count);
+      status=events.get(event);
+      if (status == null) {
+        status=new EventStatus();
+        events.put(event,status);
+      }
+      if (status.available >= count) {
+        status.available-=count;
         break;
       }
       waitNanos=unblockCondition.awaitNanos(waitNanos);
     }
     if (waitNanos <= 0) {
-      log.tracef("Timed out waiting for event %s * %d",event,count);
-      events.put(event,-1);
+      log.errorf("Timed out waiting for event %s * %d (available = %d, total = %d",event,count,status.available,status.total);
+      status.available=-1;
       return false;
     }
+    log.tracef("Received event %s * %d (available = %d, total = %d)",event,count,status.available,status.total);
     return true;
   }
   finally {

@@ -33,6 +33,7 @@
       ownsData=true;
     }
   }
+  waitingForState.set(false);
   final ConsistentHash previousReadCh=this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
   final ConsistentHash previousWriteCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
@@ -90,7 +91,7 @@
   }
   finally {
     stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
-    if (isRebalance) {
+    if (rebalanceInProgress.get()) {
       waitingForState.set(true);
     }
     notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());

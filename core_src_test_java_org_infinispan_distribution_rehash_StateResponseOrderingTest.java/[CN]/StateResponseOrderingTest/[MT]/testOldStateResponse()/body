@@ -1,15 +1,17 @@
 {
   MagicKey k1=new MagicKey("k1",cache(1));
   MagicKey k2=new MagicKey("k2",cache(2));
+  MagicKey k3=new MagicKey("k3",cache(3));
   cache(1).put(k1,"v1");
   cache(2).put(k2,"v2");
+  cache(3).put(k3,"v3");
   final StateTransferManager stm=cache(0).getAdvancedCache().getComponentRegistry().getStateTransferManager();
   int initialTopologyId=stm.getCacheTopology().getTopologyId();
   RpcManager rm=TestingUtil.extractComponent(cache(0),RpcManager.class);
   ControlledRpcManager crm=new ControlledRpcManager(rm);
   crm.blockBefore(StateRequestCommand.class);
   TestingUtil.replaceComponent(cache(0),RpcManager.class,crm,true);
-  cache(2).stop();
+  cache(3).stop();
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return stm.getCacheTopology().getPendingCH() != null;
@@ -18,11 +20,12 @@
 );
   InboundInvocationHandler iih=TestingUtil.extractGlobalComponent(manager(0),InboundInvocationHandler.class);
   StateChunk stateChunk=new StateChunk(0,Collections.<InternalCacheEntry>emptyList(),true);
-  StateResponseCommand stateResponseCommand=new StateResponseCommand(CacheContainer.DEFAULT_CACHE_NAME,address(2),initialTopologyId,Arrays.asList(stateChunk));
-  iih.handle(stateResponseCommand,address(2),null,false);
+  StateResponseCommand stateResponseCommand=new StateResponseCommand(CacheContainer.DEFAULT_CACHE_NAME,address(3),initialTopologyId,Arrays.asList(stateChunk));
+  iih.handle(stateResponseCommand,address(3),null,false);
   crm.stopBlocking();
-  TestingUtil.waitForRehashToComplete(cache(0),cache(1));
+  TestingUtil.waitForRehashToComplete(cache(0),cache(1),cache(2));
   DataContainer dataContainer=TestingUtil.extractComponent(cache(0),DataContainer.class);
   assertTrue(dataContainer.containsKey(k1));
   assertTrue(dataContainer.containsKey(k2));
+  assertTrue(dataContainer.containsKey(k3));
 }

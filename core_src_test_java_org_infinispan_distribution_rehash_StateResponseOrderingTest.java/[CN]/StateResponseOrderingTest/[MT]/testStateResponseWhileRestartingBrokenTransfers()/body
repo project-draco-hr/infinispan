@@ -1,0 +1,46 @@
+{
+  MagicKey k1=new MagicKey("k1",cache(1),cache(2),cache(3));
+  cache(0).put(k1,"v1");
+  final StateTransferManager stm=cache(0).getAdvancedCache().getComponentRegistry().getStateTransferManager();
+  final int initialTopologyId=stm.getCacheTopology().getTopologyId();
+  final CheckPoint checkPoint=new CheckPoint();
+  replaceInvocationHandler(checkPoint,manager(0),StateResponseCommand.class);
+  replaceInvocationHandler(checkPoint,manager(1),StateRequestCommand.class);
+  replaceInvocationHandler(checkPoint,manager(2),StateRequestCommand.class);
+  log.debugf("Killing node %s",address(3));
+  cache(3).stop();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return stm.getCacheTopology().getTopologyId() == initialTopologyId + 2;
+    }
+  }
+);
+  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(1));
+  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(2));
+  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(1),10,SECONDS);
+  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(2),10,SECONDS);
+  String event=checkPoint.peek(5,TimeUnit.SECONDS,"IN_START_STATE_TRANSFER_" + address(1),"IN_START_STATE_TRANSFER_" + address(2));
+  int liveNode=event.endsWith(address(1).toString()) ? 1 : 2;
+  int nodeToKill=liveNode == 1 ? 2 : 1;
+  List<Address> keyOwners=cache(0).getAdvancedCache().getDistributionManager().locate(k1);
+  log.debugf("Killing node %s. Key %s is located on %s",address(nodeToKill),k1,keyOwners);
+  log.debugf("Data on node %s: %s",address(1),cache(1).keySet());
+  log.debugf("Data on node %s: %s",address(2),cache(2).keySet());
+  checkPoint.await("IN_START_STATE_TRANSFER_" + address(liveNode),1,SECONDS);
+  checkPoint.trigger("OUT_START_STATE_TRANSFER_" + address(liveNode));
+  cache(nodeToKill).stop();
+  checkPoint.awaitStrict("IN_RESPONSE_" + address(liveNode),10,SECONDS);
+  checkPoint.trigger("OUT_RESPONSE_" + address(liveNode));
+  log.debugf("Received segments?");
+  Thread.sleep(1000);
+  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + address(liveNode),10,SECONDS);
+  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + address(liveNode));
+  checkPoint.awaitStrict("IN_START_STATE_TRANSFER_" + address(liveNode),10,SECONDS);
+  checkPoint.trigger("OUT_START_STATE_TRANSFER_" + address(liveNode));
+  checkPoint.awaitStrict("IN_RESPONSE_" + address(liveNode),10,SECONDS);
+  checkPoint.trigger("OUT_RESPONSE_" + address(liveNode));
+  TestingUtil.waitForRehashToComplete(cache(0),cache(liveNode));
+  log.debugf("Final checkpoint status: %s",checkPoint);
+  DataContainer dataContainer=TestingUtil.extractComponent(cache(0),DataContainer.class);
+  assertTrue(dataContainer.containsKey(k1));
+}
