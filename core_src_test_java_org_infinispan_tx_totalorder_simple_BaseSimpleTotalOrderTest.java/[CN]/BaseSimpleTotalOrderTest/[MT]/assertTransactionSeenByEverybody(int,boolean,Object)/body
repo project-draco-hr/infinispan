@@ -1,0 +1,24 @@
+{
+  GlobalTransaction lastExecutedTx=transactionTrackInterceptors[index].getLastExecutedTransaction();
+  assertEquals(transactionTrackInterceptors[index].getExecutedTransactions().size(),1);
+  if (!checkAllInvolvedNodes) {
+    Assert.assertTrue(transactionTrackInterceptors[index].awaitForLocalCompletion(lastExecutedTx,TX_TIMEOUT,TimeUnit.SECONDS),"Transaction didn't complete locally in " + address(cache(index)) + ".");
+    for (    TransactionTrackInterceptor interceptor : transactionTrackInterceptors) {
+      interceptor.reset();
+    }
+  }
+ else {
+    for (int i=0; i < clusterSize; ++i) {
+      if (i == index) {
+        assertTrue(transactionTrackInterceptors[i].awaitForLocalCompletion(lastExecutedTx,TX_TIMEOUT,TimeUnit.SECONDS),"Transaction didn't complete locally in " + address(cache(i)) + ".");
+      }
+      for (      Object key : keys) {
+        if (i == index || isOwner(cache(i),key)) {
+          assertTrue(transactionTrackInterceptors[i].awaitForRemoteCompletion(lastExecutedTx,TX_TIMEOUT,TimeUnit.SECONDS),"Transaction didn't arrive to " + address(cache(i)) + ". Key is "+ key);
+          break;
+        }
+      }
+      transactionTrackInterceptors[i].reset();
+    }
+  }
+}

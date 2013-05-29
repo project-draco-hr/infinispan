@@ -1,0 +1,22 @@
+{
+  preCheckBeforeTest(KEY_1);
+  cache(index1).put(KEY_1,VALUE_1);
+  assertTransactionSeenByEverybody(index1,true,KEY_1);
+  assertCacheValue(KEY_1,VALUE_1);
+  assertFalse(cache(index1).remove(KEY_1,VALUE_2));
+  assertTransactionSeenByEverybody(index1,false);
+  assertCacheValue(KEY_1,VALUE_1);
+  assertTrue(cache(index1).remove(KEY_1,VALUE_1));
+  assertTransactionSeenByEverybody(index1,true,KEY_1);
+  assertCacheValue(KEY_1,null);
+  cache(index1).put(KEY_1,VALUE_3);
+  assertTransactionSeenByEverybody(index1,true,KEY_1);
+  assertCacheValue(KEY_1,VALUE_3);
+  assertFalse(cache(index2).remove(KEY_1,VALUE_2));
+  assertTransactionSeenByEverybody(index2,false);
+  assertCacheValue(KEY_1,VALUE_3);
+  assertTrue(cache(index2).remove(KEY_1,VALUE_3));
+  assertTransactionSeenByEverybody(index2,true,KEY_1);
+  assertCacheValue(KEY_1,null);
+  assertNoTransactions();
+}

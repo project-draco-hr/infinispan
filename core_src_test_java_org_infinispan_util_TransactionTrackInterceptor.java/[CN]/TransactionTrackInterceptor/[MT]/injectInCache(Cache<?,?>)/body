@@ -1,0 +1,11 @@
+{
+  InterceptorChain chain=cache.getAdvancedCache().getComponentRegistry().getComponent(InterceptorChain.class);
+  if (chain.containsInterceptorType(TransactionTrackInterceptor.class)) {
+    return (TransactionTrackInterceptor)chain.getInterceptorsWithClass(TransactionTrackInterceptor.class).get(0);
+  }
+  TransactionTrackInterceptor interceptor=new TransactionTrackInterceptor();
+  interceptor.cache=cache;
+  interceptor.embeddedCacheManager=cache.getCacheManager();
+  chain.addInterceptor(interceptor,0);
+  return interceptor;
+}

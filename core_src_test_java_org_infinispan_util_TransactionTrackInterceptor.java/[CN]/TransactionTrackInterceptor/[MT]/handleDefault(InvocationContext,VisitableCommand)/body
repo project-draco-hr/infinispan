@@ -1,0 +1,15 @@
+{
+  try {
+    return super.handleDefault(ctx,command);
+  }
+  finally {
+    if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+      GlobalTransaction globalTransaction=((TxInvocationContext)ctx).getGlobalTransaction();
+synchronized (this) {
+        if (!localTransactionsOperation.contains(globalTransaction)) {
+          localTransactionsOperation.add(globalTransaction);
+        }
+      }
+    }
+  }
+}
