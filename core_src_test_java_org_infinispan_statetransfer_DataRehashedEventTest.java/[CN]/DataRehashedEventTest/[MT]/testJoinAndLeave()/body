@@ -5,6 +5,7 @@
   cache(1);
   TestingUtil.waitForRehashToComplete(cache(0),cache(1));
   ConsistentHash ch2Nodes=advancedCache(0).getDistributionManager().getReadConsistentHash();
+  rehashListener.waitForEvents(2);
   List<DataRehashedEvent<Object,Object>> events=rehashListener.removeEvents();
   assertEquals(events.size(),2);
   DataRehashedEvent<Object,Object> pre=events.get(0);
@@ -20,6 +21,7 @@
   cache(2);
   TestingUtil.waitForRehashToComplete(cache(0),cache(1),cache(2));
   ConsistentHash ch3Nodes=advancedCache(0).getDistributionManager().getReadConsistentHash();
+  rehashListener.waitForEvents(2);
   events=rehashListener.removeEvents();
   assertEquals(events.size(),2);
   pre=events.get(0);
@@ -33,6 +35,7 @@
   assertEquals(post.getConsistentHashAtEnd(),ch3Nodes);
   killMember(2);
   ConsistentHash chAfterLeave=advancedCache(0).getDistributionManager().getReadConsistentHash();
+  rehashListener.waitForEvents(2);
   events=rehashListener.removeEvents();
   assertEquals(events.size(),2);
   pre=events.get(0);
