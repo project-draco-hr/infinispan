@@ -1,7 +1,6 @@
 {
-  if (cache.getRpcManager() == null)   throw new IllegalStateException("Can not use non-clustered cache for MapReduceTask");
-  if (cache.getStatus() != ComponentStatus.RUNNING)   throw new IllegalStateException("Invalid cache state " + cache.getStatus());
-  if (cache.getDistributionManager() == null) {
-    throw new IllegalStateException("Cache mode should be DIST, rather than " + cache.getCacheConfiguration().clustering().cacheModeString());
+  if (cache.getStatus() != ComponentStatus.RUNNING)   throw log.invalidCacheState(cache.getStats().toString());
+  if (cache.getRpcManager() != null && cache.getDistributionManager() == null) {
+    throw log.requireDistOrReplCache(cache.getCacheConfiguration().clustering().cacheModeString());
   }
 }

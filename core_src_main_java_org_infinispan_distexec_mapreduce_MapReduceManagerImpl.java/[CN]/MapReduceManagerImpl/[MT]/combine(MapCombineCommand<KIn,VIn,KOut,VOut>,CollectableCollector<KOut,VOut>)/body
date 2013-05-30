@@ -11,12 +11,12 @@
     tmpCache=cacheManager.getCache(taskId);
   }
   if (tmpCache == null) {
-    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " not found on "+ localAddress);
+    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " not found on "+ cdl.getAddress());
   }
   DistributionManager dm=tmpCache.getAdvancedCache().getDistributionManager();
   if (combiner != null) {
     Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
-    log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,localAddress);
+    log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,cdl.getAddress());
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     Map<KOut,VOut> combinedMap=new ConcurrentHashMap<KOut,VOut>();
     try {
@@ -33,7 +33,7 @@
           combined=list.get(0);
           combinedMap.put(e.getKey(),combined);
         }
-        log.tracef("For m/r task %s combined %s to %s at %s",taskId,e.getKey(),combined,localAddress);
+        log.tracef("For m/r task %s combined %s to %s at %s",taskId,e.getKey(),combined,cdl.getAddress());
       }
     }
   finally {

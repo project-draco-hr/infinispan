@@ -3,9 +3,17 @@
   MapCombineCommand<KIn,VIn,KOut,VOut> cmd=null;
   Map<KOut,List<VOut>> mapPhasesResult=new HashMap<KOut,List<VOut>>();
   List<MapTaskPart<Map<KOut,List<VOut>>>> futures=new ArrayList<MapTaskPart<Map<KOut,List<VOut>>>>();
+  Address localAddress=clusteringDependentLogic.getAddress();
   if (inputTaskKeysEmpty()) {
-    for (    Address target : rpc.getMembers()) {
-      if (target.equals(rpc.getAddress())) {
+    List<Address> targets;
+    if (isLocalOnly) {
+      targets=Collections.singletonList(localAddress);
+    }
+ else {
+      targets=rpc.getMembers();
+    }
+    for (    Address target : targets) {
+      if (target.equals(localAddress)) {
         cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),null,false,false);
       }
  else {
@@ -17,11 +25,11 @@
     }
   }
  else {
-    Map<Address,List<KIn>> keysToNodes=mapKeysToNodes(keys);
-    for (    Entry<Address,List<KIn>> e : keysToNodes.entrySet()) {
+    Map<Address,? extends Collection<KIn>> keysToNodes=mapKeysToNodes(keys);
+    for (    Entry<Address,? extends Collection<KIn>> e : keysToNodes.entrySet()) {
       Address address=e.getKey();
-      List<KIn> keys=e.getValue();
-      if (address.equals(rpc.getAddress())) {
+      Collection<KIn> keys=e.getValue();
+      if (address.equals(localAddress)) {
         cmd=buildMapCombineCommand(taskId.toString(),clone(mapper),clone(combiner),keys,false,false);
       }
  else {

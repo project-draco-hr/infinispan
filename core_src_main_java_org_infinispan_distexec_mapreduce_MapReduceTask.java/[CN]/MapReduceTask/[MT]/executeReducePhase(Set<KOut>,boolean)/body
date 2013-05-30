@@ -8,13 +8,13 @@
     destCache=taskId.toString();
   }
   Cache<Object,Object> dstCache=cache.getCacheManager().getCache(destCache);
-  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(),allMapPhasesResponses,useCompositeKeys);
+  Map<Address,? extends Collection<KOut>> keysToNodes=mapKeysToNodes(dstCache.getAdvancedCache().getDistributionManager(),allMapPhasesResponses,useCompositeKeys);
   Map<KOut,VOut> reduceResult=new HashMap<KOut,VOut>();
   List<ReduceTaskPart<Map<KOut,VOut>>> reduceTasks=new ArrayList<ReduceTaskPart<Map<KOut,VOut>>>();
   ReduceCommand<KOut,VOut> reduceCommand=null;
-  for (  Entry<Address,List<KOut>> e : keysToNodes.entrySet()) {
+  for (  Entry<Address,? extends Collection<KOut>> e : keysToNodes.entrySet()) {
     Address address=e.getKey();
-    List<KOut> keys=e.getValue();
+    Collection<KOut> keys=e.getValue();
     if (address.equals(rpc.getAddress())) {
       reduceCommand=buildReduceCommand(taskId.toString(),destCache,clone(reducer),keys,useCompositeKeys);
     }
