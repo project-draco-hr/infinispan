@@ -1,6 +1,14 @@
 {
+  int number=input.readUnsignedByte();
+switch (number) {
+case IMMORTAL:
+    return new EmbeddedMetadata((EntryVersion)input.readObject());
+case EXPIRABLE:
   long lifespan=input.readLong();
-  long maxIdle=input.readLong();
-  EntryVersion version=(EntryVersion)input.readObject();
-  return new EmbeddedMetadata(lifespan,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS,version);
+long maxIdle=input.readLong();
+EntryVersion version=(EntryVersion)input.readObject();
+return new EmbeddedExpirableMetadata(lifespan,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS,version);
+default :
+throw new IllegalStateException("Unknown metadata type " + number);
+}
 }
