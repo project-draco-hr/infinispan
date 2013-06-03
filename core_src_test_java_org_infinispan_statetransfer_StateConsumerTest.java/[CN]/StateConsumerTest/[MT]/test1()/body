@@ -101,7 +101,7 @@
   newSegments.removeAll(oldSegments);
   log.debugf("Rebalancing. Added segments=%s, old segments=%s",newSegments,oldSegments);
   assertEquals(flatRequestedSegments,newSegments);
-  fork(new Callable<Object>(){
+  Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       stateConsumer.onTopologyUpdate(new CacheTopology(3,ch2,null),false);
       return null;
@@ -109,6 +109,7 @@
   }
 );
   stateConsumer.onTopologyUpdate(new CacheTopology(3,ch2,null),false);
+  future.get();
   assertFalse(stateConsumer.hasActiveTransfers());
   requestedSegments.clear();
   stateConsumer.onTopologyUpdate(new CacheTopology(4,ch2,ch3),true);
