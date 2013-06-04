@@ -1,0 +1,14 @@
+{
+  final String key="10";
+  final String key2="11";
+  assertEquals(null,cacheFactory.getHotRodCache().put(key,"v1",5,TimeUnit.SECONDS));
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key2,"v2",5,TimeUnit.SECONDS));
+  HttpMethod get1=new GetMethod(cacheFactory.getRestUrl() + "/" + key);
+  cacheFactory.getRestClient().executeMethod(get1);
+  assertEquals(HttpServletResponse.SC_OK,get1.getStatusCode());
+  assertDate(get1,"Expires");
+  HttpMethod get2=new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+  cacheFactory.getRestClient().executeMethod(get2);
+  assertEquals(HttpServletResponse.SC_OK,get2.getStatusCode());
+  assertDate(get2,"Expires");
+}

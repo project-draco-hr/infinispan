@@ -6,7 +6,9 @@
   HttpMethod headKey1=new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
   cacheFactory.getRestClient().executeMethod(headKey1);
   assertEquals(HttpServletResponse.SC_OK,headKey1.getStatusCode());
-  assertNotNull(headKey1.getResponseHeader("Expires"));
+  Header expires=headKey1.getResponseHeader("Expires");
+  assertNotNull(expires);
+  assertTrue(dateFormat.parse(expires.getValue()).after(new GregorianCalendar(2013,1,1).getTime()));
   HttpMethod headKey2=new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
   cacheFactory.getRestClient().executeMethod(headKey2);
   assertEquals(HttpServletResponse.SC_OK,headKey2.getStatusCode());
