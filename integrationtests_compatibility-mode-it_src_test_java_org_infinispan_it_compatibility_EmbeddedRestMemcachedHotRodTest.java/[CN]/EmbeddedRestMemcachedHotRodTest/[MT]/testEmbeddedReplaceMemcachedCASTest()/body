@@ -1,0 +1,10 @@
+{
+  final String key1="5";
+  Future<Boolean> f=cacheFactory.getMemcachedClient().set(key1,0,"v1");
+  assertTrue(f.get(60,TimeUnit.SECONDS));
+  CASValue oldValue=cacheFactory.getMemcachedClient().gets(key1);
+  assertTrue(cacheFactory.getEmbeddedCache().replace(key1,"v1","v2"));
+  CASValue newValue=cacheFactory.getMemcachedClient().gets(key1);
+  assertEquals("v2",newValue.getValue());
+  assertNotSame("The version (CAS) should have changed, " + "oldCase=" + oldValue.getCas() + ", newCas="+ newValue.getCas(),oldValue.getCas(),newValue.getCas());
+}

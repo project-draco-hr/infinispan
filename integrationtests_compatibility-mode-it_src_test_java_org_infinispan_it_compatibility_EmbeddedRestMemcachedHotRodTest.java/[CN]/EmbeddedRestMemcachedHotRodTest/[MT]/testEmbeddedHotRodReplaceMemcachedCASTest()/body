@@ -1,0 +1,12 @@
+{
+  final String key1="7";
+  Future<Boolean> f=cacheFactory.getMemcachedClient().set(key1,0,"v1");
+  assertTrue(f.get(60,TimeUnit.SECONDS));
+  CASValue oldValue=cacheFactory.getMemcachedClient().gets(key1);
+  VersionedValue versioned=cacheFactory.getHotRodCache().getVersioned(key1);
+  assertTrue(cacheFactory.getHotRodCache().replaceWithVersion(key1,"v2",versioned.getVersion()));
+  assertTrue(cacheFactory.getEmbeddedCache().replace(key1,"v2","v3"));
+  CASValue newValue=cacheFactory.getMemcachedClient().gets(key1);
+  assertEquals("v3",newValue.getValue());
+  assertTrue("The version (CAS) should have changed",oldValue.getCas() != newValue.getCas());
+}
