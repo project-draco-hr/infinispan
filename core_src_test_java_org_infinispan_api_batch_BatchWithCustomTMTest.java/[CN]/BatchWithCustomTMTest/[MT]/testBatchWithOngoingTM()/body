@@ -1,0 +1,16 @@
+{
+  Cache<String,String> cache=null;
+  cache=createCache("testBatchWithOngoingTM");
+  TransactionManager tm=TestingUtil.getTransactionManager(cache);
+  assertEquals(MyDummyTransactionManager.class,tm.getClass());
+  tm.begin();
+  cache.put("k","v");
+  cache.startBatch();
+  cache.put("k2","v2");
+  tm.commit();
+  assertEquals("v",cache.get("k"));
+  assertEquals("v2",cache.get("k2"));
+  cache.endBatch(false);
+  assertEquals("v",cache.get("k"));
+  assertEquals("v2",cache.get("k2"));
+}

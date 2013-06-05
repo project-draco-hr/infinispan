@@ -1,0 +1,23 @@
+{
+  Cache<String,String> cache=createCache("testBatchWithoutOngoingTMSuspension");
+  TransactionManager tm=TestingUtil.getTransactionManager(cache);
+  assertEquals(MyDummyTransactionManager.class,tm.getClass());
+  assertNull("Should have no ongoing txs",tm.getTransaction());
+  cache.startBatch();
+  cache.put("k","v");
+  assertNull("Should have no ongoing txs",tm.getTransaction());
+  cache.put("k2","v2");
+  assertNull(getOnDifferentThread(cache,"k"));
+  assertNull(getOnDifferentThread(cache,"k2"));
+  try {
+    tm.commit();
+  }
+ catch (  Exception e) {
+  }
+  assertNull("Should have no ongoing txs",tm.getTransaction());
+  assertNull(getOnDifferentThread(cache,"k"));
+  assertNull(getOnDifferentThread(cache,"k2"));
+  cache.endBatch(true);
+  assertEquals("v",getOnDifferentThread(cache,"k"));
+  assertEquals("v2",getOnDifferentThread(cache,"k2"));
+}

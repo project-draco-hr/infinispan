@@ -5,7 +5,7 @@
     final String lookup=JBossStandaloneJTAManagerLookup.class.getName();
     final JBossStandaloneJTAManagerLookup instance=new JBossStandaloneJTAManagerLookup();
     operations=new Operations(){
-      public UserTransaction getUserTransaction(){
+      @Override public UserTransaction getUserTransaction(){
         try {
           return instance.getUserTransaction();
         }
@@ -13,12 +13,15 @@
           throw new RuntimeException(e);
         }
       }
-      public void cleanup(){
+      @Override public void cleanup(){
       }
-      public String getLookup(){
+      @Override public String getLookup(){
         return lookup;
       }
-      public TransactionManager getManager(){
+      @Override public TransactionManagerLookup lookup(){
+        return instance;
+      }
+      @Override public TransactionManager getManager(){
         try {
           return instance.getTransactionManager();
         }
@@ -34,16 +37,19 @@
     final String lookup=DummyTransactionManagerLookup.class.getName();
     final DummyTransactionManagerLookup instance=new DummyTransactionManagerLookup();
     operations=new Operations(){
-      public UserTransaction getUserTransaction(){
+      @Override public UserTransaction getUserTransaction(){
         return instance.getUserTransaction();
       }
-      public void cleanup(){
+      @Override public void cleanup(){
         instance.cleanup();
       }
-      public String getLookup(){
+      @Override public String getLookup(){
         return lookup;
       }
-      public TransactionManager getManager(){
+      @Override public TransactionManagerLookup lookup(){
+        return instance;
+      }
+      @Override public TransactionManager getManager(){
         try {
           return instance.getTransactionManager();
         }

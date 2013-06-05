@@ -3,21 +3,19 @@
     return null;
   }
   TransactionManager transactionManager=null;
-  if (configuration.invocationBatching().enabled()) {
+  TransactionManagerLookup lookup=configuration.transaction().transactionManagerLookup();
+  try {
+    if (lookup != null) {
+      componentRegistry.wireDependencies(lookup);
+      transactionManager=lookup.getTransactionManager();
+    }
+  }
+ catch (  Exception e) {
+    log.couldNotInstantiateTransactionManager(e);
+  }
+  if (transactionManager == null && configuration.invocationBatching().enabled()) {
     log.usingBatchModeTransactionManager();
     transactionManager=BatchModeTransactionManager.getInstance();
-  }
-  if (transactionManager == null) {
-    TransactionManagerLookup lookup=configuration.transaction().transactionManagerLookup();
-    try {
-      if (lookup != null) {
-        componentRegistry.wireDependencies(lookup);
-        transactionManager=lookup.getTransactionManager();
-      }
-    }
- catch (    Exception e) {
-      log.couldNotInstantiateTransactionManager(e);
-    }
   }
   if (transactionManager == null) {
     throw new CacheException("This is transactional cache but no transaction manager could be found. " + "Configure the transaction manager lookup properly.");
