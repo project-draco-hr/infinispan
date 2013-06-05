@@ -1,2 +1,10 @@
 {
+  Interpreter interpreter=getInterpreter();
+  String sessionId=interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  interpreter.execute(sessionId,"begin; put 'a' 'a';");
+  assertNull(cache.getAdvancedCache().getTransactionManager().getTransaction());
+  assertFalse(cache.containsKey("a"));
+  interpreter.execute(sessionId,"start; put 'a' 'a';");
+  assertNull(cache.getAdvancedCache().getBatchContainer().getBatchTransaction());
+  assertFalse(cache.containsKey("a"));
 }

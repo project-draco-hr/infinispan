@@ -1,2 +1,9 @@
 {
+  Interpreter interpreter=getInterpreter();
+  String sessionId=interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  execute(interpreter,sessionId,"begin; put 'a' 'a'; commit;");
+  Object a=cache.get("a");
+  assertEquals("a",a);
+  execute(interpreter,sessionId,"begin; put 'b' 'b'; rollback;");
+  assertFalse(cache.containsKey("b"));
 }

@@ -1,2 +1,17 @@
 {
+  Interpreter interpreter=getInterpreter();
+  String sessionId=interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  execute(interpreter,sessionId,"put 'a' 'b'; get 'a';");
+  execute(interpreter,sessionId,"put 'c' {\"org.infinispan.cli.interpreter.MyClass\":{\"i\":5,\"x\":null,\"b\":true}};");
+  Object o=cache.get("c");
+  assertNotNull(o);
+  assertEquals(MyClass.class,o.getClass());
+  assertEquals(5,((MyClass)o).i);
+  assertTrue(((MyClass)o).b);
+  execute(interpreter,sessionId,"put 'f' 0.5;");
+  Double f=(Double)cache.get("f");
+  assertEquals(0.5,f.doubleValue());
+  execute(interpreter,sessionId,"put 'l' 1000l;");
+  Long l=(Long)cache.get("l");
+  assertEquals(1000l,l.longValue());
 }
