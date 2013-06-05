@@ -5,14 +5,13 @@
     return getDeltaMapForRead();
   }
  else {
-    boolean suppressLocks=flagContainer != null && flagContainer.hasFlag(Flag.SKIP_LOCKING);
-    if (!suppressLocks && flagContainer != null)     flagContainer.setFlags(Flag.FORCE_WRITE_LOCK);
-    if (trace) {
-      if (suppressLocks)       log.trace("Skip locking flag used.  Skipping locking.");
- else       log.trace("Forcing write lock even for reads");
+    AdvancedCache<Object,AtomicMap<K,V>> cacheForRead=cache;
+    if (cache.getCacheConfiguration().transaction().lockingMode() == LockingMode.PESSIMISTIC) {
+      cacheForRead=cache.withFlags(Flag.FORCE_WRITE_LOCK);
     }
-    if (suppressLocks)     flagContainer.setFlags(Flag.SKIP_LOCKING);
-    AtomicHashMap<K,V> map=getDeltaMapForRead();
+    AtomicHashMap<K,V> map=toMap(cacheForRead.get(deltaMapKey));
+    if (map != null && !startedReadingMap)     startedReadingMap=true;
+    assertValid(map);
     AtomicHashMap<K,V> copy=map == null ? new AtomicHashMap<K,V>(true) : map.copy();
     copy.initForWriting();
     cacheForWriting.put(deltaMapKey,copy);
