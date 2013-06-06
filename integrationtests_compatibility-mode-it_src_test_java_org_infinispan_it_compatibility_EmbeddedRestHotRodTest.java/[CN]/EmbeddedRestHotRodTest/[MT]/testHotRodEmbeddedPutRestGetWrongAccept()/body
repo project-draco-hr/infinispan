@@ -1,0 +1,14 @@
+{
+  final String key1="16";
+  final String key2="17";
+  assertEquals(null,cacheFactory.getHotRodCache().put(key1,"v1"));
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key2,"v2"));
+  HttpMethod getKey1=new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
+  getKey1.setRequestHeader("Accept","unknown-media-type");
+  cacheFactory.getRestClient().executeMethod(getKey1);
+  assertEquals(getKey1.getStatusText(),HttpServletResponse.SC_BAD_REQUEST,getKey1.getStatusCode());
+  HttpMethod getKey2=new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
+  getKey2.setRequestHeader("Accept","unknown-media-type");
+  cacheFactory.getRestClient().executeMethod(getKey2);
+  assertEquals(getKey2.getStatusText(),HttpServletResponse.SC_BAD_REQUEST,getKey2.getStatusCode());
+}

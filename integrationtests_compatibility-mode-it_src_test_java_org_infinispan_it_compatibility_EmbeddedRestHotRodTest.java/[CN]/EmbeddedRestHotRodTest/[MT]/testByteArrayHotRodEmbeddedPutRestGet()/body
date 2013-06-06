@@ -1,0 +1,17 @@
+{
+  final String key1="14";
+  final String key2="15";
+  RemoteCache<String,Object> remote=cacheFactory.getHotRodCache();
+  assertEquals(null,remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key1,"v1".getBytes()));
+  assertEquals(null,cacheFactory.getEmbeddedCache().put(key2,"v2".getBytes()));
+  HttpMethod getHotRodValue=new GetMethod(cacheFactory.getRestUrl() + "/" + key1);
+  cacheFactory.getRestClient().executeMethod(getHotRodValue);
+  assertEquals(getHotRodValue.getStatusText(),HttpServletResponse.SC_OK,getHotRodValue.getStatusCode());
+  assertEquals("application/octet-stream",getHotRodValue.getResponseHeader("Content-Type").getValue());
+  assertArrayEquals("v1".getBytes(),getHotRodValue.getResponseBody());
+  HttpMethod getEmbeddedValue=new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+  cacheFactory.getRestClient().executeMethod(getEmbeddedValue);
+  assertEquals(getEmbeddedValue.getStatusText(),HttpServletResponse.SC_OK,getEmbeddedValue.getStatusCode());
+  assertEquals("application/octet-stream",getEmbeddedValue.getResponseHeader("Content-Type").getValue());
+  assertArrayEquals("v2".getBytes(),getEmbeddedValue.getResponseBody());
+}
