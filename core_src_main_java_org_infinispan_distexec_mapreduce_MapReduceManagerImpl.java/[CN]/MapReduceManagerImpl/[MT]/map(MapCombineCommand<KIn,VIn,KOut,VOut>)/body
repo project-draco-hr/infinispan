@@ -16,6 +16,7 @@
   DefaultCollector<KOut,VOut> collector=new DefaultCollector<KOut,VOut>();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,inputKeys);
   int interruptCount=0;
+  long start=log.isTraceEnabled() ? timeService.time() : 0;
   try {
     taskLifecycleService.onPreExecute(mapper,cache);
     for (    KIn key : inputKeys) {
@@ -44,6 +45,9 @@
     }
   }
   finally {
+    if (log.isTraceEnabled()) {
+      log.tracef("Map phase for task %s took %s milliseconds",mcc.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
+    }
     taskLifecycleService.onPostExecute(mapper);
   }
   return collector;

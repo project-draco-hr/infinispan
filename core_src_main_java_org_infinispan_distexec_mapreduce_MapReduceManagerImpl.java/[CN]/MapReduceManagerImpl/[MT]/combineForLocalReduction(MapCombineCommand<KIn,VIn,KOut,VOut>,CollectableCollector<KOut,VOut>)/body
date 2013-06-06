@@ -6,6 +6,7 @@
     result=new HashMap<KOut,List<VOut>>();
     log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,cdl.getAddress());
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+    long start=log.isTraceEnabled() ? timeService.time() : 0;
     try {
       Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
       taskLifecycleService.onPreExecute(combiner,cache);
@@ -26,6 +27,9 @@
       }
     }
   finally {
+      if (log.isTraceEnabled()) {
+        log.tracef("Combine for task %s took %s milliseconds",mcc.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
+      }
       taskLifecycleService.onPostExecute(combiner);
     }
   }

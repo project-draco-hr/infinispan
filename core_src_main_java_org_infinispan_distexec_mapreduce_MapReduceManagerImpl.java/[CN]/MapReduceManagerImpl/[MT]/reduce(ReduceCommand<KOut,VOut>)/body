@@ -14,6 +14,7 @@
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,cdl.getAddress());
     int interruptCount=0;
+    long start=log.isTraceEnabled() ? timeService.time() : 0;
     try {
       taskLifecycleService.onPreExecute(reducer,cache);
       for (      KOut key : keys) {
@@ -32,6 +33,9 @@
       }
     }
   finally {
+      if (log.isTraceEnabled()) {
+        log.tracef("Reduce for task %s took %s milliseconds",reduceCommand.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
+      }
       taskLifecycleService.onPostExecute(reducer);
     }
   }
