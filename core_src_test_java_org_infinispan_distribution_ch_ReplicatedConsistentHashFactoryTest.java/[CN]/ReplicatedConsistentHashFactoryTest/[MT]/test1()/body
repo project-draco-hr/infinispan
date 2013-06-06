@@ -1,0 +1,28 @@
+{
+  int[] testSegments={1,2,4,8,16,31,32,33,67,128};
+  ReplicatedConsistentHashFactory factory=new ReplicatedConsistentHashFactory();
+  Address A=new TestAddress(0,"A");
+  Address B=new TestAddress(1,"B");
+  Address C=new TestAddress(2,"C");
+  Address D=new TestAddress(3,"D");
+  List<Address> a=Arrays.asList(A);
+  List<Address> ab=Arrays.asList(A,B);
+  List<Address> abc=Arrays.asList(A,B,C);
+  List<Address> abcd=Arrays.asList(A,B,C,D);
+  List<Address> bcd=Arrays.asList(B,C,D);
+  List<Address> c=Arrays.asList(C);
+  for (  int segments : testSegments) {
+    ReplicatedConsistentHash ch=factory.create(new MurmurHash3(),0,segments,a);
+    checkDistribution(ch);
+    ch=factory.updateMembers(ch,ab);
+    checkDistribution(ch);
+    ch=factory.updateMembers(ch,abc);
+    checkDistribution(ch);
+    ch=factory.updateMembers(ch,abcd);
+    checkDistribution(ch);
+    ch=factory.updateMembers(ch,bcd);
+    checkDistribution(ch);
+    ch=factory.updateMembers(ch,c);
+    checkDistribution(ch);
+  }
+}
