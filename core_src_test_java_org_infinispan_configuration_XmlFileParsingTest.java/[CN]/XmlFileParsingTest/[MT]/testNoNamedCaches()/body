@@ -1,2 +1,14 @@
 {
+  String config=INFINISPAN_START_TAG + "   <global>\n" + "      <transport clusterName=\"demoCluster\"/>\n"+ "   </global>\n"+ "\n"+ "   <default>\n"+ "      <clustering mode=\"replication\">\n"+ "      </clustering>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  InputStream is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      GlobalConfiguration globalCfg=cm.getCacheManagerConfiguration();
+      assertTrue(globalCfg.transport().transport() instanceof JGroupsTransport);
+      assertEquals("demoCluster",globalCfg.transport().clusterName());
+      Configuration cfg=cm.getDefaultCacheConfiguration();
+      assertEquals(CacheMode.REPL_SYNC,cfg.clustering().cacheMode());
+    }
+  }
+);
 }
