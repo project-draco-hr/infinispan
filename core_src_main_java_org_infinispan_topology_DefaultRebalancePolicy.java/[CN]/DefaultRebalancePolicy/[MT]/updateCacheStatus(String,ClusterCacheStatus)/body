@@ -12,6 +12,13 @@
     log.tracef("Not triggering rebalance for cache %s, a rebalance is already in progress",cacheName);
     return;
   }
+synchronized (lock) {
+    if (!isRebalancingEnabled()) {
+      log.tracef("Rebalancing is disabled, queueing rebalance for cache %s",cacheName);
+      cachesPendingRebalance.add(cacheName);
+      return;
+    }
+  }
   log.tracef("Triggering rebalance for cache %s",cacheName);
   clusterTopologyManager.triggerRebalance(cacheName);
 }

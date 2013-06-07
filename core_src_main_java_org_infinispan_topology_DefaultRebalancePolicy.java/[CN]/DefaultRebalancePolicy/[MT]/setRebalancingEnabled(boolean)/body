@@ -1,0 +1,26 @@
+{
+  Set<String> caches;
+synchronized (lock) {
+    caches=cachesPendingRebalance;
+    if (enabled) {
+      cachesPendingRebalance=null;
+    }
+ else {
+      cachesPendingRebalance=new HashSet<String>();
+    }
+  }
+  if (enabled && caches != null) {
+    log.debugf("Rebalancing re-enabled, triggering rebalancing for caches %s",caches);
+    for (    String cacheName : caches) {
+      try {
+        clusterTopologyManager.triggerRebalance(cacheName);
+      }
+ catch (      Exception e) {
+        log.rebalanceStartError(cacheName,e);
+      }
+    }
+  }
+ else {
+    log.debugf("Rebalancing suspended");
+  }
+}
