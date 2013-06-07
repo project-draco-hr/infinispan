@@ -1,0 +1,12 @@
+{
+  final String key="1";
+  RemoteCache<String,String> remote=cacheFactory.getHotRodCache();
+  assertEquals(null,remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key,"v1"));
+  MemcachedClient memcached=new MemcachedClient("localhost",cacheFactory.getMemcachedPort());
+  try {
+    assertEquals("v1".getBytes(),memcached.getBytes(key));
+  }
+  finally {
+    memcached.close();
+  }
+}
