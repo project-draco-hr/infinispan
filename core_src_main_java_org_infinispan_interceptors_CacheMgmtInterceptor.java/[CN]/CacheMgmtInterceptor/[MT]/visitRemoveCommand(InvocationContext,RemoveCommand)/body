@@ -1,10 +1,15 @@
 {
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
   Object retval=invokeNextInterceptor(ctx,command);
-  if (ctx.isOriginLocal()) {
+  if (statisticsEnabled && ctx.isOriginLocal()) {
     if (retval == null) {
       removeMisses.incrementAndGet();
     }
  else {
+      long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
+      removeTimes.getAndAdd(intervalMilliseconds);
       removeHits.incrementAndGet();
     }
   }

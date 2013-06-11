@@ -1,7 +1,9 @@
 {
-  long start=timeService.time();
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
   Object retval=invokeNextInterceptor(ctx,command);
-  if (ctx.isOriginLocal() && command.isSuccessful()) {
+  if (statisticsEnabled && ctx.isOriginLocal() && command.isSuccessful()) {
     long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
     storeTimes.getAndAdd(intervalMilliseconds);
     stores.incrementAndGet();

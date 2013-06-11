@@ -1,0 +1,27 @@
+{
+  final String name=getName(m);
+  withCachingProvider(new JCacheRunnable(){
+    @Override public void run(    CachingProvider provider){
+      CacheManager cm=provider.getCacheManager();
+      Cache<String,List<Integer>> cache=cm.configureCache(name,jcacheCfg);
+      List<Integer> list=new ArrayList<Integer>(Arrays.asList(1,2,3));
+      final String query="select * from x";
+      cache.put(query,list);
+      try {
+        cache.invokeEntryProcessor(query,new Cache.EntryProcessor<String,List<Integer>,Object>(){
+          @Override public Object process(          Cache.MutableEntry<String,List<Integer>> entry,          Object... arguments){
+            entry.getValue().add(4);
+            throw new UnexpectedException();
+          }
+        }
+);
+        fail("Expected an exception to be thrown");
+      }
+ catch (      CacheException e) {
+        assertTrue(e.getCause() instanceof UnexpectedException);
+      }
+      assertEquals(expectedValue,cache.get(query));
+    }
+  }
+);
+}

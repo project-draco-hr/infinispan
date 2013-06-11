@@ -1,0 +1,18 @@
+{
+  this.allocationStackTrace=Thread.currentThread().getStackTrace();
+  if (classLoader == null) {
+    throw new IllegalArgumentException("Classloader cannot be null");
+  }
+  if (uri == null) {
+    throw new IllegalArgumentException("Invalid CacheManager URI " + uri);
+  }
+  this.uri=uri;
+  this.provider=provider;
+  ConfigurationBuilderHolder cbh=getConfigurationBuilderHolder(classLoader);
+  GlobalConfigurationBuilder globalBuilder=cbh.getGlobalConfigurationBuilder();
+  String cacheManagerName="uri=" + uri + "/classloader="+ classLoader.toString()+ "/provider="+ provider.toString();
+  globalBuilder.classLoader(classLoader).globalJmxStatistics().cacheManagerName(cacheManagerName);
+  cm=new DefaultCacheManager(cbh,true);
+  registerPredefinedCaches();
+  status=Status.STARTED;
+}

@@ -1,0 +1,19 @@
+{
+  MBeanServer mBeanServer=cache.getMBeanServer();
+  ObjectName registeredObjectName=calculateObjectName(cache,objectNameType);
+  try {
+    if (objectNameType.equals(ObjectNameType.CONFIGURATION)) {
+      if (!isRegistered(cache,objectNameType)) {
+        mBeanServer.registerMBean(cache.getCacheMXBean(),registeredObjectName);
+      }
+    }
+ else     if (objectNameType.equals(ObjectNameType.STATISTICS)) {
+      if (!isRegistered(cache,objectNameType)) {
+        mBeanServer.registerMBean(cache.getCacheStatisticsMXBean(),registeredObjectName);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheException("Error registering cache MXBeans for CacheManager " + registeredObjectName + " . Error was "+ e.getMessage(),e);
+  }
+}

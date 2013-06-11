@@ -1,11 +1,15 @@
 {
-  final Map<Object,Object> data=command.getMap();
-  final long start=timeService.time();
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
   final Object retval=invokeNextInterceptor(ctx,command);
-  final long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
-  if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
-    storeTimes.getAndAdd(intervalMilliseconds);
-    stores.getAndAdd(data.size());
+  if (statisticsEnabled) {
+    final long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
+    final Map<Object,Object> data=command.getMap();
+    if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
+      storeTimes.getAndAdd(intervalMilliseconds);
+      stores.getAndAdd(data.size());
+    }
   }
   return retval;
 }

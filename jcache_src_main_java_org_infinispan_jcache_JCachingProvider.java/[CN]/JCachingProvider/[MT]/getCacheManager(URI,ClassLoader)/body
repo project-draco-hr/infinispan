@@ -1,0 +1,19 @@
+{
+  URI uri=managerUri == null ? getDefaultURI() : managerUri;
+  ClassLoader classLoader=managerClassLoader == null ? getDefaultClassLoader() : managerClassLoader;
+synchronized (cacheManagers) {
+    Map<URI,JCacheManager> map=cacheManagers.get(classLoader);
+    if (map == null) {
+      if (log.isTraceEnabled())       log.tracef("No cache managers registered under '%s'",uri);
+      map=new HashMap<URI,JCacheManager>();
+      cacheManagers.put(classLoader,map);
+    }
+    JCacheManager cacheManager=map.get(uri);
+    if (cacheManager == null || cacheManager.getStatus() == Status.STOPPED) {
+      cacheManager=createCacheManager(classLoader,uri);
+      if (log.isTraceEnabled())       log.tracef("Created '%s' cache manager",uri);
+      map.put(uri,cacheManager);
+    }
+    return cacheManager;
+  }
+}

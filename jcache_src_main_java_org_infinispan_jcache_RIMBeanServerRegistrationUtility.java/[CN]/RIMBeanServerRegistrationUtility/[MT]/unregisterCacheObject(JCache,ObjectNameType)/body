@@ -1,0 +1,14 @@
+{
+  Set<ObjectName> registeredObjectNames;
+  MBeanServer mBeanServer=cache.getMBeanServer();
+  ObjectName objectName=calculateObjectName(cache,objectNameType);
+  registeredObjectNames=mBeanServer.queryNames(objectName,null);
+  for (  ObjectName registeredObjectName : registeredObjectNames) {
+    try {
+      mBeanServer.unregisterMBean(registeredObjectName);
+    }
+ catch (    Exception e) {
+      throw new CacheException("Error unregistering object instance " + registeredObjectName + " . Error was "+ e.getMessage(),e);
+    }
+  }
+}
