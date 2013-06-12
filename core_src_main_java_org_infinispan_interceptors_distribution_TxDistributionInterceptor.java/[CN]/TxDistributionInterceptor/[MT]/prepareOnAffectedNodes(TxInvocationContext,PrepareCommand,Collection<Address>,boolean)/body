@@ -1,6 +1,13 @@
 {
   try {
-    rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(sync));
+    RpcOptions rpcOptions;
+    if (sync && command.isOnePhaseCommit()) {
+      rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,false).build();
+    }
+ else {
+      rpcOptions=rpcManager.getDefaultRpcOptions(sync);
+    }
+    rpcManager.invokeRemotely(recipients,command,rpcOptions);
   }
   finally {
     transactionRemotelyPrepared(ctx);

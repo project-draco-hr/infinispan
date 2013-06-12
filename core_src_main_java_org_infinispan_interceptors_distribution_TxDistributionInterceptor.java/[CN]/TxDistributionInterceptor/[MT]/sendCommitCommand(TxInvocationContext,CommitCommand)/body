@@ -1,5 +1,12 @@
 {
   Collection<Address> recipients=getCommitNodes(ctx);
   boolean syncCommitPhase=cacheConfiguration.transaction().syncCommitPhase();
-  rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(syncCommitPhase,false));
+  RpcOptions rpcOptions;
+  if (syncCommitPhase) {
+    rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,false).build();
+  }
+ else {
+    rpcOptions=rpcManager.getDefaultRpcOptions(false,false);
+  }
+  rpcManager.invokeRemotely(recipients,command,rpcOptions);
 }
