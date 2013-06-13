@@ -1,0 +1,11 @@
+{
+  final String key="1";
+  EntityEnclosingMethod put=new PutMethod(cacheFactory1.getRestUrl() + "/" + key);
+  put.setRequestEntity(new ByteArrayRequestEntity("<hey>ho</hey>".getBytes(),"application/octet-stream"));
+  HttpClient restClient=cacheFactory1.getRestClient();
+  restClient.executeMethod(put);
+  assertEquals(HttpServletResponse.SC_OK,put.getStatusCode());
+  assertEquals("",put.getResponseBodyAsString().trim());
+  assertArrayEquals("<hey>ho</hey>".getBytes(),(byte[])cacheFactory2.getEmbeddedCache().get(key));
+  assertArrayEquals("<hey>ho</hey>".getBytes(),(byte[])cacheFactory2.getHotRodCache().get(key));
+}
