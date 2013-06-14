@@ -11,12 +11,16 @@
   assertTrue((Boolean)mBeanServer.getAttribute(ltmName0,"RebalancingEnabled"));
   mBeanServer.setAttribute(ltmName0,new Attribute("RebalancingEnabled",false));
   assertFalse((Boolean)mBeanServer.getAttribute(ltmName0,"RebalancingEnabled"));
+  log.debugf("Starting 2 new nodes");
   addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"),getConfigurationBuilder());
   addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"),getConfigurationBuilder());
+  cache(2);
+  cache(3);
   Thread.sleep(1000);
   assertFalse((Boolean)mBeanServer.getAttribute(ltmName1,"RebalancingEnabled"));
   assertNull(stm0.getCacheTopology().getPendingCH());
   assertEquals(Arrays.asList(address(0),address(1)),stm0.getCacheTopology().getCurrentCH().getMembers());
+  log.debugf("Rebalancing with nodes %s %s %s %s",address(0),address(1),address(2),address(3));
   mBeanServer.setAttribute(ltmName0,new Attribute("RebalancingEnabled",true));
   assertTrue((Boolean)mBeanServer.getAttribute(ltmName0,"RebalancingEnabled"));
   mBeanServer.setAttribute(ltmName0,new Attribute("RebalancingEnabled",true));
@@ -28,22 +32,31 @@
     assertEquals(2,ch.locateOwnersForSegment(i).size());
   }
   mBeanServer.setAttribute(ltmName1,new Attribute("RebalancingEnabled",false));
+  assertFalse((Boolean)mBeanServer.getAttribute(ltmName0,"RebalancingEnabled"));
   assertFalse((Boolean)mBeanServer.getAttribute(ltmName1,"RebalancingEnabled"));
   mBeanServer.setAttribute(ltmName1,new Attribute("RebalancingEnabled",false));
-  killCacheManagers(manager(2),manager(3));
+  log.debugf("Stopping nodes %s %s",address(0),address(1));
+  killCacheManagers(manager(0),manager(1));
   Thread.sleep(1000);
-  assertNull(stm0.getCacheTopology().getPendingCH());
-  ch=stm0.getCacheTopology().getCurrentCH();
-  assertEquals(Arrays.asList(address(0),address(1)),ch.getMembers());
+  StateTransferManager stm2=TestingUtil.extractComponent(cache(2),StateTransferManager.class);
+  assertNull(stm2.getCacheTopology().getPendingCH());
+  ch=stm2.getCacheTopology().getCurrentCH();
+  assertEquals(Arrays.asList(address(2),address(3)),ch.getMembers());
   for (int i=0; i < ch.getNumSegments(); i++) {
     assertEquals(1,ch.locateOwnersForSegment(i).size());
   }
-  mBeanServer.setAttribute(ltmName1,new Attribute("RebalancingEnabled",true));
-  assertTrue((Boolean)mBeanServer.getAttribute(ltmName1,"RebalancingEnabled"));
-  TestingUtil.waitForRehashToComplete(cache(0),cache(1));
-  assertNull(stm0.getCacheTopology().getPendingCH());
-  ch=stm0.getCacheTopology().getCurrentCH();
-  assertEquals(Arrays.asList(address(0),address(1)),ch.getMembers());
+  log.debugf("Rebalancing with nodes %s %s",address(2),address(3));
+  String domain2=manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+  ObjectName ltmName2=TestingUtil.getCacheManagerObjectName(domain2,"DefaultCacheManager","LocalTopologyManager");
+  String domain3=manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
+  ObjectName ltmName3=TestingUtil.getCacheManagerObjectName(domain3,"DefaultCacheManager","LocalTopologyManager");
+  mBeanServer.setAttribute(ltmName2,new Attribute("RebalancingEnabled",true));
+  assertTrue((Boolean)mBeanServer.getAttribute(ltmName2,"RebalancingEnabled"));
+  assertTrue((Boolean)mBeanServer.getAttribute(ltmName3,"RebalancingEnabled"));
+  TestingUtil.waitForRehashToComplete(cache(2),cache(3));
+  assertNull(stm2.getCacheTopology().getPendingCH());
+  ch=stm2.getCacheTopology().getCurrentCH();
+  assertEquals(Arrays.asList(address(2),address(3)),ch.getMembers());
   for (int i=0; i < ch.getNumSegments(); i++) {
     assertEquals(2,ch.locateOwnersForSegment(i).size());
   }
