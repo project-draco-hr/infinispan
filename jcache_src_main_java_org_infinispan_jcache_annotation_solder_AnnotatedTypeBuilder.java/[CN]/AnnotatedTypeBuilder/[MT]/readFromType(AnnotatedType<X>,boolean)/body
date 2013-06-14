@@ -1,0 +1,46 @@
+{
+  if (type == null) {
+    throw log.parameterMustNotBeNull("type");
+  }
+  if (javaClass == null || overwrite) {
+    this.javaClass=type.getJavaClass();
+  }
+  mergeAnnotationsOnElement(type,overwrite,typeAnnotations);
+  for (  AnnotatedField<? super X> field : type.getFields()) {
+    if (fields.get(field.getJavaMember()) == null) {
+      fields.put(field.getJavaMember(),new AnnotationBuilder());
+    }
+    mergeAnnotationsOnElement(field,overwrite,fields.get(field.getJavaMember()));
+  }
+  for (  AnnotatedMethod<? super X> method : type.getMethods()) {
+    if (methods.get(method.getJavaMember()) == null) {
+      methods.put(method.getJavaMember(),new AnnotationBuilder());
+    }
+    mergeAnnotationsOnElement(method,overwrite,methods.get(method.getJavaMember()));
+    for (    AnnotatedParameter<? super X> p : method.getParameters()) {
+      if (methodParameters.get(method.getJavaMember()) == null) {
+        methodParameters.put(method.getJavaMember(),new HashMap<Integer,AnnotationBuilder>());
+      }
+      if (methodParameters.get(method.getJavaMember()).get(p.getPosition()) == null) {
+        methodParameters.get(method.getJavaMember()).put(p.getPosition(),new AnnotationBuilder());
+      }
+      mergeAnnotationsOnElement(p,overwrite,methodParameters.get(method.getJavaMember()).get(p.getPosition()));
+    }
+  }
+  for (  AnnotatedConstructor<? super X> constructor : type.getConstructors()) {
+    if (constructors.get(constructor.getJavaMember()) == null) {
+      constructors.put(constructor.getJavaMember(),new AnnotationBuilder());
+    }
+    mergeAnnotationsOnElement(constructor,overwrite,constructors.get(constructor.getJavaMember()));
+    for (    AnnotatedParameter<? super X> p : constructor.getParameters()) {
+      if (constructorParameters.get(constructor.getJavaMember()) == null) {
+        constructorParameters.put(constructor.getJavaMember(),new HashMap<Integer,AnnotationBuilder>());
+      }
+      if (constructorParameters.get(constructor.getJavaMember()).get(p.getPosition()) == null) {
+        constructorParameters.get(constructor.getJavaMember()).put(p.getPosition(),new AnnotationBuilder());
+      }
+      mergeAnnotationsOnElement(p,overwrite,constructorParameters.get(constructor.getJavaMember()).get(p.getPosition()));
+    }
+  }
+  return this;
+}

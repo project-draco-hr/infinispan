@@ -1,0 +1,24 @@
+{
+  Class<?> actualType=(Class<?>)type.getRawType();
+  TypeVariable<?>[] typeVariables=actualType.getTypeParameters();
+  Type[] actualTypes=type.getActualTypeArguments();
+  for (int i=0; i < typeVariables.length; i++) {
+    if (typeVariables[i].equals(typeVariable) && !actualTypes[i].equals(typeVariable)) {
+      return resolveType(this.type,beanType,actualTypes[i]);
+    }
+  }
+  Type genericSuperType=actualType.getGenericSuperclass();
+  Type resolvedGenericSuperType=resolveType(genericSuperType,beanType,typeVariable);
+  if (!(resolvedGenericSuperType instanceof TypeVariable<?>)) {
+    return resolvedGenericSuperType;
+  }
+  if (beanType instanceof ParameterizedType) {
+    for (    Type interfaceType : ((Class<?>)((ParameterizedType)beanType).getRawType()).getGenericInterfaces()) {
+      Type resolvedType=resolveType(interfaceType,interfaceType,typeVariable);
+      if (!(resolvedType instanceof TypeVariable<?>)) {
+        return resolvedType;
+      }
+    }
+  }
+  return typeVariable;
+}

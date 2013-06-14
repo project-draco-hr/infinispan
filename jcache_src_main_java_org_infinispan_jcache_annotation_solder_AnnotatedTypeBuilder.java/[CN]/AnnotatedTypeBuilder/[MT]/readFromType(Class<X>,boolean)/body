@@ -1,0 +1,87 @@
+{
+  if (type == null) {
+    throw log.parameterMustNotBeNull("type");
+  }
+  if (javaClass == null || overwrite) {
+    this.javaClass=type;
+  }
+  for (  Annotation annotation : type.getAnnotations()) {
+    if (overwrite || !typeAnnotations.isAnnotationPresent(annotation.annotationType())) {
+      typeAnnotations.add(annotation);
+    }
+  }
+  for (  Field field : Reflections.getAllDeclaredFields(type)) {
+    AnnotationBuilder annotationBuilder=fields.get(field);
+    if (annotationBuilder == null) {
+      annotationBuilder=new AnnotationBuilder();
+      fields.put(field,annotationBuilder);
+    }
+    field.setAccessible(true);
+    for (    Annotation annotation : field.getAnnotations()) {
+      if (overwrite || !annotationBuilder.isAnnotationPresent(annotation.annotationType())) {
+        annotationBuilder.add(annotation);
+      }
+    }
+  }
+  for (  Method method : Reflections.getAllDeclaredMethods(type)) {
+    AnnotationBuilder annotationBuilder=methods.get(method);
+    if (annotationBuilder == null) {
+      annotationBuilder=new AnnotationBuilder();
+      methods.put(method,annotationBuilder);
+    }
+    method.setAccessible(true);
+    for (    Annotation annotation : method.getAnnotations()) {
+      if (overwrite || !annotationBuilder.isAnnotationPresent(annotation.annotationType())) {
+        annotationBuilder.add(annotation);
+      }
+    }
+    Map<Integer,AnnotationBuilder> parameters=methodParameters.get(method);
+    if (parameters == null) {
+      parameters=new HashMap<Integer,AnnotationBuilder>();
+      methodParameters.put(method,parameters);
+    }
+    for (int i=0; i < method.getParameterTypes().length; ++i) {
+      AnnotationBuilder parameterAnnotationBuilder=parameters.get(i);
+      if (parameterAnnotationBuilder == null) {
+        parameterAnnotationBuilder=new AnnotationBuilder();
+        parameters.put(i,parameterAnnotationBuilder);
+      }
+      for (      Annotation annotation : method.getParameterAnnotations()[i]) {
+        if (overwrite || !parameterAnnotationBuilder.isAnnotationPresent(annotation.annotationType())) {
+          parameterAnnotationBuilder.add(annotation);
+        }
+      }
+    }
+  }
+  for (  Constructor<?> constructor : type.getDeclaredConstructors()) {
+    AnnotationBuilder annotationBuilder=constructors.get(constructor);
+    if (annotationBuilder == null) {
+      annotationBuilder=new AnnotationBuilder();
+      constructors.put(constructor,annotationBuilder);
+    }
+    constructor.setAccessible(true);
+    for (    Annotation annotation : constructor.getAnnotations()) {
+      if (overwrite || !annotationBuilder.isAnnotationPresent(annotation.annotationType())) {
+        annotationBuilder.add(annotation);
+      }
+    }
+    Map<Integer,AnnotationBuilder> mparams=constructorParameters.get(constructor);
+    if (mparams == null) {
+      mparams=new HashMap<Integer,AnnotationBuilder>();
+      constructorParameters.put(constructor,mparams);
+    }
+    for (int i=0; i < constructor.getParameterTypes().length; ++i) {
+      AnnotationBuilder parameterAnnotationBuilder=mparams.get(i);
+      if (parameterAnnotationBuilder == null) {
+        parameterAnnotationBuilder=new AnnotationBuilder();
+        mparams.put(i,parameterAnnotationBuilder);
+      }
+      for (      Annotation annotation : constructor.getParameterAnnotations()[i]) {
+        if (overwrite || !parameterAnnotationBuilder.isAnnotationPresent(annotation.annotationType())) {
+          annotationBuilder.add(annotation);
+        }
+      }
+    }
+  }
+  return this;
+}
