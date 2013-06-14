@@ -1,15 +1,16 @@
 {
   Xid xid=convertXid(externalXid);
   LocalXaTransaction localTransaction=getLocalTransactionAndValidate(xid);
+  boolean committedInOnePhase;
   if (isOnePhase && onePhaseTotalOrder) {
-    txCoordinator.commit(localTransaction,true);
+    committedInOnePhase=txCoordinator.commit(localTransaction,true);
   }
  else   if (isOnePhase) {
     txCoordinator.prepare(localTransaction);
-    txCoordinator.commit(localTransaction,false);
+    committedInOnePhase=txCoordinator.commit(localTransaction,false);
   }
  else {
-    txCoordinator.commit(localTransaction,false);
+    committedInOnePhase=txCoordinator.commit(localTransaction,false);
   }
-  forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction);
+  forgetSuccessfullyCompletedTransaction(recoveryManager,xid,localTransaction,committedInOnePhase);
 }

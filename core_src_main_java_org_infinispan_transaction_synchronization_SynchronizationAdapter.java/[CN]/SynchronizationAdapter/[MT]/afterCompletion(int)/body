@@ -2,14 +2,15 @@
   if (log.isTraceEnabled()) {
     log.tracef("afterCompletion(%s) called for %s.",status,localTransaction);
   }
+  boolean isOnePhase;
   if (status == Status.STATUS_COMMITTED) {
     try {
-      txCoordinator.commit(localTransaction,false);
+      isOnePhase=txCoordinator.commit(localTransaction,false);
     }
  catch (    XAException e) {
       throw new CacheException("Could not commit.",e);
     }
-    releaseLocksForCompletedTransaction(localTransaction);
+    releaseLocksForCompletedTransaction(localTransaction,isOnePhase);
   }
  else   if (status == Status.STATUS_ROLLEDBACK) {
     try {
