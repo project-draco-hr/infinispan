@@ -1,0 +1,76 @@
+{
+  final Object key=new MagicKey("ignore-return-value",cache(0));
+  final AdvancedCache<Object,Object> c=executeOnPrimaryOwner ? advancedCache(0) : advancedCache(1);
+  final TransactionManager tm=executeOnPrimaryOwner ? tm(0) : tm(1);
+  for (  Cache cache : caches()) {
+    AssertJUnit.assertNull("wrong initial value for " + address(cache) + ".",cache.get(key));
+  }
+  log.debugf("Initialize the key? %s",initKey);
+  if (initKey) {
+    cache(0).put(key,"init");
+  }
+  Object finalValue=null;
+  boolean rollbackExpected=false;
+  log.debugf("Start the transaction and perform a %s operation",operation);
+  tm.begin();
+switch (operation) {
+case PUT:
+    finalValue="v1";
+  rollbackExpected=false;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).put(key,"v1");
+break;
+case REMOVE:
+finalValue=null;
+rollbackExpected=false;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).remove(key);
+break;
+case REPLACE:
+finalValue="v2";
+rollbackExpected=true;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).replace(key,"v1");
+break;
+case CONDITIONAL_PUT:
+finalValue="v2";
+rollbackExpected=true;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).putIfAbsent(key,"v1");
+break;
+case CONDITIONAL_REMOVE:
+finalValue="v2";
+rollbackExpected=true;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).remove(key,"init");
+break;
+case CONDITIONAL_REPLACE:
+finalValue="v2";
+rollbackExpected=true;
+c.withFlags(Flag.IGNORE_RETURN_VALUES).replace(key,"init","v1");
+break;
+default :
+tm.rollback();
+AssertJUnit.fail("Unknown operation " + operation);
+}
+Transaction tx=tm.suspend();
+log.debugf("Suspend the transaction and update the key");
+c.put(key,"v2");
+log.debugf("Checking if all the keys has the same value");
+for (Cache cache : caches()) {
+AssertJUnit.assertEquals("wrong intermediate value for " + address(cache) + ".","v2",cache.get(key));
+}
+log.debugf("It is going to try to commit the suspended transaction");
+try {
+tm.resume(tx);
+tm.commit();
+if (rollbackExpected) {
+AssertJUnit.fail("Rollback expected!");
+}
+}
+ catch (RollbackException e) {
+if (!rollbackExpected) {
+AssertJUnit.fail("Rollback *not* expected!");
+}
+}
+log.debugf("So far so good. Check the key final value");
+assertNoTransactions();
+for (Cache cache : caches()) {
+AssertJUnit.assertEquals("wrong final value for " + address(cache) + ".",finalValue,cache.get(key));
+}
+}

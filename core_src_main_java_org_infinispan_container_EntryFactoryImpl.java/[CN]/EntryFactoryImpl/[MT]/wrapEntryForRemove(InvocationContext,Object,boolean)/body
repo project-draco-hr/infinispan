@@ -1,0 +1,26 @@
+{
+  CacheEntry cacheEntry=getFromContext(ctx,key);
+  MVCCEntry mvccEntry=null;
+  if (cacheEntry != null) {
+    if (cacheEntry instanceof MVCCEntry && !(cacheEntry instanceof NullMarkerEntry)) {
+      mvccEntry=(MVCCEntry)cacheEntry;
+    }
+ else {
+      mvccEntry=wrapMvccEntryForRemove(ctx,key,cacheEntry,true);
+    }
+  }
+ else {
+    InternalCacheEntry ice=getFromContainer(key);
+    if (ice != null || clusterModeWriteSkewCheck) {
+      mvccEntry=wrapInternalCacheEntryForPut(ctx,key,ice,null,skipRead);
+      mvccEntry.setRemoved(true);
+    }
+  }
+  if (mvccEntry == null) {
+    ctx.putLookedUpEntry(key,null);
+  }
+ else {
+    mvccEntry.copyForUpdate(container,localModeWriteSkewCheck);
+  }
+  return mvccEntry;
+}

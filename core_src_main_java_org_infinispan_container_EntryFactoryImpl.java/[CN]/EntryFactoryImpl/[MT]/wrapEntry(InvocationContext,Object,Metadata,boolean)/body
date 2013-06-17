@@ -1,0 +1,15 @@
+{
+  CacheEntry cacheEntry=getFromContext(ctx,key);
+  MVCCEntry mvccEntry=null;
+  if (cacheEntry != null) {
+    mvccEntry=wrapMvccEntryForPut(ctx,key,cacheEntry,providedMetadata,true);
+  }
+ else {
+    InternalCacheEntry ice=getFromContainer(key);
+    if (ice != null || clusterModeWriteSkewCheck) {
+      mvccEntry=wrapInternalCacheEntryForPut(ctx,key,ice,providedMetadata,skipRead);
+    }
+  }
+  if (mvccEntry != null)   mvccEntry.copyForUpdate(container,localModeWriteSkewCheck);
+  return mvccEntry;
+}

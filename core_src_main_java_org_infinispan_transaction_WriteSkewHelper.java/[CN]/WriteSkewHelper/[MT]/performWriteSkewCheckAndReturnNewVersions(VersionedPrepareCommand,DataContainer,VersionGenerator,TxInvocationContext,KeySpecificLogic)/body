@@ -4,16 +4,7 @@
     for (    Object k : c.getAffectedKeys()) {
       if (ksl.performCheckOnKey(k)) {
         ClusteredRepeatableReadEntry entry=(ClusteredRepeatableReadEntry)context.lookupEntry(k);
-        if (entry == null) {
-          continue;
-        }
-        if (!context.isOriginLocal()) {
-          EntryVersion versionSeen=prepareCommand.getVersionsSeen().get(k);
-          if (versionSeen != null) {
-            entry.setVersion(versionSeen);
-          }
-        }
-        if (entry.performWriteSkewCheck(dataContainer,context,c.wasPreviousRead())) {
+        if (entry.performWriteSkewCheck(dataContainer,context,prepareCommand.getVersionsSeen().get(k),versionGenerator)) {
           IncrementableEntryVersion newVersion=entry.isCreated() ? versionGenerator.generateNew() : versionGenerator.increment((IncrementableEntryVersion)entry.getMetadata().version());
           uv.put(k,newVersion);
         }
