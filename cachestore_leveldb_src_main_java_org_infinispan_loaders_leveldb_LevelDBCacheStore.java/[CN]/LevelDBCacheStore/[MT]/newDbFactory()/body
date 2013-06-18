@@ -1,0 +1,25 @@
+{
+  ImplementationType type=ImplementationType.valueOf(config.getImplementationType());
+switch (type) {
+case JNI:
+{
+      return Util.<DBFactory>getInstance(JNI_DB_FACTORY_CLASS_NAME,config.getClassLoader());
+    }
+case JAVA:
+{
+    return Util.<DBFactory>getInstance(JAVA_DB_FACTORY_CLASS_NAME,config.getClassLoader());
+  }
+default :
+{
+  for (  String className : DB_FACTORY_CLASS_NAMES) {
+    try {
+      return Util.<DBFactory>getInstance(className,config.getClassLoader());
+    }
+ catch (    Throwable e) {
+      if (log.isDebugEnabled())       log.debugUnableToInstantiateDbFactory(className,e);
+    }
+  }
+}
+}
+return null;
+}

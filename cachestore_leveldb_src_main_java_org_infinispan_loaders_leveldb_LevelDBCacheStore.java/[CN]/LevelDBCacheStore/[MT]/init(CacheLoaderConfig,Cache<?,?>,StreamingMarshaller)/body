@@ -1,4 +1,15 @@
 {
   super.init(config,cache,m);
   this.config=(LevelDBCacheStoreConfig)config;
+  this.dbFactory=newDbFactory();
+  if (this.dbFactory == null) {
+    throw log.cannotLoadlevelDBFactories(Arrays.toString(DB_FACTORY_CLASS_NAMES));
+  }
+  String dbFactoryClassName=this.dbFactory.getClass().getName();
+  if (dbFactoryClassName.equals("org.iq80.leveldb.impl.Iq80DBFactory")) {
+    log.infoUsingJavaDbFactory(dbFactoryClassName);
+  }
+ else {
+    log.infoUsingJNIDbFactory(dbFactoryClassName);
+  }
 }
