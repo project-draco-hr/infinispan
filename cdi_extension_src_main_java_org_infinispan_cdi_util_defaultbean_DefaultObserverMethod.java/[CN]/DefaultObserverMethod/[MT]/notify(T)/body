@@ -1,0 +1,26 @@
+{
+  Bean<?> declaringBean=beanManager.resolve(beanManager.getBeans(declaringBeanType,declaringBeanQualifiers));
+  final CreationalContext<?> creationalContext=createCreationalContext(declaringBean);
+  try {
+    Object instance=beanManager.getReference(declaringBean,declaringBeanType,creationalContext);
+    if (instance == null) {
+      return;
+    }
+    observerMethod.invoke(instance,creationalContext,new ParameterValueRedefiner(){
+      public Object redefineParameterValue(      ParameterValue value){
+        if (value.getInjectionPoint().getAnnotated().isAnnotationPresent(Observes.class)) {
+          return event;
+        }
+ else {
+          return value.getDefaultValue(creationalContext);
+        }
+      }
+    }
+);
+  }
+  finally {
+    if (creationalContext != null) {
+      creationalContext.release();
+    }
+  }
+}

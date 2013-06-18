@@ -1,0 +1,28 @@
+{
+  for (  Map.Entry<Type,Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
+    event.addBean(new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(getRawType(entry.getKey()))).addType(entry.getKey()).addQualifiers(entry.getValue()).beanLifecycle(new ContextualLifecycle<RemoteCache<?,?>>(){
+      @Override public RemoteCache<?,?> create(      Bean<RemoteCache<?,?>> bean,      CreationalContext<RemoteCache<?,?>> ctx){
+        return remoteCacheProducer.produce(ctx);
+      }
+      @Override public void destroy(      Bean<RemoteCache<?,?>> bean,      RemoteCache<?,?> instance,      CreationalContext<RemoteCache<?,?>> ctx){
+        remoteCacheProducer.dispose(instance);
+      }
+    }
+).create());
+  }
+  for (  final ConfigurationHolder holder : configurations) {
+    Bean<?> b=new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(AdvancedCache.class)).qualifiers(Beans.buildQualifiers(holder.getQualifiers())).addType(new TypeLiteral<AdvancedCache<T,X>>(){
+    }
+.getType()).addType(new TypeLiteral<Cache<T,X>>(){
+    }
+.getType()).beanLifecycle(new ContextualLifecycle<AdvancedCache<?,?>>(){
+      @Override public AdvancedCache<?,?> create(      Bean<AdvancedCache<?,?>> bean,      CreationalContext<AdvancedCache<?,?>> creationalContext){
+        return new ContextualReference<AdvancedCacheProducer>(beanManager,AdvancedCacheProducer.class).create(Reflections.<CreationalContext<AdvancedCacheProducer>>cast(creationalContext)).get().getAdvancedCache(holder.getName(),holder.getQualifiers());
+      }
+      @Override public void destroy(      Bean<AdvancedCache<?,?>> bean,      AdvancedCache<?,?> instance,      CreationalContext<AdvancedCache<?,?>> creationalContext){
+      }
+    }
+).create();
+    event.addBean(b);
+  }
+}

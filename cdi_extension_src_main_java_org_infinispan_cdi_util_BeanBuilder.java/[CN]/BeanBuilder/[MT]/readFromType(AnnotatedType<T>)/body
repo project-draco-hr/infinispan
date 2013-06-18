@@ -1,0 +1,47 @@
+{
+  this.beanClass=type.getJavaClass();
+  InjectionTarget<T> injectionTarget;
+  if (!type.getJavaClass().isInterface()) {
+    injectionTarget=beanManager.createInjectionTarget(type);
+  }
+ else {
+    injectionTarget=new DummyInjectionTarget<T>();
+  }
+  this.beanLifecycle=new DelegatingContextualLifecycle<T>(injectionTarget);
+  this.injectionPoints=injectionTarget.getInjectionPoints();
+  this.qualifiers=new HashSet<Annotation>();
+  this.stereotypes=new HashSet<Class<? extends Annotation>>();
+  this.types=new HashSet<Type>();
+  for (  Annotation annotation : type.getAnnotations()) {
+    if (beanManager.isQualifier(annotation.annotationType())) {
+      this.qualifiers.add(annotation);
+    }
+ else     if (beanManager.isScope(annotation.annotationType())) {
+      this.scope=annotation.annotationType();
+    }
+ else     if (beanManager.isStereotype(annotation.annotationType())) {
+      this.stereotypes.add(annotation.annotationType());
+    }
+    if (annotation instanceof Named) {
+      this.name=((Named)annotation).value();
+    }
+    if (annotation instanceof Alternative) {
+      this.alternative=true;
+    }
+  }
+  if (this.scope == null) {
+    this.scope=Dependent.class;
+  }
+  for (Class<?> c=type.getJavaClass(); c != Object.class && c != null; c=c.getSuperclass()) {
+    this.types.add(c);
+  }
+  for (  Class<?> i : type.getJavaClass().getInterfaces()) {
+    this.types.add(i);
+  }
+  if (qualifiers.isEmpty()) {
+    qualifiers.add(DefaultLiteral.INSTANCE);
+  }
+  qualifiers.add(AnyLiteral.INSTANCE);
+  this.id=ImmutableBean.class.getName() + ":" + Annotateds.createTypeId(type);
+  return this;
+}

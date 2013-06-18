@@ -1,0 +1,23 @@
+{
+  BeanManagerInfo bmi=getBeanManagerInfo(getClassLoader(null));
+  if (!bmi.booted) {
+    LOG.warning("When using the BeanManager to retrieve Beans before the Container is started," + " non-portable behaviour results!");
+  }
+  BeanManager result=bmi.finalBm;
+  if (result == null) {
+synchronized (this) {
+      result=bmi.finalBm;
+      if (result == null) {
+        result=resolveBeanManagerViaJndi();
+        if (result == null) {
+          result=bmi.loadTimeBm;
+        }
+        if (result == null) {
+          throw new IllegalStateException("Unable to find BeanManager. " + "Please ensure that you configured the CDI implementation of your choice properly.");
+        }
+        bmi.finalBm=result;
+      }
+    }
+  }
+  return result;
+}

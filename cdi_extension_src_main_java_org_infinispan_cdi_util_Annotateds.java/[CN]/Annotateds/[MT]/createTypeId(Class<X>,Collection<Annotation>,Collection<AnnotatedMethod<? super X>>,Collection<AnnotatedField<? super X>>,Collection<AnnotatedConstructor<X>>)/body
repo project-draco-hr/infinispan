@@ -1,0 +1,35 @@
+{
+  StringBuilder builder=new StringBuilder();
+  builder.append(clazz.getName());
+  builder.append(createAnnotationCollectionId(annotations));
+  builder.append("{");
+  List<AnnotatedField<? super X>> sortedFields=new ArrayList<AnnotatedField<? super X>>();
+  sortedFields.addAll(fields);
+  Collections.sort(sortedFields,AnnotatedFieldComparator.<X>instance());
+  for (  AnnotatedField<? super X> field : sortedFields) {
+    if (!field.getAnnotations().isEmpty()) {
+      builder.append(createFieldId(field));
+      builder.append(SEPERATOR);
+    }
+  }
+  List<AnnotatedMethod<? super X>> sortedMethods=new ArrayList<AnnotatedMethod<? super X>>();
+  sortedMethods.addAll(methods);
+  Collections.sort(sortedMethods,AnnotatedMethodComparator.<X>instance());
+  for (  AnnotatedMethod<? super X> method : sortedMethods) {
+    if (!method.getAnnotations().isEmpty() || hasMethodParameters(method)) {
+      builder.append(createCallableId(method));
+      builder.append(SEPERATOR);
+    }
+  }
+  List<AnnotatedConstructor<? super X>> sortedConstructors=new ArrayList<AnnotatedConstructor<? super X>>();
+  sortedConstructors.addAll(constructors);
+  Collections.sort(sortedConstructors,AnnotatedConstructorComparator.<X>instance());
+  for (  AnnotatedConstructor<? super X> constructor : sortedConstructors) {
+    if (!constructor.getAnnotations().isEmpty() || hasMethodParameters(constructor)) {
+      builder.append(createCallableId(constructor));
+      builder.append(SEPERATOR);
+    }
+  }
+  builder.append("}");
+  return builder.toString();
+}
