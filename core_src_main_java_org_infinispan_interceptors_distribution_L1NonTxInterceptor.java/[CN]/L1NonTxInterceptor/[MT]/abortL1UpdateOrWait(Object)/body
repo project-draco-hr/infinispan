@@ -1,0 +1,26 @@
+{
+  L1WriteSynchronizer sync=concurrentWrites.remove(key);
+  if (sync != null) {
+    if (sync.trySkipL1Update()) {
+      if (trace) {
+        log.tracef("Aborted possible L1 update due to concurrent invalidation for key %s",key);
+      }
+    }
+ else {
+      if (trace) {
+        log.tracef("L1 invalidation found a pending update for key %s - need to block until finished",key);
+      }
+      boolean success;
+      try {
+        sync.get();
+        success=true;
+      }
+ catch (      ExecutionException e) {
+        success=false;
+      }
+      if (trace) {
+        log.tracef("Pending L1 update completed successfully: %b - L1 invalidation can occur for key %s",success,key);
+      }
+    }
+  }
+}

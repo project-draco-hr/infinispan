@@ -1,0 +1,20 @@
+{
+  final CyclicBarrier barrier=new CyclicBarrier(2);
+  doAnswer(new Answer<Void>(){
+    @Override public Void answer(    InvocationOnMock invocationOnMock) throws Throwable {
+      barrier.await();
+      return null;
+    }
+  }
+).when(stl).acquireSharedTopologyLock();
+  Future<Void> future=fork(new Runnable(){
+    @Override public void run(){
+      sync.runL1UpdateIfPossible(new Object(),mock(GetKeyValueCommand.class,RETURNS_MOCKS));
+    }
+  }
+,null);
+  barrier.await(1,TimeUnit.SECONDS);
+  assertFalse(sync.trySkipL1Update());
+  future.get(1,TimeUnit.SECONDS);
+  verify(dc).put(Mockito.any(),Mockito.any(),Mockito.any(Metadata.class));
+}

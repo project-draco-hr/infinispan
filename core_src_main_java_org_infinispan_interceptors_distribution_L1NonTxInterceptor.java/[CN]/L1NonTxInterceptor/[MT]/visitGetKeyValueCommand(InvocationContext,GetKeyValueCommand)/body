@@ -1,23 +1,42 @@
 {
-  Object returnValue=invokeNextInterceptor(ctx,command);
-  InternalCacheEntry ice=command.getRemotelyFetchedValue();
-  if (ctx.isOriginLocal() && ice != null) {
-    log.tracef("Caching remotely retrieved entry for key %s in L1",command.getKey());
-    try {
-      long l1Lifespan=cacheConfiguration.clustering().l1().lifespan();
-      long lifespan=ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(),l1Lifespan);
-      Metadata newMetadata=ice.getMetadata().builder().lifespan(lifespan).maxIdle(-1).build();
-      PutKeyValueCommand put=cf.buildPutKeyValueCommand(ice.getKey(),ice.getValue(),newMetadata,Collections.singleton(Flag.CACHE_MODE_LOCAL));
-      lockAndWrap(ctx,command.getKey(),ice,command);
-      invokeNextInterceptor(ctx,put);
+  Object returnValue;
+  if (ctx.isOriginLocal()) {
+    Object key=command.getKey();
+    if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.hasFlag(Flag.IGNORE_RETURN_VALUES)|| cdl.localNodeIsOwner(key)|| dataContainer.containsKey(key)) {
+      return invokeNextInterceptor(ctx,command);
     }
- catch (    Exception e) {
-      log.infof("Unable to store entry %s in L1 cache",command.getKey());
-      log.debug("Inability to store in L1 caused by",e);
+    L1WriteSynchronizer l1WriteSync=new L1WriteSynchronizer(dataContainer,l1Lifespan,stateTransferLock,cdl);
+    L1WriteSynchronizer presentSync=concurrentWrites.putIfAbsent(key,l1WriteSync);
+    if (presentSync == null) {
+      try {
+        returnValue=invokeNextInterceptor(ctx,command);
+        l1WriteSync.runL1UpdateIfPossible(returnValue,command);
+      }
+ catch (      Throwable t) {
+        l1WriteSync.retrievalEncounteredException(t);
+        throw t;
+      }
+ finally {
+        concurrentWrites.remove(key);
+      }
+    }
+ else {
+      if (trace) {
+        log.tracef("Found current request for key %s, waiting for their invocation's response",key);
+      }
+      try {
+        returnValue=presentSync.get();
+      }
+ catch (      ExecutionException e) {
+        throw e.getCause();
+      }
     }
   }
- else   if (!ctx.isOriginLocal() && returnValue != null) {
-    l1Manager.addRequestor(command.getKey(),ctx.getOrigin());
+ else {
+    returnValue=invokeNextInterceptor(ctx,command);
+    if (returnValue != null) {
+      l1Manager.addRequestor(command.getKey(),ctx.getOrigin());
+    }
   }
   return returnValue;
 }

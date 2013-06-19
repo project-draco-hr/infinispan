@@ -1,0 +1,22 @@
+{
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  final Cache<Object,String> ownerCache=getFirstOwner(key);
+  RpcManager rm=TestingUtil.extractComponent(nonOwnerCache,RpcManager.class);
+  ControlledRpcManager crm=new ControlledRpcManager(rm);
+  crm.blockAfter(PutKeyValueCommand.class);
+  TestingUtil.replaceComponent(nonOwnerCache,RpcManager.class,crm,true);
+  try {
+    Future<String> future=nonOwnerCache.putIfAbsentAsync(key,firstValue);
+    crm.waitForCommandToBlock(5,TimeUnit.SECONDS);
+    assertEquals(firstValue,ownerCache.remove(key));
+    crm.stopBlocking();
+    assertNull(future.get(5,TimeUnit.SECONDS));
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+    assertIsNotInL1(nonOwnerCache,key);
+    assertNull(nonOwnerCache.get(key));
+    assertIsNotInL1(nonOwnerCache,key);
+  }
+  finally {
+    TestingUtil.replaceComponent(nonOwnerCache,RpcManager.class,rm,true);
+  }
+}

@@ -1,0 +1,18 @@
+{
+  CyclicBarrier barrier=new CyclicBarrier(2);
+  addBlockingInterceptorBeforeTx(nonOwnerCache,barrier,GetKeyValueCommand.class);
+  try {
+    Future<String> future=nonOwnerCache.getAsync(key);
+    barrier.await(5,TimeUnit.SECONDS);
+    assertEquals(originalValue,ownerCache.put(key,updateValue));
+    barrier.await(5,TimeUnit.SECONDS);
+    assertEquals(originalValue,future.get(5,TimeUnit.SECONDS));
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+    assertIsNotInL1(nonOwnerCache,key);
+    assertEquals(updateValue,nonOwnerCache.get(key));
+    assertIsInL1(nonOwnerCache,key);
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+  }
+}

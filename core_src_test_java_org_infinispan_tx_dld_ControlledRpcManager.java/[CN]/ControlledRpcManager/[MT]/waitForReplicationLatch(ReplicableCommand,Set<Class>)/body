@@ -4,7 +4,10 @@
     return;
   }
   try {
-    blockingLatch.open();
+    if (!blockingLatch.isOpened()) {
+      log.debugf("Replication trigger called, releasing any waiters for command to block.");
+      blockingLatch.open();
+    }
     log.debugf("Replication trigger called, waiting for latch to open.");
     replicationLatch.await();
     log.trace("Replication latch opened, continuing.");

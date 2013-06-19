@@ -1,0 +1,23 @@
+{
+  Throwable t=Mockito.mock(Throwable.class);
+  Future future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      return sync.get(500,TimeUnit.MILLISECONDS);
+    }
+  }
+);
+  try {
+    future.get(50,TimeUnit.MILLISECONDS);
+    fail("Should have thrown a timeout exception");
+  }
+ catch (  TimeoutException e) {
+  }
+  sync.retrievalEncounteredException(t);
+  try {
+    sync.get(1,TimeUnit.SECONDS);
+    fail("Should have thrown an execution exception");
+  }
+ catch (  ExecutionException e) {
+    assertEquals(t,e.getCause());
+  }
+}
