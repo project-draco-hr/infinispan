@@ -1,11 +1,13 @@
 {
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (skip(ctx,command) || ctx.isInTxScope())   return returnValue;
+  if (!isStoreEnabled(command) || ctx.isInTxScope())   return returnValue;
   Map<Object,Object> map=command.getMap();
   for (  Object key : map.keySet()) {
-    InternalCacheEntry se=getStoredEntry(key,ctx);
-    store.store(se);
-    if (getLog().isTraceEnabled())     getLog().tracef("Stored entry %s under key %s",se,key);
+    if (isProperWriter(ctx,command,key)) {
+      InternalCacheEntry se=getStoredEntry(key,ctx);
+      store.store(se);
+      if (getLog().isTraceEnabled())       getLog().tracef("Stored entry %s under key %s",se,key);
+    }
   }
   if (getStatisticsEnabled())   cacheStores.getAndAdd(map.size());
   return returnValue;

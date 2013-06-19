@@ -1,16 +1,17 @@
 {
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (skip(ctx,command) || ctx.isInTxScope())   return returnValue;
+  if (!isStoreEnabled(command) || ctx.isInTxScope())   return returnValue;
   Map<Object,Object> map=command.getMap();
-  if (!(command.isForwarded() && loaderConfig.shared())) {
-    for (    Object key : map.keySet()) {
-      if (!skipKey(key)) {
-        InternalCacheEntry se=getStoredEntry(key,ctx);
-        store.store(se);
-        log.tracef("Stored entry %s under key %s",se,key);
-      }
+  int count=0;
+  for (  Object key : map.keySet()) {
+    if (isUsingLockDelegation && command.isForwarded() && !dm.getPrimaryLocation(key).equals(ctx.getOrigin()))     continue;
+    if (isProperWriter(ctx,command,key)) {
+      InternalCacheEntry se=getStoredEntry(key,ctx);
+      store.store(se);
+      log.tracef("Stored entry %s under key %s",se,key);
+      count++;
     }
   }
-  if (getStatisticsEnabled())   cacheStores.getAndAdd(map.size());
+  if (getStatisticsEnabled())   cacheStores.getAndAdd(count);
   return returnValue;
 }

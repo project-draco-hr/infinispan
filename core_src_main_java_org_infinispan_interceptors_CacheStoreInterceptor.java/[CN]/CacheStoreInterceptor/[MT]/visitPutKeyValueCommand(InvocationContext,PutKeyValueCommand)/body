@@ -1,6 +1,7 @@
 {
   Object returnValue=invokeNextInterceptor(ctx,command);
-  if (skip(ctx,command) || ctx.isInTxScope() || !command.isSuccessful())   return returnValue;
+  if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())   return returnValue;
+  if (!isProperWriter(ctx,command,command.getKey()))   return returnValue;
   Object key=command.getKey();
   InternalCacheEntry se=getStoredEntry(key,ctx);
   store.store(se);
