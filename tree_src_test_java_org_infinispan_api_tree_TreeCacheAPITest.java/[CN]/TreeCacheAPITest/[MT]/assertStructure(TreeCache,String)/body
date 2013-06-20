@@ -1,2 +1,13 @@
 {
+  Cache c=tc.getCache();
+  Fqn fqn=Fqn.fromString(fqnStr);
+  for (int i=0; i < fqn.size(); i++) {
+    Fqn parent=fqn.getSubFqn(0,i);
+    Object childName=fqn.get(i);
+    assertTrue("Node [" + parent + "] does not have a Data atomic map!",c.containsKey(new NodeKey(parent,NodeKey.Type.DATA)));
+    assertTrue("Node [" + parent + "] does not have a Structure atomic map!",c.containsKey(new NodeKey(parent,NodeKey.Type.STRUCTURE)));
+    AtomicMap<Object,Fqn> am=AtomicMapLookup.getAtomicMap(c,new NodeKey(parent,NodeKey.Type.STRUCTURE));
+    boolean hasChild=am.containsKey(childName);
+    assertTrue("Node [" + parent + "] does not have a child ["+ childName+ "] in its Structure atomic "+ "map!",hasChild);
+  }
 }
