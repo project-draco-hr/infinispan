@@ -1,7 +1,10 @@
 {
   Cache<Object,Object> cache1=getCache();
+  Cache<Object,Object> cache2=cache(1,cacheName());
+  CyclicBarrier barrier=new CyclicBarrier(2);
+  cache2.getAdvancedCache().getComponentRegistry().registerComponent(barrier,"barrier");
   DistributedExecutorService des=createDES(cache1);
-  Address target=cache1.getAdvancedCache().getRpcManager().getAddress();
+  Address target=address(0);
   DistributedTaskBuilder builder=des.createDistributedTaskBuilder(new SleepingSimpleCallable());
   builder.timeout(1000,TimeUnit.MILLISECONDS);
   Future<Integer> future=des.submit(target,builder.build());
