@@ -1,0 +1,25 @@
+{
+  List<ConfigurationBuilder> configs=configs(2,m);
+  EmbeddedCacheManager cacheManager0=TestCacheManagerFactory.createClusteredCacheManager(configs.get(0));
+  EmbeddedCacheManager cacheManager1=TestCacheManagerFactory.createClusteredCacheManager(configs.get(1));
+  try {
+    Cache<String,String> cache0=cacheManager0.getCache();
+    Cache<String,String> cache1=cacheManager1.getCache();
+    TestingUtil.blockUntilViewsChanged(TIMEOUT,2,cache0,cache1);
+    cache0.put("KEY","VALUE V1");
+    assertEquals("VALUE V1",cache1.get("KEY"));
+    TestingUtil.killCacheManagers(cacheManager1);
+    cacheManager1=null;
+    cache1=null;
+    TestingUtil.blockUntilViewsChanged(TIMEOUT,1,cache0);
+    cache0.put("KEY","VALUE V2");
+    assertEquals("VALUE V2",cache0.get("KEY"));
+    cacheManager1=TestCacheManagerFactory.createClusteredCacheManager(configs.get(1));
+    cache1=cacheManager1.getCache();
+    TestingUtil.blockUntilViewsChanged(TIMEOUT,2,cache0,cache1);
+    assertEquals("VALUE V2",cache1.get("KEY"));
+  }
+  finally {
+    TestingUtil.killCacheManagers(cacheManager0,cacheManager1);
+  }
+}
