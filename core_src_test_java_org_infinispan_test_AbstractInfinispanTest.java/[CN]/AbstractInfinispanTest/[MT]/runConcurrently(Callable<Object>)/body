@@ -1,0 +1,29 @@
+{
+  Future<Object>[] movers=new Future[tasks.length];
+  final CountDownLatch latch=new CountDownLatch(1);
+  for (int i=0; i < tasks.length; i++) {
+    final Callable<Object> task=tasks[i];
+    movers[i]=fork(new Callable<Object>(){
+      public Object call() throws Exception {
+        latch.await();
+        task.call();
+        return null;
+      }
+    }
+);
+  }
+  latch.countDown();
+  Exception exception=null;
+  for (  Future<Object> t : movers) {
+    try {
+      t.get(10,TimeUnit.SECONDS);
+    }
+ catch (    Exception e) {
+      log.debug("Exception in concurrent task",e);
+      exception=e;
+    }
+  }
+  if (exception != null) {
+    throw exception;
+  }
+}

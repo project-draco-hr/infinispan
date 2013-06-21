@@ -1,0 +1,31 @@
+{
+  final int N=5;
+  final Fqn X=Fqn.fromString("/x"), Y=Fqn.fromString("/y");
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  Node<Object,Object> nodeA=rootNode.addChild(A);
+  nodeA.addChild(X);
+  nodeA.addChild(Y);
+  Node<Object,Object> nodeB=rootNode.addChild(B);
+  Node<Object,Object> nodeC=rootNode.addChild(C);
+  Callable<Object>[] movers=new Callable[N];
+  for (int i=0; i < N; i++) {
+    final Fqn source=Fqn.fromRelativeFqn(A,i % 2 == 0 ? X : Y);
+    final Fqn dest=i % 2 == 0 ? B : C;
+    movers[i]=new Callable<Object>(){
+      public Object call(){
+        try {
+          treeCache.move(source,dest);
+        }
+ catch (        Exception e) {
+        }
+        return null;
+      }
+    }
+;
+  }
+  runConcurrently(movers);
+  log.info("Tree: " + TreeStructureSupport.printTree(treeCache,true));
+  assertNoLocks();
+  assertTrue(nodeA.getChildrenNames().contains("x") ^ nodeB.getChildrenNames().contains("x"));
+  assertTrue(nodeA.getChildrenNames().contains("y") ^ nodeC.getChildrenNames().contains("y"));
+}

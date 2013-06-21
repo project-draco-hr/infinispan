@@ -1,0 +1,70 @@
+{
+  Node<Object,Object> rootNode=treeCache.getRoot();
+  final Fqn FQN_A=A, FQN_B=B, FQN_C=C;
+  Node nodeA=rootNode.addChild(FQN_A);
+  Node nodeB=rootNode.addChild(FQN_B);
+  Node nodeC=rootNode.addChild(FQN_C);
+  final CountDownLatch nodeReadLatch=new CountDownLatch(1);
+  final CountDownLatch nodeMovedLatch=new CountDownLatch(1);
+  Callable<Object> moveCtoB=new Callable<Object>(){
+    public Object call() throws Exception {
+      tm().begin();
+      try {
+        assertEquals(asSet("a","b","c"),treeCache.getRoot().getChildrenNames());
+        assertEquals(Collections.emptySet(),treeCache.getNode(FQN_C).getChildrenNames());
+        nodeReadLatch.countDown();
+        nodeMovedLatch.await();
+        treeCache.move(FQN_C,FQN_B);
+        tm().commit();
+        fail("Transaction should have failed");
+      }
+ catch (      Exception e) {
+        if (tm().getTransaction() != null) {
+          try {
+            tm().rollback();
+          }
+ catch (          SystemException e1) {
+            log.error("Failed to rollback",e1);
+          }
+        }
+      }
+      return null;
+    }
+  }
+;
+  Callable<Object> moveCtoA=new Callable<Object>(){
+    public Object call() throws Exception {
+      tm().begin();
+      try {
+        try {
+          nodeReadLatch.await();
+          treeCache.move(FQN_C,FQN_A);
+          tm().commit();
+        }
+  finally {
+          nodeMovedLatch.countDown();
+        }
+      }
+ catch (      Exception e) {
+        if (tm().getTransaction() != null) {
+          try {
+            tm().rollback();
+          }
+ catch (          SystemException e1) {
+            log.error("Failed to rollback",e1);
+          }
+        }
+        throw e;
+      }
+      return null;
+    }
+  }
+;
+  runConcurrently(moveCtoB,moveCtoA);
+  log.trace("Tree: " + TreeStructureSupport.printTree(treeCache,true));
+  assertNoLocks();
+  assertFalse(nodeC.isValid());
+  assertEquals(asSet("a","b"),rootNode.getChildrenNames());
+  assertEquals(asSet("c"),nodeA.getChildrenNames());
+  assertEquals(Collections.emptySet(),nodeB.getChildrenNames());
+}
