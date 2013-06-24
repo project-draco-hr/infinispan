@@ -1,9 +1,13 @@
 {
   CacheEntry e=ctx.lookupEntry(key);
-  if (e == null || e.isNull()) {
+  if (e == null || e.isNull() || e.isRemoved()) {
     nonExistent=true;
     log.trace("Nothing to remove since the entry is null or we have a null entry");
     if (value == null) {
+      if (e != null) {
+        e.setChanged(true);
+        e.setRemoved(true);
+      }
       return null;
     }
  else {
@@ -11,18 +15,21 @@
       return false;
     }
   }
+  if (isConditional() && ctx.isInTxScope() && !ctx.isOriginLocal()&& !(this instanceof InvalidateCommand)) {
+    if (ignorePreviousValue) {
+      return performRemove(e,ctx);
+    }
+ else {
+      return value == null ? null : true;
+    }
+  }
   if (!(e instanceof MVCCEntry))   ctx.putLookedUpEntry(key,null);
   if (!ignorePreviousValue && value != null && e.getValue() != null && !e.getValue().equals(value)) {
     successful=false;
-    e.rollback();
     return false;
   }
-  final Object removedValue=e.getValue();
-  notify(ctx,removedValue,true);
-  e.setRemoved(true);
-  e.setValid(false);
   if (this instanceof EvictCommand) {
     e.setEvicted(true);
   }
-  return value == null ? removedValue : true;
+  return performRemove(e,ctx);
 }

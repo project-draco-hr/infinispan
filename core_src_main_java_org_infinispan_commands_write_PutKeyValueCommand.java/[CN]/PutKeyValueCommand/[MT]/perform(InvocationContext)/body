@@ -1,35 +1,24 @@
 {
-  Object o;
   MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
   if (e == null && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
     successful=false;
     return null;
   }
   if (e == null)   return null;
+  if (putIfAbsent && ctx.isInTxScope() && !ctx.isOriginLocal()) {
+    if (ignorePreviousValue) {
+      return performPut(e,ctx);
+    }
+ else {
+      return e.getValue();
+    }
+  }
   Object entryValue=e.getValue();
   if (entryValue != null && putIfAbsent && !e.isRemoved()) {
-    e.setChanged(false);
     successful=false;
     return entryValue;
   }
  else {
-    notifier.notifyCacheEntryModified(key,entryValue,entryValue == null,true,ctx,this);
-    if (value instanceof Delta) {
-      Delta dv=(Delta)value;
-      DeltaAware toMergeWith=null;
-      if (entryValue instanceof DeltaAware)       toMergeWith=(DeltaAware)entryValue;
-      e.setValue(dv.merge(toMergeWith));
-      o=entryValue;
-      e.setMetadata(metadata);
-    }
- else {
-      o=e.setValue(value);
-      if (e.isRemoved()) {
-        e.setRemoved(false);
-        e.setValid(true);
-        o=null;
-      }
-    }
+    return performPut(e,ctx);
   }
-  return o;
 }

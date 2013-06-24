@@ -1,0 +1,19 @@
+{
+  boolean txScope=context.isInTxScope();
+  if (txScope) {
+    for (    CacheEntry entry : context.getLookedUpEntries().values()) {
+      if (entry != null) {
+        entry.setSkipRemoteGet(true);
+      }
+    }
+  }
+  Object retVal=invokeNextAndApplyChanges(context,command,command.getMetadata());
+  if (txScope) {
+    for (    CacheEntry entry : context.getLookedUpEntries().values()) {
+      if (entry != null) {
+        entry.setSkipRemoteGet(true);
+      }
+    }
+  }
+  return retVal;
+}

@@ -1,0 +1,57 @@
+{
+  final Cache<Object,Object> ownerCache=cache(0);
+  final Object key=new MagicKey("shared",ownerCache);
+  final Cache<Object,Object> cache=executeOnOwner ? cache(0) : cache(1);
+  final TransactionManager tm=executeOnOwner ? tm(0) : tm(1);
+  assertValueInAllCaches(key,null);
+  final Object initValue=INITIAL_VALUE;
+  ownerCache.put(key,initValue);
+  assertValueInAllCaches(key,initValue);
+  tm.begin();
+  assertEquals("Wrong first get.",initValue,cache.get(key));
+  Transaction tx=tm.suspend();
+  ownerCache.put(key,OTHER_VALUE);
+  assertValueInAllCaches(key,OTHER_VALUE);
+  Object finalValueExpected=null;
+  tm.resume(tx);
+  assertEquals("Wrong second get.",initValue,cache.get(key));
+  assertEquals("Wrong value after remove.",initValue,cache.remove(key));
+switch (operation) {
+case PUT:
+    finalValueExpected=FINAL_VALUE;
+  assertEquals("Wrong put return value.",null,cache.put(key,FINAL_VALUE));
+assertEquals("Wrong final get.",FINAL_VALUE,cache.get(key));
+break;
+case REMOVE:
+finalValueExpected=null;
+assertEquals("Wrong remove return value.",null,cache.remove(key));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+case REPLACE:
+finalValueExpected=null;
+assertEquals("Wrong replace return value.",null,cache.replace(key,FINAL_VALUE));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+case CONDITIONAL_PUT:
+finalValueExpected=FINAL_VALUE;
+assertEquals("Wrong put return value.",null,cache.putIfAbsent(key,FINAL_VALUE));
+assertEquals("Wrong final get.",FINAL_VALUE,cache.get(key));
+break;
+case CONDITIONAL_REMOVE:
+finalValueExpected=null;
+assertEquals("Wrong remove return value.",false,cache.remove(key,INITIAL_VALUE));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+case CONDITIONAL_REPLACE:
+finalValueExpected=null;
+assertEquals("Wrong replace return value.",false,cache.replace(key,INITIAL_VALUE,FINAL_VALUE));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+default :
+fail("Unknown operation " + operation);
+break;
+}
+tm.commit();
+assertValueInAllCaches(key,finalValueExpected);
+assertNoTransactions();
+}

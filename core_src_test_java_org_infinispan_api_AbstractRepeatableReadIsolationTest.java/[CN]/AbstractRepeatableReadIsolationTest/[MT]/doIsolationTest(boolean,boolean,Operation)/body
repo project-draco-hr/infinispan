@@ -1,0 +1,58 @@
+{
+  final Cache<Object,Object> ownerCache=cache(0);
+  final Object key=new MagicKey("shared",ownerCache);
+  final Cache<Object,Object> cache=executeOnOwner ? cache(0) : cache(1);
+  final TransactionManager tm=executeOnOwner ? tm(0) : tm(1);
+  assertValueInAllCaches(key,null);
+  final Object initValue=initialized ? INITIAL_VALUE : null;
+  if (initialized) {
+    ownerCache.put(key,initValue);
+    assertValueInAllCaches(key,initValue);
+  }
+  tm.begin();
+  assertEquals("Wrong first get.",initValue,cache.get(key));
+  Transaction tx=tm.suspend();
+  ownerCache.put(key,OTHER_VALUE);
+  assertValueInAllCaches(key,OTHER_VALUE);
+  Object finalValueExpected=null;
+  tm.resume(tx);
+  assertEquals("Wrong second get.",initValue,cache.get(key));
+switch (operation) {
+case PUT:
+    finalValueExpected=FINAL_VALUE;
+  assertEquals("Wrong put return value.",initValue,cache.put(key,FINAL_VALUE));
+assertEquals("Wrong final get.",FINAL_VALUE,cache.get(key));
+break;
+case REMOVE:
+finalValueExpected=null;
+assertEquals("Wrong remove return value.",initValue,cache.remove(key));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+case REPLACE:
+finalValueExpected=initialized ? FINAL_VALUE : OTHER_VALUE;
+assertEquals("Wrong replace return value.",initValue,cache.replace(key,FINAL_VALUE));
+assertEquals("Wrong final get.",initialized ? FINAL_VALUE : initValue,cache.get(key));
+break;
+case CONDITIONAL_PUT:
+finalValueExpected=initialized ? OTHER_VALUE : FINAL_VALUE;
+assertEquals("Wrong put return value.",initialized ? initValue : null,cache.putIfAbsent(key,FINAL_VALUE));
+assertEquals("Wrong final get.",initialized ? initValue : FINAL_VALUE,cache.get(key));
+break;
+case CONDITIONAL_REMOVE:
+finalValueExpected=initialized ? null : OTHER_VALUE;
+assertEquals("Wrong remove return value.",initialized,cache.remove(key,INITIAL_VALUE));
+assertEquals("Wrong final get.",null,cache.get(key));
+break;
+case CONDITIONAL_REPLACE:
+finalValueExpected=initialized ? FINAL_VALUE : OTHER_VALUE;
+assertEquals("Wrong replace return value.",initialized,cache.replace(key,INITIAL_VALUE,FINAL_VALUE));
+assertEquals("Wrong final get.",initialized ? FINAL_VALUE : initValue,cache.get(key));
+break;
+default :
+fail("Unknown operation " + operation);
+break;
+}
+tm.commit();
+assertValueInAllCaches(key,finalValueExpected);
+assertNoTransactions();
+}

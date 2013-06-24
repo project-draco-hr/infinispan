@@ -1,6 +1,11 @@
 {
   if (isNeedReliableReturnValues(command) || command.isConditional() || shouldFetchRemoteValuesForWriteSkewCheck(ctx,command)) {
     for (    Object k : keygen.getKeys()) {
+      CacheEntry entry=ctx.lookupEntry(k);
+      boolean skipRemoteGet=entry != null && entry.skipRemoteGet();
+      if (skipRemoteGet) {
+        continue;
+      }
       Object returnValue=remoteGetAndStoreInL1(ctx,k,true,command);
       if (returnValue == null) {
         localGet(ctx,k,true,command,false);

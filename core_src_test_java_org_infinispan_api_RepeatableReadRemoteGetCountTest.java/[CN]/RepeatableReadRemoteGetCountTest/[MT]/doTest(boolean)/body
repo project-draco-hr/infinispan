@@ -1,0 +1,24 @@
+{
+  final Object key=new MagicKey("key",cache(0));
+  final Cache<Object,Object> cache=cache(1);
+  final TransactionManager tm=tm(1);
+  final CountingRpcManager rpcManager=replaceRpcManager(cache);
+  if (initialized) {
+    cache(0).put(key,"v1");
+  }
+  tm.begin();
+  rpcManager.resetStats();
+  AssertJUnit.assertEquals("Wrong value read.",initialized ? "v1" : null,cache.get(key));
+  AssertJUnit.assertEquals("Wrong number of gets after read.",1,rpcManager.clusterGet);
+  AssertJUnit.assertEquals("Wrong put return value.",initialized ? "v1" : null,cache.put(key,"v2"));
+  AssertJUnit.assertEquals("Wrong number of gets after put.",1,rpcManager.clusterGet);
+  AssertJUnit.assertEquals("Wrong replace return value.","v2",cache.replace(key,"v3"));
+  AssertJUnit.assertEquals("Wrong number of gets after replace.",1,rpcManager.clusterGet);
+  AssertJUnit.assertEquals("Wrong conditional replace return value.",true,cache.replace(key,"v3","v4"));
+  AssertJUnit.assertEquals("Wrong number of gets after conditional replace.",1,rpcManager.clusterGet);
+  AssertJUnit.assertEquals("Wrong conditional remove return value.",true,cache.remove(key,"v4"));
+  AssertJUnit.assertEquals("Wrong number of gets after conditional remove.",1,rpcManager.clusterGet);
+  AssertJUnit.assertEquals("Wrong conditional put return value.",null,cache.putIfAbsent(key,"v5"));
+  AssertJUnit.assertEquals("Wrong number of gets after conditional put.",1,rpcManager.clusterGet);
+  tm.commit();
+}

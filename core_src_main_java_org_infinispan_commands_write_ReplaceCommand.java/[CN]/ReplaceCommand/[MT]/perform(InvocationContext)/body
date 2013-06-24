@@ -2,9 +2,20 @@
   MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
   if (e != null) {
     if (ctx.isOriginLocal()) {
-      if (e.isNull() || e.getValue() == null) {
-        e.setChanged(false);
+      if (e.isNull() || e.getValue() == null || e.isRemoved()) {
         return returnValue(null,false,ctx);
+      }
+    }
+ else {
+      if (isConditional() && ctx.isInTxScope()) {
+        if (ignorePreviousValue) {
+          e.setChanged(true);
+          Object old=e.setValue(newValue);
+          return returnValue(old,true,ctx);
+        }
+ else {
+          return returnValue(null,false,ctx);
+        }
       }
     }
     if (oldValue == null || isValueEquals(oldValue,e.getValue()) || ignorePreviousValue) {
@@ -12,7 +23,6 @@
       Object old=e.setValue(newValue);
       return returnValue(old,true,ctx);
     }
-    e.setChanged(false);
   }
   return returnValue(null,false,ctx);
 }

@@ -1,0 +1,23 @@
+{
+  Object entryValue=e.getValue();
+  Object o;
+  notifier.notifyCacheEntryModified(key,entryValue,entryValue == null,true,ctx,this);
+  if (value instanceof Delta) {
+    Delta dv=(Delta)value;
+    DeltaAware toMergeWith=null;
+    if (entryValue instanceof DeltaAware)     toMergeWith=(DeltaAware)entryValue;
+    e.setValue(dv.merge(toMergeWith));
+    o=entryValue;
+    e.setMetadata(metadata);
+  }
+ else {
+    o=e.setValue(value);
+    if (e.isRemoved()) {
+      e.setRemoved(false);
+      e.setValid(true);
+      o=null;
+    }
+  }
+  e.setChanged(true);
+  return o;
+}
