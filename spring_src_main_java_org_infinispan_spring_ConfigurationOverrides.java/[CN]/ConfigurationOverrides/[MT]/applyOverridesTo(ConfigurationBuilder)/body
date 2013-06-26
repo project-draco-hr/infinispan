@@ -106,9 +106,6 @@
     this.logger.debug("Overriding property [transactionManagerLookup] with value [" + this.transactionManagerLookup + "]");
     configurationToOverride.transaction().transactionManagerLookup(this.transactionManagerLookup);
   }
-  if (this.cacheLoaderManagerConfig != null) {
-    this.logger.debug("Overriding property [cacheLoaderManagerConfig] with value [" + this.cacheLoaderManagerConfig + "]");
-  }
   if (this.syncCommitPhase != null) {
     this.logger.debug("Overriding property [syncCommitPhase] with value [" + this.syncCommitPhase + "]");
     configurationToOverride.transaction().syncCommitPhase(this.syncCommitPhase);
@@ -173,9 +170,6 @@
     this.logger.debug("Overriding property [rehashEnabled] with value [" + this.rehashEnabled + "]");
     configurationToOverride.clustering().stateTransfer().fetchInMemoryState(this.rehashEnabled);
   }
-  if (this.rehashWaitTime != null) {
-    this.logger.debug("Overriding property [rehashWaitTime] with value [" + this.rehashWaitTime + "]");
-  }
   if (this.useAsyncMarshalling != null) {
     this.logger.debug("Overriding property [useAsyncMarshalling] with value [" + this.useAsyncMarshalling + "]");
     configurationToOverride.clustering().async().asyncMarshalling(this.useAsyncMarshalling);
@@ -189,7 +183,11 @@
     configurationToOverride.indexing().indexLocalOnly(this.indexLocalOnly);
   }
   if (this.customInterceptors != null) {
-    this.logger.debug("Overriding property [customInterceptors] with value [" + this.customInterceptors + "]");
+    this.logger.debug("Looping over [customInterceptors] to add each one to local collection.");
+    for (    CommandInterceptor interceptor : customInterceptors) {
+      this.logger.debug("Adding custom interceptor  [" + interceptor.getClass().getName() + "]");
+      configurationToOverride.customInterceptors().addInterceptor().interceptor(interceptor);
+    }
   }
   this.logger.debug("Finished applying configuration overrides to Configuration [" + configurationToOverride + "]");
 }
