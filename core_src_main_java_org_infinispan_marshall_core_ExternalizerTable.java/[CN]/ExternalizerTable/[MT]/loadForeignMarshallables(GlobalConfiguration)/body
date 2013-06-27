@@ -1,0 +1,11 @@
+{
+  log.trace("Loading user defined externalizers");
+  for (  Map.Entry<Integer,AdvancedExternalizer<?>> config : globalCfg.serialization().advancedExternalizers().entrySet()) {
+    AdvancedExternalizer<?> ext=config.getValue();
+    Integer id=ext.getId();
+    if (config.getKey() == null && id == null)     throw new CacheConfigurationException(String.format("No advanced externalizer identifier set for externalizer %s",ext.getClass().getName()));
+ else     if (config.getKey() != null)     id=config.getKey();
+    id=checkForeignIdLimit(id,ext);
+    updateExtReadersWritersWithTypes(new ForeignExternalizerAdapter(id,ext),generateForeignReaderIndex(id));
+  }
+}

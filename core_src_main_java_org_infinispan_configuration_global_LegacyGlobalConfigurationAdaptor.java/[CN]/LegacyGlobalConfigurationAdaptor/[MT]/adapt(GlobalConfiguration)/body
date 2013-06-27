@@ -5,9 +5,11 @@
   if (config.transport().transport() != null)   legacy.transport().transportClass(config.transport().transport().getClass());
   legacy.globalJmxStatistics().jmxDomain(config.globalJmxStatistics().domain()).mBeanServerLookup(config.globalJmxStatistics().mbeanServerLookup()).allowDuplicateDomains(config.globalJmxStatistics().allowDuplicateDomains()).cacheManagerName(config.globalJmxStatistics().cacheManagerName()).withProperties(config.globalJmxStatistics().properties());
   if (!config.globalJmxStatistics().enabled())   legacy.globalJmxStatistics().disable();
-  legacy.serialization().marshallerClass(config.serialization().marshaller().getClass()).version(config.serialization().version());
+  Marshaller marshaller=config.serialization().marshaller();
+  if (marshaller instanceof org.infinispan.marshall.Marshaller)   legacy.serialization().marshallerClass(((org.infinispan.marshall.Marshaller)marshaller).getClass()).version(config.serialization().version());
   for (  Entry<Integer,AdvancedExternalizer<?>> entry : config.serialization().advancedExternalizers().entrySet()) {
-    legacy.serialization().addAdvancedExternalizer(entry.getKey(),entry.getValue());
+    AdvancedExternalizer<?> advancedExternalizer=entry.getValue();
+    if (advancedExternalizer instanceof org.infinispan.marshall.AdvancedExternalizer)     legacy.serialization().addAdvancedExternalizer(entry.getKey(),(org.infinispan.marshall.AdvancedExternalizer)advancedExternalizer);
   }
   legacy.serialization().classResolver(config.serialization().classResolver());
   legacy.asyncTransportExecutor().factory(config.asyncTransportExecutor().factory().getClass()).withProperties(config.asyncTransportExecutor().properties());
