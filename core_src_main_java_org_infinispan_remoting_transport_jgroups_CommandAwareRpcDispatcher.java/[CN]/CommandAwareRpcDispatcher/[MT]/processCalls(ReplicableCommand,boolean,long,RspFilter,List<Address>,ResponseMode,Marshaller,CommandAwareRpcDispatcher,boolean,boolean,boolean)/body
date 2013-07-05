@@ -3,19 +3,17 @@
   boolean rsvp=command instanceof CacheTopologyControlCommand || isRsvpCommand(command);
   RspList<Object> retval=null;
   Buffer buf;
-  if (totalOrder && distribution) {
+  if (totalOrder) {
     buf=marshallCall(marshaller,command);
     Message message=constructMessage(buf,null,oob,mode,rsvp,totalOrder);
     AnycastAddress address=new AnycastAddress(dests);
     message.setDest(address);
     retval=card.castMessage(dests,message,new RequestOptions(mode,timeout,false,filter));
   }
- else   if (broadcast || FORCE_MCAST || totalOrder) {
+ else   if (broadcast || FORCE_MCAST) {
     buf=marshallCall(marshaller,command);
     RequestOptions opts=new RequestOptions(mode,timeout,false,filter);
-    if (!totalOrder) {
-      opts.setExclusionList(card.getChannel().getAddress());
-    }
+    opts.setExclusionList(card.getChannel().getAddress());
     retval=card.castMessage(dests,constructMessage(buf,null,oob,mode,rsvp,totalOrder),opts);
   }
  else {
