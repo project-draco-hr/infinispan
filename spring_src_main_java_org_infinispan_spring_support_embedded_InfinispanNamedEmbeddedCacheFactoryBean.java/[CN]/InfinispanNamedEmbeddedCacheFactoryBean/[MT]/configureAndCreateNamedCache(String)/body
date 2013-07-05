@@ -1,28 +1,34 @@
 {
 switch (this.configurationTemplateMode) {
 case NONE:
-    this.logger.debug("ConfigurationTemplateMode is NONE: starting with a fresh Configuration");
+    this.logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
   if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
     throw new IllegalStateException("Cannot use ConfigurationTemplateMode NONE: a cache named [" + cacheName + "] has already been defined.");
   }
-ConfigurationBuilder newConfiguration=new ConfigurationBuilder();
-this.configurationOverrides.applyOverridesTo(newConfiguration);
-this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName,newConfiguration.build());
+builder=new ConfigurationBuilder();
+this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName,builder.build());
 break;
 case NAMED:
-this.logger.debug("ConfigurationTemplateMode is NAMED: starting with a named Configuration [" + cacheName + "]");
-org.infinispan.configuration.cache.Configuration cacheConfiguration=infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
+this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
+Configuration cacheConfiguration=infinispanEmbeddedCacheManager.getCacheConfiguration(cacheName);
 if (cacheConfiguration != null) {
-ConfigurationBuilder newNamedConfig=new ConfigurationBuilder();
-newNamedConfig.read(cacheConfiguration);
-this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName,newNamedConfig.build());
+builder=new ConfigurationBuilder();
+builder.read(cacheConfiguration);
+this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName,builder.build());
 }
 break;
 case DEFAULT:
-this.logger.debug("ConfigurationTemplateMode is DEFAULT: starting with default Configuration");
+this.logger.debug("ConfigurationTemplateMode is DEFAULT.");
 if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
 throw new IllegalStateException("Cannot use ConfigurationTemplateMode DEFAULT: a cache named [" + cacheName + "] has already been defined.");
 }
+break;
+case CUSTOM:
+this.logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
+if (this.builder == null) {
+throw new IllegalStateException("There has not been a ConfigurationBuilder provided. There has to be one " + "provided for ConfigurationTemplateMode CUSTOM.");
+}
+this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName,builder.build());
 break;
 default :
 throw new IllegalStateException("Unknown ConfigurationTemplateMode: " + this.configurationTemplateMode);

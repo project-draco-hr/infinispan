@@ -4,11 +4,15 @@
     return createCacheManager(configurationFileLocation.getInputStream());
   }
  else {
-    final GlobalConfigurationBuilder globalCfgBuilder=new GlobalConfigurationBuilder();
-    final ConfigurationBuilder cacheCfgBuilder=new ConfigurationBuilder();
-    this.globalConfigurationOverrides.applyOverridesTo(globalCfgBuilder);
-    this.configurationOverrides.applyOverridesTo(cacheCfgBuilder);
-    cm=createCacheManager(globalCfgBuilder,cacheCfgBuilder);
+    if (gcb == null) {
+      if (logger.isDebugEnabled())       logger.debug("GlobalConfigurationBuilder is null. Using default new " + "instance.");
+      gcb=new GlobalConfigurationBuilder();
+    }
+    if (builder == null) {
+      if (logger.isDebugEnabled())       logger.debug("ConfigurationBuilder is null. Using default new instance.");
+      builder=new ConfigurationBuilder();
+    }
+    cm=createCacheManager(gcb,builder);
     return cm;
   }
 }
