@@ -1,0 +1,14 @@
+{
+  clusterRegistry0.put("s1","k1","v1");
+  clusterRegistry0.put("s1","k2","v2");
+  clusterRegistry0.put("s2","k1","v1");
+  clusterRegistry0.put("s2","k2","v2");
+  checkExpectedValues(clusterRegistry0);
+  addClusterEnabledCacheManager(dcc);
+  waitForClusterToForm();
+  assertNull(manager(1).getCacheConfiguration(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME));
+  ClusterRegistry<Object,Object,Object> clusterRegistry1=manager(1).getGlobalComponentRegistry().getComponent(ClusterRegistry.class);
+  checkExpectedValues(clusterRegistry0);
+  checkExpectedValues(clusterRegistry1);
+  assertNotNull(manager(1).getCacheConfiguration(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME));
+}
