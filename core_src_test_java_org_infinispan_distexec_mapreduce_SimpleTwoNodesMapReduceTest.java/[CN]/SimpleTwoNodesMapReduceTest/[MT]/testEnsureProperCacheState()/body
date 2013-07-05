@@ -1,17 +1,18 @@
 {
   ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
-  EmbeddedCacheManager cacheManager=addClusterEnabledCacheManager(builder);
-  Cache cache=cacheManager.getCache();
-  cache.stop();
-  try {
-    MapReduceTask<String,String,String,Integer> task=createMapReduceTask(cache);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(builder)){
+    @Override public void call(){
+      try {
+        Cache cache=cm.getCache();
+        cache.stop();
+        MapReduceTask<String,String,String,Integer> task=createMapReduceTask(cache);
+      }
+ catch (      IllegalStateException ex) {
+        assertNotNull(ex.getMessage());
+        assertTrue(ex.getMessage().contains("Cache is in an invalid state:"));
+        throw ex;
+      }
+    }
   }
- catch (  IllegalStateException ex) {
-    assertNotNull(ex.getMessage());
-    assertTrue(ex.getMessage().contains("Cache is in an invalid state:"));
-    throw ex;
-  }
- finally {
-    TestingUtil.killCacheManagers(cacheManager);
-  }
+);
 }

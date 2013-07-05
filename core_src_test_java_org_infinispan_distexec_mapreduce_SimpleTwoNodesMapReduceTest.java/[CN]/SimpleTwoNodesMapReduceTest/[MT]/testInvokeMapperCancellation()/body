@@ -1,15 +1,12 @@
 {
-  counter=new AtomicInteger();
-  MapReduceTask<String,String,String,Integer> task=invokeMapReduce(null,new LatchMapper(),new WordCountReducer());
+  final CyclicBarrier barrier=new CyclicBarrier(nodeCount() + 1);
+  final String name=this.getClass().getSimpleName();
+  barriers.put(name,barrier);
+  MapReduceTask<String,String,String,Integer> task=invokeMapReduce(null,new LatchMapper(name),new WordCountReducer());
   final Future<Map<String,Integer>> future=task.executeAsynchronously();
   Future<Boolean> cancelled=fork(new Callable<Boolean>(){
     @Override public Boolean call() throws Exception {
-      eventually(new Condition(){
-        @Override public boolean isSatisfied() throws Exception {
-          return counter.get() >= nodeCount();
-        }
-      }
-);
+      barrier.await(10,TimeUnit.SECONDS);
       return future.cancel(true);
     }
   }

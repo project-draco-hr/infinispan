@@ -1,18 +1,16 @@
 {
   boolean interrupted=false;
-  CountDownLatch latch=new CountDownLatch(1);
+  CyclicBarrier barrier=barriers.get(name);
   try {
-    if (!interrupted) {
-      counter.incrementAndGet();
-      latch.await(5000,TimeUnit.MILLISECONDS);
-    }
- else {
-      interrupted=true;
-    }
+    barrier.await(10,TimeUnit.SECONDS);
+    TimeUnit.MILLISECONDS.sleep(5000);
   }
  catch (  InterruptedException e) {
     interrupted=true;
     Thread.currentThread().interrupt();
+  }
+catch (  Exception e) {
+    log.error("Error in the mapping phase",e);
   }
   if (interrupted)   throw new RuntimeException();
 }
