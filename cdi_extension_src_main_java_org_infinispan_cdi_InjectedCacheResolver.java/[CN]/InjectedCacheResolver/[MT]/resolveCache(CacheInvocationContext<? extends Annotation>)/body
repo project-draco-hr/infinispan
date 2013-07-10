@@ -9,12 +9,9 @@
     for (    String name : cacheNames) {
       if (name.equals(cacheName)) {
         JCacheManager jcacheManager=jcacheManagers.get(cm);
-        Iterable<Cache<?,?>> caches=jcacheManager.getCaches();
-        for (        Cache<?,?> c : caches) {
-          if (c.getName().equals(cacheName))           return (Cache<K,V>)c;
-        }
-        Cache<K,V> ret=(Cache<K,V>)jcacheManager.configureCache(cacheName,cm.getCache(cacheName).getAdvancedCache());
-        return ret;
+        Cache<K,V> cache=jcacheManager.getCache(cacheName);
+        if (cache != null)         return cache;
+        return jcacheManager.configureCache(cacheName,cm.<K,V>getCache(cacheName).getAdvancedCache());
       }
     }
   }

@@ -1,0 +1,12 @@
+{
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
+  Object retval=invokeNextInterceptor(ctx,command);
+  if (statisticsEnabled && ctx.isOriginLocal() && command.isSuccessful()) {
+    long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
+    storeTimes.getAndAdd(intervalMilliseconds);
+    stores.incrementAndGet();
+  }
+  return retval;
+}

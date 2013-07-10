@@ -2,11 +2,11 @@
   boolean exists=cache.containsKey(key);
   if (exists) {
     Entry<K,V> entry=new JCacheEntry<K,V>(key,value);
-    Configuration.Duration ttl=expiryPolicy.getTTLForModifiedEntry(entry,null);
+    Duration ttl=expiryPolicy.getExpiryForModifiedEntry(entry);
     if (ttl == null || ttl.isEternal()) {
       return isConditional ? cache.replace(key,oldValue,value) : cache.replace(key,value) != null;
     }
- else     if (ttl.equals(Configuration.Duration.ZERO)) {
+ else     if (ttl.equals(Duration.ZERO)) {
       return cache.remove(key) != null;
     }
  else {

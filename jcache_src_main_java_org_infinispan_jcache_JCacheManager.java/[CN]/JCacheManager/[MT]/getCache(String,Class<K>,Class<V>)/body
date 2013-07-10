@@ -1,0 +1,18 @@
+{
+  if (keyType == null)   throw new NullPointerException("keyType can not be null");
+  if (valueType == null)   throw new NullPointerException("valueType can not be null");
+synchronized (caches) {
+    Cache<K,V> cache=(Cache<K,V>)caches.get(cacheName);
+    if (cache != null) {
+      Configuration<?,?> configuration=cache.getConfiguration();
+      Class<?> cfgKeyType=configuration.getKeyType();
+      if (verifyType(keyType,cfgKeyType)) {
+        Class<?> cfgValueType=configuration.getValueType();
+        if (verifyType(valueType,cfgValueType))         return cache;
+        throw log.incompatibleType(valueType,cfgValueType);
+      }
+      throw log.incompatibleType(keyType,cfgKeyType);
+    }
+    return null;
+  }
+}

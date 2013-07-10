@@ -1,6 +1,14 @@
 {
-  checkStartedStatus();
+  checkNotClosed();
 synchronized (caches) {
-    return (Cache<K,V>)caches.get(cacheName);
+    Cache<K,V> cache=(Cache<K,V>)caches.get(cacheName);
+    if (cache != null) {
+      Configuration<K,V> configuration=cache.getConfiguration();
+      Class<K> keyType=configuration.getKeyType();
+      Class<V> valueType=configuration.getValueType();
+      if (keyType == null && valueType == null)       return cache;
+      throw log.unsafeTypedCacheRequest(cacheName,keyType,valueType);
+    }
+    return null;
   }
 }

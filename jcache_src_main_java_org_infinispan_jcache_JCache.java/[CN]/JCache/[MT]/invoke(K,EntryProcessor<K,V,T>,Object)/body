@@ -1,0 +1,33 @@
+{
+  checkNotClosed();
+  verifyKey(key);
+  if (entryProcessor == null)   throw new NullPointerException("Entry processor cannot be null");
+  if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
+  return new WithProcessorLock<T>().call(key,new Callable<T>(){
+    @Override public T call() throws Exception {
+      V oldValue=skipCacheLoadAndStatsCache.get(key);
+      V safeOldValue=oldValue;
+      if (configuration.isStoreByValue()) {
+        safeOldValue=safeCopy(oldValue);
+      }
+      MutableJCacheEntry<K,V> mutable=new MutableJCacheEntry<K,V>(cache,key,safeOldValue);
+      T ret=entryProcessor.process(mutable,arguments);
+      if (mutable.isRemoved()) {
+        cache.remove(key);
+      }
+ else {
+        V newValue=mutable.getNewValue();
+        if (newValue != null) {
+          if (oldValue != null) {
+            cache.replace(key,oldValue,newValue);
+          }
+ else {
+            cache.putIfAbsent(key,newValue);
+          }
+        }
+      }
+      return ret;
+    }
+  }
+);
+}

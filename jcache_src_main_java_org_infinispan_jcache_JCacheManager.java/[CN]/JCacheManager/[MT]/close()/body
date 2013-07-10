@@ -1,17 +1,19 @@
 {
-  checkStartedStatus();
-  ArrayList<Cache<?,?>> cacheList;
+  if (!isClosed()) {
+    ArrayList<JCache<?,?>> cacheList;
 synchronized (caches) {
-    cacheList=new ArrayList<Cache<?,?>>(caches.values());
-    caches.clear();
-  }
-  for (  Cache<?,?> cache : cacheList) {
-    try {
-      cache.stop();
+      cacheList=new ArrayList<JCache<?,?>>(caches.values());
+      caches.clear();
     }
- catch (    Exception e) {
+    for (    JCache<?,?> cache : cacheList) {
+      try {
+        cache.close();
+        unregisterCacheMBeans(cache);
+      }
+ catch (      Exception e) {
+      }
     }
+    cm.stop();
+    isClosed=true;
   }
-  cm.stop();
-  status=Status.STOPPED;
 }

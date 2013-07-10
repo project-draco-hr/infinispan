@@ -3,7 +3,6 @@
   this.ignoreReturnValuesCache=cache.withFlags(Flag.IGNORE_RETURN_VALUES);
   this.skipCacheLoadCache=cache.withFlags(Flag.SKIP_CACHE_LOAD);
   this.skipCacheLoadAndStatsCache=cache.withFlags(Flag.SKIP_CACHE_LOAD,Flag.SKIP_STATISTICS);
-  this.skipStatsCache=cache.withFlags(Flag.SKIP_STATISTICS);
   this.skipListenerCache=cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
   this.cacheManager=cacheManager;
   this.configuration=new MutableConfiguration<K,V>(c).setManagementEnabled(c.isManagementEnabled());
@@ -11,13 +10,16 @@
   this.stats=new RICacheStatistics(this.cache);
   this.expiryPolicy=configuration.getExpiryPolicyFactory().create();
   this.lockTimeout=cache.getCacheConfiguration().locking().lockAcquisitionTimeout();
-  this.notifier=new JCacheNotifier<K,V>();
-  for (  CacheEntryListenerRegistration<? super K,? super V> r : c.getCacheEntryListenerRegistrations()) {
+  JCacheNotifier<K,V> notifier=new JCacheNotifier<K,V>();
+  boolean hasListeners=false;
+  for (  CacheEntryListenerConfiguration<K,V> r : c.getCacheEntryListenerConfigurations()) {
     notifier.addListener(r);
+    hasListeners=true;
   }
+  if (hasListeners)   cache.addListener(new JCacheListenerAdapter<K,V>(this,notifier));
   setCacheLoader(cache,c);
   setCacheWriter(cache,c);
-  addExpirationTrackingInterceptor(cache,this.notifier);
+  addExpirationTrackingInterceptor(cache,notifier);
   if (configuration.isManagementEnabled())   setManagementEnabled(true);
   if (configuration.isStatisticsEnabled())   setStatisticsEnabled(true);
 }
