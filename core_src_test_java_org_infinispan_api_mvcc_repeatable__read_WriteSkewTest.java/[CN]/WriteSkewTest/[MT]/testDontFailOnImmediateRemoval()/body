@@ -1,11 +1,12 @@
 {
   setCacheWithWriteSkewCheck();
   postStart();
+  final String key="testDontOnImmediateRemoval-Key";
   tm.begin();
-  cache.put("testDontOnImmediateRemoval-Key","testDontOnImmediateRemoval-Value");
-  Assert.assertEquals(cache.get("testDontOnImmediateRemoval-Key"),"testDontOnImmediateRemoval-Value");
-  cache.put("testDontOnImmediateRemoval-Key","testDontOnImmediateRemoval-Value-Second");
-  cache.remove("testDontOnImmediateRemoval-Key");
+  cache.put(key,"testDontOnImmediateRemoval-Value");
+  assertEquals("Wrong value for key " + key,"testDontOnImmediateRemoval-Value",cache.get(key));
+  cache.put(key,"testDontOnImmediateRemoval-Value-Second");
+  cache.remove(key);
   tm.commit();
-  Assert.assertFalse(cache.containsKey("testDontOnImmediateRemoval-Key"));
+  assertFalse("Key " + key + " was not removed as expected.",cache.containsKey(key));
 }

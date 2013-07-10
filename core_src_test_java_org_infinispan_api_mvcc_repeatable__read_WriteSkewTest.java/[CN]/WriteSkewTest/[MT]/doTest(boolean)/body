@@ -1,2 +1,78 @@
 {
+  final String key="k";
+  final Set<Exception> w1exceptions=new HashSet<Exception>();
+  final Set<Exception> w2exceptions=new HashSet<Exception>();
+  final CountDownLatch w1Signal=new CountDownLatch(1);
+  final CountDownLatch w2Signal=new CountDownLatch(1);
+  final CountDownLatch threadSignal=new CountDownLatch(2);
+  cache.put(key,"v");
+  Thread w1=new Thread("Writer-1, WriteSkewTest"){
+    @Override public void run(){
+      boolean didCoundDown=false;
+      try {
+        tm.begin();
+        assertEquals("Wrong value in Writer-1 for key " + key + ".","v",cache.get(key));
+        threadSignal.countDown();
+        didCoundDown=true;
+        w1Signal.await();
+        cache.put(key,"v2");
+        tm.commit();
+      }
+ catch (      Exception e) {
+        w1exceptions.add(e);
+      }
+ finally {
+        if (!didCoundDown)         threadSignal.countDown();
+      }
+    }
+  }
+;
+  Thread w2=new Thread("Writer-2, WriteSkewTest"){
+    @Override public void run(){
+      boolean didCoundDown=false;
+      try {
+        tm.begin();
+        assertEquals("Wrong value in Writer-2 for key " + key + ".","v",cache.get(key));
+        threadSignal.countDown();
+        didCoundDown=true;
+        w2Signal.await();
+        cache.put(key,"v3");
+        tm.commit();
+      }
+ catch (      Exception e) {
+        w2exceptions.add(e);
+        if (!allowWriteSkew) {
+          try {
+            tm.rollback();
+          }
+ catch (          SystemException e1) {
+          }
+        }
+      }
+ finally {
+        if (!didCoundDown)         threadSignal.countDown();
+      }
+    }
+  }
+;
+  w1.start();
+  w2.start();
+  threadSignal.await();
+  w1Signal.countDown();
+  w1.join();
+  w2Signal.countDown();
+  w2.join();
+  if (allowWriteSkew) {
+    throwExceptions(w1exceptions);
+    throwExceptions(w2exceptions);
+    assertEquals("W2 should have overwritten W1's work!","v3",cache.get(key));
+    assertNoLocks();
+  }
+ else {
+    Collection<Exception> combined=new HashSet<Exception>(w1exceptions);
+    combined.addAll(w2exceptions);
+    assertFalse("Exceptions are expected!",combined.isEmpty());
+    assertEquals("Expects one exception.",1,combined.size());
+    assertTrue("Wrong exception type.",combined.iterator().next() instanceof CacheException);
+  }
 }

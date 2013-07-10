@@ -1,0 +1,37 @@
+{
+  setCacheWithWriteSkewCheck();
+  postStart();
+  final String key="k";
+  tm.begin();
+  try {
+    cache.put(key,"init");
+  }
+ catch (  Exception e) {
+    tm.setRollbackOnly();
+    throw e;
+  }
+ finally {
+    if (tm.getStatus() == Status.STATUS_ACTIVE) {
+      tm.commit();
+    }
+ else {
+      tm.rollback();
+    }
+  }
+  Cache<String,String> putCache=cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
+  tm.begin();
+  putCache.put(key,"v1");
+  final Transaction tx1=tm.suspend();
+  tm.begin();
+  putCache.put(key,"v2");
+  final Transaction tx2=tm.suspend();
+  tm.begin();
+  putCache.put(key,"v3");
+  final Transaction tx3=tm.suspend();
+  tm.resume(tx1);
+  tm.commit();
+  tm.resume(tx2);
+  tm.commit();
+  tm.resume(tx3);
+  tm.commit();
+}

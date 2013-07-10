@@ -2,6 +2,9 @@
   InternalCacheEntry ice=container.get(key);
   Object actualValue=ice == null ? null : ice.getValue();
   Object valueToCompare=alreadyCopied ? oldValue : value;
+  if (log.isTraceEnabled()) {
+    log.tracef("Performing local write skew check. actualValue=%s, transactionValue=%s",actualValue,valueToCompare);
+  }
   if (actualValue != null && actualValue != valueToCompare) {
     log.unableToCopyEntryForUpdate(getKey());
     throw new WriteSkewException("Detected write skew.");

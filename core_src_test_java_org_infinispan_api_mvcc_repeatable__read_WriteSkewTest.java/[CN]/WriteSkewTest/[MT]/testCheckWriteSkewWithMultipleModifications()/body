@@ -44,7 +44,7 @@
       }
     }
   }
-,"WriteSkewTest.Thread-1");
+,"Thread-1, WriteSkewTest");
   Thread t2=new Thread(new Runnable(){
     public void run(){
       try {
@@ -82,7 +82,7 @@
       }
     }
   }
-,"WriteSkewTest.Thread-2");
+,"Thread-2, WriteSkewTest");
   t1.start();
   t2.start();
   latch1.countDown();
@@ -90,8 +90,8 @@
   t2.join();
   log.trace("successes= " + successes.get());
   log.trace("rollbacks= " + rollbacks.get());
-  Assert.assertTrue(cache.containsKey("k1"));
-  Assert.assertEquals("v2",cache.get("k1"));
-  Assert.assertEquals(1,successes.get());
-  Assert.assertEquals(1,rollbacks.get());
+  assertTrue("k1 is expected to be in cache.",cache.containsKey("k1"));
+  assertEquals("Wrong value for key k1.","v2",cache.get("k1"));
+  assertEquals("Expects only one thread to succeed.",1,successes.get());
+  assertEquals("Expects only one thread to fail",1,rollbacks.get());
 }
