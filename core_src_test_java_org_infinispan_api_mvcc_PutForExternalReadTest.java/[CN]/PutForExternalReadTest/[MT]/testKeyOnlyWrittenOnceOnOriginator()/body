@@ -1,0 +1,26 @@
+{
+  final Cache<MagicKey,String> cache1=cache(0,CACHE_NAME);
+  final Cache<MagicKey,String> cache2=cache(1,CACHE_NAME);
+  final CyclicBarrier barrier=new CyclicBarrier(2);
+  cache1.getAdvancedCache().addInterceptor(new BaseCustomInterceptor(){
+    @Override public Object visitPutKeyValueCommand(    InvocationContext ctx,    PutKeyValueCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) {
+        barrier.await(10,TimeUnit.SECONDS);
+        barrier.await(10,TimeUnit.SECONDS);
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  }
+,0);
+  final MagicKey myKey=new MagicKey(cache2);
+  cache1.putForExternalRead(myKey,value);
+  barrier.await(10,TimeUnit.SECONDS);
+  assertNull(cache1.get(myKey));
+  barrier.await(10,TimeUnit.SECONDS);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey));
+    }
+  }
+);
+}

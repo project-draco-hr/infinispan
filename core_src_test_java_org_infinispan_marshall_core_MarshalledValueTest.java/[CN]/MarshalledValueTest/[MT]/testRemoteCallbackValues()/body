@@ -1,2 +1,16 @@
 {
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  MockListener l=new MockListener();
+  cache2.addListener(l);
+  try {
+    Pojo pojo=new Pojo();
+    pojo.b=false;
+    cache1.put("key",pojo);
+    assertTrue(l.newValue instanceof Pojo);
+    assertSerializationCounts(1,1);
+  }
+  finally {
+    cache2.removeListener(l);
+  }
 }

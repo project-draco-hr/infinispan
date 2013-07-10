@@ -1,2 +1,31 @@
 {
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  Pojo key=new Pojo();
+  cache1.put(key,"value");
+  assertSerializationCounts(1,0);
+  DataContainer dc1=TestingUtil.extractComponent(cache1,DataContainer.class);
+  Object o=dc1.keySet().iterator().next();
+  assertTrue(o instanceof MarshalledValue);
+  MarshalledValue mv=(MarshalledValue)o;
+  assertDeserialized(mv);
+  assertEquals("value",cache1.get(key));
+  assertDeserialized(mv);
+  assertSerializationCounts(1,0);
+  cache1.compact();
+  assertSerializationCounts(2,0);
+  assertOnlyOneRepresentationExists(mv);
+  assertSerialized(mv);
+  DataContainer dc2=TestingUtil.extractComponent(cache2,DataContainer.class);
+  o=dc2.keySet().iterator().next();
+  assertTrue(o instanceof MarshalledValue);
+  mv=(MarshalledValue)o;
+  assertSerialized(mv);
+  assertEquals("value",cache2.get(key));
+  assertSerializationCounts(2,1);
+  assertDeserialized(mv);
+  cache2.compact();
+  assertOnlyOneRepresentationExists(mv);
+  assertSerialized(mv);
+  assertSerializationCounts(2,1);
 }

@@ -1,2 +1,82 @@
 {
+  Cache cache1=cache(0,"replSync");
+  Cache cache2=cache(1,"replSync");
+  Pojo key1=new Pojo(1), value1=new Pojo(11), key2=new Pojo(2), value2=new Pojo(22);
+  String key3="3", value3="three";
+  cache1.put(key1,value1);
+  cache1.put(key2,value2);
+  cache1.put(key3,value3);
+  Set expKeys=new HashSet();
+  expKeys.add(key1);
+  expKeys.add(key2);
+  expKeys.add(key3);
+  Set expValues=new HashSet();
+  expValues.add(value1);
+  expValues.add(value2);
+  expValues.add(value3);
+  Set expKeyEntries=ObjectDuplicator.duplicateSet(expKeys);
+  Set expValueEntries=ObjectDuplicator.duplicateSet(expValues);
+  Set keys=cache2.keySet();
+  for (  Object key : keys)   assertTrue(expKeys.remove(key));
+  assertTrue("Did not see keys " + expKeys + " in iterator!",expKeys.isEmpty());
+  Collection values=cache2.values();
+  for (  Object key : values)   assertTrue(expValues.remove(key));
+  assertTrue("Did not see keys " + expValues + " in iterator!",expValues.isEmpty());
+  Set<Map.Entry> entries=cache2.entrySet();
+  for (  Map.Entry entry : entries) {
+    assertTrue(expKeyEntries.remove(entry.getKey()));
+    assertTrue(expValueEntries.remove(entry.getValue()));
+  }
+  assertTrue("Did not see keys " + expKeyEntries + " in iterator!",expKeyEntries.isEmpty());
+  assertTrue("Did not see keys " + expValueEntries + " in iterator!",expValueEntries.isEmpty());
+  Collection[] collections=new Collection[]{keys,values,entries};
+  Object newObj=new Object();
+  List newObjCol=new ArrayList();
+  newObjCol.add(newObj);
+  for (  Collection col : collections) {
+    try {
+      col.add(newObj);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+    try {
+      col.addAll(newObjCol);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+    try {
+      col.clear();
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+    try {
+      col.remove(key1);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+    try {
+      col.removeAll(newObjCol);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+    try {
+      col.retainAll(newObjCol);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+  }
+  for (  Map.Entry entry : entries) {
+    try {
+      entry.setValue(newObj);
+      assertTrue("Should have thrown a UnsupportedOperationException",false);
+    }
+ catch (    UnsupportedOperationException uoe) {
+    }
+  }
 }
