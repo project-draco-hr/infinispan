@@ -1,16 +1,10 @@
 {
-  JdbcMixedCacheStoreConfig jdbcCacheStoreConfig=new JdbcMixedCacheStoreConfig();
-  TableManipulation stringsTm=UnitTestDatabaseManager.buildStringTableManipulation();
-  stringsTm.setTableNamePrefix("STRINGS_TABLE");
-  TableManipulation binaryTm=UnitTestDatabaseManager.buildBinaryTableManipulation();
-  binaryTm.setTableNamePrefix("BINARY_TABLE");
-  ConnectionFactoryConfig cfc=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-  jdbcCacheStoreConfig.setConnectionFactoryConfig(cfc);
-  jdbcCacheStoreConfig.setStringsTableManipulation(stringsTm);
-  jdbcCacheStoreConfig.setBinaryTableManipulation(binaryTm);
-  jdbcCacheStoreConfig.setPurgeSynchronously(true);
+  JdbcMixedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcMixedCacheStoreConfigurationBuilder.class).purgeSynchronously(true);
+  UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(),false);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(),true);
   JdbcMixedCacheStore cacheStore=new JdbcMixedCacheStore();
-  cacheStore.init(jdbcCacheStoreConfig,getCache(),getMarshaller());
+  cacheStore.init(storeBuilder.create(),getCache(),getMarshaller());
   cacheStore.start();
   return cacheStore;
 }

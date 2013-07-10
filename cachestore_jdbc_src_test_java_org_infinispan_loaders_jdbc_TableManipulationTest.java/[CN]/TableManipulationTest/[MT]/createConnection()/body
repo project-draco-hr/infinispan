@@ -1,6 +1,15 @@
 {
-  cfg=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-  connection=DriverManager.getConnection(cfg.getConnectionUrl(),cfg.getUserName(),cfg.getPassword());
-  tableManipulation=UnitTestDatabaseManager.buildStringTableManipulation();
+  JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class).purgeSynchronously(true);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
+  factoryConfiguration=UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
+  tableManipulation=new TableManipulation(storeBuilder.table().create());
+  if (factoryConfiguration instanceof SimpleConnectionFactoryConfiguration) {
+    SimpleConnectionFactoryConfiguration simpleConfiguration=(SimpleConnectionFactoryConfiguration)factoryConfiguration;
+    connection=DriverManager.getConnection(simpleConfiguration.connectionUrl(),simpleConfiguration.username(),simpleConfiguration.password());
+  }
+ else   if (factoryConfiguration instanceof PooledConnectionFactoryConfiguration) {
+    PooledConnectionFactoryConfiguration pooledConfiguration=(PooledConnectionFactoryConfiguration)factoryConfiguration;
+    connection=DriverManager.getConnection(pooledConfiguration.connectionUrl(),pooledConfiguration.username(),pooledConfiguration.password());
+  }
   tableManipulation.setCacheName("aName");
 }

@@ -1,6 +1,6 @@
 {
   super.start();
-  String location=config.getLocation();
+  String location=configuration.location();
   if (location == null || location.trim().length() == 0) {
     location="Infinispan-FileCacheStore";
   }
@@ -14,8 +14,8 @@
   if (!root.exists()) {
     throw new CacheConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
   }
-  streamBufferSize=config.getStreamBufferSize();
-  FileCacheStoreConfig.FsyncMode fsyncMode=config.getFsyncMode();
+  streamBufferSize=configuration.streamBufferSize();
+  FileCacheStoreConfigurationBuilder.FsyncMode fsyncMode=configuration.fsyncMode();
 switch (fsyncMode) {
 case DEFAULT:
     fileSync=new BufferedFileSync();
@@ -24,7 +24,7 @@ case PER_WRITE:
 fileSync=new PerWriteFileSync();
 break;
 case PERIODIC:
-fileSync=new PeriodicFileSync(config.getFsyncInterval());
+fileSync=new PeriodicFileSync(configuration.fsyncInterval());
 break;
 }
 log.debugf("Using %s file sync mode",fsyncMode);

@@ -1,12 +1,9 @@
 {
-  ConnectionFactoryConfig connectionFactoryConfig=new ConnectionFactoryConfig();
-  connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-  connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
-  TableManipulation tm=UnitTestDatabaseManager.buildStringTableManipulation();
-  JdbcStringBasedCacheStoreConfig config=new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig,tm);
-  config.setPurgeSynchronously(true);
+  JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class).purgeSynchronously(true);
+  storeBuilder.dataSource().jndiUrl(getDatasourceLocation());
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
   JdbcStringBasedCacheStore stringBasedCacheStore=new JdbcStringBasedCacheStore();
-  stringBasedCacheStore.init(config,getCache(),getMarshaller());
+  stringBasedCacheStore.init(storeBuilder.create(),getCache(),getMarshaller());
   stringBasedCacheStore.start();
   return stringBasedCacheStore;
 }

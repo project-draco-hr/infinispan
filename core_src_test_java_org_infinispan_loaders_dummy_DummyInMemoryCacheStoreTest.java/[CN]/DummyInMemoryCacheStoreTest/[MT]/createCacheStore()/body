@@ -1,9 +1,9 @@
 {
   DummyInMemoryCacheStore cl=new DummyInMemoryCacheStore();
-  ConfigurationBuilder builder=new ConfigurationBuilder();
-  DummyInMemoryCacheStoreConfigurationBuilder loader=builder.loaders().addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
+  DummyInMemoryCacheStoreConfigurationBuilder loader=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(DummyInMemoryCacheStoreConfigurationBuilder.class);
   loader.storeName(getClass().getName()).purgeSynchronously(true);
-  cl.init(loader.create().adapt(),getCache(),getMarshaller());
+  cl.init(loader.create(),getCache(),getMarshaller());
   cl.start();
+  if (cl.getConfiguration() == null)   throw new NullPointerException();
   return cl;
 }

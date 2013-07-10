@@ -1,10 +1,9 @@
 {
-  tableManipulation=UnitTestDatabaseManager.buildStringTableManipulation();
-  cfc=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-  JdbcStringBasedCacheStoreConfig config=new JdbcStringBasedCacheStoreConfig(cfc,tableManipulation);
-  config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
-  config.setPurgeSynchronously(true);
+  JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class).purgeSynchronously(true).key2StringMapper(PersonKey2StringMapper.class);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
+  UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
   cacheStore=new JdbcStringBasedCacheStore();
-  cacheStore.init(config,AbstractCacheStoreTest.mockCache(getClass().getName()),getMarshaller());
+  cacheStore.init(storeBuilder.create(),AbstractCacheStoreTest.mockCache(getClass().getName()),getMarshaller());
   cacheStore.start();
+  tableManipulation=(TableManipulation)ReflectionUtil.getValue(cacheStore,"tableManipulation");
 }

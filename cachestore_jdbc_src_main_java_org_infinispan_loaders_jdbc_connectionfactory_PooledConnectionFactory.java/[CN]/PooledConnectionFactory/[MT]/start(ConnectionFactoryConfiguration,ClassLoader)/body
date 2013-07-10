@@ -1,0 +1,26 @@
+{
+  logFileOverride(classLoader);
+  PooledConnectionFactoryConfiguration pooledConfiguration;
+  if (config instanceof PooledConnectionFactoryConfiguration) {
+    pooledConfiguration=(PooledConnectionFactoryConfiguration)config;
+  }
+ else {
+    throw new CacheLoaderException("ConnectionFactoryConfiguration passed in must be an instance of " + "PooledConnectionFactoryConfiguration");
+  }
+  pooledDataSource=new ComboPooledDataSource();
+  pooledDataSource.setProperties(new Properties());
+  try {
+    Class.forName(pooledConfiguration.driverClass(),true,ComboPooledDataSource.class.getClassLoader());
+    pooledDataSource.setDriverClass(pooledConfiguration.driverClass());
+  }
+ catch (  Exception e) {
+    log.errorInstantiatingJdbcDriver(pooledConfiguration.driverClass(),e);
+    throw new CacheLoaderException(String.format("Error while instatianting JDBC driver: '%s'",pooledConfiguration.driverClass()),e);
+  }
+  pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
+  pooledDataSource.setUser(pooledConfiguration.username());
+  pooledDataSource.setPassword(pooledConfiguration.password());
+  if (log.isTraceEnabled()) {
+    log.tracef("Started connection factory with config: %s",config);
+  }
+}

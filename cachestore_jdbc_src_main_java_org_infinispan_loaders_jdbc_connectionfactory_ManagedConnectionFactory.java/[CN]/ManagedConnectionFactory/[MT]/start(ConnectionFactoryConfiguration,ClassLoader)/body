@@ -1,0 +1,36 @@
+{
+  InitialContext ctx=null;
+  String datasourceName;
+  if (factoryConfiguration instanceof ManagedConnectionFactoryConfiguration) {
+    ManagedConnectionFactoryConfiguration managedConfiguration=(ManagedConnectionFactoryConfiguration)factoryConfiguration;
+    datasourceName=managedConfiguration.jndiUrl();
+  }
+ else {
+    throw new CacheLoaderException("FactoryConfiguration has to be an instance of " + "ManagedConnectionFactoryConfiguration");
+  }
+  try {
+    ctx=new InitialContext();
+    dataSource=(DataSource)ctx.lookup(datasourceName);
+    if (trace) {
+      log.tracef("Datasource lookup for %s succeeded: %b",datasourceName,dataSource);
+    }
+    if (dataSource == null) {
+      log.connectionInJndiNotFound(datasourceName);
+      throw new CacheLoaderException(String.format("Could not find a connection in jndi under the name '%s'",datasourceName));
+    }
+  }
+ catch (  NamingException e) {
+    log.namingExceptionLookingUpConnection(datasourceName,e);
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    if (ctx != null) {
+      try {
+        ctx.close();
+      }
+ catch (      NamingException e) {
+        log.failedClosingNamingCtx(e);
+      }
+    }
+  }
+}

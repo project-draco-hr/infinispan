@@ -1,15 +1,18 @@
 {
   super.start();
-  if (config.isManageConnectionFactory()) {
-    String connectionFactoryClass=config.getConnectionFactoryConfig().getConnectionFactoryClass();
-    if (log.isTraceEnabled()) {
-      log.tracef("Using managed connection factory: %s",connectionFactoryClass);
-    }
-    ConnectionFactory connectionFactory=ConnectionFactory.getConnectionFactory(connectionFactoryClass,config.getClassLoader());
-    connectionFactory.start(config.getConnectionFactoryConfig(),config.getClassLoader());
-    doConnectionFactoryInitialization(connectionFactory);
+  if (configuration.manageConnectionFactory()) {
+    ConnectionFactory factory=ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
+    factory.start(configuration.connectionFactory(),factory.getClass().getClassLoader());
+    doConnectionFactoryInitialization(factory);
   }
-  key2StringMapper=config.getKey2StringMapper();
+  try {
+    Object mapper=Class.forName(configuration.key2StringMapper()).newInstance();
+    if (mapper instanceof Key2StringMapper)     key2StringMapper=(Key2StringMapper)mapper;
+  }
+ catch (  Exception e) {
+    log.errorf("Trying to instantiate %s, however it failed due to %s",configuration.key2StringMapper(),e.getClass().getName());
+    throw new IllegalStateException("This should not happen.",e);
+  }
   if (log.isTraceEnabled()) {
     log.tracef("Using key2StringMapper: %s",key2StringMapper.getClass().getName());
   }

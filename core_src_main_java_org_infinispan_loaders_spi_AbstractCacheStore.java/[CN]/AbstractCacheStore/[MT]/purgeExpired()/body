@@ -1,0 +1,31 @@
+{
+  if (purgerService == null)   throw new IllegalStateException("purgerService is null (did you call super.start() from cache loader implementation ?");
+  Future<Void> future=purgerService.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        purgeInternal();
+        return null;
+      }
+ catch (      CacheLoaderException e) {
+        log.problemPurgingExpired(e);
+        throw e;
+      }
+    }
+  }
+);
+  if (configuration.purgeSynchronously()) {
+    try {
+      future.get(60,TimeUnit.SECONDS);
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+catch (    ExecutionException e) {
+      if (e.getCause() instanceof CacheLoaderException)       throw (CacheLoaderException)e.getCause();
+ else       throw log.purgingExpiredEntriesFailed(e);
+    }
+catch (    TimeoutException e) {
+      throw log.timedOutWaitingForExpiredEntriesToBePurged(e);
+    }
+  }
+}

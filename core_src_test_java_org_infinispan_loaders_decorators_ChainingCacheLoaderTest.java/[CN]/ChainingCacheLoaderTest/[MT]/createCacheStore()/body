@@ -1,17 +1,16 @@
 {
+  LoadersConfigurationBuilder loaders=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders();
   ChainingCacheStore store=new ChainingCacheStore();
-  CacheStoreConfig cfg=new DummyInMemoryCacheStore.Cfg().storeName("ChainingCacheLoaderTest_instance1").purgeOnStartup(false).fetchPersistentState(false);
+  DummyInMemoryCacheStoreConfigurationBuilder dummyBuilder1=new DummyInMemoryCacheStoreConfigurationBuilder(loaders);
+  DummyInMemoryCacheStoreConfiguration dummyConfiguration1=dummyBuilder1.storeName("ChainingCacheLoaderTest_instance1").purgeOnStartup(false).fetchPersistentState(false).create();
   store1=new DummyInMemoryCacheStore();
-  store1.init(cfg,getCache(),new TestObjectStreamMarshaller());
-  ConfigurationBuilder builder=new ConfigurationBuilder();
-  LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(),builder,cfg);
-  store.addCacheLoader(store1,builder.build().loaders().cacheLoaders().get(0));
+  store1.init(dummyConfiguration1,getCache(),new TestObjectStreamMarshaller());
+  store.addCacheLoader(store1);
   store2=new DummyInMemoryCacheStore();
-  cfg=new DummyInMemoryCacheStore.Cfg().storeName("ChainingCacheLoaderTest_instance2").purgeOnStartup(false).fetchPersistentState(true);
-  store2.init(cfg,getCache(),new TestObjectStreamMarshaller());
-  builder=new ConfigurationBuilder();
-  LegacyConfigurationAdaptor.adapt(Thread.currentThread().getContextClassLoader(),builder,cfg);
-  store.addCacheLoader(store2,builder.build().loaders().cacheLoaders().get(0));
+  DummyInMemoryCacheStoreConfigurationBuilder dummyBuilder2=new DummyInMemoryCacheStoreConfigurationBuilder(loaders);
+  DummyInMemoryCacheStoreConfiguration dummyConfiguration2=dummyBuilder2.storeName("ChainingCacheLoaderTest_instance2").purgeOnStartup(false).fetchPersistentState(true).create();
+  store2.init(dummyConfiguration2,getCache(),new TestObjectStreamMarshaller());
+  store.addCacheLoader(store2);
   stores=new DummyInMemoryCacheStore[]{store1,store2};
   store.start();
   return store;

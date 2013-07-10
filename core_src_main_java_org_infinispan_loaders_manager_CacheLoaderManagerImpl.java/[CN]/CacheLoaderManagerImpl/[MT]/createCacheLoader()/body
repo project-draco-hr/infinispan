@@ -1,0 +1,29 @@
+{
+  CacheLoader tmpLoader;
+  if (clmConfig.usingChainingCacheLoader()) {
+    ChainingCacheStore ccl=new ChainingCacheStore();
+    tmpLoader=ccl;
+    int numLoadersWithFetchPersistentState=0;
+    for (    CacheLoaderConfiguration cfg : clmConfig.cacheLoaders()) {
+      if (cfg instanceof CacheStoreConfiguration) {
+        CacheStoreConfiguration scfg=(CacheStoreConfiguration)cfg;
+        assertNotSingletonAndShared(scfg);
+        if (scfg.fetchPersistentState())         numLoadersWithFetchPersistentState++;
+      }
+      if (numLoadersWithFetchPersistentState > 1)       throw log.multipleCacheStoresWithFetchPersistentState();
+      CacheLoader l=createCacheLoader(cfg,cache);
+      ccl.addCacheLoader(l);
+    }
+  }
+ else {
+    if (!clmConfig.cacheLoaders().isEmpty()) {
+      CacheLoaderConfiguration cfg=clmConfig.cacheLoaders().get(0);
+      if (cfg instanceof CacheStoreConfiguration)       assertNotSingletonAndShared((CacheStoreConfiguration)cfg);
+      tmpLoader=createCacheLoader(cfg,cache);
+    }
+ else {
+      return null;
+    }
+  }
+  return tmpLoader;
+}

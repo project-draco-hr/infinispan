@@ -1,13 +1,13 @@
 {
-  stringsTm=UnitTestDatabaseManager.buildStringTableManipulation();
-  stringsTm.setTableNamePrefix("STRINGS_TABLE");
-  binaryTm=UnitTestDatabaseManager.buildBinaryTableManipulation();
-  binaryTm.setTableNamePrefix("BINARY_TABLE");
-  cfc=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-  JdbcMixedCacheStoreConfig cacheStoreConfig=new JdbcMixedCacheStoreConfig(cfc,binaryTm,stringsTm);
-  cacheStoreConfig.setPurgeSynchronously(true);
-  cacheStoreConfig.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
+  JdbcMixedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcMixedCacheStoreConfigurationBuilder.class).purgeSynchronously(true);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(),false);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(),true);
+  storeBuilder.stringTable().tableNamePrefix("STRINGS_TABLE").key2StringMapper(DefaultTwoWayKey2StringMapper.class).binaryTable().tableNamePrefix("BINARY_TABLE");
+  UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
+  JdbcMixedCacheStoreConfiguration storeConfiguration=storeBuilder.create();
   cacheStore=new JdbcMixedCacheStore();
-  cacheStore.init(cacheStoreConfig,AbstractCacheStoreTest.mockCache(getClass().getName()),getMarshaller());
+  cacheStore.init(storeConfiguration,AbstractCacheStoreTest.mockCache(getClass().getName()),getMarshaller());
   cacheStore.start();
+  stringsTm=(TableManipulation)ReflectionUtil.getValue(((JdbcMixedCacheStore)cacheStore).getStringBasedCacheStore(),"tableManipulation");
+  binaryTm=(TableManipulation)ReflectionUtil.getValue(((JdbcMixedCacheStore)cacheStore).getBinaryCacheStore(),"tableManipulation");
 }

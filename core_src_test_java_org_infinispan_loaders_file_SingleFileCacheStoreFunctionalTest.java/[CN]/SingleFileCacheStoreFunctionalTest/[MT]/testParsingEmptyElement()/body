@@ -8,9 +8,15 @@
       assertEquals("v1",cache.get(1));
       CacheStore store=extractComponent(cache,CacheLoaderManager.class).getCacheStore();
       assertTrue(store instanceof SingleFileCacheStore);
-      SingleFileCacheStoreConfig cfg=(SingleFileCacheStoreConfig)store.getCacheStoreConfig();
-      assertEquals("Infinispan-SingleFileCacheStore",cfg.getLocation());
-      assertEquals(-1,cfg.getMaxEntries());
+      SingleFileCacheStoreConfiguration storeConfiguration=null;
+      if (store.getConfiguration() instanceof SingleFileCacheStoreConfiguration) {
+        storeConfiguration=(SingleFileCacheStoreConfiguration)store.getConfiguration();
+      }
+ else {
+        fail("The Configuration bean for a SingleFileCacheStore has to be an instance of " + "SingleFileCacheStoreConfiguration");
+      }
+      assertEquals("Infinispan-SingleFileCacheStore",storeConfiguration.location());
+      assertEquals(-1,storeConfiguration.maxEntries());
     }
   }
 );

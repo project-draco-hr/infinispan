@@ -1,9 +1,11 @@
 {
-  TableManipulation tableManipulation=UnitTestDatabaseManager.buildStringTableManipulation();
+  JdbcStringBasedCacheStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).loaders().addLoader(JdbcStringBasedCacheStoreConfigurationBuilder.class).purgeSynchronously(true);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
+  TableManipulation tableManipulation=new TableManipulation(storeBuilder.table().create());
   tableManipulation.databaseType=null;
   tableManipulation.setCacheName("GuessDatabaseType");
   PooledConnectionFactory factory=new PooledConnectionFactory();
-  ConnectionFactoryConfig config=UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
+  ConnectionFactoryConfiguration config=UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
   factory.start(config,Thread.currentThread().getContextClassLoader());
   tableManipulation.start(factory);
   tableManipulation.getUpdateRowSql();
