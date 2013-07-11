@@ -1,0 +1,27 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  FileCacheStoreConfigurationBuilder fcscb=builder.loaders().addFileCacheStore();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case LOCATION:
+      fcscb.location(value);
+    break;
+case FSYNC_INTERVAL:
+  fcscb.fsyncInterval(Long.parseLong(value));
+break;
+case FSYNC_MODE:
+fcscb.fsyncMode(FsyncMode.valueOf(value));
+break;
+case STREAM_BUFFER_SIZE:
+fcscb.streamBufferSize(Integer.parseInt(value));
+break;
+default :
+parseLockSupportStoreAttributes(reader,i,fcscb);
+break;
+}
+}
+parseStoreChildren(reader,fcscb);
+}
