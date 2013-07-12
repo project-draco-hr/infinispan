@@ -1,0 +1,19 @@
+{
+  ConfigurationBuilder configuration=new ConfigurationBuilder();
+  configuration.dataContainer().dataContainer(new QueryableDataContainer());
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(configuration);
+  try {
+    AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
+    DataContainer ddc=DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
+    ((DefaultDataContainer)ddc).initialize(null,null,new InternalEntryFactoryImpl(),null,null,TIME_SERVICE);
+    QueryableDataContainer.setDelegate(ddc);
+    Assert.assertEquals(cm.getDefaultCacheConfiguration().dataContainer().dataContainer().getClass(),QueryableDataContainer.class);
+    Assert.assertEquals(cache.getDataContainer().getClass(),QueryableDataContainer.class);
+    QueryableDataContainer dataContainer=QueryableDataContainer.class.cast(cache.getDataContainer());
+    cache.put("name","Pete");
+    Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(),"put(name, Pete"));
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
+}

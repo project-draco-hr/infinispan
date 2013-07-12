@@ -1,0 +1,14 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+    @Override public void call(){
+      ConfigurationBuilder customConfiguration=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      customConfiguration.transaction().transactionManagerLookup(new TxManagerLookupA());
+      Configuration definedConfiguration=cm.defineConfiguration("aCache",customConfiguration.build());
+      assertTrue(definedConfiguration.transaction().transactionManagerLookup() instanceof TxManagerLookupA);
+      TransactionManager activeTransactionManager=cm.getCache("aCache").getAdvancedCache().getTransactionManager();
+      assertNotNull(activeTransactionManager);
+      assertTrue(activeTransactionManager instanceof TmA);
+    }
+  }
+);
+}

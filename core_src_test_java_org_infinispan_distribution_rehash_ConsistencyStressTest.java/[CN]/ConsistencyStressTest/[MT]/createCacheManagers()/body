@@ -1,19 +1,9 @@
 {
-  Configuration c=new Configuration();
-  c.setIsolationLevel(IsolationLevel.READ_COMMITTED);
-  c.setLockAcquisitionTimeout(60000);
-  c.setUseLockStriping(false);
-  c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
-  c.setL1CacheEnabled(false);
-  c.setSyncReplTimeout(30000);
-  c.setUseEagerLocking(true);
-  c.setEagerLockSingleNode(true);
-  c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-  c.setSyncCommitPhase(true);
-  c.setSyncRollbackPhase(true);
-  GlobalConfiguration gc=GlobalConfiguration.getClusteredDefault();
-  gc.setDistributedSyncTimeout(60000);
+  ConfigurationBuilder c=new ConfigurationBuilder();
+  c.locking().isolationLevel(IsolationLevel.READ_COMMITTED).lockAcquisitionTimeout(60000).useLockStriping(false).clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().sync().replTimeout(30000).transaction().lockingMode(LockingMode.PESSIMISTIC).transactionManagerLookup(new DummyTransactionManagerLookup()).syncCommitPhase(true).syncRollbackPhase(true);
+  GlobalConfigurationBuilder gc=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  gc.transport().distributedSyncTimeout(60000);
   List<EmbeddedCacheManager> cacheManagers=new LinkedList<EmbeddedCacheManager>();
-  for (int i=0; i < NUM_NODES; i++)   cacheManagers.add(createCacheManager(gc,c));
+  for (int i=0; i < NUM_NODES; i++)   cacheManagers.add(createClusteredCacheManager(gc,c));
   registerCacheManager(cacheManagers.toArray(new EmbeddedCacheManager[NUM_NODES]));
 }

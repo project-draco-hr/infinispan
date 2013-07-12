@@ -1,2 +1,19 @@
 {
+  CacheContainer cm=null;
+  try {
+    cm=TestCacheManagerFactory.fromXml("configs/string-based.xml");
+    Cache<String,String> first=cm.getCache("first");
+    Cache<String,String> second=cm.getCache("second");
+    CacheLoaderConfiguration firstCacheLoaderConfig=first.getCacheConfiguration().loaders().cacheLoaders().get(0);
+    CacheLoaderConfiguration secondCacheLoaderConfig=second.getCacheConfiguration().loaders().cacheLoaders().get(0);
+    assertEquals(JdbcStringBasedCacheStoreConfiguration.class,firstCacheLoaderConfig.getClass());
+    assertEquals(JdbcStringBasedCacheStoreConfiguration.class,secondCacheLoaderConfig.getClass());
+    JdbcStringBasedCacheStore firstCs=(JdbcStringBasedCacheStore)TestingUtil.extractComponent(first,CacheLoaderManager.class).getCacheLoader();
+    JdbcStringBasedCacheStore secondCs=(JdbcStringBasedCacheStore)TestingUtil.extractComponent(second,CacheLoaderManager.class).getCacheLoader();
+    assertTableExistence(firstCs.getConnectionFactory().getConnection(),firstCs.getTableManipulation().getIdentifierQuoteString(),"second","first","ISPN_STRING_TABLE");
+    assertNoOverlapingState(first,second,firstCs,secondCs);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
 }

@@ -1,0 +1,14 @@
+{
+  final ConfigurationBuilder cfg=new ConfigurationBuilder();
+  cfg.locking().lockAcquisitionTimeout(1010);
+  cfg.customInterceptors().addInterceptor().interceptor(new DummyInterceptor()).position(Position.FIRST);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+    @Override public void call(){
+      cm.defineConfiguration("custom",cfg.build());
+      Cache c=cm.getCache("custom");
+      DummyInterceptor i=TestingUtil.findInterceptor(c,DummyInterceptor.class);
+      assertNotNull(i);
+    }
+  }
+);
+}

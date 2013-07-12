@@ -1,8 +1,6 @@
 {
-  Configuration cfg=TestCacheManagerFactory.getDefaultConfiguration(true,Configuration.CacheMode.DIST_SYNC);
-  cfg.setUseEagerLocking(true);
-  cfg.setEagerLockSingleNode(true);
-  cfg.setLockAcquisitionTimeout(100);
+  ConfigurationBuilder cfg=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  cfg.transaction().lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false).recovery().disable().locking().lockAcquisitionTimeout(100);
   EmbeddedCacheManager cm1=TestCacheManagerFactory.createClusteredCacheManager(cfg);
   EmbeddedCacheManager cm2=TestCacheManagerFactory.createClusteredCacheManager(cfg);
   registerCacheManager(cm1,cm2);

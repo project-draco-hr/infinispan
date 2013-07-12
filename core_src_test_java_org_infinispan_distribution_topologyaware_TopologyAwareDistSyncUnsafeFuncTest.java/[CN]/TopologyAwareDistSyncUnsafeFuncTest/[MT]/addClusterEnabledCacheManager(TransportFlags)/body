@@ -1,5 +1,4 @@
 {
-  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(flags);
   int index=cacheManagers.size();
   String rack;
   String machine;
@@ -33,9 +32,9 @@ default :
 throw new RuntimeException("Bad!");
 }
 }
-GlobalConfiguration globalConfiguration=cm.getGlobalConfiguration();
-globalConfiguration.setRackId(rack);
-globalConfiguration.setMachineId(machine);
+GlobalConfigurationBuilder gcb=GlobalConfigurationBuilder.defaultClusteredBuilder();
+gcb.transport().rackId(rack).machineId(machine);
+EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(gcb,getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC),flags);
 cacheManagers.add(cm);
 return cm;
 }

@@ -1,7 +1,7 @@
 {
-  Configuration defaultConfig=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-  log.debug("defaultConfig = " + defaultConfig.getNumOwners());
-  defaultConfig.setL1CacheEnabled(false);
+  ConfigurationBuilder defaultConfig=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+  log.debug("defaultConfig = " + defaultConfig.build().clustering().hash().numOwners());
+  defaultConfig.clustering().l1().disable().stateTransfer().fetchInMemoryState(true);
   createClusteredCaches(5,defaultConfig);
   ConsistentHash hash=cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
   List<Address> members=hash.getMembers();

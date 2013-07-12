@@ -1,11 +1,6 @@
 {
-  Configuration c=new Configuration();
-  c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-  CacheLoaderManagerConfig clmc=new CacheLoaderManagerConfig();
-  clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg("ReplicatedSharedEvictingLoaderTest"));
-  clmc.setShared(true);
-  clmc.setPassivation(true);
-  c.setCacheLoaderManagerConfig(clmc);
+  ConfigurationBuilder c=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+  c.loaders().passivation(true).shared(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).storeName("ReplicatedSharedEvictingLoaderTest");
   createCluster(c,2);
   waitForClusterToForm();
 }

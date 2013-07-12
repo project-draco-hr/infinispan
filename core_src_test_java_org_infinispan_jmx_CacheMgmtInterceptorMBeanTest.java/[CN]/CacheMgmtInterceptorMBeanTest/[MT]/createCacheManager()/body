@@ -1,12 +1,8 @@
 {
-  GlobalConfiguration globalConfiguration=GlobalConfiguration.getNonClusteredDefault();
-  globalConfiguration.setExposeGlobalJmxStatistics(true);
-  globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-  globalConfiguration.setJmxDomain(JMX_DOMAIN);
-  cacheManager=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-  configuration.setExposeJmxStatistics(true);
-  cacheManager.defineConfiguration("test",configuration);
+  cacheManager=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
+  ConfigurationBuilder configuration=getDefaultStandaloneCacheConfig(false);
+  configuration.jmxStatistics().enable();
+  cacheManager.defineConfiguration("test",configuration.build());
   cache=cacheManager.getCache("test");
   advanced=cache.getAdvancedCache();
   mgmtInterceptor=getCacheObjectName(JMX_DOMAIN,"test(local)","Statistics");

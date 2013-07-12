@@ -1,8 +1,6 @@
 {
-  Configuration configuration=getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC,true);
-  configuration.fluent().locking().useLockStriping(false);
-  configuration.fluent().transaction().transactionManagerLookupClass(RecoveryDummyTransactionManagerLookup.class).recovery();
-  configuration.fluent().clustering().hash().rehashEnabled(false);
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  configuration.locking().useLockStriping(false).transaction().transactionManagerLookup(new RecoveryDummyTransactionManagerLookup()).useSynchronization(false).recovery().enable().clustering().stateTransfer().fetchInMemoryState(false);
   createCluster(configuration,2);
   waitForClusterToForm();
   ComponentRegistry componentRegistry=this.cache(0).getAdvancedCache().getComponentRegistry();

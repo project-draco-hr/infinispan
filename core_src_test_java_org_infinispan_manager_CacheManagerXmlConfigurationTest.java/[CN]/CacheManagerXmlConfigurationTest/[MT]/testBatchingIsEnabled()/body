@@ -1,2 +1,15 @@
 {
+  EmbeddedCacheManager cm=TestCacheManagerFactory.fromXml("configs/batching.xml");
+  try {
+    Cache c=cm.getCache("any");
+    assertTrue(c.getCacheConfiguration().invocationBatching().enabled());
+    assertTrue(c.getCacheConfiguration().transaction().transactionMode().isTransactional());
+    c=cm.getCache();
+    assertTrue(c.getCacheConfiguration().invocationBatching().enabled());
+    Cache c2=cm.getCache("tml");
+    assertTrue(c2.getCacheConfiguration().transaction().transactionMode().isTransactional());
+  }
+  finally {
+    cm.stop();
+  }
 }

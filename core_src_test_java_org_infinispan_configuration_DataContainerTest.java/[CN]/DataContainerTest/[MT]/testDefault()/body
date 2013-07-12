@@ -1,0 +1,12 @@
+{
+  String xml="<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<infinispan>" + "<default><dataContainer /></default>"+ "</infinispan>";
+  InputStream stream=new ByteArrayInputStream(xml.getBytes());
+  EmbeddedCacheManager cm=TestCacheManagerFactory.fromStream(stream);
+  try {
+    Assert.assertNull(cm.getDefaultCacheConfiguration().dataContainer().dataContainer());
+    Assert.assertEquals(cm.getCache().getAdvancedCache().getDataContainer().getClass(),DefaultDataContainer.class);
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm);
+  }
+}
