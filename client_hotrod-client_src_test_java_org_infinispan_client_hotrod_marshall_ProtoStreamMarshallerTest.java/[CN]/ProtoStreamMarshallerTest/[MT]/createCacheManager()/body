@@ -1,0 +1,12 @@
+{
+  initSerializationContext();
+  cacheManager=TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+  cache=cacheManager.getCache();
+  hotRodServer=TestHelper.startHotRodServer(cacheManager);
+  Properties hotrodClientConf=new Properties();
+  hotrodClientConf.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer.getPort());
+  hotrodClientConf.put("infinispan.client.hotrod.marshaller",ProtostreamMarshaller.class.getName());
+  remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
+  remoteCache=remoteCacheManager.getCache();
+  return cacheManager;
+}
