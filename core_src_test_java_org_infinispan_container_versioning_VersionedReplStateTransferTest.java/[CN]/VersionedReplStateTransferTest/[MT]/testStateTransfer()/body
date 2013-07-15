@@ -1,2 +1,27 @@
 {
+  Cache<Object,Object> cache0=cache(0);
+  Cache<Object,Object> cache1=cache(1);
+  cache0.put("hello","world");
+  assertEquals("world",cache0.get("hello"));
+  assertEquals("world",cache1.get("hello"));
+  tm(1).begin();
+  assertEquals("world",cache1.get("hello"));
+  Transaction t=tm(1).suspend();
+  addClusterEnabledCacheManager(builder);
+  Cache<Object,Object> cache2=cache(2);
+  assertEquals("world",cache2.get("hello"));
+  cacheManagers.get(0).stop();
+  cacheManagers.remove(0);
+  waitForClusterToForm();
+  cache2.put("hello","new world");
+  tm(1).resume(t);
+  cache1.put("hello","world2");
+  try {
+    tm(1).commit();
+    fail("Write skew check should fail");
+  }
+ catch (  RollbackException expected) {
+  }
+  assertEquals("new world",cache1.get("hello"));
+  assertEquals("new world",cache2.get("hello"));
 }
