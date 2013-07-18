@@ -1,0 +1,17 @@
+{
+  WritableGridFileChannel wgfc=fs.getWritableChannel("/readTest.txt",false,100);
+  try {
+    assertTrue(wgfc.isOpen());
+    wgfc.write(ByteBuffer.wrap("This tests read loop.".getBytes()));
+  }
+  finally {
+    wgfc.close();
+  }
+  ReadableGridFileChannel rgfc=fs.getReadableChannel("/readTest.txt");
+  try {
+    assertTrue("This tests read loop.".equals(new String(toBytes(Channels.newInputStream(rgfc)))));
+  }
+  finally {
+    rgfc.close();
+  }
+}
