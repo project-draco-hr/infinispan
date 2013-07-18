@@ -1,2 +1,12 @@
 {
+  cache=cacheManager.getCache("no-ws-chk");
+  cache.put("hello","world 1");
+  tm().begin();
+  assertEquals("Wrong value read by transaction for key hello","world 1",cache.get("hello"));
+  Transaction t=tm().suspend();
+  cache.put("hello","world 3");
+  tm().resume(t);
+  cache.put("hello","world 2");
+  tm().commit();
+  assertEquals("Wrong final value for key hello","world 2",cache.get("hello"));
 }

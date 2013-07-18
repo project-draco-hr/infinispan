@@ -1,2 +1,22 @@
 {
+  tm().begin();
+  cache.put("k1","v1");
+  cache.put("k2","v2");
+  tm().commit();
+  tm().begin();
+  cache.put("k2","v2000");
+  assertEquals("Wrong value read by transaction for key k1","v1",cache.get("k1"));
+  assertEquals("Wrong value read by transaction for key k2","v2000",cache.get("k2"));
+  Transaction t=tm().suspend();
+  cache.put("k1","v3");
+  tm().resume(t);
+  cache.put("k1","v5000");
+  try {
+    tm().commit();
+    fail("Transaction should roll back");
+  }
+ catch (  RollbackException re) {
+  }
+  assertEquals("Wrong final value for key k1","v3",cache.get("k1"));
+  assertEquals("Wrong final value for key k2","v2",cache.get("k2"));
 }

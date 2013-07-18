@@ -1,2 +1,16 @@
 {
+  cache.put("hello","world 1");
+  tm().begin();
+  assertEquals("Wrong value read by transaction for key hello","world 1",cache.get("hello"));
+  Transaction t=tm().suspend();
+  cache.put("hello","world 3");
+  tm().resume(t);
+  cache.put("hello","world 2");
+  try {
+    tm().commit();
+    fail("Transaction should roll back");
+  }
+ catch (  RollbackException re) {
+  }
+  assertEquals("Wrong final value for key hello","world 3",cache.get("hello"));
 }
