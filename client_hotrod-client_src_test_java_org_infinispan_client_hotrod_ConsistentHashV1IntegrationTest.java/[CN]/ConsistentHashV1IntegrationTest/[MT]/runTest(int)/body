@@ -1,2 +1,12 @@
 {
+  ConsistentHash serverCH=advancedCache(cacheIndex).getDistributionManager().getConsistentHash();
+  for (int i=0; i < NUM_KEYS; i++) {
+    byte[] keyBytes=(byte[])kas.getKeyForAddress(address(cacheIndex));
+    String key=DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
+    Address serverPrimary=serverCH.locatePrimaryOwner(keyBytes);
+    assertEquals(address(cacheIndex),serverPrimary);
+    remoteCache.put(key,"v");
+  }
+  assertTrue(hitCountInterceptor(cacheIndex).getHits() > NUM_KEYS * 0.99);
+  hitCountInterceptor(cacheIndex).reset();
 }
