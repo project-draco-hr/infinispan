@@ -1,15 +1,19 @@
 {
   int readerIndex=input.readUnsignedByte();
-  if (readerIndex == Ids.MAX_ID)   readerIndex=generateForeignReaderIndex(UnsignedNumeric.readUnsignedInt(input));
+  int foreignId=-1;
+  if (readerIndex == Ids.MAX_ID) {
+    foreignId=UnsignedNumeric.readUnsignedInt(input);
+    readerIndex=generateForeignReaderIndex(foreignId);
+  }
   ExternalizerAdapter adapter=readers.get(readerIndex);
   if (adapter == null) {
     if (!started) {
       log.tracef("Either the marshaller has stopped or hasn't started. Read externalizers are not properly populated: %s",readers);
       if (Thread.currentThread().isInterrupted()) {
-        throw new IOException(String.format("Cache manager is shutting down, so type (id=%d) cannot be resolved. Interruption being pushed up.",readerIndex),new InterruptedException());
+        throw log.pushReadInterruptionDueToCacheManagerShutdown(readerIndex,new InterruptedException());
       }
  else {
-        throw new CacheException(String.format("Cache manager is %s and type (id=%d) cannot be resolved (thread not interrupted)",gcr.getStatus(),readerIndex));
+        throw log.cannotResolveExternalizerReader(gcr.getStatus(),readerIndex);
       }
     }
  else {
@@ -17,7 +21,8 @@
         log.tracef("Unknown type. Input stream has %s to read",input.available());
         log.tracef("Check contents of read externalizers: %s",readers);
       }
-      throw new CacheException(String.format("Type of data read is unknown. Id=%d is not amongst known reader indexes.",readerIndex));
+      if (foreignId > 0)       throw log.missingForeignExternalizer(foreignId);
+      throw log.unknownExternalizerReaderIndex(readerIndex);
     }
   }
   return adapter.readObject(input);
