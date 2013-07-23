@@ -1,0 +1,19 @@
+{
+  Contracts.assertNotNull(cacheInvocationContext,"cacheInvocationContext parameter must not be null");
+  final String cacheName=cacheInvocationContext.getCacheName();
+  if (cacheName.trim().isEmpty()) {
+    return getCacheFromDefaultCacheManager(cacheName);
+  }
+  for (  EmbeddedCacheManager cm : jcacheManagers.keySet()) {
+    Set<String> cacheNames=cm.getCacheNames();
+    for (    String name : cacheNames) {
+      if (name.equals(cacheName)) {
+        JCacheManager jcacheManager=jcacheManagers.get(cm);
+        Cache<K,V> cache=jcacheManager.getCache(cacheName);
+        if (cache != null)         return cache;
+        return jcacheManager.configureCache(cacheName,cm.<K,V>getCache(cacheName).getAdvancedCache());
+      }
+    }
+  }
+  return getCacheFromDefaultCacheManager(cacheName);
+}

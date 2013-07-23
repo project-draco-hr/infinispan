@@ -1,9 +1,10 @@
 {
-  for (  Map.Entry<EmbeddedCacheManager,String> cmEntry : cacheManagers.entrySet()) {
+  for (  Map.Entry<EmbeddedCacheManager,Throwable> cmEntry : cacheManagers.entrySet()) {
     if (cmEntry.getKey().getStatus().allowInvocations()) {
       String thName=Thread.currentThread().getName();
-      String errorMessage='\n' + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" + "!!!!!! ("+ thName+ ") Exiting because "+ testName+ " has NOT shut down all the cache managers it has started !!!!!!!\n"+ "!!!!!! ("+ thName+ ") The still-running cacheManager was created here: "+ cmEntry.getValue()+ " !!!!!!!\n"+ "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-      log.error(errorMessage);
+      String errorMessage='\n' + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" + "!!!!!! ("+ thName+ ") Exiting because "+ testName+ " has NOT shut down all the cache managers it has started !!!!!!!\n"+ "!!!!!! ("+ thName+ ") See allocation stacktrace to find out where still-running cacheManager was created: !!!!!!!\n"+ "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+      Throwable allocationThrowable=cmEntry.getValue();
+      log.errorf(allocationThrowable,errorMessage);
       shuttingDown=true;
       try {
         Thread.sleep(60000);
@@ -12,6 +13,7 @@
         e.printStackTrace();
       }
       System.err.println(errorMessage);
+      allocationThrowable.printStackTrace();
       System.exit(9);
     }
   }
