@@ -1,0 +1,15 @@
+{
+  GlobalConfiguration globalConfig=new GlobalConfigurationBuilder().globalJmxStatistics().transport().defaultTransport().build();
+  Configuration cacheConfig=new ConfigurationBuilder().loaders().addStore().cacheStore(new JpaCacheStore()).addProperty("persistenceUnitName","org.infinispan.loaders.jpa.configurationTest").addProperty("entityClassName","org.infinispan.loaders.jpa.entity.User").build();
+  EmbeddedCacheManager cacheManager=new DefaultCacheManager(globalConfig);
+  cacheManager.defineConfiguration("userCache",cacheConfig);
+  cacheManager.start();
+  Cache<String,User> userCache=cacheManager.getCache("userCache");
+  User user=new User();
+  user.setUsername("rayt");
+  user.setFirstName("Ray");
+  user.setLastName("Tsang");
+  userCache.put(user.getUsername(),user);
+  userCache.stop();
+  cacheManager.stop();
+}
