@@ -3,7 +3,11 @@
   List<Address> members=cacheTopology.getMembers();
   ConsistentHash readCh=cacheTopology.getReadConsistentHash();
   for (  CacheTransaction tx : transactions) {
-    if (tx.getTopologyId() < topologyId && !members.contains(tx.getGlobalTransaction().getAddress()))     continue;
+    if (tx.getTopologyId() <= topologyId || !members.contains(tx.getGlobalTransaction().getAddress()))     continue;
+    LocalTransaction localTx=null;
+    if (tx instanceof LocalTransaction) {
+      localTx=(LocalTransaction)tx;
+    }
     Set<Object> filteredLockedKeys=new HashSet<Object>();
     Set<Object> lockedKeys=tx.getLockedKeys();
 synchronized (lockedKeys) {
@@ -26,6 +30,15 @@ synchronized (backupLockedKeys) {
       WriteCommand[] modifications=null;
       if (!txModifications.isEmpty()) {
         modifications=txModifications.toArray(new WriteCommand[txModifications.size()]);
+      }
+      if (trace) {
+        log.tracef("Tx %s has been requested by destination: %s",tx,destination);
+      }
+      if (localTx != null) {
+        localTx.locksAcquired(Collections.singleton(destination));
+        if (trace) {
+          log.tracef("Tx %s has acquired keys %s.  Must migrate to destination: %s",tx,filteredLockedKeys,destination);
+        }
       }
       transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(),tx.getTopologyId(),modifications,filteredLockedKeys));
     }
