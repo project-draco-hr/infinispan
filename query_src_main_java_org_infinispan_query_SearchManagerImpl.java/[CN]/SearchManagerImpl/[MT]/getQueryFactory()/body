@@ -1,0 +1,17 @@
+{
+  EntityNamesResolver entityNamesResolver=new EntityNamesResolver(){
+    @Override public Class<?> getClassFromName(    String entityName){
+      Class clazz;
+      try {
+        clazz=Class.forName(entityName);
+      }
+ catch (      ClassNotFoundException e) {
+        return null;
+      }
+      Boolean isIndexed=queryInterceptor.getKnownClasses().get(clazz);
+      return isIndexed != null && isIndexed ? clazz : null;
+    }
+  }
+;
+  return new LuceneQueryFactory(this,entityNamesResolver);
+}
