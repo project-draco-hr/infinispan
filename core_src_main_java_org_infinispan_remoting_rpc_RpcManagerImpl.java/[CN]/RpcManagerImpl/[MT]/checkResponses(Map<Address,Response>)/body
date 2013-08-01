@@ -1,10 +1,11 @@
 {
   if (rsps != null) {
     for (    Map.Entry<Address,Response> rsp : rsps.entrySet()) {
-      if (rsp != null && rsp.getValue() instanceof Throwable) {
-        Throwable throwable=(Throwable)rsp.getValue();
-        if (trace)         log.tracef("Received Throwable from remote node %s",throwable,rsp.getKey());
-        throw new RpcException(throwable);
+      if (rsp.getValue() instanceof CacheNotFoundResponse) {
+        if (globalConfiguration.transport().strictPeerToPeer()) {
+          String message=String.format("Cache %s has not been started on node %s",cacheName,rsp.getKey());
+          throw new RemoteException(message,new NamedCacheNotFoundException(cacheName,message));
+        }
       }
     }
   }

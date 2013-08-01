@@ -4,11 +4,12 @@
     log.tracef("Primary owner %s returned null",primaryOwner);
     return null;
   }
-  if (!fromPrimaryOwner.isSuccessful()) {
-    Throwable cause=fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
-    throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner,cause);
-  }
- else {
+  if (fromPrimaryOwner.isSuccessful()) {
     return ((SuccessfulResponse)fromPrimaryOwner).getResponseValue();
   }
+  if (addressResponseMap.get(primaryOwner) instanceof CacheNotFoundResponse) {
+    throw new OutdatedTopologyException("Cache is no longer running on primary owner " + primaryOwner);
+  }
+  Throwable cause=fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
+  throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner,cause);
 }

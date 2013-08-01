@@ -1,0 +1,22 @@
+{
+  final AdvancedCache<Object,Object> cache0=advancedCache(0);
+  AdvancedCache<Object,Object> cache1=advancedCache(1);
+  ControlledRpcManager crm=new ControlledRpcManager(cache0.getRpcManager());
+  cache0.getComponentRegistry().registerComponent(crm,RpcManager.class);
+  cache0.getComponentRegistry().rewire();
+  crm.blockBefore(PutKeyValueCommand.class);
+  final MagicKey key=new MagicKey(cache1);
+  Future<Object> future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      return conditional ? cache0.put(key,"v") : cache0.putIfAbsent(key,"v");
+    }
+  }
+);
+  crm.waitForCommandToBlock();
+  cache1.stop();
+  crm.stopBlocking();
+  Object result=future.get(10,TimeUnit.SECONDS);
+  assertNull(result);
+  log.tracef("Put operation is done");
+  assertEquals("v",cache0.get(key));
+}
