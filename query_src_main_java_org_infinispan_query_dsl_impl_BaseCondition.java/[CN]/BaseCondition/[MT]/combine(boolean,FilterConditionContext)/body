@@ -1,14 +1,14 @@
 {
   BaseCondition rightCondition=((BaseCondition)fcc).getRoot();
-  if (isConjunction && parent != null && !parent.isConjunction()) {
-    CompositeCondition p=new CompositeCondition(true,this,rightCondition);
-    parent.replaceChild(this,p);
+  if (isConjunction && parent instanceof OrCondition) {
+    BooleanCondition p=new AndCondition(this,rightCondition);
+    ((BooleanCondition)parent).replaceChildCondition(this,p);
     parent=p;
     rightCondition.setParent(p);
   }
  else {
     BaseCondition root=getRoot();
-    CompositeCondition p=new CompositeCondition(isConjunction,root,rightCondition);
+    BooleanCondition p=isConjunction ? new AndCondition(root,rightCondition) : new OrCondition(root,rightCondition);
     root.setParent(p);
     rightCondition.setParent(p);
   }

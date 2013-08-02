@@ -27,16 +27,19 @@
   user3.setName("Spider");
   user3.setSurname("Woman");
   user3.setGender(User.Gender.FEMALE);
-  user3.setAccountIds(Collections.EMPTY_SET);
+  user3.setAccountIds(Collections.<Integer>emptySet());
   Account account1=new Account();
   account1.setId(1);
   account1.setDescription("John Doe's first bank account");
+  account1.setCreationDate(DATE_FORMAT.parse("2013-01-03"));
   Account account2=new Account();
   account2.setId(2);
   account2.setDescription("John Doe's second bank account");
+  account2.setCreationDate(DATE_FORMAT.parse("2013-01-04"));
   Account account3=new Account();
   account3.setId(3);
   account3.setDescription("Spider Man's bank account");
+  account3.setCreationDate(DATE_FORMAT.parse("2013-01-20"));
   Transaction transaction0=new Transaction();
   transaction0.setId(0);
   transaction0.setDescription("Birthday present");
@@ -49,7 +52,7 @@
   transaction1.setDescription("Feb. rent payment");
   transaction1.setAccountId(1);
   transaction1.setAmount(1500);
-  transaction1.setDate(DATE_FORMAT.parse("2013-01-01"));
+  transaction1.setDate(DATE_FORMAT.parse("2013-01-05"));
   transaction1.setDebit(true);
   Transaction transaction2=new Transaction();
   transaction2.setId(2);
@@ -84,8 +87,8 @@
   cache.put("transaction_" + transaction3.getId(),transaction3);
   cache.put("transaction_" + transaction4.getId(),transaction4);
   SearchFactoryImplementor searchFactory=(SearchFactoryImplementor)Search.getSearchManager(cache).getSearchFactory();
-  assertNotNull(searchFactory.getAllIndexesManager().getIndexManager(User.class.getName()));
-  assertNotNull(searchFactory.getAllIndexesManager().getIndexManager(Account.class.getName()));
-  assertNotNull(searchFactory.getAllIndexesManager().getIndexManager(Transaction.class.getName()));
-  assertNull(searchFactory.getAllIndexesManager().getIndexManager(Address.class.getName()));
+  assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(User.class.getName()));
+  assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(Account.class.getName()));
+  assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(Transaction.class.getName()));
+  assertNull(searchFactory.getIndexManagerHolder().getIndexManager(Address.class.getName()));
 }
