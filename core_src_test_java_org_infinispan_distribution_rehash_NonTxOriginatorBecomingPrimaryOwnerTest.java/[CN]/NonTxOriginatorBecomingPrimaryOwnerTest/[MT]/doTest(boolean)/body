@@ -1,0 +1,33 @@
+{
+  final AdvancedCache<Object,Object> cache0=advancedCache(0);
+  AdvancedCache<Object,Object> cache1=advancedCache(1);
+  AdvancedCache<Object,Object> cache2=advancedCache(2);
+  CyclicBarrier distInterceptorBarrier=new CyclicBarrier(2);
+  BlockingInterceptor blockingInterceptor=new BlockingInterceptor(distInterceptorBarrier,PutKeyValueCommand.class,false);
+  cache0.addInterceptorBefore(blockingInterceptor,NonTxDistributionInterceptor.class);
+  for (int i=0; i < NUM_KEYS; i++) {
+    final MagicKey key=new MagicKey("key" + i,cache1);
+    Future<Object> future=fork(new Callable<Object>(){
+      @Override public Object call() throws Exception {
+        return conditional ? cache0.putIfAbsent(key,"v") : cache0.put(key,"v");
+      }
+    }
+);
+    distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+    cache1.stop();
+    TestingUtil.waitForRehashToComplete(cache0,cache2);
+    distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+    distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+    distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+    if (cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key).equals(address(2))) {
+      distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+      distInterceptorBarrier.await(10,TimeUnit.SECONDS);
+    }
+    Object result=future.get(10,TimeUnit.SECONDS);
+    assertNull(result);
+    log.tracef("Put operation is done");
+    assertEquals("v",cache0.get(key));
+    cache1.start();
+    TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
+  }
+}

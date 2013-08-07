@@ -1,5 +1,4 @@
 {
-  Object result=super.visitPutKeyValueCommand(ctx,command);
   if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
     log.tracef("Delaying command %s originating from %s",command,ctx.getOrigin());
     Integer myCount=counter.incrementAndGet();
@@ -7,5 +6,6 @@
     assertEquals(pollResult,myCount,String.format("Timed out waiting for unblock(%d) call on cache %s",myCount,cache));
     log.tracef("Command unblocked: %s",command);
   }
+  Object result=super.visitPutKeyValueCommand(ctx,command);
   return result;
 }

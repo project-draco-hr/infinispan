@@ -1,0 +1,25 @@
+{
+  log.tracef("handleNonTxWriteCommand for command %s",command);
+  if (isLocalOnly(ctx,command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  updateTopologyIdAndWaitForTransactionData(command);
+  if (!ctx.isOriginLocal()) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  int commandTopologyId=command.getTopologyId();
+  Object localResult;
+  try {
+    localResult=invokeNextInterceptor(ctx,command);
+    return localResult;
+  }
+ catch (  CacheException e) {
+    if (!(e instanceof OutdatedTopologyException || (e instanceof RemoteException && e.getCause() instanceof OutdatedTopologyException)))     throw e;
+    log.tracef("Retrying command because of topology change: %s",command);
+    int newTopologyId=Math.max(stateTransferManager.getCacheTopology().getTopologyId(),commandTopologyId + 1);
+    command.setTopologyId(newTopologyId);
+    localResult=handleNonTxWriteCommand(ctx,command);
+  }
+  stateTransferManager.forwardCommandIfNeeded(command,command.getAffectedKeys(),ctx.getOrigin(),false);
+  return localResult;
+}
