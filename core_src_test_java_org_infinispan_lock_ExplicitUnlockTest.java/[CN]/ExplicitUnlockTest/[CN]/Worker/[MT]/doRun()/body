@@ -1,0 +1,31 @@
+{
+  final String methodName="run";
+  TransactionManager mgr=cache.getAdvancedCache().getTransactionManager();
+  if (null == mgr) {
+    throw new UnsupportedOperationException("TransactionManager was not configured for the cache " + cache.getName());
+  }
+  mgr.begin();
+  try {
+    if (acquireLock()) {
+      log(methodName,"acquired lock");
+      String newName="value-" + index;
+      log(methodName,"Changing value to " + newName);
+      for (int key=1; key <= NUMBER_OF_KEYS; key++) {
+        cache.put(valueOf(key),newName);
+        Thread.sleep(stepDelayMsec);
+      }
+      validateCache();
+      if (withUnlock) {
+        unlock(lockKey);
+      }
+    }
+ else {
+      log(methodName,"Failed to acquired lock");
+    }
+    mgr.commit();
+  }
+ catch (  Exception t) {
+    mgr.rollback();
+    throw t;
+  }
+}
