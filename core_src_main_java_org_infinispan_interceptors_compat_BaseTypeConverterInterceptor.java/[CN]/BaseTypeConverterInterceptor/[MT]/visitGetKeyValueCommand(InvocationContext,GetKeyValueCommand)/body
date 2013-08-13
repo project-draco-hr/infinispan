@@ -6,10 +6,18 @@
   if (ret != null) {
     if (command.isReturnEntry()) {
       InternalCacheEntry entry=(InternalCacheEntry)ret;
-      Object returnValue=converter.unboxValue(entry.getValue());
+      Object returnValue=entry.getValue();
+      if (command.getRemotelyFetchedValue() == null) {
+        returnValue=converter.unboxValue(entry.getValue());
+      }
       return entryFactory.create(entry.getKey(),returnValue,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle());
     }
-    return converter.unboxValue(ret);
+ else {
+      if (command.getRemotelyFetchedValue() == null) {
+        return converter.unboxValue(ret);
+      }
+      return ret;
+    }
   }
   return null;
 }
