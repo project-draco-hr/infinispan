@@ -1,0 +1,53 @@
+{
+  final Address address=new Address().setStreet("Sevogelstrasse").setCity("Basel").setZip(4001);
+  final PojoWithSerializeWith pojo=new PojoWithSerializeWith(99,"any-key");
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.storeAsBinary().enable();
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      Cache<?,?> cache=cm.getCache();
+      try {
+        BucketFileCacheStore fs=createBucketFileCacheStore(cache);
+        fs.store(TestInternalCacheEntryFactory.create("1","v1"));
+        fs.store(TestInternalCacheEntryFactory.create("2",address));
+        fs.store(TestInternalCacheEntryFactory.create("3",pojo));
+        assertEquals("v1",fs.load("1").getValue());
+        assertEquals(address,fs.load("2").getValue());
+        assertEquals(pojo,fs.load("3").getValue());
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+);
+  builder=new ConfigurationBuilder();
+  builder.loaders().addFileCacheStore().location(tmpDirectory);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      Cache<String,Object> cache=cm.getCache();
+      CacheStore delegate=extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+      DelegateFileCacheStore store=(DelegateFileCacheStore)delegate;
+      assertTrue(store.getCacheStoreDelegate() instanceof FileCacheStore);
+      assertEquals("v1",cache.get("1"));
+      assertEquals(address,cache.get("2"));
+      assertEquals(pojo,cache.get("3"));
+    }
+  }
+);
+  TestingUtil.recursiveFileRemove(tmpDirectory);
+  builder=new ConfigurationBuilder();
+  builder.loaders().addFileCacheStore().location(tmpDirectory).deprecatedBucketFormat(true);
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(builder)){
+    @Override public void call(){
+      Cache<String,Object> cache=cm.getCache();
+      CacheStore delegate=extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+      DelegateFileCacheStore store=(DelegateFileCacheStore)delegate;
+      assertTrue("Store is: " + store.getCacheStoreDelegate(),store.getCacheStoreDelegate() instanceof BucketFileCacheStore);
+      assertEquals("v1",cache.get("1"));
+      assertEquals(address,cache.get("2"));
+      assertEquals(pojo,cache.get("3"));
+    }
+  }
+);
+}

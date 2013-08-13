@@ -1,21 +1,16 @@
 {
-  if (trace)   log.trace("purgeInternal()");
-  File[] files=listFilesStrict(root,NUMERIC_NAMED_FILES_FILTER);
-  for (  final File bucketFile : files) {
-    if (multiThreadedPurge) {
-      purgerService.execute(new Runnable(){
-        @Override public void run(){
-          boolean interrupted=!doPurge(bucketFile);
-          if (interrupted)           log.debug("Interrupted, so finish work.");
+  long now=System.currentTimeMillis();
+synchronized (entries) {
+    for (Iterator<FileEntry> it=entries.values().iterator(); it.hasNext(); ) {
+      FileEntry fe=it.next();
+      if (fe.isExpired(now)) {
+        it.remove();
+        try {
+          free(fe);
         }
-      }
-);
-    }
- else {
-      boolean interrupted=!doPurge(bucketFile);
-      if (interrupted) {
-        log.debug("Interrupted, so stop loading and finish with purging.");
-        Thread.currentThread().interrupt();
+ catch (        Exception e) {
+          throw new CacheLoaderException(e);
+        }
       }
     }
   }

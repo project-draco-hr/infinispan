@@ -1,32 +1,24 @@
 {
   super.start();
-  String location=configuration.location();
-  if (location == null || location.trim().length() == 0) {
-    location="Infinispan-FileCacheStore";
-  }
-  location+=File.separator + cache.getName();
-  root=new File(location);
-  if (!root.exists()) {
-    if (!root.mkdirs()) {
-      log.problemsCreatingDirectory(root);
+  try {
+    String location=configuration.location();
+    if (location == null || location.trim().length() == 0)     location="Infinispan-SingleFileCacheStore";
+    File f=new File(location + File.separator + cache.getName()+ ".dat");
+    if (!f.exists()) {
+      File dir=f.getParentFile();
+      if (!dir.exists() && !dir.mkdirs()) {
+        throw log.directoryCannotBeCreated(dir.getAbsolutePath());
+      }
     }
+    file=new RandomAccessFile(f,"rw").getChannel();
+    entries=newEntryMap();
+    freeList=Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
+    upgradeFileCacheStoreIfNeeded(location,cache.getName());
+    byte[] header=new byte[MAGIC.length];
+    if (file.read(ByteBuffer.wrap(header),0) == MAGIC.length && Arrays.equals(MAGIC,header))     rebuildIndex();
+ else     clear();
   }
-  if (!root.exists()) {
-    throw new CacheConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
   }
-  streamBufferSize=configuration.streamBufferSize();
-  FileCacheStoreConfigurationBuilder.FsyncMode fsyncMode=configuration.fsyncMode();
-switch (fsyncMode) {
-case DEFAULT:
-    fileSync=new BufferedFileSync();
-  break;
-case PER_WRITE:
-fileSync=new PerWriteFileSync();
-break;
-case PERIODIC:
-fileSync=new PeriodicFileSync(configuration.fsyncInterval());
-break;
-}
-log.debugf("Using %s file sync mode",fsyncMode);
-timerService=cache.getAdvancedCache().getComponentRegistry().getTimeService();
 }

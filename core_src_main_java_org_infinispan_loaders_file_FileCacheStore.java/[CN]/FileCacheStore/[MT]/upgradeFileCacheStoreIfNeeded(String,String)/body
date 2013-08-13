@@ -1,0 +1,21 @@
+{
+  File backupRoot;
+  try {
+    backupRoot=BucketFileCacheStore.backUpStore(cfgLocation,cacheName);
+  }
+ catch (  CacheLoaderException e) {
+    throw log.unableToUpgradeBucketBasedFileCacheStore(e);
+  }
+  if (backupRoot != null) {
+    File root=BucketFileCacheStore.getLocation(cfgLocation,cacheName);
+    Util.recursiveFileRemove(root);
+    if (!root.mkdirs())     log.problemsCreatingDirectory(root);
+    clear();
+    BucketFileCacheStore fcs=new BucketFileCacheStore();
+    fcs.setRoot(backupRoot);
+    fcs.setMarshaller(marshaller);
+    fcs.setFileSync(new BucketFileCacheStore.PerWriteFileSync());
+    Set<InternalCacheEntry> all=fcs.loadAllLockSafe();
+    for (    InternalCacheEntry entry : all)     store(entry);
+  }
+}
