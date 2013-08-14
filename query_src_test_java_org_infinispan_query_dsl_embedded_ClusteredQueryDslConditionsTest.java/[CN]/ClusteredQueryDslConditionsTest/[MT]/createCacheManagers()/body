@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder defaultCacheConfiguration=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
+  defaultCacheConfiguration.clustering().stateTransfer().fetchInMemoryState(true);
+  createClusteredCaches(2,defaultCacheConfiguration);
+  ConfigurationBuilder cacheCfg=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
+  cacheCfg.clustering().stateTransfer().fetchInMemoryState(true).indexing().enable().indexLocalOnly(true).addProperty("default.indexmanager","org.infinispan.query.indexmanager.InfinispanIndexManager").addProperty("lucene_version","LUCENE_36");
+  cacheManagers.get(0).defineConfiguration("custom",cacheCfg.build());
+  cacheManagers.get(1).defineConfiguration("custom",cacheCfg.build());
+  cache1=cacheManagers.get(0).getCache("custom");
+  cache2=cacheManagers.get(1).getCache("custom");
+}

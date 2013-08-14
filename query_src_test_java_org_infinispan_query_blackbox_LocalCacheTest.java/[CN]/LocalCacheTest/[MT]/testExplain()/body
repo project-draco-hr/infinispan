@@ -4,9 +4,16 @@
   Query luceneQuery=queryParser.parse("Eats");
   CacheQuery cacheQuery=Search.getSearchManager(cache).getQuery(luceneQuery);
   int matchCounter=0;
-  for (int i=0; i < 4; i++) {
-    Explanation found=cacheQuery.explain(i);
-    if (found.isMatch())     matchCounter++;
+  int i=0;
+  while (true) {
+    try {
+      Explanation found=cacheQuery.explain(i);
+      if (found.isMatch())       matchCounter++;
+      i++;
+    }
+ catch (    ArrayIndexOutOfBoundsException ex) {
+      break;
+    }
   }
   AssertJUnit.assertEquals(3,matchCounter);
 }
