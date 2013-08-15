@@ -17,10 +17,9 @@
           if (log.isTraceEnabled()) {
             log.tracef("Adding bucket keyed %s for purging.",key);
           }
-          Bucket bucket=null;
+          Bucket bucket;
           try {
-            InputStream binaryStream=rs.getBinaryStream(1);
-            bucket=(Bucket)JdbcUtil.unmarshall(getMarshaller(),binaryStream);
+            bucket=unmarshallBucket(rs.getBinaryStream(1));
           }
  catch (          Exception ex) {
             unlock(key);
@@ -61,7 +60,7 @@
         Bucket bucket=it.next();
         bucket.removeExpiredEntries();
         if (!bucket.isEmpty()) {
-          ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),bucket);
+          ByteBuffer byteBuffer=JdbcUtil.marshall(getMarshaller(),bucket.getEntries());
           ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
           ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
           ps.setString(3,bucket.getBucketIdAsString());
