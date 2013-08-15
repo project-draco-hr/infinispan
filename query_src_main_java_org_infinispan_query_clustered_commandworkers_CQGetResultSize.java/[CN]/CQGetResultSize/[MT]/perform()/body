@@ -1,7 +1,12 @@
 {
   query.afterDeserialise((SearchFactoryImplementor)getSearchFactory());
-  query.queryDocumentExtractor();
-  int resultSize=query.queryResultSize();
-  QueryResponse queryResponse=new QueryResponse(resultSize);
-  return queryResponse;
+  DocumentExtractor extractor=query.queryDocumentExtractor();
+  try {
+    int resultSize=query.queryResultSize();
+    QueryResponse queryResponse=new QueryResponse(resultSize);
+    return queryResponse;
+  }
+  finally {
+    extractor.close();
+  }
 }
