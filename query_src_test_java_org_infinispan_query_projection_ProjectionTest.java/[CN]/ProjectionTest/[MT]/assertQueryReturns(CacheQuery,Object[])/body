@@ -1,5 +1,17 @@
 {
   assertQueryListContains(cacheQuery.list(),expected);
-  assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER)),expected);
-  assertQueryIteratorContains(cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY)),expected);
+  final ResultIterator eagerIterator=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+  try {
+    assertQueryIteratorContains(eagerIterator,expected);
+  }
+  finally {
+    eagerIterator.close();
+  }
+  final ResultIterator lazyIterator=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+  try {
+    assertQueryIteratorContains(lazyIterator,expected);
+  }
+  finally {
+    lazyIterator.close();
+  }
 }
