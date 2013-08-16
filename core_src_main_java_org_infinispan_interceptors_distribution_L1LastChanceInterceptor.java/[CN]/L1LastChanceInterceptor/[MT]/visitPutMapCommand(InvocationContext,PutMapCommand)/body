@@ -1,0 +1,19 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (shouldUpdateOnWriteCommand(command)) {
+    Set<Object> keys=command.getMap().keySet();
+    Set<Object> toInvalidate=new HashSet<Object>(keys.size());
+    for (    Object k : keys) {
+      if (cdl.localNodeIsPrimaryOwner(k)) {
+        toInvalidate.add(k);
+      }
+    }
+    if (!toInvalidate.isEmpty()) {
+      if (trace) {
+        log.trace("Sending additional invalidation for requestors if necessary.");
+      }
+      l1Manager.flushCache(toInvalidate,ctx.getOrigin(),true);
+    }
+  }
+  return returnValue;
+}

@@ -1,0 +1,11 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  Object key;
+  if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() && cdl.localNodeIsPrimaryOwner((key=command.getKey()))) {
+    if (trace) {
+      log.trace("Sending additional invalidation for requestors if necessary.");
+    }
+    l1Manager.flushCache(Collections.singleton(key),ctx.getOrigin(),assumeOriginKeptEntryInL1);
+  }
+  return returnValue;
+}
