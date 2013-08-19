@@ -46,31 +46,31 @@ c.withFlags(Flag.IGNORE_RETURN_VALUES).replace(key,"init","v1");
 break;
 default :
 tm.rollback();
-AssertJUnit.fail("Unknown operation " + operation);
+fail("Unknown operation " + operation);
 }
 Transaction tx=tm.suspend();
 log.debugf("Suspend the transaction and update the key");
 c.put(key,"v2");
 log.debugf("Checking if all the keys has the same value");
 for (Cache cache : caches()) {
-AssertJUnit.assertEquals("wrong intermediate value for " + address(cache) + ".","v2",cache.get(key));
+assertEquals("wrong intermediate value for " + address(cache) + ".","v2",cache.get(key));
 }
 log.debugf("It is going to try to commit the suspended transaction");
 try {
 tm.resume(tx);
 tm.commit();
 if (rollbackExpected) {
-AssertJUnit.fail("Rollback expected!");
+fail("Rollback expected!");
 }
 }
  catch (RollbackException e) {
 if (!rollbackExpected) {
-AssertJUnit.fail("Rollback *not* expected!");
+fail("Rollback *not* expected!");
 }
 }
 log.debugf("So far so good. Check the key final value");
 assertNoTransactions();
 for (Cache cache : caches()) {
-AssertJUnit.assertEquals("wrong final value for " + address(cache) + ".",finalValue,cache.get(key));
+assertEquals("wrong final value for " + address(cache) + ".",finalValue,cache.get(key));
 }
 }

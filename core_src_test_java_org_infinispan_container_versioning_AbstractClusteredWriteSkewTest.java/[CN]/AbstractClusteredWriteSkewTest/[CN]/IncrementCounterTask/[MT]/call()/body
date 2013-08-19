@@ -1,20 +1,18 @@
 {
-  int failuresCounter=0;
-  while (lastValue < counterMaxValue && !Thread.interrupted()) {
+  boolean unique=true;
+  while (lastValue < SHARED_COUNTER_TEST_MAX_COUNTER_VALUE && !Thread.interrupted()) {
     boolean success=false;
     try {
       transactionManager.begin();
-      Integer value=cache.get("counter");
+      Integer value=cache.get(SHARED_COUNTER_TEST_KEY);
       value=value + 1;
       lastValue=value;
-      cache.put("counter",value);
+      cache.put(SHARED_COUNTER_TEST_KEY,value);
       transactionManager.commit();
       unique=uniqueValuesSet.add(value);
       success=true;
     }
  catch (    Exception e) {
-      failuresCounter++;
-      assertTrue(failuresCounter < 10 * counterMaxValue,"Too many failures incrementing the counter");
     }
  finally {
       if (!success) {
@@ -25,7 +23,7 @@
           log.trace("Exception during rollback",t);
         }
       }
-      assertTrue(unique,"Duplicate value found in " + address(cache) + " (value="+ lastValue+ ")");
+      assertTrue("Duplicate value found in " + address(cache) + " (value="+ lastValue+ ")",unique);
     }
   }
   return unique;
