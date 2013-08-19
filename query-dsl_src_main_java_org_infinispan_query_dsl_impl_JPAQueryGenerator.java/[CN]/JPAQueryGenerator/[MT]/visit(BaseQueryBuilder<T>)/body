@@ -1,0 +1,39 @@
+{
+  StringBuilder sb=new StringBuilder();
+  if (baseQueryBuilder.getProjection() != null && baseQueryBuilder.getProjection().length != 0) {
+    sb.append("SELECT ");
+    boolean isFirst=true;
+    for (    String projection : baseQueryBuilder.getProjection()) {
+      if (isFirst) {
+        isFirst=false;
+      }
+ else {
+        sb.append(", ");
+      }
+      sb.append(alias).append('.').append(projection);
+    }
+    sb.append(' ');
+  }
+  sb.append("FROM ").append(baseQueryBuilder.getRootType().getName()).append(" ").append(alias);
+  if (baseQueryBuilder.getFilterCondition() != null) {
+    BaseCondition baseCondition=baseQueryBuilder.getFilterCondition().getRoot();
+    String whereCondition=baseCondition.accept(this);
+    if (!whereCondition.isEmpty()) {
+      sb.append(" WHERE ").append(whereCondition);
+    }
+  }
+  if (baseQueryBuilder.getSortCriteria() != null && !baseQueryBuilder.getSortCriteria().isEmpty()) {
+    sb.append(" ORDER BY ");
+    boolean isFirst=true;
+    for (    SortCriteria sortCriteria : baseQueryBuilder.getSortCriteria()) {
+      if (isFirst) {
+        isFirst=false;
+      }
+ else {
+        sb.append(", ");
+      }
+      sb.append(alias).append('.').append(sortCriteria.getAttributePath()).append(' ').append(sortCriteria.getSortOrder().name());
+    }
+  }
+  return sb.toString();
+}

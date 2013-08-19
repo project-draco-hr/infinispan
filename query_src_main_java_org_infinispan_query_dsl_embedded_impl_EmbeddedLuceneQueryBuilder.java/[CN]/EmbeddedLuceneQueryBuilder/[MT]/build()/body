@@ -1,0 +1,19 @@
+{
+  String jpqlString=accept(new JPAQueryGenerator());
+  if (log.isTraceEnabled()) {
+    log.tracef("JPQL string : %s",jpqlString);
+  }
+  Sort sort=null;
+  if (sortCriteria != null && !sortCriteria.isEmpty()) {
+    SortField[] sortField=new SortField[sortCriteria.size()];
+    int i=0;
+    for (    SortCriteria sc : sortCriteria) {
+      sortField[i++]=new SortField(sc.getAttributePath(),SortField.STRING,sc.getSortOrder() == SortOrder.DESC);
+    }
+    sort=new Sort(sortField);
+  }
+  LuceneProcessingChain processingChain=new LuceneProcessingChain((SearchFactoryIntegrator)searchManager.getSearchFactory(),entityNamesResolver,null);
+  QueryParser queryParser=new QueryParser();
+  LuceneQueryParsingResult parsingResult=queryParser.parseQuery(jpqlString,processingChain);
+  return new EmbeddedLuceneQuery(searchManager,parsingResult,sort,startOffset,maxResults);
+}
