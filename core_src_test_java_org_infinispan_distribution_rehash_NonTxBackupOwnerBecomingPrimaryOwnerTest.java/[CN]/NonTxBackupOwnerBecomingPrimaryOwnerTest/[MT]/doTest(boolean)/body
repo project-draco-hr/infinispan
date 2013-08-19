@@ -1,0 +1,65 @@
+{
+  CheckPoint checkPoint=new CheckPoint();
+  LocalTopologyManager ltm0=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
+  int preJoinTopologyId=ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
+  final AdvancedCache<Object,Object> cache0=advancedCache(0);
+  addBlockingLocalTopologyManager(manager(0),checkPoint,preJoinTopologyId);
+  final AdvancedCache<Object,Object> cache1=advancedCache(1);
+  addBlockingLocalTopologyManager(manager(1),checkPoint,preJoinTopologyId);
+  ConfigurationBuilder c=getConfigurationBuilder();
+  c.clustering().stateTransfer().awaitInitialTransfer(false);
+  addClusterEnabledCacheManager(c);
+  addBlockingLocalTopologyManager(manager(2),checkPoint,preJoinTopologyId);
+  log.tracef("Starting the cache on the joiner");
+  final AdvancedCache<Object,Object> cache2=advancedCache(2);
+  int duringJoinTopologyId=preJoinTopologyId + 1;
+  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(0));
+  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(1));
+  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(2));
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache0.getRpcManager().getMembers().size() == 3 && cache1.getRpcManager().getMembers().size() == 3 && cache2.getRpcManager().getMembers().size() == 3;
+    }
+  }
+);
+  CacheTopology duringJoinTopology=ltm0.getCacheTopology(CACHE_NAME);
+  assertEquals(duringJoinTopologyId,duringJoinTopology.getTopologyId());
+  assertNotNull(duringJoinTopology.getPendingCH());
+  final MagicKey key=getKeyForCache2(duringJoinTopology.getPendingCH());
+  log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s",key,duringJoinTopology.getCurrentCH().locateOwners(key),duringJoinTopology.getPendingCH().locateOwners(key));
+  CyclicBarrier beforeCache1Barrier=new CyclicBarrier(2);
+  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,PutKeyValueCommand.class,false);
+  cache1.addInterceptorBefore(blockingInterceptor1,NonTxDistributionInterceptor.class);
+  CyclicBarrier afterCache2Barrier=new CyclicBarrier(2);
+  BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(afterCache2Barrier,PutKeyValueCommand.class,true);
+  cache2.addInterceptorBefore(blockingInterceptor2,StateTransferInterceptor.class);
+  Future<Object> future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      return conditional ? cache0.putIfAbsent(key,"v") : cache0.put(key,"v");
+    }
+  }
+);
+  afterCache2Barrier.await(10,TimeUnit.SECONDS);
+  afterCache2Barrier.await(10,TimeUnit.SECONDS);
+  int postJoinTopologyId=duringJoinTopologyId + 1;
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(0));
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(1));
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(2));
+  TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
+  log.tracef("Unblocking the put command on node " + address(1));
+  beforeCache1Barrier.await(10,TimeUnit.SECONDS);
+  beforeCache1Barrier.await(10,TimeUnit.SECONDS);
+  CacheTopology postJoinTopology=ltm0.getCacheTopology(CACHE_NAME);
+  if (postJoinTopology.getCurrentCH().locateOwners(key).contains(address(1))) {
+    beforeCache1Barrier.await(10,TimeUnit.SECONDS);
+    beforeCache1Barrier.await(10,TimeUnit.SECONDS);
+  }
+  afterCache2Barrier.await(10,TimeUnit.SECONDS);
+  afterCache2Barrier.await(10,TimeUnit.SECONDS);
+  Object result=future.get(10,TimeUnit.SECONDS);
+  assertNull(result);
+  log.tracef("Put operation is done");
+  assertEquals("v",cache0.get(key));
+  assertEquals("v",cache1.get(key));
+  assertEquals("v",cache2.get(key));
+}

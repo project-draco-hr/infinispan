@@ -5,20 +5,12 @@
     return null;
   }
   if (e == null)   return null;
-  if (putIfAbsent && ctx.isInTxScope() && !ctx.isOriginLocal()) {
-    if (ignorePreviousValue) {
-      return performPut(e,ctx);
-    }
- else {
-      return e.getValue();
-    }
-  }
   Object entryValue=e.getValue();
-  if (entryValue != null && putIfAbsent && !e.isRemoved()) {
-    successful=false;
-    return entryValue;
+  if (putIfAbsent && !ignorePreviousValue) {
+    if (entryValue != null && !e.isRemoved()) {
+      successful=false;
+      return entryValue;
+    }
   }
- else {
-    return performPut(e,ctx);
-  }
+  return performPut(e,ctx);
 }

@@ -3,7 +3,7 @@
   if (e == null || e.isNull() || e.isRemoved()) {
     nonExistent=true;
     log.trace("Nothing to remove since the entry is null or we have a null entry");
-    if (value == null) {
+    if (value == null || ignorePreviousValue) {
       if (e != null) {
         e.setChanged(true);
         e.setRemoved(true);
@@ -13,14 +13,6 @@
  else {
       successful=false;
       return false;
-    }
-  }
-  if (isConditional() && ctx.isInTxScope() && !ctx.isOriginLocal()&& !(this instanceof InvalidateCommand)) {
-    if (ignorePreviousValue) {
-      return performRemove(e,ctx);
-    }
- else {
-      return value == null ? null : true;
     }
   }
   if (!(e instanceof MVCCEntry))   ctx.putLookedUpEntry(key,null);

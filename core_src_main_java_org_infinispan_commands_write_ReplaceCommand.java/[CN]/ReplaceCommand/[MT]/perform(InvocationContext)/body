@@ -6,22 +6,15 @@
         return returnValue(null,false,ctx);
       }
     }
- else {
-      if (isConditional() && ctx.isInTxScope()) {
-        if (ignorePreviousValue) {
-          e.setChanged(true);
-          Object old=e.setValue(newValue);
-          return returnValue(old,true,ctx);
-        }
- else {
-          return returnValue(null,false,ctx);
-        }
-      }
-    }
-    if (oldValue == null || isValueEquals(oldValue,e.getValue()) || ignorePreviousValue) {
+    if (oldValue == null || ignorePreviousValue || isValueEquals(oldValue,e.getValue())) {
       e.setChanged(true);
       Object old=e.setValue(newValue);
-      return returnValue(old,true,ctx);
+      if (!ignorePreviousValue) {
+        return returnValue(old,true,ctx);
+      }
+ else {
+        return returnValue(oldValue,true,ctx);
+      }
     }
   }
   return returnValue(null,false,ctx);
