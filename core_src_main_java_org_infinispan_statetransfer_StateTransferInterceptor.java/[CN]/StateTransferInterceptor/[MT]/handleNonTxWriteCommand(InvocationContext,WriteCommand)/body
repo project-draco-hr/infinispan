@@ -14,10 +14,15 @@
     return localResult;
   }
  catch (  CacheException e) {
-    if (!(e instanceof OutdatedTopologyException || (e instanceof RemoteException && e.getCause() instanceof OutdatedTopologyException)))     throw e;
+    Throwable ce=e;
+    while (ce instanceof RemoteException) {
+      ce=ce.getCause();
+    }
+    if (!(ce instanceof OutdatedTopologyException))     throw e;
     log.tracef("Retrying command because of topology change: %s",command);
     int newTopologyId=Math.max(stateTransferManager.getCacheTopology().getTopologyId(),commandTopologyId + 1);
     command.setTopologyId(newTopologyId);
+    command.setIgnorePreviousValue(true);
     localResult=handleNonTxWriteCommand(ctx,command);
   }
   return localResult;
