@@ -1,0 +1,11 @@
+{
+synchronized (prepareProcessedLock) {
+    long endTime=System.nanoTime() + MILLISECONDS.toNanos(milliseconds);
+    long sleepTime=NANOSECONDS.toMillis(endTime - System.nanoTime());
+    while (!prepareProcessed && sleepTime > 0) {
+      prepareProcessedLock.wait(sleepTime);
+      sleepTime=NANOSECONDS.toMillis(endTime - System.nanoTime());
+    }
+    return prepareProcessed;
+  }
+}

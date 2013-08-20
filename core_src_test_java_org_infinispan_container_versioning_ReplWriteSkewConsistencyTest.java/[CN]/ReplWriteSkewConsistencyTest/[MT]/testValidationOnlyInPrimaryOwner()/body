@@ -1,0 +1,60 @@
+{
+  final Object key=new MagicKey(cache(0),cache(1));
+  final DataContainer primaryOwnerDataContainer=TestingUtil.extractComponent(cache(0),DataContainer.class);
+  final DataContainer backupOwnerDataContainer=TestingUtil.extractComponent(cache(1),DataContainer.class);
+  final VersionGenerator versionGenerator=TestingUtil.extractComponent(cache(0),VersionGenerator.class);
+  injectReorderResponseRpcManager(cache(3),cache(1));
+  cache(0).put(key,1);
+  for (  Cache cache : caches()) {
+    assertEquals("Wrong initial value for cache " + address(cache),1,cache.get(key));
+  }
+  InternalCacheEntry ice0=primaryOwnerDataContainer.get(key);
+  InternalCacheEntry ice1=backupOwnerDataContainer.get(key);
+  assertVersion("Wrong version for the same key",ice0.getMetadata().version(),ice1.getMetadata().version(),EQUAL);
+  final EntryVersion version0=ice0.getMetadata().version();
+  final EntryVersion version1=versionGenerator.increment((IncrementableEntryVersion)version0);
+  final EntryVersion version2=versionGenerator.increment((IncrementableEntryVersion)version1);
+  ControllerInboundInvocationHandler handler=injectControllerInboundInvocationHandler(cache(1));
+  BackupOwnerInterceptor backupOwnerInterceptor=injectBackupOwnerInterceptor(cache(1));
+  backupOwnerInterceptor.blockCommit(true);
+  handler.discardRemoteGet=true;
+  Future<Boolean> tx1=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      tm(2).begin();
+      assertEquals("Wrong value for tx1.",1,cache(2).get(key));
+      cache(2).put(key,2);
+      tm(2).commit();
+      return Boolean.TRUE;
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      Integer value=(Integer)cache(3).get(key);
+      return value != null && value == 2;
+    }
+  }
+);
+  assertVersion("Wrong version in the primary owner",primaryOwnerDataContainer.get(key).getMetadata().version(),version1,EQUAL);
+  assertVersion("Wrong version in the backup owner",backupOwnerDataContainer.get(key).getMetadata().version(),version0,EQUAL);
+  backupOwnerInterceptor.resetPrepare();
+  Future<Boolean> tx2=fork(new Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      tm(3).begin();
+      assertEquals("Wrong value for tx2.",2,cache(3).get(key));
+      cache(3).put(key,3);
+      tm(3).commit();
+      return Boolean.TRUE;
+    }
+  }
+);
+  AssertJUnit.assertTrue("Prepare of tx2 was never received.",backupOwnerInterceptor.awaitPrepare(10000));
+  backupOwnerInterceptor.blockCommit(false);
+  handler.discardRemoteGet=false;
+  AssertJUnit.assertTrue("Error in tx1.",tx1.get(15,SECONDS));
+  AssertJUnit.assertTrue("Error in tx2.",tx2.get(15,SECONDS));
+  assertVersion("Wrong version in the primary owner",primaryOwnerDataContainer.get(key).getMetadata().version(),version2,EQUAL);
+  assertVersion("Wrong version in the backup owner",backupOwnerDataContainer.get(key).getMetadata().version(),version2,EQUAL);
+  assertNoTransactions();
+  assertNotLocked(key);
+}

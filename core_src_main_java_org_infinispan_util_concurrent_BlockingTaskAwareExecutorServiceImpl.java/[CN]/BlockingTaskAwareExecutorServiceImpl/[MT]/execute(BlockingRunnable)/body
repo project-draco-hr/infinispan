@@ -7,6 +7,13 @@
   }
  else {
     blockedTasks.offer(runnable);
+    boolean checkPendingTasks;
+synchronized (blockedTasks) {
+      checkPendingTasks=runnable.isReady();
+    }
+    if (checkPendingTasks) {
+      checkForReadyTasks();
+    }
   }
   if (log.isTraceEnabled()) {
     log.tracef("Added a new task: %s task(s) are waiting",blockedTasks.size());
