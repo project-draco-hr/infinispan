@@ -1,19 +1,10 @@
 {
-  for (int i=0; i < 50; i++) {
-    Transaction transaction=new Transaction();
-    transaction.setId(50 + i);
-    transaction.setDescription("Expensive shoes " + i);
-    transaction.setAccountId(2);
-    transaction.setAmount(100 + i);
-    transaction.setDate(DATE_FORMAT.parse("2013-08-20"));
-    transaction.setDebit(true);
-    cache.put("transaction_" + transaction.getId(),transaction);
-  }
   QueryFactory qf=Search.getSearchManager(cache).getQueryFactory();
-  Query q=qf.from(Transaction.class).startOffset(20).maxResults(10).orderBy("id",SortOrder.ASC).having("accountId").eq(2).and().having("description").like("Expensive%").toBuilder().build();
-  List<Transaction> list=q.list();
-  assertEquals(10,list.size());
-  for (int i=0; i < 10; i++) {
-    assertEquals("Expensive shoes " + (20 + i),list.get(i).getDescription());
-  }
+  Query q1=qf.from(User.class).having("id").eq(1).toBuilder().build();
+  List<User> users=q1.list();
+  Query q2=qf.from(Account.class).orderBy("description",SortOrder.ASC).having("id").in(users.get(0).getAccountIds()).toBuilder().build();
+  List<Account> list=q2.list();
+  assertEquals(2,list.size());
+  assertEquals("John Doe's first bank account",list.get(0).getDescription());
+  assertEquals("John Doe's second bank account",list.get(1).getDescription());
 }

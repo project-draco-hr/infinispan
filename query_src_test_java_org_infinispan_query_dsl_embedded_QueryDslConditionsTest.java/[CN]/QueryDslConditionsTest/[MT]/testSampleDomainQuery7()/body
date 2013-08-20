@@ -1,7 +1,9 @@
 {
   QueryFactory qf=Search.getSearchManager(cache).getQueryFactory();
-  Query q=qf.from(User.class).having("addresses.postCode").eq("X1234").toBuilder().build();
-  List<User> list=q.list();
+  Query q=qf.from(Transaction.class).having("accountId").eq(1).and().having("description").like("%rent%").toBuilder().build();
+  List<Transaction> list=q.list();
   assertEquals(1,list.size());
-  assertEquals("X1234",list.get(0).getAddresses().get(0).getPostCode());
+  assertEquals(1,list.get(0).getId());
+  assertEquals(1,list.get(0).getAccountId());
+  assertTrue(list.get(0).getDescription().contains("rent"));
 }
