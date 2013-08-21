@@ -14,7 +14,12 @@
         try {
           cache.putIfAbsent(key,value);
         }
- catch (        SuspectException e) {
+ catch (        CacheException e) {
+          Throwable ce=e;
+          while (ce instanceof RemoteException) {
+            ce=ce.getCause();
+          }
+          if (!(ce instanceof OutdatedTopologyException))           throw e;
           putRetryOnSuspect(cache,key,value);
         }
       }
@@ -30,7 +35,7 @@
     futures[i].get(10,TimeUnit.SECONDS);
     for (int j=0; j < NUM_KEYS; j++) {
       for (int k=0; k < caches().size(); k++) {
-        assertEquals(cache(k).get("key_" + i + "_"+ j),"value_" + i + "_"+ j);
+        assertEquals("value_" + i + "_"+ j,cache(k).get("key_" + i + "_"+ j));
       }
     }
   }

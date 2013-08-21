@@ -49,7 +49,19 @@
       boolean isSyncForwarding=isSync || isNeedReliableReturnValues(command);
       Map<Address,Response> addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,rpcManager.getDefaultRpcOptions(isSyncForwarding));
       if (!isSyncForwarding)       return localResult;
-      return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+      try {
+        return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+      }
+ catch (      RemoteException e) {
+        Throwable ce=e;
+        while (ce instanceof RemoteException) {
+          ce=ce.getCause();
+        }
+        if (ce instanceof OutdatedTopologyException) {
+          command.setIgnorePreviousValue(true);
+        }
+        throw e;
+      }
     }
   }
 }
