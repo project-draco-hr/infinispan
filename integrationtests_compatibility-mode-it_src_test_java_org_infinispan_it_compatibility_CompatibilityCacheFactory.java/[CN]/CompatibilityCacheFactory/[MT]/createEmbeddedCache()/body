@@ -1,6 +1,9 @@
 {
   org.infinispan.configuration.cache.ConfigurationBuilder builder=new org.infinispan.configuration.cache.ConfigurationBuilder();
   builder.clustering().cacheMode(cacheMode).compatibility().enable().marshaller(marshaller);
+  if (cacheMode.isDistributed() && numOwners != defaultNumOwners) {
+    builder.clustering().hash().numOwners(numOwners);
+  }
   cacheManager=cacheMode.isClustered() ? TestCacheManagerFactory.createClusteredCacheManager(builder) : TestCacheManagerFactory.createCacheManager(builder);
   embeddedCache=cacheName.isEmpty() ? cacheManager.<K,V>getCache() : cacheManager.<K,V>getCache(cacheName);
 }

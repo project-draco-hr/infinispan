@@ -1,0 +1,10 @@
+{
+  for (int i=0; i != numEntries; i++) {
+    Future<Boolean> f=cacheFactory2.getMemcachedClient().set("k" + i,0,"v" + i);
+    assertTrue(f.get(60,TimeUnit.SECONDS));
+  }
+  for (int i=0; i != numEntries; i++) {
+    assertEquals("v" + i,cacheFactory1.getEmbeddedCache().get("k" + i));
+    cacheFactory1.getEmbeddedCache().remove("k" + i);
+  }
+}
