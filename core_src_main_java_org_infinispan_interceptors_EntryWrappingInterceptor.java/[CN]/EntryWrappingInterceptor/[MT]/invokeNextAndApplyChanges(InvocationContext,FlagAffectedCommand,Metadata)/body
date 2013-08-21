@@ -8,7 +8,7 @@
         int commandTopologyId=command.getTopologyId();
         int currentTopologyId=stateConsumer.getCacheTopology().getTopologyId();
         if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
-          log.tracef("Cache topology changed while the command was executing: expected %d, got %d",commandTopologyId,currentTopologyId);
+          if (trace)           log.tracef("Cache topology changed while the command was executing: expected %d, got %d",commandTopologyId,currentTopologyId);
           throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " + commandTopologyId + ", got "+ currentTopologyId);
         }
       }
@@ -18,6 +18,6 @@
       stateTransferLock.releaseSharedTopologyLock();
     }
   }
-  log.tracef("The return value is %s",result);
+  if (trace)   log.tracef("The return value is %s",result);
   return result;
 }
