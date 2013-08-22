@@ -1,6 +1,6 @@
 {
   ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
-  CacheStore store=null;
+  Object store=null;
   Boolean fetchPersistentState=null;
   Boolean ignoreModifications=null;
   Boolean purgeOnStartup=null;
@@ -42,15 +42,18 @@ if (purgeOnStartup != null) fcscb.purgeOnStartup(purgeOnStartup);
 if (purgeSynchronously != null) fcscb.purgeSynchronously(purgeSynchronously);
 parseStoreChildren(reader,fcscb);
 }
- else {
+ else if (store instanceof CacheStore) {
 LegacyStoreConfigurationBuilder scb=builder.loaders().addStore();
-scb.cacheStore(store);
+scb.cacheStore((CacheStore)store);
 if (fetchPersistentState != null) scb.fetchPersistentState(fetchPersistentState);
 if (ignoreModifications != null) scb.ignoreModifications(ignoreModifications);
 if (purgerThreads != null) scb.purgerThreads(purgerThreads);
 if (purgeOnStartup != null) scb.purgeOnStartup(purgeOnStartup);
 if (purgeSynchronously != null) scb.purgeSynchronously(purgeSynchronously);
 parseStoreChildren(reader,scb);
+}
+ else {
+throw log.invalidCacheLoaderClass(store.getClass().getName());
 }
 }
 }

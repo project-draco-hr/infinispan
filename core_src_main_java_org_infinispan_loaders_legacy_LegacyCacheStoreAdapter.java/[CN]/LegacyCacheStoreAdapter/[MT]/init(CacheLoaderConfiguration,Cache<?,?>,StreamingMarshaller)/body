@@ -1,0 +1,28 @@
+{
+  this.configuration=validateConfigurationClass(config,LegacyStoreConfiguration.class);
+  super.init(config,cache,m);
+  CacheLoaderConfig legacy=Util.getInstance(configuration.cacheStore().getClass().getAnnotation(CacheLoaderMetadata.class).configurationClass());
+  if (legacy instanceof AbstractCacheLoaderConfig) {
+    AbstractCacheLoaderConfig aclc=(AbstractCacheLoaderConfig)legacy;
+    aclc.setProperties(configuration.properties());
+  }
+  XmlConfigHelper.setValues(legacy,configuration.properties(),false,true);
+  if (legacy instanceof AbstractCacheStoreConfig) {
+    AbstractCacheStoreConfig acsc=(AbstractCacheStoreConfig)legacy;
+    acsc.fetchPersistentState(configuration.fetchPersistentState());
+    acsc.ignoreModifications(configuration.ignoreModifications());
+    acsc.purgeOnStartup(configuration.purgeOnStartup());
+    acsc.purgeSynchronously(configuration.purgeSynchronously());
+    acsc.purgerThreads(configuration.purgerThreads());
+    acsc.getAsyncStoreConfig().setEnabled(configuration.async().enabled());
+    acsc.getAsyncStoreConfig().flushLockTimeout(configuration.async().flushLockTimeout());
+    acsc.getAsyncStoreConfig().modificationQueueSize(configuration.async().modificationQueueSize());
+    acsc.getAsyncStoreConfig().shutdownTimeout(configuration.async().shutdownTimeout());
+    acsc.getAsyncStoreConfig().threadPoolSize(configuration.async().threadPoolSize());
+    acsc.getSingletonStoreConfig().enabled(configuration.singletonStore().enabled());
+    acsc.getSingletonStoreConfig().pushStateTimeout(configuration.singletonStore().pushStateTimeout());
+    acsc.getSingletonStoreConfig().pushStateWhenCoordinator(configuration.singletonStore().pushStateWhenCoordinator());
+  }
+  delegate=(org.infinispan.loaders.CacheStore)Util.getInstance(configuration.cacheStore().getClass());
+  delegate.init(legacy,cache,m != null ? new StreamingMarshallerAdapter(m) : null);
+}

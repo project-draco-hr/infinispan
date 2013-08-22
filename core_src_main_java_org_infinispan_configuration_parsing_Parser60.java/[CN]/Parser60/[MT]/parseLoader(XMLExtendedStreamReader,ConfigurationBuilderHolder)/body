@@ -1,6 +1,6 @@
 {
   ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
-  CacheLoader loader=null;
+  Object loader=null;
   Boolean fetchPersistentState=null;
   Boolean ignoreModifications=null;
   Boolean purgeOnStartup=null;
@@ -57,10 +57,13 @@ parseStoreChildren(reader,scb);
 ClusterCacheLoaderConfigurationBuilder cclb=builder.loaders().addClusterCacheLoader();
 parseLoaderChildren(reader,cclb);
 }
- else {
+ else if (loader instanceof CacheLoader) {
 LegacyLoaderConfigurationBuilder lcb=builder.loaders().addLoader();
-lcb.cacheLoader(loader);
+lcb.cacheLoader((CacheLoader)loader);
 parseLoaderChildren(reader,lcb);
+}
+ else {
+throw log.invalidCacheLoaderClass(loader.getClass().getName());
 }
 }
 }
