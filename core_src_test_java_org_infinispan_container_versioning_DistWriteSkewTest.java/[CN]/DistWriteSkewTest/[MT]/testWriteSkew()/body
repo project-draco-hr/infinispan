@@ -1,2 +1,28 @@
 {
+  Cache<Object,Object> cache0=cache(0);
+  Cache<Object,Object> cache1=cache(1);
+  Cache<Object,Object> cache2=cache(2);
+  Cache<Object,Object> cache3=cache(3);
+  MagicKey hello=new MagicKey("hello",cache(2));
+  cache1.put(hello,"world 1");
+  tm(1).begin();
+  assertEquals("world 1",cache1.get(hello));
+  Transaction t=tm(1).suspend();
+  cache3.put(hello,"world 3");
+  assertEquals("world 3",cache0.get(hello));
+  assertEquals("world 3",cache1.get(hello));
+  assertEquals("world 3",cache2.get(hello));
+  assertEquals("world 3",cache3.get(hello));
+  tm(1).resume(t);
+  cache1.put(hello,"world 2");
+  try {
+    tm(1).commit();
+    fail("Transaction should roll back");
+  }
+ catch (  RollbackException re) {
+  }
+  assertEquals("world 3",cache0.get(hello));
+  assertEquals("world 3",cache1.get(hello));
+  assertEquals("world 3",cache2.get(hello));
+  assertEquals("world 3",cache3.get(hello));
 }

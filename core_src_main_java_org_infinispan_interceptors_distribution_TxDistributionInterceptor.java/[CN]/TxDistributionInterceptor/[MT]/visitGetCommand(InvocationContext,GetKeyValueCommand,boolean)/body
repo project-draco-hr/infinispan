@@ -1,13 +1,15 @@
 {
   try {
     Object returnValue=invokeNextInterceptor(ctx,command);
-    if (returnValue != null && isL1CacheEnabled && !ctx.isOriginLocal())     l1Manager.addRequestor(command.getKey(),ctx.getOrigin());
     CacheEntry entry=ctx.lookupEntry(command.getKey());
     boolean skipRemoteGet=entry != null && entry.skipRemoteGet();
     if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
       Object key=command.getKey();
       if (needsRemoteGet(ctx,command)) {
-        returnValue=remoteGetAndStoreInL1(ctx,key,false,command);
+        InternalCacheEntry ice=remoteGet(ctx,key,false,command);
+        if (ice != null) {
+          returnValue=ice.getValue();
+        }
       }
       if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
         returnValue=localGet(ctx,key,false,command,isGetCacheEntry);

@@ -1,0 +1,39 @@
+{
+  L1WriteSynchronizer l1WriteSync=new L1WriteSynchronizer(dataContainer,l1Lifespan,stateTransferLock,cdl);
+  L1WriteSynchronizer presentSync=concurrentWrites.putIfAbsent(key,l1WriteSync);
+  if (presentSync == null) {
+    try {
+      l1Manager.registerL1WriteSynchronizer(key,l1WriteSync);
+      Object returnValue;
+      try {
+        returnValue=invokeNextInterceptor(ctx,command);
+      }
+  finally {
+        l1Manager.unregisterL1WriteSynchronizer(key);
+      }
+      return returnValue;
+    }
+ catch (    Throwable t) {
+      l1WriteSync.retrievalEncounteredException(t);
+      throw t;
+    }
+ finally {
+      concurrentWrites.remove(key);
+    }
+  }
+ else {
+    if (trace) {
+      log.tracef("Found current request for key %s, waiting for their invocation's response",key);
+    }
+    try {
+      Object returnValue=presentSync.get();
+      if (runInterceptorOnConflict) {
+        returnValue=invokeNextInterceptor(ctx,command);
+      }
+      return returnValue;
+    }
+ catch (    ExecutionException e) {
+      throw e.getCause();
+    }
+  }
+}

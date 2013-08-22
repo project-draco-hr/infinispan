@@ -9,12 +9,14 @@
 ).when(stl).acquireSharedTopologyLock();
   Future<Void> future=fork(new Runnable(){
     @Override public void run(){
-      sync.runL1UpdateIfPossible(new Object(),mock(GetKeyValueCommand.class,RETURNS_MOCKS));
+      Object keyValue=new Object();
+      InternalCacheEntry ice=new ImmortalCacheEntry(keyValue,keyValue);
+      sync.runL1UpdateIfPossible(ice);
     }
   }
 ,null);
   barrier.await(1,TimeUnit.SECONDS);
   assertFalse(sync.trySkipL1Update());
   future.get(1,TimeUnit.SECONDS);
-  verify(dc).put(Mockito.any(),Mockito.any(),Mockito.any(Metadata.class));
+  verify(dc).put(any(),any(),any(Metadata.class));
 }

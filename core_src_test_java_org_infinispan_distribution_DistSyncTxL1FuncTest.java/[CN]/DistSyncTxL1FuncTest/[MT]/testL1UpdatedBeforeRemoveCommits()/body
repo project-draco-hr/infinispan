@@ -1,0 +1,13 @@
+{
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  final Cache<Object,String> ownerCache=getFirstOwner(key);
+  ownerCache.put(key,firstValue);
+  assertIsNotInL1(nonOwnerCache,key);
+  nonOwnerCache.getAdvancedCache().getTransactionManager().begin();
+  assertEquals(firstValue,nonOwnerCache.remove(key));
+  InternalCacheEntry ice=nonOwnerCache.getAdvancedCache().getDataContainer().get(key);
+  assertNotNull(ice);
+  assertEquals(firstValue,ice.getValue());
+  nonOwnerCache.getAdvancedCache().getTransactionManager().commit();
+  assertIsNotInL1(nonOwnerCache,key);
+}

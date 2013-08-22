@@ -109,8 +109,13 @@ default :
 if (configuration.deadlockDetection().enabled() && !isTotalOrder) {
 interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(),DeadlockDetectingInterceptor.class),false);
 }
-if (configuration.clustering().l1().enabled() && !configuration.transaction().transactionMode().isTransactional()) {
+if (configuration.clustering().l1().enabled()) {
+if (configuration.transaction().transactionMode().isTransactional()) {
+interceptorChain.appendInterceptor(createInterceptor(new L1TxInterceptor(),L1TxInterceptor.class),false);
+}
+ else {
 interceptorChain.appendInterceptor(createInterceptor(new L1NonTxInterceptor(),L1NonTxInterceptor.class),false);
+}
 }
 switch (configuration.clustering().cacheMode()) {
 case INVALIDATION_SYNC:

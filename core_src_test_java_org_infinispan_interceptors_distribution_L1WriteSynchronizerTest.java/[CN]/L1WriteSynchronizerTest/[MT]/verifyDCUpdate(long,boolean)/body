@@ -1,12 +1,11 @@
 {
   Object value=new Object();
   Object key=new Object();
-  GetKeyValueCommand mockedCommand=when(mock(GetKeyValueCommand.class).getKey()).thenReturn(key).getMock();
   InternalCacheEntry ice=when(mock(InternalCacheEntry.class,RETURNS_DEEP_STUBS).getValue()).thenReturn(value).getMock();
+  when(ice.getKey()).thenReturn(key);
   when(ice.getLifespan()).thenReturn(iceLifespan);
-  when(mockedCommand.getRemotelyFetchedValue()).thenReturn(ice);
-  sync.runL1UpdateIfPossible(value,mockedCommand);
-  verify(dc).put(eq(key),eq(value),Mockito.any(Metadata.class));
+  sync.runL1UpdateIfPossible(ice);
+  verify(dc).put(eq(key),eq(value),any(Metadata.class));
   Metadata.Builder verifier=verify(ice.getMetadata().builder());
   verifier.lifespan(shouldBeIceLifespan ? iceLifespan : l1Timeout);
   verifier.maxIdle(-1);

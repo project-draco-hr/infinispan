@@ -1,0 +1,20 @@
+{
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  final Cache<Object,String> ownerCache=getFirstOwner(key);
+  ownerCache.put(key,firstValue);
+  CyclicBarrier barrier=new CyclicBarrier(2);
+  addBlockingInterceptorBeforeTx(nonOwnerCache,barrier,PutKeyValueCommand.class,true);
+  try {
+    Future<String> futureReplace=nonOwnerCache.putAsync(key,secondValue);
+    barrier.await(5,TimeUnit.SECONDS);
+    Future<String> futureGet=nonOwnerCache.getAsync(key);
+    assertEquals(firstValue,futureGet.get(3,TimeUnit.SECONDS));
+    assertIsInL1(nonOwnerCache,key);
+    barrier.await(5,TimeUnit.SECONDS);
+    assertEquals(firstValue,futureReplace.get());
+    assertEquals(firstValue,futureGet.get(5,TimeUnit.SECONDS));
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+  }
+}

@@ -1,0 +1,29 @@
+{
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  final Cache<Object,String> ownerCache=getFirstOwner(key);
+  ownerCache.put(key,firstValue);
+  CyclicBarrier invalidationBarrier=new CyclicBarrier(2);
+  nonOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(invalidationBarrier,InvalidateL1Command.class,false),getL1InterceptorClass());
+  try {
+    assertEquals(firstValue,nonOwnerCache.get(key));
+    Future<String> futurePut=ownerCache.putAsync(key,secondValue);
+    invalidationBarrier.await(5,TimeUnit.SECONDS);
+    nonOwnerCache.getAdvancedCache().getDataContainer().remove(key);
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+    CyclicBarrier getBarrier=new CyclicBarrier(2);
+    addBlockingInterceptorBeforeTx(nonOwnerCache,getBarrier,GetKeyValueCommand.class);
+    Future<String> futureGet=nonOwnerCache.getAsync(key);
+    getBarrier.await(5,TimeUnit.SECONDS);
+    invalidationBarrier.await(5,TimeUnit.SECONDS);
+    assertEquals(firstValue,futurePut.get(5,TimeUnit.SECONDS));
+    getBarrier.await(5,TimeUnit.SECONDS);
+    assertNotNull(futureGet.get(5,TimeUnit.SECONDS));
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+    assertIsNotInL1(nonOwnerCache,key);
+    assertEquals(secondValue,nonOwnerCache.get(key));
+    assertIsInL1(nonOwnerCache,key);
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+  }
+}
