@@ -1,11 +1,11 @@
 {
-  boolean success=acquireGlobalLock(false);
+  if (!acquireGlobalLock(false)) {
+    throw new CacheLoaderException("Unable to acquire global lock");
+  }
   try {
     return loadAllLockSafe();
   }
   finally {
-    if (success) {
-      releaseGlobalLock(false);
-    }
+    releaseGlobalLock(false);
   }
 }

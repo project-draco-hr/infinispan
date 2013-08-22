@@ -2,13 +2,13 @@
   if (trace) {
     log.trace("Clearing store");
   }
-  boolean success=acquireGlobalLock(true);
+  if (!acquireGlobalLock(true)) {
+    throw new CacheLoaderException("Unable to acquire global lock");
+  }
   try {
     clearLockSafe();
   }
   finally {
-    if (success) {
-      releaseGlobalLock(true);
-    }
+    releaseGlobalLock(true);
   }
 }

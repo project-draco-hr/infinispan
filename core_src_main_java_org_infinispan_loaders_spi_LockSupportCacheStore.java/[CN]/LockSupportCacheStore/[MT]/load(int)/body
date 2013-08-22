@@ -2,13 +2,13 @@
   if (maxEntries < 0) {
     return loadAll();
   }
-  boolean success=acquireGlobalLock(false);
+  if (!acquireGlobalLock(false)) {
+    throw new CacheLoaderException("Unable to acquire global lock");
+  }
   try {
     return loadLockSafe(maxEntries);
   }
   finally {
-    if (success) {
-      releaseGlobalLock(false);
-    }
+    releaseGlobalLock(false);
   }
 }

@@ -1,11 +1,11 @@
 {
-  boolean success=acquireGlobalLock(true);
+  if (!acquireGlobalLock(true)) {
+    throw new CacheLoaderException("Unable to acquire global lock");
+  }
   try {
     fromStreamLockSafe(objectInput);
   }
   finally {
-    if (success) {
-      releaseGlobalLock(true);
-    }
+    releaseGlobalLock(true);
   }
 }
