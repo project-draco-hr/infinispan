@@ -2,11 +2,13 @@
   log.debugf("Applying %d transactions for cache %s transferred from node %s",transactions.size(),cacheName,sender);
   if (isTransactional) {
     for (    TransactionInfo transactionInfo : transactions) {
-      CacheTransaction tx=transactionTable.getLocalTransaction(transactionInfo.getGlobalTransaction());
+      GlobalTransaction gtx=transactionInfo.getGlobalTransaction();
+      gtx.setRemote(true);
+      CacheTransaction tx=transactionTable.getLocalTransaction(gtx);
       if (tx == null) {
-        tx=transactionTable.getRemoteTransaction(transactionInfo.getGlobalTransaction());
+        tx=transactionTable.getRemoteTransaction(gtx);
         if (tx == null) {
-          tx=transactionTable.getOrCreateRemoteTransaction(transactionInfo.getGlobalTransaction(),transactionInfo.getModifications());
+          tx=transactionTable.getOrCreateRemoteTransaction(gtx,transactionInfo.getModifications());
           ((RemoteTransaction)tx).setMissingLookedUpEntries(true);
         }
       }
