@@ -1,0 +1,20 @@
+{
+  final Cache<MagicKey,String> cache1=cache(0);
+  final Cache<MagicKey,String> cache2=cache(1);
+  final MagicKey magicKey=new MagicKey(cache1);
+  if (owner) {
+    cache1.putForExternalRead(magicKey,VALUE);
+  }
+ else {
+    cache2.putForExternalRead(magicKey,VALUE);
+  }
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache1.containsKey(magicKey) && cache2.containsKey(magicKey);
+    }
+  }
+);
+  assertEquals(VALUE,cache1.get(magicKey));
+  assertEquals(VALUE,cache2.get(magicKey));
+  assertNotLocked(magicKey);
+}
