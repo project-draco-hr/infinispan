@@ -1,0 +1,23 @@
+{
+  RemoteValueWrapperInterceptor wrapperInterceptor=cr.getComponent(RemoteValueWrapperInterceptor.class);
+  if (wrapperInterceptor == null) {
+    wrapperInterceptor=new RemoteValueWrapperInterceptor();
+    InterceptorChain ic=cr.getComponent(InterceptorChain.class);
+    ConfigurationBuilder builder=new ConfigurationBuilder().read(cfg);
+    InterceptorConfigurationBuilder interceptorBuilder=builder.customInterceptors().addInterceptor();
+    interceptorBuilder.interceptor(wrapperInterceptor);
+    if (cfg.invocationBatching().enabled()) {
+      if (ic != null)       ic.addInterceptorAfter(wrapperInterceptor,BatchingInterceptor.class);
+      interceptorBuilder.after(BatchingInterceptor.class);
+    }
+ else {
+      if (ic != null)       ic.addInterceptorAfter(wrapperInterceptor,InvocationContextInterceptor.class);
+      interceptorBuilder.after(InvocationContextInterceptor.class);
+    }
+    if (ic != null) {
+      cr.registerComponent(wrapperInterceptor,RemoteValueWrapperInterceptor.class);
+      cr.registerComponent(wrapperInterceptor,wrapperInterceptor.getClass().getName(),true);
+    }
+    cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
+  }
+}

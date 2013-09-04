@@ -1,0 +1,35 @@
+{
+  HeaderParams params=writeHeader(transport,QUERY_REQUEST);
+  QueryRequest queryRequest=new QueryRequest();
+  queryRequest.setJpqlString(remoteQuery.getJpqlString());
+  queryRequest.setStartOffset(remoteQuery.getStartOffset());
+  queryRequest.setMaxResults(remoteQuery.getMaxResults());
+  if (remoteQuery.getSortCriteria() != null && !remoteQuery.getSortCriteria().isEmpty()) {
+    List<QueryRequest.SortCriteria> scl=new ArrayList<QueryRequest.SortCriteria>();
+    for (    SortCriteria sc : remoteQuery.getSortCriteria()) {
+      QueryRequest.SortCriteria sc2=new QueryRequest.SortCriteria();
+      sc2.setAttributePath(sc.getAttributePath());
+      sc2.setAscending(sc.getSortOrder() == SortOrder.ASC);
+      scl.add(sc2);
+    }
+    queryRequest.setSortCriteria(scl);
+  }
+  byte[] requestBytes;
+  try {
+    requestBytes=ProtobufUtil.toByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(),queryRequest);
+  }
+ catch (  IOException e) {
+    throw new CacheException(e);
+  }
+  transport.writeArray(requestBytes);
+  transport.flush();
+  readHeaderAndValidate(transport,params);
+  byte[] responseBytes=transport.readArray();
+  try {
+    QueryResponse queryResponse=ProtobufUtil.fromByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(),responseBytes,QueryResponse.class);
+    return queryResponse;
+  }
+ catch (  IOException e) {
+    throw new CacheException(e);
+  }
+}

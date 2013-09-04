@@ -1,0 +1,28 @@
+{
+  QueryOperation op=operationsFactory.newQueryOperation(remoteQuery);
+  QueryResponse response=op.execute();
+  List<Object> results=new ArrayList<Object>(response.getNumResults());
+  if (response.getProjectionSize() > 0) {
+    Iterator<WrappedMessage> it=response.getResults().iterator();
+    while (it.hasNext()) {
+      Object[] row=new Object[response.getProjectionSize()];
+      for (int i=0; i < response.getProjectionSize(); i++) {
+        row[i]=it.next().getValue();
+      }
+      results.add(row);
+    }
+  }
+ else {
+    for (    WrappedMessage r : response.getResults()) {
+      try {
+        byte[] bytes=(byte[])r.getValue();
+        Object o=ProtobufUtil.fromWrappedByteArray(remoteCacheManager.getSerializationContext(),bytes);
+        results.add(o);
+      }
+ catch (      IOException e) {
+        throw new HotRodClientException(e);
+      }
+    }
+  }
+  return results;
+}

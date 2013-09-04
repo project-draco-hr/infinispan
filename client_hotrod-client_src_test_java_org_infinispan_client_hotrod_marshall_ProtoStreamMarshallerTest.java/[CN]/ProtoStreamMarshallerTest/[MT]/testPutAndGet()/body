@@ -1,25 +1,14 @@
 {
-  User user=new User();
-  user.setId(1);
-  user.setName("Tom");
-  user.setSurname("Cat");
-  user.setGender(User.Gender.MALE);
-  user.setAccountIds(Collections.singletonList(12));
-  Address address=new Address();
-  address.setStreet("Dark Alley");
-  address.setPostCode("1234");
-  user.setAddresses(Collections.singletonList(address));
+  User user=createUser();
   remoteCache.put(1,user);
+  assertEquals(1,cache.keySet().size());
+  byte[] key=(byte[])cache.keySet().iterator().next();
+  Object localObject=cache.get(key);
+  assertNotNull(localObject);
+  assertTrue(localObject instanceof byte[]);
+  Object unmarshalledObject=ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(),(byte[])localObject);
+  assertTrue(unmarshalledObject instanceof User);
+  assertUser((User)unmarshalledObject);
   User fromCache=remoteCache.get(1);
-  assertEquals(1,fromCache.getId());
-  assertEquals("Tom",fromCache.getName());
-  assertEquals("Cat",fromCache.getSurname());
-  assertEquals(User.Gender.MALE,fromCache.getGender());
-  assertNotNull(fromCache.getAccountIds());
-  assertEquals(1,fromCache.getAccountIds().size());
-  assertEquals(12,fromCache.getAccountIds().get(0).intValue());
-  assertNotNull(fromCache.getAddresses());
-  assertEquals(1,fromCache.getAddresses().size());
-  assertEquals("Dark Alley",fromCache.getAddresses().get(0).getStreet());
-  assertEquals("1234",fromCache.getAddresses().get(0).getPostCode());
+  assertUser(fromCache);
 }

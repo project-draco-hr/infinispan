@@ -1,0 +1,16 @@
+{
+  MarshallerRegistration.registerMarshallers(SerializationContextHolder.getSerializationContext());
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext());
+  ConfigurationBuilder builder=hotRodCacheConfiguration();
+  builder.transaction().indexing().enable().indexLocalOnly(false).addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
+  builder.dataContainer().valueEquivalence(AnyEquivalence.getInstance());
+  cacheManager=TestCacheManagerFactory.createCacheManager(builder);
+  cache=cacheManager.getCache();
+  hotRodServer=TestHelper.startHotRodServer(cacheManager);
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+  clientBuilder.marshaller(new ProtoStreamMarshaller());
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+  remoteCache=remoteCacheManager.getCache();
+  return cacheManager;
+}

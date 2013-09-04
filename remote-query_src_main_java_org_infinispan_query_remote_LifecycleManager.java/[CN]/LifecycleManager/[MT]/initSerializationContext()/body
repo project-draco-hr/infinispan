@@ -1,0 +1,18 @@
+{
+  if (!isSerializationContextInitialized) {
+    isSerializationContextInitialized=true;
+    try {
+      SerializationContext serCtx=SerializationContextHolder.getSerializationContext();
+      serCtx.registerProtofile("/query.protobin");
+      serCtx.registerMarshaller(QueryRequest.class,new QueryRequestMarshaller());
+      serCtx.registerMarshaller(QueryRequest.SortCriteria.class,new SortCriteriaMarshaller());
+      serCtx.registerMarshaller(QueryResponse.class,new QueryResponseMarshaller());
+    }
+ catch (    IOException e) {
+      throw new CacheException("Failed to initialise serialization context",e);
+    }
+catch (    Descriptors.DescriptorValidationException e) {
+      throw new CacheException("Failed to initialise serialization context",e);
+    }
+  }
+}

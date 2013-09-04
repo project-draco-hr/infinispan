@@ -1,0 +1,13 @@
+{
+  final RemoteCache<Integer,User> remoteCache0=client(0).getCache();
+  final RemoteCache<Integer,User> remoteCache1=client(1).getCache();
+  remoteCache0.put(1,createUser1());
+  remoteCache1.put(2,createUser2());
+  QueryFactory qf=Search.getQueryFactory(remoteCache1);
+  Query query=qf.from(User.class).having("addresses.postCode").eq("1234").toBuilder().build();
+  List<User> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(User.class,list.get(0).getClass());
+  assertUser(list.get(0));
+}
