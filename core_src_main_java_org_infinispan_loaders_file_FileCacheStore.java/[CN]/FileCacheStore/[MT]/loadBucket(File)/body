@@ -1,0 +1,32 @@
+{
+  Bucket bucket=null;
+  if (bucketFile.exists()) {
+    if (trace) {
+      log.trace("Found bucket file: '" + bucketFile + "'");
+    }
+    InputStream is=null;
+    try {
+      fileSync.flush(bucketFile);
+      if (bucketFile.length() == 0) {
+        return null;
+      }
+      is=new FileInputStream(bucketFile);
+      Map<Object,InternalCacheEntry> entries=objectFromInputStreamInReentrantMode(is);
+      bucket=new Bucket(timerService,keyEquivalence,entries);
+    }
+ catch (    InterruptedException ie) {
+      throw ie;
+    }
+catch (    Exception e) {
+      log.errorReadingFromFile(bucketFile.getAbsoluteFile(),e);
+      throw new CacheLoaderException("Error while reading from file",e);
+    }
+ finally {
+      safeClose(is);
+    }
+  }
+  if (bucket != null) {
+    bucket.setBucketId(bucketFile.getName());
+  }
+  return bucket;
+}

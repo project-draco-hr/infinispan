@@ -1,0 +1,27 @@
+{
+  File f=new File(root,b.getBucketIdAsString());
+  if (f.exists()) {
+    if (!purgeFile(f)) {
+      log.problemsRemovingFile(f);
+    }
+ else     if (trace) {
+      log.tracef("Successfully deleted file: '%s'",f.getName());
+    }
+  }
+  if (!b.getEntries().isEmpty()) {
+    try {
+      byte[] bytes=marshaller.objectToByteBuffer(b.getEntries());
+      fileSync.write(bytes,f);
+    }
+ catch (    IOException ex) {
+      log.errorSavingBucket(b,ex);
+      throw new CacheLoaderException(ex);
+    }
+catch (    InterruptedException ie) {
+      if (trace) {
+        log.trace("Interrupted while marshalling a bucket");
+      }
+      Thread.currentThread().interrupt();
+    }
+  }
+}
