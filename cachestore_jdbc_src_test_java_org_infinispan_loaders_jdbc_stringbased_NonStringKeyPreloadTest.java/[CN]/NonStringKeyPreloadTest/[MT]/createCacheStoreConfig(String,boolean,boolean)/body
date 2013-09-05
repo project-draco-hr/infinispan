@@ -1,9 +1,9 @@
 {
   ConfigurationBuilder cfg=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-  JdbcStringBasedCacheStoreConfigurationBuilder store=cfg.loaders().preload(preload).addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class).fetchPersistentState(true).key2StringMapper(mapperName);
+  JdbcStringBasedStoreConfigurationBuilder store=cfg.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).fetchPersistentState(true).preload(preload).key2StringMapper(mapperName);
   UnitTestDatabaseManager.buildTableManipulation(store.table(),false);
   if (wrap) {
-    ConnectionFactoryConfigurationBuilder<?> tmp=UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().loaders().addStore(JdbcStringBasedCacheStoreConfigurationBuilder.class));
+    ConnectionFactoryConfigurationBuilder<?> tmp=UnitTestDatabaseManager.configureUniqueConnectionFactory(new ConfigurationBuilder().persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class));
     store.connectionFactory(new SharedConnectionFactoryConfigurationBuilder(store)).read((PooledConnectionFactoryConfiguration)tmp.create());
   }
  else {

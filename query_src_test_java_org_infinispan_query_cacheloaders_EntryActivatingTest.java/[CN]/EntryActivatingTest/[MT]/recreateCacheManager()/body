@@ -1,8 +1,8 @@
 {
   ConfigurationBuilder cfg=new ConfigurationBuilder();
-  cfg.loaders().preload(true).passivation(true).addStore(DummyInMemoryCacheStoreConfigurationBuilder.class).purgeOnStartup(true).indexing().enable().addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
+  cfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).purgeOnStartup(true).indexing().enable().addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
   cm=TestCacheManagerFactory.createCacheManager(cfg);
   cache=cm.getCache();
-  store=TestingUtil.extractComponent(cache,CacheLoaderManager.class).getCacheStore();
+  store=(AdvancedLoadWriteStore)TestingUtil.getFirstLoader(cache);
   search=Search.getSearchManager(cache);
 }

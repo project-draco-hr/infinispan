@@ -2,8 +2,8 @@
   final MagicKey k=new MagicKey("key1",c1,c2);
   final String v1="real-data";
   final String v2="stale-data";
-  CacheStore store=TestingUtil.extractComponent(c3,CacheLoaderManager.class).getCacheStore();
-  store.store(TestInternalCacheEntryFactory.create(k,v2));
+  CacheWriter store=(CacheWriter)TestingUtil.getFirstLoader(c3);
+  store.write(new MarshalledEntryImpl(k,v2,null,marshaller(c3)));
   c1.put(k,v1);
   assertEquals(v1,c3.get(k));
 }

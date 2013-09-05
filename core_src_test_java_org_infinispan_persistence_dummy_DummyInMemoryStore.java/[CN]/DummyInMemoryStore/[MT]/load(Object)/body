@@ -1,0 +1,13 @@
+{
+  record("load");
+  if (key == null)   return null;
+  MarshalledEntry me=deserialize(key,store.get(key));
+  if (me == null)   return null;
+  long now=System.currentTimeMillis();
+  if (isExpired(me,now)) {
+    log.debugf("Key %s exists, but has expired.  Entry is %s",key,me);
+    store.remove(key);
+    return null;
+  }
+  return me;
+}

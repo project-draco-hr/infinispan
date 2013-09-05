@@ -1,0 +1,30 @@
+{
+  PreparedStatement ps=null;
+  try {
+    String sql=tableManipulation.getUpdateRowSql();
+    ps=conn.prepareStatement(sql);
+    for (Iterator<Bucket> it=buckets.iterator(); it.hasNext(); ) {
+      Bucket bucket=it.next();
+      for (      Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
+        if (purgeListener != null)         purgeListener.entryPurged(key);
+      }
+      if (!bucket.isEmpty()) {
+        ByteBuffer byteBuffer=JdbcUtil.marshall(marshaller,bucket);
+        ps.setBinaryStream(1,byteBuffer.getStream(),byteBuffer.getLength());
+        ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+        ps.setString(3,bucket.getBucketIdAsString());
+        ps.addBatch();
+      }
+ else {
+        it.remove();
+        emptyBuckets.add(bucket);
+      }
+    }
+    ps.executeBatch();
+  }
+  finally {
+    JdbcUtil.safeClose(ps);
+    releaseLocks(buckets);
+  }
+  return null;
+}

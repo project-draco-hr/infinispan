@@ -1,10 +1,10 @@
 {
-  InternalCacheEntry first=TestInternalCacheEntryFactory.create("String","someValue",1000);
-  InternalCacheEntry second=TestInternalCacheEntryFactory.create(MIRCEA,"value1",1000);
-  cacheStore.store(first);
-  cacheStore.store(second);
+  MarshalledEntryImpl first=new MarshalledEntryImpl("String","someValue",internalMetadata(1000l,null),getMarshaller());
+  MarshalledEntryImpl second=new MarshalledEntryImpl(MIRCEA,"value1",internalMetadata(1000l,null),getMarshaller());
+  cacheStore.write(first);
+  cacheStore.write(second);
   assertRowCounts(1,1);
   Thread.sleep(1200);
-  cacheStore.purgeExpired();
+  cacheStore.purge(new WithinThreadExecutor(),null);
   assertRowCounts(0,0);
 }

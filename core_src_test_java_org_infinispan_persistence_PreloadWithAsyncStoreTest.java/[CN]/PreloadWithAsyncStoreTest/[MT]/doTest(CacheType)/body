@@ -1,0 +1,30 @@
+{
+  final Cache<Object,Object> cache=cacheManager.getCache(cacheType.cacheName);
+  ExceptionTrackerInterceptor interceptor=getInterceptor(cache);
+  assertTrue("Preload should be enabled.",cache.getCacheConfiguration().persistence().preload());
+  assertTrue("Async Store should be enabled.",cache.getCacheConfiguration().persistence().usingAsyncStore());
+  CacheLoader loader=TestingUtil.getFirstLoader(cache);
+  assertNotInCacheAndStore(cache,loader,KEYS);
+  for (int i=0; i < KEYS.length; ++i) {
+    cache.put(KEYS[i],VALUES[i]);
+  }
+  for (int i=1; i < KEYS.length; i++) {
+    assertInCacheAndStore(cache,loader,KEYS[i],VALUES[i]);
+  }
+  DataContainer dataContainer=cache.getAdvancedCache().getDataContainer();
+  assertEquals("Wrong number of keys in data container after puts.",KEYS.length,dataContainer.size());
+  assertEquals("Some exceptions has been caught during the puts.",0,interceptor.exceptionsCaught);
+  cache.stop();
+  assertEquals("Expected empty data container after stop.",0,dataContainer.size());
+  assertEquals("Some exceptions has been caught during the stop.",0,interceptor.exceptionsCaught);
+  cache.start();
+  assertTrue("Preload should be enabled after restart.",cache.getCacheConfiguration().persistence().preload());
+  assertTrue("Async Store should be enabled after restart.",cache.getCacheConfiguration().persistence().usingAsyncStore());
+  dataContainer=cache.getAdvancedCache().getDataContainer();
+  assertEquals("Wrong number of keys in data container after preload.",KEYS.length,dataContainer.size());
+  assertEquals("Some exceptions has been caught during the preload.",0,interceptor.exceptionsCaught);
+  loader=TestingUtil.getFirstLoader(cache);
+  for (int i=1; i < KEYS.length; i++) {
+    assertInCacheAndStore(cache,loader,KEYS[i],VALUES[i]);
+  }
+}

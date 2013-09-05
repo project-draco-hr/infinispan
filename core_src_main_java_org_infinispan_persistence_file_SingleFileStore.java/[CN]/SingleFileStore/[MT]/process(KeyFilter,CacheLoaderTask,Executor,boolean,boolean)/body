@@ -1,0 +1,26 @@
+{
+  filter=PersistenceUtil.notNull(filter);
+  Set<Object> keysToLoad=new HashSet<Object>(entries.size());
+synchronized (entries) {
+    for (    Object k : entries.keySet()) {
+      if (filter.shouldLoadKey(k))       keysToLoad.add(k);
+    }
+  }
+  ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(executor);
+  final TaskContextImpl taskContext=new TaskContextImpl();
+  int taskCount=0;
+  for (  Object k : keysToLoad) {
+    if (taskContext.isStopped())     break;
+    taskCount++;
+    final Object key=k;
+    ecs.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        final MarshalledEntry marshalledEntry=_load(key,fetchValue,fetchMetadata);
+        task.processEntry(marshalledEntry,taskContext);
+        return null;
+      }
+    }
+);
+  }
+  PersistenceUtil.waitForAllTasksToComplete(ecs,taskCount);
+}

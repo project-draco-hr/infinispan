@@ -1,0 +1,15 @@
+{
+  String config=INFINISPAN_START_TAG_NO_SCHEMA + "<default>\n" + "<persistence passivation=\"false\"> \n"+ "<singleFile shared=\"false\" preload=\"true\"/> \n"+ "</persistence>\n"+ "</default>\n"+ INFINISPAN_END_TAG;
+  InputStream is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      Cache<Object,Object> cache=cm.getCache();
+      cache.put(1,"v1");
+      assertEquals("v1",cache.get(1));
+      SingleFileStore cacheLoader=(SingleFileStore)TestingUtil.getFirstLoader(cache);
+      assertEquals("Infinispan-SingleFileStore",cacheLoader.getConfiguration().location());
+      assertEquals(-1,cacheLoader.getConfiguration().maxEntries());
+    }
+  }
+);
+}

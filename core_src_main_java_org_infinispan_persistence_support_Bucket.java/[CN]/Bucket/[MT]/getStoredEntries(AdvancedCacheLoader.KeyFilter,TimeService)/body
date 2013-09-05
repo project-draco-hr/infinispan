@@ -1,0 +1,10 @@
+{
+  filter=PersistenceUtil.notNull(filter);
+  long currentTimeMillis=timeService.wallClockTime();
+  Map<Object,MarshalledEntry> result=new HashMap<Object,MarshalledEntry>();
+  for (  Map.Entry<Object,MarshalledEntry> entry : getStoredEntries().entrySet()) {
+    MarshalledEntry me=entry.getValue();
+    if (!isExpired(currentTimeMillis,me) && filter.shouldLoadKey(entry.getKey()))     result.put(entry.getKey(),me);
+  }
+  return result;
+}

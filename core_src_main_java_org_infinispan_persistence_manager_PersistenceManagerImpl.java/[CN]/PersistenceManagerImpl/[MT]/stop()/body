@@ -1,0 +1,23 @@
+{
+  Set undelegated=new HashSet();
+  for (  CacheWriter w : writers) {
+    w.stop();
+    if (w instanceof DelegatingCacheWriter) {
+      CacheWriter actual=undelegate(w);
+      actual.stop();
+      undelegated.add(actual);
+    }
+ else {
+      undelegated.add(w);
+    }
+  }
+  for (  CacheLoader l : loaders) {
+    if (!undelegated.contains(l))     l.stop();
+    if (l instanceof DelegatingCacheLoader) {
+      CacheLoader actual=undelegate(l);
+      if (!undelegated.contains(actual)) {
+        actual.stop();
+      }
+    }
+  }
+}

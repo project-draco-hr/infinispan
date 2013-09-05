@@ -1,0 +1,30 @@
+{
+  boolean keyFound=findModificationForKey(key,mods) != null;
+  if (keyFound && block) {
+    log("Wait for v1 latch" + mods);
+    try {
+      v2Latch.countDown();
+      block=false;
+      log("before wait");
+      v1Latch.await(2,TimeUnit.SECONDS);
+      log("after wait");
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    log("before apply mods");
+    try {
+      super.applyModificationsSync(mods);
+    }
+ catch (    Throwable e) {
+      log("Error apply mods :" + e.getMessage());
+    }
+    log("after apply mods");
+  }
+ else   if (keyFound && !block) {
+    log("Do v2 modification and unleash v1 latch" + mods);
+    super.applyModificationsSync(mods);
+    v1Latch.countDown();
+    endLatch.countDown();
+  }
+}

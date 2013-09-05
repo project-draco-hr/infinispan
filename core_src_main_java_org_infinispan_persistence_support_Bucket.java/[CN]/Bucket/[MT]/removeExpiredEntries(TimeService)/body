@@ -1,0 +1,17 @@
+{
+  Set<Object> result=new HashSet<Object>();
+  long currentTimeMillis=0;
+  Iterator<Map.Entry<Object,MarshalledEntry>> entryIterator=entries.entrySet().iterator();
+  while (entryIterator.hasNext()) {
+    Map.Entry<Object,MarshalledEntry> entry=entryIterator.next();
+    final MarshalledEntry value=entry.getValue();
+    if (value.getMetadata() != null) {
+      if (currentTimeMillis == 0)       currentTimeMillis=timeService.wallClockTime();
+      if (value.getMetadata().isExpired(currentTimeMillis)) {
+        result.add(entry.getKey());
+        entryIterator.remove();
+      }
+    }
+  }
+  return result;
+}

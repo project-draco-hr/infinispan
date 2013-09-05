@@ -1,16 +1,17 @@
 {
   ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
-  ClusterCacheLoaderConfigurationBuilder cclb=builder.loaders().addClusterCacheLoader();
+  ClusterStoreConfigurationBuilder cclb=builder.persistence().addClusterStore();
   for (int i=0; i < reader.getAttributeCount(); i++) {
     ParseUtils.requireNoNamespaceAttribute(reader,i);
     String value=replaceProperties(reader.getAttributeValue(i));
-    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    String attrName=reader.getAttributeLocalName(i);
+    Attribute attribute=Attribute.forName(attrName);
 switch (attribute) {
 case REMOTE_CALL_TIMEOUT:
       cclb.remoteCallTimeout(Long.parseLong(value));
     break;
 default :
-  parseCommonLoaderAttributes(reader,i,cclb);
+  parseCommonStoreAttributes(reader,cclb,attrName,value,i);
 break;
 }
 }

@@ -1,0 +1,32 @@
+{
+  String lockingKey=key2Str(key);
+  Connection conn=null;
+  PreparedStatement ps=null;
+  ResultSet rs=null;
+  MarshalledEntry storedValue=null;
+  try {
+    String sql=tableManipulation.getSelectRowSql();
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    ps.setString(1,lockingKey);
+    rs=ps.executeQuery();
+    if (rs.next()) {
+      InputStream inputStream=rs.getBinaryStream(2);
+      KeyValuePair<ByteBuffer,ByteBuffer> icv=JdbcUtil.unmarshall(ctx.getMarshaller(),inputStream);
+      storedValue=new MarshalledEntryImpl(key,icv.getKey(),icv.getValue(),ctx.getMarshaller());
+    }
+  }
+ catch (  SQLException e) {
+    log.sqlFailureReadingKey(key,lockingKey,e);
+    throw new CacheLoaderException(String.format("SQL error while fetching stored entry with key: %s, lockingKey: %s",key,lockingKey),e);
+  }
+ finally {
+    JdbcUtil.safeClose(rs);
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+  if (storedValue != null && storedValue.getMetadata() != null && storedValue.getMetadata().isExpired(ctx.getTimeService().wallClockTime())) {
+    return null;
+  }
+  return storedValue;
+}

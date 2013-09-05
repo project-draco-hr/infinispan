@@ -1,5 +1,8 @@
 {
-  Map<String,AbstractDelegatingStore> stores=new TreeMap<String,AbstractDelegatingStore>();
-  stores.put("ASYNC",createAsyncStore());
+  Map<String,KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>> stores=new TreeMap<String,KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>>();
+  AdvancedAsyncCacheWriter writer=createAsyncStore();
+  AdvancedAsyncCacheLoader loader=new AdvancedAsyncCacheLoader((CacheLoader)writer.undelegate(),writer.getState());
+  KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter> pair=new KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>(loader,writer);
+  stores.put("ASYNC",pair);
   return stores;
 }

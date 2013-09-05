@@ -1,0 +1,17 @@
+{
+  log.debugf("Async cache loader starting %s",this);
+  state.set(newState(false,null));
+  stateLock=new BufferLock(asyncConfiguration.modificationQueueSize());
+  int poolSize=asyncConfiguration.threadPoolSize();
+  executor=new ThreadPoolExecutor(0,poolSize,120L,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(),new ThreadFactory(){
+    @Override public Thread newThread(    Runnable r){
+      Thread t=new Thread(r,"AsyncStoreProcessor-" + cacheName + "-"+ threadId.getAndIncrement());
+      t.setDaemon(true);
+      return t;
+    }
+  }
+);
+  coordinator=new Thread(new AsyncStoreCoordinator(),"AsyncStoreCoordinator-" + cacheName);
+  coordinator.setDaemon(true);
+  coordinator.start();
+}

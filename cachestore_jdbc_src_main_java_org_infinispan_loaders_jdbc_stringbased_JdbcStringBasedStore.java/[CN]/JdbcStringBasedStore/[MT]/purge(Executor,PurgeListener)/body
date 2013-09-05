@@ -1,0 +1,30 @@
+{
+  ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(executor);
+  ecs.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      Connection conn=null;
+      PreparedStatement ps=null;
+      try {
+        String sql=tableManipulation.getDeleteExpiredRowsSql();
+        conn=connectionFactory.getConnection();
+        ps=conn.prepareStatement(sql);
+        ps.setLong(1,ctx.getTimeService().wallClockTime());
+        int result=ps.executeUpdate();
+        if (log.isTraceEnabled()) {
+          log.tracef("Successfully purged %d rows.",result);
+        }
+      }
+ catch (      SQLException ex) {
+        log.failedClearingJdbcCacheStore(ex);
+        throw new CacheLoaderException("Failed clearing string based JDBC store",ex);
+      }
+ finally {
+        JdbcUtil.safeClose(ps);
+        connectionFactory.releaseConnection(conn);
+      }
+      return null;
+    }
+  }
+);
+  PersistenceUtil.waitForAllTasksToComplete(ecs,1);
+}

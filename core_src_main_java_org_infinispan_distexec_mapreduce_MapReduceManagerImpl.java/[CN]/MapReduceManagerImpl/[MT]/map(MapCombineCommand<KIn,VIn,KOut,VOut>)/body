@@ -3,11 +3,11 @@
   Set<KIn> keys=mcc.getKeys();
   Set<KIn> inputKeysCopy=null;
   Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
-  DistributionManager dm=cache.getAdvancedCache().getDistributionManager();
+  final DistributionManager dm=cache.getAdvancedCache().getDistributionManager();
   boolean inputKeysSpecified=keys != null && !keys.isEmpty();
   Set<KIn> inputKeys=keys;
   if (!inputKeysSpecified) {
-    inputKeys=filterLocalPrimaryOwner(cache.keySet(),dm);
+    inputKeys=filterLocalPrimaryOwner(cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).keySet(),dm);
   }
  else {
     inputKeysCopy=new HashSet<KIn>(keys);
@@ -27,21 +27,15 @@
         inputKeysCopy.remove(key);
       }
     }
-    Set<KIn> keysFromCacheLoader=null;
-    if (inputKeysSpecified) {
-      keysFromCacheLoader=filterLocalPrimaryOwner(inputKeysCopy,dm);
-    }
- else {
-      keysFromCacheLoader=filterLocalPrimaryOwner(loadAllKeysFromCacheLoaderUsingFilter(inputKeys),dm);
-    }
-    log.tracef("For m/r task %s cache loader input keys %s",mcc.getTaskId(),keysFromCacheLoader);
-    interruptCount=0;
-    for (    KIn key : keysFromCacheLoader) {
-      if (checkInterrupt(interruptCount++) && Thread.currentThread().isInterrupted())       throw new InterruptedException();
-      VIn value=loadValueFromCacheLoader(key);
-      if (value != null) {
-        mapper.map(key,value,collector);
+    if (persistenceManager != null) {
+      AdvancedCacheLoader.KeyFilter keyFilter;
+      if (inputKeysSpecified) {
+        keyFilter=new CollectionKeyFilter(filterLocalPrimaryOwner(inputKeysCopy,dm),true);
       }
+ else {
+        keyFilter=new CompositeFilter(new PrimaryOwnerFilter(cdl),new CollectionKeyFilter(inputKeys));
+      }
+      persistenceManager.processOnAllStores(keyFilter,new MapReduceCacheLoaderTask(mapper,collector),new WithinThreadExecutor(),true,false);
     }
   }
   finally {

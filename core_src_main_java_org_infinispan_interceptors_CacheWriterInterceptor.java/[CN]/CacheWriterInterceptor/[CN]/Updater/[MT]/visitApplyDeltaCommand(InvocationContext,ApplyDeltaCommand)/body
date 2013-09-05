@@ -1,0 +1,20 @@
+{
+  if (isProperWriter(ctx,command,command.getKey())) {
+    if (generateStatistics)     putCount++;
+    CacheEntry entry=ctx.lookupEntry(command.getKey());
+    InternalCacheEntry ice;
+    if (entry instanceof InternalCacheEntry) {
+      ice=(InternalCacheEntry)entry;
+    }
+ else     if (entry instanceof DeltaAwareCacheEntry) {
+      AtomicHashMap<?,?> uncommittedChanges=((DeltaAwareCacheEntry)entry).getUncommittedChages();
+      ice=entryFactory.create(entry.getKey(),uncommittedChanges,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle());
+    }
+ else {
+      ice=entryFactory.create(entry);
+    }
+    MarshalledEntryImpl marshalledEntry=new MarshalledEntryImpl(ice.getKey(),ice.getValue(),internalMetadata(ice),marshaller);
+    persistenceManager.writeToAllStores(marshalledEntry,command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE));
+  }
+  return null;
+}

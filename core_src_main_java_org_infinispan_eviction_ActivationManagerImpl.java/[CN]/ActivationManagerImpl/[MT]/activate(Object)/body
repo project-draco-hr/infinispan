@@ -1,16 +1,10 @@
 {
-  if (enabled) {
-    try {
-      if (trace)       log.tracef("Try to activate key=%s removing it from the store",key);
-      if (store.remove(key) && statisticsEnabled) {
-        activations.incrementAndGet();
-      }
-    }
- catch (    CacheLoaderException e) {
-      log.unableToRemoveEntryAfterActivation(key,e);
+  try {
+    if (persistenceManager.activate(key) && statisticsEnabled) {
+      activations.incrementAndGet();
     }
   }
- else {
-    if (trace)     log.trace("Don't remove entry from shared cache store after activation.");
+ catch (  CacheException e) {
+    log.unableToRemoveEntryAfterActivation(key,e);
   }
 }

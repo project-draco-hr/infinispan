@@ -1,0 +1,35 @@
+{
+  try {
+    org.infinispan.commons.io.ByteBuffer key=marshalledEntry.getKeyBytes();
+    org.infinispan.commons.io.ByteBuffer data=marshalledEntry.getValueBytes();
+    org.infinispan.commons.io.ByteBuffer metadata=marshalledEntry.getMetadataBytes();
+    int metadataLength=metadata == null ? 0 : metadata.getLength();
+    int len=KEY_POS + key.getLength() + data.getLength()+ metadataLength;
+    FileEntry fe=allocate(len);
+    try {
+      fe.expiryTime=metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
+      fe.keyLen=key.getLength();
+      fe.dataLen=data.getLength();
+      fe.metadataLen=metadataLength;
+      ByteBuffer buf=ByteBuffer.allocate(len);
+      buf.putInt(fe.size);
+      buf.putInt(fe.keyLen);
+      buf.putInt(fe.dataLen);
+      buf.putInt(fe.metadataLen);
+      buf.putLong(fe.expiryTime);
+      buf.put(key.getBuf(),key.getOffset(),key.getLength());
+      buf.put(data.getBuf(),data.getOffset(),data.getLength());
+      if (metadata != null)       buf.put(metadata.getBuf(),metadata.getOffset(),metadata.getLength());
+      buf.flip();
+      file.write(buf,fe.offset);
+      fe=entries.put(marshalledEntry.getKey(),fe);
+      if (fe == null)       fe=evict();
+    }
+  finally {
+      free(fe);
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+}

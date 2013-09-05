@@ -1,0 +1,16 @@
+{
+  int existingElements=entriesCollector.size();
+  int toLoadElements=maxEntries - existingElements;
+  if (toLoadElements <= 0) {
+    return;
+  }
+  HashSet<IndexScopedKey> keysCollector=new HashSet<IndexScopedKey>();
+  loadSomeKeys(keysCollector,Collections.EMPTY_SET,toLoadElements);
+  for (  IndexScopedKey key : keysCollector) {
+    Object value=load(key);
+    if (value != null) {
+      MarshalledEntry cacheEntry=new MarshalledEntryImpl(key,value,null,marshaller);
+      entriesCollector.add(cacheEntry);
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
-  Set<Object> keysToL1=new HashSet<Object>();
-  Set<Object> keysToRemove=new HashSet<Object>();
+  final Set<Object> keysToL1=new HashSet<Object>();
+  final Set<Object> keysToRemove=new HashSet<Object>();
   for (  InternalCacheEntry ice : dataContainer) {
     Object key=ice.getKey();
     int keySegment=getSegment(key);
@@ -11,11 +11,11 @@
       keysToRemove.add(key);
     }
   }
-  CacheStore cacheStore=getCacheStore();
-  if (cacheStore != null) {
-    try {
-      Set<Object> storedKeys=cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-      for (      Object key : storedKeys) {
+  try {
+    CollectionKeyFilter filter=new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
+    persistenceManager.processOnAllStores(filter,new AdvancedCacheLoader.CacheLoaderTask(){
+      @Override public void processEntry(      MarshalledEntry marshalledEntry,      AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+        Object key=marshalledEntry.getKey();
         int keySegment=getSegment(key);
         if (segmentsToL1.contains(keySegment)) {
           keysToL1.add(key);
@@ -25,9 +25,10 @@
         }
       }
     }
- catch (    CacheLoaderException e) {
-      log.failedLoadingKeysFromCacheStore(e);
-    }
+,new WithinThreadExecutor(),false,false);
+  }
+ catch (  CacheException e) {
+    log.failedLoadingKeysFromCacheStore(e);
   }
   if (configuration.clustering().l1().onRehash()) {
     log.debugf("Moving to L1 state for segments %s of cache %s",segmentsToL1,cacheName);

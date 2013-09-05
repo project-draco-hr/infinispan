@@ -1,0 +1,34 @@
+{
+  final FileEntry fe;
+  final boolean expired;
+synchronized (entries) {
+    fe=entries.get(key);
+    if (fe == null)     return null;
+    expired=fe.isExpired(System.currentTimeMillis());
+    if (expired)     entries.remove(key);
+    fe.lock();
+  }
+  final byte[] data;
+  try {
+    if (expired) {
+      free(fe);
+      return null;
+    }
+    data=new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
+    file.read(ByteBuffer.wrap(data),fe.offset + KEY_POS);
+  }
+ catch (  Exception e) {
+    throw new CacheLoaderException(e);
+  }
+ finally {
+    fe.unlock();
+  }
+  org.infinispan.commons.io.ByteBuffer keyBb=new org.infinispan.commons.io.ByteBuffer(data,0,fe.keyLen);
+  org.infinispan.commons.io.ByteBuffer valueBb=null;
+  org.infinispan.commons.io.ByteBuffer metadataBb=null;
+  if (loadValue) {
+    valueBb=new org.infinispan.commons.io.ByteBuffer(data,fe.keyLen,fe.dataLen);
+    if (loadMetadata && fe.metadataLen > 0)     metadataBb=new org.infinispan.commons.io.ByteBuffer(data,fe.keyLen + fe.dataLen,fe.metadataLen);
+  }
+  return new MarshalledEntryImpl(keyBb,valueBb,metadataBb,ctx.getMarshaller());
+}

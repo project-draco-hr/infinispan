@@ -1,0 +1,34 @@
+{
+  if (!enabled)   return;
+  long start=-1;
+  try {
+    if (log.isTraceEnabled()) {
+      log.trace("Purging cache store of expired entries");
+      start=timeService.time();
+    }
+    storesMutex.readLock().lock();
+    try {
+      for (      CacheWriter w : writers) {
+        if (w instanceof AdvancedCacheWriter) {
+          final CacheNotifier notifier=cache.getComponentRegistry().getComponent(CacheNotifier.class);
+          ((AdvancedCacheWriter)w).purge(new WithinThreadExecutor(),new AdvancedCacheWriter.PurgeListener(){
+            @Override public void entryPurged(            Object key){
+              InternalCacheEntry ice=new ImmortalCacheEntry(key,null);
+              notifier.notifyCacheEntriesEvicted(Collections.singleton(ice),null,null);
+            }
+          }
+);
+        }
+      }
+    }
+  finally {
+      storesMutex.readLock().unlock();
+    }
+    if (log.isTraceEnabled()) {
+      log.tracef("Purging cache store completed in %s",Util.prettyPrintTime(timeService.timeDuration(start,TimeUnit.MILLISECONDS)));
+    }
+  }
+ catch (  Exception e) {
+    log.exceptionPurgingDataContainer(e);
+  }
+}

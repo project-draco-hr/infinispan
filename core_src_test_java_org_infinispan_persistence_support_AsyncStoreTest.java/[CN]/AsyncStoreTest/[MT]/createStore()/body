@@ -1,0 +1,15 @@
+{
+  DummyInMemoryStoreConfigurationBuilder dummyCfg=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(AsyncStoreTest.class.getName());
+  dummyCfg.async().enable().threadPoolSize(10);
+  DummyInMemoryStore underlying=new DummyInMemoryStore();
+  writer=new AdvancedAsyncCacheWriter(underlying);
+  DummyLoaderContext ctx=new DummyLoaderContext(dummyCfg.create(),getCache(),new TestObjectStreamMarshaller());
+  writer.init(ctx);
+  writer.start();
+  loader=new AdvancedAsyncCacheLoader(underlying,writer.getState());
+  loader.init(ctx);
+  loader.start();
+  underlying.init(ctx);
+  underlying.start();
+  testObjectStreamMarshaller=new TestObjectStreamMarshaller(false);
+}

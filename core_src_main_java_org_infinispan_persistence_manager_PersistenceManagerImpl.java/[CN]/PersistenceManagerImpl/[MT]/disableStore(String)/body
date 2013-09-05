@@ -1,0 +1,30 @@
+{
+  if (enabled) {
+    storesMutex.writeLock().lock();
+    try {
+      Iterator<CacheLoader> clIt=loaders.iterator();
+      while (clIt.hasNext()) {
+        CacheLoader l=clIt.next();
+        if (undelegate(l).getClass().getName().equals(storeType))         clIt.remove();
+      }
+      Iterator<CacheWriter> cwIt=writers.iterator();
+      while (cwIt.hasNext()) {
+        CacheWriter w=cwIt.next();
+        if (undelegate(w).getClass().getName().equals(storeType))         cwIt.remove();
+      }
+    }
+  finally {
+      storesMutex.writeLock().unlock();
+    }
+    if (loaders.isEmpty() && writers.isEmpty()) {
+      ComponentRegistry cr=cache.getComponentRegistry();
+      CacheLoaderInterceptor cli=cr.getComponent(CacheLoaderInterceptor.class);
+      CacheWriterInterceptor csi=cr.getComponent(CacheWriterInterceptor.class);
+      cli.disableInterceptor();
+      csi.disableInterceptor();
+      cache.removeInterceptor(cli.getClass());
+      cache.removeInterceptor(csi.getClass());
+      enabled=false;
+    }
+  }
+}

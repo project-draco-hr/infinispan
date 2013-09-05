@@ -1,0 +1,24 @@
+{
+  if (configuration.manageConnectionFactory()) {
+    ConnectionFactory factory=ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
+    factory.start(configuration.connectionFactory(),factory.getClass().getClassLoader());
+    initializeConnectionFactory(factory);
+  }
+  try {
+    Object mapper=Class.forName(configuration.key2StringMapper()).newInstance();
+    if (mapper instanceof Key2StringMapper)     key2StringMapper=(Key2StringMapper)mapper;
+  }
+ catch (  Exception e) {
+    log.errorf("Trying to instantiate %s, however it failed due to %s",configuration.key2StringMapper(),e.getClass().getName());
+    throw new IllegalStateException("This should not happen.",e);
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Using key2StringMapper: %s",key2StringMapper.getClass().getName());
+  }
+  if (configuration.preload()) {
+    enforceTwoWayMapper("preload");
+  }
+  if (isDistributed()) {
+    enforceTwoWayMapper("distribution/rehashing");
+  }
+}

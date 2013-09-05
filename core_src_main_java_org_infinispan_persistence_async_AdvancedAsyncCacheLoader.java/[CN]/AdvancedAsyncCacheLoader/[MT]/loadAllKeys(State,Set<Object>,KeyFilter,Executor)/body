@@ -1,0 +1,27 @@
+{
+  if (!s.clear) {
+    State next=s.next;
+    if (next != null) {
+      loadAllKeys(next,result,filter,executor);
+    }
+ else {
+      advancedLoader().process(filter,new CacheLoaderTask(){
+        @Override public void processEntry(        MarshalledEntry marshalledEntry,        TaskContext taskContext) throws InterruptedException {
+          result.add(marshalledEntry.getKey());
+        }
+      }
+,executor,false,false);
+    }
+  }
+  for (  Modification mod : s.modifications.values()) {
+switch (mod.getType()) {
+case STORE:
+      Object key=((Store)mod).getStoredValue().getKey();
+    if (filter == null || filter.shouldLoadKey(key))     result.add(key);
+  break;
+case REMOVE:
+result.remove(((Remove)mod).getKey());
+break;
+}
+}
+}

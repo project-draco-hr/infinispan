@@ -1,0 +1,20 @@
+{
+  storesMutex.readLock().lock();
+  try {
+    Set<T> result=new HashSet<T>();
+    for (    CacheLoader l : loaders) {
+      CacheLoader real=undelegate(l);
+      if (storeClass.isInstance(real)) {
+        result.add((T)real);
+      }
+    }
+    for (    CacheWriter w : writers) {
+      CacheWriter real=undelegate(w);
+      if (storeClass.isInstance(real))       result.add((T)real);
+    }
+    return result;
+  }
+  finally {
+    storesMutex.readLock().unlock();
+  }
+}

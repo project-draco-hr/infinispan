@@ -1,0 +1,14 @@
+{
+  storesMutex.readLock().lock();
+  try {
+    boolean removed=false;
+    for (    CacheWriter w : writers) {
+      if (skipSharedStore && configMap.get(w).shared())       continue;
+      removed|=w.delete(key);
+    }
+    return removed;
+  }
+  finally {
+    storesMutex.readLock().unlock();
+  }
+}

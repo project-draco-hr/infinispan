@@ -1,0 +1,9 @@
+{
+  Object retval=invokeNextInterceptor(ctx,command);
+  if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())   return retval;
+  if (!isProperWriter(ctx,command,command.getKey()))   return retval;
+  Object key=command.getKey();
+  boolean resp=persistenceManager.deleteFromAllStores(key,false);
+  if (getLog().isTraceEnabled())   getLog().tracef("Removed entry under key %s and got response %s from CacheStore",key,resp);
+  return retval;
+}

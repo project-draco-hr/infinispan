@@ -1,0 +1,12 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (!isStoreEnabled(command) || ctx.isInTxScope())   return returnValue;
+  Map<Object,Object> map=command.getMap();
+  for (  Object key : map.keySet()) {
+    if (isProperWriter(ctx,command,key)) {
+      storeEntry(ctx,key,command);
+    }
+  }
+  if (getStatisticsEnabled())   cacheStores.getAndAdd(map.size());
+  return returnValue;
+}

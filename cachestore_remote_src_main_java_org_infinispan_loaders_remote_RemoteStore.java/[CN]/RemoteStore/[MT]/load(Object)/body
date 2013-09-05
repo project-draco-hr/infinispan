@@ -1,0 +1,17 @@
+{
+  if (configuration.rawValues()) {
+    MetadataValue<?> value=remoteCache.getWithMetadata(key);
+    if (value != null) {
+      Metadata metadata=new EmbeddedMetadata.Builder().version(new NumericVersion(value.getVersion())).lifespan(value.getLifespan(),TimeUnit.SECONDS).maxIdle(value.getMaxIdle(),TimeUnit.SECONDS).build();
+      long created=value.getCreated();
+      long lastUsed=value.getLastUsed();
+      return new MarshalledEntryImpl(key,value.getValue(),new InternalMetadataImpl(metadata,created,lastUsed),ctx.getMarshaller());
+    }
+ else {
+      return null;
+    }
+  }
+ else {
+    return (MarshalledEntry)remoteCache.get(key);
+  }
+}

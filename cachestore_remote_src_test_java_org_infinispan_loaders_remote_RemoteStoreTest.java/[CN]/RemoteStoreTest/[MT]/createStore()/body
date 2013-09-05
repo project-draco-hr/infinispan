@@ -1,0 +1,15 @@
+{
+  ConfigurationBuilder cb=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED).expiration().wakeUpInterval(10L);
+  GlobalConfigurationBuilder globalConfig=new GlobalConfigurationBuilder().nonClusteredDefault();
+  globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
+  localCacheManager=TestCacheManagerFactory.createCacheManager(globalConfig,hotRodCacheConfiguration(cb));
+  localCacheManager.getCache(REMOTE_CACHE);
+  hrServer=TestHelper.startHotRodServer(localCacheManager);
+  RemoteCacheStoreConfigurationBuilder storeConfigurationBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(RemoteCacheStoreConfigurationBuilder.class).remoteCacheName(REMOTE_CACHE);
+  storeConfigurationBuilder.addServer().host(hrServer.getHost()).port(hrServer.getPort());
+  RemoteStore remoteStore=new RemoteStore();
+  remoteStore.init(new InitializationContextImpl(storeConfigurationBuilder.create(),getCache(),getMarshaller(),new DefaultTimeService()));
+  remoteStore.start();
+  return remoteStore;
+}

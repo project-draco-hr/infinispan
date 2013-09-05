@@ -4,12 +4,12 @@
     cm=TestCacheManagerFactory.fromXml("configs/string-based.xml");
     Cache<String,String> first=cm.getCache("first");
     Cache<String,String> second=cm.getCache("second");
-    CacheLoaderConfiguration firstCacheLoaderConfig=first.getCacheConfiguration().loaders().cacheLoaders().get(0);
-    CacheLoaderConfiguration secondCacheLoaderConfig=second.getCacheConfiguration().loaders().cacheLoaders().get(0);
-    assertEquals(JdbcStringBasedCacheStoreConfiguration.class,firstCacheLoaderConfig.getClass());
-    assertEquals(JdbcStringBasedCacheStoreConfiguration.class,secondCacheLoaderConfig.getClass());
-    JdbcStringBasedCacheStore firstCs=(JdbcStringBasedCacheStore)TestingUtil.extractComponent(first,CacheLoaderManager.class).getCacheLoader();
-    JdbcStringBasedCacheStore secondCs=(JdbcStringBasedCacheStore)TestingUtil.extractComponent(second,CacheLoaderManager.class).getCacheLoader();
+    StoreConfiguration firstCacheLoaderConfig=first.getCacheConfiguration().persistence().stores().get(0);
+    StoreConfiguration secondCacheLoaderConfig=second.getCacheConfiguration().persistence().stores().get(0);
+    assertEquals(JdbcStringBasedStoreConfiguration.class,firstCacheLoaderConfig.getClass());
+    assertEquals(JdbcStringBasedStoreConfiguration.class,secondCacheLoaderConfig.getClass());
+    JdbcStringBasedStore firstCs=(JdbcStringBasedStore)TestingUtil.getFirstLoader(first);
+    JdbcStringBasedStore secondCs=(JdbcStringBasedStore)TestingUtil.getFirstLoader(second);
     assertTableExistence(firstCs.getConnectionFactory().getConnection(),firstCs.getTableManipulation().getIdentifierQuoteString(),"second","first","ISPN_STRING_TABLE");
     assertNoOverlapingState(first,second,firstCs,secondCs);
   }

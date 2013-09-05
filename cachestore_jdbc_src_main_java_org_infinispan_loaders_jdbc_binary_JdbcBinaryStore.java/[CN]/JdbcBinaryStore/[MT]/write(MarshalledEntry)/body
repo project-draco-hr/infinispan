@@ -1,0 +1,16 @@
+{
+  log.tracef("store(%s)",entry);
+  InternalMetadata m=entry.getMetadata();
+  if (m != null && m.isExpired(ctx.getTimeService().wallClockTime())) {
+    delete(entry.getKey());
+    return;
+  }
+  Integer bucketId=getBuckedId(entry.getKey());
+  lockBucketForWriting(bucketId);
+  try {
+    storeInBucket(entry,bucketId);
+  }
+  finally {
+    unlock(bucketId);
+  }
+}

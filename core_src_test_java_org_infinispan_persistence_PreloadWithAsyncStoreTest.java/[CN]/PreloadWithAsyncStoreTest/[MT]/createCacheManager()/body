@@ -1,0 +1,11 @@
+{
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager();
+  for (  CacheType cacheType : CacheType.values()) {
+    ConfigurationBuilder builder=new ConfigurationBuilder();
+    builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(this.getClass().getName()).async().enable();
+    builder.transaction().transactionMode(cacheType.transactionMode).useSynchronization(cacheType.useSynchronization).recovery().enabled(cacheType.useRecovery);
+    builder.customInterceptors().addInterceptor().index(0).interceptor(new ExceptionTrackerInterceptor());
+    cm.defineConfiguration(cacheType.cacheName,builder.build());
+  }
+  return cm;
+}

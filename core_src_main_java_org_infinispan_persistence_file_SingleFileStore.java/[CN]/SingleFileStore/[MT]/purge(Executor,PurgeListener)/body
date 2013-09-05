@@ -1,0 +1,24 @@
+{
+  threadPool.execute(new Runnable(){
+    @Override public void run(){
+      long now=System.currentTimeMillis();
+synchronized (entries) {
+        for (Iterator<Map.Entry<Object,FileEntry>> it=entries.entrySet().iterator(); it.hasNext(); ) {
+          Map.Entry<Object,FileEntry> next=it.next();
+          FileEntry fe=next.getValue();
+          if (fe.isExpired(now)) {
+            it.remove();
+            try {
+              free(fe);
+            }
+ catch (            Exception e) {
+              throw new CacheLoaderException(e);
+            }
+            if (task != null)             task.entryPurged(next.getKey());
+          }
+        }
+      }
+    }
+  }
+);
+}

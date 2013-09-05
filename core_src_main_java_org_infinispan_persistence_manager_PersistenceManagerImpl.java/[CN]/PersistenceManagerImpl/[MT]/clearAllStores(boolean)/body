@@ -1,0 +1,14 @@
+{
+  storesMutex.readLock().lock();
+  try {
+    for (    CacheWriter w : writers) {
+      if (w instanceof AdvancedCacheWriter) {
+        if (skipSharedStores && configMap.get(w).shared())         continue;
+        ((AdvancedCacheWriter)w).clear();
+      }
+    }
+  }
+  finally {
+    storesMutex.readLock().unlock();
+  }
+}

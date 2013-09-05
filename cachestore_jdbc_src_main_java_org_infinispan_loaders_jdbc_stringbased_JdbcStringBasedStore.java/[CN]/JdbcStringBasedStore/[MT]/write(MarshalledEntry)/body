@@ -1,0 +1,43 @@
+{
+  Connection connection=null;
+  PreparedStatement ps=null;
+  String keyStr=key2Str(entry.getKey());
+  try {
+    connection=connectionFactory.getConnection();
+    String sql=tableManipulation.getSelectIdRowSql();
+    if (log.isTraceEnabled()) {
+      log.tracef("Running sql '%s'. Key string is '%s'",sql,keyStr);
+    }
+    ps=connection.prepareStatement(sql);
+    ps.setString(1,keyStr);
+    ResultSet rs=ps.executeQuery();
+    if (rs.next()) {
+      sql=tableManipulation.getUpdateRowSql();
+    }
+ else {
+      sql=tableManipulation.getInsertRowSql();
+    }
+    JdbcUtil.safeClose(rs);
+    JdbcUtil.safeClose(ps);
+    if (log.isTraceEnabled()) {
+      log.tracef("Running sql '%s'. Key string is '%s'",sql,keyStr);
+    }
+    ps=connection.prepareStatement(sql);
+    updateStatement(entry,keyStr,ps);
+    ps.executeUpdate();
+  }
+ catch (  SQLException ex) {
+    log.sqlFailureStoringKey(keyStr,ex);
+    throw new CacheLoaderException(String.format("Error while storing string key to database; key: '%s'",keyStr),ex);
+  }
+catch (  InterruptedException e) {
+    if (log.isTraceEnabled()) {
+      log.trace("Interrupted while marshalling to store");
+    }
+    Thread.currentThread().interrupt();
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(connection);
+  }
+}

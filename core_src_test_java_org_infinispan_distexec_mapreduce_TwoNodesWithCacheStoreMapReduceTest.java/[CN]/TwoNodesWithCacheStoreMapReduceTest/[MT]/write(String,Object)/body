@@ -1,0 +1,13 @@
+{
+  Cache cache1=cache(0,cacheName());
+  ClusteringDependentLogic cdl=cache1.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+  boolean onCache1=cdl.localNodeIsPrimaryOwner(key);
+  CacheWriter cacheWriter;
+  if (onCache1) {
+    cacheWriter=(CacheWriter)TestingUtil.getCacheLoader(cache1);
+  }
+ else {
+    cacheWriter=(CacheWriter)TestingUtil.getCacheLoader(cache(1,cacheName()));
+  }
+  cacheWriter.write(new MarshalledEntryImpl(key,value,null,TestingUtil.marshaller(cache1)));
+}

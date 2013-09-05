@@ -1,8 +1,8 @@
 {
   int threads=Runtime.getRuntime().availableProcessors();
   ComponentRegistry cr=cache.getAdvancedCache().getComponentRegistry();
-  CacheLoaderManager loaderManager=cr.getComponent(CacheLoaderManager.class);
-  List<RemoteCacheStore> stores=loaderManager.getCacheLoaders(RemoteCacheStore.class);
+  PersistenceManager loaderManager=cr.getComponent(PersistenceManager.class);
+  Set<RemoteStore> stores=loaderManager.getStores(RemoteStore.class);
   Marshaller marshaller=new GenericJBossMarshaller();
   byte[] knownKeys;
   try {
@@ -11,10 +11,10 @@
  catch (  Exception e) {
     throw new CacheException(e);
   }
-  for (  RemoteCacheStore store : stores) {
+  for (  RemoteStore store : stores) {
     final RemoteCache<Object,Object> storeCache=store.getRemoteCache();
     if (storeCache.containsKey(knownKeys)) {
-      RemoteCacheStoreConfiguration storeConfig=(RemoteCacheStoreConfiguration)store.getConfiguration();
+      RemoteCacheStoreConfiguration storeConfig=store.getConfiguration();
       if (!storeConfig.hotRodWrapping()) {
         throw log.remoteStoreNoHotRodWrapping(cache.getName());
       }

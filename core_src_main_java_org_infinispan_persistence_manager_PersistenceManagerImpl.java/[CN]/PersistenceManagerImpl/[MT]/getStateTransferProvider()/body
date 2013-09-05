@@ -1,0 +1,13 @@
+{
+  storesMutex.readLock().lock();
+  try {
+    for (    CacheLoader l : loaders) {
+      StoreConfiguration storeConfiguration=configMap.get(l);
+      if (storeConfiguration.fetchPersistentState() && !storeConfiguration.shared())       return (AdvancedCacheLoader)l;
+    }
+    return null;
+  }
+  finally {
+    storesMutex.readLock().unlock();
+  }
+}

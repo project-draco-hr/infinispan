@@ -1,0 +1,23 @@
+{
+  if (store != null)   return;
+  Equivalence<Object> keyEq=cache.getCacheConfiguration().dataContainer().keyEquivalence();
+  Equivalence<byte[]> valueEq=cache.getCacheConfiguration().dataContainer().valueEquivalence();
+  store=new EquivalentConcurrentHashMapV8<Object,byte[]>(keyEq,valueEq);
+  stats=newStatsMap();
+  if (storeName != null) {
+    if (cache != null)     storeName+="_" + cache.getName();
+    Map<Object,byte[]> existing=stores.putIfAbsent(storeName,store);
+    if (existing != null) {
+      store=existing;
+      log.debugf("Reusing in-memory cache store %s",storeName);
+    }
+ else {
+      log.debugf("Creating new in-memory cache store %s",storeName);
+    }
+    ConcurrentMap<String,AtomicInteger> existingStats=storeStats.putIfAbsent(storeName,stats);
+    if (existing != null) {
+      stats=existingStats;
+    }
+  }
+  record("start");
+}

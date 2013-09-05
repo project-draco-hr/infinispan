@@ -1,18 +1,19 @@
 {
   System.out.printf("Testing independent read/write/remove performance " + "with capacity %d, keys %d, readers %d, writers %d, removers %d\n",capacity,numKeys,readerThreads,writerThreads,removerThreads);
   generateKeyList(numKeys);
-  Map<String,AbstractDelegatingStore> stores=createAsyncStores();
+  Map<String,KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>> stores=createAsyncStores();
   try {
-    for (    Map.Entry<String,AbstractDelegatingStore> e : stores.entrySet()) {
-      mapTestReadWriteRemove(e.getKey(),e.getValue(),numKeys,readerThreads,writerThreads,removerThreads);
+    for (    Map.Entry<String,KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>> e : stores.entrySet()) {
+      mapTestReadWriteRemove(e.getKey(),e.getValue().getKey(),e.getValue().getValue(),numKeys,readerThreads,writerThreads,removerThreads);
       e.setValue(null);
     }
   }
   finally {
-    for (Iterator<AbstractDelegatingStore> it=stores.values().iterator(); it.hasNext(); ) {
-      AbstractDelegatingStore store=it.next();
+    for (Iterator<KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter>> it=stores.values().iterator(); it.hasNext(); ) {
+      KeyValuePair<AdvancedAsyncCacheLoader,AdvancedAsyncCacheWriter> store=it.next();
       try {
-        store.stop();
+        store.getKey().stop();
+        store.getValue().stop();
         it.remove();
       }
  catch (      Exception ex) {

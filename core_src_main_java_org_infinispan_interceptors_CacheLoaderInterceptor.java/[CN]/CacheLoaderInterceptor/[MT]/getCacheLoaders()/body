@@ -1,15 +1,6 @@
 {
-  if (enabled && clm.isEnabled()) {
-    if (loader instanceof ChainingCacheStore) {
-      ChainingCacheStore chainingStore=(ChainingCacheStore)loader;
-      LinkedHashMap<CacheStore,CacheStoreConfiguration> stores=chainingStore.getStores();
-      Set<String> storeTypes=new HashSet<String>(stores.size());
-      for (      CacheStore cs : stores.keySet())       storeTypes.add(undelegateCacheLoader(cs).getClass().getName());
-      return storeTypes;
-    }
- else {
-      return Collections.singleton(undelegateCacheLoader(loader).getClass().getName());
-    }
+  if (enabled && cacheConfiguration.persistence().usingStores()) {
+    return persistenceManager.getCacheLoadersAsString();
   }
  else {
     return InfinispanCollections.emptySet();

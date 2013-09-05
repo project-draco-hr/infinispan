@@ -1,0 +1,46 @@
+{
+  enabled=configuration.persistence().usingStores();
+  if (!enabled)   return;
+  try {
+    createLoadersAndWriters();
+    Transaction xaTx=null;
+    if (transactionManager != null) {
+      xaTx=transactionManager.suspend();
+    }
+    try {
+      Set undelegated=new HashSet();
+      for (      CacheWriter w : writers) {
+        w.start();
+        if (w instanceof DelegatingCacheWriter) {
+          CacheWriter actual=undelegate(w);
+          actual.start();
+          undelegated.add(actual);
+        }
+ else {
+          undelegated.add(w);
+        }
+        if (configMap.get(w).purgeOnStartup()) {
+          if (!(w instanceof AdvancedCacheWriter))           throw new CacheLoaderException("'purgeOnStartup' can only be set on stores implementing " + "" + AdvancedCacheWriter.class.getName());
+          ((AdvancedCacheWriter)w).clear();
+        }
+      }
+      for (      CacheLoader l : loaders) {
+        if (!undelegated.contains(l))         l.start();
+        if (l instanceof DelegatingCacheLoader) {
+          CacheLoader actual=undelegate(l);
+          if (!undelegated.contains(actual)) {
+            actual.start();
+          }
+        }
+      }
+    }
+  finally {
+      if (xaTx != null) {
+        transactionManager.resume(xaTx);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to start cache loaders",e);
+  }
+}

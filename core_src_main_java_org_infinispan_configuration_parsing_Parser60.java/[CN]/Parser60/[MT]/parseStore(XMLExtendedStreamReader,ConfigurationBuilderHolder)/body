@@ -1,11 +1,11 @@
 {
   ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
-  Object store=null;
+  CacheLoader store=null;
   Boolean fetchPersistentState=null;
   Boolean ignoreModifications=null;
   Boolean purgeOnStartup=null;
-  Integer purgerThreads=null;
-  Boolean purgeSynchronously=null;
+  Boolean preload=null;
+  Boolean shared=null;
   for (int i=0; i < reader.getAttributeCount(); i++) {
     ParseUtils.requireNoNamespaceAttribute(reader,i);
     String value=replaceProperties(reader.getAttributeValue(i));
@@ -23,37 +23,29 @@ break;
 case PURGE_ON_STARTUP:
 purgeOnStartup=Boolean.valueOf(value);
 break;
-case PURGER_THREADS:
-purgerThreads=Integer.valueOf(value);
+case PRELOAD:
+preload=Boolean.parseBoolean(value);
 break;
-case PURGE_SYNCHRONOUSLY:
-purgeSynchronously=Boolean.valueOf(value);
+case SHARED:
+shared=Boolean.parseBoolean(value);
 break;
 default :
 throw ParseUtils.unexpectedAttribute(reader,i);
 }
 }
 if (store != null) {
-if (store instanceof FileCacheStore) {
-FileCacheStoreConfigurationBuilder fcscb=builder.loaders().addFileCacheStore();
-if (fetchPersistentState != null) fcscb.fetchPersistentState(fetchPersistentState);
-if (ignoreModifications != null) fcscb.ignoreModifications(ignoreModifications);
-if (purgeOnStartup != null) fcscb.purgeOnStartup(purgeOnStartup);
-if (purgeSynchronously != null) fcscb.purgeSynchronously(purgeSynchronously);
-parseStoreChildren(reader,fcscb);
+if (store instanceof SingleFileStore) {
+SingleFileStoreConfigurationBuilder sfs=builder.persistence().addSingleFileStore();
+if (fetchPersistentState != null) sfs.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) sfs.ignoreModifications(ignoreModifications);
+if (purgeOnStartup != null) sfs.purgeOnStartup(purgeOnStartup);
+if (preload != null) sfs.preload(preload);
+if (shared != null) sfs.shared(shared);
+parseStoreChildren(reader,sfs);
 }
- else if (store instanceof CacheStore) {
-LegacyStoreConfigurationBuilder scb=builder.loaders().addStore();
-scb.cacheStore((CacheStore)store);
-if (fetchPersistentState != null) scb.fetchPersistentState(fetchPersistentState);
-if (ignoreModifications != null) scb.ignoreModifications(ignoreModifications);
-if (purgerThreads != null) scb.purgerThreads(purgerThreads);
-if (purgeOnStartup != null) scb.purgeOnStartup(purgeOnStartup);
-if (purgeSynchronously != null) scb.purgeSynchronously(purgeSynchronously);
-parseStoreChildren(reader,scb);
-}
- else {
-throw log.invalidCacheLoaderClass(store.getClass().getName());
+ else if (store instanceof ClusterLoader) {
+ClusterStoreConfigurationBuilder cscb=builder.persistence().addClusterStore();
+parseLoaderChildren(reader,cscb);
 }
 }
 }

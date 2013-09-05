@@ -1,0 +1,21 @@
+{
+  Connection conn=null;
+  PreparedStatement ps=null;
+  try {
+    String sql=tableManipulation.getDeleteAllRowsSql();
+    conn=connectionFactory.getConnection();
+    ps=conn.prepareStatement(sql);
+    int result=ps.executeUpdate();
+    if (log.isTraceEnabled()) {
+      log.tracef("Successfully removed %d rows.",result);
+    }
+  }
+ catch (  SQLException ex) {
+    log.failedClearingJdbcCacheStore(ex);
+    throw new CacheLoaderException("Failed clearing cache store",ex);
+  }
+ finally {
+    JdbcUtil.safeClose(ps);
+    connectionFactory.releaseConnection(conn);
+  }
+}

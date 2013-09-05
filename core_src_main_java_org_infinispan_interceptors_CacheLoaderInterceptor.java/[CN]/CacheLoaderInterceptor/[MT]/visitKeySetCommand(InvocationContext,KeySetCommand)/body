@@ -1,8 +1,13 @@
 {
   Object keys=super.visitKeySetCommand(ctx,command);
   if (enabled && !shouldSkipCacheLoader(command)) {
-    Set<Object> union=new HashSet<Object>((Set<Object>)keys);
-    union.addAll(loader.loadAllKeys(union));
+    final Set<Object> union=new HashSet<Object>((Set<Object>)keys);
+    persistenceManager.processOnAllStores(new CollectionKeyFilter(union),new AdvancedCacheLoader.CacheLoaderTask(){
+      @Override public void processEntry(      MarshalledEntry marshalledEntry,      AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+        union.add(marshalledEntry.getKey());
+      }
+    }
+,new WithinThreadExecutor(),false,false);
     return Collections.unmodifiableSet(union);
   }
   return keys;
