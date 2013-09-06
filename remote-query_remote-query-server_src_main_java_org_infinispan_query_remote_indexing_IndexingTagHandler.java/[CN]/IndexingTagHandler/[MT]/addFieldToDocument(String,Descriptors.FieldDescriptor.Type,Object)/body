@@ -1,0 +1,32 @@
+{
+  LuceneOptions luceneOptions=defaultLuceneOptions;
+  LuceneOptions numericLuceneOptions=STORED_NOT_ANALYZED;
+  if (value == null) {
+    value=QueryFacadeImpl.NULL_TOKEN;
+    luceneOptions=NOT_STORED_NOT_ANALYZED;
+    numericLuceneOptions=NOT_STORED_NOT_ANALYZED;
+  }
+  String fn=getFullFieldName(fieldName);
+switch (type) {
+case DOUBLE:
+case FLOAT:
+case INT64:
+case UINT64:
+case INT32:
+case FIXED64:
+case FIXED32:
+case UINT32:
+case SFIXED32:
+case SFIXED64:
+case SINT32:
+case SINT64:
+case ENUM:
+    numericLuceneOptions.addNumericFieldToDocument(fn,value,document);
+  break;
+case BOOL:
+numericLuceneOptions.addNumericFieldToDocument(fn,((Boolean)value) ? TRUE_INT : FALSE_INT,document);
+break;
+default :
+luceneOptions.addFieldToDocument(fn,String.valueOf(value),document);
+}
+}
