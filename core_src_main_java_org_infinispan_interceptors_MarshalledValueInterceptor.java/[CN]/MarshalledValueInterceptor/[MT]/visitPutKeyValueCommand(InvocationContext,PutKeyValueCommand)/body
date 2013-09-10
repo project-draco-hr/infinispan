@@ -1,6 +1,6 @@
 {
-  MarshalledValue key=null;
-  MarshalledValue value=null;
+  MarshalledValue key;
+  MarshalledValue value;
   if (wrapKeys) {
     if (!isTypeExcluded(command.getKey().getClass())) {
       key=createMarshalledValue(command.getKey(),ctx);
@@ -13,15 +13,6 @@
       command.setValue(value);
     }
   }
-  boolean isRawComparisonRequired=!ctx.isOriginLocal() && command.getKey() instanceof MarshalledValue;
-  if (isRawComparisonRequired)   ((MarshalledValue)command.getKey()).setEqualityPreferenceForInstance(false);
-  try {
-    Object retVal=invokeNextInterceptor(ctx,command);
-    compact(key);
-    compact(value);
-    return processRetVal(retVal,ctx);
-  }
-  finally {
-    if (isRawComparisonRequired)     ((MarshalledValue)command.getKey()).setEqualityPreferenceForInstance(true);
-  }
+  Object retVal=invokeNextInterceptor(ctx,command);
+  return processRetVal(retVal,ctx);
 }

@@ -14,7 +14,7 @@
   if (compatibility.enabled()) {
     interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibility.marshaller()),TypeConverterInterceptor.class),false);
   }
-  if (isUsingMarshalledValues(configuration) || configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue()|| hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
+  if (configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue() || hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
   if (invocationBatching) {
     interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class),false);
   }
@@ -34,12 +34,7 @@
   if (configuration.transaction().transactionMode().isTransactional())   interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(),TxInterceptor.class),false);
   if (isUsingMarshalledValues(configuration)) {
     CommandInterceptor interceptor;
-    if (configuration.storeAsBinary().defensive()) {
-      interceptor=createInterceptor(new DefensiveMarshalledValueInterceptor(),DefensiveMarshalledValueInterceptor.class);
-    }
- else {
-      interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
-    }
+    interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
     interceptorChain.appendInterceptor(interceptor,false);
   }
   interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(),NotificationInterceptor.class),false);
