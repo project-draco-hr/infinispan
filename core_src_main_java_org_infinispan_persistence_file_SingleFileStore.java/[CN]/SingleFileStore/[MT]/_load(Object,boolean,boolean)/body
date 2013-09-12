@@ -23,12 +23,13 @@ synchronized (entries) {
  finally {
     fe.unlock();
   }
-  org.infinispan.commons.io.ByteBuffer keyBb=new org.infinispan.commons.io.ByteBuffer(data,0,fe.keyLen);
+  ByteBufferFactory factory=ctx.getByteBufferFactory();
+  org.infinispan.commons.io.ByteBuffer keyBb=factory.newByteBuffer(data,0,fe.keyLen);
   org.infinispan.commons.io.ByteBuffer valueBb=null;
   org.infinispan.commons.io.ByteBuffer metadataBb=null;
   if (loadValue) {
-    valueBb=new org.infinispan.commons.io.ByteBuffer(data,fe.keyLen,fe.dataLen);
-    if (loadMetadata && fe.metadataLen > 0)     metadataBb=new org.infinispan.commons.io.ByteBuffer(data,fe.keyLen + fe.dataLen,fe.metadataLen);
+    valueBb=factory.newByteBuffer(data,fe.keyLen,fe.dataLen);
+    if (loadMetadata && fe.metadataLen > 0)     metadataBb=factory.newByteBuffer(data,fe.keyLen + fe.dataLen,fe.metadataLen);
   }
   return new MarshalledEntryImpl(keyBb,valueBb,metadataBb,ctx.getMarshaller());
 }
