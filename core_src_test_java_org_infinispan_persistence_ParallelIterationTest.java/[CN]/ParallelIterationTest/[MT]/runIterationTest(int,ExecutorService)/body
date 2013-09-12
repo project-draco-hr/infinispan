@@ -1,0 +1,24 @@
+{
+  int numEntries=insertData();
+  final ConcurrentMap entries=new ConcurrentHashMap();
+  final ConcurrentMap threads=new ConcurrentHashMap();
+  final AtomicBoolean sameKeyMultipleTimes=new AtomicBoolean();
+  store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+      Object existing=entries.put(marshalledEntry.getKey(),marshalledEntry.getValue());
+      threads.put(Thread.currentThread(),Thread.currentThread());
+      if (existing != null) {
+        log.warnf("Already a value present for key %s: %s",marshalledEntry.getKey(),existing);
+        sameKeyMultipleTimes.set(true);
+      }
+    }
+  }
+,persistenceExecutor1,true,true);
+  assertFalse(sameKeyMultipleTimes.get());
+  for (int i=0; i < numEntries; i++) {
+    assertEquals(entries.get(i),i,"For key" + i);
+  }
+  if (multipleThreads) {
+    assertEquals(threads.size(),numThreads);
+  }
+}

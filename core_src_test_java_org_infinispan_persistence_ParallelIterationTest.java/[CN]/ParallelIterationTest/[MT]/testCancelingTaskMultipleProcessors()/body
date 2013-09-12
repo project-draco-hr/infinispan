@@ -1,0 +1,23 @@
+{
+  insertData();
+  final ConcurrentMap entries=new ConcurrentHashMap();
+  final AtomicBoolean stopped=new AtomicBoolean(false);
+  store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+synchronized (entries) {
+        boolean shouldStop=entries.size() == 100 && !stopped.get();
+        log.info("shouldStop = " + shouldStop);
+        if (shouldStop) {
+          stopped.set(true);
+          taskContext.stop();
+          return;
+        }
+        entries.put(marshalledEntry.getKey(),marshalledEntry.getValue());
+      }
+    }
+  }
+,persistenceExecutor,true,true);
+  assertTrue(stopped.get());
+  assertTrue(entries.size() <= 100 + numThreads(),"got " + entries.size() + " elements, expected less than "+ (100 + numThreads()));
+  assertTrue(entries.size() >= 100);
+}
