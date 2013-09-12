@@ -1,0 +1,18 @@
+{
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    if (ctx.isOriginLocal()) {
+      getLog().debug("visit Commit");
+      if (awaitCommit != null) {
+        getLog().debug("Commit Received... unblocking...");
+        awaitCommit.countDown();
+      }
+      if (blockCommit != null) {
+        getLog().debug("Commit Received... blocking...");
+        blockCommit.await();
+      }
+    }
+  }
+}

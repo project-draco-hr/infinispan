@@ -1,7 +1,12 @@
 {
+  final boolean local=ctx.isOriginLocal();
+  if (ctx.isInTxScope() && !local && !ignorePreviousValue) {
+    successful=false;
+    return null;
+  }
   MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
   if (e != null) {
-    if (ctx.isOriginLocal()) {
+    if (local) {
       if (e.isNull() || e.getValue() == null || e.isRemoved()) {
         return returnValue(null,false,ctx);
       }
