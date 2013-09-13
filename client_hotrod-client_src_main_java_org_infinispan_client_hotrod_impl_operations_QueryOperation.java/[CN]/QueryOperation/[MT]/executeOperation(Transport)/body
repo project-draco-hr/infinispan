@@ -14,9 +14,10 @@
     }
     queryRequest.setSortCriteria(scl);
   }
+  SerializationContext serCtx=ProtoStreamMarshaller.getSerializationContext();
   byte[] requestBytes;
   try {
-    requestBytes=ProtobufUtil.toByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(),queryRequest);
+    requestBytes=ProtobufUtil.toByteArray(serCtx,queryRequest);
   }
  catch (  IOException e) {
     throw new CacheException(e);
@@ -26,7 +27,7 @@
   readHeaderAndValidate(transport,params);
   byte[] responseBytes=transport.readArray();
   try {
-    QueryResponse queryResponse=ProtobufUtil.fromByteArray(remoteQuery.getCache().getRemoteCacheManager().getSerializationContext(),responseBytes,QueryResponse.class);
+    QueryResponse queryResponse=ProtobufUtil.fromByteArray(serCtx,responseBytes,QueryResponse.class);
     return queryResponse;
   }
  catch (  IOException e) {

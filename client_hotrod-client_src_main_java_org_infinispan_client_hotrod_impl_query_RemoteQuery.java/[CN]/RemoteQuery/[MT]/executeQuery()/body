@@ -1,8 +1,10 @@
 {
-  QueryOperation op=operationsFactory.newQueryOperation(remoteQuery);
+  List<Object> results;
+  QueryOperation op=cache.getOperationsFactory().newQueryOperation(this);
   QueryResponse response=op.execute();
-  List<Object> results=new ArrayList<Object>(response.getNumResults());
+  numResults=response.getNumResults();
   if (response.getProjectionSize() > 0) {
+    results=new ArrayList<Object>(response.getResults().size() / response.getProjectionSize());
     Iterator<WrappedMessage> it=response.getResults().iterator();
     while (it.hasNext()) {
       Object[] row=new Object[response.getProjectionSize()];
@@ -13,10 +15,11 @@
     }
   }
  else {
+    results=new ArrayList<Object>(response.getResults().size());
     for (    WrappedMessage r : response.getResults()) {
       try {
         byte[] bytes=(byte[])r.getValue();
-        Object o=ProtobufUtil.fromWrappedByteArray(remoteCacheManager.getSerializationContext(),bytes);
+        Object o=ProtobufUtil.fromWrappedByteArray(ProtoStreamMarshaller.getSerializationContext(),bytes);
         results.add(o);
       }
  catch (      IOException e) {
