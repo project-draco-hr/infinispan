@@ -1,22 +1,19 @@
 {
   org.infinispan.configuration.cache.ConfigurationBuilder builder=hotRodCacheConfiguration();
-  CompatibilityProtoStreamMarshaller compatModeMarshaller=new CompatibilityProtoStreamMarshaller();
-  builder.compatibility().enable().marshaller(compatModeMarshaller);
-  builder.indexing().enable();
+  builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+  builder.indexing().enable().addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
   builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
   cacheManager=TestCacheManagerFactory.createCacheManager(builder);
   cache=cacheManager.getCache();
-  compatModeMarshaller.setCacheManager(cacheManager);
   hotRodServer=TestHelper.startHotRodServer(cacheManager);
   ConfigurationBuilder clientBuilder=new ConfigurationBuilder();
   clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
   clientBuilder.marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
   remoteCache=remoteCacheManager.getCache();
-  SerializationContext clientSerCtx=ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
-  MarshallerRegistration.registerMarshallers(clientSerCtx);
-  clientSerCtx.registerMarshaller(EmbeddedAccount.class,new EmbeddedAccountMarshaller());
-  MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
-  ProtobufMetadataManager.getSerializationContext(cacheManager).registerMarshaller(EmbeddedAccount.class,new EmbeddedAccountMarshaller());
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+  ProtobufMetadataManager protobufMetadataManager=cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  protobufMetadataManager.registerProtofile("/bank.protobin");
+  protobufMetadataManager.registerMarshaller(EmbeddedAccount.class,new EmbeddedAccountMarshaller());
   return cacheManager;
 }

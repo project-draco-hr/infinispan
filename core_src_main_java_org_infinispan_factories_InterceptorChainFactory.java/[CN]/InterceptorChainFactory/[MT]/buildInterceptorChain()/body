@@ -12,7 +12,11 @@
   }
   CompatibilityModeConfiguration compatibility=configuration.compatibility();
   if (compatibility.enabled()) {
-    interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibility.marshaller()),TypeConverterInterceptor.class),false);
+    Marshaller compatibilityMarshaller=compatibility.marshaller();
+    if (compatibilityMarshaller != null) {
+      componentRegistry.wireDependencies(compatibilityMarshaller);
+    }
+    interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibilityMarshaller),TypeConverterInterceptor.class),false);
   }
   if (configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue() || hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
   if (invocationBatching) {
