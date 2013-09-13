@@ -1,0 +1,26 @@
+{
+  Class<?> fbClass;
+  try {
+    fbClass=Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge");
+  }
+ catch (  ClassNotFoundException e) {
+    return indexingProperties;
+  }
+  try {
+    SearchMapping mapping=(SearchMapping)indexingProperties.get(Environment.MODEL_MAPPING);
+    if (mapping == null) {
+      mapping=new SearchMapping();
+      Properties amendedProperties=new Properties();
+      amendedProperties.putAll(indexingProperties);
+      amendedProperties.put(Environment.MODEL_MAPPING,mapping);
+      indexingProperties=amendedProperties;
+    }
+    Cache cache=cr.getComponent(Cache.class);
+    FieldBridge fb=(FieldBridge)fbClass.getConstructor(Cache.class).newInstance(cache);
+    mapping.entity(Class.forName("org.infinispan.query.remote.indexing.ProtobufValueWrapper")).indexed().classBridgeInstance(fb).norms(Norms.NO).analyze(Analyze.YES).store(Store.YES);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Failed to configure indexing for remote query",e);
+  }
+  return indexingProperties;
+}

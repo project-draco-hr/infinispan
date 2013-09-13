@@ -1,0 +1,11 @@
+{
+  Account account=createAccount();
+  remoteCache.put(1,account);
+  org.apache.lucene.search.Query query=org.infinispan.query.Search.getSearchManager(cache).buildQueryBuilderForClass(EmbeddedAccount.class).get().keyword().wildcard().onField("description").matching("*test*").createQuery();
+  CacheQuery cacheQuery=org.infinispan.query.Search.getSearchManager(cache).getQuery(query);
+  List<Object> list=cacheQuery.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(EmbeddedAccount.class,list.get(0).getClass());
+  assertAccount((Account)list.get(0));
+}
