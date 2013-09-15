@@ -1,0 +1,14 @@
+{
+  loadersAndStoresMutex.readLock().lock();
+  try {
+    for (    Map.Entry<CacheStore,CacheStoreConfiguration> e : stores.entrySet()) {
+      if (e.getValue().fetchPersistentState()) {
+        e.getKey().fromStream(inputStream);
+        break;
+      }
+    }
+  }
+  finally {
+    loadersAndStoresMutex.readLock().unlock();
+  }
+}

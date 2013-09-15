@@ -1,0 +1,45 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case PASSIVATION:
+      builder.persistence().passivation(Boolean.parseBoolean(value));
+    break;
+case PRELOAD:
+  preload=Boolean.parseBoolean(value);
+break;
+case SHARED:
+shared=Boolean.parseBoolean(value);
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element52 element=Element52.forName(reader.getLocalName());
+switch (element) {
+case CLUSTER_LOADER:
+parseClusterLoader(reader,holder);
+break;
+case FILE_STORE:
+parseFileStore(reader,holder);
+break;
+case LOADER:
+parseLoader(reader,holder);
+break;
+case STORE:
+parseStore(reader,holder);
+break;
+default :
+reader.handleAny(holder);
+}
+}
+List<StoreConfigurationBuilder<?,?>> stores=builder.persistence().stores();
+int index=0;
+for (StoreConfigurationBuilder<?,?> scb : stores) {
+setPreloadShared(scb,index++);
+}
+}

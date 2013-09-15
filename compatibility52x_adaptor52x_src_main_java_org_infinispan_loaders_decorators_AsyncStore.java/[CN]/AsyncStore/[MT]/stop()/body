@@ -1,0 +1,15 @@
+{
+  log.trace("Stop async store");
+  stateLock.writeLock(1);
+  state.stopped=true;
+  stateLock.writeUnlock();
+  try {
+    coordinator.join(shutdownTimeout);
+    if (coordinator.isAlive())     log.error("Async store executor did not stop properly");
+  }
+ catch (  InterruptedException e) {
+    log.interruptedWaitingAsyncStorePush(e);
+    Thread.currentThread().interrupt();
+  }
+  super.stop();
+}

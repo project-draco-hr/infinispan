@@ -1,0 +1,27 @@
+{
+  try {
+    Set<Object> keys=loader.loadAllKeys(null);
+    int batchSize=1000;
+    ExecutorCompletionService ecs=new ExecutorCompletionService(executor);
+    int tasks=0;
+    final TaskContext taskContext=new TaskContextImpl();
+    Set<Object> entries=new HashSet<Object>(batchSize);
+    for (    Object key : keys) {
+      if (keyFilter == null || keyFilter.shouldLoadKey(key))       entries.add(key);
+      if (entries.size() == batchSize) {
+        final Set<Object> batch=entries;
+        entries=new HashSet<Object>(batchSize);
+        submitProcessTask(cacheLoaderTask,ecs,taskContext,batch,fetchValue,fetchMetadata);
+        tasks++;
+      }
+    }
+    if (!entries.isEmpty()) {
+      submitProcessTask(cacheLoaderTask,ecs,taskContext,entries,fetchValue,fetchMetadata);
+      tasks++;
+    }
+    PersistenceUtil.waitForAllTasksToComplete(ecs,tasks);
+  }
+ catch (  CacheLoaderException e) {
+    throw newCacheLoaderException(e);
+  }
+}
