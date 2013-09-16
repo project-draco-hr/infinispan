@@ -1,0 +1,18 @@
+{
+  printThread(threadInfo,threadDump);
+  StackTraceElement[] stacktrace=threadInfo.getStackTrace();
+  MonitorInfo[] monitors=threadInfo.getLockedMonitors();
+  for (int i=0; i < stacktrace.length; i++) {
+    StackTraceElement ste=stacktrace[i];
+    threadDump.append(INDENT + "at " + ste.toString());
+    threadDump.append("\n");
+    for (int j=1; j < monitors.length; j++) {
+      MonitorInfo mi=monitors[j];
+      if (mi.getLockedStackDepth() == i) {
+        threadDump.append(INDENT + "  - locked " + mi);
+        threadDump.append("\n");
+      }
+    }
+  }
+  threadDump.append("\n");
+}

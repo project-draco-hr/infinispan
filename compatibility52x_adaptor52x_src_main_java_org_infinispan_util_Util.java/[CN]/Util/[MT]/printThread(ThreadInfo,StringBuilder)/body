@@ -1,0 +1,20 @@
+{
+  StringBuilder sb=new StringBuilder("\"" + threadInfo.getThreadName() + "\""+ " nid="+ threadInfo.getThreadId()+ " state="+ threadInfo.getThreadState());
+  if (threadInfo.getLockName() != null && threadInfo.getThreadState() != Thread.State.BLOCKED) {
+    String[] lockInfo=threadInfo.getLockName().split("@");
+    sb.append("\n" + INDENT + "- waiting on <0x"+ lockInfo[1]+ "> (a "+ lockInfo[0]+ ")");
+    sb.append("\n" + INDENT + "- locked <0x"+ lockInfo[1]+ "> (a "+ lockInfo[0]+ ")");
+  }
+ else   if (threadInfo.getLockName() != null && threadInfo.getThreadState() == Thread.State.BLOCKED) {
+    String[] lockInfo=threadInfo.getLockName().split("@");
+    sb.append("\n" + INDENT + "- waiting to lock <0x"+ lockInfo[1]+ "> (a "+ lockInfo[0]+ ")");
+  }
+  if (threadInfo.isSuspended())   sb.append(" (suspended)");
+  if (threadInfo.isInNative())   sb.append(" (running in native)");
+  threadDump.append(sb.toString());
+  threadDump.append("\n");
+  if (threadInfo.getLockOwnerName() != null) {
+    threadDump.append(INDENT + " owned by " + threadInfo.getLockOwnerName()+ " id="+ threadInfo.getLockOwnerId());
+    threadDump.append("\n");
+  }
+}

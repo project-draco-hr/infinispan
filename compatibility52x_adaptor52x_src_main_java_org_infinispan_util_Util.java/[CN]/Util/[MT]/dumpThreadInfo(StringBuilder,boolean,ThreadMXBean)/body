@@ -1,0 +1,21 @@
+{
+  SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  String timestamp=dateFormat.format(new Date());
+  threadDump.append(timestamp);
+  threadDump.append("\nFull thread dump ");
+  threadDump.append("\n");
+  if (withLocks) {
+    ThreadInfo[] threadInfos=threadMx.dumpAllThreads(true,true);
+    for (    ThreadInfo threadInfo : threadInfos) {
+      printThreadInfo(threadInfo,threadDump);
+      LockInfo[] syncs=threadInfo.getLockedSynchronizers();
+      printLockInfo(syncs,threadDump);
+    }
+    threadDump.append("\n");
+  }
+ else {
+    long[] threadIds=threadMx.getAllThreadIds();
+    ThreadInfo[] threadInfos=threadMx.getThreadInfo(threadIds,Integer.MAX_VALUE);
+    for (    ThreadInfo threadInfo : threadInfos)     printThreadInfo(threadInfo,threadDump);
+  }
+}

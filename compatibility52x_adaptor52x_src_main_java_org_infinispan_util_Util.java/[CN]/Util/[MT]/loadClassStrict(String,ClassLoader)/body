@@ -1,0 +1,23 @@
+{
+  ClassLoader[] cls=getClassLoaders(userClassLoader);
+  ClassNotFoundException e=null;
+  NoClassDefFoundError ne=null;
+  for (  ClassLoader cl : cls) {
+    if (cl == null)     continue;
+    try {
+      return (Class<T>)Class.forName(classname,true,cl);
+    }
+ catch (    ClassNotFoundException ce) {
+      e=ce;
+    }
+catch (    NoClassDefFoundError ce) {
+      ne=ce;
+    }
+  }
+  if (e != null)   throw e;
+ else   if (ne != null) {
+    log.unableToLoadClass(classname,Arrays.toString(cls),ne);
+    throw new ClassNotFoundException(classname,ne);
+  }
+ else   throw new IllegalStateException();
+}
