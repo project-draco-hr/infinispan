@@ -1,11 +1,11 @@
 {
   int pollFrequencyMS=20;
   TimeService timeService=getTimeService();
-  final long startupWaitTime=getConfiguration().getStateRetrievalTimeout();
+  final long startupWaitTime=getConfiguration().clustering().stateTransfer().timeout();
   final long giveUpTime=timeService.expectedEndTime(startupWaitTime,TimeUnit.MILLISECONDS);
   while (!timeService.isTimeExpired(giveUpTime)) {
     if (state.allowInvocations())     break;
     Thread.sleep(pollFrequencyMS);
   }
-  if (!state.allowInvocations())   throw new IllegalStateException("Cache not in STARTED state, even after waiting " + getConfiguration().getStateRetrievalTimeout() + " millis.");
+  if (!state.allowInvocations())   throw new IllegalStateException("Cache not in STARTED state, even after waiting " + startupWaitTime + " millis.");
 }
