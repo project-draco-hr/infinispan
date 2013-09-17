@@ -1,0 +1,27 @@
+{
+  InputStream xsltInStream=FileLookupFactory.newInstance().lookupFile(xsltFile,cl);
+  if (xsltInStream == null) {
+    throw new IllegalStateException("Cold not find xslt file! : " + xsltFile);
+  }
+  try {
+    Document document=getInputDocument(is);
+    Transformer transformer=getTransformer(xsltInStream);
+    DOMSource source=new DOMSource(document);
+    ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+    StreamResult result=new StreamResult(byteArrayOutputStream);
+    transformer.transform(source,result);
+    InputStream indentation=FileLookupFactory.newInstance().lookupFile("xslt/indent.xslt",cl);
+    try {
+      transformer=getTransformer(indentation);
+      StreamResult finalResult=new StreamResult(os);
+      StreamSource rawResult=new StreamSource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+      transformer.transform(rawResult,finalResult);
+    }
+  finally {
+      Util.close(indentation);
+    }
+  }
+  finally {
+    Util.close(xsltInStream);
+  }
+}

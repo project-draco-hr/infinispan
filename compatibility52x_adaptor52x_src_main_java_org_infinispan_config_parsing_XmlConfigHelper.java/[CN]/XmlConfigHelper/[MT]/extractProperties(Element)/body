@@ -1,0 +1,18 @@
+{
+  TypedProperties p=new TypedProperties();
+  NodeList list=source.getElementsByTagName("property");
+  if (list == null)   return null;
+  for (int loop=0; loop < list.getLength(); loop++) {
+    Node node=list.item(loop);
+    if (node.getNodeType() != Node.ELEMENT_NODE)     continue;
+    Element element=(Element)node;
+    String name=element.getAttribute("name");
+    String valueStr=element.getAttribute("value");
+    if (valueStr.length() > 0) {
+      valueStr=valueStr.trim();
+      valueStr=StringPropertyReplacer.replaceProperties(valueStr);
+      p.put(name,valueStr);
+    }
+  }
+  return p.isEmpty() ? null : p;
+}
