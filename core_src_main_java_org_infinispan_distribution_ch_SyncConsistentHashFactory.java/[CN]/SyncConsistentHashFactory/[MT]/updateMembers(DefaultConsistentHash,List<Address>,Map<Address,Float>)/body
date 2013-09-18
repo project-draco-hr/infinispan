@@ -1,0 +1,25 @@
+{
+  checkCapacityFactors(newMembers,actualCapacityFactors);
+  boolean sameCapacityFactors=actualCapacityFactors == null ? baseCH.getCapacityFactors() == null : actualCapacityFactors.equals(baseCH.getCapacityFactors());
+  if (newMembers.equals(baseCH.getMembers()) && sameCapacityFactors)   return baseCH;
+  int numSegments=baseCH.getNumSegments();
+  int numOwners=baseCH.getNumOwners();
+  HashSet<Address> leavers=new HashSet<Address>(baseCH.getMembers());
+  leavers.removeAll(newMembers);
+  DefaultConsistentHash rebalancedCH=null;
+  List<Address>[] newSegmentOwners=new List[numSegments];
+  for (int i=0; i < numSegments; i++) {
+    List<Address> owners=new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
+    owners.removeAll(leavers);
+    if (!owners.isEmpty()) {
+      newSegmentOwners[i]=owners;
+    }
+ else {
+      if (rebalancedCH == null) {
+        rebalancedCH=create(baseCH.getHashFunction(),numOwners,numSegments,newMembers,actualCapacityFactors);
+      }
+      newSegmentOwners[i]=rebalancedCH.locateOwnersForSegment(i);
+    }
+  }
+  return new DefaultConsistentHash(baseCH.getHashFunction(),numOwners,numSegments,newMembers,actualCapacityFactors,newSegmentOwners);
+}

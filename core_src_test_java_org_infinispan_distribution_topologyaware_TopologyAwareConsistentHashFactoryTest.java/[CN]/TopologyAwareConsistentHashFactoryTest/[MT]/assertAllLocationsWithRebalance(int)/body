@@ -1,15 +1,16 @@
 {
-  ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers);
-  assertAllLocations(numOwners,chMembers);
-  assertDistribution(numOwners,chMembers);
-  ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers.subList(0,1));
+  ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers,capacityFactors);
+  List<Address> membersWithLoad=computeNodesWithLoad(chMembers);
+  assertAllLocations(numOwners,membersWithLoad);
+  assertDistribution(numOwners,membersWithLoad);
+  ch=chf.create(new MurmurHash3(),numOwners,numSegments,chMembers.subList(0,1),capacityFactors);
   assertAllLocations(numOwners,chMembers.subList(0,1));
   for (int i=2; i <= chMembers.size(); i++) {
     List<Address> currentMembers=chMembers.subList(0,i);
     log.debugf("Created CH with numOwners %d, members %s",numOwners,currentMembers);
-    ch=chf.updateMembers(ch,currentMembers);
+    ch=chf.updateMembers(ch,currentMembers,capacityFactors);
     ch=chf.rebalance(ch);
-    assertAllLocations(numOwners,currentMembers);
-    assertDistribution(numOwners,currentMembers);
+    membersWithLoad=computeNodesWithLoad(currentMembers);
+    assertAllLocations(numOwners,membersWithLoad);
   }
 }

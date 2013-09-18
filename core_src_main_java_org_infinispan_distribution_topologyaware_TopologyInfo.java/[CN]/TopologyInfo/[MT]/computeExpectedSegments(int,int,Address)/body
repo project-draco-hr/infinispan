@@ -1,0 +1,27 @@
+{
+  if (capacityFactors != null && capacityFactors.get(node) == 0.0)   return 0;
+  TopologyAwareAddress taa=(TopologyAwareAddress)node;
+  String siteId=taa.getSiteId();
+  String rackId=taa.getRackId();
+  String machineId=taa.getMachineId();
+  Site site=allSites.get(siteId);
+  Rack rack=site.racks.get(rackId);
+  Machine machine=rack.machines.get(machineId);
+  double maxSegments;
+  if (numOwners == 1) {
+    maxSegments=computeMaxSegmentsForNode(numSegments,numOwners,allNodes,node);
+  }
+ else   if (getAllNodesCount() <= numOwners) {
+    maxSegments=numSegments;
+  }
+ else   if (getAllMachinesCount() <= numOwners) {
+    maxSegments=computeMaxSegmentsForMachine(numSegments,numOwners,allMachines,machine,node);
+  }
+ else   if (getAllRacksCount() <= numOwners) {
+    maxSegments=computeMaxSegmentsForRack(numSegments,numOwners,allRacks,rack,machine,node);
+  }
+ else {
+    maxSegments=computeMaxSegmentsForSite(numSegments,numOwners,allSites.values(),site,rack,machine,node);
+  }
+  return (int)Math.round(maxSegments);
+}

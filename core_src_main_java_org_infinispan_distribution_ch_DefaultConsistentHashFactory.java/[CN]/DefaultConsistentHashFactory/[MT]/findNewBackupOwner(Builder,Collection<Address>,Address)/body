@@ -1,0 +1,16 @@
+{
+  Address best=null;
+  float initialCapacityFactor=owner != null ? builder.getCapacityFactor(owner) : 0;
+  float bestSegmentsPerCapacity=initialCapacityFactor != 0 ? (builder.getOwned(owner) - 1) / initialCapacityFactor : Float.MAX_VALUE;
+  for (  Address candidate : builder.getMembers()) {
+    if (excludes == null || !excludes.contains(candidate)) {
+      int owned=builder.getOwned(candidate);
+      float capacityFactor=builder.getCapacityFactor(candidate);
+      if ((owned + 1) <= capacityFactor * bestSegmentsPerCapacity) {
+        best=candidate;
+        bestSegmentsPerCapacity=(owned + 1) / capacityFactor;
+      }
+    }
+  }
+  return best;
+}

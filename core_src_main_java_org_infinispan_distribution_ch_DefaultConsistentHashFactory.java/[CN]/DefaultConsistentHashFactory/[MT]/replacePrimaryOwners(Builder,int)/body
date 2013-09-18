@@ -1,0 +1,17 @@
+{
+  boolean primaryOwnerReplaced=true;
+  while (primaryOwnerReplaced) {
+    Address worstNode=findWorstPrimaryOwner(builder,builder.getMembers());
+    primaryOwnerReplaced=false;
+    for (int segment=builder.getNumSegments() - 1; segment >= 0; segment--) {
+      if (builder.getOwners(segment).size() >= maxOwners)       continue;
+      if (!builder.getPrimaryOwner(segment).equals(worstNode))       continue;
+      Address newPrimary=findNewPrimaryOwner(builder,builder.getMembers(),worstNode);
+      if (newPrimary != null && !builder.getOwners(segment).contains(newPrimary)) {
+        builder.addPrimaryOwner(segment,newPrimary);
+        primaryOwnerReplaced=true;
+        worstNode=findWorstPrimaryOwner(builder,builder.getMembers());
+      }
+    }
+  }
+}

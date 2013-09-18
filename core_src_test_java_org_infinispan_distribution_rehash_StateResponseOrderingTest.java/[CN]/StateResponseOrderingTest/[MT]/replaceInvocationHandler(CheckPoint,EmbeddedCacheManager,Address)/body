@@ -1,0 +1,28 @@
+{
+  final InboundInvocationHandler handler=TestingUtil.extractGlobalComponent(manager,InboundInvocationHandler.class);
+  InboundInvocationHandler mockHandler=mock(InboundInvocationHandler.class);
+  doAnswer(new Answer<Object>(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      CacheRpcCommand command=(CacheRpcCommand)invocation.getArguments()[0];
+      Address source=(Address)invocation.getArguments()[1];
+      Response response=(Response)invocation.getArguments()[2];
+      boolean preserveOrder=(Boolean)invocation.getArguments()[3];
+      if (command instanceof StateRequestCommand && source.equals(nonOwner)) {
+        StateRequestCommand stateRequestCommand=(StateRequestCommand)command;
+        checkPoint.trigger("IN_" + stateRequestCommand.getType() + '_'+ manager.getAddress());
+        checkPoint.awaitStrict("OUT_" + stateRequestCommand.getType() + '_'+ manager.getAddress(),5,SECONDS);
+      }
+ else       if (command instanceof StateResponseCommand && manager.getAddress().equals(nonOwner)) {
+        checkPoint.trigger("IN_RESPONSE_" + source);
+        checkPoint.awaitStrict("OUT_RESPONSE_" + source,5,SECONDS);
+      }
+      handler.handle(command,source,response,preserveOrder);
+      return null;
+    }
+  }
+).when(mockHandler).handle(any(CacheRpcCommand.class),any(Address.class),any(Response.class),anyBoolean());
+  TestingUtil.replaceComponent(manager,InboundInvocationHandler.class,mockHandler,true);
+  Transport transport=TestingUtil.extractGlobalComponent(manager,Transport.class);
+  CommandAwareRpcDispatcher dispatcher=(CommandAwareRpcDispatcher)TestingUtil.extractField(transport,"dispatcher");
+  TestingUtil.replaceField(mockHandler,"inboundInvocationHandler",dispatcher,CommandAwareRpcDispatcher.class);
+}

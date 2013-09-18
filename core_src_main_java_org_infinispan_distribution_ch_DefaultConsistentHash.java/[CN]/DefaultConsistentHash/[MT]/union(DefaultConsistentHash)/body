@@ -15,5 +15,25 @@
     unionSegmentOwners[i]=new ArrayList<Address>(locateOwnersForSegment(i));
     mergeLists(unionSegmentOwners[i],dch2.locateOwnersForSegment(i));
   }
-  return new DefaultConsistentHash(hashFunction,numOwners,numSegments,unionMembers,unionSegmentOwners);
+  Map<Address,Float> unionCapacityFactors=null;
+  if (this.capacityFactors != null || dch2.capacityFactors != null) {
+    unionCapacityFactors=new HashMap<Address,Float>();
+    if (this.capacityFactors != null) {
+      unionCapacityFactors.putAll(this.capacityFactors);
+    }
+ else {
+      for (      Address node : this.members) {
+        unionCapacityFactors.put(node,1.0f);
+      }
+    }
+    if (dch2.capacityFactors != null) {
+      unionCapacityFactors.putAll(dch2.capacityFactors);
+    }
+ else {
+      for (      Address node : dch2.members) {
+        unionCapacityFactors.put(node,1.0f);
+      }
+    }
+  }
+  return new DefaultConsistentHash(hashFunction,numOwners,numSegments,unionMembers,unionCapacityFactors,unionSegmentOwners);
 }

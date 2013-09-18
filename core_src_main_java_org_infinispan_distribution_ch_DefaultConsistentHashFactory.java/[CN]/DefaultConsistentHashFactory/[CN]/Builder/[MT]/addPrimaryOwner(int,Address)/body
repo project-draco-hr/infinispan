@@ -1,0 +1,15 @@
+{
+  modCount++;
+  List<Address> segmentOwners=this.segmentOwners[segment];
+  int ownerIndex=segmentOwners.indexOf(newPrimaryOwner);
+  if (ownerIndex >= 0) {
+    throw new IllegalArgumentException("The new primary owner must not be a backup already");
+  }
+  if (!segmentOwners.isEmpty()) {
+    Address oldPrimaryOwner=segmentOwners.get(0);
+    stats.decPrimaryOwned(oldPrimaryOwner);
+  }
+  segmentOwners.add(0,newPrimaryOwner);
+  stats.incOwned(newPrimaryOwner);
+  stats.incPrimaryOwned(newPrimaryOwner);
+}

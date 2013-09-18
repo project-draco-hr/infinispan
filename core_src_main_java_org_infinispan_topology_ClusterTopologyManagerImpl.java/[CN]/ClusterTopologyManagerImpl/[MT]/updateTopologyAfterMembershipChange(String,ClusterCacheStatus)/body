@@ -15,11 +15,11 @@ synchronized (cacheStatus) {
       log.tracef("Initial topology installed for cache %s: %s",cacheName,newTopology);
       return false;
     }
-    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers);
+    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,cacheStatus.getCapacityFactors());
     ConsistentHash newPendingCH=null;
     if (pendingCH != null) {
       List<Address> newPendingMembers=cacheStatus.pruneInvalidMembers(pendingCH.getMembers());
-      newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers);
+      newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,cacheStatus.getCapacityFactors());
     }
     CacheTopology newTopology=new CacheTopology(topologyId + 1,newCurrentCH,newPendingCH);
     cacheStatus.updateCacheTopology(newTopology);

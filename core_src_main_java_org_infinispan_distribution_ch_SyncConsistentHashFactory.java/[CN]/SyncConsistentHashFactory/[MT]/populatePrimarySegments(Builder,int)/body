@@ -1,0 +1,46 @@
+{
+  int collisions=0;
+  List<Address> sortedMembers=builder.getSortedMembers();
+  int nodesWithLoad=builder.nodesWithLoad();
+  int numNodes=sortedMembers.size();
+  float maxCapacityFactor=1;
+  float totalCapacity=0;
+  for (  Address member : sortedMembers) {
+    Float capacityFactor=builder.getCapacityFactor(member);
+    if (capacityFactor > maxCapacityFactor) {
+      maxCapacityFactor=capacityFactor;
+    }
+    totalCapacity+=capacityFactor;
+  }
+  double totalVirtualNodes=nodesWithLoad * Math.sqrt(numSegments);
+  Map<Address,Integer> virtualNodeCounts=new HashMap<Address,Integer>(numNodes);
+  for (  Address member : sortedMembers) {
+    Float capacityFactor=builder.getCapacityFactor(member);
+    int vn=0;
+    if (capacityFactor > 0) {
+      vn=(int)Math.round(capacityFactor / totalCapacity * totalVirtualNodes + 1);
+    }
+    virtualNodeCounts.put(member,vn);
+  }
+  HashMap<Integer,Address> primarySegments=new HashMap<Integer,Address>();
+  for (int virtualNode=0; virtualNode < totalVirtualNodes; virtualNode++) {
+    for (    Address member : sortedMembers) {
+      if (virtualNode >= virtualNodeCounts.get(member))       continue;
+      int virtualNodeHash=normalizedHash(builder.getHashFunction(),member.hashCode());
+      if (virtualNode != 0) {
+        virtualNodeHash=normalizedHash(builder.getHashFunction(),virtualNodeHash + virtualNode);
+      }
+      int initSegment=virtualNodeHash / builder.getSegmentSize();
+      for (int i=0; i < numSegments; i++) {
+        int segment=(initSegment + i) % numSegments;
+        if (!primarySegments.containsKey(segment)) {
+          primarySegments.put(segment,member);
+          if (segment != initSegment)           collisions++;
+          break;
+        }
+      }
+    }
+    if (primarySegments.size() >= numSegments)     break;
+  }
+  return new TreeMap<Integer,Address>(primarySegments);
+}

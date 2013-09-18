@@ -1,0 +1,46 @@
+{
+  int numSegments=ch.getNumSegments();
+  List<Address> nodes=ch.getMembers();
+  int numNodes=nodes.size();
+  int actualNumOwners=computeActualNumOwners(ch.getNumOwners(),nodes,lfMap);
+  OwnershipStatistics stats=new OwnershipStatistics(nodes);
+  for (int i=0; i < numSegments; i++) {
+    List<Address> owners=ch.locateOwnersForSegment(i);
+    if (!allowExtraOwners) {
+      assertEquals(owners.size(),actualNumOwners);
+    }
+ else {
+      assertTrue(owners.size() >= actualNumOwners);
+    }
+    stats.incPrimaryOwned(owners.get(0));
+    for (int j=0; j < owners.size(); j++) {
+      Address owner=owners.get(j);
+      stats.incOwned(owner);
+      assertEquals(owners.indexOf(owner),j,"Found the same owner twice in the owners list");
+    }
+  }
+  float totalCapacity=computeTotalCapacity(nodes,lfMap);
+  float maxCapacityFactor=computeMaxCapacityFactor(nodes,lfMap);
+  Map<Address,Float> expectedOwnedMap=computeExpectedOwned(numSegments,numNodes,actualNumOwners,nodes,lfMap);
+  for (  Address node : nodes) {
+    float capacityFactor=lfMap != null ? lfMap.get(node) : 1;
+    float expectedPrimaryOwned=expectedPrimaryOwned(numSegments,numNodes,totalCapacity,capacityFactor);
+    float deviationPrimaryOwned=allowedDeviationPrimaryOwned(numSegments,numNodes,totalCapacity,maxCapacityFactor);
+    int minPrimaryOwned=(int)Math.floor(expectedPrimaryOwned - deviationPrimaryOwned);
+    int maxPrimaryOwned=(int)Math.ceil(expectedPrimaryOwned + deviationPrimaryOwned);
+    if (!allowExtraOwners) {
+      int primaryOwned=stats.getPrimaryOwned(node);
+      assertTrue(minPrimaryOwned <= primaryOwned);
+      assertTrue(primaryOwned <= maxPrimaryOwned);
+    }
+    float expectedOwned=expectedOwnedMap.get(node);
+    float deviationOwned=allowedDeviationOwned(numSegments,actualNumOwners,numNodes,totalCapacity,maxCapacityFactor);
+    int minOwned=(int)Math.floor(expectedOwned - deviationOwned);
+    int maxOwned=(int)Math.ceil(expectedOwned + deviationOwned);
+    int owned=stats.getOwned(node);
+    assertTrue(Math.floor(minOwned) <= owned);
+    if (!allowExtraOwners) {
+      assertTrue(owned <= Math.ceil(maxOwned));
+    }
+  }
+}

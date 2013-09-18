@@ -1,0 +1,18 @@
+{
+  if (actualMembers.size() == 0)   throw new IllegalArgumentException("Can't construct a consistent hash without any members");
+  checkCapacityFactors(actualMembers,actualCapacityFactors);
+  boolean sameCapacityFactors=actualCapacityFactors == null ? baseCH.getCapacityFactors() == null : actualCapacityFactors.equals(baseCH.getCapacityFactors());
+  if (actualMembers.equals(baseCH.getMembers()) && sameCapacityFactors)   return baseCH;
+  Builder builder=new Builder(baseCH,actualMembers,actualCapacityFactors);
+  Builder balancedBuilder=null;
+  for (int segment=0; segment < baseCH.getNumSegments(); segment++) {
+    if (builder.getOwners(segment).isEmpty()) {
+      if (balancedBuilder == null) {
+        balancedBuilder=new Builder(builder);
+        rebalanceBuilder(balancedBuilder);
+      }
+      builder.addOwners(segment,balancedBuilder.getOwners(segment));
+    }
+  }
+  return builder.build();
+}

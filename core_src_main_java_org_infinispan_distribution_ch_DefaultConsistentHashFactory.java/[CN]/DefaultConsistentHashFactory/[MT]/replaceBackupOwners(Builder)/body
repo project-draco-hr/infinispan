@@ -1,0 +1,23 @@
+{
+  List<Address> untestedNodes=new ArrayList<Address>(builder.getMembers());
+  while (!untestedNodes.isEmpty()) {
+    Address worstNode=findWorstBackupOwner(builder,untestedNodes);
+    boolean backupOwnerReplaced=false;
+    for (int segment=builder.getNumSegments() - 1; segment >= 0; segment--) {
+      List<Address> owners=builder.getOwners(segment);
+      int ownerIdx=owners.indexOf(worstNode);
+      if (ownerIdx <= 0)       continue;
+      Address replacement=findNewBackupOwner(builder,owners,worstNode);
+      if (replacement != null) {
+        builder.removeOwner(segment,worstNode);
+        builder.addOwner(segment,replacement);
+        backupOwnerReplaced=true;
+        untestedNodes=new ArrayList<Address>(builder.getMembers());
+        worstNode=findWorstBackupOwner(builder,untestedNodes);
+      }
+    }
+    if (!backupOwnerReplaced) {
+      untestedNodes.remove(worstNode);
+    }
+  }
+}

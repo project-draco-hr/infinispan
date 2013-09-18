@@ -1,0 +1,33 @@
+{
+  Map<Address,Float> expectedOwned=new HashMap<Address,Float>();
+  if (capacityFactors == null) {
+    float expected=Math.min(numSegments,(float)numSegments * actualNumOwners / numNodes);
+    for (    Address node : nodes) {
+      expectedOwned.put(node,expected);
+    }
+    return expectedOwned;
+  }
+  List<Address> sortedNodes=new ArrayList<Address>(nodes);
+  Collections.sort(sortedNodes,new Comparator<Address>(){
+    @Override public int compare(    Address o1,    Address o2){
+      return (int)Math.signum(capacityFactors.get(o2) - capacityFactors.get(o1));
+    }
+  }
+);
+  float totalCapacity=computeTotalCapacity(nodes,capacityFactors);
+  int remainingCopies=actualNumOwners * numSegments;
+  for (  Address node : sortedNodes) {
+    float nodeLoad=capacityFactors.get(node);
+    float nodeSegments;
+    if (remainingCopies * nodeLoad / totalCapacity > numSegments) {
+      nodeSegments=numSegments;
+      totalCapacity-=nodeLoad;
+      remainingCopies-=nodeSegments;
+    }
+ else {
+      nodeSegments=nodeLoad != 0 ? remainingCopies * nodeLoad / totalCapacity : 0;
+    }
+    expectedOwned.put(node,nodeSegments);
+  }
+  return expectedOwned;
+}

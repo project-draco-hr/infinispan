@@ -4,10 +4,13 @@
     List<Address> owners=builder.getOwners(segment);
     if (owners.size() >= builder.getActualNumOwners())     continue;
     int maxDistinctLocations=topologyInfo.getDistinctLocationsCount(level,builder.getActualNumOwners());
-    int distinctLocations=new TopologyInfo(owners).getDistinctLocationsCount(level,builder.getActualNumOwners());
+    TopologyInfo ownersInfo=new TopologyInfo(owners,builder.getCapacityFactors());
+    int distinctLocations=ownersInfo.getDistinctLocationsCount(level,builder.getActualNumOwners());
     if (distinctLocations == maxDistinctLocations)     continue;
+    float totalCapacity=topologyInfo.computeTotalCapacity(builder.getMembers(),builder.getCapacityFactors());
     for (    Address candidate : builder.getMembers()) {
-      int maxSegments=topologyInfo.computeMaxSegments(builder.getNumSegments(),builder.getActualNumOwners(),candidate) + extraSegments;
+      int nodeExtraSegments=(int)(extraSegments * builder.getCapacityFactor(candidate) / totalCapacity);
+      int maxSegments=topologyInfo.computeExpectedSegments(builder.getNumSegments(),builder.getActualNumOwners(),candidate) + nodeExtraSegments;
       if (builder.getOwned(candidate) < maxSegments) {
         if (!owners.contains(candidate) && !locationIsDuplicate(owners,candidate,level)) {
           builder.addOwner(segment,candidate);

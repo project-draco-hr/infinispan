@@ -1,0 +1,35 @@
+{
+  DefaultConsistentHash baseCH=chf.create(hashFunction,no,ns,nodes,lfMap);
+  assertEquals(lfMap,baseCH.getCapacityFactors());
+  checkDistribution(baseCH,lfMap,false);
+  int[][] nodeChanges={{1,0},{2,0},{0,1},{0,2},{1,1},{1,2},{2,1},{10,0},{0,10}};
+  List<Address> baseMembers=baseCH.getMembers();
+  assertSame(baseCH,chf.updateMembers(baseCH,baseMembers,lfMap));
+  assertSame(baseCH,chf.rebalance(baseCH));
+  int nodeIndex=baseMembers.size();
+  for (int i=0; i < nodeChanges.length; i++) {
+    int nodesToAdd=nodeChanges[i][0];
+    int nodesToRemove=nodeChanges[i][1];
+    if (nodesToRemove > baseMembers.size())     break;
+    if (nodesToRemove == baseMembers.size() && nodesToAdd == 0)     break;
+    List<Address> newMembers=new ArrayList<Address>(baseMembers);
+    HashMap<Address,Float> newCapacityFactors=lfMap != null ? new HashMap<Address,Float>(lfMap) : null;
+    for (int k=0; k < nodesToRemove; k++) {
+      int indexToRemove=Math.abs(baseCH.getHashFunction().hash(k) % newMembers.size());
+      if (newCapacityFactors != null) {
+        newCapacityFactors.remove(newMembers.get(indexToRemove));
+      }
+      newMembers.remove(indexToRemove);
+    }
+    for (int k=0; k < nodesToAdd; k++) {
+      TestAddress address=new TestAddress(nodeIndex++,"TA");
+      newMembers.add(address);
+      if (newCapacityFactors != null) {
+        newCapacityFactors.put(address,lfMap.get(baseMembers.get(k % baseMembers.size())));
+      }
+    }
+    log.tracef("Testing consistent hash modifications iteration %d. Initial CH is %s. New members are %s",iterationCount,baseCH,newMembers);
+    baseCH=checkModificationsIteration(chf,baseCH,nodesToAdd,nodesToRemove,newMembers,newCapacityFactors);
+    iterationCount++;
+  }
+}

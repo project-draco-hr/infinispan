@@ -1,0 +1,15 @@
+{
+synchronized (this) {
+    if (members.contains(joiner)) {
+      if (trace)       log.tracef("Trying to add node %s to cache %s, but it is already a member: " + "members = %s, joiners = %s",joiner,cacheName,members,joiners);
+      return false;
+    }
+    HashMap<Address,Float> newCapacityFactors=new HashMap<Address,Float>(capacityFactors);
+    newCapacityFactors.put(joiner,joinInfo.getCapacityFactor());
+    capacityFactors=Immutables.immutableMapWrap(newCapacityFactors);
+    members=immutableAdd(members,joiner);
+    joiners=immutableAdd(joiners,joiner);
+    if (trace)     log.tracef("Added joiner %s to cache %s: members = %s, joiners = %s",joiner,cacheName,members,joiners);
+    return true;
+  }
+}
