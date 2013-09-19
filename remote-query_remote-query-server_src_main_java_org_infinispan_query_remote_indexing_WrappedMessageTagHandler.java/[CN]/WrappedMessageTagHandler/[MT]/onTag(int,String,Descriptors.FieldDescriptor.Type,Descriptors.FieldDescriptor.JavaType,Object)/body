@@ -1,5 +1,15 @@
 {
 switch (fieldNumber) {
+case wrappedEnum:
+    numericValue=value;
+  break;
+case wrappedBool:
+numericValue=Boolean.TRUE.equals(value) ? IndexingTagHandler.TRUE_INT : IndexingTagHandler.FALSE_INT;
+break;
+case wrappedBytes:
+case wrappedString:
+stringValue=(String)value;
+break;
 case wrappedDouble:
 case wrappedFloat:
 case wrappedInt64:
@@ -7,31 +17,20 @@ case wrappedUInt64:
 case wrappedInt32:
 case wrappedFixed64:
 case wrappedFixed32:
-case wrappedBool:
-case wrappedString:
-case wrappedBytes:
 case wrappedUInt32:
 case wrappedSFixed32:
 case wrappedSFixed64:
 case wrappedSInt32:
 case wrappedSInt64:
-case wrappedEnum:
-    luceneOptions.addFieldToDocument("theValue",String.valueOf(value),document);
-  break;
+numericValue=value;
+break;
 case wrappedDescriptorFullName:
 messageDescriptor=serCtx.getMessageDescriptor((String)value);
 break;
 case wrappedMessageBytes:
-byte[] bytes=(byte[])value;
-try {
-luceneOptions.addFieldToDocument(QueryFacadeImpl.TYPE_FIELD_NAME,messageDescriptor.getFullName(),document);
-new ProtobufParser().parse(new IndexingTagHandler(messageDescriptor,document,luceneOptions),messageDescriptor,bytes);
-}
- catch (IOException e) {
-throw new CacheException(e);
-}
+bytes=(byte[])value;
 break;
 default :
-throw new IllegalStateException();
+throw new IllegalStateException("Unexpected field : " + fieldNumber);
 }
 }

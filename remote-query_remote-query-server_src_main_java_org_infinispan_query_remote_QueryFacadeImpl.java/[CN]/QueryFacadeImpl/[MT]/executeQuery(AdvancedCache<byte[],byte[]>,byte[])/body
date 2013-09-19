@@ -7,6 +7,7 @@
   Class targetEntity;
   Descriptors.Descriptor messageDescriptor;
   QueryParser queryParser=new QueryParser();
+  SearchFactoryIntegrator searchFactory=(SearchFactoryIntegrator)searchManager.getSearchFactory();
   if (cache.getCacheConfiguration().compatibility().enabled()) {
     final QueryInterceptor queryInterceptor=ComponentRegistryUtils.getQueryInterceptor(cache);
     EntityNamesResolver entityNamesResolver=new EntityNamesResolver(){
@@ -18,7 +19,7 @@
       }
     }
 ;
-    LuceneProcessingChain processingChain=new LuceneProcessingChain((SearchFactoryIntegrator)searchManager.getSearchFactory(),entityNamesResolver,null);
+    LuceneProcessingChain processingChain=new LuceneProcessingChain.Builder(searchFactory,entityNamesResolver).buildProcessingChainForClassBasedEntities();
     LuceneQueryParsingResult parsingResult=queryParser.parseQuery(request.getJpqlString(),processingChain);
     MessageMarshaller messageMarshaller=(MessageMarshaller)serCtx.getMarshaller(parsingResult.getTargetEntity());
     messageDescriptor=serCtx.getMessageDescriptor(messageMarshaller.getTypeName());
@@ -29,43 +30,70 @@
  else {
     EntityNamesResolver entityNamesResolver=new EntityNamesResolver(){
       @Override public Class<?> getClassFromName(      String entityName){
-        try {
-          serCtx.getMessageDescriptor(entityName);
-        }
- catch (        Exception e) {
-          return null;
-        }
-        return ProtobufValueWrapper.class;
+        return serCtx.canMarshall(entityName) ? ProtobufValueWrapper.class : null;
       }
     }
 ;
-    IspnLuceneProcessingChain processingChain=new IspnLuceneProcessingChain(serCtx,(SearchFactoryIntegrator)searchManager.getSearchFactory(),entityNamesResolver,null);
-    IspnLuceneQueryParsingResult parsingResult=queryParser.parseQuery(request.getJpqlString(),processingChain);
-    messageDescriptor=parsingResult.getTargetType();
-    targetEntity=parsingResult.getTargetEntity();
-    projections=parsingResult.getProjections();
-    QueryBuilder qb=searchManager.getSearchFactory().buildQueryBuilder().forEntity(targetEntity).get();
-    luceneQuery=qb.bool().must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().matching(messageDescriptor.getFullName()).createQuery()).must(parsingResult.getQuery()).createQuery();
-  }
-  CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,targetEntity);
-  if (request.getSortCriteria() != null && !request.getSortCriteria().isEmpty()) {
-    SortField[] sortField=new SortField[request.getSortCriteria().size()];
-    int i=0;
-    for (    QueryRequest.SortCriteria sc : request.getSortCriteria()) {
-      Descriptors.FieldDescriptor field=getFieldDescriptor(messageDescriptor,sc.getAttributePath());
-      int sortType=SortField.STRING;
-      if (field != null) {
+    FieldBridgeProvider fieldBridgeProvider=new FieldBridgeProvider(){
+      @Override public FieldBridge getFieldBridge(      String type,      String propertyPath){
+        Descriptors.Descriptor md=serCtx.getMessageDescriptor(type);
+        Descriptors.FieldDescriptor fd=getFieldDescriptor(md,propertyPath);
+switch (fd.getType()) {
+case DOUBLE:
+          return new NullEncodingDoubleNumericFieldBridge(NULL_TOKEN);
+case FLOAT:
+        return new NullEncodingFloatNumericFieldBridge(NULL_TOKEN);
+case INT64:
+case UINT64:
+case FIXED64:
+case SFIXED64:
+case SINT64:
+      return new NullEncodingLongNumericFieldBridge(NULL_TOKEN);
+case INT32:
+case FIXED32:
+case UINT32:
+case SFIXED32:
+case SINT32:
+case BOOL:
+case ENUM:
+    return new NullEncodingIntegerNumericFieldBridge(NULL_TOKEN);
+case STRING:
+case BYTES:
+case GROUP:
+case MESSAGE:
+  return new NullEncodingTwoWayFieldBridge(BridgeFactory.STRING,NULL_TOKEN);
+}
+return null;
+}
+}
+;
+LuceneProcessingChain processingChain=new LuceneProcessingChain.Builder(searchFactory,entityNamesResolver).buildProcessingChainForDynamicEntities(fieldBridgeProvider);
+LuceneQueryParsingResult parsingResult=queryParser.parseQuery(request.getJpqlString(),processingChain);
+targetEntity=parsingResult.getTargetEntity();
+messageDescriptor=serCtx.getMessageDescriptor(parsingResult.getTargetEntityName());
+projections=parsingResult.getProjections();
+QueryBuilder qb=searchManager.getSearchFactory().buildQueryBuilder().forEntity(targetEntity).get();
+luceneQuery=qb.bool().must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(messageDescriptor.getFullName()).createQuery()).must(parsingResult.getQuery()).createQuery();
+}
+CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,targetEntity);
+if (request.getSortCriteria() != null && !request.getSortCriteria().isEmpty()) {
+SortField[] sortField=new SortField[request.getSortCriteria().size()];
+int i=0;
+for (QueryRequest.SortCriteria sc : request.getSortCriteria()) {
+Descriptors.FieldDescriptor field=getFieldDescriptor(messageDescriptor,sc.getAttributePath());
+int sortType=SortField.STRING;
+if (field != null) {
 switch (field.getJavaType()) {
 case INT:
 case BOOLEAN:
 case ENUM:
-          sortType=SortField.INT;
-        break;
+sortType=SortField.INT;
+break;
 case LONG:
-      sortType=SortField.LONG;
-    break;
+sortType=SortField.LONG;
+break;
 case FLOAT:
-  sortType=SortField.FLOAT;
+sortType=SortField.FLOAT;
 break;
 case DOUBLE:
 sortType=SortField.DOUBLE;
