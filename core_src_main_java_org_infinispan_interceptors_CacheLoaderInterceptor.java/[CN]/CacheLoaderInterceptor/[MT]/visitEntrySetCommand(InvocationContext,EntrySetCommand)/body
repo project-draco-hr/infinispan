@@ -1,17 +1,16 @@
 {
   Object entrySet=super.visitEntrySetCommand(ctx,command);
   if (enabled && !shouldSkipCacheLoader(command)) {
-    final Set<InternalCacheEntry> union=new HashSet<InternalCacheEntry>();
-    final Set<Object> processedKeys=new HashSet<Object>();
+    final ConcurrentHashSet<InternalCacheEntry> union=new ConcurrentHashSet<InternalCacheEntry>();
+    final ConcurrentHashSet<Object> processedKeys=new ConcurrentHashSet<Object>();
     for (    InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)     processedKeys.add(ice.getKey());
     persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys),new AdvancedCacheLoader.CacheLoaderTask(){
       @Override public void processEntry(      MarshalledEntry marshalledEntry,      AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-        processedKeys.add(marshalledEntry.getKey());
         union.add(iceFactory.create(marshalledEntry.getKey(),marshalledEntry.getValue(),marshalledEntry.getMetadata()));
       }
     }
 ,true,true);
-    union.addAll((Set<InternalCacheEntry>)entrySet);
+    for (    InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)     union.add(ice);
     return Collections.unmodifiableSet(union);
   }
   return entrySet;

@@ -1,17 +1,15 @@
 {
   Object values=super.visitValuesCommand(ctx,command);
   if (enabled && !shouldSkipCacheLoader(command)) {
-    final Set<Object> processedKeys=new HashSet<Object>();
-    final List<Object> result=new ArrayList<Object>();
-    persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys),new AdvancedCacheLoader.CacheLoaderTask(){
+    final ConcurrentLinkedQueue<Object> result=new ConcurrentLinkedQueue<Object>();
+    persistenceManager.processOnAllStores(null,new AdvancedCacheLoader.CacheLoaderTask(){
       @Override public void processEntry(      MarshalledEntry marshalledEntry,      AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-        processedKeys.add(marshalledEntry.getKey());
         result.add(marshalledEntry.getValue());
       }
     }
 ,true,false);
     result.addAll((Collection<Object>)values);
-    return Collections.unmodifiableList(result);
+    return result;
   }
   return values;
 }
