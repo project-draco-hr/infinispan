@@ -1,0 +1,40 @@
+{
+  final String key="some-key";
+  String value="some-value";
+  final String otherValue="some-new-value";
+  final Cache<Object,String> nonOwner=getFirstNonOwner(key);
+  final Cache<Object,String> owner=getFirstOwner(key);
+  owner.put(key,value);
+  nonOwner.get(key);
+  assertIsInL1(nonOwner,key);
+  try {
+    TransactionManager ownerManger=TestingUtil.getTransactionManager(owner);
+    ownerManger.begin();
+    owner.put(key,otherValue);
+    Future<String> futureGet=fork(new Callable<String>(){
+      @Override public String call() throws Exception {
+        TransactionManager mgr=TestingUtil.getTransactionManager(nonOwner);
+        mgr.begin();
+        try {
+          return nonOwner.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key);
+        }
+  finally {
+          mgr.commit();
+        }
+      }
+    }
+);
+    try {
+      futureGet.get(1,TimeUnit.SECONDS);
+      fail("Get command should have blocked waiting");
+    }
+ catch (    TimeoutException e) {
+    }
+    ownerManger.commit();
+    assertEquals(otherValue,futureGet.get(1,TimeUnit.SECONDS));
+    assertIsInL1(nonOwner,key);
+  }
+  finally {
+    nonOwner.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+  }
+}
