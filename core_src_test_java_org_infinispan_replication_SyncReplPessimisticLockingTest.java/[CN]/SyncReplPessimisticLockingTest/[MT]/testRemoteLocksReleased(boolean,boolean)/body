@@ -1,0 +1,33 @@
+{
+  MagicKey key=new MagicKey(cache(0,"testcache"));
+  tm(1,"testcache").begin();
+  if (write) {
+    cache(1,"testcache").put(key,"somevalue");
+  }
+ else {
+    cache(1,"testcache").getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key);
+  }
+  Collection<LocalTransaction> localTxs=TestingUtil.getTransactionTable(cache(1,"testcache")).getLocalTransactions();
+  assertEquals(1,localTxs.size());
+  LocalTransaction localTx=localTxs.iterator().next();
+  if (write) {
+    assertFalse(localTx.isReadOnly());
+  }
+ else {
+    assertTrue(localTx.isReadOnly());
+  }
+  Collection<RemoteTransaction> remoteTxs=TestingUtil.getTransactionTable(cache(0,"testcache")).getRemoteTransactions();
+  assertEquals(1,remoteTxs.size());
+  RemoteTransaction remoteTx=remoteTxs.iterator().next();
+  assertTrue(remoteTx.getLockedKeys().contains(key));
+  assertTrue(TestingUtil.extractLockManager(cache(0,"testcache")).isLocked(key));
+  if (commit) {
+    tm(1,"testcache").commit();
+    Thread.sleep(100);
+  }
+ else {
+    tm(1,"testcache").rollback();
+  }
+  assertEquals(0,TestingUtil.getTransactionTable(cache(0,"testcache")).getRemoteTxCount());
+  assertFalse(TestingUtil.extractLockManager(cache(0,"testcache")).isLocked(key));
+}
