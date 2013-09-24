@@ -1,10 +1,12 @@
 {
   Object key=command.getKey();
   TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
-  command.setKey(converter.boxKey(key));
   Object oldValue=command.getOldValue();
-  command.setOldValue(converter.boxValue(oldValue));
-  command.setNewValue(converter.boxValue(command.getNewValue()));
+  if (ctx.isOriginLocal()) {
+    command.setKey(converter.boxKey(key));
+    command.setOldValue(converter.boxValue(oldValue));
+    command.setNewValue(converter.boxValue(command.getNewValue()));
+  }
   addVersionIfNeeded(command);
   Object ret=invokeNextInterceptor(ctx,command);
   if (oldValue != null && ret instanceof Boolean)   return ret;

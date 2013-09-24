@@ -1,10 +1,12 @@
 {
   Object key=command.getKey();
   TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
-  command.setKey(converter.boxKey(key));
   Object conditionalValue=command.getValue();
-  command.setValue(converter.boxValue(conditionalValue));
+  if (ctx.isOriginLocal()) {
+    command.setKey(converter.boxKey(key));
+    command.setValue(converter.boxValue(conditionalValue));
+  }
   Object ret=invokeNextInterceptor(ctx,command);
   if (conditionalValue != null && ret instanceof Boolean)   return ret;
-  return converter.unboxValue(ret);
+  return ctx.isOriginLocal() ? converter.unboxValue(ret) : ret;
 }

@@ -1,8 +1,10 @@
 {
   Object key=command.getKey();
   TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
-  command.setKey(converter.boxKey(key));
-  command.setValue(converter.boxValue(command.getValue()));
+  if (ctx.isOriginLocal()) {
+    command.setKey(converter.boxKey(key));
+    command.setValue(converter.boxValue(command.getValue()));
+  }
   Object ret=invokeNextInterceptor(ctx,command);
   return converter.unboxValue(ret);
 }
