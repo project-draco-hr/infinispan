@@ -16,18 +16,22 @@
  else {
     assertTrue(localTx.isReadOnly());
   }
-  Collection<RemoteTransaction> remoteTxs=TestingUtil.getTransactionTable(cache(0,"testcache")).getRemoteTransactions();
+  final Collection<RemoteTransaction> remoteTxs=TestingUtil.getTransactionTable(cache(0,"testcache")).getRemoteTransactions();
   assertEquals(1,remoteTxs.size());
   RemoteTransaction remoteTx=remoteTxs.iterator().next();
   assertTrue(remoteTx.getLockedKeys().contains(key));
   assertTrue(TestingUtil.extractLockManager(cache(0,"testcache")).isLocked(key));
   if (commit) {
     tm(1,"testcache").commit();
-    Thread.sleep(100);
   }
  else {
     tm(1,"testcache").rollback();
   }
-  assertEquals(0,TestingUtil.getTransactionTable(cache(0,"testcache")).getRemoteTxCount());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return remoteTxs.isEmpty();
+    }
+  }
+);
   assertFalse(TestingUtil.extractLockManager(cache(0,"testcache")).isLocked(key));
 }
