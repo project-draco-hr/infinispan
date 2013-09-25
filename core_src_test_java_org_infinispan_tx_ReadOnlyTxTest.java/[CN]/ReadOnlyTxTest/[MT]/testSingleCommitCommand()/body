@@ -1,0 +1,14 @@
+{
+  cache.put("k","v");
+  CommitCommandCounterInterceptor counterInterceptor=new CommitCommandCounterInterceptor();
+  cache.getAdvancedCache().addInterceptor(counterInterceptor,0);
+  try {
+    tm().begin();
+    AssertJUnit.assertEquals("Wrong value for key k.","v",cache.get("k"));
+    tm().commit();
+  }
+  finally {
+    cache.getAdvancedCache().getAdvancedCache().removeInterceptor(counterInterceptor.getClass());
+  }
+  AssertJUnit.assertEquals("Wrong number of CommitCommand.",numberCommitCommand(),counterInterceptor.counter.get());
+}

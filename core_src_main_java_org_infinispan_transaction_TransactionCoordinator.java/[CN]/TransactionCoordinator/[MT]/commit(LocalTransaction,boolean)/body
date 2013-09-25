@@ -15,15 +15,8 @@
     }
     return true;
   }
- else {
-    CommitCommand commitCommand=commandCreator.createCommitCommand(localTransaction.getGlobalTransaction());
-    try {
-      invoker.invoke(ctx,commitCommand);
-      txTable.removeLocalTransaction(localTransaction);
-    }
- catch (    Throwable e) {
-      handleCommitFailure(e,localTransaction,false);
-    }
-    return false;
+ else   if (!localTransaction.isReadOnly()) {
+    commitInternal(localTransaction);
   }
+  return false;
 }
