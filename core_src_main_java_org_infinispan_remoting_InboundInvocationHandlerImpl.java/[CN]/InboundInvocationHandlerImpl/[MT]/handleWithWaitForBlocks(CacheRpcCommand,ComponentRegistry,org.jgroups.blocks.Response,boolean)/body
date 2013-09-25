@@ -44,30 +44,38 @@ catch (        Throwable throwable) {
       }
     }
 );
-    return;
   }
- else   if (!preserveOrder && cmd.canBlock()) {
-    remoteCommandsExecutor.execute(new Runnable(){
-      @Override public void run(){
-        Response resp;
-        try {
-          resp=handleInternal(cmd,cr);
+ else {
+    final StateTransferLock stateTransferLock=cr.getStateTransferLock();
+    final int commandTopologyId=extractCommandTopologyId(cmd);
+    if (!preserveOrder && cmd.canBlock()) {
+      remoteCommandsExecutor.execute(new BlockingRunnable(){
+        @Override public boolean isReady(){
+          return stateTransferLock.transactionDataReceived(commandTopologyId);
         }
- catch (        Throwable throwable) {
-          log.exceptionHandlingCommand(cmd,throwable);
-          resp=new ExceptionResponse(new CacheException("Problems invoking command.",throwable));
+        @Override public void run(){
+          Response resp;
+          try {
+            resp=handleInternal(cmd,cr);
+          }
+ catch (          Throwable throwable) {
+            log.exceptionHandlingCommand(cmd,throwable);
+            resp=new ExceptionResponse(new CacheException("Problems invoking command.",throwable));
+          }
+          reply(response,resp);
+          afterResponseSent(cmd,resp);
         }
-        reply(response,resp);
-        afterResponseSent(cmd,resp);
       }
-    }
 );
-    return;
+    }
+ else {
+      stateTransferLock.waitForTransactionData(commandTopologyId,1,TimeUnit.DAYS);
+      Response resp=handleInternal(cmd,cr);
+      if (trace && resp != null && !resp.isValid()) {
+        log.tracef("Unable to execute command, got invalid response %s",resp);
+      }
+      reply(response,resp);
+      afterResponseSent(cmd,resp);
+    }
   }
-  Response resp=handleInternal(cmd,cr);
-  if (trace && resp != null && !resp.isValid()) {
-    log.tracef("Unable to execute command, got invalid response %s",resp);
-  }
-  reply(response,resp);
-  afterResponseSent(cmd,resp);
 }

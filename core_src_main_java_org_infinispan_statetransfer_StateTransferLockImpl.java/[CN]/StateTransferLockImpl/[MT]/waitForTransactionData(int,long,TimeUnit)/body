@@ -1,0 +1,22 @@
+{
+  if (trace) {
+    log.tracef("Waiting for transaction data for topology %d, current topology is %d",expectedTopologyId,transactionDataTopologyId);
+  }
+  if (transactionDataTopologyId >= expectedTopologyId)   return;
+  transactionDataLock.lock();
+  try {
+    long timeoutNanos=unit.toNanos(timeout);
+    while (transactionDataTopologyId < expectedTopologyId && timeoutNanos > 0) {
+      timeoutNanos=transactionDataCondition.awaitNanos(timeoutNanos);
+    }
+    if (timeoutNanos <= 0) {
+      throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
+    }
+  }
+  finally {
+    transactionDataLock.unlock();
+  }
+  if (trace) {
+    log.tracef("Received transaction data for topology %d, expected topology was %d",transactionDataTopologyId,expectedTopologyId);
+  }
+}

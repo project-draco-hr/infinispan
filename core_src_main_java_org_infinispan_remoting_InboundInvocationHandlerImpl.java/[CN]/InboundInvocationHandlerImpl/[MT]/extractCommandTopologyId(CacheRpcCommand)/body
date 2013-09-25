@@ -1,0 +1,20 @@
+{
+  int commandTopologyId=-1;
+  if (cmd instanceof SingleRpcCommand) {
+    ReplicableCommand innerCmd=((SingleRpcCommand)cmd).getCommand();
+    if (innerCmd instanceof TopologyAffectedCommand) {
+      commandTopologyId=((TopologyAffectedCommand)innerCmd).getTopologyId();
+    }
+  }
+ else   if (cmd instanceof MultipleRpcCommand) {
+    for (    ReplicableCommand innerCmd : ((MultipleRpcCommand)cmd).getCommands()) {
+      if (innerCmd instanceof TopologyAffectedCommand) {
+        commandTopologyId=Math.max(((TopologyAffectedCommand)innerCmd).getTopologyId(),commandTopologyId);
+      }
+    }
+  }
+ else   if (cmd instanceof TopologyAffectedCommand) {
+    commandTopologyId=((TopologyAffectedCommand)cmd).getTopologyId();
+  }
+  return commandTopologyId;
+}

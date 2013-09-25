@@ -6,7 +6,11 @@
     log.tracef("Signalling topology %d is installed",topologyId);
   }
   this.topologyId=topologyId;
-synchronized (topologyLock) {
-    topologyLock.notifyAll();
+  topologyLock.lock();
+  try {
+    topologyCondition.signalAll();
+  }
+  finally {
+    topologyLock.unlock();
   }
 }

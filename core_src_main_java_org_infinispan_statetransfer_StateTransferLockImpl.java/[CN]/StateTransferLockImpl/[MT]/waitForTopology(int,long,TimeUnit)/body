@@ -1,0 +1,22 @@
+{
+  if (topologyId >= expectedTopologyId)   return;
+  if (trace) {
+    log.tracef("Waiting for topology %d to be installed, current topology is %d",expectedTopologyId,topologyId);
+  }
+  topologyLock.lock();
+  try {
+    long timeoutNanos=unit.toNanos(timeout);
+    while (topologyId < expectedTopologyId && timeoutNanos > 0) {
+      timeoutNanos=topologyCondition.awaitNanos(timeoutNanos);
+    }
+    if (timeoutNanos <= 0) {
+      throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
+    }
+  }
+  finally {
+    topologyLock.unlock();
+  }
+  if (trace) {
+    log.tracef("Topology %d is now installed, expected topology was %d",topologyId,expectedTopologyId);
+  }
+}

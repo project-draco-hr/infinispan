@@ -6,7 +6,11 @@
     log.tracef("Signalling transaction data received for topology %d",topologyId);
   }
   transactionDataTopologyId=topologyId;
-synchronized (transactionDataLock) {
-    transactionDataLock.notifyAll();
+  transactionDataLock.lock();
+  try {
+    transactionDataCondition.signalAll();
+  }
+  finally {
+    transactionDataLock.unlock();
   }
 }
