@@ -1,0 +1,21 @@
+{
+  Stats stats=fileStats.get(file);
+  if (stats == null) {
+    int fileSize=(int)fileProvider.getFileSize(file);
+    stats=new Stats(fileSize,0);
+    Stats other=fileStats.putIfAbsent(file,stats);
+    if (other != null) {
+      if (fileSize > other.getTotal()) {
+        other.setTotal(fileSize);
+      }
+      return other;
+    }
+  }
+  if (stats.getTotal() < 0) {
+    int fileSize=(int)fileProvider.getFileSize(file);
+    if (fileSize >= 0) {
+      stats.setTotal(fileSize);
+    }
+  }
+  return stats;
+}

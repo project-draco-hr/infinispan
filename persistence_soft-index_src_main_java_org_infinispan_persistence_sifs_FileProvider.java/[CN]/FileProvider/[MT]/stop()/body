@@ -1,0 +1,21 @@
+{
+  int open=currentOpenFiles.get();
+  while (open > 0) {
+    try {
+      if (tryCloseFile()) {
+        open=currentOpenFiles.decrementAndGet();
+      }
+ else {
+        break;
+      }
+    }
+ catch (    IOException e) {
+      log.error("Failed to close file",e);
+    }
+  }
+  if (currentOpenFiles.get() != 0) {
+    for (    Map.Entry<Integer,Record> entry : openFiles.entrySet()) {
+      log.warn("File " + entry.getKey() + " open: "+ entry.getValue().handleCount+ " handles");
+    }
+  }
+}

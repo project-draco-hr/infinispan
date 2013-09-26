@@ -1,0 +1,23 @@
+{
+  byte[][] newKeyParts=new byte[childTo - childFrom][];
+  if (newPrefixExtension.length > 0) {
+    for (int i=childFrom; i < childTo; ++i) {
+      newKeyParts[i - childFrom]=substring(keyParts[i],newPrefixExtension.length,keyParts[i].length);
+    }
+  }
+ else {
+    System.arraycopy(keyParts,childFrom,newKeyParts,0,childTo - childFrom);
+  }
+  byte[] newPrefix=childFrom == childTo ? new byte[0] : concat(prefix,newPrefixExtension);
+  if (innerNodes != null) {
+    InnerNode[] newInnerNodes=new InnerNode[childTo - childFrom + 1];
+    System.arraycopy(innerNodes,childFrom,newInnerNodes,0,childTo - childFrom + 1);
+    return new IndexNode(segment,newPrefix,newKeyParts,newInnerNodes);
+  }
+ else   if (leafNodes != null) {
+    LeafNode[] newLeafNodes=new LeafNode[childTo - childFrom + 1];
+    System.arraycopy(leafNodes,childFrom,newLeafNodes,0,childTo - childFrom + 1);
+    return new IndexNode(segment,newPrefix,newKeyParts,newLeafNodes);
+  }
+  throw new IllegalStateException();
+}

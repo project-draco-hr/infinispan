@@ -1,0 +1,32 @@
+{
+  InnerNode[] newInnerNodes=new InnerNode[innerNodes.length + newNodes.size() - 1 - oldNodesTo + oldNodesFrom];
+  System.arraycopy(innerNodes,0,newInnerNodes,0,oldNodesFrom);
+  System.arraycopy(innerNodes,oldNodesTo + 1,newInnerNodes,oldNodesFrom + newNodes.size(),innerNodes.length - oldNodesTo - 1);
+  for (int i=0; i < newNodes.size(); ++i) {
+    IndexNode node=newNodes.get(i);
+    Index.IndexSpace space=segment.allocateIndexSpace(node.length());
+    node.store(space);
+    newInnerNodes[i + oldNodesFrom]=new InnerNode(node);
+  }
+  byte[][] newKeys=new byte[newNodes.size() - 1][];
+  byte[] newPrefix=prefix;
+  for (int i=0; i < newKeys.length; ++i) {
+    try {
+      newKeys[i]=newNodes.get(i + 1).leftmostKey();
+      if (newKeys[i] == null) {
+        throw new IllegalStateException();
+      }
+    }
+ catch (    IndexNodeOutdatedException e) {
+      throw new IllegalStateException("Index cannot be outdated for segment updater thread",e);
+    }
+    newPrefix=commonPrefix(newPrefix,newKeys[i]);
+  }
+  byte[][] newKeyParts=new byte[keyParts.length + newNodes.size() - 1 - oldNodesTo + oldNodesFrom][];
+  copyKeyParts(keyParts,0,newKeyParts,0,oldNodesFrom,prefix,newPrefix);
+  copyKeyParts(keyParts,oldNodesTo,newKeyParts,oldNodesFrom + newKeys.length,keyParts.length - oldNodesTo,prefix,newPrefix);
+  for (int i=0; i < newKeys.length; ++i) {
+    newKeyParts[i + oldNodesFrom]=substring(newKeys[i],newPrefix.length,newKeys[i].length);
+  }
+  return new IndexNode(segment,newPrefix,newKeyParts,newInnerNodes);
+}

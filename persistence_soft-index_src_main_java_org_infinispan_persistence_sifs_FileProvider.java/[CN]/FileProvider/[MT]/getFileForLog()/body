@@ -1,0 +1,23 @@
+{
+  lock.writeLock().lock();
+  try {
+    for (; ; ) {
+      File f=new File(dataDir,String.valueOf(nextFileId));
+      if (f.exists()) {
+        if (nextFileId == Integer.MAX_VALUE) {
+          nextFileId=0;
+        }
+ else {
+          nextFileId++;
+        }
+      }
+ else {
+        logFiles.add(nextFileId);
+        return new Log(nextFileId,new FileOutputStream(new File(dataDir,String.valueOf(nextFileId))).getChannel());
+      }
+    }
+  }
+  finally {
+    lock.writeLock().unlock();
+  }
+}

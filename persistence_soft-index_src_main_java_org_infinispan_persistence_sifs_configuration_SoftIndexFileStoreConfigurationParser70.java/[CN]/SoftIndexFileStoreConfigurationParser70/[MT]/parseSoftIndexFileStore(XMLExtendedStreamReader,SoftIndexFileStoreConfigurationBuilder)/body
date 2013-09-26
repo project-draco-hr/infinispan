@@ -1,0 +1,46 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    String attrName=reader.getAttributeLocalName(i);
+    Attribute attribute=Attribute.forName(attrName);
+switch (attribute) {
+case DATA_LOCATION:
+      builder.dataLocation(value);
+    break;
+case INDEX_LOCATION:
+  builder.indexLocation(value);
+break;
+case INDEX_SEGMENTS:
+builder.indexSegments(Integer.parseInt(value));
+break;
+case INDEX_QUEUE_LENGTH:
+builder.indexQueueLength(Integer.parseInt(value));
+break;
+case MAX_FILE_SIZE:
+builder.maxFileSize(Integer.parseInt(value));
+break;
+case MIN_NODE_SIZE:
+builder.minNodeSize(Integer.parseInt(value));
+break;
+case MAX_NODE_SIZE:
+builder.maxNodeSize(Integer.parseInt(value));
+break;
+case SYNC_WRITES:
+builder.syncWrites(Boolean.parseBoolean(value));
+break;
+case OPEN_FILES_LIMIT:
+builder.openFilesLimit(Integer.parseInt(value));
+break;
+case COMPACTION_THRESHOLD:
+builder.compactionThreshold(Double.parseDouble(value));
+break;
+default :
+Parser70.parseStoreAttribute(reader,i,builder);
+break;
+}
+}
+if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+throw ParseUtils.unexpectedElement(reader);
+}
+}

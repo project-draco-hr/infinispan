@@ -1,0 +1,40 @@
+{
+  EntryRecord headerAndKey;
+  if (keyReference == null || (headerAndKey=keyReference.get()) == null) {
+synchronized (this) {
+      if (keyReference == null || (headerAndKey=keyReference.get()) == null) {
+        boolean ownHandle=false;
+        if (handle == null) {
+          ownHandle=true;
+          handle=fileProvider.getFile(file);
+          if (handle == null) {
+            throw new IndexNodeOutdatedException(file + ":" + offset);
+          }
+        }
+        try {
+          EntryHeader header=EntryRecord.readEntryHeader(handle,offset);
+          if (header == null) {
+            throw new IllegalStateException("Error reading header from " + file + ":"+ offset+ " | "+ handle.getFileSize());
+          }
+          headerAndKey=new EntryRecord(header,EntryRecord.readKey(handle,header,offset),null,null);
+          keyReference=new SoftReference<EntryRecord>(headerAndKey);
+        }
+  finally {
+          if (ownHandle) {
+            handle.close();
+          }
+        }
+      }
+    }
+  }
+  if (headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
+    EntryRecord expired=headerAndKey;
+    headerAndKey=new EntryRecord(headerAndKey.getHeader(),null,null,null);
+synchronized (this) {
+      if (keyReference.get() == expired) {
+        keyReference=new SoftReference<EntryRecord>(headerAndKey);
+      }
+    }
+  }
+  return headerAndKey;
+}

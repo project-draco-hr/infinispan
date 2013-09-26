@@ -1,0 +1,32 @@
+{
+  try {
+    for (; ; ) {
+      EntryPosition entry=temporaryTable.get(key);
+      if (entry != null) {
+        if (entry.offset < 0) {
+          return false;
+        }
+        FileProvider.Handle handle=fileProvider.getFile(entry.file);
+        if (handle != null) {
+          try {
+            EntryHeader header=EntryRecord.readEntryHeader(handle,entry.offset);
+            if (header == null) {
+              throw new IllegalStateException("Error reading from " + entry.file + ":"+ entry.offset+ " | "+ handle.getFileSize());
+            }
+            return header.expiryTime() < 0 || header.expiryTime() > timeService.wallClockTime();
+          }
+  finally {
+            handle.close();
+          }
+        }
+      }
+ else {
+        EntryPosition position=index.getPosition(key,marshaller.objectToByteBuffer(key));
+        return position != null;
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new PersistenceException("Cannot load key from index",e);
+  }
+}

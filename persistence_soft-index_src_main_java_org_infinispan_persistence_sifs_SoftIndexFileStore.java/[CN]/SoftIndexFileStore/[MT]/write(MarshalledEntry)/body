@@ -1,0 +1,15 @@
+{
+  int keyLength=entry.getKeyBytes().getLength();
+  if (keyLength > maxKeyLength) {
+    throw new PersistenceException("Configuration 'maxNodeSize' is too low - with maxNodeSize=" + configuration.maxNodeSize() + " bytes you can use only keys serialized to "+ maxKeyLength+ " bytes (key "+ entry.getKey()+ " is serialized to "+ keyLength+ " bytes)");
+  }
+ else   if (keyLength > Short.MAX_VALUE) {
+    throw new PersistenceException("SoftIndexFileStore is limited to keys with serialized size <= 32767 bytes");
+  }
+  try {
+    storeQueue.pushAndWait(LogRequest.storeRequest(entry));
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+}

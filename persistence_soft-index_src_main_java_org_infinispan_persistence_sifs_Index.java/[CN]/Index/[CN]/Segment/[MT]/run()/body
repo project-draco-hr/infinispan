@@ -1,0 +1,89 @@
+{
+  try {
+    int counter=0;
+    while (true) {
+      if (++counter % 30000 == 0) {
+        log.debug("Queue size is " + indexQueue.size());
+      }
+      final IndexRequest request=indexQueue.take();
+      if (trace)       log.trace("Indexing " + request);
+switch (request.getType()) {
+case CLEAR:
+        IndexRequest cleared;
+      while ((cleared=indexQueue.poll()) != null) {
+        cleared.setResult(false);
+      }
+    CountDownLatch pause=new CountDownLatch(1);
+  request.setResult(pause);
+log.debug("Waiting for cleared " + System.nanoTime());
+pause.await();
+continue;
+case DELETE_FILE:
+if (request.countDown()) {
+fileProvider.deleteFile(request.getFile());
+compactor.releaseStats(request.getFile());
+}
+continue;
+case STOP:
+return;
+case GET_SIZE:
+request.setResult(size.get());
+continue;
+}
+IndexNode.OverwriteHook overwriteHook;
+if (request.isCompareAndSet()) {
+overwriteHook=new IndexNode.OverwriteHook(){
+@Override public boolean check(int oldFile,int oldOffset){
+return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
+}
+@Override public void setOverwritten(boolean overwritten,int prevFile,int prevOffset){
+if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
+size.decrementAndGet();
+}
+}
+}
+;
+}
+ else {
+overwriteHook=new IndexNode.OverwriteHook(){
+@Override public void setOverwritten(boolean overwritten,int prevFile,int prevOffset){
+request.setResult(overwritten);
+if (request.getOffset() >= 0 && prevOffset < 0) {
+size.incrementAndGet();
+}
+ else if (request.getOffset() < 0 && prevOffset >= 0) {
+size.decrementAndGet();
+}
+}
+}
+;
+}
+try {
+IndexNode.setPosition(root,request.getSerializedKey(),request.getFile(),request.getOffset(),request.getSize(),overwriteHook);
+}
+ catch (IllegalStateException e) {
+throw new IllegalStateException(request.toString(),e);
+}
+request.setResult(false);
+temporaryTable.removeConditionally(request.getKey(),request.getFile(),request.getOffset());
+}
+}
+ catch (IOException e) {
+throw new RuntimeException(e);
+}
+catch (InterruptedException e) {
+throw new RuntimeException(e);
+}
+catch (Exception e) {
+log.error("Error in indexer thread",e);
+}
+ finally {
+try {
+indexFile.close();
+indexFileFile.delete();
+}
+ catch (IOException e) {
+log.error("Failed to close/delete the index",e);
+}
+}
+}

@@ -1,0 +1,28 @@
+{
+  this.segment=segment;
+  this.offset=offset;
+  this.occupiedSpace=occupiedSpace;
+  ByteBuffer buffer=loadBuffer(segment.getIndexFile(),offset,occupiedSpace);
+  prefix=new byte[buffer.getShort()];
+  buffer.get(prefix);
+  byte flags=buffer.get();
+  int numKeyParts=buffer.getShort();
+  keyParts=new byte[numKeyParts][];
+  for (int i=0; i < numKeyParts; ++i) {
+    keyParts[i]=new byte[buffer.getShort()];
+    buffer.get(keyParts[i]);
+  }
+  if ((flags & HAS_LEAVES) != 0) {
+    leafNodes=new LeafNode[numKeyParts + 1];
+    for (int i=0; i < numKeyParts + 1; ++i) {
+      leafNodes[i]=new LeafNode(buffer.getInt(),buffer.getInt());
+    }
+  }
+ else {
+    innerNodes=new InnerNode[numKeyParts + 1];
+    for (int i=0; i < numKeyParts + 1; ++i) {
+      innerNodes[i]=new InnerNode(buffer.getLong(),buffer.getShort());
+    }
+  }
+  if (trace)   log.tracef("Loaded %08x from %d:%d (length %d)",System.identityHashCode(this),offset,occupiedSpace,length());
+}

@@ -1,0 +1,60 @@
+{
+  try {
+    Iterator<Integer> iterator=fileProvider.getFileIterator();
+    while (iterator.hasNext()) {
+      int file=iterator.next();
+      log.debug("Loading entries from file " + file);
+      FileProvider.Handle handle=fileProvider.getFile(file);
+      if (handle == null) {
+        log.debug("File " + file + " was deleted during iteration");
+        fileFunctor.afterFile(file);
+        continue;
+      }
+      try {
+        int offset=0;
+        for (; ; ) {
+          EntryHeader header=EntryRecord.readEntryHeader(handle,offset);
+          if (header == null) {
+            break;
+          }
+          try {
+            byte[] serializedKey=EntryRecord.readKey(handle,header,offset);
+            if (serializedKey == null) {
+              break;
+            }
+            byte[] serializedMetadata=null;
+            if (readMetadata && header.metadataLength() > 0) {
+              serializedMetadata=EntryRecord.readMetadata(handle,header,offset);
+            }
+            byte[] serializedValue=null;
+            int offsetOrNegation=offset;
+            if (header.valueLength() > 0) {
+              if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                offsetOrNegation=~offset;
+              }
+ else               if (readValues) {
+                serializedValue=EntryRecord.readValue(handle,header,offset);
+              }
+            }
+ else {
+              offsetOrNegation=~offset;
+            }
+            if (!functor.apply(file,offsetOrNegation,header.totalLength(),serializedKey,serializedMetadata,serializedValue,header.seqId(),header.expiryTime())) {
+              return;
+            }
+          }
+  finally {
+            offset+=header.totalLength();
+          }
+        }
+      }
+  finally {
+        handle.close();
+        fileFunctor.afterFile(file);
+      }
+    }
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+}

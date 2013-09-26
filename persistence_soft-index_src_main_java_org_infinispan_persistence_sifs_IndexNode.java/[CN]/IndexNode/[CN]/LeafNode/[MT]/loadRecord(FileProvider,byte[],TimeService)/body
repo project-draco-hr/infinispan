@@ -1,0 +1,17 @@
+{
+  if (offset < 0)   return null;
+  FileProvider.Handle handle=fileProvider.getFile(file);
+  if (handle == null) {
+    throw new IndexNodeOutdatedException(file + ":" + offset);
+  }
+  try {
+    EntryRecord headerAndKey=getHeaderAndKey(fileProvider,handle,timeService);
+    if (!Arrays.equals(key,headerAndKey.getKey())) {
+      return null;
+    }
+    return headerAndKey.loadMetadataAndValue(handle,offset);
+  }
+  finally {
+    handle.close();
+  }
+}

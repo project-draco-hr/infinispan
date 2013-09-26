@@ -1,0 +1,19 @@
+{
+  if (length <= 0)   throw new IllegalArgumentException("Offset=" + offset + ", length="+ length);
+  if (offset + length < indexFileSize) {
+    List<IndexSpace> list=freeBlocks.get(length);
+    if (list == null) {
+      freeBlocks.put(length,list=new ArrayList<IndexSpace>());
+    }
+    list.add(new IndexSpace(offset,length));
+  }
+ else {
+    indexFileSize-=length;
+    try {
+      indexFile.truncate(indexFileSize);
+    }
+ catch (    IOException e) {
+      log.warn("Cannot truncate index",e);
+    }
+  }
+}

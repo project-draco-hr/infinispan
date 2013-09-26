@@ -1,0 +1,20 @@
+{
+  ByteBuffer header=ByteBuffer.allocate(EntryHeader.HEADER_SIZE);
+  if (EntryHeader.useMagic) {
+    header.putInt(EntryHeader.MAGIC);
+  }
+  header.putShort((short)serializedKey.getLength());
+  header.putShort(serializedMetadata == null ? (short)0 : (short)serializedMetadata.getLength());
+  header.putInt(serializedValue == null ? 0 : serializedValue.getLength());
+  header.putLong(seqId);
+  header.putLong(expiration);
+  header.flip();
+  write(fileChannel,header);
+  write(fileChannel,ByteBuffer.wrap(serializedKey.getBuf(),serializedKey.getOffset(),serializedKey.getLength()));
+  if (serializedMetadata != null) {
+    write(fileChannel,ByteBuffer.wrap(serializedMetadata.getBuf(),serializedMetadata.getOffset(),serializedMetadata.getLength()));
+  }
+  if (serializedValue != null) {
+    write(fileChannel,ByteBuffer.wrap(serializedValue.getBuf(),serializedValue.getOffset(),serializedValue.getLength()));
+  }
+}

@@ -1,0 +1,18 @@
+{
+  lock.writeLock().lock();
+  try {
+    ArrayList<CountDownLatch> pauses=new ArrayList<CountDownLatch>();
+    for (    Segment seg : segments) {
+      pauses.add(seg.pauseAndClear());
+    }
+    for (    CountDownLatch pause : pauses) {
+      pause.countDown();
+    }
+  }
+ catch (  InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    lock.writeLock().unlock();
+  }
+}

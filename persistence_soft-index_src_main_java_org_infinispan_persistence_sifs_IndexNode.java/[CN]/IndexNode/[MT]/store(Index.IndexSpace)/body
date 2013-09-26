@@ -1,0 +1,28 @@
+{
+  this.offset=indexSpace.offset;
+  this.occupiedSpace=indexSpace.length;
+  ByteBuffer buffer=ByteBuffer.allocate(length());
+  buffer.putShort((short)prefix.length);
+  buffer.put(prefix);
+  buffer.put(innerNodes == null ? HAS_LEAVES : 0);
+  buffer.putShort((short)keyParts.length);
+  for (int i=0; i < keyParts.length; ++i) {
+    buffer.putShort((short)keyParts[i].length);
+    buffer.put(keyParts[i]);
+  }
+  if (innerNodes != null) {
+    for (int i=0; i < innerNodes.length; ++i) {
+      buffer.putLong(innerNodes[i].offset);
+      buffer.putShort((short)innerNodes[i].length);
+    }
+  }
+ else {
+    for (int i=0; i < leafNodes.length; ++i) {
+      buffer.putInt(leafNodes[i].file);
+      buffer.putInt(leafNodes[i].offset);
+    }
+  }
+  buffer.flip();
+  segment.getIndexFile().write(buffer,offset);
+  if (trace)   log.tracef("Persisted %08x (length %d, %d %s) to %d:%d",System.identityHashCode(this),length(),innerNodes != null ? innerNodes.length : leafNodes.length,innerNodes != null ? "children" : "leaves",offset,occupiedSpace);
+}

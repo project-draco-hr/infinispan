@@ -1,0 +1,48 @@
+{
+  int attempts=0;
+  ArrayList<IndexNode> path=new ArrayList<IndexNode>();
+  for (; ; ) {
+    rootLock.lock();
+    IndexNode node=segment.getRoot();
+    Lock parentLock=rootLock, currentLock=null;
+    try {
+      while (node.innerNodes != null) {
+        path.add(node);
+        currentLock=node.lock.readLock();
+        currentLock.lock();
+        if (parentLock != null) {
+          parentLock.unlock();
+        }
+        parentLock=currentLock;
+        int insertionPoint=node.getInsertionPoint(key);
+        node=node.innerNodes[insertionPoint].getIndexNode(segment);
+        if (node == null) {
+          return null;
+        }
+      }
+      currentLock=node.lock.readLock();
+      currentLock.lock();
+      if (node.leafNodes.length == 0) {
+        return null;
+      }
+      int insertionPoint=node.getInsertionPoint(key);
+      return operation.apply(node.leafNodes[insertionPoint],key,segment.getFileProvider(),segment.getTimeService());
+    }
+ catch (    IndexNodeOutdatedException e) {
+      try {
+        if (attempts > 10) {
+          throw new PersistenceException("Index looks corrupt",e);
+        }
+        Thread.sleep(1000);
+        attempts++;
+        path.clear();
+      }
+ catch (      InterruptedException e1) {
+      }
+    }
+ finally {
+      if (parentLock != currentLock && parentLock != null)       parentLock.unlock();
+      if (currentLock != null)       currentLock.unlock();
+    }
+  }
+}

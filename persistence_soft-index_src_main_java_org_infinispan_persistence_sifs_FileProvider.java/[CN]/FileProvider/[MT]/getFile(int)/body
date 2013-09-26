@@ -1,0 +1,67 @@
+{
+  lock.readLock().lock();
+  try {
+    for (; ; ) {
+      Record record=openFiles.get(fileId);
+      if (record == null) {
+        for (; ; ) {
+          int open=currentOpenFiles.get();
+          if (open >= openFileLimit) {
+            if (tryCloseFile())             break;
+          }
+ else {
+            if (currentOpenFiles.compareAndSet(open,open + 1)) {
+              break;
+            }
+          }
+        }
+        for (; ; ) {
+          FileChannel fileChannel;
+          try {
+            fileChannel=openChannel(fileId);
+          }
+ catch (          FileNotFoundException e) {
+            currentOpenFiles.decrementAndGet();
+            log.debug("File " + fileId + " was not found",e);
+            return null;
+          }
+          Record newRecord=new Record(fileChannel,fileId);
+          Record other=openFiles.putIfAbsent(fileId,newRecord);
+          if (other != null) {
+            fileChannel.close();
+synchronized (other) {
+              if (other.isOpen()) {
+                currentOpenFiles.decrementAndGet();
+                return new Handle(other);
+              }
+            }
+          }
+ else {
+            Handle handle;
+synchronized (newRecord) {
+              if (!newRecord.isOpen()) {
+                throw new IllegalStateException();
+              }
+              handle=new Handle(newRecord);
+            }
+            try {
+              recordQueue.put(newRecord);
+            }
+ catch (            InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+            return handle;
+          }
+        }
+      }
+synchronized (record) {
+        if (record.isOpen()) {
+          return new Handle(record);
+        }
+      }
+    }
+  }
+  finally {
+    lock.readLock().unlock();
+  }
+}

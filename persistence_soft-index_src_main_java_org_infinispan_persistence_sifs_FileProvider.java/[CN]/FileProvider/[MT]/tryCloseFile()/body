@@ -1,0 +1,27 @@
+{
+  Record removed;
+  try {
+    removed=recordQueue.take();
+  }
+ catch (  InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+synchronized (removed) {
+    if (removed.isUsed()) {
+      try {
+        recordQueue.put(removed);
+      }
+ catch (      InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+ else {
+      if (removed.isOpen()) {
+        removed.close();
+        openFiles.remove(removed.getFileId(),removed);
+      }
+      return true;
+    }
+  }
+  return false;
+}

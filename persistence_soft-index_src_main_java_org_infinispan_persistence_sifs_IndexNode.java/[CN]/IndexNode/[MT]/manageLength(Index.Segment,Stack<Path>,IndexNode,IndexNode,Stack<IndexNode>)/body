@@ -1,0 +1,74 @@
+{
+  int from, to;
+  if (copy.length() < segment.getMinNodeSize() && !stack.isEmpty()) {
+    Path parent=stack.peek();
+    if (parent.node.innerNodes.length == 1) {
+      if (copy.length() <= node.occupiedSpace) {
+        node.replaceContent(copy);
+        return null;
+      }
+ else {
+        return new JoinSplitResult(parent.index,parent.index,Collections.singletonList(copy));
+      }
+    }
+    int sizeWithLeft=Integer.MAX_VALUE;
+    int sizeWithRight=Integer.MAX_VALUE;
+    if (parent.index > 0) {
+      sizeWithLeft=copy.length() + parent.node.innerNodes[parent.index - 1].length - INNER_NODE_HEADER_SIZE;
+    }
+    if (parent.index < parent.node.innerNodes.length - 1) {
+      sizeWithRight=copy.length() + parent.node.innerNodes[parent.index + 1].length - INNER_NODE_HEADER_SIZE;
+    }
+    int joinWith;
+    if (sizeWithLeft == Integer.MAX_VALUE) {
+      joinWith=parent.index + 1;
+    }
+ else     if (sizeWithRight == Integer.MAX_VALUE) {
+      joinWith=parent.index - 1;
+    }
+ else     if (sizeWithLeft > segment.getMaxNodeSize() && sizeWithRight > segment.getMaxNodeSize()) {
+      joinWith=sizeWithLeft >= sizeWithRight ? parent.index - 1 : parent.index + 1;
+    }
+ else {
+      joinWith=sizeWithLeft <= sizeWithRight ? parent.index - 1 : parent.index + 1;
+    }
+    if (joinWith < 0 || joinWith >= parent.node.innerNodes.length) {
+      throw new IllegalStateException(String.format("parent %08x, %08x -> %08x: cannot join to %d, with left %d, with right %d, max %d",System.identityHashCode(parent.node),System.identityHashCode(node),System.identityHashCode(copy),joinWith,sizeWithLeft,sizeWithRight,segment.getMaxNodeSize()));
+    }
+    IndexNode joiner=parent.node.innerNodes[joinWith].getIndexNode(segment);
+    byte[] middleKey=concat(parent.node.prefix,parent.node.keyParts[joinWith < parent.index ? parent.index - 1 : parent.index]);
+    if (joinWith < parent.index) {
+      copy=join(joiner,middleKey,copy);
+      from=joinWith;
+      to=parent.index;
+    }
+ else {
+      copy=join(copy,middleKey,joiner);
+      from=parent.index;
+      to=joinWith;
+    }
+    garbage.push(joiner);
+  }
+ else   if (copy.length() <= node.occupiedSpace) {
+    if (copy.innerNodes != null && copy.innerNodes.length == 1 && stack.isEmpty()) {
+      IndexNode child=copy.innerNodes[0].getIndexNode(copy.segment);
+      return new JoinSplitResult(0,0,Collections.singletonList(child));
+    }
+ else {
+      node.replaceContent(copy);
+      return null;
+    }
+  }
+ else   if (stack.isEmpty()) {
+    from=to=0;
+  }
+ else {
+    from=to=stack.peek().index;
+  }
+  if (copy.length() <= segment.getMaxNodeSize()) {
+    return new JoinSplitResult(from,to,Collections.singletonList(copy));
+  }
+ else {
+    return new JoinSplitResult(from,to,copy.split());
+  }
+}

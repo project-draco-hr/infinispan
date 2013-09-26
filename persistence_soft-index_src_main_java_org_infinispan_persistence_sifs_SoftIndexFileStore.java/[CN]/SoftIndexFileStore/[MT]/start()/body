@@ -1,0 +1,67 @@
+{
+  log.info("Starting using configuration " + configuration);
+  temporaryTable=new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(),keyEquivalence);
+  storeQueue=new SyncProcessingQueue<LogRequest>();
+  indexQueue=new IndexQueue(configuration.indexSegments(),configuration.indexQueueLength(),keyEquivalence);
+  fileProvider=new FileProvider(configuration.dataLocation(),configuration.openFilesLimit());
+  compactor=new Compactor(fileProvider,temporaryTable,indexQueue,marshaller,timeService,configuration.maxFileSize(),configuration.compactionThreshold());
+  logAppender=new LogAppender(storeQueue,indexQueue,temporaryTable,compactor,fileProvider,configuration.syncWrites(),configuration.maxFileSize());
+  try {
+    index=new Index(fileProvider,configuration.indexLocation(),configuration.indexSegments(),configuration.minNodeSize(),configuration.maxNodeSize(),indexQueue,temporaryTable,compactor,timeService,keyEquivalence);
+  }
+ catch (  IOException e) {
+    throw new PersistenceException("Cannot open index file in " + configuration.indexLocation(),e);
+  }
+  compactor.setIndex(index);
+  final AtomicLong maxSeqId=new AtomicLong(0);
+  if (configuration.purgeOnStartup()) {
+    log.debug("Not building the index - purge will be executed");
+  }
+ else {
+    log.debug("Building the index");
+    forEachOnDisk(false,false,new EntryFunctor(){
+      @Override public boolean apply(      int file,      int offset,      int size,      byte[] serializedKey,      byte[] serializedMetadata,      byte[] serializedValue,      long seqId,      long expiration) throws IOException, ClassNotFoundException {
+        long prevSeqId;
+        while (seqId > (prevSeqId=maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId,seqId))         ;
+        Object key=marshaller.objectFromByteBuffer(serializedKey);
+        if (trace)         log.tracef("Loaded %d:%d (seqId %d, expiration %d)",file,offset,seqId,expiration);
+        try {
+          EntryPosition entry=temporaryTable.get(key);
+          if (entry == null) {
+            entry=index.getPosition(key,serializedKey);
+          }
+          if (entry != null) {
+            FileProvider.Handle handle=fileProvider.getFile(entry.file);
+            try {
+              EntryHeader header=EntryRecord.readEntryHeader(handle,entry.offset);
+              if (header == null) {
+                throw new IllegalStateException("Cannot read " + entry.file + ":"+ entry.offset);
+              }
+              if (seqId < header.seqId()) {
+                if (trace)                 log.tracef("Record on %d:%d has seqId %d > %d",entry.file,entry.offset,header.seqId(),seqId);
+                return true;
+              }
+            }
+  finally {
+              handle.close();
+            }
+          }
+          temporaryTable.set(key,file,offset);
+          indexQueue.put(new IndexRequest(key,serializedKey,file,offset,size));
+        }
+ catch (        InterruptedException e) {
+          log.error("Interrupted building of index, the index won't be built properly!",e);
+          return false;
+        }
+        return true;
+      }
+    }
+,new FileFunctor(){
+      @Override public void afterFile(      int file){
+        compactor.completeFile(file);
+      }
+    }
+);
+  }
+  logAppender.setSeqId(0);
+}

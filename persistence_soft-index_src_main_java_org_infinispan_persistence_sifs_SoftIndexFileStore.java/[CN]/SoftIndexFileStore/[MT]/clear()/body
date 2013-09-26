@@ -1,0 +1,24 @@
+{
+  try {
+    logAppender.clearAndPause();
+    compactor.clearAndPause();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot pause cache store to clear it.",e);
+  }
+  try {
+    index.clear();
+  }
+ catch (  IOException e) {
+    throw new PersistenceException("Cannot clear/reopen index!",e);
+  }
+  try {
+    fileProvider.clear();
+  }
+ catch (  IOException e) {
+    throw new PersistenceException("Cannot clear data directory!",e);
+  }
+  temporaryTable.clear();
+  compactor.resumeAfterPause();
+  logAppender.resumeAfterPause();
+}

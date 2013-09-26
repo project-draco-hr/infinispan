@@ -1,0 +1,140 @@
+{
+  try {
+    FileProvider.Log logFile=null;
+    int currentOffset=0;
+    for (; ; ) {
+      Integer scheduledFile=null;
+      try {
+        scheduledFile=scheduledCompaction.poll(1,TimeUnit.MINUTES);
+      }
+ catch (      InterruptedException e) {
+      }
+      if (terminateSignal) {
+        if (logFile != null) {
+          logFile.close();
+          completeFile(logFile.fileId);
+        }
+        break;
+      }
+      if (clearSignal) {
+        pauseCompactor(logFile);
+        logFile=null;
+        continue;
+      }
+      if (scheduledFile == null) {
+        if (logFile != null) {
+          logFile.close();
+          completeFile(logFile.fileId);
+          logFile=null;
+        }
+        continue;
+      }
+      log.debug("Compacting file " + scheduledFile);
+      int scheduledOffset=0;
+      FileProvider.Handle handle=fileProvider.getFile(scheduledFile);
+      if (handle == null) {
+        throw new IllegalStateException("Compactor should not get deleted file for compaction!");
+      }
+      try {
+        while (!clearSignal && !terminateSignal) {
+          EntryHeader header=EntryRecord.readEntryHeader(handle,scheduledOffset);
+          if (header == null) {
+            break;
+          }
+          byte[] serializedKey=EntryRecord.readKey(handle,header,scheduledOffset);
+          Object key=marshaller.objectFromByteBuffer(serializedKey);
+          boolean drop=true;
+          EntryPosition entry=temporaryTable.get(key);
+          if (entry != null) {
+synchronized (entry) {
+              if (entry.file == scheduledFile && entry.offset == scheduledOffset) {
+                drop=false;
+              }
+ else               if (trace) {
+                log.tracef("Key for %d:%d was found in temporary table on %d:%d",scheduledFile,scheduledOffset,entry.file,entry.offset);
+              }
+            }
+          }
+ else {
+            EntryPosition position=index.getPosition(key,serializedKey);
+            if (position != null && position.file == scheduledFile && position.offset == scheduledOffset) {
+              drop=false;
+            }
+ else             if (trace) {
+              if (position != null) {
+                log.tracef("Key for %d:%d was found in index on %d:%d",scheduledFile,scheduledOffset,position.file,position.offset);
+              }
+ else {
+                log.tracef("Key for %d:%d was not found in index!",scheduledFile,scheduledOffset);
+              }
+            }
+          }
+          if (drop) {
+            if (trace) {
+              log.tracef("Drop %d:%d (%s)",scheduledFile,scheduledOffset,header.valueLength() > 0 ? "record" : "tombstone");
+            }
+            scheduledOffset+=header.totalLength();
+            continue;
+          }
+          if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
+            if (logFile != null) {
+              logFile.close();
+              completeFile(logFile.fileId);
+            }
+            currentOffset=0;
+            logFile=fileProvider.getFileForLog();
+            log.debug("Compacting to " + logFile.fileId);
+          }
+          byte[] serializedValue;
+          byte[] serializedMetadata;
+          int entryOffset;
+          if (header.valueLength() > 0 && (header.expiryTime() < 0 || header.expiryTime() > timeService.wallClockTime())) {
+            serializedMetadata=EntryRecord.readMetadata(handle,header,scheduledOffset);
+            serializedValue=EntryRecord.readValue(handle,header,scheduledOffset);
+            entryOffset=currentOffset;
+          }
+ else {
+            serializedMetadata=null;
+            serializedValue=null;
+            entryOffset=~currentOffset;
+          }
+          EntryRecord.writeEntry(logFile.fileChannel,serializedKey,serializedMetadata,serializedValue,header.seqId(),header.expiryTime());
+          temporaryTable.setConditionally(key,logFile.fileId,entryOffset,scheduledFile,scheduledOffset);
+          if (trace) {
+            log.tracef("Update %d:%d -> %d:%d | %d,%d",scheduledFile,scheduledOffset,logFile.fileId,entryOffset,logFile.fileChannel.position(),logFile.fileChannel.size());
+          }
+          indexQueue.put(new IndexRequest(key,serializedKey,logFile.fileId,entryOffset,header.totalLength(),scheduledFile,scheduledOffset));
+          currentOffset+=header.totalLength();
+          scheduledOffset+=header.totalLength();
+        }
+      }
+  finally {
+        handle.close();
+      }
+      if (terminateSignal) {
+        if (logFile != null) {
+          logFile.close();
+          completeFile(logFile.fileId);
+        }
+        return;
+      }
+ else       if (clearSignal) {
+        pauseCompactor(logFile);
+        logFile=null;
+      }
+ else {
+        log.debugf("Finished compacting %d, scheduling delete",scheduledFile);
+        indexQueue.put(IndexRequest.deleteFileRequest(scheduledFile));
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+catch (  ClassNotFoundException e) {
+    throw new RuntimeException(e);
+  }
+catch (  InterruptedException e) {
+    throw new RuntimeException(e);
+  }
+}

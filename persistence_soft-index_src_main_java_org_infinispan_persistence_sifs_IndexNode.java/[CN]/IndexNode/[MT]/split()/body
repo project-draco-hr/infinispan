@@ -1,0 +1,48 @@
+{
+  int headerLength=headerLength();
+  int contentLength=contentLength();
+  int maxLength=segment.getMaxNodeSize();
+  int targetParts=contentLength / Math.max(maxLength - headerLength,1) + 1;
+  int targetLength=contentLength / targetParts + headerLength;
+  List<IndexNode> list=new ArrayList<IndexNode>();
+  int childLength=innerNodes != null ? INNER_NODE_REFERENCE_SIZE : LEAF_NODE_REFERENCE_SIZE;
+  byte[] prefixExtension=keyParts[0];
+  int currentLength=INNER_NODE_HEADER_SIZE + prefix.length + prefixExtension.length+ 2 * childLength + 2;
+  int nodeFrom=0;
+  for (int i=1; i < keyParts.length; ++i) {
+    int newLength;
+    byte[] newPrefixExtension=commonPrefix(prefixExtension,keyParts[i]);
+    if (newPrefixExtension.length != prefixExtension.length) {
+      newLength=currentLength + (prefixExtension.length - newPrefixExtension.length) * (i - nodeFrom - 1);
+    }
+ else {
+      newLength=currentLength;
+    }
+    newLength+=keyParts[i].length - newPrefixExtension.length + childLength + 2;
+    if (newLength < targetLength) {
+      currentLength=newLength;
+    }
+ else {
+      IndexNode subNode;
+      if (newLength > maxLength) {
+        subNode=subNode(prefixExtension,nodeFrom,i);
+        ++i;
+      }
+ else {
+        subNode=subNode(newPrefixExtension,nodeFrom,i + 1);
+        i+=2;
+      }
+      list.add(subNode);
+      if (i < keyParts.length) {
+        newPrefixExtension=keyParts[i];
+      }
+      currentLength=INNER_NODE_HEADER_SIZE + prefix.length + newPrefixExtension.length+ 2 * childLength + 2;
+      nodeFrom=i;
+    }
+    prefixExtension=newPrefixExtension;
+  }
+  if (nodeFrom <= keyParts.length) {
+    list.add(subNode(prefixExtension,nodeFrom,keyParts.length));
+  }
+  return list;
+}

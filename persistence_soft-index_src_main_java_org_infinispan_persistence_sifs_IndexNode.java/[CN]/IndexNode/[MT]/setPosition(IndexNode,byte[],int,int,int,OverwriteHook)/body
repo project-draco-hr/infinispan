@@ -1,0 +1,62 @@
+{
+  IndexNode node=root;
+  Stack<Path> stack=new Stack<Path>();
+  while (node.innerNodes != null) {
+    int insertionPoint=node.getInsertionPoint(key);
+    stack.push(new Path(node,insertionPoint));
+    if (trace)     log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)",System.identityHashCode(node),node.length(),node.innerNodes.length,insertionPoint);
+    node=node.innerNodes[insertionPoint].getIndexNode(root.segment);
+  }
+  IndexNode copy=node.copyWith(key,file,offset,size,overwriteHook);
+  if (copy == node) {
+    return;
+  }
+  if (trace) {
+    log.tracef("Created %08x (length %d) from %08x (length %d), stack size %d",System.identityHashCode(copy),copy.length(),System.identityHashCode(node),node.length(),stack.size());
+  }
+  Stack<IndexNode> garbage=new Stack<IndexNode>();
+  try {
+    JoinSplitResult result=manageLength(root.segment,stack,node,copy,garbage);
+    if (result == null) {
+      return;
+    }
+    if (trace)     log.tracef("Created (1) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(node));
+    garbage.push(node);
+    for (; ; ) {
+      if (stack.isEmpty()) {
+        IndexNode newRoot;
+        if (result.newNodes.size() == 1) {
+          newRoot=result.newNodes.get(0);
+          if (trace)           log.tracef("Setting new root %08x (index has shrunk)",System.identityHashCode(newRoot));
+        }
+ else {
+          newRoot=IndexNode.emptyWithInnerNodes(root.segment).copyWith(0,0,result.newNodes);
+          if (trace)           log.tracef("Setting new root %08x (index has grown)",System.identityHashCode(newRoot));
+        }
+        newRoot.segment.setRoot(newRoot);
+        return;
+      }
+      Path path=stack.pop();
+      copy=path.node.copyWith(result.from,result.to,result.newNodes);
+      if (trace) {
+        log.tracef("Created %08x (length %d) from %08x with the %d new nodes (%d - %d)",System.identityHashCode(copy),copy.length(),System.identityHashCode(path.node),result.newNodes.size(),result.from,result.to);
+      }
+      result=manageLength(path.node.segment,stack,path.node,copy,garbage);
+      if (result == null) {
+        if (trace)         log.tracef("No more index updates required");
+        return;
+      }
+      if (trace)       log.tracef("Created (2) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(path.node));
+      garbage.push(path.node);
+    }
+  }
+  finally {
+    while (!garbage.isEmpty()) {
+      IndexNode oldNode=garbage.pop();
+      oldNode.lock.writeLock().lock();
+      if (oldNode.offset >= 0) {
+        oldNode.segment.freeIndexSpace(oldNode.offset,oldNode.occupiedSpace);
+      }
+    }
+  }
+}

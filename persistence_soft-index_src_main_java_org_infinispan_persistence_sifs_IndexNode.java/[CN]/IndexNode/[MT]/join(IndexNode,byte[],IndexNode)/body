@@ -1,0 +1,31 @@
+{
+  byte[] newPrefix=commonPrefix(left.prefix,right.prefix);
+  byte[][] newKeyParts=new byte[left.keyParts.length + right.keyParts.length + 1][];
+  newPrefix=commonPrefix(newPrefix == null ? left.prefix : newPrefix,middleKey);
+  copyKeyParts(left.keyParts,0,newKeyParts,0,left.keyParts.length,left.prefix,newPrefix);
+  byte[] rightmostKey;
+  try {
+    rightmostKey=left.rightmostKey();
+  }
+ catch (  IndexNodeOutdatedException e) {
+    throw new IllegalStateException(e);
+  }
+  int commonLength=Math.abs(compare(middleKey,rightmostKey));
+  newKeyParts[left.keyParts.length]=substring(middleKey,newPrefix.length,commonLength);
+  copyKeyParts(right.keyParts,0,newKeyParts,left.keyParts.length + 1,right.keyParts.length,right.prefix,newPrefix);
+  if (left.innerNodes != null && right.innerNodes != null) {
+    InnerNode[] newInnerNodes=new InnerNode[left.innerNodes.length + right.innerNodes.length];
+    System.arraycopy(left.innerNodes,0,newInnerNodes,0,left.innerNodes.length);
+    System.arraycopy(right.innerNodes,0,newInnerNodes,left.innerNodes.length,right.innerNodes.length);
+    return new IndexNode(left.segment,newPrefix,newKeyParts,newInnerNodes);
+  }
+ else   if (left.leafNodes != null && right.leafNodes != null) {
+    LeafNode[] newLeafNodes=new LeafNode[left.leafNodes.length + right.leafNodes.length];
+    System.arraycopy(left.leafNodes,0,newLeafNodes,0,left.leafNodes.length);
+    System.arraycopy(right.leafNodes,0,newLeafNodes,left.leafNodes.length,right.leafNodes.length);
+    return new IndexNode(left.segment,newPrefix,newKeyParts,newLeafNodes);
+  }
+ else {
+    throw new IllegalArgumentException("Cannot join " + left + " and "+ right);
+  }
+}

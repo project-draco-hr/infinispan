@@ -1,0 +1,28 @@
+{
+  lock.readLock().lock();
+  try {
+    for (; ; ) {
+      Record newRecord=new Record(null,fileId);
+      Record record=openFiles.putIfAbsent(fileId,newRecord);
+      if (record == null) {
+        newRecord.delete();
+        openFiles.remove(fileId,newRecord);
+        return;
+      }
+synchronized (record) {
+        if (openFiles.get(fileId) == record) {
+          try {
+            record.deleteOnClose();
+          }
+ catch (          IOException e) {
+            log.error("Cannot close/delete file " + fileId,e);
+          }
+          break;
+        }
+      }
+    }
+  }
+  finally {
+    lock.readLock().unlock();
+  }
+}
