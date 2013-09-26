@@ -1,0 +1,25 @@
+{
+  cache.put(1,"v1");
+  tm().begin();
+  try {
+    assertEquals("v1",cache.put(1,"v2"));
+    Transaction suspended=tm().suspend();
+    tm().begin();
+    try {
+      cache.clear();
+    }
+  finally {
+      tm().commit();
+      tm().resume(suspended);
+      Set<Map.Entry<Object,Object>> entrySet=cache.entrySet();
+      assertEquals(1,entrySet.size());
+      Map.Entry<Object,Object> entry=entrySet.iterator().next();
+      assertEquals(1,entry.getKey());
+      assertEquals("v2",entry.getValue());
+      assertTrue(entrySet.contains(new ImmortalCacheEntry(1,"v2")));
+    }
+  }
+  finally {
+    tm().commit();
+  }
+}

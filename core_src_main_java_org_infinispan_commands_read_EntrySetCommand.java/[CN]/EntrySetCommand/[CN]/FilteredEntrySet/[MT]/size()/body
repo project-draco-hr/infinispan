@@ -1,18 +1,24 @@
 {
   long currentTimeMillis=0;
-  int size=entrySet.size();
+  Set<Object> validKeys=new HashSet<Object>();
   for (  InternalCacheEntry e : entrySet) {
     if (e.canExpire()) {
       if (currentTimeMillis == 0)       currentTimeMillis=timeService.wallClockTime();
-      if (e.isExpired(currentTimeMillis))       size--;
+      if (!e.isExpired(currentTimeMillis))       validKeys.add(e.getKey());
+    }
+ else {
+      validKeys.add(e.getKey());
     }
   }
+  int size=validKeys.size();
   for (  CacheEntry e : lookedUpEntries.values()) {
-    if (e.isCreated()) {
-      size++;
+    if (validKeys.contains(e.getKey())) {
+      if (e.isRemoved()) {
+        size--;
+      }
     }
- else     if (e.isRemoved()) {
-      size--;
+ else     if (!e.isRemoved()) {
+      size++;
     }
   }
   return Math.max(size,0);

@@ -3,7 +3,7 @@
     boolean found=false;
     while (it1.hasNext()) {
       CacheEntry e=it1.next();
-      if (e.isCreated()) {
+      if (!e.isRemoved()) {
         next=immutableInternalCacheEntry(entryFactory.create(e.getKey(),e.getValue(),e.getMetadata()));
         found=true;
         break;
@@ -18,14 +18,8 @@
     while (it2.hasNext()) {
       InternalCacheEntry ice=it2.next();
       Object key=ice.getKey();
-      CacheEntry e=lookedUpEntries.get(key);
-      if (e == null) {
+      if (!lookedUpEntries.containsKey(key)) {
         next=ice;
-        found=true;
-        break;
-      }
-      if (e.isChanged()) {
-        next=immutableInternalCacheEntry(entryFactory.create(key,e.getValue(),e.getMetadata()));
         found=true;
         break;
       }

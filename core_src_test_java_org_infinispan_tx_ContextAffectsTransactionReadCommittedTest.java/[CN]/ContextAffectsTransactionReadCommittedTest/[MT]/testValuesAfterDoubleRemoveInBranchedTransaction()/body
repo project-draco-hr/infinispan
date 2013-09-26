@@ -1,0 +1,23 @@
+{
+  cache.put(1,"v1");
+  cache.put(2,"v2");
+  tm().begin();
+  try {
+    assertEquals("v1",cache.remove(1));
+    Transaction suspended=tm().suspend();
+    tm().begin();
+    try {
+      assertEquals("v1",cache.remove(1));
+    }
+  finally {
+      tm().commit();
+      tm().resume(suspended);
+      Collection<Object> values=cache.values();
+      assertEquals(1,values.size());
+      assertTrue(values.contains("v2"));
+    }
+  }
+  finally {
+    tm().commit();
+  }
+}

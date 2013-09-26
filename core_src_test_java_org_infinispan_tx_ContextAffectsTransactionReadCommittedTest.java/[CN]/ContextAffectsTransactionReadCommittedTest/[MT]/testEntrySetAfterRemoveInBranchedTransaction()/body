@@ -1,0 +1,37 @@
+{
+  cache.put(1,"v1");
+  cache.put(2,"v2");
+  tm().begin();
+  try {
+    assertEquals("v1",cache.get(1));
+    Transaction suspended=tm().suspend();
+    tm().begin();
+    try {
+      cache.remove(1);
+    }
+  finally {
+      tm().commit();
+      tm().resume(suspended);
+      Set<Map.Entry<Object,Object>> entrySet=cache.entrySet();
+      assertEquals(2,entrySet.size());
+      for (      Map.Entry<Object,Object> entry : entrySet) {
+        Object key=entry.getKey();
+        Object value=entry.getValue();
+        if (entry.getKey().equals(1)) {
+          assertEquals("v1",value);
+        }
+ else         if (key.equals(2)) {
+          assertEquals("v2",value);
+        }
+ else {
+          fail("Unexpected entry found: " + entry);
+        }
+      }
+      assertTrue(entrySet.contains(new ImmortalCacheEntry(1,"v1")));
+      assertTrue(entrySet.contains(new ImmortalCacheEntry(2,"v2")));
+    }
+  }
+  finally {
+    tm().commit();
+  }
+}

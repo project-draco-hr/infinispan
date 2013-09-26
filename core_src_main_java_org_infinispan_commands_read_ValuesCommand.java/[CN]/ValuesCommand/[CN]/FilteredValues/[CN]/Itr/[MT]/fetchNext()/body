@@ -3,7 +3,7 @@
     boolean found=false;
     while (it1.hasNext()) {
       CacheEntry e=it1.next();
-      if (e.isCreated()) {
+      if (!e.isRemoved()) {
         next=e.getValue();
         found=true;
         break;
@@ -19,18 +19,12 @@
     while (it2.hasNext()) {
       InternalCacheEntry ice=it2.next();
       Object key=ice.getKey();
-      CacheEntry e=lookedUpEntries.get(key);
       if (ice.canExpire()) {
         if (currentTimeMillis == 0)         currentTimeMillis=timeService.wallClockTime();
         if (ice.isExpired(currentTimeMillis))         continue;
       }
-      if (e == null) {
+      if (!lookedUpEntries.containsKey(key)) {
         next=ice.getValue();
-        found=true;
-        break;
-      }
-      if (e.isChanged()) {
-        next=e.getValue();
         found=true;
         break;
       }

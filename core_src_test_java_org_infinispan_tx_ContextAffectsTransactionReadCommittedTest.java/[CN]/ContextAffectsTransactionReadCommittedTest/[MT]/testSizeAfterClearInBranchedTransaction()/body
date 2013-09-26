@@ -1,0 +1,21 @@
+{
+  cache.put(1,"v1");
+  tm().begin();
+  try {
+    assertEquals("v1",cache.get(1));
+    Transaction suspended=tm().suspend();
+    tm().begin();
+    try {
+      cache.clear();
+    }
+  finally {
+      tm().commit();
+      tm().resume(suspended);
+      assertEquals(1,cache.size());
+      assertEquals("v1",cache.get(1));
+    }
+  }
+  finally {
+    tm().commit();
+  }
+}
