@@ -1,0 +1,22 @@
+{
+  GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder().nonClusteredDefault();
+  gcb.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup());
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE).valueEquivalence(ByteArrayEquivalence.INSTANCE).indexing().enable().indexLocalOnly(false).addProperty("default.directory_provider",getDirectoryProvider()).addProperty("lucene_version","LUCENE_CURRENT");
+  cacheManager=TestCacheManagerFactory.createCacheManager(gcb,builder,true);
+  cacheManager.defineConfiguration(TEST_CACHE_NAME,builder.build());
+  cache=cacheManager.getCache(TEST_CACHE_NAME);
+  hotRodServer=TestHelper.startHotRodServer(cacheManager);
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+  clientBuilder.marshaller(new ProtoStreamMarshaller());
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+  remoteCache=remoteCacheManager.getCache(TEST_CACHE_NAME);
+  ObjectName objName=new ObjectName(JMX_DOMAIN + ":type=RemoteQuery,name=" + ObjectName.quote("DefaultCacheManager")+ ",component="+ ProtobufMetadataManager.OBJECT_NAME);
+  byte[] descriptor=readClasspathResource("/bank.protobin");
+  MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  mBeanServer.invoke(objName,"registerProtofile",new Object[]{descriptor},new String[]{byte[].class.getName()});
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+  server=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  return cacheManager;
+}

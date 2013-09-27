@@ -1,10 +1,12 @@
 {
   QueryFactory qf=Search.getQueryFactory(remoteCache);
-  Query q=qf.from(Transaction.class).having("date").between(DATE_FORMAT.parse("2013-01-01").getTime(),DATE_FORMAT.parse("2013-01-31").getTime()).toBuilder().build();
+  Query q=qf.from(Transaction.class).orderBy("date",SortOrder.ASC).having("date").between(DATE_FORMAT.parse("2013-01-01").getTime(),DATE_FORMAT.parse("2013-01-31").getTime()).toBuilder().build();
   List<Transaction> list=q.list();
   assertEquals(4,list.size());
-  assertTrue(list.get(0).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
-  assertTrue(list.get(0).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
-  assertTrue(list.get(1).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+  assertTrue(list.get(0).getDate() == DATE_FORMAT.parse("2013-01-01").getTime());
   assertTrue(list.get(1).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
+  assertTrue(list.get(1).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+  assertTrue(list.get(2).getDate() < DATE_FORMAT.parse("2013-01-31").getTime());
+  assertTrue(list.get(2).getDate() > DATE_FORMAT.parse("2013-01-01").getTime());
+  assertTrue(list.get(3).getDate() == DATE_FORMAT.parse("2013-01-31").getTime());
 }

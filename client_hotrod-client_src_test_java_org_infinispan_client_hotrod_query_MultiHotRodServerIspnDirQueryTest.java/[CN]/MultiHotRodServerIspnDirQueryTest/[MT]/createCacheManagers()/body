@@ -1,0 +1,15 @@
+{
+  ConfigurationBuilder defaultConfiguration=new ConfigurationBuilder();
+  ConfigurationBuilder builder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,false));
+  builder.indexing().enable().indexLocalOnly(false).addProperty("default.directory_provider","infinispan").addProperty("lucene_version","LUCENE_CURRENT");
+  createHotRodServers(2,defaultConfiguration);
+  for (  EmbeddedCacheManager cm : cacheManagers) {
+    cm.defineConfiguration("queryableCache",builder.build());
+    cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofile("/bank.protobin");
+  }
+  for (  RemoteCacheManager rcm : clients) {
+    MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
+  }
+  remoteCache0=client(0).getCache("queryableCache");
+  remoteCache1=client(1).getCache("queryableCache");
+}
