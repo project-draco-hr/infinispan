@@ -11,7 +11,13 @@
   }
   if (locked) {
     Class[] array=toAdd.toArray(new Class[toAdd.size()]);
-    searchFactory.addClasses(array);
+    final Transaction transaction=suspend();
+    try {
+      searchFactory.addClasses(array);
+    }
+  finally {
+      resume(transaction);
+    }
     for (    Class<?> type : toAdd) {
       knownClasses.put(type,isIndexed(type));
     }
