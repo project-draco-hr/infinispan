@@ -38,39 +38,24 @@
   }
   Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
-switch (op) {
-case PUT:
-        return cache0.put(key,op.getValue());
-case PUT_IF_ABSENT:
-      return cache0.putIfAbsent(key,op.getValue());
-case REPLACE:
-    return cache0.replace(key,op.getValue());
-case REPLACE_EXACT:
-  return cache0.replace(key,op.getPreviousValue(),op.getValue());
-case REMOVE:
-return cache0.remove(key);
-case REMOVE_EXACT:
-return cache0.remove(key,op.getPreviousValue());
-default :
-throw new IllegalArgumentException("Unsupported operation: " + op);
-}
-}
-}
+      return op.perform(cache0,key);
+    }
+  }
 );
-afterCache1Barrier.await(10,TimeUnit.SECONDS);
-afterCache1Barrier.await(10,TimeUnit.SECONDS);
-beforeCache2Barrier.await(10,TimeUnit.SECONDS);
-beforeCache2Barrier.await(10,TimeUnit.SECONDS);
-Object result=future.get(10,TimeUnit.SECONDS);
-assertEquals(op.getReturnValue(),result);
-log.tracef("%s operation is done",op);
-cache0.removeInterceptor(BlockingInterceptor.class);
-int postJoinTopologyId=duringJoinTopologyId + 1;
-checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(0));
-checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(1));
-checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(2));
-TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
-assertEquals(op.getValue(),cache0.get(key));
-assertEquals(op.getValue(),cache1.get(key));
-assertEquals(op.getValue(),cache2.get(key));
+  afterCache1Barrier.await(10,TimeUnit.SECONDS);
+  afterCache1Barrier.await(10,TimeUnit.SECONDS);
+  beforeCache2Barrier.await(10,TimeUnit.SECONDS);
+  beforeCache2Barrier.await(10,TimeUnit.SECONDS);
+  Object result=future.get(10,TimeUnit.SECONDS);
+  assertEquals(op.getReturnValue(),result);
+  log.tracef("%s operation is done",op);
+  cache0.removeInterceptor(BlockingInterceptor.class);
+  int postJoinTopologyId=duringJoinTopologyId + 1;
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(0));
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(1));
+  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(2));
+  TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
+  assertEquals(op.getValue(),cache0.get(key));
+  assertEquals(op.getValue(),cache1.get(key));
+  assertEquals(op.getValue(),cache2.get(key));
 }
