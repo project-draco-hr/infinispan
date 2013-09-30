@@ -1,0 +1,19 @@
+{
+  ecs.submit(new Callable(){
+    @Override public Object call() throws Exception {
+      try {
+        for (        Object k : batch) {
+          if (taskContext.isStopped())           break;
+          MarshalledEntry load=load(k);
+          if (load != null)           cacheLoaderTask.processEntry(load,taskContext);
+        }
+        return null;
+      }
+ catch (      Exception e) {
+        log.errorExecutingParallelStoreTask(e);
+        throw e;
+      }
+    }
+  }
+);
+}

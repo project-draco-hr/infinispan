@@ -2,8 +2,7 @@
   try {
     Set<Object> keys=loader.loadAllKeys(null);
     int batchSize=1000;
-    ExecutorCompletionService ecs=new ExecutorCompletionService(executor);
-    int tasks=0;
+    ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
     final TaskContext taskContext=new TaskContextImpl();
     Set<Object> entries=new HashSet<Object>(batchSize);
     for (    Object key : keys) {
@@ -11,15 +10,16 @@
       if (entries.size() == batchSize) {
         final Set<Object> batch=entries;
         entries=new HashSet<Object>(batchSize);
-        submitProcessTask(cacheLoaderTask,ecs,taskContext,batch,fetchValue,fetchMetadata);
-        tasks++;
+        submitProcessTask(cacheLoaderTask,eacs,taskContext,batch,fetchValue,fetchMetadata);
       }
     }
     if (!entries.isEmpty()) {
-      submitProcessTask(cacheLoaderTask,ecs,taskContext,entries,fetchValue,fetchMetadata);
-      tasks++;
+      submitProcessTask(cacheLoaderTask,eacs,taskContext,entries,fetchValue,fetchMetadata);
     }
-    PersistenceUtil.waitForAllTasksToComplete(ecs,tasks);
+    eacs.waitUntilAllCompleted();
+    if (eacs.isExceptionThrown()) {
+      throw newCacheLoaderException(null);
+    }
   }
  catch (  CacheLoaderException e) {
     throw newCacheLoaderException(e);

@@ -1,7 +1,6 @@
 {
   int batchSize=100;
-  ExecutorCompletionService ecs=new ExecutorCompletionService(executor);
-  int tasks=0;
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContext taskContext=new TaskContextImpl();
   Set<Object> allKeys=new HashSet<Object>(batchSize);
   Set<Object> batch=new HashSet<Object>();
@@ -11,13 +10,14 @@
     if (batch.size() == batchSize) {
       final Set<Object> toHandle=batch;
       batch=new HashSet<Object>(batchSize);
-      submitProcessTask(cacheLoaderTask,ecs,taskContext,toHandle);
-      tasks++;
+      submitProcessTask(cacheLoaderTask,eacs,taskContext,toHandle);
     }
   }
   if (!batch.isEmpty()) {
-    submitProcessTask(cacheLoaderTask,ecs,taskContext,batch);
-    tasks++;
+    submitProcessTask(cacheLoaderTask,eacs,taskContext,batch);
   }
-  PersistenceUtil.waitForAllTasksToComplete(ecs,tasks);
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new CacheLoaderException("Execution exception!");
+  }
 }

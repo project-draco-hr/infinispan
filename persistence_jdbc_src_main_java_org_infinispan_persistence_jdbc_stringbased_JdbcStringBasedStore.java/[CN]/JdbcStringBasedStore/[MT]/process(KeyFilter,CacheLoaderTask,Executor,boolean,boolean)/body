@@ -1,6 +1,6 @@
 {
   ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(executor);
-  ecs.submit(new Callable<Void>(){
+  Future<Void> future=ecs.submit(new Callable<Void>(){
     @Override public Void call() throws Exception {
       Connection conn=null;
       PreparedStatement ps=null;
@@ -46,5 +46,14 @@
     }
   }
 );
-  PersistenceUtil.waitForAllTasksToComplete(ecs,1);
+  try {
+    future.get();
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+catch (  ExecutionException e) {
+    log.errorExecutingParallelStoreTask(e);
+    throw new CacheLoaderException(e);
+  }
 }

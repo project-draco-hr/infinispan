@@ -1,0 +1,29 @@
+{
+  final FutureImpl future=new FutureImpl();
+  scheduled.incrementAndGet();
+  executor.execute(new Runnable(){
+    @Override public void run(){
+      try {
+        task.call();
+      }
+ catch (      Exception e) {
+        exceptionThrown=true;
+        future.exception=e;
+      }
+ finally {
+synchronized (future) {
+          future.completed=true;
+          future.notifyAll();
+        }
+        long count=completed.incrementAndGet();
+        if (count == scheduled.get()) {
+synchronized (ExecutorAllCompletionService.this) {
+            ExecutorAllCompletionService.this.notifyAll();
+          }
+        }
+      }
+    }
+  }
+);
+  return future;
+}

@@ -1,24 +1,31 @@
 {
   scanForUnknownDirectories();
-  ExecutorCompletionService ecs=new ExecutorCompletionService(executor);
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContextImpl taskContext=new TaskContextImpl();
-  int count=0;
   for (  final DirectoryLoaderAdaptor dir : openDirectories.values()) {
-    ecs.submit(new Callable<Void>(){
+    eacs.submit(new Callable<Void>(){
       @Override public Void call() throws Exception {
-        final HashSet<MarshalledEntry> allInternalEntries=new HashSet<MarshalledEntry>();
-        dir.loadAllEntries(allInternalEntries,Integer.MAX_VALUE,ctx.getMarshaller());
-        for (        MarshalledEntry me : allInternalEntries) {
-          if (taskContext.isStopped())           break;
-          if (filter == null || filter.shouldLoadKey(me.getKey())) {
-            task.processEntry(me,taskContext);
+        try {
+          final HashSet<MarshalledEntry> allInternalEntries=new HashSet<MarshalledEntry>();
+          dir.loadAllEntries(allInternalEntries,Integer.MAX_VALUE,ctx.getMarshaller());
+          for (          MarshalledEntry me : allInternalEntries) {
+            if (taskContext.isStopped())             break;
+            if (filter == null || filter.shouldLoadKey(me.getKey())) {
+              task.processEntry(me,taskContext);
+            }
           }
+          return null;
         }
-        return null;
+ catch (        Exception e) {
+          log.errorExecutingParallelStoreTask(e);
+          throw e;
+        }
       }
     }
 );
-    count++;
   }
-  PersistenceUtil.waitForAllTasksToComplete(ecs,count);
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new CacheLoaderException("Execution exception!");
+  }
 }

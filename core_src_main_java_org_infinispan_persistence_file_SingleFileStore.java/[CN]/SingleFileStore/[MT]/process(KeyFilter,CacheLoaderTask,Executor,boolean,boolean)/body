@@ -6,23 +6,30 @@ synchronized (entries) {
       if (filter.shouldLoadKey(k))       keysToLoad.add(k);
     }
   }
-  ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(executor);
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContextImpl taskContext=new TaskContextImpl();
   int taskCount=0;
-  for (  Object k : keysToLoad) {
+  for (  final Object key : keysToLoad) {
     if (taskContext.isStopped())     break;
-    taskCount++;
-    final Object key=k;
-    ecs.submit(new Callable<Void>(){
+    eacs.submit(new Callable<Void>(){
       @Override public Void call() throws Exception {
-        final MarshalledEntry marshalledEntry=_load(key,fetchValue,fetchMetadata);
-        if (marshalledEntry != null) {
-          task.processEntry(marshalledEntry,taskContext);
+        try {
+          final MarshalledEntry marshalledEntry=_load(key,fetchValue,fetchMetadata);
+          if (marshalledEntry != null) {
+            task.processEntry(marshalledEntry,taskContext);
+          }
+          return null;
         }
-        return null;
+ catch (        Exception e) {
+          log.errorExecutingParallelStoreTask(e);
+          throw e;
+        }
       }
     }
 );
   }
-  PersistenceUtil.waitForAllTasksToComplete(ecs,taskCount);
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new CacheLoaderException("Execution exception!");
+  }
 }

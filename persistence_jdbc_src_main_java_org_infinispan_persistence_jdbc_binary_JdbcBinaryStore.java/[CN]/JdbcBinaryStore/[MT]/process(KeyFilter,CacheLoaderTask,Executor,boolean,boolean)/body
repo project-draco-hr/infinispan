@@ -12,26 +12,33 @@
     ps.setLong(1,ctx.getTimeService().wallClockTime());
     rs=ps.executeQuery();
     rs.setFetchSize(tableManipulation.getFetchSize());
-    ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(executor);
+    ExecutorAllCompletionService ecs=new ExecutorAllCompletionService(executor);
     final TaskContextImpl taskContext=new TaskContextImpl();
-    int taskCount=0;
     while (rs.next()) {
       InputStream binaryStream=rs.getBinaryStream(1);
       final Bucket bucket=unmarshallBucket(binaryStream);
       ecs.submit(new Callable<Void>(){
         @Override public Void call() throws Exception {
-          for (          MarshalledEntry me : bucket.getStoredEntries(filter,ctx.getTimeService()).values()) {
-            if (!taskContext.isStopped()) {
-              task.processEntry(me,taskContext);
+          try {
+            for (            MarshalledEntry me : bucket.getStoredEntries(filter,ctx.getTimeService()).values()) {
+              if (!taskContext.isStopped()) {
+                task.processEntry(me,taskContext);
+              }
             }
+            return null;
           }
-          return null;
+ catch (          Exception e) {
+            log.errorExecutingParallelStoreTask(e);
+            throw e;
+          }
         }
       }
 );
-      taskCount++;
     }
-    PersistenceUtil.waitForAllTasksToComplete(ecs,taskCount);
+    ecs.waitUntilAllCompleted();
+    if (ecs.isExceptionThrown()) {
+      throw new CacheLoaderException("Execution exception!");
+    }
   }
  catch (  SQLException e) {
     log.sqlFailureFetchingAllStoredEntries(e);

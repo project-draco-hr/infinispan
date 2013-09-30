@@ -4,7 +4,7 @@
   ResultSet rs=null;
   Set<Bucket> expiredBuckets=new HashSet<Bucket>();
   final int batchSize=100;
-  ExecutorCompletionService<Void> ecs=new ExecutorCompletionService<Void>(threadPool);
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(threadPool);
   Set<Bucket> emptyBuckets=new HashSet<Bucket>(batchSize);
   int taskCount=0;
   try {
@@ -26,7 +26,7 @@
           bucket.setBucketId(bucketId);
           expiredBuckets.add(bucket);
           if (expiredBuckets.size() == batchSize) {
-            ecs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
+            eacs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
             taskCount++;
             expiredBuckets=new HashSet<Bucket>(batchSize);
           }
@@ -37,7 +37,7 @@
           }
         }
       }
-      if (!expiredBuckets.isEmpty())       ecs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
+      if (!expiredBuckets.isEmpty())       eacs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
     }
  catch (    Exception ex) {
       releaseLocks(expiredBuckets);
@@ -48,10 +48,8 @@
       JdbcUtil.safeClose(ps);
       JdbcUtil.safeClose(rs);
     }
-    try {
-      PersistenceUtil.waitForAllTasksToComplete(ecs,taskCount);
-    }
- catch (    CacheLoaderException e) {
+    eacs.waitUntilAllCompleted();
+    if (eacs.isExceptionThrown()) {
       releaseLocks(emptyBuckets);
     }
     if (emptyBuckets.isEmpty())     return;
