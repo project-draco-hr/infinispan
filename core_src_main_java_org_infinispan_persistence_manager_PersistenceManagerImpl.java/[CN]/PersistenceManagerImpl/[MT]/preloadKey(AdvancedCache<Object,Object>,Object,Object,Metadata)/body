@@ -1,0 +1,20 @@
+{
+  final Transaction transaction=suspendIfNeeded();
+  boolean success=false;
+  try {
+    try {
+      beginIfNeeded();
+      cache.put(key,value,metadata);
+      success=true;
+    }
+ catch (    Exception e) {
+      throw new CacheLoaderException("Unable to preload!",e);
+    }
+ finally {
+      commitIfNeeded(success);
+    }
+  }
+  finally {
+    resumeIfNeeded(transaction);
+  }
+}

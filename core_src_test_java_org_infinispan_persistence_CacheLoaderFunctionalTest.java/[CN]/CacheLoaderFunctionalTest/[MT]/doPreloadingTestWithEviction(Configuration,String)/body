@@ -1,0 +1,59 @@
+{
+  assertTrue("Preload not enabled for preload with eviction test",preloadingCfg.persistence().preload());
+  assertTrue("Eviction not enabled for preload with eviction test",preloadingCfg.eviction().strategy().isEnabled());
+  cm.defineConfiguration(cacheName,preloadingCfg);
+  final Cache<String,String> preloadingCache=cm.getCache(cacheName);
+  final int expectedEntriesInContainer=Math.min(4,preloadingCfg.eviction().maxEntries());
+  AdvancedCacheLoader preloadingCacheLoader=(AdvancedCacheLoader)TestingUtil.getCacheLoader(preloadingCache);
+  assertTrue("Preload not enabled in cache configuration",preloadingCache.getCacheConfiguration().persistence().preload());
+  assertNotInCacheAndStore(preloadingCache,preloadingCacheLoader,"k1","k2","k3","k4");
+  preloadingCache.getAdvancedCache().getTransactionManager().begin();
+  preloadingCache.put("k1","v1");
+  preloadingCache.put("k2","v2",lifespan,MILLISECONDS);
+  preloadingCache.put("k3","v3");
+  preloadingCache.put("k4","v4",lifespan,MILLISECONDS);
+  preloadingCache.getAdvancedCache().getTransactionManager().commit();
+  DataContainer c=preloadingCache.getAdvancedCache().getDataContainer();
+  assertEquals("Wrong number of entries in data container",expectedEntriesInContainer,c.size());
+  for (int i=1; i < 5; i++) {
+    final Object key="k" + i;
+    final Object value="v" + i;
+    final long lifespan=i % 2 == 1 ? -1 : this.lifespan;
+    boolean found=false;
+    InternalCacheEntry se=preloadingCache.getAdvancedCache().getDataContainer().get(key);
+    MarshalledEntry load=preloadingCacheLoader.load(key);
+    if (se != null) {
+      testStoredEntry(se.getValue(),value,se.getLifespan(),lifespan,"Cache",key);
+      found=true;
+    }
+    if (load != null) {
+      testStoredEntry(load.getValue(),value,load.getMetadata().lifespan(),lifespan,"Store",key);
+      found=true;
+    }
+    assertTrue("Key not found.",found);
+  }
+  preloadingCache.stop();
+  assertEquals("DataContainer still has entries after stop",0,c.size());
+  preloadingCache.start();
+  preloadingCacheLoader=(AdvancedCacheLoader)TestingUtil.getCacheLoader(preloadingCache);
+  assertTrue("Preload not enabled in cache configuration",preloadingCache.getCacheConfiguration().persistence().preload());
+  c=preloadingCache.getAdvancedCache().getDataContainer();
+  assertEquals("Wrong number of entries in data container",expectedEntriesInContainer,c.size());
+  for (int i=1; i < 5; i++) {
+    final Object key="k" + i;
+    final Object value="v" + i;
+    final long lifespan=i % 2 == 1 ? -1 : this.lifespan;
+    boolean found=false;
+    InternalCacheEntry se=preloadingCache.getAdvancedCache().getDataContainer().get(key);
+    MarshalledEntry load=preloadingCacheLoader.load(key);
+    if (se != null) {
+      testStoredEntry(se.getValue(),value,se.getLifespan(),lifespan,"Cache",key);
+      found=true;
+    }
+    if (load != null) {
+      testStoredEntry(load.getValue(),value,load.getMetadata().lifespan(),lifespan,"Store",key);
+      found=true;
+    }
+    assertTrue("Key not found.",found);
+  }
+}
