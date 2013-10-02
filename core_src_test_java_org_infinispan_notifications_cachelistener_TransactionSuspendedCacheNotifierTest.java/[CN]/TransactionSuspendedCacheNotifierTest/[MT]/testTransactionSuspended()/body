@@ -1,0 +1,12 @@
+{
+  CacheNotifierImpl notifier=new CacheNotifierImpl();
+  notifier.injectDependencies(cache,cache.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class),cache.getAdvancedCache().getTransactionManager());
+  notifier.addListener(new TestListener(log),null,null);
+  notifier.start();
+  assertTrue(cache.isEmpty());
+  tm().begin();
+  notifier.notifyCacheEntryActivated(null,null,false,context,null);
+  tm().rollback();
+  assertFalse(cache.isEmpty());
+  assertEquals(1,cache.get(Event.Type.CACHE_ENTRY_ACTIVATED));
+}
