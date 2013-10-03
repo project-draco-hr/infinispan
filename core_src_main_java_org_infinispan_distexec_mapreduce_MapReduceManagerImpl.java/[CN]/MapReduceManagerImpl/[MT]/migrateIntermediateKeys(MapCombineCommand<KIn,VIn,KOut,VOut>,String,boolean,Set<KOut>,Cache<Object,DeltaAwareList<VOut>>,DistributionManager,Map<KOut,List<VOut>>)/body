@@ -1,0 +1,34 @@
+{
+  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dm,taskId,collectedValues.keySet(),emitCompositeIntermediateKeys);
+  long start=log.isTraceEnabled() ? timeService.time() : 0;
+  try {
+    for (    Entry<Address,List<KOut>> entry : keysToNodes.entrySet()) {
+      List<KOut> keysHashedToAddress=entry.getValue();
+      try {
+        log.tracef("For m/r task %s migrating intermediate keys %s to %s",taskId,keysHashedToAddress,entry.getKey());
+        for (        KOut key : keysHashedToAddress) {
+          List<VOut> values=collectedValues.get(key);
+          for (int i=0; i < values.size(); i+=chunkSize) {
+            List<VOut> chunk=values.subList(i,Math.min(values.size(),i + chunkSize));
+            DeltaAwareList<VOut> delta=new DeltaAwareList<VOut>(chunk);
+            if (emitCompositeIntermediateKeys) {
+              tmpCache.put(new IntermediateCompositeKey<KOut>(taskId,key),delta);
+            }
+ else {
+              tmpCache.put(key,delta);
+            }
+          }
+          mapPhaseKeys.add(key);
+        }
+      }
+ catch (      Exception e) {
+        throw new CacheException("Could not move intermediate keys/values for M/R task " + taskId,e);
+      }
+    }
+  }
+  finally {
+    if (log.isTraceEnabled()) {
+      log.tracef("Migrating keys for task %s took %s milliseconds (Migrated %s keys)",mcc.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS),mapPhaseKeys.size());
+    }
+  }
+}
