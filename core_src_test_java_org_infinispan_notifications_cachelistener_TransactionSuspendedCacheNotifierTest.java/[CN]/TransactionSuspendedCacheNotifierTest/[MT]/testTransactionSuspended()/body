@@ -1,12 +1,22 @@
 {
-  CacheNotifierImpl notifier=new CacheNotifierImpl();
-  notifier.injectDependencies(cache,cache.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class),cache.getAdvancedCache().getTransactionManager());
-  notifier.addListener(new TestListener(log),null,null);
-  notifier.start();
+  TestListener listener=new TestListener();
+  cache.getAdvancedCache().addListener(listener);
   assertTrue(cache.isEmpty());
+  cache.put("key","value");
+  assertEquals("value",cache.get("key"));
+  cache.put("key","new-value");
+  assertEquals("new-value",cache.get("key"));
   tm().begin();
-  notifier.notifyCacheEntryActivated(null,null,false,context,null);
-  tm().rollback();
-  assertFalse(cache.isEmpty());
-  assertEquals(1,cache.get(Event.Type.CACHE_ENTRY_ACTIVATED));
+  assertEquals("new-value",cache.get("key"));
+  tm().commit();
+  cache.remove("key");
+  assertNull(cache.get("key"));
+  cache.clear();
+  assertTrue(cache.isEmpty());
+  if (listener.list.size() > 0) {
+    for (    Throwable throwable : listener.list) {
+      log.error("Error in listener...",throwable);
+    }
+    fail("Listener catch some errors");
+  }
 }

@@ -1,8 +1,28 @@
 {
-  try {
-    return transactionManager == null ? null : transactionManager.suspend();
-  }
- catch (  SystemException e) {
+  if (transactionManager == null) {
     return null;
   }
+  try {
+switch (transactionManager.getStatus()) {
+case Status.STATUS_ACTIVE:
+case Status.STATUS_NO_TRANSACTION:
+      return null;
+case Status.STATUS_MARKED_ROLLBACK:
+case Status.STATUS_PREPARED:
+case Status.STATUS_COMMITTED:
+case Status.STATUS_ROLLEDBACK:
+case Status.STATUS_UNKNOWN:
+case Status.STATUS_PREPARING:
+case Status.STATUS_COMMITTING:
+case Status.STATUS_ROLLING_BACK:
+default :
+    return transactionManager.suspend();
+}
+}
+ catch (Exception e) {
+if (log.isTraceEnabled()) {
+  log.trace("An error occurred while trying to suspend a transaction.",e);
+}
+return null;
+}
 }

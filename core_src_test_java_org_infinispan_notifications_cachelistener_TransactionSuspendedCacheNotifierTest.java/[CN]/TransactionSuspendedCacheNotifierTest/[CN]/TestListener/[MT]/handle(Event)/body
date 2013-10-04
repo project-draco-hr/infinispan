@@ -1,8 +1,9 @@
 {
-  log.debugf("Event triggered! %s",e);
-  Cache cache=e.getCache();
-  Integer count=(Integer)cache.get(e.getType());
-  count=count == null ? 1 : count + 1;
-  cache.put(e.getType(),count);
-  log.debugf("Event triggered! %s. Added to cache: %s",e,count);
+  try {
+    Object value=e.getCache().getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).get("key");
+    log.debugf("Event=%s, value=%s",e,value);
+  }
+ catch (  Throwable throwable) {
+    list.add(throwable);
+  }
 }
