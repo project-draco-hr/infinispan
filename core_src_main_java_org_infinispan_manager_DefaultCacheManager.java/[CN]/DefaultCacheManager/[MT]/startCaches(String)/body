@@ -1,10 +1,19 @@
 {
   List<Thread> threads=new ArrayList<Thread>(cacheNames.length);
+  final AtomicReference<RuntimeException> exception=new AtomicReference<RuntimeException>(null);
   for (  final String cacheName : cacheNames) {
     String threadName="CacheStartThread," + globalConfiguration.transport().nodeName() + ","+ cacheName;
     Thread thread=new Thread(threadName){
       @Override public void run(){
-        createCache(cacheName);
+        try {
+          createCache(cacheName);
+        }
+ catch (        RuntimeException e) {
+          exception.set(e);
+        }
+catch (        Throwable t) {
+          exception.set(new RuntimeException(t));
+        }
       }
     }
 ;
@@ -13,11 +22,14 @@
   }
   try {
     for (    Thread thread : threads) {
-      thread.join(defaultConfiguration.locking().lockAcquisitionTimeout());
+      thread.join();
     }
   }
  catch (  InterruptedException e) {
     throw new CacheException("Interrupted while waiting for the caches to start");
+  }
+  if (exception.get() != null) {
+    throw exception.get();
   }
   return this;
 }
