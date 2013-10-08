@@ -1,0 +1,18 @@
+{
+  if (isIndexed(clazz)) {
+    return;
+  }
+  mutating.lock();
+  try {
+    final Transaction transaction=suspend();
+    try {
+      searchFactory.addClasses(new Class[]{clazz});
+    }
+  finally {
+      resume(transaction);
+    }
+  }
+  finally {
+    mutating.unlock();
+  }
+}

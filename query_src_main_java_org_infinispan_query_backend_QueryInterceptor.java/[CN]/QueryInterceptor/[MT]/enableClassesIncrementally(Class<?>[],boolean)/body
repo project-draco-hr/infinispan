@@ -1,7 +1,7 @@
 {
   ArrayList<Class<?>> toAdd=null;
   for (  Class<?> type : classes) {
-    if (!knownClasses.containsKey(type)) {
+    if (!clusterRegistry.containsKey(knownClassesScope,type)) {
       if (toAdd == null)       toAdd=new ArrayList<Class<?>>(classes.length);
       toAdd.add(type);
     }
@@ -10,16 +10,15 @@
     return;
   }
   if (locked) {
-    Class[] array=toAdd.toArray(new Class[toAdd.size()]);
     final Transaction transaction=suspend();
     try {
-      searchFactory.addClasses(array);
+      searchFactory.addClasses(toAdd.toArray(new Class[toAdd.size()]));
     }
   finally {
       resume(transaction);
     }
     for (    Class<?> type : toAdd) {
-      knownClasses.put(type,isIndexed(type));
+      clusterRegistry.put(knownClassesScope,type,isIndexed(type));
     }
   }
  else {
