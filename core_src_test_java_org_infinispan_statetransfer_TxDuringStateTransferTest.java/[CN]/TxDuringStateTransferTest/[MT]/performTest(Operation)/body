@@ -1,0 +1,17 @@
+{
+  assertClusterSize("Wrong number of caches.",4);
+  final Object key=new MagicKey(cache(0),cache(1),cache(2));
+  operation.init(cache(0),key);
+  final DummyTransactionManager transactionManager=(DummyTransactionManager)tm(0);
+  transactionManager.begin();
+  operation.perform(cache(0),key);
+  final DummyTransaction transaction=transactionManager.getTransaction();
+  transaction.runPrepare();
+  assertEquals("Wrong transaction status before killing backup owner.",Status.STATUS_PREPARED,transaction.getStatus());
+  killMember(1);
+  assertEquals("Wrong transaction status after killing backup owner.",Status.STATUS_PREPARED,transaction.getStatus());
+  transaction.runCommitTx();
+  for (  Cache<Object,Object> cache : caches()) {
+    operation.check(cache,key,valueOf(address(cache)));
+  }
+}
