@@ -1,0 +1,19 @@
+{
+  if (registryListener == null) {
+synchronized (this) {
+      if (registryListener == null) {
+        registryListener=new ProtobufMetadataRegistryListener();
+        clusterRegistry.addListener(REGISTRY_SCOPE,registryListener);
+        for (        String uuid : clusterRegistry.keys(REGISTRY_SCOPE)) {
+          byte[] descriptorFile=clusterRegistry.get(REGISTRY_SCOPE,uuid);
+          try {
+            serCtx.registerProtofile(new ByteArrayInputStream(descriptorFile));
+          }
+ catch (          Exception e) {
+            log.error(e);
+          }
+        }
+      }
+    }
+  }
+}

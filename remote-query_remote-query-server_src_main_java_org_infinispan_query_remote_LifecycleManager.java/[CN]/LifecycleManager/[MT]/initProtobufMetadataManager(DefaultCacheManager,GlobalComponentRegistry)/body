@@ -1,7 +1,7 @@
 {
-  ProtobufMetadataManager protobufMetadataManager=new ProtobufMetadataManager(cacheManager);
+  SerializationContext serCtx=ProtobufUtil.newSerializationContext();
   try {
-    MarshallerRegistration.registerMarshallers(protobufMetadataManager.getSerializationContext());
+    MarshallerRegistration.registerMarshallers(serCtx);
   }
  catch (  IOException e) {
     throw new CacheException("Failed to initialise serialization context",e);
@@ -9,6 +9,7 @@
 catch (  Descriptors.DescriptorValidationException e) {
     throw new CacheException("Failed to initialise serialization context",e);
   }
+  ProtobufMetadataManager protobufMetadataManager=new ProtobufMetadataManager(serCtx);
   gcr.registerComponent(protobufMetadataManager,ProtobufMetadataManager.class);
   registerProtobufMetadataManagerMBean(protobufMetadataManager,gcr,cacheManager.getName());
 }
