@@ -1,0 +1,31 @@
+{
+  String scope1="s1", scope2="s2";
+  TestRegistryListener listener0s1=new TestRegistryListener();
+  TestRegistryListener listener1s1=new TestRegistryListener();
+  TestRegistryListener listener0s2=new TestRegistryListener();
+  TestRegistryListener listener1s2=new TestRegistryListener();
+  clusterRegistry0.addListener(scope1,listener0s1);
+  clusterRegistry1.addListener(scope1,listener1s1);
+  clusterRegistry0.addListener(scope2,listener0s2);
+  clusterRegistry1.addListener(scope2,listener1s2);
+  clusterRegistry0.put(scope1,"k1",1);
+  clusterRegistry1.put(scope2,"k1",2);
+  assertEquals(1,(int)listener0s1.getLastUpdate(scope1,"k1"));
+  assertEquals(1,(int)listener1s1.getLastUpdate(scope1,"k1"));
+  assertEquals(2,(int)listener0s2.getLastUpdate(scope2,"k1"));
+  assertEquals(2,(int)listener1s2.getLastUpdate(scope2,"k1"));
+  clusterRegistry0.removeListener(listener0s1);
+  clusterRegistry1.removeListener(listener1s1);
+  clusterRegistry0.removeListener(listener0s2);
+  clusterRegistry1.removeListener(listener1s2);
+  listener0s1.updates.clear();
+  listener1s1.updates.clear();
+  listener0s2.updates.clear();
+  listener1s2.updates.clear();
+  clusterRegistry0.put(scope1,"k2",1);
+  clusterRegistry1.put(scope2,"k2",2);
+  assertEquals(0,listener0s1.updates.size());
+  assertEquals(0,listener1s1.updates.size());
+  assertEquals(0,listener0s2.updates.size());
+  assertEquals(0,listener1s2.updates.size());
+}
