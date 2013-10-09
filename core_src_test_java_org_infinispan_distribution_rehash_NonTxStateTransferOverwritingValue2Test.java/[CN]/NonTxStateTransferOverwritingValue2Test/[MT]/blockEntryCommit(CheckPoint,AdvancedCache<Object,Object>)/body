@@ -1,0 +1,20 @@
+{
+  ClusteringDependentLogic cdl1=cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+  ClusteringDependentLogic spyCdl1=spy(cdl1);
+  TestingUtil.replaceComponent(cache,ClusteringDependentLogic.class,spyCdl1,true);
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      Object[] arguments=invocation.getArguments();
+      CacheEntry entry=(CacheEntry)arguments[0];
+      Object key=entry.getKey();
+      InvocationContext ctx=(InvocationContext)arguments[3];
+      Address source=ctx.getOrigin();
+      checkPoint.trigger("pre_commit_entry_" + key + "_from_"+ source);
+      checkPoint.awaitStrict("resume_commit_entry_" + key + "_from_"+ source,10,SECONDS);
+      Object result=invocation.callRealMethod();
+      checkPoint.trigger("post_commit_entry_" + key + "_from_"+ source);
+      return result;
+    }
+  }
+).when(spyCdl1).commitEntry(any(CacheEntry.class),any(Metadata.class),any(FlagAffectedCommand.class),any(InvocationContext.class));
+}
