@@ -17,13 +17,27 @@
       storesMutex.writeLock().unlock();
     }
     if (loaders.isEmpty() && writers.isEmpty()) {
-      ComponentRegistry cr=cache.getComponentRegistry();
-      CacheLoaderInterceptor cli=cr.getComponent(CacheLoaderInterceptor.class);
-      CacheWriterInterceptor csi=cr.getComponent(CacheWriterInterceptor.class);
-      cli.disableInterceptor();
-      csi.disableInterceptor();
-      cache.removeInterceptor(cli.getClass());
-      cache.removeInterceptor(csi.getClass());
+      InterceptorChain chain=cache.getComponentRegistry().getComponent(InterceptorChain.class);
+      List<CommandInterceptor> loaderInterceptors=chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
+      if (loaderInterceptors.isEmpty()) {
+        log.persistenceWithoutCacheLoaderInterceptor();
+      }
+ else {
+        for (        CommandInterceptor interceptor : loaderInterceptors) {
+          ((CacheLoaderInterceptor)interceptor).disableInterceptor();
+        }
+      }
+      List<CommandInterceptor> writerInterceptors=chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
+      if (writerInterceptors.isEmpty()) {
+        log.persistenceWithoutCacheWriteInterceptor();
+      }
+ else {
+        for (        CommandInterceptor interceptor : writerInterceptors) {
+          ((CacheWriterInterceptor)interceptor).disableInterceptor();
+        }
+      }
+      removeInterceptors(loaderInterceptors);
+      removeInterceptors(writerInterceptors);
       enabled=false;
     }
   }
