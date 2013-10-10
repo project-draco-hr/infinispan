@@ -1,0 +1,15 @@
+{
+  configurationBuilder.persistence().clearStores();
+  DummyInMemoryStoreConfigurationBuilder dimcs=new DummyInMemoryStoreConfigurationBuilder(configurationBuilder.persistence());
+  if (sharedCacheLoader.get()) {
+    dimcs.storeName(getClass().getName());
+  }
+ else {
+    dimcs.storeName(getClass().getName() + id++);
+  }
+  dimcs.fetchPersistentState(false).purgeOnStartup(false).shared(sharedCacheLoader.get()).preload(true);
+  configurationBuilder.persistence().passivation(false).addStore(dimcs).fetchPersistentState(fetchPersistentState.get());
+  configurationBuilder.eviction().strategy(EvictionStrategy.LIRS).maxEntries(INSERTION_COUNT * 10);
+  EmbeddedCacheManager cm=addClusterEnabledCacheManager(configurationBuilder,new TransportFlags().withMerge(true));
+  return cm;
+}
