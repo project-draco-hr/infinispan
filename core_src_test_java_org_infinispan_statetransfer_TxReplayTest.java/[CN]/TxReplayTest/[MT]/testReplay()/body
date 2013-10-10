@@ -1,0 +1,21 @@
+{
+  assertClusterSize("Wrong cluster size",3);
+  final Object key=new MagicKey(cache(0),cache(1));
+  final Cache<Object,Object> newBackupOwnerCache=cache(2);
+  final TxCommandInterceptor interceptor=TxCommandInterceptor.inject(newBackupOwnerCache);
+  DummyTransactionManager transactionManager=(DummyTransactionManager)tm(0);
+  transactionManager.begin();
+  cache(0).put(key,VALUE);
+  final DummyTransaction transaction=transactionManager.getTransaction();
+  transaction.runPrepare();
+  assertEquals("Wrong transaction status before killing backup owner.",Status.STATUS_PREPARED,transaction.getStatus());
+  killMember(1);
+  checkIfTransactionExists(newBackupOwnerCache);
+  assertEquals("Wrong transaction status after killing backup owner.",Status.STATUS_PREPARED,transaction.getStatus());
+  transaction.runCommitTx();
+  assertNoTransactions();
+  assertEquals("Wrong number of prepares!",1,interceptor.numberPrepares.get());
+  assertEquals("Wrong number of commits!",1,interceptor.numberCommits.get());
+  assertEquals("Wrong number of rollbacks!",0,interceptor.numberRollbacks.get());
+  checkKeyInDataContainer(key);
+}
