@@ -24,23 +24,25 @@
     this.dependencies=new HashMap<String,String>(injectMethods.size() * 2);
     int j=0;
     for (    Method m : injectMethods) {
-      List<String> params=new LinkedList<String>();
       InjectMetadata injectMetadata=new InjectMetadata(m.getName());
       Class<?>[] parameterTypes=m.getParameterTypes();
+      String[] params=new String[parameterTypes.length];
+      String[] paramNames=new String[parameterTypes.length];
       Annotation[][] annotations=m.getParameterAnnotations();
       for (int i=0; i < parameterTypes.length; i++) {
         String componentName=findComponentName(annotations,i);
         String parameterType=parameterTypes[i].getName();
-        params.add(parameterType);
+        params[i]=parameterType;
         if (componentName == null) {
           dependencies.put(parameterType,parameterType);
         }
  else {
-          injectMetadata.addParameterName(i,componentName);
+          paramNames[i]=componentName;
           dependencies.put(componentName,parameterType);
         }
       }
-      injectMetadata.parameters=params.toArray(new String[params.size()]);
+      injectMetadata.parameters=params;
+      injectMetadata.parameterNames=paramNames;
       this.injectMetadata[j++]=injectMetadata;
     }
   }
