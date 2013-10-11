@@ -1,0 +1,19 @@
+{
+  Iterator<ProgrammaticSearchMappingProvider> providers=ServiceLoader.load(ProgrammaticSearchMappingProvider.class).iterator();
+  if (providers.hasNext()) {
+    SearchMapping mapping=(SearchMapping)indexingProperties.get(Environment.MODEL_MAPPING);
+    if (mapping == null) {
+      mapping=new SearchMapping();
+      Properties amendedProperties=new Properties();
+      amendedProperties.putAll(indexingProperties);
+      amendedProperties.put(Environment.MODEL_MAPPING,mapping);
+      indexingProperties=amendedProperties;
+    }
+    Cache cache=cr.getComponent(Cache.class);
+    while (providers.hasNext()) {
+      ProgrammaticSearchMappingProvider provider=providers.next();
+      provider.defineMappings(cache,mapping);
+    }
+  }
+  return indexingProperties;
+}
