@@ -1,0 +1,18 @@
+{
+  if (shouldModifyIndexes(command,ctx)) {
+    Map<Object,Object> dataMap=command.getMap();
+    for (    Map.Entry<Object,Object> entry : dataMap.entrySet()) {
+      final Object key=extractValue(entry.getKey());
+      final Object value=extractValue(entry.getValue());
+      final Object previousValue=previousValues.get(key);
+      if (updateKnownTypesIfNeeded(previousValue)) {
+        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+        removeFromIndexes(previousValue,key,transactionContext);
+      }
+      if (updateKnownTypesIfNeeded(value)) {
+        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+        updateIndexes(value,key,transactionContext);
+      }
+    }
+  }
+}

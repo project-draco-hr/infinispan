@@ -8,6 +8,7 @@
       stateBeforePrepare[i]=internalCacheEntry != null ? internalCacheEntry.getValue() : null;
     }
  else     if (writeCommand instanceof PutMapCommand) {
+      stateBeforePrepare[i]=getPreviousValues(((PutMapCommand)writeCommand).getMap().keySet());
     }
  else     if (writeCommand instanceof RemoveCommand) {
       InternalCacheEntry internalCacheEntry=dataContainer.get(((RemoveCommand)writeCommand).getKey());
@@ -27,7 +28,7 @@
         processPutKeyValueCommand((PutKeyValueCommand)writeCommand,ctx,stateBeforePrepare[i],transactionContext);
       }
  else       if (writeCommand instanceof PutMapCommand) {
-        processPutMapCommand((PutMapCommand)writeCommand,ctx,transactionContext);
+        processPutMapCommand((PutMapCommand)writeCommand,ctx,(Map<Object,Object>)stateBeforePrepare[i],transactionContext);
       }
  else       if (writeCommand instanceof RemoveCommand) {
         processRemoveCommand((RemoveCommand)writeCommand,ctx,stateBeforePrepare[i],transactionContext);
