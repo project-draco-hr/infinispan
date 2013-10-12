@@ -20,8 +20,13 @@
     assertNotNull(futureGet.get(5,TimeUnit.SECONDS));
     removeAllBlockingInterceptorsFromCache(nonOwnerCache);
     assertIsNotInL1(nonOwnerCache,key);
-    assertEquals(secondValue,nonOwnerCache.get(key));
-    assertIsInL1(nonOwnerCache,key);
+    eventually(new Condition(){
+      @Override public boolean isSatisfied() throws Exception {
+        assertEquals(secondValue,nonOwnerCache.get(key));
+        return isInL1(nonOwnerCache,key);
+      }
+    }
+);
   }
   finally {
     removeAllBlockingInterceptorsFromCache(nonOwnerCache);
