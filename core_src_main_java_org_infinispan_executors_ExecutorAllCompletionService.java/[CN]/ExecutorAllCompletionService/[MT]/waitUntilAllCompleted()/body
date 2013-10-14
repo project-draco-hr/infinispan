@@ -1,11 +1,19 @@
 {
   while (completed.get() < scheduled.get()) {
     try {
-      poll(100,TimeUnit.MILLISECONDS);
+      Future<Void> future=poll(100,TimeUnit.MILLISECONDS);
+      if (future != null) {
+        future.get();
+      }
     }
  catch (    InterruptedException e) {
       Thread.currentThread().interrupt();
       return;
+    }
+catch (    ExecutionException e) {
+      if (firstException.get() == null) {
+        firstException.compareAndSet(null,e);
+      }
     }
   }
 }
