@@ -1,0 +1,16 @@
+{
+  ProcessedCommand parsed=new ProcessedCommand("get " + key.toString() + ";");
+  Context cliCtx=createContext();
+  Command command=cliCtx.getCommandRegistry().getCommand(parsed.getCommand());
+  command.execute(cliCtx,parsed);
+  ResponseMatcher.Result result=((ResponseMatcher)cliCtx.getOutputAdapter()).getResult(Collections.singletonList(parsed));
+  if (result.isError)   throw new CacheException("Unable to load entry: " + result.result);
+  if (result.result.equals("null"))   return null;
+  Object value=result.result;
+  try {
+    value=jsonMapper.readValue(result.result,Object.class);
+  }
+ catch (  IOException e) {
+  }
+  return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,value,null);
+}

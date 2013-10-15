@@ -1,0 +1,23 @@
+{
+  withCacheManager(new CacheManagerCallable(createSourceCacheManager()){
+    @Override public void call(){
+      Cache<Integer,String> sourceCache=cm.getCache();
+      sourceCache.put(1,"v1");
+      sourceCache.put(2,"v2");
+      sourceCache.put(3,"v3");
+      withCacheManager(new CacheManagerCallable(createTargetCacheManager()){
+        @Override public void call(){
+          final Cache<Integer,String> targetCache=cm.getCache();
+          Future<String> f1=asyncGet(targetCache,1);
+          Future<String> f2=asyncGet(targetCache,2);
+          Future<String> f3=asyncGet(targetCache,3);
+          assertFutureEquals("v1",f1);
+          assertFutureEquals("v2",f2);
+          assertFutureEquals("v3",f3);
+        }
+      }
+);
+    }
+  }
+);
+}

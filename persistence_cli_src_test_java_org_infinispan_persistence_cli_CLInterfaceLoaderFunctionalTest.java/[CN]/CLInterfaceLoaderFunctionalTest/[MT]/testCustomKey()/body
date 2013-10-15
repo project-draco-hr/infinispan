@@ -1,0 +1,23 @@
+{
+  withCacheManager(new CacheManagerCallable(createSourceCacheManager()){
+    @Override public void call(){
+      Cache<Key,Integer> sourceCache=cm.getCache();
+      final Key k1=new Key("k1",false);
+      final Key k2=new Key("k2",false);
+      final Key k3=new Key("k3",false);
+      sourceCache.put(k1,1);
+      sourceCache.put(k2,2);
+      sourceCache.put(k3,3);
+      withCacheManager(new CacheManagerCallable(createTargetCacheManager()){
+        @Override public void call(){
+          Cache<Key,Integer> targetCache=cm.getCache();
+          assertEquals(new Integer(1),targetCache.get(k1));
+          assertEquals(new Integer(2),targetCache.get(k2));
+          assertEquals(new Integer(3),targetCache.get(k3));
+        }
+      }
+);
+    }
+  }
+);
+}

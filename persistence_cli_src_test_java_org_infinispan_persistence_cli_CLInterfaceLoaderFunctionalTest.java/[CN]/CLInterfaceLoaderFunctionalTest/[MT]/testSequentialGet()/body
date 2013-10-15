@@ -1,0 +1,20 @@
+{
+  withCacheManager(new CacheManagerCallable(createSourceCacheManager()){
+    @Override public void call(){
+      Cache<Integer,String> sourceCache=cm.getCache();
+      sourceCache.put(1,"v1");
+      sourceCache.put(2,"v2");
+      sourceCache.put(3,"v3");
+      withCacheManager(new CacheManagerCallable(createTargetCacheManager()){
+        @Override public void call(){
+          Cache<Object,Object> targetCache=cm.getCache();
+          assertEquals("v1",targetCache.get(1));
+          assertEquals("v2",targetCache.get(2));
+          assertEquals("v3",targetCache.get(3));
+        }
+      }
+);
+    }
+  }
+);
+}
