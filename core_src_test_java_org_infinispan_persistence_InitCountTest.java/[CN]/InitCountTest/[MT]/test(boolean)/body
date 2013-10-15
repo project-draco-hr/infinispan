@@ -1,0 +1,20 @@
+{
+  ConfigurationBuilder dcc=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  DummyInMemoryStoreConfigurationBuilder builder=dcc.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+  if (async) {
+    builder.async().enable();
+  }
+  EmbeddedCacheManager cacheManager=TestCacheManagerFactory.createCacheManager(dcc);
+  Cache<Object,Object> cache=cacheManager.getCache();
+  try {
+    CacheLoader firstLoader=TestingUtil.getFirstLoader(cache);
+    CacheLoader undelegatedLoader=firstLoader instanceof DelegatingCacheLoader ? ((DelegatingCacheLoader)firstLoader).undelegate() : firstLoader;
+    CacheWriter firstWriter=TestingUtil.getFirstWriter(cache);
+    CacheWriter undelegatedWriter=firstWriter instanceof DelegatingCacheWriter ? ((DelegatingCacheWriter)firstWriter).undelegate() : firstWriter;
+    assertEquals(1,((DummyInMemoryStore)undelegatedLoader).initCount.get());
+    assertEquals(1,((DummyInMemoryStore)undelegatedWriter).initCount.get());
+  }
+  finally {
+    TestingUtil.killCacheManagers(cacheManager);
+  }
+}
