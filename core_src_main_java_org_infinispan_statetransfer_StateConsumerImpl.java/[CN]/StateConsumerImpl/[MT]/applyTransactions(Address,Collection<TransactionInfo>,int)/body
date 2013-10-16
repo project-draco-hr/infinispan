@@ -1,0 +1,20 @@
+{
+  log.debugf("Applying %d transactions for cache %s transferred from node %s",transactions.size(),cacheName,sender);
+  if (isTransactional) {
+    for (    TransactionInfo transactionInfo : transactions) {
+      GlobalTransaction gtx=transactionInfo.getGlobalTransaction();
+      gtx.setRemote(true);
+      CacheTransaction tx=transactionTable.getLocalTransaction(gtx);
+      if (tx == null) {
+        tx=transactionTable.getRemoteTransaction(gtx);
+        if (tx == null) {
+          tx=transactionTable.getOrCreateRemoteTransaction(gtx,transactionInfo.getModifications());
+          ((RemoteTransaction)tx).setLookedUpEntriesTopology(topologyId - 1);
+        }
+      }
+      for (      Object key : transactionInfo.getLockedKeys()) {
+        tx.addBackupLockForKey(key);
+      }
+    }
+  }
+}

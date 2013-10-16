@@ -1,5 +1,8 @@
 {
 synchronized (this) {
+    if (trace) {
+      log.tracef("Starting transfer thread: %b",!isTransferThreadRunning);
+    }
     if (isTransferThreadRunning) {
       return;
     }
@@ -40,7 +43,9 @@ synchronized (this) {
           if (failedTasks.isEmpty() && taskQueue.isEmpty()) {
             break;
           }
-          log.tracef("Retrying %d failed tasks",failedTasks.size());
+          if (trace) {
+            log.tracef("Retrying %d failed tasks",failedTasks.size());
+          }
 synchronized (StateConsumerImpl.this) {
             Set<Integer> failedSegments=new HashSet<Integer>();
             for (            InboundTransferTask task : failedTasks) {
@@ -61,6 +66,9 @@ synchronized (StateConsumerImpl.this) {
       }
   finally {
 synchronized (StateConsumerImpl.this) {
+          if (trace) {
+            log.tracef("Stopping state transfer thread");
+          }
           isTransferThreadRunning=false;
         }
       }

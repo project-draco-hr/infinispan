@@ -1,0 +1,54 @@
+{
+  final String key=getClass().getName() + "-key";
+  final AdvancedCache<Object,Object> primaryOwnerCache=getFirstOwner(key).getAdvancedCache();
+  final AdvancedCache<Object,Object> backupOwnerCache=getOwners(key)[1].getAdvancedCache();
+  final AdvancedCache<Object,Object> nonOwnerCache=getFirstNonOwner(key).getAdvancedCache();
+  final Object previousValue=op.getPreviousValue();
+  if (previousValue != null) {
+    primaryOwnerCache.put(key,previousValue);
+    assertEquals(previousValue,primaryOwnerCache.get(key));
+    log.tracef("Previous value inserted: %s = %s",key,previousValue);
+    assertEquals(previousValue,nonOwnerCache.get(key));
+    if (l1Enabled()) {
+      assertIsInL1(nonOwnerCache,key);
+    }
+  }
+  CyclicBarrier beforeCommitCache1Barrier=new CyclicBarrier(2);
+  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCommitCache1Barrier,PrepareCommand.class,false);
+  primaryOwnerCache.addInterceptorAfter(blockingInterceptor1,StateTransferInterceptor.class);
+  Future<Object> future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      try {
+        return op.perform(primaryOwnerCache,key);
+      }
+  finally {
+        log.tracef("%s operation is done",op);
+      }
+    }
+  }
+);
+  beforeCommitCache1Barrier.await(10,SECONDS);
+  log.tracef("Stopping the cache");
+  backupOwnerCache.getCacheManager().stop();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return primaryOwnerCache.getRpcManager().getMembers().size() == 2 && nonOwnerCache.getRpcManager().getMembers().size() == 2;
+    }
+  }
+);
+  TestingUtil.waitForRehashToComplete(primaryOwnerCache,nonOwnerCache);
+  beforeCommitCache1Barrier.await(10,SECONDS);
+  assertEquals(op.getReturnValue(),future.get(10,SECONDS));
+  log.tracef("%s operation is done",op);
+switch (op) {
+case REMOVE:
+case REMOVE_EXACT:
+    break;
+default :
+  assertIsInContainerImmortal(primaryOwnerCache,key);
+assertIsInContainerImmortal(nonOwnerCache,key);
+break;
+}
+assertEquals(op.getValue(),primaryOwnerCache.get(key));
+assertEquals(op.getValue(),nonOwnerCache.get(key));
+}

@@ -1,0 +1,14 @@
+{
+  StateConsumer sc=TestingUtil.extractComponent(cache,StateConsumer.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(sc);
+  StateConsumer mockConsumer=mock(StateConsumer.class,withSettings().defaultAnswer(forwardedAnswer));
+  TestingUtil.replaceComponent(cache,StateConsumer.class,mockConsumer,true);
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_state_apply_invoked_for_" + cache);
+      checkPoint.awaitStrict("pre_state_apply_release_for_" + cache,10,TimeUnit.SECONDS);
+      return forwardedAnswer.answer(invocation);
+    }
+  }
+).when(mockConsumer).applyState(any(Address.class),anyInt(),anyCollection());
+}

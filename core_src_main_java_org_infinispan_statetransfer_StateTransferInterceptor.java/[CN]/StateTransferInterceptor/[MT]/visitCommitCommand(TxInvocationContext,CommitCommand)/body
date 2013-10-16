@@ -1,9 +1,12 @@
 {
   if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
     RemoteTransaction remoteTx=(RemoteTransaction)ctx.getCacheTransaction();
-    if (remoteTx.isMissingLookedUpEntries()) {
+    if (trace) {
+      log.tracef("Remote tx topology id %d and command topology is %d",remoteTx.lookedUpEntriesTopology(),command.getTopologyId());
+    }
+    if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
       ctx.skipTransactionCompleteCheck(true);
-      remoteTx.setMissingLookedUpEntries(false);
+      remoteTx.setLookedUpEntriesTopology(command.getTopologyId());
       PrepareCommand prepareCommand;
       if (useVersioning) {
         prepareCommand=commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(),ctx.getModifications(),false);

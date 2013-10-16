@@ -1,0 +1,62 @@
+{
+  final String key=getClass().getName() + "-key";
+  final AdvancedCache<Object,Object> primaryOwnerCache=getFirstOwner(key).getAdvancedCache();
+  final AdvancedCache<Object,Object> backupOwnerCache=getOwners(key)[1].getAdvancedCache();
+  final AdvancedCache<Object,Object> nonOwnerCache=getFirstNonOwner(key).getAdvancedCache();
+  final Object previousValue=op.getPreviousValue();
+  if (previousValue != null) {
+    primaryOwnerCache.put(key,previousValue);
+    assertEquals(previousValue,primaryOwnerCache.get(key));
+    log.tracef("Previous value inserted: %s = %s",key,previousValue);
+    assertEquals(previousValue,nonOwnerCache.get(key));
+    if (l1Enabled()) {
+      assertIsInL1(nonOwnerCache,key);
+    }
+  }
+  CyclicBarrier cyclicBarrier=new CyclicBarrier(2);
+  primaryOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(cyclicBarrier,PrepareCommand.class,true),StateTransferInterceptor.class);
+  try {
+    Future<Object> future=fork(new Callable<Object>(){
+      @Override public Object call() throws Exception {
+        final TransactionManager tm=primaryOwnerCache.getTransactionManager();
+        tm.begin();
+        if (additionalValueOnNonOwner) {
+          MagicKey mk=new MagicKey("placeholder",nonOwnerCache);
+          String value="somevalue";
+          primaryOwnerCache.put(mk,value);
+          log.tracef("Adding additional value on nonOwner value inserted: %s = %s",mk,value);
+        }
+        Object returnValue=op.perform(primaryOwnerCache,key);
+        log.trace("Calling commit on transaction");
+        tm.commit();
+        log.trace("Commit completed");
+        return returnValue;
+      }
+    }
+);
+    cyclicBarrier.await(10,SECONDS);
+    CheckPoint checkPoint=new CheckPoint();
+    log.trace("Adding proxy to state transfer");
+    waitUntilStateBeingTransferred(nonOwnerCache,checkPoint);
+    backupOwnerCache.getCacheManager().stop();
+    checkPoint.awaitStrict("pre_state_apply_invoked_for_" + nonOwnerCache,10,SECONDS);
+    cyclicBarrier.await(10,SECONDS);
+    assertEquals(op.getReturnValue(),future.get(10,SECONDS));
+    checkPoint.trigger("pre_state_apply_release_for_" + nonOwnerCache);
+    TestingUtil.waitForRehashToComplete(primaryOwnerCache,nonOwnerCache);
+switch (op) {
+case REMOVE:
+case REMOVE_EXACT:
+      break;
+default :
+    assertIsInContainerImmortal(primaryOwnerCache,key);
+  assertIsInContainerImmortal(nonOwnerCache,key);
+break;
+}
+assertEquals(op.getValue(),primaryOwnerCache.get(key));
+assertEquals(op.getValue(),nonOwnerCache.get(key));
+}
+  finally {
+removeAllBlockingInterceptorsFromCache(primaryOwnerCache);
+}
+}
