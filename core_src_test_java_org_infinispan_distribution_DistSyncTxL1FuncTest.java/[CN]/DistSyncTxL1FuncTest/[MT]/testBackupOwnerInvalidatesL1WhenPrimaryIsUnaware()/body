@@ -1,0 +1,41 @@
+{
+  final Cache<Object,String>[] owners=getOwners(key,2);
+  final Cache<Object,String> ownerCache=owners[0];
+  final Cache<Object,String> backupOwnerCache=owners[1];
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  ownerCache.put(key,firstValue);
+  assertEquals(firstValue,nonOwnerCache.get(key));
+  assertIsInL1(nonOwnerCache,key);
+  CyclicBarrier backupPutBarrier=new CyclicBarrier(2);
+  addBlockingInterceptor(backupOwnerCache,backupPutBarrier,CommitCommand.class,getL1InterceptorClass(),false);
+  try {
+    Future<String> future=fork(new Callable<String>(){
+      @Override public String call() throws Exception {
+        return ownerCache.put(key,secondValue);
+      }
+    }
+);
+    backupPutBarrier.await(10,TimeUnit.SECONDS);
+    assertEquals(firstValue,ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+    assertEquals(firstValue,backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+    removeAllBlockingInterceptorsFromCache(ownerCache);
+    CyclicBarrier ownerGetBarrier=new CyclicBarrier(2);
+    addBlockingInterceptor(ownerCache,ownerGetBarrier,GetKeyValueCommand.class,getL1InterceptorClass(),false);
+    assertEquals(firstValue,nonOwnerCache.get(key));
+    assertIsInL1(nonOwnerCache,key);
+    backupPutBarrier.await(10,TimeUnit.SECONDS);
+    assertEquals(firstValue,future.get(10,TimeUnit.SECONDS));
+    ownerGetBarrier.await(10,TimeUnit.SECONDS);
+    eventually(new Condition(){
+      @Override public boolean isSatisfied() throws Exception {
+        return !isInL1(nonOwnerCache,key);
+      }
+    }
+);
+    assertEquals(secondValue,ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(ownerCache);
+    removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+  }
+}
