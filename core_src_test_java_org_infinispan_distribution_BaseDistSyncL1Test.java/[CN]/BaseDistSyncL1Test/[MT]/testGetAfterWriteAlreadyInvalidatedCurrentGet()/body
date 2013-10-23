@@ -1,0 +1,27 @@
+{
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  final Cache<Object,String> ownerCache=getFirstOwner(key);
+  ownerCache.put(key,firstValue);
+  CyclicBarrier nonOwnerGetBarrier=new CyclicBarrier(2);
+  addBlockingInterceptor(nonOwnerCache,nonOwnerGetBarrier,GetKeyValueCommand.class,getDistributionInterceptorClass(),true);
+  try {
+    Future<String> future=fork(new Callable<String>(){
+      @Override public String call() throws Exception {
+        return nonOwnerCache.get(key);
+      }
+    }
+);
+    nonOwnerGetBarrier.await(10,TimeUnit.SECONDS);
+    ownerCache.put(key,secondValue);
+    assertEquals(secondValue,nonOwnerCache.get(key));
+    assertIsInL1(nonOwnerCache,key);
+    assertEquals(secondValue,nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+    nonOwnerGetBarrier.await(10,TimeUnit.SECONDS);
+    assertEquals(firstValue,future.get(10,TimeUnit.SECONDS));
+    assertIsInL1(nonOwnerCache,key);
+    assertEquals(secondValue,nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(nonOwnerCache);
+  }
+}
