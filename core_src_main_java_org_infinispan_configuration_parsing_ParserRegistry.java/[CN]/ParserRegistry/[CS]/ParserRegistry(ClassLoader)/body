@@ -1,27 +1,32 @@
 {
   this.parserMappings=CollectionFactory.makeConcurrentMap();
   this.cl=new WeakReference<ClassLoader>(classLoader);
-  ServiceLoader<ConfigurationParser> parsers=ServiceLoader.load(ConfigurationParser.class,cl.get());
-  for (  ConfigurationParser parser : parsers) {
-    Namespaces namespacesAnnotation=parser.getClass().getAnnotation(Namespaces.class);
-    Namespace[] namespaces;
-    if (namespacesAnnotation != null) {
-      namespaces=namespacesAnnotation.value();
-    }
- else {
-      Namespace namespaceAnnotation=parser.getClass().getAnnotation(Namespace.class);
-      if (namespaceAnnotation != null) {
-        namespaces=new Namespace[]{namespaceAnnotation};
+  Collection<Class<ConfigurationParser>> parsers=ServiceFinder.load(ConfigurationParser.class,cl.get(),ParserRegistry.class.getClassLoader());
+  for (  Class<ConfigurationParser> parserClass : parsers) {
+    try {
+      ConfigurationParser parser=parserClass.newInstance();
+      Namespaces namespacesAnnotation=parserClass.getAnnotation(Namespaces.class);
+      Namespace[] namespaces;
+      if (namespacesAnnotation != null) {
+        namespaces=namespacesAnnotation.value();
       }
  else {
-        throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+        Namespace namespaceAnnotation=parserClass.getAnnotation(Namespace.class);
+        if (namespaceAnnotation != null) {
+          namespaces=new Namespace[]{namespaceAnnotation};
+        }
+ else {
+          throw log.parserDoesNotDeclareNamespaces(parserClass.getName());
+        }
+      }
+      for (      Namespace ns : namespaces) {
+        QName qName=new QName(ns.uri(),ns.root());
+        if (parserMappings.putIfAbsent(qName,parser) != null) {
+          throw log.parserRootElementAlreadyRegistered(qName);
+        }
       }
     }
-    for (    Namespace ns : namespaces) {
-      QName qName=new QName(ns.uri(),ns.root());
-      if (parserMappings.putIfAbsent(qName,parser) != null) {
-        throw log.parserRootElementAlreadyRegistered(qName);
-      }
+ catch (    Exception e) {
     }
   }
 }

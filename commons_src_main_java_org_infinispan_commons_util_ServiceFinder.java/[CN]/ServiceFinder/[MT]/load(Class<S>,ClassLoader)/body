@@ -1,0 +1,31 @@
+{
+  Set<Class<S>> services=new LinkedHashSet<Class<S>>();
+  for (  ClassLoader loader : loaders) {
+    if (loader == null)     continue;
+    try {
+      for (Enumeration<URL> resources=loader.getResources("META-INF/services/" + service.getName()); resources.hasMoreElements(); ) {
+        URL resource=resources.nextElement();
+        BufferedReader r=new BufferedReader(new InputStreamReader(resource.openStream()));
+        for (String line=r.readLine(); line != null; line=r.readLine()) {
+          line=line.trim();
+          if (!line.startsWith("#")) {
+            Class<?> klass;
+            try {
+              klass=loader.loadClass(line);
+              if (!service.isAssignableFrom(klass)) {
+                throw new ClassCastException("Class " + line + " does not implement "+ service.getName());
+              }
+              services.add((Class<S>)klass);
+            }
+ catch (            ClassNotFoundException e) {
+            }
+          }
+        }
+        r.close();
+      }
+    }
+ catch (    IOException e) {
+    }
+  }
+  return services;
+}
