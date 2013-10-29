@@ -1,31 +1,28 @@
 {
+  String[] testMethods=System.getProperty("lucene.profiling.tests","profileTestRAMDirectory,profileTestFSDirectory,profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero").split(",");
   PerformanceCompareStressTest test=new PerformanceCompareStressTest();
-  test.beforeTest();
-  try {
-    test.profileTestRAMDirectory();
-  }
+  test.durationMs=new Long(System.getProperty("lucene.profiling.duration","120000"));
+  String outputFile=System.getProperty("lucene.profiling.output");
+  test.results=outputFile == null ? null : new Properties();
+  for (  String testMethod : testMethods) {
+    try {
+      test.currentMethod=testMethod;
+      Method m=PerformanceCompareStressTest.class.getMethod(testMethod);
+      test.beforeTest();
+      try {
+        m.invoke(test);
+      }
   finally {
-    test.afterTest();
+        test.afterTest();
+      }
+    }
+ catch (    NoSuchMethodException e) {
+      System.out.println("Couldn't find method " + testMethod);
+      System.exit(1);
+    }
   }
-  test.beforeTest();
-  try {
-    test.profileTestFSDirectory();
-  }
-  finally {
-    test.afterTest();
-  }
-  test.beforeTest();
-  try {
-    test.profileInfinispanLocalDirectory();
-  }
-  finally {
-    test.afterTest();
-  }
-  test.beforeTest();
-  try {
-    test.profileTestInfinispanDirectoryWithNetworkDelayZero();
-  }
-  finally {
-    test.afterTest();
+  if (test.results != null && !test.results.isEmpty()) {
+    System.out.println("Writing results to " + outputFile + " ...");
+    TestingUtil.outputPropertiesToXML(outputFile,test.results);
   }
 }
