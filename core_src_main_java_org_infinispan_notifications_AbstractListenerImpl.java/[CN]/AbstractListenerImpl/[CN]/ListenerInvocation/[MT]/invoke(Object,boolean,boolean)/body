@@ -17,7 +17,32 @@
               throw new IllegalArgumentException("Provided event should be EventImpl when a converter is" + "being used!");
             }
           }
-          method.invoke(target,event);
+          if (subject != null) {
+            try {
+              Subject.doAs(subject,new PrivilegedExceptionAction<Void>(){
+                @Override public Void run() throws Exception {
+                  method.invoke(target,event);
+                  return null;
+                }
+              }
+);
+            }
+ catch (            PrivilegedActionException e) {
+              Throwable cause=e.getCause();
+              if (cause instanceof InvocationTargetException) {
+                throw (InvocationTargetException)cause;
+              }
+ else               if (cause instanceof IllegalAccessException) {
+                throw (IllegalAccessException)cause;
+              }
+ else {
+                throw new InvocationTargetException(cause);
+              }
+            }
+          }
+ else {
+            method.invoke(target,event);
+          }
         }
  catch (        InvocationTargetException exception) {
           Throwable cause=getRealException(exception);

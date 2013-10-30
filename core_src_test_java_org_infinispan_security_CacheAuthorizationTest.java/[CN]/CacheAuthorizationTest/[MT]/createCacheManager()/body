@@ -1,0 +1,13 @@
+{
+  GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
+  GlobalAuthorizationConfigurationBuilder globalRoles=global.security().authorization().principalRoleMapper(new IdentityRoleMapper());
+  ConfigurationBuilder config=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  config.transaction().lockingMode(LockingMode.PESSIMISTIC);
+  config.invocationBatching().enable();
+  AuthorizationConfigurationBuilder authConfig=config.security().enable().authorization();
+  for (  AuthorizationPermission perm : AuthorizationPermission.values()) {
+    globalRoles.role(perm.toString()).permission(perm);
+    authConfig.role(perm.toString());
+  }
+  return TestCacheManagerFactory.createCacheManager(global,config);
+}

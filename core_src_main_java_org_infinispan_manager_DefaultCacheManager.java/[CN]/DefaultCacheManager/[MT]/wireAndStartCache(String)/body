@@ -1,10 +1,15 @@
 {
   CacheWrapper createdCacheWrapper=null;
+  Configuration c=null;
   try {
 synchronized (caches) {
       CacheWrapper existingCacheWrapper=caches.get(cacheName);
       if (existingCacheWrapper != null) {
         return null;
+      }
+      c=getConfiguration(cacheName);
+      if (c.security().enabled()) {
+        AuthorizationHelper.checkPermission(globalConfiguration.security(),c.security().authorization(),AuthorizationPermission.LIFECYCLE);
       }
       createdCacheWrapper=new CacheWrapper();
       if (caches.put(cacheName,createdCacheWrapper) != null) {
@@ -12,9 +17,11 @@ synchronized (caches) {
       }
     }
     globalComponentRegistry.start();
-    Configuration c=getConfiguration(cacheName);
     log.tracef("About to wire and start cache %s",cacheName);
     Cache<K,V> cache=new InternalCacheFactory<K,V>().createCache(c,globalComponentRegistry,cacheName);
+    if (cache.getAdvancedCache().getAuthorizationManager() != null) {
+      cache=new SecureCacheImpl<K,V>(cache.getAdvancedCache());
+    }
     createdCacheWrapper.setCache(cache);
     cache.start();
     return cache;

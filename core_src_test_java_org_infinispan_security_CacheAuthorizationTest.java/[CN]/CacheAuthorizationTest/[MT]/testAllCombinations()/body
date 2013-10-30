@@ -1,0 +1,76 @@
+{
+  Method[] allMethods=SecureCache.class.getMethods();
+  Set<String> methodNames=new HashSet<String>();
+  for (  Method m : allMethods) {
+    StringBuilder s=new StringBuilder("test");
+    String name=m.getName();
+    s.append(name.substring(0,1).toUpperCase());
+    s.append(name.substring(1));
+    for (    Class<?> p : m.getParameterTypes()) {
+      s.append("_");
+      s.append(p.getSimpleName().replaceAll("\\[\\]","Array"));
+    }
+    methodNames.add(s.toString());
+  }
+  final SecureCacheTestDriver driver=new SecureCacheTestDriver();
+  final SecureCache<String,String> cache=(SecureCache<String,String>)Subject.doAs(subjects.get(AuthorizationPermission.ALL),new PrivilegedAction<Cache<String,String>>(){
+    @Override public Cache<String,String> run(){
+      return cacheManager.getCache();
+    }
+  }
+);
+  for (  final String methodName : methodNames) {
+    Class<? extends SecureCacheTestDriver> driverClass=driver.getClass();
+    try {
+      final Method method=driverClass.getMethod(methodName,SecureCache.class);
+      TestCachePermission annotation=method.getAnnotation(TestCachePermission.class);
+      if (annotation == null) {
+        throw new Exception(String.format("Method %s on class %s is missing the TestCachePermission annotation",methodName,driver.getClass().getName()));
+      }
+      final AuthorizationPermission expectedPerm=annotation.value();
+      System.out.printf("Method: %s ",methodName);
+      for (      final AuthorizationPermission perm : AuthorizationPermission.values()) {
+        if (perm == AuthorizationPermission.NONE)         continue;
+        System.out.printf(" %s",perm.toString());
+        if (expectedPerm == AuthorizationPermission.NONE) {
+          try {
+            method.invoke(driver,cache);
+          }
+ catch (          SecurityException e) {
+            throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s",methodName,perm.toString()),e);
+          }
+        }
+ else {
+          Subject.doAs(subjects.get(perm),new PrivilegedExceptionAction<Void>(){
+            @Override public Void run() throws Exception {
+              try {
+                method.invoke(driver,cache);
+                if (perm != expectedPerm && perm != AuthorizationPermission.ALL) {
+                  throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",methodName,perm.toString()));
+                }
+                return null;
+              }
+ catch (              InvocationTargetException e) {
+                Throwable cause=e.getCause();
+                if (cause instanceof SecurityException) {
+                  if (perm == expectedPerm && perm != AuthorizationPermission.ALL) {
+                    throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s",methodName,perm.toString()),e);
+                  }
+ else {
+                    return null;
+                  }
+                }
+ else                 throw new Exception("Unexpected non-SecurityException",e);
+              }
+            }
+          }
+);
+        }
+      }
+      System.out.println();
+    }
+ catch (    NoSuchMethodException e) {
+      throw new Exception(String.format("Class %s needs to declare a method with the following signature: void %s(SecureCache<String, String> cache) {}\n",driver.getClass().getName(),methodName),e);
+    }
+  }
+}
