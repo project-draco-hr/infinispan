@@ -1,8 +1,11 @@
 {
-  boolean exists=cache.containsKey(key);
-  if (exists) {
-    Entry<K,V> entry=new JCacheEntry<K,V>(key,value);
-    Duration ttl=expiryPolicy.getExpiryForModifiedEntry(entry);
+  V current=cache.get(key);
+  if (current != null) {
+    if (isConditional && !current.equals(oldValue)) {
+      updateTTLForAccessed(cache,key,value);
+      return false;
+    }
+    Duration ttl=Expiration.getExpiry(expiryPolicy,Expiration.Operation.UPDATE);
     if (ttl == null || ttl.isEternal()) {
       return isConditional ? cache.replace(key,oldValue,value) : cache.replace(key,value) != null;
     }

@@ -1,0 +1,26 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(false)){
+    @Override public void call(){
+      ConfigurationBuilder builder=new ConfigurationBuilder();
+      builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(this.getClass().getName());
+      cm.defineConfiguration("dummyStore",builder.build());
+      JCacheManager jCacheManager=createJCacheManager(cm,this);
+      Cache<Integer,String> cache=jCacheManager.getCache("dummyStore");
+      int numEntries=loadInitialData(cm);
+      DummyInMemoryStore dummyStore=TestingUtil.getFirstWriter(cm.getCache("dummyStore"));
+      CompletionListenerFuture future=new CompletionListenerFuture();
+      Set<Integer> keys=Collections.singleton(1);
+      cache.loadAll(keys,false,future);
+      futureGet(future);
+      assertTrue(future.isDone());
+      assertEquals(numEntries,dummyStore.stats().get("load").intValue());
+      assertEquals("v1",cache.get(1));
+      future=new CompletionListenerFuture();
+      cache.loadAll(keys,true,future);
+      futureGet(future);
+      assertTrue(future.isDone());
+      assertEquals(numEntries * 2,dummyStore.stats().get("load").intValue());
+    }
+  }
+);
+}

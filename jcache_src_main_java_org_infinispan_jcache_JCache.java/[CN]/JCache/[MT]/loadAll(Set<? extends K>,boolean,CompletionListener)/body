@@ -1,22 +1,7 @@
 {
   checkNotClosed();
   if (keys == null)   throw log.parameterMustNotBeNull("keys");
-  if (cacheLoader == null)   return;
-  List<K> keysToLoad=new ArrayList<K>(keys);
-  for (  K key : keys) {
-    if (key == null)     throw log.parameterMustNotBeNull("Key");
-  }
-  try {
-    Map<K,V> loaded=cacheLoader.loadAll(keysToLoad);
-    Iterator<Map.Entry<K,V>> it=loaded.entrySet().iterator();
-    while (it.hasNext()) {
-      Map.Entry<K,V> entry=it.next();
-      if (entry.getValue() == null)       it.remove();
-    }
-    cache.putAll(loaded);
-    listener.onCompletion();
-  }
- catch (  Throwable t) {
-    setListenerException(listener,t);
-  }
+  if (jcacheLoader == null && jcacheWriter != null)   listener.onCompletion();
+ else   if (jcacheLoader != null)   loadAllFromJCacheLoader(keys,replaceExistingValues,listener);
+ else   loadAllFromInfinispanCacheLoader(keys,replaceExistingValues,listener);
 }

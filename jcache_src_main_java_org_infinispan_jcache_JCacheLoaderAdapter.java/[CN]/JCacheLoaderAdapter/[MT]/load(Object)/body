@@ -1,4 +1,15 @@
 {
-  Entry<K,V> e=delegate.load((K)key);
-  return e == null ? null : ctx.getMarshalledEntryFactory().newMarshalledEntry(e.getValue(),e.getValue(),null);
+  V value=loadKey(key);
+  if (value != null) {
+    Duration expiry=Expiration.getExpiry(expiryPolicy,Expiration.Operation.CREATION);
+    long now=ctx.getTimeService().wallClockTime();
+    if (expiry.isEternal()) {
+      return ctx.getMarshalledEntryFactory().newMarshalledEntry(value,value,null);
+    }
+ else {
+      JCacheInternalMetadata meta=new JCacheInternalMetadata(now,expiry.getTimeUnit().toMillis(expiry.getDurationAmount()));
+      return ctx.getMarshalledEntryFactory().newMarshalledEntry(value,value,meta);
+    }
+  }
+  return null;
 }

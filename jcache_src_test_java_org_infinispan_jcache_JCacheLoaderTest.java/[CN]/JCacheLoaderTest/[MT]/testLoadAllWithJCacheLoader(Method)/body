@@ -1,0 +1,19 @@
+{
+  final String cacheName=m.getName();
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(false)){
+    @Override public void call(){
+      JCacheManager jCacheManager=createJCacheManager(cm,this);
+      InMemoryJCacheLoader<Integer,String> cacheLoader=new InMemoryJCacheLoader<Integer,String>();
+      cacheLoader.store(1,"v1").store(2,"v2");
+      MutableConfiguration<Integer,String> cfg=new MutableConfiguration<Integer,String>();
+      cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+      Cache<Integer,String> cache=jCacheManager.createCache(cacheName,cfg);
+      assertEquals(0,cacheLoader.getLoadCount());
+      CompletionListenerFuture future=new CompletionListenerFuture();
+      cache.loadAll(CollectionFactory.makeSet(1,2),true,future);
+      futureGet(future);
+      assertEquals(2,cacheLoader.getLoadCount());
+    }
+  }
+);
+}

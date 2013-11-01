@@ -1,7 +1,7 @@
 {
   checkNotClosed();
   verifyKey(key);
-  if (entryProcessor == null)   throw new NullPointerException("Entry processor cannot be null");
+  verifyEntryProcessor(entryProcessor);
   if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
   return new WithProcessorLock<T>().call(key,new Callable<T>(){
     @Override public T call() throws Exception {
@@ -10,24 +10,30 @@
       if (configuration.isStoreByValue()) {
         safeOldValue=safeCopy(oldValue);
       }
-      MutableJCacheEntry<K,V> mutable=new MutableJCacheEntry<K,V>(cache,key,safeOldValue);
-      T ret=entryProcessor.process(mutable,arguments);
-      if (mutable.isRemoved()) {
-        cache.remove(key);
-      }
+      MutableJCacheEntry<K,V> mutable=createMutableCacheEntry(safeOldValue,key);
+      T ret=processEntryProcessor(mutable,entryProcessor,arguments);
+switch (mutable.getOperation()) {
+case NONE:
+        break;
+case ACCESS:
+      skipCacheLoadCache.get(key);
+    updateTTLForAccessed(cache,key,oldValue);
+  break;
+case UPDATE:
+V newValue=mutable.getNewValue();
+if (oldValue != null) {
+replace(cache,key,oldValue,newValue,true);
+}
  else {
-        V newValue=mutable.getNewValue();
-        if (newValue != null) {
-          if (oldValue != null) {
-            cache.replace(key,oldValue,newValue);
-          }
- else {
-            cache.putIfAbsent(key,newValue);
-          }
-        }
-      }
-      return ret;
-    }
-  }
+put(cache,skipCacheLoadCache,key,newValue,true);
+}
+break;
+case REMOVE:
+cache.remove(key);
+break;
+}
+return ret;
+}
+}
 );
 }
