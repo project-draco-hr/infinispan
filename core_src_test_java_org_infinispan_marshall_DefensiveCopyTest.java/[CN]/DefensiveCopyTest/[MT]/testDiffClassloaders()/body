@@ -1,0 +1,13 @@
+{
+  URL core=ReclosableLatch.class.getProtectionDomain().getCodeSource().getLocation();
+  URL tests=getClass().getResource("/");
+  ClassLoader cl1=new URLClassLoader(new URL[]{core,tests},null);
+  ClassLoader cl2=new URLClassLoader(new URL[]{core,tests},null);
+  Object key1=cl1.loadClass(Key.class.getName()).getConstructor(String.class,Boolean.TYPE).newInstance("key1",false);
+  Object key2=cl2.loadClass(Key.class.getName()).getConstructor(String.class,Boolean.TYPE).newInstance("key1",false);
+  String value="tralala";
+  cache.put(key1,value);
+  Object result=cache.get(key2);
+  assertNotNull(result);
+  assertEquals(value,result);
+}
