@@ -7,14 +7,9 @@
   assertEquals(firstValue,nonOwnerCache.get(key));
   assertIsInL1(nonOwnerCache,key);
   CyclicBarrier backupPutBarrier=new CyclicBarrier(2);
-  addBlockingInterceptor(backupOwnerCache,backupPutBarrier,CommitCommand.class,getL1InterceptorClass(),false);
+  addBlockingInterceptor(backupOwnerCache,backupPutBarrier,getCommitCommand(),getL1InterceptorClass(),false);
   try {
-    Future<String> future=fork(new Callable<String>(){
-      @Override public String call() throws Exception {
-        return ownerCache.put(key,secondValue);
-      }
-    }
-);
+    Future<String> future=ownerCache.putAsync(key,secondValue);
     backupPutBarrier.await(10,TimeUnit.SECONDS);
     assertEquals(firstValue,ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
     assertEquals(firstValue,backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
