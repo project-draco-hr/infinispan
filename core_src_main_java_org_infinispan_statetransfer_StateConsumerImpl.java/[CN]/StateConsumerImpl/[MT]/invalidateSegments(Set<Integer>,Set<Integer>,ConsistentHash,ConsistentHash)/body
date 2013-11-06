@@ -13,6 +13,18 @@
  else     if (!newSegments.contains(keySegment)) {
       keysToRemove.add(key);
     }
+    if (isL1OnRehash) {
+      List<Address> owners=newCH.locateOwnersForSegment(keySegment);
+      if (owners.contains(rpcManager.getAddress())) {
+        log.tracef("L1 on rehash is enabled - checking if previous owners for key %s need to be added to requestors",key);
+        for (        Address address : prevCH.locateOwnersForSegment(keySegment)) {
+          if (!owners.contains(address)) {
+            log.tracef("Adding previous owner %s to L1 requestors for key %s as it is no longer an owner",address,key);
+            l1Manager.addRequestor(key,address);
+          }
+        }
+      }
+    }
   }
   try {
     CollectionKeyFilter filter=new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
@@ -33,7 +45,7 @@
  catch (  CacheException e) {
     log.failedLoadingKeysFromCacheStore(e);
   }
-  if (configuration.clustering().l1().onRehash()) {
+  if (isL1OnRehash) {
     log.debugf("Moving to L1 state for segments %s of cache %s",segmentsToL1,cacheName);
   }
  else {

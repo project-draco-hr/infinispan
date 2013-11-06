@@ -39,6 +39,7 @@
   InvocationContextContainer icc=mock(InvocationContextContainer.class);
   TotalOrderManager totalOrderManager=mock(TotalOrderManager.class);
   BlockingTaskAwareExecutorService remoteCommandsExecutor=mock(BlockingTaskAwareExecutorService.class);
+  L1Manager l1Manager=mock(L1Manager.class);
   when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class),any(Address.class),anyInt(),any(Set.class))).thenAnswer(new Answer<StateRequestCommand>(){
     @Override public StateRequestCommand answer(    InvocationOnMock invocation){
       return new StateRequestCommand("cache1",(StateRequestCommand.Type)invocation.getArguments()[0],(Address)invocation.getArguments()[1],(Integer)invocation.getArguments()[2],(Set)invocation.getArguments()[3]);
@@ -77,7 +78,7 @@
   }
 );
   final StateConsumerImpl stateConsumer=new StateConsumerImpl();
-  stateConsumer.init(cache,pooledExecutorService,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,persistenceManager,dataContainer,transactionTable,stateTransferLock,cacheNotifier,totalOrderManager,remoteCommandsExecutor);
+  stateConsumer.init(cache,pooledExecutorService,stateTransferManager,interceptorChain,icc,configuration,rpcManager,null,commandsFactory,persistenceManager,dataContainer,transactionTable,stateTransferLock,cacheNotifier,totalOrderManager,remoteCommandsExecutor,l1Manager);
   stateConsumer.start();
   final List<InternalCacheEntry> cacheEntries=new ArrayList<InternalCacheEntry>();
   Object key1=new TestKey("key1",0,ch1);
