@@ -1,0 +1,21 @@
+{
+  final Object key=new MagicKey(cache(1),cache(2));
+  replaceRpcManagerInCache(cache(0));
+  boolean failed=false;
+  tm(0).begin();
+  try {
+    if (explicitLocking) {
+      cache(0).getAdvancedCache().lock(key);
+    }
+ else {
+      cache(0).put(key,"value");
+    }
+  }
+ catch (  Exception e) {
+    failed=true;
+  }
+  tm(0).rollback();
+  assertTrue("Expected an exception",failed);
+  assertNoTransactions();
+  assertNotLocked(cache(1),key);
+}

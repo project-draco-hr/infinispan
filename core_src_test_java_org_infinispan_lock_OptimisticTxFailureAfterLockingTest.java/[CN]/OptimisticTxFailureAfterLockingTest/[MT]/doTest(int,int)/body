@@ -1,0 +1,18 @@
+{
+  final Object key=new MagicKey(cache(primaryOwnerIndex),cache(2));
+  cache(primaryOwnerIndex).put(key,"v1");
+  tm(execIndex).begin();
+  AssertJUnit.assertEquals("v1",cache(execIndex).get(key));
+  final Transaction transaction=tm(execIndex).suspend();
+  cache(primaryOwnerIndex).put(key,"v2");
+  tm(execIndex).resume(transaction);
+  AssertJUnit.assertEquals("v1",cache(execIndex).put(key,"v3"));
+  try {
+    tm(execIndex).commit();
+    AssertJUnit.fail("Exception expected!");
+  }
+ catch (  RollbackException e) {
+  }
+  assertNoTransactions();
+  assertNotLocked(cache(primaryOwnerIndex),key);
+}
