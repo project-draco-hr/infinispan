@@ -1,0 +1,19 @@
+{
+  final Object key=new MagicKey(cache(0),cache(1));
+  final ControlledRpcManager controlledRpcManager=replaceRpcManager(cache(1));
+  cache(0).put(key,"v1");
+  operation.setCommandToBlock(controlledRpcManager);
+  assertKeyValue(key,"v1");
+  Future<Void> future=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      operation.execute(cache(1),key,"v2");
+      return null;
+    }
+  }
+);
+  controlledRpcManager.waitForCommandToBlock();
+  cache(0).put(key,"v3");
+  controlledRpcManager.stopBlocking();
+  future.get();
+  assertKeyValue(key,"v3");
+}
