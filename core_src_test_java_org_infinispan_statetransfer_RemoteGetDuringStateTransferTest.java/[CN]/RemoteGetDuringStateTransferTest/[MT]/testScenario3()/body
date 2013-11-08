@@ -1,0 +1,21 @@
+{
+  assertClusterSize("Wrong cluster size.",2);
+  final Object key="key_s3";
+  ownerCheckAndInit(cache(1),key,"v");
+  final ControlledRpcManager rpcManager=replaceRpcManager(cache(0));
+  final ControlledLocalTopologyManager topologyManager=replaceTopologyManager(manager(0));
+  final int currentTopologyId=currentTopologyId(cache(0));
+  rpcManager.blockBefore(ClusteredGetCommand.class);
+  topologyManager.startBlocking(LatchType.CONFIRM_REBALANCE);
+  Future<Void> joinerFuture=addNode();
+  topologyManager.waitToBlock(LatchType.CONFIRM_REBALANCE);
+  awaitForTopology(currentTopologyId + 1,cache(0));
+  Future<Object> remoteGetFuture=remoteGet(cache(0),key);
+  rpcManager.waitForCommandToBlock();
+  awaitForTopology(currentTopologyId + 1,cache(1));
+  rpcManager.stopBlocking();
+  assertEquals("Wrong value from remote get.","v",remoteGetFuture.get());
+  assertTopologyId(currentTopologyId + 1,cache(0));
+  topologyManager.stopBlocking(LatchType.CONFIRM_REBALANCE);
+  joinerFuture.get();
+}
