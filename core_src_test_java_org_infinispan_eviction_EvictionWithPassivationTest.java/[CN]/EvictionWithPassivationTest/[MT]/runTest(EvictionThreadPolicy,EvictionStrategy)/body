@@ -1,2 +1,30 @@
 {
+  String name="test-" + p + "-"+ s;
+  Cache<String,String> testCache=cacheManager.getCache(name);
+  testCache.clear();
+  testCache.put("X","4567");
+  testCache.put("Y","4568");
+  testCache.put("Z","4569");
+  if (!s.equals(EvictionStrategy.NONE)) {
+    assertEquals(EVICTION_MAX_ENTRIES,testCache.getAdvancedCache().getDataContainer().size());
+    assertEquals("4567",testCache.get("X"));
+    assertEquals(EVICTION_MAX_ENTRIES,testCache.getAdvancedCache().getDataContainer().size());
+  }
+  assertEquals("4567",testCache.get("X"));
+  assertEquals("4568",testCache.get("Y"));
+  assertEquals("4569",testCache.get("Z"));
+  for (int i=0; i < 10; i++) {
+    testCache.getAdvancedCache().startBatch();
+    String k="A" + i;
+    testCache.put(k,k);
+    k="B" + i;
+    testCache.put(k,k);
+    testCache.getAdvancedCache().endBatch(true);
+  }
+  for (int i=0; i < 10; i++) {
+    String k="A" + i;
+    assertEquals(k,testCache.get(k));
+    k="B" + i;
+    assertEquals(k,testCache.get(k));
+  }
 }

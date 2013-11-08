@@ -1,0 +1,38 @@
+{
+  String name="test-" + p + "-"+ s;
+  final Cache<String,String> testCache=cacheManager.getCache(name);
+  testCache.clear();
+  final String key="Y";
+  final String value;
+  if (previousValue != null) {
+    testCache.put(key,previousValue);
+    value=previousValue + "4568";
+  }
+ else {
+    value="4568";
+  }
+  testCache.evict(key);
+  testCache.startBatch();
+  try {
+    if (previousValue != null) {
+      assertEquals(previousValue,testCache.put(key,value));
+    }
+ else {
+      assertNull(testCache.put(key,value));
+    }
+    assertEquals(value,testCache.get(key));
+    Future<String> future=testCache.getAsync(key);
+    if (previousValue != null) {
+      assertEquals(previousValue,future.get(10000,TimeUnit.SECONDS));
+    }
+ else {
+      assertNull(future.get(10,TimeUnit.SECONDS));
+    }
+  }
+ catch (  Throwable e) {
+    testCache.endBatch(false);
+    throw e;
+  }
+  testCache.endBatch(true);
+  assertEquals(value,testCache.get(key));
+}

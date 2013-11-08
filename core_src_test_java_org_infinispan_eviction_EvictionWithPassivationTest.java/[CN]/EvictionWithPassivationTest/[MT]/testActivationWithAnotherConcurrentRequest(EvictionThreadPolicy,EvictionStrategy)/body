@@ -1,0 +1,16 @@
+{
+  String name="test-" + p + "-"+ s;
+  final Cache<String,String> testCache=cacheManager.getCache(name);
+  final String key="Y";
+  final String value="4568";
+  testCache.clear();
+  testCache.put(key,value);
+  testCache.evict(key);
+  testCache.startBatch();
+  assertEquals(value,testCache.get(key));
+  Future<String> future=testCache.getAsync(key);
+  assertEquals(value,future.get(10,TimeUnit.SECONDS));
+  assertEquals(value,testCache.get(key));
+  testCache.endBatch(true);
+  assertEquals(value,testCache.get(key));
+}

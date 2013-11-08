@@ -1,5 +1,9 @@
 {
   ConfigurationBuilder cfg=new ConfigurationBuilder();
-  cfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true).eviction().strategy(strategy).threadPolicy(threadPolicy).maxEntries(EVICTION_MAX_ENTRIES).invocationBatching().enable();
+  cfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true).invocationBatching().enable();
+  cfg.eviction().strategy(strategy);
+  if (strategy != EvictionStrategy.NONE) {
+    cfg.eviction().threadPolicy(threadPolicy).maxEntries(EVICTION_MAX_ENTRIES);
+  }
   return cfg;
 }
