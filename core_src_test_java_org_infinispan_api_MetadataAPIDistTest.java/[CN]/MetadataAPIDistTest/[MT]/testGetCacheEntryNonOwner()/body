@@ -1,0 +1,10 @@
+{
+  byte[] key={1,2,3};
+  Cache<byte[],byte[]> owner=getFirstOwner(key,this.<byte[],byte[]>caches());
+  Cache<byte[],byte[]> nonOwner=getFirstNonOwner(key,this.<byte[],byte[]>caches());
+  owner.put(key,new byte[]{4,5,6});
+  assertArrayEquals(new byte[]{4,5,6},owner.get(key));
+  CacheEntry cacheEntry=nonOwner.getAdvancedCache().getCacheEntry(key);
+  assertNotNull(cacheEntry);
+  assertArrayEquals(new byte[]{4,5,6},(byte[])cacheEntry.getValue());
+}
