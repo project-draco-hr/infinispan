@@ -1,0 +1,23 @@
+{
+  cacheManager.getCache(CACHE_NAME);
+  ObjectName queryStatsObjectName=getQueryStatsObjectName(JMX_DOMAIN,CACHE_NAME);
+  Set<ObjectName> matchingNames=server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME)+ ",*"),null);
+  assertEquals(1,matchingNames.size());
+  assertTrue(matchingNames.contains(queryStatsObjectName));
+  EmbeddedCacheManager cm2=null;
+  try {
+    ConfigurationBuilder defaultCacheConfig2=new ConfigurationBuilder();
+    defaultCacheConfig2.indexing().enable().jmxStatistics().enable();
+    cm2=TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain("cm2",JMX_DOMAIN,true,true,defaultCacheConfig2,new PerThreadMBeanServerLookup());
+    cm2.getCache(CACHE_NAME);
+    matchingNames=server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME)+ ",*"),null);
+    assertEquals(2,matchingNames.size());
+    assertTrue(matchingNames.contains(queryStatsObjectName));
+  }
+  finally {
+    TestingUtil.killCacheManagers(cm2);
+  }
+  matchingNames=server.queryNames(new ObjectName(JMX_DOMAIN + ":type=Query,component=Statistics,cache=" + ObjectName.quote(CACHE_NAME)+ ",*"),null);
+  assertEquals(1,matchingNames.size());
+  assertTrue(matchingNames.contains(queryStatsObjectName));
+}

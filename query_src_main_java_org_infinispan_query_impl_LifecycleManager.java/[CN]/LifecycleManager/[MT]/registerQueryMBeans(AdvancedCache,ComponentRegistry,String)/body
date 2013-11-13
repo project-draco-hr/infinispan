@@ -3,7 +3,8 @@
   SearchFactoryIntegrator sf=getSearchFactory(cfg.indexing().properties(),cr);
   GlobalConfiguration globalCfg=cr.getGlobalComponentRegistry().getGlobalConfiguration();
   mbeanServer=JmxUtil.lookupMBeanServer(globalCfg);
-  String queryGroupName=getQueryGroupName(cacheName);
+  String cacheManagerName=cr.getGlobalComponentRegistry().getGlobalConfiguration().globalJmxStatistics().cacheManagerName();
+  String queryGroupName=getQueryGroupName(cacheManagerName,cacheName);
   jmxDomain=JmxUtil.buildJmxDomain(globalCfg,mbeanServer,queryGroupName);
   Statistics stats=sf.getStatistics();
   stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
@@ -14,11 +15,11 @@
  catch (  Exception e) {
     throw new CacheException("Unable to register query module statistics mbean",e);
   }
-  ManageableComponentMetadata metadata=metadataRepo.findComponentMetadata(MassIndexer.class).toManageableComponentMetadata();
+  ManageableComponentMetadata massIndexerCompMetadata=cr.getGlobalComponentRegistry().getComponentMetadataRepo().findComponentMetadata(MassIndexer.class).toManageableComponentMetadata();
   try {
     MapReduceMassIndexer maxIndexer=new MapReduceMassIndexer(cache,sf);
-    ResourceDMBean mbean=new ResourceDMBean(maxIndexer,metadata);
-    ObjectName massIndexerObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component="+ metadata.getJmxObjectName());
+    ResourceDMBean mbean=new ResourceDMBean(maxIndexer,massIndexerCompMetadata);
+    ObjectName massIndexerObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component="+ massIndexerCompMetadata.getJmxObjectName());
     JmxUtil.registerMBean(mbean,massIndexerObjName,mbeanServer);
   }
  catch (  Exception e) {
