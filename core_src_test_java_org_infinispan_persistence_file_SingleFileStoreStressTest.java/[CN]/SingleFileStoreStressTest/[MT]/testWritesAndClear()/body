@@ -1,0 +1,34 @@
+{
+  final int NUM_WRITER_THREADS=1;
+  final int NUM_READER_THREADS=1;
+  final int NUM_KEYS=100;
+  final int TEST_DURATION_SECONDS=2;
+  Cache<String,String> cache=cacheManager.getCache(CACHE_NAME);
+  PersistenceManager persistenceManager=TestingUtil.extractComponent(cache,PersistenceManager.class);
+  final SingleFileStore store=persistenceManager.getStores(SingleFileStore.class).iterator().next();
+  final StreamingMarshaller marshaller=TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+  final List<String> keys=new ArrayList<String>(NUM_KEYS);
+  for (int j=0; j < NUM_KEYS; j++) {
+    String key="key" + j;
+    keys.add(key);
+  }
+  final CountDownLatch stopLatch=new CountDownLatch(1);
+  Future[] writeFutures=new Future[NUM_WRITER_THREADS];
+  for (int i=0; i < NUM_WRITER_THREADS; i++) {
+    writeFutures[i]=fork(stopOnException(new WriteTask(store,marshaller,keys,stopLatch),stopLatch));
+  }
+  Future[] readFutures=new Future[NUM_READER_THREADS];
+  for (int i=0; i < NUM_READER_THREADS; i++) {
+    readFutures[i]=fork(stopOnException(new ReadTask(store,keys,true,stopLatch),stopLatch));
+  }
+  Future clearFuture=fork(stopOnException(new ClearTask(store,stopLatch),stopLatch));
+  stopLatch.await(TEST_DURATION_SECONDS,SECONDS);
+  stopLatch.countDown();
+  for (int i=0; i < NUM_WRITER_THREADS; i++) {
+    writeFutures[i].get();
+  }
+  for (int i=0; i < NUM_READER_THREADS; i++) {
+    readFutures[i].get();
+  }
+  clearFuture.get();
+}

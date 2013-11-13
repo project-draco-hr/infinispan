@@ -2,9 +2,21 @@
   threadPool.execute(new Runnable(){
     @Override public void run(){
       long now=System.currentTimeMillis();
+      List<KeyValuePair<Object,FileEntry>> entriesToPurge=new ArrayList<KeyValuePair<Object,FileEntry>>();
 synchronized (entries) {
         for (Iterator<Map.Entry<Object,FileEntry>> it=entries.entrySet().iterator(); it.hasNext(); ) {
           Map.Entry<Object,FileEntry> next=it.next();
+          FileEntry fe=next.getValue();
+          if (fe.isExpired(now)) {
+            it.remove();
+            entriesToPurge.add(new KeyValuePair<Object,FileEntry>(next.getKey(),fe));
+          }
+        }
+      }
+      resizeLock.readLock().lock();
+      try {
+        for (Iterator<KeyValuePair<Object,FileEntry>> it=entriesToPurge.iterator(); it.hasNext(); ) {
+          KeyValuePair<Object,FileEntry> next=it.next();
           FileEntry fe=next.getValue();
           if (fe.isExpired(now)) {
             it.remove();
@@ -17,6 +29,9 @@ synchronized (entries) {
             if (task != null)             task.entryPurged(next.getKey());
           }
         }
+      }
+  finally {
+        resizeLock.readLock().unlock();
       }
     }
   }

@@ -5,12 +5,12 @@
     org.infinispan.commons.io.ByteBuffer metadata=marshalledEntry.getMetadataBytes();
     int metadataLength=metadata == null ? 0 : metadata.getLength();
     int len=KEY_POS + key.getLength() + data.getLength()+ metadataLength;
-    FileEntry fe=allocate(len);
+    FileEntry fe=null;
+    resizeLock.readLock().lock();
     try {
-      fe.expiryTime=metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
-      fe.keyLen=key.getLength();
-      fe.dataLen=data.getLength();
-      fe.metadataLen=metadataLength;
+      fe=allocate(len);
+      long expiryTime=metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
+      fe=new FileEntry(fe,key.getLength(),data.getLength(),metadataLength,expiryTime);
       ByteBuffer buf=ByteBuffer.allocate(len);
       buf.putInt(fe.size);
       buf.putInt(fe.keyLen);
@@ -21,12 +21,18 @@
       buf.put(data.getBuf(),data.getOffset(),data.getLength());
       if (metadata != null)       buf.put(metadata.getBuf(),metadata.getOffset(),metadata.getLength());
       buf.flip();
-      file.write(buf,fe.offset);
+      channel.write(buf,fe.offset);
+      if (trace)       log.tracef("Wrote entry %s at %d",marshalledEntry.getKey(),fe.offset);
       fe=entries.put(marshalledEntry.getKey(),fe);
       if (fe == null)       fe=evict();
     }
   finally {
-      free(fe);
+      try {
+        free(fe);
+      }
+  finally {
+        resizeLock.readLock().unlock();
+      }
     }
   }
  catch (  Exception e) {

@@ -1,21 +1,36 @@
 {
   final FileEntry fe;
   final boolean expired;
+  resizeLock.readLock().lock();
+  try {
 synchronized (entries) {
-    fe=entries.get(key);
-    if (fe == null)     return null;
-    expired=fe.isExpired(System.currentTimeMillis());
-    if (expired)     entries.remove(key);
-    fe.lock();
+      fe=entries.get(key);
+      if (fe == null)       return null;
+      expired=fe.isExpired(System.currentTimeMillis());
+      if (expired) {
+        entries.remove(key);
+      }
+ else {
+        fe.lock();
+      }
+    }
+    if (expired) {
+      try {
+        free(fe);
+      }
+ catch (      IOException e) {
+        throw new PersistenceException(e);
+      }
+      return null;
+    }
+  }
+  finally {
+    resizeLock.readLock().unlock();
   }
   final byte[] data;
   try {
-    if (expired) {
-      free(fe);
-      return null;
-    }
     data=new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
-    file.read(ByteBuffer.wrap(data),fe.offset + KEY_POS);
+    channel.read(ByteBuffer.wrap(data),fe.offset + KEY_POS);
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
@@ -23,6 +38,7 @@ synchronized (entries) {
  finally {
     fe.unlock();
   }
+  if (trace)   log.tracef("Read entry %s at %d",key,fe.offset);
   ByteBufferFactory factory=ctx.getByteBufferFactory();
   org.infinispan.commons.io.ByteBuffer keyBb=factory.newByteBuffer(data,0,fe.keyLen);
   org.infinispan.commons.io.ByteBuffer valueBb=null;

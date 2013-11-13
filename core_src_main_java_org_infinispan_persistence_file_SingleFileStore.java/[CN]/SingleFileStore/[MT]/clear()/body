@@ -1,4 +1,5 @@
 {
+  resizeLock.writeLock().lock();
   try {
 synchronized (entries) {
 synchronized (freeList) {
@@ -6,13 +7,17 @@ synchronized (freeList) {
         for (        FileEntry fe : freeList)         fe.waitUnlocked();
         entries.clear();
         freeList.clear();
-        file.truncate(0);
-        file.write(ByteBuffer.wrap(MAGIC),0);
+        if (trace)         log.tracef("Truncating file, current size is %d",filePos);
+        channel.truncate(0);
+        channel.write(ByteBuffer.wrap(MAGIC),0);
         filePos=MAGIC.length;
       }
     }
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
+  }
+ finally {
+    resizeLock.writeLock().unlock();
   }
 }

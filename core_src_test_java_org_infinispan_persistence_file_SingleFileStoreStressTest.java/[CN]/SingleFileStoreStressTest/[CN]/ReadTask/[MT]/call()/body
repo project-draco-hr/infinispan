@@ -1,0 +1,17 @@
+{
+  Random random=new Random();
+  while (stopLatch.getCount() != 0) {
+    String key=keys.get(random.nextInt(keys.size()));
+    MarshalledEntry entryFromStore=store.load(key);
+    if (entryFromStore == null) {
+      assertTrue(allowNulls);
+    }
+ else {
+      String storeValue=(String)entryFromStore.getValue();
+      log.tracef("Read value %s for key %s",storeValue,key);
+      assertEquals(key,entryFromStore.getKey());
+      assertTrue(storeValue.startsWith(key));
+    }
+  }
+  return null;
+}

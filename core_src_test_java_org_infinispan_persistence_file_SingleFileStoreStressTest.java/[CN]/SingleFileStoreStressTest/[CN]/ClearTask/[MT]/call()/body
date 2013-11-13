@@ -1,0 +1,16 @@
+{
+  File file=new File(location,CACHE_NAME + ".dat");
+  assertTrue(file.exists());
+  MILLISECONDS.sleep(100);
+  while (stopLatch.getCount() != 0) {
+    long sizeBeforeClear=file.length();
+    store.clear();
+    log.tracef("Cleared store, store size before = %d, file size before = %d",store.getFileSize(),file.length());
+    MILLISECONDS.sleep(1);
+    long fileSizeAfterClear=file.length();
+    long storeSizeAfterClear=store.getFileSize();
+    assertTrue("Store size " + storeSizeAfterClear + " is smaller than the file size "+ fileSizeAfterClear,fileSizeAfterClear <= storeSizeAfterClear);
+    MILLISECONDS.sleep(100);
+  }
+  return null;
+}

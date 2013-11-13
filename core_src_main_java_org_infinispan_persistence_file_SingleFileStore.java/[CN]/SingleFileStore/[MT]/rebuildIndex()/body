@@ -2,19 +2,23 @@
   ByteBuffer buf=ByteBuffer.allocate(KEY_POS);
   for (; ; ) {
     buf.clear().limit(KEY_POS);
-    file.read(buf,filePos);
+    channel.read(buf,filePos);
     if (buf.remaining() > 0)     return;
     buf.flip();
-    FileEntry fe=new FileEntry(filePos,buf.getInt());
-    fe.keyLen=buf.getInt();
-    fe.dataLen=buf.getInt();
-    fe.metadataLen=buf.getInt();
-    fe.expiryTime=buf.getLong();
+    int entrySize=buf.getInt();
+    int keyLen=buf.getInt();
+    int dataLen=buf.getInt();
+    int metadataLen=buf.getInt();
+    long expiryTime=buf.getLong();
+    FileEntry fe=new FileEntry(filePos,entrySize,keyLen,dataLen,metadataLen,expiryTime);
+    if (fe.size < KEY_POS + fe.keyLen + fe.dataLen+ fe.metadataLen) {
+      throw log.errorReadingFileStore(file.getPath(),filePos);
+    }
     filePos+=fe.size;
     if (fe.keyLen > 0) {
       if (buf.capacity() < fe.keyLen)       buf=ByteBuffer.allocate(fe.keyLen);
       buf.clear().limit(fe.keyLen);
-      file.read(buf,fe.offset + KEY_POS);
+      channel.read(buf,fe.offset + KEY_POS);
       Object key=ctx.getMarshaller().objectFromByteBuffer(buf.array(),0,fe.keyLen);
       entries.put(key,fe);
     }
