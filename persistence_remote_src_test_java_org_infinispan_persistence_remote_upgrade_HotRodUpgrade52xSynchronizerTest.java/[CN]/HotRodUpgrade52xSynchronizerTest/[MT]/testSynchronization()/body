@@ -1,0 +1,17 @@
+{
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    sourceRemoteCache.put(s,s);
+  }
+  assertEquals("A",targetRemoteCache.get("A"));
+  GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
+  Set<ByteArrayKey> keySet=new HashSet<ByteArrayKey>();
+  for (  byte[] key : sourceServerCache.keySet()) {
+    keySet.add(new ByteArrayKey(key));
+  }
+  sourceServerCache.put(marshaller.objectToByteBuffer("___MigrationManager_HotRod_KnownKeys___"),marshaller.objectToByteBuffer(keySet));
+  RollingUpgradeManager targetUpgradeManager=targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  targetUpgradeManager.synchronizeData("hotrod");
+  assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size() - 1,targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
+  targetUpgradeManager.disconnectSource("hotrod");
+}
