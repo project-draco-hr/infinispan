@@ -8,10 +8,12 @@
   long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
   while (true) {
     try {
-      CacheTopology initialTopology=(CacheTopology)executeOnCoordinator(command,timeout);
-      if (initialTopology != null) {
-        handleConsistentHashUpdate(cacheName,initialTopology,viewId);
-        return initialTopology;
+synchronized (cacheStatus) {
+        CacheTopology initialTopology=(CacheTopology)executeOnCoordinator(command,timeout);
+        if (initialTopology != null) {
+          handleConsistentHashUpdate(cacheName,initialTopology,viewId);
+          return initialTopology;
+        }
       }
     }
  catch (    Exception e) {
