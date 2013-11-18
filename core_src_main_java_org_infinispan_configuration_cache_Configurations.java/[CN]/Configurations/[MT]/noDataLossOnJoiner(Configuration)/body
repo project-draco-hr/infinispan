@@ -1,0 +1,13 @@
+{
+  if (!configuration.clustering().cacheMode().isClustered()) {
+    return true;
+  }
+  if (hasSharedCacheLoadOrWriter(configuration)) {
+    return true;
+  }
+  final boolean usingStores=configuration.persistence().usingStores();
+  final boolean passivation=configuration.persistence().passivation();
+  final boolean fetchInMemoryState=configuration.clustering().stateTransfer().fetchInMemoryState();
+  final boolean fetchPersistenceState=configuration.persistence().fetchPersistentState();
+  return (usingStores && !passivation && (fetchInMemoryState || fetchPersistenceState)) || (usingStores && passivation && fetchInMemoryState&& fetchPersistenceState) || (!usingStores && fetchInMemoryState);
+}
