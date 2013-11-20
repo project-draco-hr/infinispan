@@ -1,0 +1,22 @@
+{
+  if (getLog().isTraceEnabled()) {
+    getLog().tracef("Interception of method named '%s'",invocationContext.getMethod().getName());
+  }
+  final CacheKeyInvocationContext<CacheRemoveAll> cacheKeyInvocationContext=contextFactory.getCacheKeyInvocationContext(invocationContext);
+  final CacheRemoveAll cacheRemoveAll=cacheKeyInvocationContext.getCacheAnnotation();
+  final Cache<GeneratedCacheKey,Object> cache=cacheResolver.resolveCache(cacheKeyInvocationContext);
+  if (!cacheRemoveAll.afterInvocation()) {
+    cache.clear();
+    if (getLog().isTraceEnabled()) {
+      getLog().tracef("Clear cache '%s' before method invocation",cache.getName());
+    }
+  }
+  final Object result=invocationContext.proceed();
+  if (cacheRemoveAll.afterInvocation()) {
+    cache.clear();
+    if (getLog().isTraceEnabled()) {
+      getLog().tracef("Clear cache '%s' after method invocation",cache.getName());
+    }
+  }
+  return result;
+}
