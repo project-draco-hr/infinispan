@@ -1,0 +1,44 @@
+{
+  try {
+    if (obj == null) {
+      p.put(prefix,"null");
+      return;
+    }
+    Class<?> cls=obj.getClass();
+    if (cls.getName().startsWith("org.infinispan.config") && !cls.isEnum()) {
+      for (      Method m : getMethods(obj.getClass())) {
+        if (m.getParameterTypes().length != 0 || "toString".equals(m.getName()) || "hashCode".equals(m.getName()) || "toProperties".equals(m.getName())) {
+          continue;
+        }
+        try {
+          String prefixDot=prefix == null || "".equals(prefix) ? "" : prefix + ".";
+          reflect(m.invoke(obj),p,prefixDot + m.getName());
+        }
+ catch (        IllegalAccessException e) {
+        }
+      }
+    }
+ else     if (Collection.class.isAssignableFrom(cls)) {
+      Collection<?> collection=(Collection<?>)obj;
+      Iterator<?> iter=collection.iterator();
+      for (int i=0; i < collection.size(); i++) {
+        reflect(iter.next(),p,prefix + "[" + i+ "]");
+      }
+    }
+ else     if (cls.isArray()) {
+      Object[] a=(Object[])obj;
+      for (int i=0; i < a.length; i++) {
+        reflect(a[i],p,prefix + "[" + i+ "]");
+      }
+    }
+ else     if (hasPlainToString(cls,obj)) {
+      p.put(prefix,cls.getName());
+    }
+ else {
+      p.put(prefix,obj.toString());
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+}
