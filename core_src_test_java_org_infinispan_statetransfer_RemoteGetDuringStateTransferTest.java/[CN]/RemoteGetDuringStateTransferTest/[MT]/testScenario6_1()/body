@@ -1,25 +1,24 @@
 {
   assertClusterSize("Wrong cluster size.",2);
-  final Object key="key_s4";
+  final Object key="key_s6";
   ownerCheckAndInit(cache(1),key,"v");
   final ControlledRpcManager rpcManager=replaceRpcManager(cache(0));
   final ControlledLocalTopologyManager topologyManager=replaceTopologyManager(manager(0));
   final int currentTopologyId=currentTopologyId(cache(0));
   rpcManager.blockBefore(ClusteredGetCommand.class);
   topologyManager.startBlocking(LatchType.CONSISTENT_HASH_UPDATE);
-  assertTopologyId(currentTopologyId,cache(0));
+  NewNode joiner=addNode();
+  topologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
+  assertTopologyId(currentTopologyId + 1,cache(0));
   Future<Object> remoteGetFuture=remoteGet(cache(0),key);
   rpcManager.waitForCommandToBlock();
-  NewNode joiner=addNode(LatchType.CONSISTENT_HASH_UPDATE);
-  topologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
   awaitForTopology(currentTopologyId + 2,cache(1));
-  awaitForTopology(currentTopologyId + 1,cache(0));
+  awaitForTopology(currentTopologyId + 2,cache(2));
   awaitUntilNotInDataContainer(cache(1),key);
   joiner.localTopologyManager.waitToBlock(LatchType.CONSISTENT_HASH_UPDATE);
   rpcManager.stopBlocking();
   assertEquals("Wrong value from remote get.","v",remoteGetFuture.get());
   assertTopologyId(currentTopologyId + 1,cache(0));
   topologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
-  joiner.localTopologyManager.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
   joiner.joinerFuture.get();
 }

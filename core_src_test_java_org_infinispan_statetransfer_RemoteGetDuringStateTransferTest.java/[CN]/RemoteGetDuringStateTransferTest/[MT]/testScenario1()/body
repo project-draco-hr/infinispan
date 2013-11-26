@@ -9,12 +9,12 @@
   topologyManager.startBlocking(LatchType.REBALANCE);
   Future<Object> remoteGetFuture=remoteGet(cache(0),key);
   rpcManager.waitForCommandToBlock();
-  Future<Void> joinerFuture=addNode();
+  NewNode joiner=addNode();
   topologyManager.waitToBlock(LatchType.REBALANCE);
   awaitForTopology(currentTopologyId + 1,cache(1));
   rpcManager.stopBlocking();
   assertEquals("Wrong value from remote get.","v",remoteGetFuture.get());
   assertTopologyId(currentTopologyId,cache(0));
   topologyManager.stopBlocking(LatchType.REBALANCE);
-  joinerFuture.get();
+  joiner.joinerFuture.get();
 }

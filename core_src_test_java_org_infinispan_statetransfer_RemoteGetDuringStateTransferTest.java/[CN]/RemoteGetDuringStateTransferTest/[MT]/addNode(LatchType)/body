@@ -1,0 +1,17 @@
+{
+  NewNode newNode=new NewNode();
+  EmbeddedCacheManager embeddedCacheManager=addClusterEnabledCacheManager(configuration());
+  newNode.localTopologyManager=replaceTopologyManager(embeddedCacheManager);
+  if (block != null) {
+    newNode.localTopologyManager.startBlocking(block);
+  }
+  topologyManagerList.add(newNode.localTopologyManager);
+  newNode.joinerFuture=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      waitForClusterToForm();
+      return null;
+    }
+  }
+);
+  return newNode;
+}
