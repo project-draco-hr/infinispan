@@ -1,0 +1,30 @@
+{
+  final Cache<Object,String>[] owners=getOwners(key,2);
+  final Cache<Object,String> ownerCache=owners[0];
+  final Cache<Object,String> backupOwnerCache=owners[1];
+  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
+  ownerCache.put(key,firstValue);
+  assertIsNotInL1(nonOwnerCache,key);
+  CyclicBarrier getBarrier=new CyclicBarrier(3);
+  ownerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier,GetKeyValueCommand.class,true),getL1InterceptorClass());
+  backupOwnerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier,GetKeyValueCommand.class,true),getL1InterceptorClass());
+  try {
+    Future<String> future=nonOwnerCache.getAsync(key);
+    getBarrier.await(10,TimeUnit.SECONDS);
+    Assert.assertEquals(firstValue,ownerCache.put(key,secondValue));
+    getBarrier.await(10,TimeUnit.SECONDS);
+    final String expectedValue;
+    if (isolationLevel == IsolationLevel.REPEATABLE_READ) {
+      expectedValue=firstValue;
+    }
+ else {
+      expectedValue=secondValue;
+    }
+    Assert.assertEquals(expectedValue,future.get(10,TimeUnit.SECONDS));
+    assertIsNotInL1(nonOwnerCache,key);
+  }
+  finally {
+    removeAllBlockingInterceptorsFromCache(ownerCache);
+    removeAllBlockingInterceptorsFromCache(backupOwnerCache);
+  }
+}
