@@ -1,21 +1,12 @@
 {
-  CheckPoint checkPoint=new CheckPoint();
-  LocalTopologyManager ltm0=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
-  int preJoinTopologyId=ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
   final AdvancedCache<Object,Object> cache0=advancedCache(0);
-  addBlockingLocalTopologyManager(manager(0),checkPoint,preJoinTopologyId);
   final AdvancedCache<Object,Object> cache1=advancedCache(1);
-  addBlockingLocalTopologyManager(manager(1),checkPoint,preJoinTopologyId);
+  ControlledRpcManager blockingRpcManager1=blockStateResponseCommand(cache1);
   ConfigurationBuilder c=getConfigurationBuilder();
   c.clustering().stateTransfer().awaitInitialTransfer(false);
   addClusterEnabledCacheManager(c);
-  addBlockingLocalTopologyManager(manager(2),checkPoint,preJoinTopologyId);
   log.tracef("Starting the cache on the joiner");
   final AdvancedCache<Object,Object> cache2=advancedCache(2);
-  int duringJoinTopologyId=preJoinTopologyId + 1;
-  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(0));
-  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(1));
-  checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_"+ address(2));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return cache0.getRpcManager().getMembers().size() == 3 && cache1.getRpcManager().getMembers().size() == 3 && cache2.getRpcManager().getMembers().size() == 3;
@@ -31,6 +22,7 @@
   CyclicBarrier beforeCache2Barrier=new CyclicBarrier(2);
   BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(beforeCache2Barrier,op.getCommandClass(),true);
   cache2.addInterceptorBefore(blockingInterceptor2,NonTxDistributionInterceptor.class);
+  blockingRpcManager1.waitForCommandToBlock();
   final MagicKey key=getKeyForCache2();
   if (op.getPreviousValue() != null) {
     cache0.withFlags(Flag.CACHE_MODE_LOCAL).put(key,op.getPreviousValue());
@@ -50,10 +42,7 @@
   assertEquals(op.getReturnValue(),result);
   log.tracef("%s operation is done",op);
   cache0.removeInterceptor(BlockingInterceptor.class);
-  int postJoinTopologyId=duringJoinTopologyId + 1;
-  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(0));
-  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(1));
-  checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_"+ address(2));
+  blockingRpcManager1.stopBlocking();
   TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
   assertEquals(op.getValue(),cache0.get(key));
   assertEquals(op.getValue(),cache1.get(key));
