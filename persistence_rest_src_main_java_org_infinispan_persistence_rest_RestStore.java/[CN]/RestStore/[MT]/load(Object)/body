@@ -1,0 +1,36 @@
+{
+  HttpGet get=new HttpGet(keyToUri(key));
+  try {
+    HttpResponse response=httpClient.execute(httpHost,get);
+switch (response.getStatusLine().getStatusCode()) {
+case HttpStatus.SC_OK:
+      String contentType=response.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue();
+    long ttl=timeHeaderToSeconds(response.getFirstHeader(TIME_TO_LIVE_SECONDS));
+  long maxidle=timeHeaderToSeconds(response.getFirstHeader(MAX_IDLE_TIME_SECONDS));
+Metadata metadata=metadataHelper.buildMetadata(contentType,ttl,TimeUnit.SECONDS,maxidle,TimeUnit.SECONDS);
+InternalMetadata internalMetadata;
+if (metadata.maxIdle() > -1 || metadata.lifespan() > -1) {
+long now=ctx.getTimeService().wallClockTime();
+internalMetadata=new InternalMetadataImpl(metadata,now,now);
+}
+ else {
+internalMetadata=new InternalMetadataImpl(metadata,-1,-1);
+}
+byte[] bytes=EntityUtils.toByteArray(response.getEntity());
+return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,unmarshall(contentType,bytes),internalMetadata);
+case HttpStatus.SC_NOT_FOUND:
+return null;
+default :
+throw log.httpError(response.getStatusLine().toString());
+}
+}
+ catch (IOException e) {
+throw log.httpError(e);
+}
+catch (Exception e) {
+throw new PersistenceException(e);
+}
+ finally {
+get.abort();
+}
+}

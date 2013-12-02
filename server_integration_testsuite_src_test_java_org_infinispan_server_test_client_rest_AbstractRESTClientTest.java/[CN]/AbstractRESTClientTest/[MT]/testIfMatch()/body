@@ -1,0 +1,10 @@
+{
+  String fullPathKey=fullPathKey(KEY_A);
+  put(fullPathKey,"data","application/text");
+  HttpResponse resp=get(fullPathKey);
+  String eTag=resp.getHeaders("ETag")[0].getValue();
+  get(fullPathKey,"data",HttpServletResponse.SC_OK,true,"If-Match",eTag);
+  get(fullPathKey,null,HttpServletResponse.SC_PRECONDITION_FAILED,true,"If-Match",eTag + "garbage");
+  head(fullPathKey,HttpServletResponse.SC_OK,new String[][]{{"If-Match",eTag}});
+  head(fullPathKey,HttpServletResponse.SC_PRECONDITION_FAILED,new String[][]{{"If-Match",eTag + "garbage"}});
+}

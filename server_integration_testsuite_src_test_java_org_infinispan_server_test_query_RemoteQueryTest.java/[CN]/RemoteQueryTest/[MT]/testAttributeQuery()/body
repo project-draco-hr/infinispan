@@ -1,0 +1,13 @@
+{
+  remoteCache.put(1,createUser1());
+  remoteCache.put(2,createUser2());
+  User fromCache=remoteCache.get(1);
+  assertUser(fromCache);
+  QueryFactory qf=Search.getQueryFactory(remoteCache);
+  Query query=qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+  List<User> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(User.class,list.get(0).getClass());
+  assertUser(list.get(0));
+}

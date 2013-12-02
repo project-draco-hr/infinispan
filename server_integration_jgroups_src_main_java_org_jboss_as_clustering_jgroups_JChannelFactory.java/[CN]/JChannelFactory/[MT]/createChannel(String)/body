@@ -1,0 +1,66 @@
+{
+  JChannel channel=new MuxChannel(this);
+  TP transport=channel.getProtocolStack().getTransport();
+  if (transport.isSingleton()) {
+synchronized (transport) {
+      this.init(transport);
+    }
+  }
+ else {
+    this.init(transport);
+  }
+  final RelayConfiguration relayConfig=this.configuration.getRelay();
+  if (relayConfig != null) {
+    final String localSite=relayConfig.getSiteName();
+    final List<RemoteSiteConfiguration> remoteSites=this.configuration.getRelay().getRemoteSites();
+    final List<String> sites=new ArrayList<String>(remoteSites.size() + 1);
+    sites.add(localSite);
+    final Map<String,RelayConfig.BridgeConfig> bridges=new HashMap<String,RelayConfig.BridgeConfig>();
+    for (    final RemoteSiteConfiguration remoteSite : remoteSites) {
+      final String siteName=remoteSite.getName();
+      sites.add(siteName);
+      final String cluster=remoteSite.getCluster();
+      final String clusterName=(cluster != null) ? cluster : siteName;
+      final RelayConfig.BridgeConfig bridge=new RelayConfig.BridgeConfig(clusterName){
+        @Override public JChannel createChannel() throws Exception {
+          return (JChannel)remoteSite.getChannelFactory().createChannel(id + "/" + clusterName);
+        }
+      }
+;
+      bridges.put(clusterName,bridge);
+    }
+    Collections.sort(sites);
+    final RELAY2 relay=new RELAY2().site(localSite);
+    for (short i=0; i < sites.size(); ++i) {
+      final String site=sites.get(i);
+      RelayConfig.SiteConfig siteConfig=new RelayConfig.SiteConfig(site);
+      relay.addSite(site,siteConfig);
+      if (site.equals(localSite)) {
+        for (        RelayConfig.BridgeConfig bridge : bridges.values()) {
+          siteConfig.addBridge(bridge);
+        }
+      }
+    }
+    Configurator.resolveAndAssignFields(relay,relayConfig.getProperties());
+    Configurator.resolveAndInvokePropertyMethods(relay,relayConfig.getProperties());
+    channel.getProtocolStack().addProtocol(relay);
+    relay.init();
+  }
+  channel.setName(this.configuration.getEnvironment().getNodeName() + "/" + id);
+  TransportConfiguration.Topology topology=this.configuration.getTransport().getTopology();
+  if (topology != null) {
+    channel.setAddressGenerator(new TopologyAddressGenerator(channel,topology.getSite(),topology.getRack(),topology.getMachine()));
+  }
+  MBeanServer server=this.configuration.getMBeanServer();
+  if (server != null) {
+    try {
+      this.channels.put(channel,id);
+      JmxConfigurator.registerChannel(channel,server,id);
+    }
+ catch (    Exception e) {
+      ROOT_LOGGER.warn(e.getMessage(),e);
+    }
+    channel.addChannelListener(this);
+  }
+  return channel;
+}

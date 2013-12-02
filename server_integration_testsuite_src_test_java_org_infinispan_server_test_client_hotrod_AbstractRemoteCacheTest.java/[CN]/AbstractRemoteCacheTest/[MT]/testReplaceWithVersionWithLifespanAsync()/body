@@ -1,0 +1,13 @@
+{
+  int lifespanInSecs=2;
+  assertNull(remoteCache.replace("aKey","aValue"));
+  remoteCache.put("aKey","aValue");
+  VersionedValue valueBinary=remoteCache.getVersioned("aKey");
+  NotifyingFuture<Boolean> future=remoteCache.replaceWithVersionAsync("aKey","aNewValue",valueBinary.getVersion(),lifespanInSecs);
+  assertTrue(future.get());
+  VersionedValue entry2=remoteCache.getVersioned("aKey");
+  assertNotEquals(entry2.getVersion(),valueBinary.getVersion());
+  assertEquals("aNewValue",entry2.getValue());
+  sleepForSecs(lifespanInSecs + 1);
+  assertNull(remoteCache.getVersioned("aKey"));
+}

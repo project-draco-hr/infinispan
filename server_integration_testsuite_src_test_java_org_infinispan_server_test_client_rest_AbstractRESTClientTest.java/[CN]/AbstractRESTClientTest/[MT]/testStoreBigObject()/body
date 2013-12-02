@@ -1,0 +1,25 @@
+{
+  int SIZE=3000000;
+  byte[] bytes=new byte[SIZE];
+  for (int i=0; i < SIZE; i++) {
+    bytes[i]=(byte)(i % 10);
+  }
+  put(fullPathKey("object"),bytes,"application/octet-stream");
+  HttpResponse resp=getWithoutClose(fullPathKey("object"));
+  InputStream responseStream=resp.getEntity().getContent();
+  byte[] response=new byte[SIZE];
+  byte data;
+  int j=0;
+  while ((data=(byte)responseStream.read()) != -1) {
+    response[j]=data;
+    j++;
+  }
+  boolean correct=true;
+  for (int i=0; i < SIZE; i++) {
+    if (bytes[i] != response[i]) {
+      correct=false;
+    }
+  }
+  EntityUtils.consume(resp.getEntity());
+  assertTrue(correct);
+}

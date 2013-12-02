@@ -1,0 +1,51 @@
+def main():
+    parser = argparse.ArgumentParser(description='Dependency tool for JBoss AS/EAP modules')
+    parser.add_argument('serverConfig', metavar='standalone.xml', type=str, help='The xml configuration file which lists the required extensions [e.g. standalone.xml / domain.xml]')
+    parser.add_argument('modules', metavar='module.xml', type=str, nargs='+', help='A list of module.xml definition files')
+    parser.add_argument('--includes', dest='mode', action='store_const', const='includes', default='excludes', help='Prints out the modules to be included (default is to print out the modules to be excluded)')
+    parser.add_argument('--html', dest='mode', action='store_const', const='html', default='excludes', help='Produces an HTML version of the dependency relationships')
+    args = parser.parse_args()
+    server = Server(args.serverConfig)
+    availableModules = {}
+    for i in args.modules:
+        module = Module(i)
+        availableModules[module.name] = module
+    requiredModules = server.traverse(availableModules)
+    if (args.mode == 'includes'):
+        for module in sorted(requiredModules):
+            availableModules[module].show()
+    elif (args.mode == 'excludes'):
+        for module in sorted(availableModules):
+            if (module not in requiredModules):
+                print module
+    elif (args.mode == 'html'):
+        print '<!DOCTYPE HTML>\n<html>\n<head>\n<title>EDG dependencies</title>\n<style type="text/css">'
+        print 'ul {margin: 0}'
+        print 'td {border: 1px solid black}'
+        print '</style>\n</head>\n<body>'
+        print '<table style="border-collapse: collapse">'
+        print '<tr><th>Module</th><th>Depends on</th><th>Is a dependency of</th><th>Resources</th></tr>'
+        for module in sorted(availableModules):
+            color = ('#aaffaa' if (module in requiredModules) else '#ffaaaa')
+            print ('<tr style="background: %s"><td><a name="%s"><h4>%s</h4></a></td>' % (color, module, module))
+            deps = availableModules[module].dependencies
+            print '<td><ul>'
+            for d in deps:
+                print ("<li><a href='#%s'>%s</a></li>" % (d, d))
+            print '</ul></td>'
+            reqs = set()
+            for r in availableModules:
+                if (module in availableModules[r].dependencies):
+                    reqs.add(r)
+            print '<td><ul>'
+            for r in sorted(reqs):
+                print ("<li><a href='#%s'>%s</a></li>" % (r, r))
+            print '</ul></td>'
+            rsrcs = availableModules[module].resources
+            print '<td><ul>'
+            for r in rsrcs:
+                print ('<li>%s</li>' % r)
+            print '</ul></td>'
+            print '</tr>'
+        print '</table>\n'
+        print '</body>\n</html>\n'

@@ -1,0 +1,18 @@
+{
+  cacheManager=TestCacheManagerFactory.fromXml(CACHE_LOADER_CONFIG);
+  List<StoreConfiguration> cacheLoaders=cacheManager.getDefaultCacheConfiguration().persistence().stores();
+  assertEquals(1,cacheLoaders.size());
+  RestStoreConfiguration store=(RestStoreConfiguration)cacheLoaders.get(0);
+  assertFalse(store.appendCacheNameToPath());
+  assertEquals("localhost",store.host());
+  assertEquals("/rest/___defaultcache/",store.path());
+  assertEquals(18212,store.port());
+  ConnectionPoolConfiguration connectionPool=store.connectionPool();
+  assertEquals(10000,connectionPool.connectionTimeout());
+  assertEquals(10,connectionPool.maxConnectionsPerHost());
+  assertEquals(10,connectionPool.maxTotalConnections());
+  assertEquals(20000,connectionPool.bufferSize());
+  assertEquals(10000,connectionPool.socketTimeout());
+  assertTrue(connectionPool.tcpNoDelay());
+  assertFalse(store.async().enabled());
+}

@@ -1,0 +1,14 @@
+{
+  try {
+    MarshalledEntry me=(MarshalledEntry)unmarshall(db.get(marshall(key)));
+    if (me == null)     return null;
+    InternalMetadata meta=me.getMetadata();
+    if (meta != null && meta.isExpired(ctx.getTimeService().wallClockTime())) {
+      return null;
+    }
+    return me;
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+}

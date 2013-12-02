@@ -1,0 +1,18 @@
+{
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  ObjectOutputStream oo=new ObjectOutputStream(bout);
+  oo.writeObject(new TestSerializable("CONTENT"));
+  oo.flush();
+  byte[] byteData=bout.toByteArray();
+  mc.writeln("set " + KEY_A + " 0 0 "+ byteData.length);
+  mc.flush();
+  mc.write(byteData);
+  mc.write("\r\n".getBytes(ENCODING));
+  mc.flush();
+  assertEquals("STORED",mc.readln());
+  byte[] bytesBack=mc.getBytes(KEY_A);
+  assertEquals(byteData.length,bytesBack.length);
+  ObjectInputStream oin=new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+  TestSerializable ts=(TestSerializable)oin.readObject();
+  assertEquals("CONTENT",ts.getContent());
+}

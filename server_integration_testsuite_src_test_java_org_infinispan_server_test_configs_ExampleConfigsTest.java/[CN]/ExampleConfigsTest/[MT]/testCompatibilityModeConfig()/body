@@ -1,0 +1,34 @@
+{
+  MemcachedClient memcachedClient=null;
+  CloseableHttpClient restClient=null;
+  try {
+    RemoteInfinispanMBeans s1=createRemotes("standalone-compatibility-mode","local",DEFAULT_CACHE_NAME);
+    RemoteCache<Object,Object> s1Cache=createCache(s1);
+    restClient=HttpClients.createDefault();
+    String restUrl="http://" + s1.server.getHotrodEndpoint().getInetAddress().getHostName() + ":8080"+ s1.server.getRESTEndpoint().getContextPath()+ "/"+ DEFAULT_CACHE_NAME;
+    memcachedClient=new MemcachedClient(s1.server.getMemcachedEndpoint().getInetAddress().getHostName(),s1.server.getMemcachedEndpoint().getPort());
+    String key="1";
+    assertEquals(null,s1Cache.withFlags(Flag.FORCE_RETURN_VALUE).put(key,"v1".getBytes()));
+    assertArrayEquals("v1".getBytes(),(byte[])s1Cache.get(key));
+    HttpGet get=new HttpGet(restUrl + "/" + key);
+    HttpResponse getResponse=restClient.execute(get);
+    assertEquals(HttpServletResponse.SC_OK,getResponse.getStatusLine().getStatusCode());
+    assertArrayEquals("v1".getBytes(),EntityUtils.toByteArray(getResponse.getEntity()));
+    assertArrayEquals("v1".getBytes(),readWithMemcachedAndDeserialize(key,memcachedClient));
+    key="2";
+    HttpPut put=new HttpPut(restUrl + "/" + key);
+    put.setEntity(new ByteArrayEntity("<hey>ho</hey>".getBytes(),ContentType.APPLICATION_OCTET_STREAM));
+    HttpResponse putResponse=restClient.execute(put);
+    assertEquals(HttpServletResponse.SC_OK,putResponse.getStatusLine().getStatusCode());
+    assertArrayEquals("<hey>ho</hey>".getBytes(),(byte[])s1Cache.get(key));
+    assertArrayEquals("<hey>ho</hey>".getBytes(),readWithMemcachedAndDeserialize(key,memcachedClient));
+  }
+  finally {
+    if (restClient != null) {
+      restClient.close();
+    }
+    if (memcachedClient != null) {
+      memcachedClient.close();
+    }
+  }
+}

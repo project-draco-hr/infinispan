@@ -1,0 +1,19 @@
+{
+  RemoteCacheImpl rci=(RemoteCacheImpl)rc;
+  OperationsFactory of=getOperationsFactoryField(rci);
+  TcpTransportFactory ttf=(TcpTransportFactory)getTransportFactoryField(of);
+  Collection<SocketAddress> servers=ttf.getServers();
+  StringBuffer serverList=new StringBuffer();
+  int listSize=servers.size();
+  int i=0;
+  for (Iterator iter=servers.iterator(); iter.hasNext(); i++) {
+    InetSocketAddress addr=(InetSocketAddress)iter.next();
+    String serverAddress=addr.getAddress().toString();
+    if (serverAddress.startsWith("/"))     serverAddress=serverAddress.substring(1);
+    serverList.append(addr.getHostName());
+    serverList.append(":");
+    serverList.append(addr.getPort());
+    if (i < listSize - 1)     serverList.append(";");
+  }
+  return serverList.toString();
+}

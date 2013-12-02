@@ -1,0 +1,41 @@
+{
+  ROOT_LOGGER.endpointStarting(serverName);
+  boolean done=false;
+  try {
+    EmbeddedCacheManagerConfiguration embeddedCacheManagerConfiguration=cacheManagerConfiguration.getOptionalValue();
+    if (embeddedCacheManagerConfiguration != null) {
+      configurationBuilder.defaultCacheName(embeddedCacheManagerConfiguration.getDefaultCache());
+    }
+    SocketBinding socketBinding=getSocketBinding().getValue();
+    InetSocketAddress socketAddress=socketBinding.getSocketAddress();
+    configurationBuilder.host(socketAddress.getAddress().getHostAddress());
+    configurationBuilder.port(socketAddress.getPort());
+    SecurityRealm realm=securityRealm.getOptionalValue();
+    final String qual;
+    if (realm != null) {
+      SSLContext sslContext=realm.getSSLContext();
+      if (sslContext == null) {
+        throw ROOT_LOGGER.noSSLContext(serverName,realm.getName());
+      }
+      configurationBuilder.ssl().sslContext(sslContext);
+      qual=" (SSL)";
+    }
+ else {
+      qual="";
+    }
+    ROOT_LOGGER.endpointStarted(serverName + qual,NetworkUtils.formatAddress(socketAddress));
+    startProtocolServer(configurationBuilder.build());
+    done=true;
+  }
+ catch (  StartException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw ROOT_LOGGER.failedStart(e,serverName);
+  }
+ finally {
+    if (!done) {
+      doStop();
+    }
+  }
+}

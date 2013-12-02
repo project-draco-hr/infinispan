@@ -1,0 +1,22 @@
+{
+  try {
+    controller.start(JOINING_NODE_FRIEND);
+    RemoteInfinispanMBeans coordinator=RemoteInfinispanMBeans.create(servers,COORDINATOR_NODE,"memcachedCache","clustered");
+    RemoteInfinispanMBeans friend=RemoteInfinispanMBeans.create(servers,JOINING_NODE_FRIEND,"memcachedCache","clustered");
+    MBeanServerConnectionProvider providerCoordinator=new MBeanServerConnectionProvider(coordinator.server.getHotrodEndpoint().getInetAddress().getHostName(),9999);
+    MBeanServerConnectionProvider providerFriend=new MBeanServerConnectionProvider(friend.server.getHotrodEndpoint().getInetAddress().getHostName(),10099);
+    MemcachedClient mcCoordinator=new MemcachedClient(coordinator.server.getMemcachedEndpoint().getInetAddress().getHostName(),coordinator.server.getMemcachedEndpoint().getPort());
+    MemcachedClient mcFriend=new MemcachedClient(friend.server.getMemcachedEndpoint().getInetAddress().getHostName(),friend.server.getMemcachedEndpoint().getPort());
+    assertEquals(2,coordinator.manager.getClusterSize());
+    assertEquals(2,friend.manager.getClusterSize());
+    assertEquals("secret",getAttribute(providerCoordinator,ENCRYPT_MBEAN,"store_password"));
+    assertEquals("secret",getAttribute(providerFriend,ENCRYPT_MBEAN,"store_password"));
+    assertEquals("org.jgroups.auth.X509Token",getAttribute(providerCoordinator,AUTH_MBEAN,"auth_class"));
+    assertEquals("org.jgroups.auth.X509Token",getAttribute(providerFriend,AUTH_MBEAN,"auth_class"));
+    mcFriend.set("key1","value1");
+    assertEquals("Could not read replicated pair key1/value1","value1",mcCoordinator.get("key1"));
+  }
+  finally {
+    controller.stop(JOINING_NODE_FRIEND);
+  }
+}

@@ -1,0 +1,15 @@
+{
+  long expiry=entry.getMetadata().expiryTime();
+  long maxIdle=entry.getMetadata().maxIdle();
+  if (maxIdle > 0) {
+    expiry=maxIdle + System.currentTimeMillis();
+  }
+  Long at=expiry;
+  Object key=entry.getKey();
+  try {
+    expiryEntryQueue.put(new ExpiryEntry(at,key));
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
+}

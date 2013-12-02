@@ -1,0 +1,15 @@
+{
+  NotifyingFuture<Boolean> future=null;
+  future=remoteCache.removeWithVersionAsync("aKey",12321212l);
+  assertTrue(!future.get());
+  remoteCache.put("aKey","aValue");
+  VersionedValue valueBinary=remoteCache.getVersioned("aKey");
+  future=remoteCache.removeWithVersionAsync("aKey",valueBinary.getVersion());
+  assertTrue(future.get());
+  remoteCache.put("aKey","aNewValue");
+  VersionedValue entry2=remoteCache.getVersioned("aKey");
+  assertNotEquals(entry2.getVersion(),valueBinary.getVersion());
+  assertEquals(entry2.getValue(),"aNewValue");
+  future=remoteCache.removeWithVersionAsync("aKey",valueBinary.getVersion());
+  assertTrue(!future.get());
+}

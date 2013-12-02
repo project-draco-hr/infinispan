@@ -1,0 +1,16 @@
+{
+  RemoteInfinispanMBeans sDefault=createRemotes("clustered-jdbc","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans sNamed=createRemotes("clustered-jdbc","clustered",NAMED_CACHE_NAME);
+  RemoteCache<Object,Object> sDefaultCache=createCache(sDefault);
+  RemoteCache<Object,Object> sNamedCache=createCache(sNamed);
+  sNamedCache.put("key","value");
+  sNamedCache.put("key2","value2");
+  assertEquals("value",sNamedCache.get("key"));
+  assertEquals("value2",sNamedCache.get("key2"));
+  for (int i=0; i < 1001; i++) {
+    sDefaultCache.put("k" + i,"v" + i);
+  }
+  for (int i=0; i < 1001; i++) {
+    assertEquals("v" + i,sDefaultCache.get("k" + i));
+  }
+}

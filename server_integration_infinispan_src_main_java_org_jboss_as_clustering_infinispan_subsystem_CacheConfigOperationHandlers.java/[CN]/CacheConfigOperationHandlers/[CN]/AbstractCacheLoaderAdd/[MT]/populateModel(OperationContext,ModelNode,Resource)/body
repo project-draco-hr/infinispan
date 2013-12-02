@@ -1,0 +1,22 @@
+{
+  final ModelNode model=resource.getModel();
+  for (  final AttributeDefinition attribute : attributes) {
+    if (attribute.getName().equals(BaseStoreResource.PROPERTIES.getName()))     continue;
+    attribute.validateAndSet(operation,model);
+  }
+  populateSubclassModel(context,operation,model);
+  if (operation.hasDefined(ModelKeys.PROPERTIES)) {
+    for (    ModelNode node : operation.get(ModelKeys.PROPERTIES).asList()) {
+      for (      Property property : node.asPropertyList()) {
+        final Resource param=context.createResource(PathAddress.pathAddress(PathElement.pathElement(ModelKeys.PROPERTY,property.getName())));
+        final ModelNode value=property.getValue();
+        if (!value.isDefined()) {
+          throw InfinispanMessages.MESSAGES.propertyValueNotDefined(property.getName());
+        }
+        ModelNode holder=new ModelNode();
+        holder.get(LoaderPropertyResource.VALUE.getName()).set(value);
+        LoaderPropertyResource.VALUE.validateAndSet(holder,param.getModel());
+      }
+    }
+  }
+}

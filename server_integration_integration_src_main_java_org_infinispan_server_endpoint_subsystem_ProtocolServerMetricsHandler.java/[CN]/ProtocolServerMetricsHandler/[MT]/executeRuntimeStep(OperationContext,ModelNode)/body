@@ -1,0 +1,22 @@
+{
+  final String attrName=operation.require(ModelDescriptionConstants.NAME).asString();
+  ProtocolServerMetrics metric=ProtocolServerMetrics.getStat(attrName);
+  if (metric == null) {
+    context.getFailureDescription().set(String.format("Unknown metric %s",attrName));
+  }
+ else {
+    final ServiceController<?> controller=context.getServiceRegistry(false).getService(EndpointUtils.getServiceName(operation,name));
+    ProtocolServerService service=(ProtocolServerService)controller.getService();
+    ModelNode result=new ModelNode();
+switch (metric) {
+case BYTES_READ:
+      result.set(service.getTransport().getTotalBytesRead());
+    break;
+case BYTES_WRITTEN:
+  result.set(service.getTransport().getTotalBytesWritten());
+break;
+}
+context.getResult().set(result);
+}
+context.stepCompleted();
+}

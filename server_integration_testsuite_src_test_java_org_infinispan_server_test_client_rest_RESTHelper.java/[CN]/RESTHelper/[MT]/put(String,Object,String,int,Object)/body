@@ -1,0 +1,23 @@
+{
+  HttpPut put=new HttpPut(uri);
+  if (data instanceof String) {
+    put.setEntity(new StringEntity((String)data,"UTF-8"));
+  }
+ else   if (data instanceof byte[]) {
+    byte[] byteData=(byte[])data;
+    ByteArrayInputStream bs=new ByteArrayInputStream(byteData);
+    put.setEntity(new InputStreamEntity(bs,byteData.length));
+  }
+ else {
+    throw new IllegalArgumentException("Unknown data type for PUT method");
+  }
+  put.setHeader("Content-Type",contentType);
+  if (headers.length % 2 != 0)   throw new IllegalArgumentException("bad headers argument");
+  for (int i=0; i < headers.length; i+=2) {
+    put.setHeader((String)headers[i],(String)headers[i + 1]);
+  }
+  HttpResponse resp=client.execute(put);
+  EntityUtils.consume(resp.getEntity());
+  assertEquals(expectedCode,resp.getStatusLine().getStatusCode());
+  return resp;
+}

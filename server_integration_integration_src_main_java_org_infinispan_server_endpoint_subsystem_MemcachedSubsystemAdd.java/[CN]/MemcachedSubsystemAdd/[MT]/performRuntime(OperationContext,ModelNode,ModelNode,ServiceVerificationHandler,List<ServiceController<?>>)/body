@@ -1,0 +1,19 @@
+{
+  ModelNode config=Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
+  MemcachedServerConfigurationBuilder configurationBuilder=new MemcachedServerConfigurationBuilder();
+  this.configureProtocolServer(configurationBuilder,config);
+  final String cacheName;
+  if (config.hasDefined(ModelKeys.CACHE)) {
+    cacheName=config.get(ModelKeys.CACHE).asString();
+    configurationBuilder.defaultCacheName(cacheName);
+  }
+ else {
+    cacheName="memcachedCache";
+  }
+  final ProtocolServerService service=new ProtocolServerService(getServiceName(operation),MemcachedServer.class,configurationBuilder);
+  ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"memcached"),service);
+  EndpointUtils.addCacheContainerDependency(builder,getCacheContainerName(operation),service.getCacheManager());
+  EndpointUtils.addCacheDependency(builder,getCacheContainerName(operation),cacheName);
+  EndpointUtils.addSocketBindingDependency(builder,getSocketBindingName(operation),service.getSocketBinding());
+  builder.install();
+}

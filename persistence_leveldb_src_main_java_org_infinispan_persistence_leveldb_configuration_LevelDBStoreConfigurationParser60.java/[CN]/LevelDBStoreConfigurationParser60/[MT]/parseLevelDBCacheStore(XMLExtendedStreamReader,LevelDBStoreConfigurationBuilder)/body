@@ -1,0 +1,57 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String attributeValue=reader.getAttributeValue(i);
+    String value=StringPropertyReplacer.replaceProperties(attributeValue);
+    String attrName=reader.getAttributeLocalName(i);
+    Attribute attribute=Attribute.forName(attrName);
+switch (attribute) {
+case LOCATION:
+{
+        builder.location(value);
+        break;
+      }
+case EXPIRED_LOCATION:
+{
+      builder.expiredLocation(value);
+      break;
+    }
+case IMPLEMENTATION_TYPE:
+{
+    builder.implementationType(LevelDBStoreConfiguration.ImplementationType.valueOf(value));
+    break;
+  }
+case CLEAR_THRESHOLD:
+{
+  builder.clearThreshold(Integer.valueOf(value));
+  break;
+}
+case EXPIRY_QUEUE_SIZE:
+{
+builder.expiryQueueSize(Integer.valueOf(value));
+}
+case BLOCK_SIZE:
+{
+builder.blockSize(Integer.valueOf(value));
+break;
+}
+case CACHE_SIZE:
+{
+builder.cacheSize(Long.valueOf(value));
+break;
+}
+case COMPRESSION_TYPE:
+{
+builder.compressionType(CompressionType.valueOf(value));
+break;
+}
+default :
+{
+Parser60.parseCommonStoreAttributes(reader,builder,attrName,attributeValue,i);
+}
+}
+}
+if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+ParseUtils.unexpectedElement(reader);
+}
+}

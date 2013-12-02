@@ -1,0 +1,23 @@
+{
+  ecs.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        for (        Object key : batch) {
+          if (taskContext.isStopped())           break;
+          if (!loadEntry && !loadMetadata) {
+            cacheLoaderTask.processEntry(ctx.getMarshalledEntryFactory().newMarshalledEntry(key,(Object)null,null),taskContext);
+          }
+ else {
+            cacheLoaderTask.processEntry(load(key),taskContext);
+          }
+        }
+      }
+ catch (      Exception e) {
+        log.errorExecutingParallelStoreTask(e);
+        throw e;
+      }
+      return null;
+    }
+  }
+);
+}

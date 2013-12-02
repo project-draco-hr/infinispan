@@ -1,0 +1,48 @@
+{
+  RemoteInfinispanMBeans s1=createRemotes("clustered-topology-1","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans s2=createRemotes("clustered-topology-2","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans s3=createRemotes("clustered-topology-3","clustered",DEFAULT_CACHE_NAME);
+  RemoteCache<Object,Object> s1Cache=createCache(s1);
+  RemoteCache<Object,Object> s2Cache=createCache(s2);
+  RemoteCache<Object,Object> s3Cache=createCache(s3);
+  assertEquals(3,s1.manager.getClusterSize());
+  assertEquals(3,s2.manager.getClusterSize());
+  assertEquals(3,s3.manager.getClusterSize());
+  int total_elements=0;
+  s1Cache.clear();
+  s2Cache.clear();
+  s3Cache.clear();
+  long s0Entries=0;
+  long s1Entries=0;
+  long s2Entries=0;
+  List<String> s1Bulk=new ArrayList<String>();
+  List<String> s2Bulk=new ArrayList<String>();
+  while (s0Entries == 0 || s1Entries == 0 || s2Entries == 0 || total_elements < 5) {
+    s1Cache.put("machine" + total_elements,"machine");
+    if (s1Entries + 1 == s2.cache.getNumberOfEntries()) {
+      s1Bulk.add("machine" + total_elements);
+    }
+    if (s2Entries + 1 == s3.cache.getNumberOfEntries()) {
+      s2Bulk.add("machine" + total_elements);
+    }
+    total_elements++;
+    s1Entries=s2.cache.getNumberOfEntries();
+    s2Entries=s3.cache.getNumberOfEntries();
+    s0Entries=s1.cache.getNumberOfEntries();
+    if (total_elements > 10)     break;
+  }
+  assertTrue("Unexpected number of entries in server1: " + s0Entries,s0Entries > 0);
+  assertTrue("Unexpected number of entries in server2: " + s1Entries,s1Entries > 0);
+  assertTrue("Instead of " + total_elements * 2 + " total elements there were " + (s0Entries + s1Entries + s2Entries),s0Entries + s1Entries + s2Entries == total_elements * 2);
+  assertTrue("Server 1 elements are not contained in server 2",s2Bulk.containsAll(s1Bulk));
+  for (  String key : s1Bulk) {
+    s2Cache.remove(key);
+  }
+  s0Entries=s1.cache.getNumberOfEntries();
+  s1Entries=s2.cache.getNumberOfEntries();
+  s2Entries=s3.cache.getNumberOfEntries();
+  assertEquals("There were " + s1Entries + " left in the 2nd server",0,s1Entries);
+  assertEquals(s0Entries,s2Entries);
+  assertNotEquals(s0Entries,s1Entries);
+  assertEquals(s1Cache.getBulk(),s3Cache.getBulk());
+}

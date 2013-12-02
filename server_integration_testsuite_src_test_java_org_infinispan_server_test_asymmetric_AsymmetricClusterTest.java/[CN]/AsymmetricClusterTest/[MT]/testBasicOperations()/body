@@ -1,0 +1,12 @@
+{
+  Configuration conf=new ConfigurationBuilder().addServers(server1.getHotrodEndpoint().getInetAddress().getHostName() + ":" + server1.getHotrodEndpoint().getPort()).build();
+  RemoteCacheManager rcm=new RemoteCacheManager(conf);
+  hrCache=rcm.getCache();
+  mc=new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(),server1.getMemcachedEndpoint().getPort());
+  mc2=new MemcachedClient(server2.getMemcachedEndpoint().getInetAddress().getHostName(),server2.getMemcachedEndpoint().getPort());
+  mc.set("k1","v1");
+  assertEquals("v1",mc.get("k1"));
+  assertEquals("v1",mc2.get("k1"));
+  hrCache.put("k2","v2");
+  assertEquals("v2",hrCache.get("k2"));
+}

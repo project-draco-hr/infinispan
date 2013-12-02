@@ -1,0 +1,19 @@
+{
+  VersionedValue value=remoteCache.getVersioned("aKey");
+  assertNull("expected null but received: " + value,remoteCache.getVersioned("aKey"));
+  remoteCache.put("aKey","aValue");
+  assertEquals("aValue",remoteCache.get("aKey"));
+  VersionedValue valueBinary=remoteCache.getVersioned("aKey");
+  assertNotNull(valueBinary);
+  assertEquals(valueBinary.getValue(),"aValue");
+  remoteCache.put("aKey","aValue");
+  VersionedValue entry2=remoteCache.getVersioned("aKey");
+  assertEquals(entry2.getValue(),"aValue");
+  assertNotEquals(entry2.getVersion(),valueBinary.getVersion());
+  assertNotEquals(valueBinary,entry2);
+  remoteCache.put("aKey","anotherValue");
+  VersionedValue entry3=remoteCache.getVersioned("aKey");
+  assertEquals(entry3.getValue(),"anotherValue");
+  assertNotEquals(entry3.getVersion(),entry2.getVersion());
+  assertNotEquals(entry3,entry2);
+}

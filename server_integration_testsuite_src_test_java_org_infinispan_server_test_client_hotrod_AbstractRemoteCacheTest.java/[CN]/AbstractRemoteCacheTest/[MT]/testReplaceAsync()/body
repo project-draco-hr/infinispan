@@ -1,0 +1,16 @@
+{
+  remoteCache.clear();
+  for (int i=0; i <= ASYNC_OPS_ENTRY_LOAD; i++) {
+    remoteCache.put("key" + i,"value" + i);
+  }
+  Set<Future<?>> futures=new HashSet<Future<?>>();
+  for (int i=0; i <= ASYNC_OPS_ENTRY_LOAD; i++) {
+    futures.add(remoteCache.replaceAsync("key" + i,"newValue" + i,-1,TimeUnit.SECONDS,-1,TimeUnit.SECONDS));
+  }
+  for (  Future<?> f : futures) {
+    f.get();
+  }
+  for (int i=0; i <= ASYNC_OPS_ENTRY_LOAD; i++) {
+    assertEquals("newValue" + i,remoteCache.get("key" + i));
+  }
+}

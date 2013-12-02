@@ -1,0 +1,20 @@
+{
+  HttpGet get=new HttpGet(uri);
+  if (headers.length % 2 != 0)   throw new IllegalArgumentException("bad headers argument");
+  for (int i=0; i < headers.length; i+=2) {
+    get.setHeader((String)headers[i],(String)headers[i + 1]);
+  }
+  HttpResponse resp=client.execute(get);
+  try {
+    assertEquals(expectedCode,resp.getStatusLine().getStatusCode());
+    if (expectedResponseBody != null) {
+      assertEquals(expectedResponseBody,EntityUtils.toString(resp.getEntity()));
+    }
+  }
+  finally {
+    if (closeConnection) {
+      EntityUtils.consume(resp.getEntity());
+    }
+  }
+  return resp;
+}

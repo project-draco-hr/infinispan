@@ -1,0 +1,29 @@
+{
+  Map<String,String> stats=mc.getStats();
+  int incr_misses=new Integer(stats.get("incr_misses"));
+  int incr_hits=new Integer(stats.get("incr_hits"));
+  int decr_misses=new Integer(stats.get("decr_misses"));
+  int decr_hits=new Integer(stats.get("decr_hits"));
+  mc.set(KEY_A,"0");
+  mc.writeln("incr " + KEY_A + " 1");
+  mc.flush();
+  assertEquals("1",mc.readln());
+  mc.writeln("decr " + KEY_A + " 1");
+  mc.flush();
+  assertEquals("0",mc.readln());
+  mc.writeln("incr " + KEY_B + " 1");
+  mc.flush();
+  assertEquals("NOT_FOUND",mc.readln());
+  mc.writeln("decr " + KEY_B + " 1");
+  mc.flush();
+  assertEquals("NOT_FOUND",mc.readln());
+  stats=mc.getStats();
+  int incr_misses_new=new Integer(stats.get("incr_misses"));
+  int incr_hits_new=new Integer(stats.get("incr_hits"));
+  int decr_misses_new=new Integer(stats.get("decr_misses"));
+  int decr_hits_new=new Integer(stats.get("decr_hits"));
+  assertEquals(incr_misses + 1,incr_misses_new);
+  assertEquals(incr_hits + 1,incr_hits_new);
+  assertEquals(decr_misses + 1,decr_misses_new);
+  assertEquals(decr_hits + 1,decr_hits_new);
+}

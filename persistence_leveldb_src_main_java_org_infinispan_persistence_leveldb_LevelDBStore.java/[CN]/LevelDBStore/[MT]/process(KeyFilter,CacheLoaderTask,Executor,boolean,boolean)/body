@@ -1,0 +1,36 @@
+{
+  int batchSize=100;
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
+  final TaskContext taskContext=new TaskContextImpl();
+  List<Map.Entry<byte[],byte[]>> entries=new ArrayList<Map.Entry<byte[],byte[]>>(batchSize);
+  DBIterator it=db.iterator(new ReadOptions().fillCache(false));
+  try {
+    for (it.seekToFirst(); it.hasNext(); ) {
+      Map.Entry<byte[],byte[]> entry=it.next();
+      entries.add(entry);
+      if (entries.size() == batchSize) {
+        final List<Map.Entry<byte[],byte[]>> batch=entries;
+        entries=new ArrayList<Map.Entry<byte[],byte[]>>(batchSize);
+        submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,batch);
+      }
+    }
+    if (!entries.isEmpty()) {
+      submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,entries);
+    }
+    eacs.waitUntilAllCompleted();
+    if (eacs.isExceptionThrown()) {
+      throw new PersistenceException("Execution exception!",eacs.getFirstException());
+    }
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+ finally {
+    try {
+      it.close();
+    }
+ catch (    IOException e) {
+      log.warnUnableToCloseDbIterator(e);
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  try {
+    controller.start(CONTAINER1,new Config().add(SERVER_CONFIG_PROPERTY,CONFIG_READ_WRITE_SECURED).map());
+    RESTHelper.setCredentials(TEST_USER_NAME,TEST_USER_PASSWORD);
+    put(fullPathKey(KEY_A),"data","application/text",HttpServletResponse.SC_OK);
+    RESTHelper.clearCredentials();
+    put(fullPathKey(KEY_B),"data","application/text",HttpServletResponse.SC_UNAUTHORIZED);
+    RESTHelper.setCredentials(TEST_USER_NAME,TEST_USER_PASSWORD);
+    post(fullPathKey(KEY_C),"data","application/text",HttpServletResponse.SC_OK);
+    RESTHelper.clearCredentials();
+    post(fullPathKey(KEY_D),"data","application/text",HttpServletResponse.SC_UNAUTHORIZED);
+    get(fullPathKey(KEY_A),HttpServletResponse.SC_UNAUTHORIZED);
+    RESTHelper.setCredentials(TEST_USER_NAME,TEST_USER_PASSWORD);
+    get(fullPathKey(KEY_A),"data");
+    RESTHelper.clearCredentials();
+    head(fullPathKey(KEY_A),HttpServletResponse.SC_UNAUTHORIZED);
+    RESTHelper.setCredentials(TEST_USER_NAME,TEST_USER_PASSWORD);
+    head(fullPathKey(KEY_A),HttpServletResponse.SC_OK);
+    RESTHelper.clearCredentials();
+    delete(fullPathKey(KEY_A),HttpServletResponse.SC_UNAUTHORIZED);
+    RESTHelper.setCredentials(TEST_USER_NAME,TEST_USER_PASSWORD);
+    delete(fullPathKey(KEY_A),HttpServletResponse.SC_OK);
+    delete(fullPathKey(KEY_C),HttpServletResponse.SC_OK);
+    RESTHelper.clearCredentials();
+  }
+  finally {
+    controller.stop(CONTAINER1);
+  }
+}

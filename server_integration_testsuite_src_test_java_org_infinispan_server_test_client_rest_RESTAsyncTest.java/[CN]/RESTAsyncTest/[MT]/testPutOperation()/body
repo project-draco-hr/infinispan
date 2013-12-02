@@ -1,0 +1,23 @@
+{
+  String fullPathKey=fullPathKey(KEY_A);
+  int NUM_OPERATIONS=1000;
+  String initialXML="<hey>ho</hey>";
+  StringBuilder initial=new StringBuilder(initialXML);
+  for (int i=0; i < 200; i++) {
+    initial.append("expanding");
+  }
+  initialXML=initial.toString();
+  long t1=System.currentTimeMillis();
+  for (int i=0; i < NUM_OPERATIONS; i++) {
+    put(fullPathKey,initialXML,"application/octet-stream",HttpServletResponse.SC_OK,"performAsync","false");
+  }
+  long putSyncTime=System.currentTimeMillis() - t1;
+  delete(fullPathKey);
+  t1=System.currentTimeMillis();
+  for (int i=0; i < NUM_OPERATIONS; i++) {
+    put(fullPathKey,initialXML,"application/octet-stream",HttpServletResponse.SC_OK,"performAsync","true");
+  }
+  long putAsyncTime=System.currentTimeMillis() - t1;
+  assertTrue("PUT : async- " + putAsyncTime + ", sync- "+ putSyncTime,putAsyncTime < putSyncTime);
+  get(fullPathKey,initialXML,HttpServletResponse.SC_OK,true,"performAsync","true");
+}

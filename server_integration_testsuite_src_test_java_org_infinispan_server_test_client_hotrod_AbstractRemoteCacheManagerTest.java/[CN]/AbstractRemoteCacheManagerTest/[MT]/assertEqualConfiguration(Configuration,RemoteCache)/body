@@ -1,0 +1,32 @@
+{
+  assertEquals(config.balancingStrategy().getName(),getRequestBalancingStrategyProperty(rc));
+  String servers=getServerListProperty(rc);
+  for (  ServerConfiguration scfg : config.servers()) {
+    boolean found=false;
+    for (    String server : servers.split(";")) {
+      String[] components=server.trim().split(":");
+      String host=components[0];
+      int port=ConfigurationProperties.DEFAULT_HOTROD_PORT;
+      if (components.length > 1)       port=Integer.parseInt(components[1]);
+      if (scfg.host().equals(host) && scfg.port() == port)       found=true;
+    }
+    if (!found)     fail("The remote cache manager was configured to have server with an address " + scfg.host() + ":"+ scfg.port()+ ", but it doesn't.");
+  }
+  assertEquals(config.forceReturnValues(),Boolean.parseBoolean(getForceReturnValueProperty(rc)));
+  assertEquals(config.tcpNoDelay(),Boolean.parseBoolean(getTcpNoDelayProperty(rc)));
+  assertEquals(config.pingOnStartup(),rc.getRemoteCacheManager().getConfiguration().pingOnStartup());
+  assertEquals(config.asyncExecutorFactory().factoryClass().getName(),rc.getRemoteCacheManager().getConfiguration().asyncExecutorFactory().factoryClass().getName());
+  assertEquals(config.transportFactory().getName(),getTransportFactoryProperty(rc));
+  if (config.marshaller() != null) {
+    assertEquals(config.marshaller().getClass().getName(),getMarshallerProperty(rc));
+  }
+ else {
+    assertEquals(config.marshallerClass().getName(),getMarshallerProperty(rc));
+  }
+  rc.stats();
+  if (isDistributedMode()) {
+    assertEquals(config.consistentHashImpl(2).getName(),getHashFunctionImplProperty(rc));
+  }
+  assertEquals(config.keySizeEstimate(),getKeySizeEstimateProperty(rc));
+  assertEquals(config.valueSizeEstimate(),getValueSizeEstimateProperty(rc));
+}

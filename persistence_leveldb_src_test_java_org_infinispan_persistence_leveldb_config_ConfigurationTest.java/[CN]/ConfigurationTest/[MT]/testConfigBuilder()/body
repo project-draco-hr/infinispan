@@ -1,0 +1,16 @@
+{
+  GlobalConfiguration globalConfig=new GlobalConfigurationBuilder().globalJmxStatistics().transport().defaultTransport().build();
+  Configuration cacheConfig=new ConfigurationBuilder().persistence().addStore(LevelDBStoreConfigurationBuilder.class).location(tmpDataDirectory).expiredLocation(tmpExpiredDirectory).implementationType(LevelDBStoreConfiguration.ImplementationType.AUTO).build();
+  StoreConfiguration cacheLoaderConfig=cacheConfig.persistence().stores().get(0);
+  assertTrue(cacheLoaderConfig instanceof LevelDBStoreConfiguration);
+  LevelDBStoreConfiguration leveldbConfig=(LevelDBStoreConfiguration)cacheLoaderConfig;
+  assertEquals(tmpDataDirectory,leveldbConfig.location());
+  assertEquals(tmpExpiredDirectory,leveldbConfig.expiredLocation());
+  EmbeddedCacheManager cacheManager=new DefaultCacheManager(globalConfig);
+  cacheManager.defineConfiguration("testCache",cacheConfig);
+  cacheManager.start();
+  Cache<String,String> cache=cacheManager.getCache("testCache");
+  cache.put("hello","there");
+  cache.stop();
+  cacheManager.stop();
+}

@@ -1,0 +1,11 @@
+{
+  int initialLocal=Integer.parseInt(getAttribute(provider,hotRodServerMBean,"numberOfLocalConnections"));
+  int initialGlobal=Integer.parseInt(getAttribute(provider,hotRodServerMBean,"numberOfGlobalConnections"));
+  assertEquals("Number of global connections obtained from node1 and node2 is not the same",initialGlobal,Integer.parseInt(getAttribute(provider2,hotRodServerMBean,"numberOfGlobalConnections")));
+  Configuration conf=new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1.getHotrodEndpoint().getPort()).build();
+  RemoteCacheManager manager2=new RemoteCacheManager(conf);
+  manager2.getCache().put("key","value");
+  assertEquals(initialLocal + 1,Integer.parseInt(getAttribute(provider,hotRodServerMBean,"numberOfLocalConnections")));
+  assertEquals(initialGlobal + 2,Integer.parseInt(getAttribute(provider,hotRodServerMBean,"numberOfGlobalConnections")));
+  assertEquals(initialGlobal + 2,Integer.parseInt(getAttribute(provider2,hotRodServerMBean,"numberOfGlobalConnections")));
+}

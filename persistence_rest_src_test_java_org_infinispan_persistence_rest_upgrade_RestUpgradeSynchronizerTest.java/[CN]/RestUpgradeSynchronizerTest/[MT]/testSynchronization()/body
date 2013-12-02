@@ -1,0 +1,17 @@
+{
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    PutMethod put=new PutMethod(String.format("http://localhost:%d/rest/%s/%s",sourceServer.getPort(),BasicCacheContainer.DEFAULT_CACHE_NAME,s));
+    put.setRequestEntity(new StringRequestEntity(s,"text/plain","UTF-8"));
+    assertEquals(HttpStatus.SC_OK,client.executeMethod(put));
+  }
+  GetMethod get=new GetMethod(String.format("http://localhost:%d/rest/%s/A",targetServer.getPort(),BasicCacheContainer.DEFAULT_CACHE_NAME));
+  assertEquals(HttpStatus.SC_OK,client.executeMethod(get));
+  assertEquals("A",get.getResponseBodyAsString());
+  RollingUpgradeManager sourceUpgradeManager=sourceServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  sourceUpgradeManager.recordKnownGlobalKeyset();
+  RollingUpgradeManager targetUpgradeManager=targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  targetUpgradeManager.synchronizeData("rest");
+  assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size(),targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
+  targetUpgradeManager.disconnectSource("rest");
+}

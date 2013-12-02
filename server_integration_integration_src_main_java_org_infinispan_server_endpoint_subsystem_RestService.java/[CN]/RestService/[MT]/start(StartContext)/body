@@ -1,0 +1,51 @@
+{
+  ROOT_LOGGER.endpointStarting("REST");
+  try {
+    context.setPath(path);
+    context.addLifecycleListener(new RestContextConfig());
+    context.setDocBase(pathManagerInjector.getValue().resolveRelativePathEntry("rest",HOME_DIR));
+    callbackHandle=pathManagerInjector.getValue().registerCallback(HOME_DIR,PathManager.ReloadServerCallback.create(),PathManager.Event.UPDATED,PathManager.Event.REMOVED);
+    final Loader loader=new WebCtxLoader(this.getClass().getClassLoader());
+    Host host=hostInjector.getValue().getHost();
+    loader.setContainer(host);
+    context.setLoader(loader);
+    context.setInstanceManager(new LocalInstanceManager());
+    addContextApplicationParameter(context,"resteasy.resources","org.infinispan.rest.Server");
+    addContextApplicationParameter(context,"resteasy.use.builtin.providers","true");
+    context.addApplicationListener(ResteasyBootstrap.class.getName());
+    context.setReplaceWelcomeFiles(true);
+    context.addWelcomeFile("index.html");
+    Wrapper wrapper=context.createWrapper();
+    wrapper.setName("default");
+    wrapper.setServletClass("org.apache.catalina.servlets.DefaultServlet");
+    context.addChild(wrapper);
+    context.addServletMapping("/","default");
+    context.addMimeMapping("html","text/html");
+    context.addMimeMapping("jpg","image/jpeg");
+    HttpServletDispatcher hsd=new HttpServletDispatcher();
+    Wrapper hsdWrapper=context.createWrapper();
+    hsdWrapper.setName("Resteasy");
+    hsdWrapper.setServlet(hsd);
+    hsdWrapper.setServletClass(hsd.getClass().getName());
+    context.addChild(hsdWrapper);
+    context.addServletMapping("/rest/*","Resteasy");
+    ServletContext servletContext=context.getServletContext();
+    ServerBootstrap.setCacheManager(servletContext,cacheManagerInjector.getValue());
+    ServerBootstrap.setConfiguration(servletContext,configuration);
+    if (securityDomain != null) {
+      configureContextSecurity();
+    }
+    host.addChild(context);
+    context.create();
+  }
+ catch (  Exception e) {
+    throw ROOT_LOGGER.restContextCreationFailed(e);
+  }
+  try {
+    context.start();
+    ROOT_LOGGER.httpEndpointStarted("REST",path,"rest");
+  }
+ catch (  LifecycleException e) {
+    throw ROOT_LOGGER.restContextStartFailed(e);
+  }
+}

@@ -1,0 +1,23 @@
+{
+  HttpPost post=new HttpPost(uri);
+  if (data instanceof String) {
+    post.setEntity(new StringEntity((String)data,"UTF-8"));
+  }
+ else   if (data instanceof byte[]) {
+    byte[] byteData=(byte[])data;
+    ByteArrayInputStream bs=new ByteArrayInputStream(byteData);
+    post.setEntity(new InputStreamEntity(bs,byteData.length));
+  }
+ else {
+    throw new IllegalArgumentException("Unknown data type for POST method");
+  }
+  post.setHeader("Content-Type",contentType);
+  if (headers.length % 2 != 0)   throw new IllegalArgumentException("bad headers argument");
+  for (int i=0; i < headers.length; i+=2) {
+    post.setHeader((String)headers[i],(String)headers[i + 1]);
+  }
+  HttpResponse resp=client.execute(post);
+  EntityUtils.consume(resp.getEntity());
+  assertEquals(expectedCode,resp.getStatusLine().getStatusCode());
+  return resp;
+}

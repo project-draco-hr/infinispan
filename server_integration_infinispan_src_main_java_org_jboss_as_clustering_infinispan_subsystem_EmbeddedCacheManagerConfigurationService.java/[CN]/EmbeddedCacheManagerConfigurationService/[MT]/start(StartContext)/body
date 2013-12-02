@@ -1,0 +1,69 @@
+{
+  GlobalConfigurationBuilder builder=new GlobalConfigurationBuilder();
+  ModuleLoader moduleLoader=this.dependencies.getModuleLoader();
+  builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader));
+  try {
+    ClassLoader loader=(this.moduleId != null) ? moduleLoader.loadModule(this.moduleId).getClassLoader() : EmbeddedCacheManagerConfiguration.class.getClassLoader();
+    builder.classLoader(loader);
+    int id=Ids.MAX_ID;
+    for (    SimpleExternalizer<?> externalizer : ServiceLoader.load(SimpleExternalizer.class,loader)) {
+      builder.serialization().addAdvancedExternalizer(id++,externalizer);
+    }
+  }
+ catch (  ModuleLoadException e) {
+    throw new StartException(e);
+  }
+  builder.shutdown().hookBehavior(ShutdownHookBehavior.DONT_REGISTER);
+  TransportConfiguration transport=this.dependencies.getTransportConfiguration();
+  TransportConfigurationBuilder transportBuilder=builder.transport();
+  if (transport != null) {
+    ChannelProvider.init(transportBuilder,ChannelService.getServiceName(this.name));
+    Long timeout=transport.getLockTimeout();
+    if (timeout != null) {
+      transportBuilder.distributedSyncTimeout(timeout.longValue());
+    }
+    boolean strictPeerToPeer=transport.isStrictPeerToPeer();
+    transportBuilder.strictPeerToPeer(strictPeerToPeer);
+    org.jboss.as.clustering.jgroups.TransportConfiguration.Topology topology=transport.getChannelFactory().getProtocolStackConfiguration().getTransport().getTopology();
+    if (topology != null) {
+      String site=topology.getSite();
+      if (site != null) {
+        transportBuilder.siteId(site);
+      }
+      String rack=topology.getRack();
+      if (rack != null) {
+        transportBuilder.rackId(rack);
+      }
+      String machine=topology.getMachine();
+      if (machine != null) {
+        transportBuilder.machineId(machine);
+      }
+    }
+    transportBuilder.clusterName(this.name);
+    Executor executor=transport.getExecutor();
+    if (executor != null) {
+      builder.asyncTransportExecutor().factory(new ManagedExecutorFactory(executor));
+    }
+  }
+  Executor listenerExecutor=this.dependencies.getListenerExecutor();
+  if (listenerExecutor != null) {
+    builder.asyncListenerExecutor().factory(new ManagedExecutorFactory(listenerExecutor));
+  }
+  ScheduledExecutorService evictionExecutor=this.dependencies.getEvictionExecutor();
+  if (evictionExecutor != null) {
+    builder.evictionScheduledExecutor().factory(new ManagedScheduledExecutorFactory(evictionExecutor));
+  }
+  ScheduledExecutorService replicationQueueExecutor=this.dependencies.getReplicationQueueExecutor();
+  if (replicationQueueExecutor != null) {
+    builder.replicationQueueScheduledExecutor().factory(new ManagedScheduledExecutorFactory(replicationQueueExecutor));
+  }
+  GlobalJmxStatisticsConfigurationBuilder jmxBuilder=builder.globalJmxStatistics().cacheManagerName(this.name);
+  MBeanServer server=this.dependencies.getMBeanServer();
+  if (server != null) {
+    jmxBuilder.enable().mBeanServerLookup(new MBeanServerProvider(server)).jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName()).allowDuplicateDomains(true);
+  }
+ else {
+    jmxBuilder.disable();
+  }
+  this.config=builder.build();
+}

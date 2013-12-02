@@ -1,0 +1,15 @@
+{
+  long lifespanInSecs=10;
+  Set<Future<?>> futures=new HashSet<Future<?>>();
+  for (int i=0; i != ASYNC_OPS_ENTRY_LOAD; i++) {
+    futures.add(remoteCache.putAsync("key" + i,"value" + i,lifespanInSecs,TimeUnit.SECONDS,-1,TimeUnit.SECONDS));
+  }
+  for (  Future<?> f : futures) {
+    f.get();
+  }
+  assertEquals(ASYNC_OPS_ENTRY_LOAD,numEntriesOnServer(0));
+  sleepForSecs(lifespanInSecs + 1);
+  for (int i=0; i != ASYNC_OPS_ENTRY_LOAD; i++) {
+    assertEquals(null,remoteCache.get("key" + i));
+  }
+}

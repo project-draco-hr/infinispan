@@ -1,0 +1,13 @@
+{
+  Configuration conf=new ConfigurationBuilder().addServer().host(server1.getHotrodEndpoint().getInetAddress().getHostName()).port(server1.getHotrodEndpoint().getPort()).build();
+  rcm1=new RemoteCacheManager(conf);
+  RemoteCache<String,String> rc1=rcm1.getCache(READONLY_CACHE_NAME);
+  rc1.put("k1","v1");
+  rc1.put("k2","v2");
+  rc1.put("k3","v3");
+  assertEquals(0,server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
+  assertEquals(2,server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(READONLY_CACHE_NAME).getNumberOfEntries());
+  assertNull(rc1.get("k1"));
+  assertEquals("v2",rc1.get("k2"));
+  assertEquals("v3",rc1.get("k3"));
+}

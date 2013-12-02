@@ -1,0 +1,38 @@
+{
+  Map<String,String> stats=mc.getStats();
+  int cas_misses=new Integer(stats.get("cas_misses"));
+  int cas_hits=new Integer(stats.get("cas_hits"));
+  mc.set(KEY_A,"A");
+  mc.writeln("gets " + KEY_A);
+  mc.flush();
+  String[] valueline=mc.readln().split(" ");
+  assertEquals("VALUE",valueline[0]);
+  assertEquals(KEY_A,valueline[1]);
+  assertEquals("0",valueline[2]);
+  assertEquals("1",valueline[3]);
+  assertEquals("A",mc.readln());
+  String casId=valueline[4];
+  assertEquals("END",mc.readln());
+  mc.writeln("cas " + KEY_A + " 0 0 1 "+ casId);
+  mc.writeln("B");
+  mc.flush();
+  assertEquals("STORED",mc.readln());
+  assertEquals("B",mc.get(KEY_A));
+  mc.writeln("cas " + KEY_B + " 0 0 1 1");
+  mc.writeln("B");
+  mc.flush();
+  assertEquals("NOT_FOUND",mc.readln());
+  stats=mc.getStats();
+  int cas_misses_new=new Integer(stats.get("cas_misses"));
+  int cas_hits_new=new Integer(stats.get("cas_hits"));
+  assertEquals(cas_misses + 1,cas_misses_new);
+  assertEquals(cas_hits + 1,cas_hits_new);
+  int cas_badval=new Integer(stats.get("cas_badval"));
+  mc.writeln("cas " + KEY_A + " 0 0 1 1"+ casId);
+  mc.writeln("C");
+  mc.flush();
+  assertEquals("EXISTS",mc.readln());
+  stats=mc.getStats();
+  int cas_badval_new=new Integer(stats.get("cas_badval"));
+  assertEquals(cas_badval + 1,cas_badval_new);
+}

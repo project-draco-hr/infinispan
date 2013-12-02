@@ -1,0 +1,26 @@
+{
+  if (!modelNode.hasDefined(key)) {
+    return;
+  }
+  final ModelNode modules=modelNode.get(key);
+  for (  Property moduleProp : modules.asPropertyList()) {
+    ModelNode module=moduleProp.getValue();
+    writer.writeStartElement(elementName);
+    if (!moduleProp.getName().equals(module.get(CODE).asString())) {
+      writer.writeAttribute(NAME,moduleProp.getName());
+    }
+    LoginModuleResourceDefinition.CODE.marshallAsAttribute(module,writer);
+    LoginModuleResourceDefinition.FLAG.marshallAsAttribute(module,writer);
+    MappingModuleDefinition.TYPE.marshallAsAttribute(module,writer);
+    JASPIMappingModuleDefinition.LOGIN_MODULE_STACK_REF.marshallAsAttribute(module,writer);
+    LoginModuleResourceDefinition.MODULE.marshallAsAttribute(module,false,writer);
+    if (module.hasDefined(Constants.MODULE_OPTIONS)) {
+      for (      ModelNode option : module.get(Constants.MODULE_OPTIONS).asList()) {
+        writer.writeEmptyElement(Element.MODULE_OPTION.getLocalName());
+        writer.writeAttribute(Attribute.NAME.getLocalName(),option.asProperty().getName());
+        writer.writeAttribute(Attribute.VALUE.getLocalName(),option.asProperty().getValue().asString());
+      }
+    }
+    writer.writeEndElement();
+  }
+}

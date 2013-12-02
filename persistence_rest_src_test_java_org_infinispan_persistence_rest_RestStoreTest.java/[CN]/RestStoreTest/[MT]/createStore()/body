@@ -1,0 +1,20 @@
+{
+  ConfigurationBuilder cb=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  cb.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED).expiration().wakeUpInterval(10L);
+  GlobalConfigurationBuilder globalConfig=new GlobalConfigurationBuilder().nonClusteredDefault();
+  globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
+  localCacheManager=TestCacheManagerFactory.createCacheManager(globalConfig,cb);
+  localCacheManager.getCache(REMOTE_CACHE);
+  restServer=RestTestingUtil.startRestServer(localCacheManager);
+  RestStoreConfigurationBuilder storeConfigurationBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(RestStoreConfigurationBuilder.class);
+  storeConfigurationBuilder.host(restServer.getHost()).port(restServer.getPort()).path("/rest/" + REMOTE_CACHE);
+  storeConfigurationBuilder.connectionPool().maxTotalConnections(10).maxConnectionsPerHost(10);
+  storeConfigurationBuilder.validate();
+  RestStore restStore=new RestStore();
+  restStore.init(new DummyInitializationContext(storeConfigurationBuilder.create(),getCache(),getMarshaller(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(getMarshaller())));
+  InternalEntryFactoryImpl iceFactory=new InternalEntryFactoryImpl();
+  iceFactory.injectTimeService(TIME_SERVICE);
+  restStore.setInternalCacheEntryFactory(iceFactory);
+  restStore.start();
+  return restStore;
+}

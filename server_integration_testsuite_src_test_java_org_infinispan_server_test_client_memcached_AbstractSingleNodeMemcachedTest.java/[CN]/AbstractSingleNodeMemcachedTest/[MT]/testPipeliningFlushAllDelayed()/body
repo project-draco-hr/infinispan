@@ -1,0 +1,15 @@
+{
+  mc.writeln("flush_all 1");
+  mc.writeln("get " + KEY_B);
+  mc.flush();
+  assertEquals("OK",mc.readln());
+  assertEquals("END",mc.readln());
+  mc.set(KEY_A,"thisWillBeFlushed");
+  assertEquals("thisWillBeFlushed",mc.get(KEY_A));
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return mc.get(KEY_A) == null;
+    }
+  }
+,20000,40);
+}

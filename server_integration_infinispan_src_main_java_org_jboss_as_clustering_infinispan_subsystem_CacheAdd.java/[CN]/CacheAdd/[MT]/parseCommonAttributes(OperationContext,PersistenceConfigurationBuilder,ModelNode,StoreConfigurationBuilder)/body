@@ -1,0 +1,49 @@
+{
+  ModelNode shared=store.get(ModelKeys.SHARED);
+  if (shared != null && shared.isDefined()) {
+    storeConfigurationBuilder.shared(shared.asBoolean());
+  }
+  ModelNode preload=store.get(ModelKeys.PRELOAD);
+  if (preload != null && preload.isDefined()) {
+    storeConfigurationBuilder.preload(preload.asBoolean());
+  }
+  ModelNode fetchState=store.get(ModelKeys.FETCH_STATE);
+  if (fetchState != null && fetchState.isDefined()) {
+    storeConfigurationBuilder.fetchPersistentState(fetchState.asBoolean());
+  }
+  ModelNode passivation=store.get(ModelKeys.PASSIVATION);
+  if (passivation != null && passivation.isDefined()) {
+    persistenceBuilder.passivation(passivation.asBoolean());
+  }
+  ModelNode purge=store.get(ModelKeys.PURGE);
+  if (purge != null && purge.isDefined()) {
+    storeConfigurationBuilder.purgeOnStartup(purge.asBoolean());
+  }
+  ModelNode singleton=store.get(ModelKeys.SINGLETON);
+  if (singleton != null && singleton.isDefined()) {
+    if (singleton.asBoolean())     storeConfigurationBuilder.singleton().enable();
+  }
+  ModelNode readOnly=store.get(ModelKeys.READ_ONLY);
+  if (readOnly != null && readOnly.isDefined()) {
+    storeConfigurationBuilder.ignoreModifications(readOnly.asBoolean());
+  }
+  final boolean async=store.hasDefined(ModelKeys.WRITE_BEHIND) && store.get(ModelKeys.WRITE_BEHIND,ModelKeys.WRITE_BEHIND_NAME).isDefined();
+  if (async) {
+    ModelNode writeBehind=store.get(ModelKeys.WRITE_BEHIND,ModelKeys.WRITE_BEHIND_NAME);
+    storeConfigurationBuilder.async().enable().flushLockTimeout(StoreWriteBehindResource.FLUSH_LOCK_TIMEOUT.resolveModelAttribute(context,writeBehind).asLong()).modificationQueueSize(StoreWriteBehindResource.MODIFICATION_QUEUE_SIZE.resolveModelAttribute(context,writeBehind).asInt()).shutdownTimeout(StoreWriteBehindResource.SHUTDOWN_TIMEOUT.resolveModelAttribute(context,writeBehind).asLong()).threadPoolSize(StoreWriteBehindResource.THREAD_POOL_SIZE.resolveModelAttribute(context,writeBehind).asInt());
+  }
+  final Properties properties=new TypedProperties();
+  if (store.hasDefined(ModelKeys.PROPERTY)) {
+    for (    Property property : store.get(ModelKeys.PROPERTY).asPropertyList()) {
+      String propertyName=property.getName();
+      ModelNode propertyValue=null;
+      propertyValue=StorePropertyResource.VALUE.resolveModelAttribute(context,property.getValue());
+      properties.setProperty(propertyName,propertyValue.asString());
+    }
+  }
+  storeConfigurationBuilder.withProperties(properties);
+  ModelNode writeBehind=store.get(ModelKeys.WRITE_BEHIND);
+  if (writeBehind != null && writeBehind.isDefined()) {
+    if (writeBehind.asBoolean())     storeConfigurationBuilder.async();
+  }
+}

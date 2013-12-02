@@ -1,0 +1,24 @@
+{
+  RemoteInfinispanMBeans s1=createRemotes("clustered-xsite-1","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans s2=createRemotes("clustered-xsite-2","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans s3=createRemotes("clustered-xsite-3","clustered",DEFAULT_CACHE_NAME);
+  RemoteCache<Object,Object> s1Cache=createCache(s1);
+  RemoteCache<Object,Object> s2Cache=createCache(s2);
+  RemoteCache<Object,Object> s3Cache=createCache(s3);
+  assertEquals(0,s1.cache.getNumberOfEntries());
+  assertEquals(0,s2.cache.getNumberOfEntries());
+  assertEquals(2,s1.manager.getClusterSize());
+  assertEquals(2,s2.manager.getClusterSize());
+  assertEquals(1,s3.manager.getClusterSize());
+  s1Cache.put("k1","v1");
+  s1Cache.put("k2","v2");
+  assertEquals(2,s1.cache.getNumberOfEntries());
+  assertEquals(2,s2.cache.getNumberOfEntries());
+  assertEquals(2,s3.cache.getNumberOfEntries());
+  assertEquals(s1Cache.get("k1"),"v1");
+  assertEquals(s2Cache.get("k1"),"v1");
+  assertEquals(s3Cache.get("k1"),"v1");
+  assertEquals(s1Cache.get("k2"),"v2");
+  assertEquals(s2Cache.get("k2"),"v2");
+  assertEquals(s3Cache.get("k2"),"v2");
+}

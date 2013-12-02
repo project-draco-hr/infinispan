@@ -1,0 +1,16 @@
+{
+  mc=new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(),server1.getMemcachedEndpoint().getPort());
+  assertCleanCacheAndStore();
+  mc.set("k1","v1");
+  mc.set("k2","v2");
+  assertEquals(0,server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
+  mc.set("k3","v3");
+  assertEquals(2,server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(LOCAL_CACHE_NAME).getNumberOfEntries());
+  assertEquals(1,server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
+  assertEquals("v1",mc.get("k1"));
+  assertEquals("v2",mc.get("k2"));
+  assertEquals("v3",mc.get("k3"));
+  mc.delete("k1");
+  mc.delete("k2");
+  mc.delete("k3");
+}

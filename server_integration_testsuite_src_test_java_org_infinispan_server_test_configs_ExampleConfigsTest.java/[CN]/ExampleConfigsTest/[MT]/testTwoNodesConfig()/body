@@ -1,0 +1,56 @@
+{
+  final RemoteInfinispanMBeans s1=createRemotes("clustered-two-nodes-1","clustered",DEFAULT_CACHE_NAME);
+  RemoteInfinispanMBeans s2=createRemotes("clustered-two-nodes-2","clustered",DEFAULT_CACHE_NAME);
+  RemoteCache<Object,Object> s1Cache=createCache(s1);
+  RemoteCache<Object,Object> s2Cache=createCache(s2);
+  addServer(s1.server);
+  addServer(s2.server);
+  setUpREST(s1.server,s2.server);
+  assertEquals(0,s1.cache.getNumberOfEntries());
+  assertEquals(0,s2.cache.getNumberOfEntries());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return s1.manager.getClusterSize() == 2;
+    }
+  }
+,30000,300);
+  Assert.assertEquals(2,s1.manager.getClusterSize());
+  Assert.assertEquals(2,s2.manager.getClusterSize());
+  s1Cache.put("k","v");
+  s1Cache.put("k2","v2");
+  assertEquals(s1Cache.get("k"),"v");
+  assertEquals(s1Cache.get("k2"),"v2");
+  assertEquals(2,s1.cache.getNumberOfEntries());
+  s2Cache.put("k3","v3");
+  assertEquals(3,s2.cache.getNumberOfEntries());
+  assertEquals("v",s1Cache.get("k"));
+  assertEquals("v",s2Cache.get("k"));
+  assertEquals("v2",s1Cache.get("k2"));
+  assertEquals("v2",s2Cache.get("k2"));
+  assertEquals("v3",s1Cache.get("k3"));
+  assertEquals("v3",s2Cache.get("k3"));
+  setUpREST(s1.server,s2.server);
+  put(fullPathKey(0,KEY_A),"data","text/plain");
+  get(fullPathKey(1,KEY_A),"data");
+  setUpREST(s1.server,s2.server);
+  post(fullPathKey(0,KEY_A),"data","text/plain");
+  get(fullPathKey(1,KEY_A),"data");
+  setUpREST(s1.server,s2.server);
+  post(fullPathKey(0,KEY_A),"data","text/plain");
+  get(fullPathKey(1,KEY_A),"data");
+  delete(fullPathKey(0,KEY_A));
+  head(fullPathKey(1,KEY_A),HttpServletResponse.SC_NOT_FOUND);
+  setUpREST(s1.server,s2.server);
+  post(fullPathKey(0,KEY_A),"data","text/plain");
+  post(fullPathKey(0,KEY_B),"data","text/plain");
+  head(fullPathKey(0,KEY_A));
+  head(fullPathKey(0,KEY_B));
+  delete(fullPathKey(0,null));
+  head(fullPathKey(1,KEY_A),HttpServletResponse.SC_NOT_FOUND);
+  head(fullPathKey(1,KEY_B),HttpServletResponse.SC_NOT_FOUND);
+  setUpREST(s1.server,s2.server);
+  post(fullPathKey(0,KEY_A),"data","application/text",HttpServletResponse.SC_OK,"Content-Type","application/text","timeToLiveSeconds","2");
+  head(fullPathKey(1,KEY_A));
+  Thread.sleep(2100);
+  head(fullPathKey(1,KEY_A),HttpServletResponse.SC_NOT_FOUND);
+}

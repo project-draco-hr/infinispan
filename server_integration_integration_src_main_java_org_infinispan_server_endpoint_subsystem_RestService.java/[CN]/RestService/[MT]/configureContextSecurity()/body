@@ -1,0 +1,34 @@
+{
+  SecurityConstraint constraint=new SecurityConstraint();
+  SecurityCollection webCollection=new SecurityCollection();
+  webCollection.addPattern("/rest/*");
+switch (securityMode) {
+case WRITE:
+    webCollection.addMethod("PUT");
+  webCollection.addMethod("POST");
+webCollection.addMethod("DELETE");
+break;
+case READ_WRITE:
+break;
+}
+constraint.addCollection(webCollection);
+constraint.setAuthConstraint(true);
+constraint.addAuthRole("REST");
+context.addConstraint(constraint);
+LoginConfig login=new LoginConfig();
+login.setAuthMethod(authMethod);
+login.setRealmName("ApplicationRealm");
+context.setLoginConfig(login);
+context.addSecurityRole("REST");
+JBossWebRealm realm=new JBossWebRealm();
+SecurityDomainContext securityDomainContext=securityDomainContextInjector.getValue();
+realm.setAuthenticationManager(securityDomainContext.getAuthenticationManager());
+realm.setAuthorizationManager(securityDomainContext.getAuthorizationManager());
+realm.setMappingManager(securityDomainContext.getMappingManager());
+realm.setAuditManager(securityDomainContext.getAuditManager());
+context.setRealm(realm);
+context.addValve(new RestSecurityContext(path,securityDomain));
+if ("SPNEGO".equals(authMethod)) {
+context.addValve(new NegotiationAuthenticator());
+}
+}

@@ -1,0 +1,20 @@
+{
+  InetSocketAddress hostport0=new InetSocketAddress(getServers().get(0).getHotrodEndpoint().getInetAddress().getHostName(),getServers().get(0).getHotrodEndpoint().getPort());
+  InetSocketAddress hostport1=new InetSocketAddress(getServers().get(1).getHotrodEndpoint().getInetAddress().getHostName(),getServers().get(1).getHotrodEndpoint().getPort());
+  TcpTransport tt=null;
+  InetSocketAddress sock_addr=null;
+  Configuration cfg=createRemoteCacheManagerConfigurationBuilder().balancingStrategy("org.infinispan.server.test.client.hotrod.Node0OnlyBalancingStrategy").build();
+  RemoteCacheManager rcm=new RemoteCacheManager(cfg);
+  RemoteCache rc=rcm.getCache(TEST_CACHE_NAME);
+  RemoteCacheImpl rci=(RemoteCacheImpl)rc;
+  OperationsFactory of=getOperationsFactoryField(rci);
+  TcpTransportFactory ttf=(TcpTransportFactory)getTransportFactoryField(of);
+  tt=(TcpTransport)ttf.getTransport();
+  sock_addr=(InetSocketAddress)tt.getServerAddress();
+  ttf.releaseTransport(tt);
+  assertEquals("load balancing first request: server address expected " + hostport0 + ", actual server address "+ sock_addr,sock_addr,hostport0);
+  tt=(TcpTransport)ttf.getTransport();
+  sock_addr=(InetSocketAddress)tt.getServerAddress();
+  ttf.releaseTransport(tt);
+  assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"+ sock_addr,sock_addr,hostport0);
+}

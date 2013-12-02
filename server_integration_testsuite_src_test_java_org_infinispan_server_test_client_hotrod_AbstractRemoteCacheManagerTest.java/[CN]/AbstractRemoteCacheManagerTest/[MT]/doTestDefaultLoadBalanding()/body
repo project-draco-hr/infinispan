@@ -1,0 +1,36 @@
+{
+  InetSocketAddress hostport0=new InetSocketAddress(getServers().get(0).getHotrodEndpoint().getInetAddress().getHostName(),getServers().get(0).getHotrodEndpoint().getPort());
+  InetSocketAddress hostport1=new InetSocketAddress(getServers().get(1).getHotrodEndpoint().getInetAddress().getHostName(),getServers().get(1).getHotrodEndpoint().getPort());
+  TcpTransport tt=null;
+  InetSocketAddress sock_addr=null;
+  StringBuilder serverAddrSequence=new StringBuilder();
+  String hostport0String=hostport0.getAddress().getHostAddress() + ":" + hostport0.getPort();
+  String hostport1String=hostport1.getAddress().getHostAddress() + ":" + hostport1.getPort();
+  String expectedSequence1=hostport0String + " " + hostport1String+ " "+ hostport0String;
+  String expectedSequence2=hostport1String + " " + hostport0String+ " "+ hostport1String;
+  String expectedSequenceLocalMode=hostport0String + " " + hostport0String+ " "+ hostport0String;
+  Configuration cfg=createRemoteCacheManagerConfigurationBuilder().build();
+  RemoteCacheManager rcm=new RemoteCacheManager(cfg);
+  RemoteCache rc=rcm.getCache(TEST_CACHE_NAME);
+  RemoteCacheImpl rci=(RemoteCacheImpl)rc;
+  OperationsFactory of=getOperationsFactoryField(rci);
+  TcpTransportFactory ttf=(TcpTransportFactory)getTransportFactoryField(of);
+  tt=(TcpTransport)ttf.getTransport();
+  sock_addr=(InetSocketAddress)tt.getServerAddress();
+  ttf.releaseTransport(tt);
+  serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
+  tt=(TcpTransport)ttf.getTransport();
+  sock_addr=(InetSocketAddress)tt.getServerAddress();
+  ttf.releaseTransport(tt);
+  serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
+  tt=(TcpTransport)ttf.getTransport();
+  sock_addr=(InetSocketAddress)tt.getServerAddress();
+  ttf.releaseTransport(tt);
+  serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort());
+  if (!isLocalMode()) {
+    assertTrue("loadbalancing server sequence expected either " + expectedSequence1 + " or "+ expectedSequence2+ ", actual sequence: "+ serverAddrSequence.toString(),serverAddrSequence.toString().equals(expectedSequence1) || serverAddrSequence.toString().equals(expectedSequence2));
+  }
+ else {
+    assertEquals("LOCAL mode - loadbalancing server sequence expected " + expectedSequenceLocalMode + ", actual sequence: "+ serverAddrSequence.toString(),serverAddrSequence.toString(),expectedSequenceLocalMode);
+  }
+}

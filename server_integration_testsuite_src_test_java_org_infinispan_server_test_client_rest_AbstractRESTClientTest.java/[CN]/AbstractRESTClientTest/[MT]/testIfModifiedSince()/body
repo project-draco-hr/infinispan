@@ -1,0 +1,11 @@
+{
+  String fullPathKey=fullPathKey(KEY_A);
+  put(fullPathKey,"data","application/text");
+  HttpResponse resp=get(fullPathKey);
+  String dateLast=resp.getHeaders("Last-Modified")[0].getValue();
+  String dateMinus=addDay(dateLast,-1);
+  String datePlus=addDay(dateLast,1);
+  get(fullPathKey,"data",HttpServletResponse.SC_OK,true,"If-Modified-Since",dateMinus);
+  get(fullPathKey,null,HttpServletResponse.SC_NOT_MODIFIED,true,"If-Modified-Since",dateLast);
+  get(fullPathKey,null,HttpServletResponse.SC_NOT_MODIFIED,true,"If-Modified-Since",datePlus);
+}

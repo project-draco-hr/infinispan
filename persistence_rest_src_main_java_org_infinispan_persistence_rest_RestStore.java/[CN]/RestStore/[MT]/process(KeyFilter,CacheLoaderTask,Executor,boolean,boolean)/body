@@ -1,0 +1,35 @@
+{
+  HttpGet get=new HttpGet(path + "?global");
+  get.addHeader(HttpHeaders.ACCEPT,"text/plain");
+  try {
+    HttpResponse response=httpClient.execute(httpHost,get);
+    HttpEntity entity=response.getEntity();
+    int batchSize=1000;
+    ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
+    final TaskContext taskContext=new TaskContextImpl();
+    BufferedReader reader=new BufferedReader(new InputStreamReader(entity.getContent()));
+    Set<Object> entries=new HashSet<Object>(batchSize);
+    for (String stringKey=reader.readLine(); stringKey != null; stringKey=reader.readLine()) {
+      Object key=key2StringMapper.getKeyMapping(stringKey);
+      if (keyFilter == null || keyFilter.shouldLoadKey(key))       entries.add(key);
+      if (entries.size() == batchSize) {
+        final Set<Object> batch=entries;
+        entries=new HashSet<Object>(batchSize);
+        submitProcessTask(cacheLoaderTask,eacs,taskContext,batch,loadValue,loadMetadata);
+      }
+    }
+    if (!entries.isEmpty()) {
+      submitProcessTask(cacheLoaderTask,eacs,taskContext,entries,loadValue,loadMetadata);
+    }
+    eacs.waitUntilAllCompleted();
+    if (eacs.isExceptionThrown()) {
+      throw new PersistenceException("Execution exception!",eacs.getFirstException());
+    }
+  }
+ catch (  Exception e) {
+    throw log.errorLoadingRemoteEntries(e);
+  }
+ finally {
+    get.releaseConnection();
+  }
+}

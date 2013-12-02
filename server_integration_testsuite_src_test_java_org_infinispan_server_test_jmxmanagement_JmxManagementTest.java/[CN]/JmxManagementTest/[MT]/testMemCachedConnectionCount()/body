@@ -1,0 +1,10 @@
+{
+  int initialLocal=Integer.parseInt(getAttribute(provider,memCachedServerMBean,"numberOfLocalConnections"));
+  int initialGlobal=Integer.parseInt(getAttribute(provider,memCachedServerMBean,"numberOfGlobalConnections"));
+  assertEquals("Number of global connections obtained from node1 and node2 is not the same",initialGlobal,Integer.parseInt(getAttribute(provider2,memCachedServerMBean,"numberOfGlobalConnections")));
+  MemcachedClient mc2=new MemcachedClient("UTF-8",server1.getMemcachedEndpoint().getInetAddress().getHostName(),server1.getMemcachedEndpoint().getPort(),10000);
+  mc2.set("key","value");
+  assertEquals(initialLocal + 1,Integer.parseInt(getAttribute(provider,memCachedServerMBean,"numberOfLocalConnections")));
+  assertEquals(initialGlobal + 1,Integer.parseInt(getAttribute(provider,memCachedServerMBean,"numberOfGlobalConnections")));
+  assertEquals(initialGlobal + 1,Integer.parseInt(getAttribute(provider2,memCachedServerMBean,"numberOfGlobalConnections")));
+}

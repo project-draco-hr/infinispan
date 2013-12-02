@@ -1,0 +1,17 @@
+import sys
+import xml.etree.ElementTree as ET
+if (len(sys.argv) < 3):
+    sys.exit(('Usage: %s standalone.xml module.xml [module.xml ...]' % sys.argv[0]))
+server = Server(sys.argv[1])
+availableModules = {}
+for i in range(2, len(sys.argv)):
+    module = Module(sys.argv[i])
+    availableModules[module.name] = module
+requiredModules = server.traverse(availableModules)
+print 'Required modules'
+for module in sorted(requiredModules):
+    print ('  %s' % module)
+print 'Removable modules'
+for module in sorted(availableModules):
+    if (module not in requiredModules):
+        print ('  %s' % module)

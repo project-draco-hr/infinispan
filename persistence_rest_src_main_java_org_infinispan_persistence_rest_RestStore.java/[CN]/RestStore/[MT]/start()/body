@@ -1,0 +1,27 @@
+{
+  if (iceFactory == null) {
+    iceFactory=ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
+  }
+  connectionManager=new PoolingClientConnectionManager();
+  ConnectionPoolConfiguration pool=configuration.connectionPool();
+  connectionManager.setDefaultMaxPerRoute(pool.maxConnectionsPerHost());
+  connectionManager.setMaxTotal(pool.maxTotalConnections());
+  HttpParams params=new BasicHttpParams();
+  params.setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,pool.connectionTimeout());
+  params.setParameter(CoreConnectionPNames.SO_TIMEOUT,pool.socketTimeout());
+  params.setParameter(CoreConnectionPNames.TCP_NODELAY,pool.tcpNoDelay());
+  params.setParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE,pool.bufferSize());
+  httpClient=new DefaultHttpClient(connectionManager,params);
+  httpHost=new HttpHost(configuration.host(),configuration.port());
+  this.key2StringMapper=Util.getInstance(configuration.key2StringMapper(),ctx.getCache().getAdvancedCache().getClassLoader());
+  this.key2StringMapper.setMarshaller(ctx.getMarshaller());
+  this.path=configuration.path();
+  try {
+    if (configuration.appendCacheNameToPath()) {
+      path=path + urlCodec.encode(ctx.getCache().getName()) + "/";
+    }
+  }
+ catch (  EncoderException e) {
+  }
+  this.metadataHelper=Util.getInstance(configuration.metadataHelper(),ctx.getCache().getAdvancedCache().getClassLoader());
+}

@@ -1,0 +1,26 @@
+{
+  assertEquals(0,sMain.cache.getNumberOfEntries());
+  assertEquals(0,sRemoteStore.cache.getNumberOfEntries());
+  RemoteCache<Object,Object> sMainCache=createCache(sMain);
+  RemoteCache<Object,Object> sRemoteStoreCache=createCache(sRemoteStore);
+  for (int i=0; i < 1100; i++) {
+    sMainCache.put("key" + i,"value" + i);
+  }
+  assertTrue(sMain.cache.getNumberOfEntries() <= 1000);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      log.debug("Num entries: Main cache: " + sMain.cache.getNumberOfEntries() + " Remote store: "+ sRemoteStore.cache.getNumberOfEntries()+ " Total: "+ (sMain.cache.getNumberOfEntries() + sRemoteStore.cache.getNumberOfEntries()));
+      return sMain.cache.getNumberOfEntries() + sRemoteStore.cache.getNumberOfEntries() == 1100;
+    }
+  }
+,10000);
+  for (int i=0; i < 1100; i++) {
+    assertNotNull(sMainCache.get("key" + i));
+    sMainCache.remove("key" + i);
+    assertNull(sMainCache.get("key" + i));
+  }
+  assertEquals(0,sMain.cache.getNumberOfEntries());
+  assertEquals(0,sRemoteStore.cache.getNumberOfEntries());
+  sMainCache.clear();
+  sRemoteStoreCache.clear();
+}

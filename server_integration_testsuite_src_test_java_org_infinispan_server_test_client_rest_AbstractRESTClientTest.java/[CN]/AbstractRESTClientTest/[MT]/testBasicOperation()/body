@@ -1,0 +1,29 @@
+{
+  String fullPathKey=fullPathKey(KEY_A);
+  String initialXML="<hey>ho</hey>";
+  HttpResponse insert=put(fullPathKey,initialXML,"application/octet-stream");
+  assertEquals(0,insert.getEntity().getContentLength());
+  HttpResponse get=get(fullPathKey,initialXML);
+  assertEquals("application/octet-stream",get.getHeaders("Content-Type")[0].getValue());
+  delete(fullPathKey);
+  get(fullPathKey,HttpServletResponse.SC_NOT_FOUND);
+  put(fullPathKey,initialXML,"application/octet-stream");
+  get(fullPathKey,initialXML);
+  delete(fullPathKey(null));
+  get(fullPathKey,HttpServletResponse.SC_NOT_FOUND);
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  ObjectOutputStream oo=new ObjectOutputStream(bout);
+  oo.writeObject(new TestSerializable("CONTENT"));
+  oo.flush();
+  byte[] byteData=bout.toByteArray();
+  put(fullPathKey,byteData,"application/octet-stream");
+  HttpResponse resp=getWithoutClose(fullPathKey);
+  int respLength=new Long(resp.getEntity().getContentLength()).intValue();
+  byte[] bytesBack=new byte[respLength];
+  resp.getEntity().getContent().read(bytesBack,0,respLength);
+  EntityUtils.consume(resp.getEntity());
+  assertEquals(byteData.length,bytesBack.length);
+  ObjectInputStream oin=new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+  TestSerializable ts=(TestSerializable)oin.readObject();
+  assertEquals("CONTENT",ts.getContent());
+}

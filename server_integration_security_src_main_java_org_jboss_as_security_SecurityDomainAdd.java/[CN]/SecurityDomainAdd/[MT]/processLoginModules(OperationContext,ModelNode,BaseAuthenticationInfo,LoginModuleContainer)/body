@@ -1,0 +1,15 @@
+{
+  for (  Property moduleProperty : node.asPropertyList()) {
+    ModelNode module=moduleProperty.getValue();
+    String codeName=extractCode(context,module,ModulesMap.AUTHENTICATION_MAP);
+    String flag=LoginModuleResourceDefinition.FLAG.resolveModelAttribute(context,module).asString();
+    LoginModuleControlFlag controlFlag=getControlFlag(flag);
+    Map<String,Object> options=extractOptions(context,module);
+    AppConfigurationEntry entry=new AppConfigurationEntry(codeName,controlFlag,options);
+    container.addAppConfigurationEntry(entry);
+    ModelNode moduleName=LoginModuleResourceDefinition.MODULE.resolveModelAttribute(context,module);
+    if (moduleName.isDefined() && moduleName.asString().length() > 0) {
+      authInfo.setJBossModuleName(moduleName.asString());
+    }
+  }
+}

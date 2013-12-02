@@ -1,0 +1,14 @@
+{
+  int lifespanInSecs=1;
+  remoteCache.putIfAbsent("aKey","aValue",lifespanInSecs,TimeUnit.SECONDS,-1,TimeUnit.SECONDS);
+  assertEquals(1,remoteCache.size());
+  assertEquals("aValue",remoteCache.get("aKey"));
+  sleepForSecs(lifespanInSecs + 1);
+  assertEquals(null,remoteCache.get("akey"));
+  remoteCache.putIfAbsent("aKey","aValue");
+  assertEquals(1,remoteCache.size());
+  assertEquals("aValue",remoteCache.get("aKey"));
+  assertEquals(null,remoteCache.putIfAbsent("aKey","anotherValue",lifespanInSecs,TimeUnit.SECONDS,-1,TimeUnit.SECONDS));
+  sleepForSecs(lifespanInSecs + 1);
+  assertEquals("aValue",remoteCache.get("aKey"));
+}

@@ -1,0 +1,22 @@
+{
+  int NUM_OPERATIONS=15;
+  int SIZE=900;
+  byte[] bytes=new byte[SIZE];
+  for (int i=0; i < SIZE; i++) {
+    bytes[i]=(byte)(i % 10);
+  }
+  for (int i=0; i < NUM_OPERATIONS; i++) {
+    put(fullPathKey(String.valueOf(i)),bytes,"application/octet-stream",HttpServletResponse.SC_OK,"performAsync","false");
+  }
+  for (int i=0; i < NUM_OPERATIONS; i++) {
+    delete(fullPathKey(String.valueOf(i)),HttpServletResponse.SC_OK,"performAsync","true");
+  }
+  for (int i=0; i < NUM_OPERATIONS; i++) {
+    get(fullPathKey(String.valueOf(i)),null,HttpServletResponse.SC_NOT_FOUND,true,"performAsync","true");
+  }
+  put(fullPathKey(KEY_A),KEY_A,"application/octet-stream");
+  put(fullPathKey(KEY_B),KEY_B,"application/octet-stream");
+  delete(fullPathKey(null),HttpServletResponse.SC_OK,"performAsync","true");
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,get(fullPathKey(KEY_A),HttpServletResponse.SC_NOT_FOUND).getStatusLine().getStatusCode());
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,get(fullPathKey(KEY_B),HttpServletResponse.SC_NOT_FOUND).getStatusLine().getStatusCode());
+}

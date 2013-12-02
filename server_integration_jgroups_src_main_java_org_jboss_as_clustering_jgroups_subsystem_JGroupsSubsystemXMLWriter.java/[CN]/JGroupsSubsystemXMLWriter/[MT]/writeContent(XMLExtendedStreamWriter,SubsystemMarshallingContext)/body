@@ -1,0 +1,27 @@
+{
+  context.startSubsystemElement(Namespace.CURRENT.getUri(),false);
+  ModelNode model=context.getModelNode();
+  if (model.isDefined()) {
+    this.writeOptional(writer,Attribute.DEFAULT_STACK,model,ModelKeys.DEFAULT_STACK);
+    for (    Property property : model.get(ModelKeys.STACK).asPropertyList()) {
+      writer.writeStartElement(Element.STACK.getLocalName());
+      writer.writeAttribute(Attribute.NAME.getLocalName(),property.getName());
+      ModelNode stack=property.getValue();
+      if (stack.hasDefined(ModelKeys.TRANSPORT)) {
+        ModelNode transport=stack.get(ModelKeys.TRANSPORT,ModelKeys.TRANSPORT_NAME);
+        this.writeProtocol(writer,transport,Element.TRANSPORT);
+      }
+      if (stack.hasDefined(ModelKeys.PROTOCOL)) {
+        for (        Property protocol : ProtocolStackAdd.getOrderedProtocolPropertyList(stack)) {
+          this.writeProtocol(writer,protocol.getValue(),Element.PROTOCOL);
+        }
+      }
+      if (stack.hasDefined(ModelKeys.RELAY)) {
+        ModelNode relay=stack.get(ModelKeys.RELAY,ModelKeys.RELAY_NAME);
+        this.writeRelay(writer,relay,Element.RELAY);
+      }
+      writer.writeEndElement();
+    }
+  }
+  writer.writeEndElement();
+}

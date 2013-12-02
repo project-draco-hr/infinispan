@@ -1,0 +1,19 @@
+{
+  HttpPut put=new HttpPut(keyToUri(entry.getKey()));
+  InternalMetadata metadata=entry.getMetadata();
+  if (metadata != null && metadata.expiryTime() > -1) {
+    put.addHeader(TIME_TO_LIVE_SECONDS,Long.toString(timeoutToSeconds(metadata.lifespan())));
+    put.addHeader(MAX_IDLE_TIME_SECONDS,Long.toString(timeoutToSeconds(metadata.maxIdle())));
+  }
+  try {
+    String contentType=metadataHelper.getContentType(entry);
+    put.setEntity(new ByteArrayEntity(marshall(contentType,entry),ContentType.create(contentType)));
+    httpClient.execute(httpHost,put);
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+ finally {
+    put.abort();
+  }
+}

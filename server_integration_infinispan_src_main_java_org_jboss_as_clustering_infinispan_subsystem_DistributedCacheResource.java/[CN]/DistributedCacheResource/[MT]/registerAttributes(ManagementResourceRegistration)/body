@@ -1,0 +1,20 @@
+{
+  super.registerAttributes(resourceRegistration);
+  final OperationStepHandler writeHandler=new ReloadRequiredWriteAttributeHandler(DISTRIBUTED_CACHE_ATTRIBUTES);
+  for (  AttributeDefinition attr : DISTRIBUTED_CACHE_ATTRIBUTES) {
+    resourceRegistration.registerReadWriteAttribute(attr,null,writeHandler);
+  }
+  if (runtimeRegistration) {
+    resourceRegistration.registerReadWriteAttribute(REBALANCING,RebalancingAttributeHandler.INSTANCE,RebalancingAttributeHandler.INSTANCE);
+  }
+  final OperationStepHandler virtualNodesWriteHandler=new ModelOnlyWriteAttributeHandler(VIRTUAL_NODES){
+    @Override public void execute(    OperationContext context,    ModelNode operation) throws OperationFailedException {
+      if (operation.hasDefined(VALUE) && operation.get(VALUE).asInt() != 1) {
+        throw InfinispanMessages.MESSAGES.attributeDeprecated(ModelKeys.VIRTUAL_NODES);
+      }
+      context.stepCompleted();
+    }
+  }
+;
+  resourceRegistration.registerReadWriteAttribute(VIRTUAL_NODES,null,virtualNodesWriteHandler);
+}

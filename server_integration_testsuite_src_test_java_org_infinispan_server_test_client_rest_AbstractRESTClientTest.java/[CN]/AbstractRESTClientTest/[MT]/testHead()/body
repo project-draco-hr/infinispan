@@ -1,0 +1,15 @@
+{
+  String fullPathKey=fullPathKey(KEY_A);
+  post(fullPathKey,"data","application/text");
+  HttpResponse resp=null;
+  try {
+    resp=headWithoutClose(fullPathKey);
+    assertNotNull(resp.getHeaders("ETag")[0].getValue());
+    assertNotNull(resp.getHeaders("Last-Modified")[0].getValue());
+    assertEquals("application/text",resp.getHeaders("Content-Type")[0].getValue());
+    assertNull(resp.getEntity());
+  }
+  finally {
+    EntityUtils.consume(resp.getEntity());
+  }
+}

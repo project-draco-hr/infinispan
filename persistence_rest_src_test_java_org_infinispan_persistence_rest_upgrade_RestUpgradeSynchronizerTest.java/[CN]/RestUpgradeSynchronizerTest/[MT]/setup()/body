@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder serverBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  sourceContainer=TestCacheManagerFactory.createCacheManager(serverBuilder);
+  sourceServerCache=sourceContainer.getCache();
+  sourceServer=RestTestingUtil.startRestServer(sourceContainer);
+  ConfigurationBuilder targetConfigurationBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  targetConfigurationBuilder.persistence().addStore(RestStoreConfigurationBuilder.class).host("localhost").port(sourceServer.getPort()).path("/rest/" + BasicCacheContainer.DEFAULT_CACHE_NAME).metadataHelper(MimeMetadataHelper.class).locking().isolationLevel(IsolationLevel.NONE);
+  targetContainer=TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
+  targetServerCache=targetContainer.getCache();
+  targetServer=RestTestingUtil.startRestServer(targetContainer,sourceServer.getPort() + 10);
+  client=new HttpClient();
+}

@@ -1,0 +1,17 @@
+{
+  Collection<Principal> principalCol=new HashSet<Principal>();
+  principalCol.add(new RealmUser(getUsername()));
+  try {
+    AuthorizingCallbackHandler callbackHandler=getCallbackHandler();
+    SubjectUserInfo sui=callbackHandler.createSubjectUserInfo(principalCol);
+    SimpleGroup sg=new SimpleGroup("Roles");
+    Set<RealmRole> roles=sui.getSubject().getPrincipals(RealmRole.class);
+    for (    RealmRole current : roles) {
+      sg.addMember(createIdentity(current.getName()));
+    }
+    return new Group[]{sg};
+  }
+ catch (  Exception e) {
+    throw SecurityMessages.MESSAGES.failureCallingSecurityRealm(e.getMessage());
+  }
+}

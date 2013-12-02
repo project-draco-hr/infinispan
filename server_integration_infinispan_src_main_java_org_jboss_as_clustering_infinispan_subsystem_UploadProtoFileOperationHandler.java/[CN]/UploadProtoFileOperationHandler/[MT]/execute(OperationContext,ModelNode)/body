@@ -1,0 +1,19 @@
+{
+  ModelNode newValue=operation.require(CacheContainerResource.PROTO_URL.getName());
+  String urlString=newValue.asString();
+  final PathAddress address=PathAddress.pathAddress(operation.require(OP_ADDR));
+  final String cacheContainerName=address.getElement(address.size() - 1).getValue();
+  final ServiceController<?> controller=context.getServiceRegistry(false).getService(EmbeddedCacheManagerService.getServiceName(cacheContainerName));
+  EmbeddedCacheManager cacheManager=(EmbeddedCacheManager)controller.getValue();
+  ProtobufMetadataManager protoManager=cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  if (protoManager != null) {
+    try {
+      URL url=new URL(urlString);
+      protoManager.registerProtofile(url.openStream());
+    }
+ catch (    Exception e) {
+      throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+    }
+  }
+  context.stepCompleted();
+}
