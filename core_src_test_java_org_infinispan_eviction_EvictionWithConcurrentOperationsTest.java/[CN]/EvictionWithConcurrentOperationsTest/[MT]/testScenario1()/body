@@ -1,0 +1,21 @@
+{
+  final Object key1=new SameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Object key2=new SameHashCodeKey("key2");
+  final ControlledPassivationManager controlledPassivationManager=replacePassivationManager();
+  final Latch latch=new Latch();
+  controlledPassivationManager.beforePassivate=new Runnable(){
+    @Override public void run(){
+      latch.blockIfNeeded();
+    }
+  }
+;
+  latch.enable();
+  Future<Object> put=cache.putAsync(key2,"v2");
+  latch.waitToBlock(30,TimeUnit.SECONDS);
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v1",cache.get(key1));
+  latch.disable();
+  put.get();
+  assertInMemory(key2,"v2");
+  assertNotInMemory(key1,"v1");
+}

@@ -1,0 +1,28 @@
+{
+  final Object key1=createSameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Latch latch=new Latch();
+  final SyncEvictionListener evictionListener=new SyncEvictionListener(){
+    @CacheEntriesEvicted @Override public void evicted(    CacheEntriesEvictedEvent event){
+      if (event.getEntries().containsKey(key1)) {
+        latch.blockIfNeeded();
+      }
+    }
+  }
+;
+  cache.addListener(evictionListener);
+  latch.enable();
+  Future<Void> evict=evictWithFuture(key1);
+  latch.waitToBlock(30,TimeUnit.SECONDS);
+  Future<Object> get=cache.getAsync(key1);
+  try {
+    get.get(10,TimeUnit.SECONDS);
+    fail("Get should not succeed while the eviction is in progress");
+  }
+ catch (  TimeoutException expected) {
+  }
+  latch.disable();
+  evict.get();
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v1",get.get(30,TimeUnit.SECONDS));
+  assertInMemory(key1,"v1");
+}

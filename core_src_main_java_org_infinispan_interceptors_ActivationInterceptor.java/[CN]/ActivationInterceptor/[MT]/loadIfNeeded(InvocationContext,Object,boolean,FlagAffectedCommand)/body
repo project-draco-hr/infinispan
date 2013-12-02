@@ -1,13 +1,34 @@
 {
-  Boolean loaded=super.loadIfNeeded(ctx,key,isRetrieval,cmd);
-  if (loaded == Boolean.TRUE) {
-    if (enabled && isManualEviction) {
-      CacheEntry e=ctx.lookupEntry(key);
-      if (e != null && e.isLoaded()) {
-        cdl.commitEntry(e,null,cmd,ctx);
-        removeFromStoreIfNeeded(key);
+  CacheEntry entry=ctx.lookupEntry(key);
+  if (entry != null && !entry.isNull() && entry.getValue() != null) {
+    return null;
+  }
+  try {
+    while (!cdl.lock(key,false))     ;
+    InternalCacheEntry ice=dataContainer.get(key);
+    if (ice != null) {
+      if (cmd instanceof ApplyDeltaCommand) {
+        ctx.putLookedUpEntry(key,ice);
+        entryFactory.wrapEntryForDelta(ctx,key,((ApplyDeltaCommand)cmd).getDelta());
+      }
+ else {
+        entryFactory.wrapEntryForPut(ctx,key,ice,false,cmd,false);
+      }
+      return null;
+    }
+    Boolean loaded=super.loadIfNeeded(ctx,key,isRetrieval,cmd);
+    if (loaded == Boolean.TRUE) {
+      if (enabled && isManualEviction) {
+        CacheEntry e=ctx.lookupEntry(key);
+        if (e != null && e.isLoaded()) {
+          cdl.commitEntry(e,null,cmd,ctx);
+          removeFromStoreIfNeeded(key);
+        }
       }
     }
+    return loaded;
   }
-  return loaded;
+  finally {
+    cdl.unlock(key);
+  }
 }

@@ -1,0 +1,33 @@
+{
+  final Object key1=createSameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Latch readLatch=new Latch();
+  final Latch writeLatch=new Latch();
+  final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor=new AfterEntryWrappingInterceptor().injectThis(cache);
+  afterEntryWrappingInterceptor.beforeGet=new Runnable(){
+    @Override public void run(){
+      readLatch.blockIfNeeded();
+    }
+  }
+;
+  final SyncEvictionListener evictionListener=new SyncEvictionListener(){
+    @CacheEntriesEvicted @Override public void evicted(    CacheEntriesEvictedEvent event){
+      if (event.getEntries().containsKey(key1)) {
+        writeLatch.blockIfNeeded();
+      }
+    }
+  }
+;
+  cache.addListener(evictionListener);
+  readLatch.enable();
+  Future<Void> evict=evictWithFuture(key1);
+  writeLatch.waitToBlock(30,TimeUnit.SECONDS);
+  Future<Object> get=cache.getAsync(key1);
+  readLatch.waitToBlock(30,TimeUnit.SECONDS);
+  writeLatch.disable();
+  assertEquals("Wrong value for key " + key1 + " in put operation.","v1",cache.put(key1,"v3"));
+  evict.get();
+  readLatch.disable();
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v3",get.get());
+  assertInMemory(key1,"v3");
+}

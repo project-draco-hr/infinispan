@@ -1,0 +1,36 @@
+{
+  final Object key1=createSameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Latch readLatch=new Latch();
+  final Latch writeLatch=new Latch();
+  final AtomicBoolean firstGet=new AtomicBoolean(false);
+  final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor=new AfterEntryWrappingInterceptor().injectThis(cache);
+  afterEntryWrappingInterceptor.beforeGet=new Runnable(){
+    @Override public void run(){
+      if (firstGet.compareAndSet(false,true)) {
+        readLatch.blockIfNeeded();
+      }
+    }
+  }
+;
+  final SyncEvictionListener evictionListener=new SyncEvictionListener(){
+    @CacheEntriesEvicted @Override public void evicted(    CacheEntriesEvictedEvent event){
+      if (event.getEntries().containsKey(key1)) {
+        writeLatch.blockIfNeeded();
+      }
+    }
+  }
+;
+  cache.addListener(evictionListener);
+  readLatch.enable();
+  Future<Void> evict=evictWithFuture(key1);
+  writeLatch.waitToBlock(30,TimeUnit.SECONDS);
+  Future<Object> get=cache.getAsync(key1);
+  readLatch.waitToBlock(30,TimeUnit.SECONDS);
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v1",cache.get(key1));
+  writeLatch.disable();
+  evict.get();
+  readLatch.disable();
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v1",get.get());
+  assertInMemory(key1,"v1");
+}

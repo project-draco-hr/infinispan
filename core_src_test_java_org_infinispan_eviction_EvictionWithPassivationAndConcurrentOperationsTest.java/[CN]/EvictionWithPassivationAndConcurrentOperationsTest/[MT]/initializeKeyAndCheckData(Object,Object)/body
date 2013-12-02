@@ -1,0 +1,11 @@
+{
+  assertTrue("A cache store should be configured!",cache.getCacheConfiguration().persistence().usingStores());
+  cache.put(key,value);
+  DataContainer container=cache.getAdvancedCache().getDataContainer();
+  InternalCacheEntry entry=container.get(key);
+  CacheLoader<Object,Object> loader=TestingUtil.getFirstLoader(cache);
+  assertNotNull("Key " + key + " does not exist in data container.",entry);
+  assertEquals("Wrong value for key " + key + " in data container.",value,entry.getValue());
+  MarshalledEntry<Object,Object> entryLoaded=loader.load(key);
+  assertNull("Key " + key + " exists in cache loader.",entryLoaded);
+}

@@ -1,0 +1,48 @@
+{
+  final Object key1=new SameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Object key2=new SameHashCodeKey("key2");
+  final Latch readLatch=new Latch();
+  final Latch writeLatch=new Latch();
+  final Latch writeLatch2=new Latch();
+  final AtomicBoolean firstWriter=new AtomicBoolean(false);
+  final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor=new AfterEntryWrappingInterceptor().injectThis(cache);
+  afterEntryWrappingInterceptor.beforeGet=new Runnable(){
+    @Override public void run(){
+      readLatch.blockIfNeeded();
+    }
+  }
+;
+  afterEntryWrappingInterceptor.afterPut=new Runnable(){
+    @Override public void run(){
+      if (!firstWriter.compareAndSet(false,true)) {
+        writeLatch2.blockIfNeeded();
+      }
+    }
+  }
+;
+  final SyncEvictionListener evictionListener=new SyncEvictionListener(){
+    @CacheEntriesEvicted @Override public void evicted(    CacheEntriesEvictedEvent event){
+      if (event.getEntries().containsKey(key1)) {
+        writeLatch.blockIfNeeded();
+      }
+    }
+  }
+;
+  cache.addListener(evictionListener);
+  readLatch.enable();
+  Future<Object> put=cache.putAsync(key2,"v2");
+  writeLatch.waitToBlock(30,TimeUnit.SECONDS);
+  Future<Object> get=cache.getAsync(key1);
+  readLatch.waitToBlock(30,TimeUnit.SECONDS);
+  writeLatch.disable();
+  Future<Object> put2=cache.putAsync(key1,"v3");
+  put.get();
+  writeLatch2.waitToBlock(30,TimeUnit.SECONDS);
+  readLatch.disable();
+  assertPossibleValues(key1,get.get(),"v1","v3");
+  writeLatch2.disable();
+  assertEquals("Wrong value for key " + key1 + " in put operation.","v1",put2.get());
+  assertInMemory(key1,"v3");
+  assertNotInMemory(key2,"v2");
+}

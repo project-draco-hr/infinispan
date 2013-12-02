@@ -1,0 +1,19 @@
+{
+  final Object key1=createSameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final ControlledDataContainer controller=replaceControlledDataContainer();
+  final Latch latch=new Latch();
+  controller.beforeRemove=new Runnable(){
+    @Override public void run(){
+      latch.blockIfNeeded();
+    }
+  }
+;
+  latch.enable();
+  Future<Void> evict=evictWithFuture(key1);
+  latch.waitToBlock(30,TimeUnit.SECONDS);
+  assertEquals("Wrong value for key " + key1 + " in get operation.","v1",cache.get(key1));
+  latch.disable();
+  evict.get();
+  assertNotInMemory(key1,"v1");
+}
