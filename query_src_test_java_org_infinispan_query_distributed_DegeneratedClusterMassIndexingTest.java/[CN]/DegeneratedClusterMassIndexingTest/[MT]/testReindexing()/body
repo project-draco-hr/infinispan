@@ -1,0 +1,11 @@
+{
+  Cache cache=cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+  SearchManager searchManager=Search.getSearchManager(cache);
+  Query query=searchManager.buildQueryBuilderForClass(Car.class).get().keyword().onField("make").matching("ford").createQuery();
+  cache.put("car1",new Car("ford","white",300));
+  cache.put("car2",new Car("ford","blue",300));
+  cache.put("car3",new Car("ford","red",300));
+  assertEquals(0,searchManager.getQuery(query,Car.class).getResultSize());
+  searchManager.getMassIndexer().start();
+  assertEquals(3,searchManager.getQuery(query,Car.class).getResultSize());
+}
