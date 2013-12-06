@@ -1,0 +1,41 @@
+{
+  final NewNode newNode=new NewNode();
+  ConfigurationBuilder builder=configuration();
+  newNode.controller=new NodeController();
+  newNode.controller.interceptor=new ControlledCommandInterceptor();
+  builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
+  EmbeddedCacheManager embeddedCacheManager=addClusterEnabledCacheManager(builder);
+  newNode.controller.topologyManager=replaceTopologyManager(embeddedCacheManager);
+  newNode.controller.interceptor.addAction(new Action(){
+    @Override public boolean isApplicable(    InvocationContext context,    VisitableCommand command){
+      return !context.isOriginLocal() && command instanceof PrepareCommand;
+    }
+    @Override public void before(    InvocationContext context,    VisitableCommand command,    Cache cache){
+      log.tracef("Before: command=%s. origin=%s",command,context.getOrigin());
+      if (context.getOrigin().equals(address(cache(1)))) {
+        try {
+          cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopologyId + 2,10,TimeUnit.SECONDS);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+    @Override public void after(    InvocationContext context,    VisitableCommand command,    Cache cache){
+      log.tracef("After: command=%s. origin=%s",command,context.getOrigin());
+      if (context.getOrigin().equals(address(cache(0)))) {
+        newNode.controller.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      }
+    }
+  }
+);
+  newNode.controller.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  newNode.joinerFuture=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      waitForClusterToForm();
+      return null;
+    }
+  }
+);
+  return newNode;
+}

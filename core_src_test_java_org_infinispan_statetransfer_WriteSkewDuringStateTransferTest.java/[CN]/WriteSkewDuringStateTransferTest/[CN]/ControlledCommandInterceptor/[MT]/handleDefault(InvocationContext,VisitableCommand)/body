@@ -1,0 +1,14 @@
+{
+  List<Action> actions=extractActions(ctx,command);
+  if (actions.isEmpty()) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  for (  Action action : actions) {
+    action.before(ctx,command,cache);
+  }
+  Object retVal=invokeNextInterceptor(ctx,command);
+  for (  Action action : actions) {
+    action.after(ctx,command,cache);
+  }
+  return retVal;
+}

@@ -1,0 +1,29 @@
+{
+  assertClusterSize("Wrong cluster size",2);
+  final Object key="key1";
+  assertKeyOwnership(key,cache(1),cache(0));
+  final int currentTopologyId=currentTopologyId(cache(0));
+  final ControlledRpcManager nodeARpcManager=replaceRpcManager(cache(0));
+  final NodeController nodeAController=setNodeControllerIn(cache(0));
+  setInitialPhaseForNodeA(nodeAController,currentTopologyId);
+  final NodeController nodeBController=setNodeControllerIn(cache(1));
+  setInitialPhaseForNodeB(nodeBController,currentTopologyId);
+  final NewNode nodeC=addNode(currentTopologyId);
+  nodeAController.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  nodeARpcManager.blockAfter(VersionedPrepareCommand.class);
+  Future<Object> tx=executeTransaction(cache(0),key);
+  nodeARpcManager.waitForCommandToBlock();
+  nodeAController.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  awaitForTopology(currentTopologyId + 2,cache(0));
+  nodeARpcManager.stopBlocking();
+  assertNull("Wrong put() return value.",tx.get());
+  nodeAController.topologyManager.stopBlockingAll();
+  nodeBController.topologyManager.stopBlockingAll();
+  nodeC.controller.topologyManager.stopBlockingAll();
+  nodeC.joinerFuture.get();
+  awaitForTopology(currentTopologyId + 2,cache(0));
+  awaitForTopology(currentTopologyId + 2,cache(1));
+  awaitForTopology(currentTopologyId + 2,cache(2));
+  assertKeyVersionInDataContainer(key,cache(1),cache(2));
+  cache(0).put(key,"v2");
+}

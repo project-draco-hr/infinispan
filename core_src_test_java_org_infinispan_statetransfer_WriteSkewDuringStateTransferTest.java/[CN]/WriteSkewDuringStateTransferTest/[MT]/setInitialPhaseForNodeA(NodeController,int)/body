@@ -1,0 +1,19 @@
+{
+  nodeA.interceptor.addAction(new Action(){
+    @Override public boolean isApplicable(    InvocationContext context,    VisitableCommand command){
+      return context.isOriginLocal() && command instanceof PrepareCommand;
+    }
+    @Override public void before(    InvocationContext context,    VisitableCommand command,    Cache cache){
+      try {
+        cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1,10,TimeUnit.SECONDS);
+      }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
+    @Override public void after(    InvocationContext context,    VisitableCommand command,    Cache cache){
+    }
+  }
+);
+  nodeA.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+}
