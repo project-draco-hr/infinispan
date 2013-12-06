@@ -14,7 +14,7 @@
     }
   }
   CyclicBarrier beforeCommitCache1Barrier=new CyclicBarrier(2);
-  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCommitCache1Barrier,PrepareCommand.class,false);
+  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCommitCache1Barrier,getVisitableCommand(op),false);
   primaryOwnerCache.addInterceptorAfter(blockingInterceptor1,StateTransferInterceptor.class);
   Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
@@ -28,6 +28,7 @@
   }
 );
   beforeCommitCache1Barrier.await(10,SECONDS);
+  removeAllBlockingInterceptorsFromCache(primaryOwnerCache);
   log.tracef("Stopping the cache");
   backupOwnerCache.getCacheManager().stop();
   eventually(new Condition(){

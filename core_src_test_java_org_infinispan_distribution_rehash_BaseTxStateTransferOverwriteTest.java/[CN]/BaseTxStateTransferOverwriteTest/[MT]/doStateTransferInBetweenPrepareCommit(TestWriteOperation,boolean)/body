@@ -13,27 +13,22 @@
       assertIsInL1(nonOwnerCache,key);
     }
   }
-  CyclicBarrier cyclicBarrier=new CyclicBarrier(2);
-  primaryOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(cyclicBarrier,PrepareCommand.class,true),StateTransferInterceptor.class);
+  final CyclicBarrier cyclicBarrier=new CyclicBarrier(2);
   try {
-    Future<Object> future=fork(new Callable<Object>(){
+    TransactionManager tm=primaryOwnerCache.getTransactionManager();
+    Future<Object> future=fork(runWithTx(tm,new Callable<Object>(){
       @Override public Object call() throws Exception {
-        final TransactionManager tm=primaryOwnerCache.getTransactionManager();
-        tm.begin();
         if (additionalValueOnNonOwner) {
           MagicKey mk=new MagicKey("placeholder",nonOwnerCache);
           String value="somevalue";
           primaryOwnerCache.put(mk,value);
           log.tracef("Adding additional value on nonOwner value inserted: %s = %s",mk,value);
         }
-        Object returnValue=op.perform(primaryOwnerCache,key);
-        log.trace("Calling commit on transaction");
-        tm.commit();
-        log.trace("Commit completed");
-        return returnValue;
+        primaryOwnerCache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(cyclicBarrier,getVisitableCommand(op),true),StateTransferInterceptor.class);
+        return op.perform(primaryOwnerCache,key);
       }
     }
-);
+));
     cyclicBarrier.await(10,SECONDS);
     CheckPoint checkPoint=new CheckPoint();
     log.trace("Adding proxy to state transfer");
