@@ -1,26 +1,25 @@
 {
-  if (skipCommand(ctx)) {
+  if (valueMatcher == ValueMatcher.MATCH_NEVER) {
     successful=false;
     return null;
   }
-  CacheEntry e=ctx.lookupEntry(key);
+  MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
   if (e == null || e.isNull() || e.isRemoved()) {
     nonExistent=true;
-    log.trace("Nothing to remove since the entry is null or we have a null entry");
-    if (value == null || ignorePreviousValue) {
+    if (valueMatcher.matches(e,value,null,valueEquivalence)) {
       if (e != null) {
         e.setChanged(true);
         e.setRemoved(true);
       }
-      return null;
+      return isConditional() ? true : null;
     }
  else {
+      log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
       successful=false;
       return false;
     }
   }
-  if (!(e instanceof MVCCEntry))   ctx.putLookedUpEntry(key,null);
-  if (!ignorePreviousValue && value != null && e.getValue() != null && !isValueEquals(e.getValue(),value)) {
+  if (!valueMatcher.matches(e,value,null,valueEquivalence)) {
     successful=false;
     return false;
   }

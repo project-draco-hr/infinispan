@@ -4,9 +4,8 @@
   }
   SingleKeyRecipientGenerator skrg=new SingleKeyRecipientGenerator(command.getKey());
   Object returnValue=handleTxWriteCommand(ctx,command,skrg,command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
-  if (ignorePreviousValueOnBackup(command,ctx)) {
-    command.setIgnorePreviousValue(true);
-    command.setPutIfAbsent(false);
+  if (ctx.isOriginLocal()) {
+    command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
   }
   return returnValue;
 }

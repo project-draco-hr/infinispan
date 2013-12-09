@@ -4,48 +4,58 @@
   }
   RecipientGenerator recipientGenerator=new SingleKeyRecipientGenerator(command.getKey());
   remoteGetBeforeWrite(ctx,command,recipientGenerator);
+  Object localResult=invokeNextInterceptor(ctx,command);
   if (isLocalModeForced(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return localResult;
   }
   boolean isSync=isSynchronous(command);
   Address primaryOwner=cdl.getPrimaryOwner(command.getKey());
   int commandTopologyId=command.getTopologyId();
   int currentTopologyId=stateTransferManager.getCacheTopology().getTopologyId();
-  if (isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
+  boolean topologyChanged=isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1;
+  if (command.isSuccessful() && topologyChanged) {
     log.tracef("Cache topology changed while the command was executing: expected %d, got %d",commandTopologyId,currentTopologyId);
     throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " + commandTopologyId + ", got "+ currentTopologyId);
   }
+  ValueMatcher valueMatcher=command.getValueMatcher();
   if (!ctx.isOriginLocal()) {
-    Object returnValue=invokeNextInterceptor(ctx,command);
     if (primaryOwner.equals(rpcManager.getAddress())) {
       if (!command.isSuccessful()) {
         log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",command);
-        return returnValue;
+        return localResult;
       }
-      command.setIgnorePreviousValue(true);
-      rpcManager.invokeRemotely(recipientGenerator.generateRecipients(),command,rpcManager.getDefaultRpcOptions(isSync));
+      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+      try {
+        rpcManager.invokeRemotely(recipientGenerator.generateRecipients(),command,rpcManager.getDefaultRpcOptions(isSync));
+      }
+  finally {
+        command.setValueMatcher(valueMatcher.matcherForRetry());
+      }
     }
-    return returnValue;
+    return localResult;
   }
  else {
     if (primaryOwner.equals(rpcManager.getAddress())) {
-      Object result=invokeNextInterceptor(ctx,command);
       if (!command.isSuccessful()) {
         log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).",command);
-        return result;
+        return localResult;
       }
       List<Address> recipients=recipientGenerator.generateRecipients();
       log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",recipients);
       boolean isSingleOwnerAndLocal=cacheConfiguration.clustering().hash().numOwners() == 1;
       if (!isSingleOwnerAndLocal) {
-        command.setIgnorePreviousValue(true);
-        rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(isSync));
+        command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+        try {
+          rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(isSync));
+        }
+  finally {
+          command.setValueMatcher(valueMatcher.matcherForRetry());
+        }
       }
-      return result;
+      return localResult;
     }
  else {
       log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
-      Object localResult=invokeNextInterceptor(ctx,command);
       boolean isSyncForwarding=isSync || isNeedReliableReturnValues(command);
       Map<Address,Response> addressResponseMap;
       try {
@@ -57,12 +67,15 @@
           ce=ce.getCause();
         }
         if (ce instanceof OutdatedTopologyException) {
-          command.setIgnorePreviousValue(true);
+          if (trace)           log.tracef("Changing the value matching policy from %s to %s (original value was %s)",command.getValueMatcher(),valueMatcher.matcherForRetry(),valueMatcher);
+          command.setValueMatcher(valueMatcher.matcherForRetry());
         }
         throw e;
       }
       if (!isSyncForwarding)       return localResult;
-      return getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+      Object primaryResult=getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
+      command.updateStatusFromRemoteResponse(primaryResult);
+      return primaryResult;
     }
   }
 }

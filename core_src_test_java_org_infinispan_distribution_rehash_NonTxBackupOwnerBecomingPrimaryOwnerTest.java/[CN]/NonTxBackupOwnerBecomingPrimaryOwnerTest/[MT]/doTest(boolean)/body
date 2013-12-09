@@ -1,4 +1,5 @@
 {
+  final String key="testkey";
   CheckPoint checkPoint=new CheckPoint();
   LocalTopologyManager ltm0=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
   int preJoinTopologyId=ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
@@ -25,7 +26,6 @@
   CacheTopology duringJoinTopology=ltm0.getCacheTopology(CACHE_NAME);
   assertEquals(duringJoinTopologyId,duringJoinTopology.getTopologyId());
   assertNotNull(duringJoinTopology.getPendingCH());
-  final MagicKey key=getKeyForCache2(duringJoinTopology.getPendingCH());
   log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s",key,duringJoinTopology.getCurrentCH().locateOwners(key),duringJoinTopology.getPendingCH().locateOwners(key));
   CyclicBarrier beforeCache1Barrier=new CyclicBarrier(2);
   BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,PutKeyValueCommand.class,false);
@@ -57,7 +57,12 @@
   afterCache2Barrier.await(10,TimeUnit.SECONDS);
   afterCache2Barrier.await(10,TimeUnit.SECONDS);
   Object result=future.get(10,TimeUnit.SECONDS);
-  assertNull(result);
+  if (conditional) {
+    assertNull(result);
+  }
+ else {
+    assertTrue(result == null || "v".equals(result));
+  }
   log.tracef("Put operation is done");
   assertEquals("v",cache0.get(key));
   assertEquals("v",cache1.get(key));

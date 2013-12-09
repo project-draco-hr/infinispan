@@ -1,25 +1,17 @@
 {
-  final boolean local=ctx.isOriginLocal();
-  if (ctx.isInTxScope() && !local && !ignorePreviousValue) {
+  if (valueMatcher == ValueMatcher.MATCH_NEVER) {
     successful=false;
     return null;
   }
   MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
-  if (e != null) {
-    if (local) {
-      if (e.isNull() || e.getValue() == null || e.isRemoved()) {
-        return returnValue(null,false,ctx);
-      }
+  if (valueMatcher.matches(e,oldValue,newValue,valueEquivalence)) {
+    e.setChanged(true);
+    Object old=e.setValue(newValue);
+    if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
+      return returnValue(old,true,ctx);
     }
-    if (oldValue == null || ignorePreviousValue || isValueEquals(oldValue,e.getValue())) {
-      e.setChanged(true);
-      Object old=e.setValue(newValue);
-      if (!ignorePreviousValue) {
-        return returnValue(old,true,ctx);
-      }
  else {
-        return returnValue(oldValue,true,ctx);
-      }
+      return returnValue(oldValue,true,ctx);
     }
   }
   return returnValue(null,false,ctx);

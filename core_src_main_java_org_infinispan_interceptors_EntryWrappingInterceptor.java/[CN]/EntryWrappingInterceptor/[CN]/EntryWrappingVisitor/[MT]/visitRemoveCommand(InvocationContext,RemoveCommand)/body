@@ -1,11 +1,7 @@
 {
   if (cdl.localNodeIsOwner(command.getKey())) {
-    if (command.isIgnorePreviousValue()) {
-      entryFactory.wrapEntryForPut(ctx,command.getKey(),null,false,command,false);
-    }
- else {
-      entryFactory.wrapEntryForRemove(ctx,command.getKey(),false,false);
-    }
+    boolean forceWrap=command.getValueMatcher().nonExistentEntryCanMatch();
+    entryFactory.wrapEntryForRemove(ctx,command.getKey(),false,false,forceWrap);
     invokeNextInterceptor(ctx,command);
   }
   return null;

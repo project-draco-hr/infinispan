@@ -1,5 +1,5 @@
 {
-  if (ctx.isInTxScope() && !ctx.isOriginLocal() && !ignorePreviousValue) {
+  if (valueMatcher == ValueMatcher.MATCH_NEVER) {
     successful=false;
     return null;
   }
@@ -10,11 +10,9 @@
   }
   if (e == null)   return null;
   Object entryValue=e.getValue();
-  if (putIfAbsent && !ignorePreviousValue) {
-    if (entryValue != null && !e.isRemoved()) {
-      successful=false;
-      return entryValue;
-    }
+  if (!valueMatcher.matches(e,null,value,valueEquivalence)) {
+    successful=false;
+    return entryValue;
   }
   return performPut(e,ctx);
 }
