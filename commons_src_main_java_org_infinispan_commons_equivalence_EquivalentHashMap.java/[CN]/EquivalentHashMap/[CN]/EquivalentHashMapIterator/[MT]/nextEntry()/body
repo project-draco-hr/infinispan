@@ -1,8 +1,11 @@
 {
   if (modCount != expectedCount)   throw new ConcurrentModificationException();
-  if (!hasNext && !hasNext())   throw new NoSuchElementException();
-  current=next++;
-  hasNext=false;
-  Node<K,V> node=table[this.current];
-  return new MapEntry<K,V>(node.key,node.value,EquivalentHashMap.this);
+  Node<K,V> e=next;
+  if (e == null)   throw new NoSuchElementException();
+  if ((next=e.next) == null) {
+    Node<K,V>[] t=table;
+    while (index < t.length && (next=t[index++]) == null)     ;
+  }
+  current=e;
+  return new MapEntry<K,V>(e.key,e.value,EquivalentHashMap.this);
 }
