@@ -15,7 +15,8 @@
   ObjectName objName=new ObjectName(JMX_DOMAIN + ":type=RemoteQuery,name=" + ObjectName.quote("DefaultCacheManager")+ ",component="+ ProtobufMetadataManager.OBJECT_NAME);
   byte[] descriptor=readClasspathResource("/bank.protobin");
   MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
-  mBeanServer.invoke(objName,"registerProtofile",new Object[]{descriptor},new String[]{byte[].class.getName()});
+  ProtobufMetadataManagerMBean protobufMetadataManagerMBean=JMX.newMBeanProxy(mBeanServer,objName,ProtobufMetadataManagerMBean.class);
+  protobufMetadataManagerMBean.registerProtofile(descriptor);
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
   server=PerThreadMBeanServerLookup.getThreadMBeanServer();
   return cacheManager;
