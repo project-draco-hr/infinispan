@@ -1,0 +1,19 @@
+{
+  QueryBuilder qb=Search.getQueryFactory(remoteCache).from(User.class).having("name").eq("Tom").toBuilder();
+  User user=new User();
+  user.setId(1);
+  user.setName("Tom");
+  user.setSurname("Cat");
+  user.setGender(User.Gender.MALE);
+  remoteCache.put(1,user);
+  assertEquals(0,qb.build().list().size());
+  ObjectName massIndexerName=new ObjectName("jboss.infinispan:type=Query,manager=" + ObjectName.quote(CACHE_MANAGER_NAME) + ",cache="+ ObjectName.quote(CACHE_NAME)+ ",component=MassIndexer");
+  provider.getConnection().invoke(massIndexerName,"start",null,null);
+  List<User> list=qb.build().list();
+  assertEquals(1,list.size());
+  User foundUser=list.get(0);
+  assertEquals(1,foundUser.getId());
+  assertEquals("Tom",foundUser.getName());
+  assertEquals("Cat",foundUser.getSurname());
+  assertEquals(User.Gender.MALE,foundUser.getGender());
+}
