@@ -9,6 +9,7 @@
   final String evictionExecutor=(resolvedValue=CacheContainerResource.EVICTION_EXECUTOR.resolveModelAttribute(context,containerModel)).isDefined() ? resolvedValue.asString() : null;
   final String replicationQueueExecutor=(resolvedValue=CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.resolveModelAttribute(context,containerModel)).isDefined() ? resolvedValue.asString() : null;
   final ServiceController.Mode initialMode=StartMode.valueOf(CacheContainerResource.START.resolveModelAttribute(context,containerModel).asString()).getMode();
+  final boolean statistics=CacheContainerResource.STATISTICS.resolveModelAttribute(context,containerModel).asBoolean();
   ServiceName[] aliases=null;
   if (containerModel.hasDefined(ModelKeys.ALIASES)) {
     List<ModelNode> list=operation.get(ModelKeys.ALIASES).asList();
@@ -36,7 +37,7 @@
       controllers.add(provider.install(target,name));
     }
   }
-  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,moduleId,stack,transportConfig,transportExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
+  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,statistics,moduleId,stack,transportConfig,transportExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
   controllers.add(this.installContainerService(target,name,aliases,transportConfig,initialMode,verificationHandler));
   controllers.add(this.installJndiService(target,name,InfinispanJndiName.createCacheContainerJndiName(jndiName,name),verificationHandler));
   controllers.add(this.installKeyAffinityServiceFactoryService(target,name,verificationHandler));
