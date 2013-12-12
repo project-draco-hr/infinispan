@@ -1,0 +1,23 @@
+{
+  Cache cache=cache(0,"atomic");
+  ControlledRpcManager crm=new ControlledRpcManager(cache.getAdvancedCache().getRpcManager());
+  TestingUtil.replaceComponent(cache,RpcManager.class,crm,true);
+  MagicKey atomicMapKey=new MagicKey("atomicMapKey",cache);
+  AtomicMap atomicMap=AtomicMapLookup.getAtomicMap(cache,atomicMapKey);
+  atomicMap.put("key1","value1");
+  crm.blockBefore(StateResponseCommand.class);
+  ConfigurationBuilder c=getConfigurationBuilder();
+  final EmbeddedCacheManager joiner=addClusterEnabledCacheManager(c);
+  Future<Cache> future=fork(new Callable<Cache>(){
+    @Override public Cache call() throws Exception {
+      return joiner.getCache("atomic");
+    }
+  }
+);
+  crm.waitForCommandToBlock();
+  atomicMap.put("key2","value2");
+  crm.stopBlocking();
+  Cache cache2=future.get();
+  AtomicMap atomicMap2=AtomicMapLookup.getAtomicMap(cache2,atomicMapKey);
+  assertEquals(new HashSet<String>(Arrays.asList("key1","key2")),atomicMap2.keySet());
+}
