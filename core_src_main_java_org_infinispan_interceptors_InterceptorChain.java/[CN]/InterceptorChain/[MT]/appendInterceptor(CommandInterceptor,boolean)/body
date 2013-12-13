@@ -1,7 +1,14 @@
 {
-  if (isCustom)   validateCustomInterceptor(ci.getClass());
-  CommandInterceptor it=firstInChain;
-  while (it.hasNext())   it=it.getNext();
-  it.setNext(ci);
+  Class<? extends CommandInterceptor> interceptorClass=ci.getClass();
+  if (isCustom)   validateCustomInterceptor(interceptorClass);
+  assertNotAdded(interceptorClass);
+  if (firstInChain == null) {
+    firstInChain=ci;
+  }
+ else {
+    CommandInterceptor it=firstInChain;
+    while (it.hasNext())     it=it.getNext();
+    it.setNext(ci);
+  }
   ci.setNext(null);
 }

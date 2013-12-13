@@ -5,11 +5,9 @@
   boolean invocationBatching=configuration.invocationBatching().enabled();
   boolean isTotalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
   if (invocationBatching) {
-    interceptorChain.setFirstInChain(createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class));
+    interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class),false);
   }
- else {
-    interceptorChain.setFirstInChain(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class));
-  }
+  interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class),false);
   CompatibilityModeConfiguration compatibility=configuration.compatibility();
   if (compatibility.enabled()) {
     Marshaller compatibilityMarshaller=compatibility.marshaller();
@@ -19,9 +17,6 @@
     interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibilityMarshaller),TypeConverterInterceptor.class),false);
   }
   if (configuration.clustering().async().asyncMarshalling() || configuration.clustering().async().useReplQueue() || hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
-  if (invocationBatching) {
-    interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class),false);
-  }
   interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(),CacheMgmtInterceptor.class),false);
   if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated()) {
     if (isTotalOrder) {

@@ -1,3 +1,5 @@
 {
-  return ctx.isInTxScope() && (txTable.containsLocalTx(tm.getTransaction()) || (!ctx.isOriginLocal() && txTable.containRemoteTx(((TxInvocationContext)ctx).getGlobalTransaction())));
+  if (!ctx.isInTxScope())   return false;
+  if (ctx.isOriginLocal())   return txTable.containsLocalTx(tm.getTransaction());
+ else   return txTable.containRemoteTx(((TxInvocationContext)ctx).getGlobalTransaction());
 }

@@ -1,12 +1,11 @@
 {
   super.start();
   baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
-  baseCfg.setObjectTable(externalizerTable);
   proxy=new ExternalizerTableProxy(externalizerTable);
   baseCfg.setObjectTable(proxy);
   ClassResolver classResolver=globalCfg.serialization().classResolver();
   if (classResolver == null) {
-    ClassLoader cl=cfg == null ? globalCfg.classLoader() : cfg.classLoader();
+    ClassLoader cl=Configurations.getClassLoader(cfg,globalCfg);
     classResolver=new EmbeddedContextClassResolver(cl,icc);
   }
   baseCfg.setClassResolver(classResolver);

@@ -15,14 +15,14 @@ case RemoveCommand.COMMAND_ID:
 break;
 case MultipleRpcCommand.COMMAND_ID:
 MultipleRpcCommand rc=(MultipleRpcCommand)c;
-rc.init(interceptorChain,icc);
+rc.init(interceptorChain,icf);
 if (rc.getCommands() != null) for (ReplicableCommand nested : rc.getCommands()) {
 initializeReplicableCommand(nested,false);
 }
 break;
 case SingleRpcCommand.COMMAND_ID:
 SingleRpcCommand src=(SingleRpcCommand)c;
-src.init(interceptorChain,icc);
+src.init(interceptorChain,icf);
 if (src.getCommand() != null) initializeReplicableCommand(src.getCommand(),false);
 break;
 case InvalidateCommand.COMMAND_ID:
@@ -38,7 +38,7 @@ case VersionedPrepareCommand.COMMAND_ID:
 case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
 case TotalOrderVersionedPrepareCommand.COMMAND_ID:
 PrepareCommand pc=(PrepareCommand)c;
-pc.init(interceptorChain,icc,txTable);
+pc.init(interceptorChain,icf,txTable);
 pc.initialize(notifier,recoveryManager);
 if (pc.getModifications() != null) for (ReplicableCommand nested : pc.getModifications()) {
 initializeReplicableCommand(nested,false);
@@ -54,13 +54,13 @@ case VersionedCommitCommand.COMMAND_ID:
 case TotalOrderCommitCommand.COMMAND_ID:
 case TotalOrderVersionedCommitCommand.COMMAND_ID:
 CommitCommand commitCommand=(CommitCommand)c;
-commitCommand.init(interceptorChain,icc,txTable);
+commitCommand.init(interceptorChain,icf,txTable);
 commitCommand.markTransactionAsRemote(isRemote);
 break;
 case RollbackCommand.COMMAND_ID:
 case TotalOrderRollbackCommand.COMMAND_ID:
 RollbackCommand rollbackCommand=(RollbackCommand)c;
-rollbackCommand.init(interceptorChain,icc,txTable);
+rollbackCommand.init(interceptorChain,icf,txTable);
 rollbackCommand.markTransactionAsRemote(isRemote);
 break;
 case ClearCommand.COMMAND_ID:
@@ -69,11 +69,11 @@ cc.init(notifier);
 break;
 case ClusteredGetCommand.COMMAND_ID:
 ClusteredGetCommand clusteredGetCommand=(ClusteredGetCommand)c;
-clusteredGetCommand.initialize(icc,this,entryFactory,interceptorChain,distributionManager,txTable,configuration.dataContainer().keyEquivalence());
+clusteredGetCommand.initialize(icf,this,entryFactory,interceptorChain,distributionManager,txTable,configuration.dataContainer().keyEquivalence());
 break;
 case LockControlCommand.COMMAND_ID:
 LockControlCommand lcc=(LockControlCommand)c;
-lcc.init(interceptorChain,icc,txTable);
+lcc.init(interceptorChain,icf,txTable);
 lcc.markTransactionAsRemote(isRemote);
 if (configuration.deadlockDetection().enabled() && isRemote) {
 DldGlobalTransaction gtx=(DldGlobalTransaction)lcc.getGlobalTransaction();
