@@ -1,0 +1,21 @@
+{
+  int carId=0;
+  int cacheId=0;
+  final long start=System.nanoTime();
+  for (int outherLoop=0; outherLoop < NUMBER_OF_ITERATIONS; outherLoop++) {
+    final Cache<String,Car> cache=getWriteOnlyCache(cacheId++ % NUM_NODES);
+    System.out.print("Using " + cacheId + ": "+ cache+ "\t");
+    final long blockStart=System.nanoTime();
+    cache.startBatch();
+    for (int innerLoop=0; innerLoop < LOG_ON_EACH; innerLoop++) {
+      carId++;
+      cache.put("car" + carId,new Car("megane","blue",300 + carId));
+      carId++;
+      cache.put("car" + carId,new Car("bmw","blue",300 + carId));
+    }
+    cache.endBatch(true);
+    System.out.println("Inserted " + LOG_ON_EACH + " cars in "+ Util.prettyPrintTime(System.nanoTime() - blockStart,TimeUnit.NANOSECONDS));
+  }
+  System.out.println("Test took " + Util.prettyPrintTime(System.nanoTime() - start,TimeUnit.NANOSECONDS));
+  verifyFindsCar(carId / 2,"megane");
+}
