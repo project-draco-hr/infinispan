@@ -1,15 +1,6 @@
 {
   if (ctx.isOriginLocal()) {
-    ArrayList<Object> keyToCheckOwners=new ArrayList<Object>(command.getKeys().size());
-    for (    Object key : command.getKeys()) {
-      if (key instanceof DeltaCompositeKey) {
-        keyToCheckOwners.add(((DeltaCompositeKey)key).getDeltaAwareValueKey());
-      }
- else {
-        keyToCheckOwners.add(key);
-      }
-    }
-    final Collection<Address> affectedNodes=cdl.getOwners(keyToCheckOwners);
+    final Collection<Address> affectedNodes=cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
     ((LocalTxInvocationContext)ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
     log.tracef("Registered remote locks acquired %s",affectedNodes);
     rpcManager.invokeRemotely(affectedNodes,command,rpcManager.getDefaultRpcOptions(true,false));
