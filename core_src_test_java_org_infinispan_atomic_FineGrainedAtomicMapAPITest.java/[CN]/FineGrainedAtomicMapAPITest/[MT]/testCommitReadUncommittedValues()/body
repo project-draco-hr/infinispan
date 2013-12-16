@@ -1,2 +1,23 @@
 {
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  final FineGrainedAtomicMap<String,String> map=getFineGrainedAtomicMap(cache1,"testCommitReadUncommittedValues");
+  tm(cache1).begin();
+  map.put("existing","existing");
+  map.put("hey","blah");
+  tm(cache1).commit();
+  tm(cache1).begin();
+  map.put("key one","fake one");
+  map.put("key one","value one");
+  map.put("blah","montevideo");
+  map.put("blah","buenos aires");
+  map.remove("blah");
+  map.put("blah","toronto");
+  Map<Object,Object> expectedMap=createMap(new Object[]{"key one","blah","existing","hey"},new Object[]{"value one","toronto","existing","blah"});
+  assertMap(expectedMap,map);
+  FineGrainedAtomicMap<String,String> sameAsMap=getFineGrainedAtomicMap(cache1,"testCommitReadUncommittedValues");
+  assertMap(expectedMap,sameAsMap);
+  tm(cache1).commit();
+  assertMap(expectedMap,map);
+  assertMap(expectedMap,sameAsMap);
 }

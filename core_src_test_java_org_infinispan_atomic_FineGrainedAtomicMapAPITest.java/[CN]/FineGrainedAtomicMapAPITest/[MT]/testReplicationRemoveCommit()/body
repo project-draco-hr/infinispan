@@ -1,2 +1,20 @@
 {
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  final FineGrainedAtomicMap<String,String> map=getFineGrainedAtomicMap(cache1,"testReplicationRemoveCommit");
+  Map<Object,Object> expectedMap=createMap(new Object[]{"existing","blah"},new Object[]{"existing","blah"});
+  tm(cache1).begin();
+  map.put("existing","existing");
+  map.put("blah","blah");
+  tm(cache1).commit();
+  assertMap(expectedMap,map);
+  final FineGrainedAtomicMap<Object,Object> other=getFineGrainedAtomicMap(cache2,"testReplicationRemoveCommit",false);
+  assertMap(expectedMap,other);
+  tm(cache2).begin();
+  String removed=map.remove("existing");
+  assertEquals("Wrong value removed from map '" + map + "'.","existing",removed);
+  tm(cache2).commit();
+  expectedMap=createMap(new Object[]{"blah"},new Object[]{"blah"});
+  assertMap(expectedMap,map);
+  assertMap(expectedMap,other);
 }

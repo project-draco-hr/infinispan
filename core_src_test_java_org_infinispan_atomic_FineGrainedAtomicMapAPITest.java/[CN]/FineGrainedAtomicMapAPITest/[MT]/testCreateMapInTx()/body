@@ -1,2 +1,12 @@
 {
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  tm(0,"atomic").begin();
+  FineGrainedAtomicMap<String,String> map1=getFineGrainedAtomicMap(cache1,"testCreateMapInTx",true);
+  map1.put("k1","v1");
+  tm(0,"atomic").commit();
+  Map<Object,Object> expectedMap=createMap(new Object[]{"k1"},new Object[]{"v1"});
+  assertMap(expectedMap,map1);
+  final FineGrainedAtomicMap<String,String> map2=getFineGrainedAtomicMap(cache2,"testCreateMapInTx",true);
+  assertMap(expectedMap,map2);
 }

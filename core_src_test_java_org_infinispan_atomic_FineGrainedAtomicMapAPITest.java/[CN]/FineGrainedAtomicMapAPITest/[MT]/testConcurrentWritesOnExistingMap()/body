@@ -1,2 +1,32 @@
 {
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  assertSize(cache1,0);
+  final FineGrainedAtomicMap<String,String> map=getFineGrainedAtomicMap(cache1,"testConcurrentReadsOnExistingMap",true);
+  map.put("the-1","my preciousss");
+  final Map<Object,Object> expectedMap=createMap(new Object[]{"the-1"},new Object[]{"my preciousss"});
+  tm(0,"atomic").begin();
+  assertMap(expectedMap,map);
+  final AtomicBoolean allOk=new AtomicBoolean(false);
+  map.put("the-2","a minor");
+  fork(new Runnable(){
+    @Override public void run(){
+      try {
+        tm(0,"atomic").begin();
+        FineGrainedAtomicMap<String,String> map=getFineGrainedAtomicMap(cache1,"testConcurrentReadsOnExistingMap",true);
+        assertMap(expectedMap,map);
+        assertNotContainsKey(map,"the-2");
+        map.put("the-2","a minor-different");
+        tm(0,"atomic").commit();
+      }
+ catch (      org.infinispan.util.concurrent.TimeoutException e) {
+        allOk.set(true);
+      }
+catch (      Exception e) {
+        log.error("Unexpected error performing transaction",e);
+      }
+    }
+  }
+,true);
+  tm(0,"atomic").commit();
+  assertTrue(allOk.get());
 }
