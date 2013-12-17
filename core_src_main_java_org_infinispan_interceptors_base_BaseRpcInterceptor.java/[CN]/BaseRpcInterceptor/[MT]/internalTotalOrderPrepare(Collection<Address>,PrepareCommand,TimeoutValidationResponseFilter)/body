@@ -4,11 +4,12 @@
     if (responseFilter != null) {
       builder.responseFilter(responseFilter);
     }
- else {
-      builder.responseFilter(getIgnoreExtraResponseFilter(recipients));
-    }
     builder.totalOrder(true);
-    return rpcManager.invokeRemotely(recipients,prepareCommand,builder.build());
+    Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,prepareCommand,builder.build());
+    if (responseFilter != null) {
+      responseFilter.validate();
+    }
+    return responseMap;
   }
  else {
     RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),false);

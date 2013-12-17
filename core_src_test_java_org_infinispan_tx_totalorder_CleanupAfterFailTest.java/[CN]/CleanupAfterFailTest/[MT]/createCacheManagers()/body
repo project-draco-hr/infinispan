@@ -1,0 +1,9 @@
+{
+  ConfigurationBuilder dcc=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).syncCommitPhase(true).syncRollbackPhase(true).useSynchronization(false).recovery().disable();
+  dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
+  dcc.clustering().hash().numOwners(1).numSegments(60);
+  dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
+  createCluster(dcc,2);
+  waitForClusterToForm();
+}

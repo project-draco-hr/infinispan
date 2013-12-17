@@ -1,0 +1,35 @@
+{
+  final CountDownLatch block=new CountDownLatch(1);
+  final CommandInterceptor interceptor=new BaseCustomInterceptor(){
+    @Override public Object visitPrepareCommand(    TxInvocationContext ctx,    PrepareCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) {
+        block.await();
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  }
+;
+  final InterceptorChain chain=TestingUtil.extractComponent(cache(0),InterceptorChain.class);
+  final Object key1=new MagicKey(cache(0));
+  final Object key2=new MagicKey(cache(1));
+  try {
+    chain.addInterceptor(interceptor,0);
+    tm(0).begin();
+    cache(0).put(key1,"v1");
+    cache(0).put(key2,"v2");
+    tm(0).commit();
+    fail("Rollback expected!");
+  }
+ catch (  RollbackException e) {
+  }
+ finally {
+    block.countDown();
+    chain.removeInterceptor(0);
+  }
+  cache(0).put(key1,"v3");
+  cache(0).put(key2,"v4");
+  assertCacheValue(key1,"v3");
+  assertCacheValue(key2,"v4");
+  assertNoTransactions();
+  assertNoLocks();
+}
