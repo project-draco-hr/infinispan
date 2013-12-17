@@ -1,5 +1,5 @@
 {
-  StateTransferManager stm=cr.getStateTransferManager();
+  final StateTransferManager stm=cr.getStateTransferManager();
   if (cmd instanceof TotalOrderPrepareCommand && !stm.ownsData()) {
     reply(response,null);
     return;
@@ -50,6 +50,10 @@ catch (        Throwable throwable) {
           return stateTransferLock.transactionDataReceived(commandTopologyId);
         }
         @Override public void run(){
+          if (0 < commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
+            if (trace)             log.tracef("Ignoring command sent before the local node was a member " + "(command topology id is %d)",commandTopologyId);
+            reply(response,null);
+          }
           Response resp;
           try {
             resp=handleInternal(cmd,cr);

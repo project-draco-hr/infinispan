@@ -2,6 +2,10 @@
   if (trace) {
     log.tracef("Installing new cache topology %s on cache %s",newCacheTopology,cacheName);
   }
+  if (firstTopologyAsMember < 0 && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
+    if (trace)     log.trace("This is the first topology in which the local node is a member");
+    firstTopologyAsMember=newCacheTopology.getTopologyId();
+  }
   newCacheTopology=addGrouping(newCacheTopology);
   CacheTopology oldCacheTopology=stateConsumer.getCacheTopology();
   if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
