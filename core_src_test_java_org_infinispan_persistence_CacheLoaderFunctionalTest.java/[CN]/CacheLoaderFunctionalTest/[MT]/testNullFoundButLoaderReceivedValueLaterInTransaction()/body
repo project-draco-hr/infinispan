@@ -1,0 +1,22 @@
+{
+  assertNotInCacheAndStore("k1");
+  tm.begin();
+  try {
+    assertNull(cache.get("k1"));
+    store.write(new MarshalledEntryImpl("k1","v1",null,sm));
+    IsolationLevel level=cache.getCacheConfiguration().locking().isolationLevel();
+switch (level) {
+case READ_COMMITTED:
+      assertEquals("v1",cache.get("k1"));
+    break;
+case REPEATABLE_READ:
+  assertNull(cache.get("k1"));
+break;
+default :
+fail("Unsupported isolation " + level + " - please change test to add desired outcome for isolation level");
+}
+}
+  finally {
+tm.rollback();
+}
+}
