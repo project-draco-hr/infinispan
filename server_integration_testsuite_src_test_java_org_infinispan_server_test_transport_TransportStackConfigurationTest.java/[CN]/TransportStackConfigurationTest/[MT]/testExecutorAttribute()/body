@@ -1,0 +1,14 @@
+{
+  try {
+    startContainerWithStack(CONTAINER1,"node0",0,"tcp");
+    startContainerWithStack(CONTAINER2,"node1",100,"tcp");
+    provider=new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(),managementPort);
+    final String dumpServicesBean="jboss.msc:type=container,name=jboss-as";
+    final String dumpServicesOp="dumpServicesToString";
+    String services=provider.getConnection().invoke(new ObjectName(dumpServicesBean),dumpServicesOp,null,null).toString();
+    assertTrue(isTestInfinispanTransportSpecified(services));
+  }
+  finally {
+    stopContainers(CONTAINER1,CONTAINER2);
+  }
+}
