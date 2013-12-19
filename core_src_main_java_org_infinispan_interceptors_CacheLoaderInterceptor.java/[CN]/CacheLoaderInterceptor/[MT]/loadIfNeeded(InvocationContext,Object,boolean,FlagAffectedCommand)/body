@@ -4,26 +4,35 @@
   }
   if (!isRetrieval && !ctx.isOriginLocal() && !forceLoad(key,cmd.getFlags()))   return null;
   CacheEntry e=ctx.lookupEntry(key);
-  if (shouldAttemptLookup(e)) {
+  if (!shouldAttemptLookup(e)) {
+    return null;
+  }
+  final boolean isDelta=cmd instanceof ApplyDeltaCommand;
+  try {
+    while (!cdl.lock(key,false))     ;
+    InternalCacheEntry ice=dataContainer.get(key);
+    if (ice != null) {
+      wrapInternalCacheEntry(ctx,key,cmd,ice,isDelta,false);
+      return null;
+    }
     MarshalledEntry loaded=persistenceManager.loadFromAllStores(key,ctx);
-    if (loaded == null)     return Boolean.FALSE;
+    if (getLog().isTraceEnabled()) {
+      getLog().tracef("Loaded %s for key %s from persistence.",loaded,key);
+    }
+    if (loaded == null) {
+      return Boolean.FALSE;
+    }
     InternalMetadata metadata=loaded.getMetadata();
     if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
       return Boolean.FALSE;
     }
-    InternalCacheEntry ice=iceFactory.create(loaded.getKey(),loaded.getValue(),metadata);
-    CacheEntry wrappedEntry;
-    if (cmd instanceof ApplyDeltaCommand) {
-      ctx.putLookedUpEntry(key,ice);
-      wrappedEntry=entryFactory.wrapEntryForDelta(ctx,key,((ApplyDeltaCommand)cmd).getDelta());
-    }
- else {
-      wrappedEntry=entryFactory.wrapEntryForPut(ctx,key,ice,false,cmd,false);
-    }
-    recordLoadedEntry(ctx,key,wrappedEntry,ice,cmd);
+    ice=iceFactory.create(loaded.getKey(),loaded.getValue(),metadata);
+    CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,ice,isDelta,true);
+    recordLoadedEntry(ctx,key,wrappedEntry,ice,cmd,isDelta);
+    afterSuccessfullyLoaded(wrappedEntry);
     return Boolean.TRUE;
   }
- else {
-    return null;
+  finally {
+    cdl.unlock(key);
   }
 }

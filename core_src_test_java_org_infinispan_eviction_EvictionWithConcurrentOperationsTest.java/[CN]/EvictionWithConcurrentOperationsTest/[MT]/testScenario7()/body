@@ -1,0 +1,21 @@
+{
+  final Object key1=new SameHashCodeKey("key1");
+  initializeKeyAndCheckData(key1,"v1");
+  final Latch readLatch=new Latch();
+  final AfterActivationOrCacheLoader commandController=new AfterActivationOrCacheLoader().injectThis(cache);
+  commandController.afterGet=new Runnable(){
+    @Override public void run(){
+      readLatch.blockIfNeeded();
+    }
+  }
+;
+  cache.evict(key1);
+  assertNotInMemory(key1,"v1");
+  readLatch.enable();
+  Future<Object> get=cache.getAsync(key1);
+  readLatch.waitToBlock(30,TimeUnit.SECONDS);
+  assertEquals("Wrong value for key " + key1 + " in put operation.","v1",cache.put(key1,"v2"));
+  readLatch.disable();
+  assertPossibleValues(key1,get.get(),"v1");
+  assertInMemory(key1,"v2");
+}
