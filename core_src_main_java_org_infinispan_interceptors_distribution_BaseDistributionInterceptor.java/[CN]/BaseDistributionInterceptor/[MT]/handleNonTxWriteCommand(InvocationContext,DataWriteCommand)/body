@@ -3,7 +3,9 @@
     throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
   }
   RecipientGenerator recipientGenerator=new SingleKeyRecipientGenerator(command.getKey());
-  remoteGetBeforeWrite(ctx,command,recipientGenerator);
+  if (needValuesFromPreviousOwners(ctx,command)) {
+    remoteGetBeforeWrite(ctx,command,recipientGenerator);
+  }
   Object localResult=invokeNextInterceptor(ctx,command);
   if (isLocalModeForced(command)) {
     return localResult;

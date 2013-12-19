@@ -1,7 +1,8 @@
 {
   if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
     for (    Object key : cmd.getAffectedKeys()) {
-      if (dm.isAffectedByRehash(key) && !dataContainer.containsKey(key))       return true;
+      boolean shouldPerformWriteSkewCheck=cdl.localNodeIsPrimaryOwner(key);
+      if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key))       return true;
     }
   }
   return false;

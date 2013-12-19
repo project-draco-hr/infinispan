@@ -1,15 +1,13 @@
 {
-  if (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE)|| shouldFetchRemoteValuesForWriteSkewCheck(ctx,command)) {
-    for (    Object k : keygen.getKeys()) {
-      CacheEntry entry=ctx.lookupEntry(k);
-      boolean skipRemoteGet=entry != null && entry.skipLookup();
-      if (skipRemoteGet) {
-        continue;
-      }
-      InternalCacheEntry ice=remoteGet(ctx,k,true,command);
-      if (ice == null) {
-        localGet(ctx,k,true,command,false);
-      }
+  for (  Object k : keygen.getKeys()) {
+    CacheEntry entry=ctx.lookupEntry(k);
+    boolean skipRemoteGet=entry != null && entry.skipLookup();
+    if (skipRemoteGet) {
+      continue;
+    }
+    InternalCacheEntry ice=remoteGet(ctx,k,true,command);
+    if (ice == null) {
+      localGet(ctx,k,true,command,false);
     }
   }
 }
