@@ -1,0 +1,21 @@
+{
+  RemoteCacheManagerFactory rcmFactory=new RemoteCacheManagerFactory();
+  RemoteInfinispanMBeans s=RemoteInfinispanMBeans.create(server,CONTAINER,"default","local");
+  controller.start(CONTAINER);
+  RemoteCache<Object,Object> rc=rcmFactory.createCache(s);
+  rc.clear();
+  assertNull(rc.get("k1"));
+  rc.put("k1","v1");
+  rc.put("k2","v2");
+  rc.put("k3","v3");
+  assertEquals("v1",rc.get("k1"));
+  assertEquals("v2",rc.get("k2"));
+  assertEquals("v3",rc.get("k3"));
+  controller.kill(CONTAINER);
+  controller.start(CONTAINER);
+  assertEquals("v2",rc.get("k2"));
+  assertEquals("v3",rc.get("k3"));
+  assertNull(rc.get("k1"));
+  controller.stop(CONTAINER);
+  rcmFactory.stopManagers();
+}
