@@ -1,42 +1,32 @@
 {
   final GlobalConfiguration gc=cm.getCacheManagerConfiguration();
-  assertTrue(gc.asyncListenerExecutor().factory() instanceof DefaultExecutorFactory);
-  assertEquals("5",gc.asyncListenerExecutor().properties().getProperty("maxThreads"));
-  if (!deprecated) {
-    assertEquals("10000",gc.asyncListenerExecutor().properties().getProperty("queueSize"));
-  }
-  assertEquals("AsyncListenerThread",gc.asyncListenerExecutor().properties().getProperty("threadNamePrefix"));
-  assertTrue(gc.persistenceExecutor().factory() instanceof DefaultExecutorFactory);
-  assertEquals("6",gc.persistenceExecutor().properties().getProperty("maxThreads"));
-  if (!deprecated) {
-    assertEquals("10001",gc.persistenceExecutor().properties().getProperty("queueSize"));
-  }
-  assertEquals("PersistenceThread",gc.persistenceExecutor().properties().getProperty("threadNamePrefix"));
-  assertTrue(gc.asyncTransportExecutor().factory() instanceof DefaultExecutorFactory);
-  assertEquals(String.valueOf(TestCacheManagerFactory.MAX_ASYNC_EXEC_THREADS),gc.asyncTransportExecutor().properties().getProperty("maxThreads"));
-  if (!deprecated) {
-    assertEquals(String.valueOf(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE),gc.asyncTransportExecutor().properties().getProperty("queueSize"));
-  }
-  assertEquals("AsyncSerializationThread",gc.asyncTransportExecutor().properties().getProperty("threadNamePrefix"));
-  if (!deprecated) {
-    assertTrue(gc.remoteCommandsExecutor().factory() instanceof DefaultExecutorFactory);
-    assertEquals(String.valueOf(TestCacheManagerFactory.MAX_REQ_EXEC_THREADS),gc.remoteCommandsExecutor().properties().getProperty("maxThreads"));
-    assertEquals("RemoteCommandThread",gc.remoteCommandsExecutor().properties().getProperty("threadNamePrefix"));
-    assertEquals("2",gc.remoteCommandsExecutor().properties().getProperty("coreThreads"));
-    assertEquals(String.valueOf(TestCacheManagerFactory.KEEP_ALIVE),gc.remoteCommandsExecutor().properties().getProperty("keepAliveTime"));
-  }
-  if (!deprecated) {
-    assertTrue(gc.totalOrderExecutor().factory() instanceof DefaultExecutorFactory);
-    assertEquals("16",gc.totalOrderExecutor().properties().getProperty("maxThreads"));
-    assertEquals("TotalOrderValidatorThread",gc.totalOrderExecutor().properties().getProperty("threadNamePrefix"));
-    assertEquals("1",gc.totalOrderExecutor().properties().getProperty("coreThreads"));
-    assertEquals("1000",gc.totalOrderExecutor().properties().getProperty("keepAliveTime"));
-    assertEquals("0",gc.totalOrderExecutor().properties().getProperty("queueSize"));
-  }
-  assertTrue(gc.evictionScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory);
-  assertEquals("EvictionThread",gc.evictionScheduledExecutor().properties().getProperty("threadNamePrefix"));
-  assertTrue(gc.replicationQueueScheduledExecutor().factory() instanceof DefaultScheduledExecutorFactory);
-  assertEquals("ReplicationQueueThread",gc.replicationQueueScheduledExecutor().properties().getProperty("threadNamePrefix"));
+  BlockingThreadPoolExecutorFactory listenerThreadPool=cm.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
+  assertEquals(5,listenerThreadPool.maxThreads());
+  assertEquals(10000,listenerThreadPool.queueLength());
+  DefaultThreadFactory listenerThreadFactory=cm.getCacheManagerConfiguration().listenerThreadPool().threadFactory();
+  assertEquals("AsyncListenerThread",listenerThreadFactory.threadNamePattern());
+  BlockingThreadPoolExecutorFactory persistenceThreadPool=cm.getCacheManagerConfiguration().persistenceThreadPool().threadPoolFactory();
+  assertEquals(6,persistenceThreadPool.maxThreads());
+  assertEquals(10001,persistenceThreadPool.queueLength());
+  DefaultThreadFactory persistenceThreadFactory=cm.getCacheManagerConfiguration().persistenceThreadPool().threadFactory();
+  assertEquals("PersistenceThread",persistenceThreadFactory.threadNamePattern());
+  BlockingThreadPoolExecutorFactory transportThreadPool=cm.getCacheManagerConfiguration().transport().transportThreadPool().threadPoolFactory();
+  assertEquals(TestCacheManagerFactory.MAX_ASYNC_EXEC_THREADS,transportThreadPool.maxThreads());
+  assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE,transportThreadPool.queueLength());
+  BlockingThreadPoolExecutorFactory remoteCommandThreadPool=cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadPoolFactory();
+  assertEquals(TestCacheManagerFactory.MAX_REQ_EXEC_THREADS,remoteCommandThreadPool.maxThreads());
+  assertEquals(TestCacheManagerFactory.KEEP_ALIVE,remoteCommandThreadPool.keepAlive());
+  BlockingThreadPoolExecutorFactory totalOrderThreadPool=cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory();
+  assertEquals(16,totalOrderThreadPool.maxThreads());
+  assertEquals(1,totalOrderThreadPool.coreThreads());
+  assertEquals(1000,totalOrderThreadPool.keepAlive());
+  assertEquals(0,totalOrderThreadPool.queueLength());
+  DefaultThreadFactory totalOrderThreadFactory=cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadFactory();
+  assertEquals("TotalOrderValidatorThread",totalOrderThreadFactory.threadNamePattern());
+  DefaultThreadFactory evictionThreadFactory=cm.getCacheManagerConfiguration().evictionThreadPool().threadFactory();
+  assertEquals("EvictionThread",evictionThreadFactory.threadNamePattern());
+  DefaultThreadFactory replicationQueueThreadFactory=cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
+  assertEquals("ReplicationQueueThread",replicationQueueThreadFactory.threadNamePattern());
   assertTrue(gc.transport().transport() instanceof JGroupsTransport);
   assertEquals("infinispan-cluster",gc.transport().clusterName());
   assertTrue(gc.transport().nodeName().contains("Node"));
@@ -59,8 +49,6 @@
   Configuration c=cm.getCacheConfiguration("transactional");
   assertTrue(!c.clustering().cacheMode().isClustered());
   assertTrue(c.transaction().transactionManagerLookup() instanceof GenericTransactionManagerLookup);
-  assertTrue(c.transaction().useEagerLocking());
-  assertTrue(c.transaction().eagerLockingSingleNode());
   assertTrue(!c.transaction().syncRollbackPhase());
   if (!deprecated) {
     assertReaperAndTimeoutInfo(defaultCfg);
@@ -82,7 +70,6 @@
   c=cm.getCacheConfiguration("asyncInval");
   assertEquals(CacheMode.INVALIDATION_ASYNC,c.clustering().cacheMode());
   assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
-  if (!deprecated)   assertTrue(!c.clustering().stateTransfer().awaitInitialTransfer());
   assertEquals(15000,c.clustering().sync().replTimeout());
   c=cm.getCacheConfiguration("syncRepl");
   assertEquals(CacheMode.REPL_SYNC,c.clustering().cacheMode());
@@ -124,8 +111,6 @@
   assertTrue(loaderCfg.ignoreModifications());
   assertTrue(loaderCfg.purgeOnStartup());
   assertEquals("/tmp/FileCacheStore-Location",loaderCfg.location());
-  assertEquals(20000,loaderCfg.singletonStore().pushStateTimeout());
-  assertTrue(loaderCfg.singletonStore().pushStateWhenCoordinator());
   assertEquals(5,loaderCfg.async().threadPoolSize());
   assertEquals(15000,loaderCfg.async().flushLockTimeout());
   assertTrue(loaderCfg.async().enabled());
@@ -193,6 +178,4 @@
   assertTrue(c.storeAsBinary().enabled());
   assertTrue(c.storeAsBinary().storeKeysAsBinary());
   assertTrue(!c.storeAsBinary().storeValuesAsBinary());
-  Configuration withJDBCLoader=cm.getCacheConfiguration("withJDBCLoader");
-  assertTrue(withJDBCLoader.locking().supportsConcurrentUpdates());
 }

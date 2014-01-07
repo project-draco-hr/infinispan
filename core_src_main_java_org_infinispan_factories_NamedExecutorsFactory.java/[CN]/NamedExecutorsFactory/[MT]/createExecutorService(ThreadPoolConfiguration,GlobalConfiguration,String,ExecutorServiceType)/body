@@ -1,0 +1,20 @@
+{
+  ThreadFactory threadFactory;
+  ThreadPoolExecutorFactory executorFactory;
+  if (threadPoolConfiguration != null) {
+    threadFactory=threadPoolConfiguration.threadFactory() != null ? threadPoolConfiguration.threadFactory() : createThreadFactoryWithDefaults(globalCfg,componentName);
+    executorFactory=threadPoolConfiguration.threadPoolFactory() != null ? threadPoolConfiguration.threadPoolFactory() : createThreadPoolFactoryWithDefaults(componentName,type);
+  }
+ else {
+    threadFactory=createThreadFactoryWithDefaults(globalCfg,componentName);
+    executorFactory=createThreadPoolFactoryWithDefaults(componentName,type);
+  }
+switch (type) {
+case SCHEDULED:
+    return (T)new LazyInitializingScheduledExecutorService(executorFactory,threadFactory);
+case BLOCKING:
+  return (T)new LazyInitializingBlockingTaskAwareExecutorService(executorFactory,threadFactory,globalComponentRegistry.getTimeService());
+default :
+return (T)new LazyInitializingExecutorService(executorFactory,threadFactory);
+}
+}

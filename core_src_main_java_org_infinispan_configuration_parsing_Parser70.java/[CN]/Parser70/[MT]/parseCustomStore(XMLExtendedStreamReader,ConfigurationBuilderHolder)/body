@@ -1,0 +1,45 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  Boolean fetchPersistentState=null;
+  Boolean ignoreModifications=null;
+  Boolean purgeOnStartup=null;
+  Boolean preload=null;
+  Boolean shared=null;
+  StoreConfigurationBuilder<?,?> pcb=null;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+      Class storeBuilderClass=Util.loadClass(value,holder.getClassLoader());
+    pcb=builder.persistence().addStore(storeBuilderClass);
+  break;
+case FETCH_STATE:
+fetchPersistentState=Boolean.valueOf(value);
+break;
+case READ_ONLY:
+ignoreModifications=Boolean.valueOf(value);
+break;
+case PURGE:
+purgeOnStartup=Boolean.valueOf(value);
+break;
+case PRELOAD:
+preload=Boolean.parseBoolean(value);
+break;
+case SHARED:
+shared=Boolean.parseBoolean(value);
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+if (pcb != null) {
+if (fetchPersistentState != null) pcb.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) pcb.ignoreModifications(ignoreModifications);
+if (purgeOnStartup != null) pcb.purgeOnStartup(purgeOnStartup);
+if (preload != null) pcb.preload(preload);
+if (shared != null) pcb.shared(shared);
+parseStoreElements(reader,pcb);
+}
+}

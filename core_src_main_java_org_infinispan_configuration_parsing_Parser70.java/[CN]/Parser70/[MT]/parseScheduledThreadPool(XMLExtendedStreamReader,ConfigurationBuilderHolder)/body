@@ -1,0 +1,31 @@
+{
+  ThreadPoolConfigurationBuilder builder=new ThreadPoolConfigurationBuilder(holder.getGlobalConfigurationBuilder());
+  String name=null;
+  String threadFactoryName=null;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case NAME:
+{
+        name=value;
+        break;
+      }
+case THREAD_FACTORY:
+{
+      threadFactoryName=value;
+      break;
+    }
+default :
+{
+    throw ParseUtils.unexpectedAttribute(reader,i);
+  }
+}
+}
+ThreadPoolExecutorFactory factory=ScheduledThreadPoolExecutorFactory.create();
+builder.threadPoolFactory(factory);
+threadPoolToThreadFactory.put(name,threadFactoryName);
+threadPools.put(name,builder);
+ParseUtils.requireNoContent(reader);
+}

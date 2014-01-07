@@ -1,0 +1,18 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case INDEX:
+      Index index=Index.valueOf(value);
+    builder.indexing().index(index);
+  break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+Properties indexingProperties=parseProperties(reader);
+builder.indexing().withProperties(indexingProperties);
+}

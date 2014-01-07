@@ -1,10 +1,9 @@
 {
-  GlobalConfigurationBuilder globalConfigurationBuilder=GlobalConfigurationBuilder.defaultClusteredBuilder();
-  ConfigurationBuilder configurationBuilder=new ConfigurationBuilder();
-  DummyExecutorFactory factory=new DummyExecutorFactory();
-  globalConfigurationBuilder.remoteCommandsExecutor().factory(factory);
-  configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-  cacheManager=createClusteredCacheManager(globalConfigurationBuilder,configurationBuilder);
+  executorService=new DummyTaskCountExecutorService();
+  BlockingTaskAwareExecutorService remoteExecutorService=new BlockingTaskAwareExecutorServiceImpl(executorService,TIME_SERVICE);
+  ConfigurationBuilder builder=getDefaultCacheConfiguration(false);
+  builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+  cacheManager=createClusteredCacheManager(builder);
   Cache<Object,Object> cache=cacheManager.getCache();
   String cacheName=cache.getName();
   Transport transport=extractGlobalComponent(cacheManager,Transport.class);
@@ -17,7 +16,8 @@
     Assert.fail("Expected a JGroups Transport");
   }
   commandsFactory=extractCommandsFactory(cache);
-  executorService=factory.getExecutorService();
+  TestingUtil.replaceField(remoteExecutorService,"remoteCommandsExecutor",commandAwareRpcDispatcher,CommandAwareRpcDispatcher.class);
+  TestingUtil.replaceField(remoteExecutorService,"remoteCommandsExecutor",extractGlobalComponent(cacheManager,InboundInvocationHandler.class),InboundInvocationHandlerImpl.class);
   GetKeyValueCommand getKeyValueCommand=new GetKeyValueCommand("key",InfinispanCollections.<Flag>emptySet(),false);
   PutKeyValueCommand putKeyValueCommand=new PutKeyValueCommand("key","value",false,null,new EmbeddedMetadata.Builder().build(),InfinispanCollections.<Flag>emptySet(),AnyEquivalence.getInstance());
   blockingCacheRpcCommand=new ReduceCommand<Object,Object>(cacheName);

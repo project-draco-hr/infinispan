@@ -1,10 +1,9 @@
 {
   try {
-    String nodeName=globalConfiguration.transport().nodeName();
     if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
 synchronized (this) {
         if (notificationExecutor == null) {
-          notificationExecutor=buildAndConfigureExecutorService(globalConfiguration.asyncListenerExecutor().factory(),globalConfiguration.asyncListenerExecutor().properties(),componentName,nodeName);
+          notificationExecutor=createExecutorService(globalConfiguration.listenerThreadPool(),globalConfiguration,ASYNC_NOTIFICATION_EXECUTOR,ExecutorServiceType.DEFAULT);
         }
       }
       return (T)notificationExecutor;
@@ -12,7 +11,7 @@ synchronized (this) {
  else     if (componentName.equals(PERSISTENCE_EXECUTOR)) {
 synchronized (this) {
         if (persistenceExecutor == null) {
-          persistenceExecutor=buildAndConfigureExecutorService(globalConfiguration.persistenceExecutor().factory(),globalConfiguration.persistenceExecutor().properties(),componentName,nodeName);
+          persistenceExecutor=createExecutorService(globalConfiguration.persistenceThreadPool(),globalConfiguration,PERSISTENCE_EXECUTOR,ExecutorServiceType.DEFAULT);
         }
       }
       return (T)persistenceExecutor;
@@ -20,7 +19,7 @@ synchronized (this) {
  else     if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
 synchronized (this) {
         if (asyncTransportExecutor == null) {
-          asyncTransportExecutor=buildAndConfigureExecutorService(globalConfiguration.asyncTransportExecutor().factory(),globalConfiguration.asyncTransportExecutor().properties(),componentName,nodeName);
+          asyncTransportExecutor=createExecutorService(globalConfiguration.transport().transportThreadPool(),globalConfiguration,ASYNC_TRANSPORT_EXECUTOR,ExecutorServiceType.DEFAULT);
         }
       }
       return (T)asyncTransportExecutor;
@@ -28,7 +27,7 @@ synchronized (this) {
  else     if (componentName.equals(EVICTION_SCHEDULED_EXECUTOR)) {
 synchronized (this) {
         if (evictionExecutor == null) {
-          evictionExecutor=buildAndConfigureScheduledExecutorService(globalConfiguration.evictionScheduledExecutor().factory(),globalConfiguration.evictionScheduledExecutor().properties(),componentName,nodeName);
+          evictionExecutor=createExecutorService(globalConfiguration.evictionThreadPool(),globalConfiguration,EVICTION_SCHEDULED_EXECUTOR,ExecutorServiceType.SCHEDULED);
         }
       }
       return (T)evictionExecutor;
@@ -36,7 +35,7 @@ synchronized (this) {
  else     if (componentName.equals(ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
 synchronized (this) {
         if (asyncReplicationExecutor == null) {
-          asyncReplicationExecutor=buildAndConfigureScheduledExecutorService(globalConfiguration.replicationQueueScheduledExecutor().factory(),globalConfiguration.replicationQueueScheduledExecutor().properties(),componentName,nodeName);
+          asyncReplicationExecutor=createExecutorService(globalConfiguration.replicationQueueThreadPool(),globalConfiguration,ASYNC_REPLICATION_QUEUE_EXECUTOR,ExecutorServiceType.SCHEDULED);
         }
       }
       return (T)asyncReplicationExecutor;
@@ -44,7 +43,7 @@ synchronized (this) {
  else     if (componentName.equals(REMOTE_COMMAND_EXECUTOR)) {
 synchronized (this) {
         if (remoteCommandsExecutor == null) {
-          remoteCommandsExecutor=buildAndConfigureBlockingTaskAwareExecutorService(globalConfiguration.remoteCommandsExecutor().factory(),globalConfiguration.remoteCommandsExecutor().properties(),componentName,nodeName);
+          remoteCommandsExecutor=createExecutorService(globalConfiguration.replicationQueueThreadPool(),globalConfiguration,REMOTE_COMMAND_EXECUTOR,ExecutorServiceType.BLOCKING);
         }
       }
       return (T)remoteCommandsExecutor;
@@ -52,7 +51,7 @@ synchronized (this) {
  else     if (componentName.equals(TOTAL_ORDER_EXECUTOR)) {
 synchronized (this) {
         if (totalOrderExecutor == null) {
-          totalOrderExecutor=buildAndConfigureBlockingTaskAwareExecutorService(globalConfiguration.totalOrderExecutor().factory(),globalConfiguration.totalOrderExecutor().properties(),componentName,nodeName);
+          totalOrderExecutor=createExecutorService(globalConfiguration.transport().totalOrderThreadPool(),globalConfiguration,TOTAL_ORDER_EXECUTOR,ExecutorServiceType.BLOCKING);
         }
       }
       return (T)totalOrderExecutor;

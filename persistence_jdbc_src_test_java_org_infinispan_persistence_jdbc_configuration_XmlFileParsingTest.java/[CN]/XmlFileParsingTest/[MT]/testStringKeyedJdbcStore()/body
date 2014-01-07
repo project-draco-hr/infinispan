@@ -1,5 +1,5 @@
 {
-  String config=INFINISPAN_START_TAG + "   <default>\n" + "     <persistence>\n"+ "       <stringKeyedJdbcStore xmlns=\"urn:infinispan:config:jdbc:6.0\" key2StringMapper=\"DummyKey2StringMapper\" preload=\"true\" shared=\"true\">\n"+ "         <connectionPool connectionUrl=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driverClass=\"org.h2.Driver\"/>\n"+ "         <stringKeyedTable prefix=\"entry\" fetchSize=\"34\" batchSize=\"128\" >\n"+ "           <idColumn name=\"id\" type=\"VARCHAR\" />\n"+ "           <dataColumn name=\"datum\" type=\"BINARY\" />\n"+ "           <timestampColumn name=\"version\" type=\"BIGINT\" />\n"+ "         </stringKeyedTable>\n"+ "         <async enabled=\"true\" />\n"+ "       </stringKeyedJdbcStore>\n"+ "     </persistence>\n"+ "   </default>\n"+ TestingUtil.INFINISPAN_END_TAG;
+  String config=INFINISPAN_START_TAG + "   <cache-container default-cache=\"default\">\n" + "      <local-cache name=\"default\">\n"+ "     <persistence>\n"+ "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" "+ "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" >\n"+ "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n"+ "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n"+ "           <id-column name=\"id\" type=\"VARCHAR\" />\n"+ "           <data-column name=\"datum\" type=\"BINARY\" />\n"+ "           <timestamp-column name=\"version\" type=\"BIGINT\" />\n"+ "         </string-keyed-table>\n"+ "         <write-behind />\n"+ "       </string-keyed-jdbc-store>\n"+ "     </persistence>\n"+ "   </local-cache></cache-container>\n"+ TestingUtil.INFINISPAN_END_TAG;
   JdbcStringBasedStoreConfiguration store=(JdbcStringBasedStoreConfiguration)buildCacheManagerWithCacheStore(config);
   assertEquals(128,store.table().batchSize());
   assertEquals(34,store.table().fetchSize());
@@ -14,4 +14,8 @@
   assertEquals("org.h2.Driver",connectionFactory.driverClass());
   assertEquals("dbuser",connectionFactory.username());
   assertEquals("dbpass",connectionFactory.password());
+  assertTrue(store.ignoreModifications());
+  assertTrue(store.fetchPersistentState());
+  assertTrue(store.purgeOnStartup());
+  assertFalse(store.singletonStore().enabled());
 }
