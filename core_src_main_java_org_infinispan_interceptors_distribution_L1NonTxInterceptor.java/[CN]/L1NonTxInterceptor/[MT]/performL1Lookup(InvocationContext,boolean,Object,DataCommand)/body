@@ -26,8 +26,15 @@
       log.tracef("Found current request for key %s, waiting for their invocation's response",key);
     }
     try {
-      Object returnValue=presentSync.get();
-      if (runInterceptorOnConflict) {
+      Object returnValue;
+      try {
+        returnValue=presentSync.get(replicationTimeout,TimeUnit.MILLISECONDS);
+        if (runInterceptorOnConflict) {
+          returnValue=invokeNextInterceptor(ctx,command);
+        }
+      }
+ catch (      TimeoutException e) {
+        log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!",replicationTimeout);
         returnValue=invokeNextInterceptor(ctx,command);
       }
       return returnValue;
