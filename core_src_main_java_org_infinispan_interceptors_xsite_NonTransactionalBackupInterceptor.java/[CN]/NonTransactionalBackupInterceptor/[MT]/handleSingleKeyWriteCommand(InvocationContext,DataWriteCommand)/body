@@ -1,0 +1,10 @@
+{
+  Object result=invokeNextInterceptor(ctx,command);
+  if (skipXSiteBackup(command)) {
+    return result;
+  }
+ else   if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey())) {
+    backupSender.processResponses(backupSender.backupWrite(transform(command)),command);
+  }
+  return result;
+}
