@@ -1,16 +1,14 @@
 {
   if (indexReader == null) {
-    indexReader=IndexReader.open(directory);
+    indexReader=DirectoryReader.open(directory);
   }
  else {
-    IndexReader before=indexReader;
-    indexReader=indexReader.reopen();
-    if (before != indexReader) {
+    DirectoryReader before=indexReader;
+    DirectoryReader after=DirectoryReader.openIfChanged(indexReader);
+    if (after != null) {
       before.close();
+      indexReader=after;
     }
-  }
-  if (searcher != null) {
-    searcher.close();
   }
   searcher=new IndexSearcher(indexReader);
 }

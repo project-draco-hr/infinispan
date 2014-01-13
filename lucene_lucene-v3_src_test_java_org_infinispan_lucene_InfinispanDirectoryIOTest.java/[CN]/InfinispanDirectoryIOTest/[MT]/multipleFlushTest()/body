@@ -5,13 +5,13 @@
   cache.clear();
   Directory dir=DirectoryBuilder.newDirectoryInstance(cache,cache,cache,INDEXNAME).chunkSize(13).create();
   byte[] manyBytes=fillBytes(bufferSize);
-  IndexOutput indexOutput=dir.createOutput(filename);
+  IndexOutput indexOutput=dir.createOutput(filename,IOContext.DEFAULT);
   for (int i=0; i < 10; i++) {
     indexOutput.writeBytes(manyBytes,bufferSize);
     indexOutput.flush();
   }
   indexOutput.close();
-  IndexInput input=dir.openInput(filename);
+  IndexInput input=dir.openInput(filename,IOContext.DEFAULT);
   final int finalSize=(10 * bufferSize);
   AssertJUnit.assertEquals(finalSize,input.length());
   final byte[] resultingBuffer=new byte[finalSize];
