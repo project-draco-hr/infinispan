@@ -1,0 +1,12 @@
+{
+  c.put("k","v");
+  VersionedValue versioned1=c.getVersioned("k");
+  Future<Boolean> f=c.replaceWithVersionAsync("k","v2",versioned1.getVersion());
+  testFuture(f,true);
+  VersionedValue versioned2=c.getVersioned("k");
+  assertNotEquals(versioned1.getVersion(),versioned2.getVersion());
+  assertEquals(versioned2.getValue(),"v2");
+  f=c.replaceWithVersionAsync("k","v3",versioned1.getVersion());
+  testFuture(f,false);
+  testK("v2");
+}

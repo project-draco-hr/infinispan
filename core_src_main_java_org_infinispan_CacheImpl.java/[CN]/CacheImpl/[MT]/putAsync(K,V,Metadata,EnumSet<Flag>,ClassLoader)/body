@@ -5,20 +5,29 @@
     @Override public V call() throws Exception {
       try {
         associateImplicitTransactionWithCurrentThread(ctx);
-        return putInternal(key,value,metadata,explicitFlags,ctx);
-      }
-  finally {
+        V retval=putInternal(key,value,metadata,explicitFlags,ctx);
         try {
-          result.notifyDone();
+          result.notifyDone(retval);
           log.trace("Finished notifying");
         }
  catch (        Throwable e) {
           log.trace("Exception while notifying the future",e);
         }
+        return retval;
+      }
+ catch (      Exception e) {
+        try {
+          result.notifyException(e);
+          log.trace("Finished notifying");
+        }
+ catch (        Throwable e2) {
+          log.trace("Exception while notifying the future",e2);
+        }
+        throw e;
       }
     }
   }
 );
-  result.setActual(returnValue);
+  result.setFuture(returnValue);
   return result;
 }

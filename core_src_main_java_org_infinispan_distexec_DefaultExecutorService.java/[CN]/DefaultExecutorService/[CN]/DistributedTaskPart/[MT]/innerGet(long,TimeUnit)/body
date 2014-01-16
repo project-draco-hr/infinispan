@@ -2,14 +2,8 @@
   if (isCancelled())   throw new CancellationException("Task already cancelled");
   long timeoutNanos=computeTimeoutNanos(timeout,unit);
   long endNanos=timeService.expectedEndTime(timeoutNanos,TimeUnit.NANOSECONDS);
-  V response;
   try {
-    if (timeoutNanos > 0) {
-      response=retrieveResult(f.get(timeoutNanos,TimeUnit.NANOSECONDS));
-    }
- else {
-      response=retrieveResult(f.get());
-    }
+    return getResult(timeoutNanos);
   }
  catch (  TimeoutException te) {
     throw te;
@@ -23,7 +17,7 @@ catch (  Exception e) {
     boolean canFailover=failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
     if (canFailover) {
       try {
-        response=failoverExecution(e,timeoutNanos,TimeUnit.NANOSECONDS);
+        return failoverExecution(e,timeoutNanos,TimeUnit.NANOSECONDS);
       }
  catch (      Exception failedOver) {
         throw wrapIntoExecutionException(failedOver);
@@ -33,5 +27,4 @@ catch (  Exception e) {
       throw wrapIntoExecutionException(e);
     }
   }
-  return response;
 }

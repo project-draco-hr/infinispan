@@ -1,0 +1,12 @@
+{
+  assertNotNull(f);
+  AtomicReference<Throwable> ex=new AtomicReference<Throwable>();
+  CountDownLatch latch=new CountDownLatch(1);
+  f.attachListener(new TestingListener<T>(expected,ex,latch));
+  if (!latch.await(5,TimeUnit.SECONDS)) {
+    fail("Not finished within 5 seconds");
+  }
+  if (ex.get() != null) {
+    throw new AssertionError(ex.get());
+  }
+}

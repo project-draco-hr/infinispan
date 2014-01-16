@@ -5,14 +5,27 @@
     @Override public Boolean call() throws Exception {
       try {
         associateImplicitTransactionWithCurrentThread(ctx);
-        return replaceInternal(key,oldValue,newValue,metadata,explicitFlags,ctx);
+        Boolean retval=replaceInternal(key,oldValue,newValue,metadata,explicitFlags,ctx);
+        try {
+          result.notifyDone(retval);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
+        return retval;
       }
-  finally {
-        result.notifyDone();
+ catch (      Exception e) {
+        try {
+          result.notifyException(e);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
+        throw e;
       }
     }
   }
 );
-  result.setActual(returnValue);
+  result.setFuture(returnValue);
   return result;
 }

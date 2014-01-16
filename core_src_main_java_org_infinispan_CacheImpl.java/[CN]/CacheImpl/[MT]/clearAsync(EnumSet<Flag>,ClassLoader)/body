@@ -6,14 +6,26 @@
       try {
         associateImplicitTransactionWithCurrentThread(ctx);
         clearInternal(explicitFlags,ctx);
+        try {
+          result.notifyDone(null);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
         return null;
       }
-  finally {
-        result.notifyDone();
+ catch (      Exception e) {
+        try {
+          result.notifyException(e);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
+        throw e;
       }
     }
   }
 );
-  result.setActual(returnValue);
+  result.setFuture(returnValue);
   return result;
 }

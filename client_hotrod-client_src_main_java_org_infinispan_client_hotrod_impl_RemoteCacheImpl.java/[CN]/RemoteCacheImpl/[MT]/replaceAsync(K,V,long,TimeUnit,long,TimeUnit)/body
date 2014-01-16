@@ -3,12 +3,28 @@
   final NotifyingFutureImpl<V> result=new NotifyingFutureImpl<V>();
   Future<V> future=executorService.submit(new Callable<V>(){
     @Override public V call() throws Exception {
-      V v=replace(key,value,lifespan,lifespanUnit,maxIdle,maxIdleUnit);
-      result.notifyFutureCompletion();
-      return v;
+      try {
+        V old=replace(key,value,lifespan,lifespanUnit,maxIdle,maxIdleUnit);
+        try {
+          result.notifyDone(old);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
+        return old;
+      }
+ catch (      Exception e) {
+        try {
+          result.notifyException(e);
+        }
+ catch (        Throwable t) {
+          log.trace("Error when notifying",t);
+        }
+        throw e;
+      }
     }
   }
 );
-  result.setExecuting(future);
+  result.setFuture(future);
   return result;
 }
