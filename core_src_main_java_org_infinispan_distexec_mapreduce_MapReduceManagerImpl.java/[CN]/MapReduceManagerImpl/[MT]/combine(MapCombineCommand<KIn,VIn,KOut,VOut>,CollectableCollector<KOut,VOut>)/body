@@ -1,10 +1,8 @@
 {
   String taskId=mcc.getTaskId();
-  boolean emitCompositeIntermediateKeys=mcc.isEmitCompositeIntermediateKeys();
-  Reducer<KOut,VOut> combiner=mcc.getCombiner();
   Set<KOut> mapPhaseKeys=new HashSet<KOut>();
   Cache<Object,DeltaAwareList<VOut>> tmpCache=null;
-  if (emitCompositeIntermediateKeys) {
+  if (mcc.isEmitCompositeIntermediateKeys()) {
     tmpCache=cacheManager.getCache(DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
   }
  else {
@@ -13,8 +11,8 @@
   if (tmpCache == null) {
     throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " not found on "+ cdl.getAddress());
   }
-  DistributionManager dm=tmpCache.getAdvancedCache().getDistributionManager();
-  if (combiner != null) {
+  if (mcc.hasCombiner()) {
+    Reducer<KOut,VOut> combiner=mcc.getCombiner();
     Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
     log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,cdl.getAddress());
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
@@ -42,11 +40,11 @@
       }
       taskLifecycleService.onPostExecute(combiner);
     }
-    migrateIntermediateKeys(mcc,taskId,emitCompositeIntermediateKeys,mapPhaseKeys,tmpCache,dm,combinedMap);
+    migrateIntermediateKeys(mcc,mapPhaseKeys,tmpCache,combinedMap);
   }
  else {
     Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
-    migrateIntermediateKeys(mcc,taskId,emitCompositeIntermediateKeys,mapPhaseKeys,tmpCache,dm,collectedValues);
+    migrateIntermediateKeys(mcc,mapPhaseKeys,tmpCache,collectedValues);
   }
   return mapPhaseKeys;
 }
