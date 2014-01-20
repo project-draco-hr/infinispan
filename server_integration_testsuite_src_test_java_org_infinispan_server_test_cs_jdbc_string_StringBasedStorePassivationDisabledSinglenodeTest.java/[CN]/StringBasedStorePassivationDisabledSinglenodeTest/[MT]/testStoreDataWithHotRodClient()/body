@@ -1,0 +1,17 @@
+{
+  RemoteInfinispanMBeans mbeans=createMBeans(server,CONTAINER,CACHE_NAME_BUCKET,MANAGER_NAME);
+  cache=createCache(mbeans);
+  assertCleanCacheAndStoreHotrod();
+  Double doubleKey=10.0;
+  Double doubleValue=20.0;
+  cache.clear();
+  assertEquals(0,server.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME_BUCKET).getNumberOfEntries());
+  assertTrue(dbServer.bucketTable.getAllRows().isEmpty());
+  cache.put(doubleKey,doubleValue);
+  assertEquals(1,dbServer.bucketTable.getAllRows().size());
+  controller.stop(CONTAINER);
+  controller.start(CONTAINER);
+  cache=createCache(mbeans);
+  assertEquals(1,dbServer.bucketTable.getAllRows().size());
+  assertEquals(doubleValue,cache.get(doubleKey));
+}

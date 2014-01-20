@@ -1,0 +1,24 @@
+{
+  try {
+    mc1=createMemcachedClient(server1);
+    assertCleanCacheAndStore1();
+    mc1.set("k1","v1");
+    mc1.set("k2","v2");
+    assertEquals(2,dbServer1.stringTable.getAllRows().size());
+    assertNotNull(dbServer1.stringTable.getValueByKey("k1"));
+    assertNotNull(dbServer1.stringTable.getValueByKey("k2"));
+    startContainer(controller,CONTAINER2,CONFIG_SINGLETON_2);
+    assertEquals(2,server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+    assertTrue(dbServer2.stringTable.getAllRows().isEmpty());
+    mc2=createMemcachedClient(server2);
+    mc2.set("k3","v3");
+    assertEquals(3,server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+    assertEquals(3,server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+    assertTrue(dbServer2.stringTable.getAllRows().isEmpty());
+    assertEquals(3,dbServer1.stringTable.getAllRows().size());
+    assertCleanCacheAndStore2();
+  }
+  finally {
+    controller.stop(CONTAINER2);
+  }
+}

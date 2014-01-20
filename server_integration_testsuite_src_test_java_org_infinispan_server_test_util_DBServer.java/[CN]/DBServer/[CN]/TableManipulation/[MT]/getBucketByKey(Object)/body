@@ -1,0 +1,18 @@
+{
+  int keyHash=ByteArrayEquivalence.INSTANCE.hashCode(key) & 0xfffffc00;
+  Connection connection=factory.getConnection();
+  final PreparedStatement ps=connection.prepareStatement(getRowByKeySql);
+  Object result=null;
+  ps.setInt(1,keyHash);
+  try {
+    ResultSet rs;
+    rs=ps.executeQuery();
+    if (rs.next()) {
+      result=rs.getObject(dataColumnName);
+    }
+  }
+  finally {
+    factory.releaseConnection(connection);
+  }
+  return result;
+}

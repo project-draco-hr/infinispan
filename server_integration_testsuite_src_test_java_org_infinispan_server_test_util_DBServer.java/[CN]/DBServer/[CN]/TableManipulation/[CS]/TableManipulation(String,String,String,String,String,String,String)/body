@@ -1,0 +1,23 @@
+{
+  this.idColumnName=idColumnName;
+  this.dataColumnName=dataColumnName;
+  this.tableName=tableName;
+  this.connectionUrl=connectionUrl;
+  this.username=username;
+  this.password=password;
+  this.tableName=getIdentifierQuoteString() + this.tableName.replaceAll("[^\\p{Alnum}]","_") + getIdentifierQuoteString();
+  if (connectionUrl.contains("sybase")) {
+    this.getRowByKeySql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ this.tableName+ " WHERE "+ idColumnName+ " = convert(VARCHAR(255),?)";
+  }
+ else   if (connectionUrl.contains("postgre") || connectionUrl.contains("edb")) {
+    this.getRowByKeySql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ this.tableName+ " WHERE "+ idColumnName+ " = cast(? as VARCHAR(255))";
+  }
+ else {
+    this.getRowByKeySql="SELECT " + idColumnName + ", "+ dataColumnName+ " FROM "+ this.tableName+ " WHERE "+ idColumnName+ " = ?";
+  }
+  this.getAllRowsSql="SELECT " + dataColumnName + ","+ idColumnName+ " FROM "+ this.tableName;
+  this.deleteAllRowsSql="DELETE from " + this.tableName;
+  this.dropTableSql="DROP TABLE " + this.tableName;
+  factory=new SimpleConnectionFactory(connectionUrl,username,password);
+  factory.start(driverClass);
+}

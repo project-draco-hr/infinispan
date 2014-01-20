@@ -1,0 +1,19 @@
+{
+  mc=createMemcachedClient(server);
+  assertCleanCacheAndStore();
+  mc.set("k1","v1");
+  mc.set("k2","v2");
+  dbServer.stringTable.waitForTableCreation();
+  System.out.println("Available tables: " + dbServer.stringTable.getTableNames());
+  assertEquals(2,dbServer.stringTable.getAllRows().size());
+  assertTrue(!dbServer.bucketTable.exists() || dbServer.bucketTable.getAllRows().isEmpty());
+  controller.stop(CONTAINER);
+  controller.start(CONTAINER);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return 2 == server.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries();
+    }
+  }
+,10000);
+  assertEquals(2,dbServer.stringTable.getAllRows().size());
+}

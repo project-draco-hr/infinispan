@@ -1,0 +1,21 @@
+{
+  String key1="key1";
+  String key2="myBestPersonalKeyWhichHasNeverBeenBetter";
+  cache=createCache(mbeans);
+  assertCleanCacheAndStoreHotrod();
+  cache.put(key1,"v1");
+  cache.put(key2,"v2");
+  byte[] k1Stored=getRealKeyStored(key1,cache);
+  byte[] k2Stored=getRealKeyStored(key2,cache);
+  controller.stop(CONTAINER);
+  controller.start(CONTAINER);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return 2 == server.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries();
+    }
+  }
+,10000);
+  assertEquals(2,dbServer.bucketTable.getAllRows().size());
+  assertNotNull(dbServer.bucketTable.getBucketByKey(k1Stored));
+  assertNotNull(dbServer.bucketTable.getBucketByKey(k2Stored));
+}

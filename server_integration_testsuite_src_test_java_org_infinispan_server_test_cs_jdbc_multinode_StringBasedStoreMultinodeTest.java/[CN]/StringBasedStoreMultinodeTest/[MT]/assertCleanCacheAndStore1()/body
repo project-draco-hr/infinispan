@@ -1,0 +1,16 @@
+{
+  mc1.delete("k1");
+  mc1.delete("k2");
+  assertEquals(0,server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+  if (dbServer1.stringTable.exists() && !dbServer1.stringTable.getAllRows().isEmpty()) {
+    dbServer1.stringTable.deleteAllRows();
+    eventually(new Condition(){
+      @Override public boolean isSatisfied() throws Exception {
+        return dbServer1.stringTable.getAllRows().isEmpty();
+      }
+    }
+,10000);
+  }
+  assertNull(dbServer1.stringTable.getValueByKey("k1"));
+  assertNull(dbServer1.stringTable.getValueByKey("k2"));
+}

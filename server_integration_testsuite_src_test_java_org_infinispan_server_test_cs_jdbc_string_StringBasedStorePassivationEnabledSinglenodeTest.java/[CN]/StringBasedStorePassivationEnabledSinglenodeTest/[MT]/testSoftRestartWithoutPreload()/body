@@ -1,0 +1,18 @@
+{
+  mc=createMemcachedClient(server);
+  assertCleanCacheAndStore();
+  mc.set("k1","v1");
+  mc.set("k2","v2");
+  assertTrue(!dbServer.stringTable.exists() || dbServer.stringTable.getValueByKey("k1") == null);
+  assertTrue(!dbServer.stringTable.exists() || dbServer.stringTable.getValueByKey("k2") == null);
+  mc.set("k3","v3");
+  assertTrue(2 >= server.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+  assertNotNull(dbServer.stringTable.getValueByKey("k1"));
+  controller.stop(CONTAINER);
+  controller.start(CONTAINER);
+  mc=createMemcachedClient(server);
+  assertEquals(0,server.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+  assertTrue(!dbServer.stringTable.getAllRows().isEmpty());
+  assertNotNull(dbServer.stringTable.getValueByKey("k1"));
+  assertEquals("v1",mc.get("k1"));
+}
