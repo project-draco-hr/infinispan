@@ -1,7 +1,6 @@
 {
   if (trace)   log.tracef("Committing transaction %s",localTransaction.getGlobalTransaction());
-  LocalTxInvocationContext ctx=icf.createTxInvocationContext();
-  ctx.setLocalTransaction(localTransaction);
+  LocalTxInvocationContext ctx=icf.createTxInvocationContext(localTransaction);
   if (isOnePhaseCommit(localTransaction) || isOnePhase) {
     validateNotMarkedForRollback(localTransaction);
     if (trace)     log.trace("Doing an 1PC prepare call on the interceptor chain");
@@ -11,12 +10,12 @@
       invoker.invoke(ctx,command);
     }
  catch (    Throwable e) {
-      handleCommitFailure(e,localTransaction,true);
+      handleCommitFailure(e,true,ctx);
     }
     return true;
   }
  else   if (!localTransaction.isReadOnly()) {
-    commitInternal(localTransaction);
+    commitInternal(ctx);
   }
   return false;
 }

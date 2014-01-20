@@ -1,0 +1,22 @@
+{
+  if (trace)   log.tracef("Couldn't commit transaction %s, trying to rollback.",ctx.getCacheTransaction());
+  if (onePhaseCommit) {
+    log.errorProcessing1pcPrepareCommand(e);
+  }
+ else {
+    log.errorProcessing2pcCommitCommand(e);
+  }
+  try {
+    if (!(onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder())) {
+      rollbackInternal(ctx);
+    }
+  }
+ catch (  Throwable e1) {
+    log.couldNotRollbackPrepared1PcTransaction(ctx.getCacheTransaction(),e1);
+    throw new XAException(XAException.XAER_RMERR);
+  }
+ finally {
+    txTable.failureCompletingTransaction(ctx.getTransaction());
+  }
+  throw new XAException(XAException.XA_HEURRB);
+}

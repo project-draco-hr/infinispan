@@ -6,14 +6,13 @@
   }
   PrepareCommand prepareCommand=commandCreator.createPrepareCommand(localTransaction.getGlobalTransaction(),localTransaction.getModifications(),false);
   if (trace)   log.tracef("Sending prepare command through the chain: %s",prepareCommand);
-  LocalTxInvocationContext ctx=icf.createTxInvocationContext();
+  LocalTxInvocationContext ctx=icf.createTxInvocationContext(localTransaction);
   prepareCommand.setReplayEntryWrapping(replayEntryWrapping);
-  ctx.setLocalTransaction(localTransaction);
   try {
     invoker.invoke(ctx,prepareCommand);
     if (localTransaction.isReadOnly()) {
       if (trace)       log.tracef("Readonly transaction: %s",localTransaction.getGlobalTransaction());
-      commitInternal(localTransaction);
+      commitInternal(ctx);
       return XA_RDONLY;
     }
  else {
