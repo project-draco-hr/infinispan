@@ -4,7 +4,9 @@
   this.configureProtocolServer(configurationBuilder,config);
   final ProtocolServerService service=new ProtocolServerService(getServiceName(operation),WebSocketServer.class,configurationBuilder);
   ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"websocket"),service);
-  EndpointUtils.addCacheContainerDependency(builder,getCacheContainerName(operation),service.getCacheManager());
+  String cacheContainerName=getCacheContainerName(operation);
+  EndpointUtils.addCacheContainerDependency(builder,cacheContainerName,service.getCacheManager());
   EndpointUtils.addSocketBindingDependency(builder,getSocketBindingName(operation),service.getSocketBinding());
+  EndpointUtils.addCacheDependency(builder,cacheContainerName,null);
   builder.install();
 }
