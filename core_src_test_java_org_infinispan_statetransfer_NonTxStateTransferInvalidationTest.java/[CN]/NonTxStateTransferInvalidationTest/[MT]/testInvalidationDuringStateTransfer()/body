@@ -1,0 +1,22 @@
+{
+  cache(0).put("key1","value1");
+  CheckPoint checkPoint=new CheckPoint();
+  blockJoinResponse(manager(0),checkPoint);
+  addClusterEnabledCacheManager(dccc);
+  Future<Object> joinFuture=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      return cache(2);
+    }
+  }
+);
+  checkPoint.awaitStrict("sending_join_response",10,SECONDS);
+  NotifyingFuture<Object> putFuture=cache(0).putAsync("key2","value2");
+  try {
+    putFuture.get(1,SECONDS);
+    fail("Put operation should have been blocked, but it finished successfully");
+  }
+ catch (  java.util.concurrent.TimeoutException e) {
+  }
+  checkPoint.trigger("resume_join_response");
+  putFuture.get(10,SECONDS);
+}

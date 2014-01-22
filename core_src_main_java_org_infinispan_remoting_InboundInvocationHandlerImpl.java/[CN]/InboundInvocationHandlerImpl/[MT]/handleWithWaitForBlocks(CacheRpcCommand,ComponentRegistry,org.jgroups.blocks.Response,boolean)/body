@@ -43,7 +43,7 @@ catch (        Throwable throwable) {
   }
  else {
     final StateTransferLock stateTransferLock=cr.getStateTransferLock();
-    final int commandTopologyId=extractCommandTopologyId(cmd);
+    final int commandTopologyId=Math.max(extractCommandTopologyId(cmd),0);
     if (!preserveOrder && cmd.canBlock()) {
       remoteCommandsExecutor.execute(new BlockingRunnable(){
         @Override public boolean isReady(){
@@ -70,6 +70,10 @@ catch (        Throwable throwable) {
     }
  else {
       stateTransferLock.waitForTransactionData(commandTopologyId,1,TimeUnit.DAYS);
+      if (0 < commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
+        if (trace)         log.tracef("Ignoring command sent before the local node was a member " + "(command topology id is %d)",commandTopologyId);
+        reply(response,null);
+      }
       Response resp=handleInternal(cmd,cr);
       if (trace && resp != null && !resp.isValid()) {
         log.tracef("Unable to execute command, got invalid response %s",resp);
