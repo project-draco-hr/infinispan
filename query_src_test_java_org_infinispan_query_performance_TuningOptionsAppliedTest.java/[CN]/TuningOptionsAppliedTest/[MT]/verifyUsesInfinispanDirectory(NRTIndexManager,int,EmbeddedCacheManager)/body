@@ -2,12 +2,10 @@
   DirectoryProvider directoryProvider=nrti.getDirectoryProvider();
   Assert.assertTrue(directoryProvider instanceof InfinispanDirectoryProvider);
   InfinispanDirectoryProvider ispn=(InfinispanDirectoryProvider)directoryProvider;
-  InfinispanDirectory infinispanDirectory=ispn.getDirectory();
-  int chunkSize=extractFieldfromInfinispanDirectory("chunkSize").getInt(infinispanDirectory);
-  Assert.assertEquals(chunkSize,expectedChunkSize);
-  AdvancedCache metadataCache=(AdvancedCache)extractFieldfromInfinispanDirectory("metadataCache").get(infinispanDirectory);
-  Assert.assertEquals(metadataCache.getName(),"LuceneIndexesMetadataOWR");
-  AdvancedCache chunksCache=(AdvancedCache)extractFieldfromInfinispanDirectory("chunksCache").get(infinispanDirectory);
-  Assert.assertEquals(chunksCache.getName(),"LuceneIndexesDataOWR");
-  Assert.assertTrue(chunksCache.getCacheManager() == embeddedCacheManager);
+  Directory infinispanDirectory=ispn.getDirectory();
+  DirectoryExtensions extended=(DirectoryExtensions)infinispanDirectory;
+  Assert.assertEquals(expectedChunkSize,extended.getChunkSize());
+  Assert.assertEquals(extended.getMetadataCache().getName(),"LuceneIndexesMetadataOWR");
+  Assert.assertEquals(extended.getDataCache().getName(),"LuceneIndexesDataOWR");
+  Assert.assertTrue(extended.getDataCache().getCacheManager() == embeddedCacheManager);
 }
