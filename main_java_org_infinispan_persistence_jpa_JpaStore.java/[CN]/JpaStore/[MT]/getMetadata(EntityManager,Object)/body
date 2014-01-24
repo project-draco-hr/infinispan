@@ -1,0 +1,17 @@
+{
+  byte[] keyBytes;
+  try {
+    keyBytes=marshaller.objectToByteBuffer(key);
+  }
+ catch (  Exception e) {
+    throw new JpaStoreException("Failed to marshall key",e);
+  }
+  MetadataEntity m=em.find(MetadataEntity.class,keyBytes);
+  if (m == null)   return null;
+  try {
+    return (InternalMetadata)marshaller.objectFromByteBuffer(m.getMetadata());
+  }
+ catch (  Exception e) {
+    throw new JpaStoreException("Failed to unmarshall metadata",e);
+  }
+}

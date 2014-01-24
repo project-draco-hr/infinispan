@@ -1,0 +1,73 @@
+{
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
+  final TaskContextImpl taskContext=new TaskContextImpl();
+  EntityManager em=emf.createEntityManager();
+  try {
+    CriteriaBuilder cb=em.getCriteriaBuilder();
+    CriteriaQuery cq=cb.createQuery();
+    Root root=cq.from(configuration.entityClass());
+    Type idType=root.getModel().getIdType();
+    SingularAttribute idAttr=root.getModel().getId(idType.getJavaType());
+    cq.select(root.get(idAttr));
+    for (    final Object key : em.createQuery(cq).getResultList()) {
+      if (taskContext.isStopped())       break;
+      if (filter != null && !filter.shouldLoadKey(key)) {
+        if (trace)         log.trace("Key " + key + " filtered");
+        continue;
+      }
+      EntityTransaction txn=em.getTransaction();
+      Object tempEntity=null;
+      InternalMetadata tempMetadata=null;
+      boolean loaded=false;
+      txn.begin();
+      try {
+        do {
+          try {
+            tempEntity=fetchValue ? em.find(configuration.entityClass(),key) : null;
+            tempMetadata=fetchMetadata ? getMetadata(em,key) : null;
+          }
+  finally {
+            try {
+              txn.commit();
+              loaded=true;
+            }
+ catch (            Exception e) {
+              log.trace("Failed to load once",e);
+            }
+          }
+        }
+ while (!loaded);
+      }
+  finally {
+        if (txn != null && txn.isActive())         txn.rollback();
+      }
+      final Object entity=tempEntity;
+      final InternalMetadata metadata=tempMetadata;
+      if (trace)       log.trace("Processing " + key + " -> "+ entity+ "("+ metadata+ ")");
+      if (metadata != null && metadata.isExpired(timeService.wallClockTime()))       continue;
+      eacs.submit(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          try {
+            final MarshalledEntry marshalledEntry=marshallerEntryFactory.newMarshalledEntry(key,entity,metadata);
+            if (marshalledEntry != null) {
+              task.processEntry(marshalledEntry,taskContext);
+            }
+            return null;
+          }
+ catch (          Exception e) {
+            log.errorExecutingParallelStoreTask(e);
+            throw e;
+          }
+        }
+      }
+);
+    }
+    eacs.waitUntilAllCompleted();
+    if (eacs.isExceptionThrown()) {
+      throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!",eacs.getFirstException());
+    }
+  }
+  finally {
+    em.close();
+  }
+}

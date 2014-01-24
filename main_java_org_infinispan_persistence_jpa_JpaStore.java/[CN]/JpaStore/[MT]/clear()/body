@@ -1,0 +1,33 @@
+{
+  EntityManager em=emf.createEntityManager();
+  EntityTransaction txn=em.getTransaction();
+  try {
+    for (int i=0; ; ++i) {
+      txn.begin();
+      try {
+        log.trace("Clearing JPA Store");
+        String entityTable=em.getMetamodel().entity(configuration.entityClass()).getName();
+        Query clearEntities=em.createQuery("DELETE FROM " + entityTable);
+        clearEntities.executeUpdate();
+        if (configuration.storeMetadata()) {
+          String metadataTable=em.getMetamodel().entity(MetadataEntity.class).getName();
+          Query clearMetadata=em.createQuery("DELETE FROM " + metadataTable);
+          clearMetadata.executeUpdate();
+        }
+        em.clear();
+        txn.commit();
+        break;
+      }
+ catch (      Exception e) {
+        log.trace("Failed to clear store",e);
+        if (i >= 10)         throw new JpaStoreException("Exception caught in clear()",e);
+      }
+ finally {
+        if (txn != null && txn.isActive())         txn.rollback();
+      }
+    }
+  }
+  finally {
+    em.close();
+  }
+}

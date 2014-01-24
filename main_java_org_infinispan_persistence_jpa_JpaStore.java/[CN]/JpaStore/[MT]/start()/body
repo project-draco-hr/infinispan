@@ -1,0 +1,27 @@
+{
+  try {
+    this.emf=emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
+  }
+ catch (  PersistenceException e) {
+    throw new JpaStoreException("Persistence Unit [" + this.configuration.persistenceUnitName() + "] not found",e);
+  }
+  ManagedType<?> mt;
+  try {
+    mt=emf.getMetamodel().entity(this.configuration.entityClass());
+  }
+ catch (  IllegalArgumentException e) {
+    throw new JpaStoreException("Entity class [" + this.configuration.entityClass().getName() + " specified in configuration is not recognized by the EntityManagerFactory with Persistence Unit ["+ this.configuration.persistenceUnitName()+ "]",e);
+  }
+  if (!(mt instanceof IdentifiableType)) {
+    throw new JpaStoreException("Entity class must have one and only one identifier (@Id or @EmbeddedId)");
+  }
+  IdentifiableType<?> it=(IdentifiableType<?>)mt;
+  if (!it.hasSingleIdAttribute()) {
+    throw new JpaStoreException("Entity class has more than one identifier.  It must have only one identifier.");
+  }
+  Type<?> idType=it.getIdType();
+  Class<?> idJavaType=idType.getJavaType();
+  if (idJavaType.isAnnotationPresent(GeneratedValue.class)) {
+    throw new JpaStoreException("Entity class has one identifier, but it must not have @GeneratedValue annotation");
+  }
+}

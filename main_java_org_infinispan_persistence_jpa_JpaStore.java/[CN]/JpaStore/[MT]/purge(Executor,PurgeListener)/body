@@ -1,0 +1,70 @@
+{
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(threadPool);
+  EntityManager em=emf.createEntityManager();
+  try {
+    CriteriaBuilder cb=em.getCriteriaBuilder();
+    CriteriaQuery<MetadataEntity> cq=cb.createQuery(MetadataEntity.class);
+    Root root=cq.from(MetadataEntity.class);
+    long currentTime=timeService.wallClockTime();
+    cq.where(cb.le(root.get(MetadataEntity.EXPIRATION),currentTime));
+    for (    MetadataEntity metadata : em.createQuery(cq).getResultList()) {
+      EntityTransaction txn=em.getTransaction();
+      final Object key;
+      try {
+        key=marshaller.objectFromByteBuffer(metadata.name);
+      }
+ catch (      Exception e) {
+        throw new JpaStoreException("Cannot unmarshall key",e);
+      }
+      long txnBegin=timeService.time();
+      txn.begin();
+      try {
+        long metadataFindBegin=timeService.time();
+        metadata=em.find(MetadataEntity.class,metadata.name);
+        stats.addMetadataFind(timeService.time() - metadataFindBegin);
+        if (metadata.expiration > currentTime) {
+          txn.rollback();
+          continue;
+        }
+        long entityFindBegin=timeService.time();
+        Object entity=em.find(configuration.entityClass(),key);
+        stats.addEntityFind(timeService.time() - entityFindBegin);
+        if (entity != null) {
+          long entityRemoveBegin=timeService.time();
+          em.remove(entity);
+          stats.addEntityRemove(timeService.time() - entityRemoveBegin);
+        }
+        long metadataRemoveBegin=timeService.time();
+        em.remove(metadata);
+        stats.addMetadataRemove(timeService.time() - metadataRemoveBegin);
+        txn.commit();
+        stats.addRemoveTxCommitted(timeService.time() - txnBegin);
+        if (trace)         log.trace("Expired " + key + " -> "+ entity+ "("+ toString(metadata)+ ")");
+        if (listener != null) {
+          eacs.submit(new Runnable(){
+            @Override public void run(){
+              listener.entryPurged(key);
+            }
+          }
+,null);
+        }
+      }
+ catch (      RuntimeException e) {
+        stats.addRemoveTxFailed(timeService.time() - txnBegin);
+        throw e;
+      }
+ finally {
+        if (txn != null && txn.isActive()) {
+          txn.rollback();
+        }
+      }
+    }
+  }
+  finally {
+    em.close();
+  }
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new JpaStoreException(eacs.getFirstException());
+  }
+}

@@ -1,0 +1,54 @@
+{
+  if (!isValidKeyType(key)) {
+    return false;
+  }
+  EntityManager em=emf.createEntityManager();
+  try {
+    long entityFindBegin=timeService.time();
+    Object entity=em.find(configuration.entityClass(),key);
+    stats.addEntityFind(timeService.time() - entityFindBegin);
+    if (entity == null) {
+      return false;
+    }
+    MetadataEntity metadata=null;
+    if (configuration.storeMetadata()) {
+      byte[] keyBytes;
+      try {
+        keyBytes=marshaller.objectToByteBuffer(key);
+      }
+ catch (      Exception e) {
+        throw new JpaStoreException("Failed to marshall key",e);
+      }
+      long metadataFindBegin=timeService.time();
+      metadata=em.find(MetadataEntity.class,keyBytes);
+      stats.addMetadataFind(timeService.time() - metadataFindBegin);
+    }
+    EntityTransaction txn=em.getTransaction();
+    if (trace)     log.trace("Removing " + entity + "("+ toString(metadata)+ ")");
+    long txnBegin=timeService.time();
+    txn.begin();
+    try {
+      long entityRemoveBegin=timeService.time();
+      em.remove(entity);
+      stats.addEntityRemove(timeService.time() - entityRemoveBegin);
+      if (metadata != null) {
+        long metadataRemoveBegin=timeService.time();
+        em.remove(metadata);
+        stats.addMetadataRemove(timeService.time() - metadataRemoveBegin);
+      }
+      txn.commit();
+      stats.addRemoveTxCommitted(timeService.time() - txnBegin);
+      return true;
+    }
+ catch (    Exception e) {
+      stats.addRemoveTxFailed(timeService.time() - txnBegin);
+      throw new JpaStoreException("Exception caught in delete()",e);
+    }
+ finally {
+      if (txn != null && txn.isActive())       txn.rollback();
+    }
+  }
+  finally {
+    em.close();
+  }
+}

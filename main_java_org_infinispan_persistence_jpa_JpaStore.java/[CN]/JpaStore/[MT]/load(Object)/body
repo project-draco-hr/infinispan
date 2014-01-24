@@ -1,0 +1,61 @@
+{
+  if (!isValidKeyType(key)) {
+    return null;
+  }
+  EntityManager em=emf.createEntityManager();
+  try {
+    EntityTransaction txn=em.getTransaction();
+    long txnBegin=timeService.time();
+    txn.begin();
+    try {
+      long entityFindBegin=timeService.time();
+      Object entity=em.find(configuration.entityClass(),key);
+      stats.addEntityFind(timeService.time() - entityFindBegin);
+      try {
+        if (entity == null)         return null;
+        InternalMetadata m=null;
+        if (configuration.storeMetadata()) {
+          byte[] keyBytes;
+          try {
+            keyBytes=marshaller.objectToByteBuffer(key);
+          }
+ catch (          Exception e) {
+            throw new JpaStoreException("Failed to marshall key",e);
+          }
+          long metadataFindBegin=timeService.time();
+          MetadataEntity metadata=em.find(MetadataEntity.class,keyBytes);
+          stats.addMetadataFind(timeService.time() - metadataFindBegin);
+          if (metadata != null && metadata.getMetadata() != null) {
+            try {
+              m=(InternalMetadata)marshaller.objectFromByteBuffer(metadata.getMetadata());
+            }
+ catch (            Exception e) {
+              throw new JpaStoreException("Failed to unmarshall metadata",e);
+            }
+            if (m.isExpired(timeService.wallClockTime())) {
+              return null;
+            }
+          }
+        }
+        if (trace)         log.trace("Loaded " + entity + " ("+ m+ ")");
+        return marshallerEntryFactory.newMarshalledEntry(key,entity,m);
+      }
+  finally {
+        try {
+          txn.commit();
+          stats.addReadTxCommitted(timeService.time() - txnBegin);
+        }
+ catch (        Exception e) {
+          stats.addReadTxFailed(timeService.time() - txnBegin);
+          throw new JpaStoreException("Failed to load entry",e);
+        }
+      }
+    }
+  finally {
+      if (txn != null && txn.isActive())       txn.rollback();
+    }
+  }
+  finally {
+    em.close();
+  }
+}

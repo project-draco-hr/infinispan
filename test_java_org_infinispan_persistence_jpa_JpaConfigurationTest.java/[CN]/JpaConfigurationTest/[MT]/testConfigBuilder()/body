@@ -1,0 +1,20 @@
+{
+  GlobalConfiguration globalConfig=new GlobalConfigurationBuilder().globalJmxStatistics().transport().defaultTransport().build();
+  Configuration cacheConfig=new ConfigurationBuilder().persistence().addStore(JpaStoreConfigurationBuilder.class).persistenceUnitName(PERSISTENCE_UNIT_NAME).entityClass(User.class).build();
+  StoreConfiguration storeConfiguration=cacheConfig.persistence().stores().get(0);
+  assertTrue(storeConfiguration instanceof JpaStoreConfiguration);
+  JpaStoreConfiguration jpaCacheLoaderConfig=(JpaStoreConfiguration)storeConfiguration;
+  assertEquals(PERSISTENCE_UNIT_NAME,jpaCacheLoaderConfig.persistenceUnitName());
+  assertEquals(User.class,jpaCacheLoaderConfig.entityClass());
+  EmbeddedCacheManager cacheManager=new DefaultCacheManager(globalConfig);
+  cacheManager.defineConfiguration("userCache",cacheConfig);
+  cacheManager.start();
+  Cache<String,User> userCache=cacheManager.getCache("userCache");
+  User user=new User();
+  user.setUsername("rtsang");
+  user.setFirstName("Ray");
+  user.setLastName("Tsang");
+  userCache.put(user.getUsername(),user);
+  userCache.stop();
+  cacheManager.stop();
+}

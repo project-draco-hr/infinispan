@@ -1,0 +1,51 @@
+{
+  if (!isValidKeyType(key)) {
+    return false;
+  }
+  EntityManager em=emf.createEntityManager();
+  try {
+    EntityTransaction txn=em.getTransaction();
+    long txnBegin=timeService.time();
+    txn.begin();
+    try {
+      long entityFindBegin=timeService.time();
+      Object entity=em.find(configuration.entityClass(),key);
+      stats.addEntityFind(timeService.time() - entityFindBegin);
+      if (trace)       log.trace("Entity " + key + " -> "+ entity);
+      try {
+        if (entity == null)         return false;
+        if (configuration.storeMetadata()) {
+          byte[] keyBytes;
+          try {
+            keyBytes=marshaller.objectToByteBuffer(key);
+          }
+ catch (          Exception e) {
+            throw new JpaStoreException("Cannot marshall key",e);
+          }
+          long metadataFindBegin=timeService.time();
+          MetadataEntity metadata=em.find(MetadataEntity.class,keyBytes);
+          stats.addMetadataFind(timeService.time() - metadataFindBegin);
+          if (trace)           log.trace("Metadata " + key + " -> "+ toString(metadata));
+          return metadata == null || metadata.expiration > timeService.wallClockTime();
+        }
+ else {
+          return true;
+        }
+      }
+  finally {
+        txn.commit();
+        stats.addReadTxCommitted(timeService.time() - txnBegin);
+      }
+    }
+ catch (    RuntimeException e) {
+      stats.addReadTxFailed(timeService.time() - txnBegin);
+      throw e;
+    }
+ finally {
+      if (txn != null && txn.isActive())       txn.rollback();
+    }
+  }
+  finally {
+    em.close();
+  }
+}

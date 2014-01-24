@@ -1,0 +1,42 @@
+{
+  EntityManager em=emf.createEntityManager();
+  Object entity=entry.getValue();
+  MetadataEntity metadata=configuration.storeMetadata() ? new MetadataEntity(entry.getKeyBytes(),entry.getMetadataBytes(),entry.getMetadata() == null ? Long.MAX_VALUE : entry.getMetadata().expiryTime()) : null;
+  try {
+    if (!configuration.entityClass().isAssignableFrom(entity.getClass())) {
+      throw new JpaStoreException(String.format("This cache is configured with JPA CacheStore to only store values of type %s - cannot write %s = %s",configuration.entityClass().getName(),entity,entity.getClass().getName()));
+    }
+ else {
+      EntityTransaction txn=em.getTransaction();
+      Object id=emf.getPersistenceUnitUtil().getIdentifier(entity);
+      if (!entry.getKey().equals(id)) {
+        throw new JpaStoreException("Entity id value must equal to key of cache entry: " + "key = [" + entry.getKey() + "], id = ["+ id+ "]");
+      }
+      long txnBegin=timeService.time();
+      try {
+        if (trace)         log.trace("Writing " + entity + "("+ toString(metadata)+ ")");
+        txn.begin();
+        long entityMergeBegin=timeService.time();
+        em.merge(entity);
+        stats.addEntityMerge(timeService.time() - entityMergeBegin);
+        if (metadata != null && metadata.hasBytes()) {
+          long metadataMergeBegin=timeService.time();
+          em.merge(metadata);
+          stats.addMetadataMerge(timeService.time() - metadataMergeBegin);
+        }
+        txn.commit();
+        stats.addWriteTxCommited(timeService.time() - txnBegin);
+      }
+ catch (      Exception e) {
+        stats.addWriteTxFailed(timeService.time() - txnBegin);
+        throw new JpaStoreException("Exception caught in write()",e);
+      }
+ finally {
+        if (txn != null && txn.isActive())         txn.rollback();
+      }
+    }
+  }
+  finally {
+    em.close();
+  }
+}

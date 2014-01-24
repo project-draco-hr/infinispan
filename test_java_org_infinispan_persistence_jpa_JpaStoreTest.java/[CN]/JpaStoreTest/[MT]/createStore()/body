@@ -1,0 +1,9 @@
+{
+  store=new JpaStore();
+  JpaStoreConfiguration configuration=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(JpaStoreConfigurationBuilder.class).persistenceUnitName("org.infinispan.persistence.jpa").entityClass(KeyValueEntity.class).create();
+  Cache cache=getCache();
+  cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().registerComponent(new EntityManagerFactoryRegistry(),EntityManagerFactoryRegistry.class);
+  store.init(new DummyInitializationContext(configuration,cache,getMarshaller(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(getMarshaller())));
+  store.start();
+  return store;
+}
