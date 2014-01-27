@@ -1,0 +1,12 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  tm(0,"atomic").begin();
+  Map<String,String> map1=createAtomicMap(cache1,"testCreateMapInTx",true);
+  map1.put("k1","v1");
+  tm(0,"atomic").commit();
+  Map<Object,Object> expectedMap=createMap("k1","v1");
+  assertMap(expectedMap,map1);
+  final Map<String,String> map2=createAtomicMap(cache2,"testCreateMapInTx",true);
+  assertMap(expectedMap,map2);
+}

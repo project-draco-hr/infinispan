@@ -1,0 +1,32 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  final TransactionManager tm1=tm(cache1);
+  final Map<String,String> map1=createAtomicMap(cache1,"testMultipleTx",true);
+  final Map<String,String> map2=createAtomicMap(cache2,"testMultipleTx",false);
+  Map<Object,Object> expectedMap=Collections.emptyMap();
+  assertMap(expectedMap,map1);
+  assertMap(expectedMap,map2);
+  tm1.begin();
+  map1.put("k1","initial");
+  tm1.commit();
+  expectedMap=createMap("k1","initial");
+  assertMap(expectedMap,map1);
+  assertMap(expectedMap,map2);
+  tm1.begin();
+  map1.put("k1","v1");
+  map1.put("k2","v2");
+  map1.put("k3","v3");
+  tm1.commit();
+  expectedMap=createMap("k1","v1","k2","v2","k3","v3");
+  assertMap(expectedMap,map1);
+  assertMap(expectedMap,map2);
+  tm1.begin();
+  map1.put("k4","v4");
+  map1.put("k5","v5");
+  map1.put("k6","v6");
+  tm1.commit();
+  expectedMap=createMap("k1","v1","k2","v2","k3","v3","k4","v4","k5","v5","k6","v6");
+  assertMap(expectedMap,map1);
+  assertMap(expectedMap,map2);
+}

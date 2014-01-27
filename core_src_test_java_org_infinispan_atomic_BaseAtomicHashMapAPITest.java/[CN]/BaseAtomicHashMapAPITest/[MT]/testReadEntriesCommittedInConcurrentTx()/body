@@ -1,0 +1,33 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  if (cache1.getCacheConfiguration().locking().isolationLevel() != IsolationLevel.REPEATABLE_READ || cache2.getCacheConfiguration().locking().isolationLevel() != IsolationLevel.REPEATABLE_READ) {
+    return;
+  }
+  final TransactionManager tm1=tm(cache1);
+  final TransactionManager tm2=tm(cache2);
+  final Map<String,String> writeMap=createAtomicMap(cache1,"repeatableReadMap",true);
+  Map<Object,Object> emptyMap=Collections.emptyMap();
+  assertMap(emptyMap,writeMap);
+  tm1.begin();
+  writeMap.put("k1","initial");
+  tm1.commit();
+  Map<Object,Object> initialMap=createMap("k1","initial");
+  assertMap(initialMap,writeMap);
+  tm2.begin();
+  Map<String,String> readMap=createAtomicMap(cache2,"repeatableReadMap",false);
+  assertMap(initialMap,readMap);
+  Transaction tx2=tm2.suspend();
+  tm1.begin();
+  writeMap.put("k1","v1");
+  writeMap.put("k2","v2");
+  writeMap.put("k3","v3");
+  Map<Object,Object> modifiedMap=createMap("k1","v1","k2","v2","k3","v3");
+  assertMap(modifiedMap,writeMap);
+  tm1.commit();
+  tm2.resume(tx2);
+  assertMap(initialMap,readMap);
+  tm2.commit();
+  assertMap(modifiedMap,writeMap);
+  assertMap(modifiedMap,readMap);
+}

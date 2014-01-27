@@ -1,0 +1,12 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  final Map<String,String> map1=createAtomicMap(cache1,"testRollback",true);
+  tm(0,"atomic").begin();
+  map1.put("k1","v");
+  map1.put("k2","v2");
+  tm(0,"atomic").rollback();
+  Map<Object,Object> instance=createAtomicMap(cache2,"testRollback",true);
+  assertMap(Collections.emptyMap(),instance);
+  assertMap(Collections.emptyMap(),map1);
+}

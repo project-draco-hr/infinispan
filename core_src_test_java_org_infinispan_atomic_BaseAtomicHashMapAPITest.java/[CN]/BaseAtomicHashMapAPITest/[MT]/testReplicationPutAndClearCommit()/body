@@ -1,0 +1,20 @@
+{
+  final Cache<String,Object> cache1=cache(0,"atomic");
+  final Cache<String,Object> cache2=cache(1,"atomic");
+  final Map<String,String> map=createAtomicMap(cache1,"map");
+  final Map<String,String> map2=createAtomicMap(cache2,"map",false);
+  Map<Object,Object> expectedMap=createMap("existing","existing","blah","blah");
+  TestingUtil.getTransactionManager(cache1).begin();
+  map.put("existing","existing");
+  map.put("blah","blah");
+  map.size();
+  TestingUtil.getTransactionManager(cache1).commit();
+  assertMap(expectedMap,map);
+  assertMap(expectedMap,map2);
+  tm(cache2).begin();
+  map2.clear();
+  tm(cache2).commit();
+  expectedMap=Collections.emptyMap();
+  assertMap(expectedMap,map);
+  assertMap(expectedMap,map2);
+}
