@@ -1,11 +1,14 @@
 {
   AdvancedCache cache=mock(AdvancedCache.class);
-  ComponentRegistry registry=mock(ComponentRegistry.class);
-  org.infinispan.configuration.cache.Configuration config=new ConfigurationBuilder().dataContainer().keyEquivalence(AnyEquivalence.getInstance()).valueEquivalence(AnyEquivalence.getInstance()).build();
+  Configuration config=new ConfigurationBuilder().dataContainer().keyEquivalence(AnyEquivalence.getInstance()).valueEquivalence(AnyEquivalence.getInstance()).build();
+  GlobalConfiguration gc=new GlobalConfigurationBuilder().build();
+  Set<String> cachesSet=new HashSet<String>();
+  EmbeddedCacheManager cm=mock(EmbeddedCacheManager.class);
+  GlobalComponentRegistry gcr=new GlobalComponentRegistry(gc,cm,cachesSet);
+  ComponentRegistry registry=new ComponentRegistry("cache",config,cache,gcr,BaseStoreTest.class.getClassLoader());
   when(cache.getName()).thenReturn(name);
   when(cache.getAdvancedCache()).thenReturn(cache);
   when(cache.getComponentRegistry()).thenReturn(registry);
-  when(registry.getTimeService()).thenReturn(TIME_SERVICE);
   when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
   when(cache.getCacheConfiguration()).thenReturn(config);
   return cache;
