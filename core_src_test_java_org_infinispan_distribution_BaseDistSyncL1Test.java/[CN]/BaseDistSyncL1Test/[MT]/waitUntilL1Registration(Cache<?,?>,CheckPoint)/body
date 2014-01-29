@@ -1,0 +1,15 @@
+{
+  L1Manager l1Manager=TestingUtil.extractComponent(cache,L1Manager.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(l1Manager);
+  L1Manager mockL1=mock(L1Manager.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_acquire_shared_topology_lock_invoked");
+      checkPoint.awaitStrict("pre_acquire_shared_topology_lock_released",10,TimeUnit.SECONDS);
+      return forwardedAnswer.answer(invocation);
+    }
+  }
+).when(mockL1).registerL1WriteSynchronizer(Mockito.anyObject(),Mockito.any(L1WriteSynchronizer.class));
+  TestingUtil.replaceComponent(cache,L1Manager.class,mockL1,true);
+  return l1Manager;
+}

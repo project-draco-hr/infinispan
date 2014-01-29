@@ -1,10 +1,9 @@
 {
   final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
   final Cache<Object,String> ownerCache=getFirstOwner(key);
-  ownerCache.put(key,firstValue);
   assertIsNotInL1(nonOwnerCache,key);
   CheckPoint checkPoint=new CheckPoint();
-  StateTransferLock lock=waitUntilAboutToAcquireLock(nonOwnerCache,checkPoint);
+  L1Manager l1Manager=waitUntilL1Registration(nonOwnerCache,checkPoint);
   try {
     log.warn("Doing get here - ignore all previous");
     Future<String> getFuture=nonOwnerCache.getAsync(key);
@@ -17,11 +16,10 @@
  catch (    TimeoutException e) {
     }
     checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
-    Assert.assertEquals(firstValue,getFuture.get(10,TimeUnit.SECONDS));
-    Assert.assertEquals(firstValue,getFuture2.get(10,TimeUnit.SECONDS));
-    assertIsInL1(nonOwnerCache,key);
+    Assert.assertNull(getFuture.get(10,TimeUnit.SECONDS));
+    Assert.assertNull(getFuture2.get(10,TimeUnit.SECONDS));
   }
   finally {
-    TestingUtil.replaceComponent(nonOwnerCache,StateTransferLock.class,lock,true);
+    TestingUtil.replaceComponent(nonOwnerCache,L1Manager.class,l1Manager,true);
   }
 }

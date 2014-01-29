@@ -1,8 +1,7 @@
 {
-  Object value=new Object();
   Future future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
-      return sync.get(5,TimeUnit.SECONDS);
+      return sync.get();
     }
   }
 );
@@ -12,7 +11,6 @@
   }
  catch (  TimeoutException e) {
   }
-  InternalCacheEntry ice=new ImmortalCacheEntry(value,value);
-  sync.runL1UpdateIfPossible(ice);
-  assertEquals(value,future.get(1,TimeUnit.SECONDS));
+  sync.runL1UpdateIfPossible(null);
+  assertNull(future.get(1,TimeUnit.SECONDS));
 }
