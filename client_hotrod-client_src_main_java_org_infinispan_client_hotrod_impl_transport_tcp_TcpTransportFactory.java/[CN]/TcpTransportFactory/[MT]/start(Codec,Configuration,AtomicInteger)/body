@@ -11,6 +11,7 @@ synchronized (lock) {
     tcpNoDelay=configuration.tcpNoDelay();
     soTimeout=configuration.socketTimeout();
     connectTimeout=configuration.connectionTimeout();
+    maxRetries=configuration.maxRetries();
     if (configuration.ssl().enabled()) {
       SslConfiguration ssl=configuration.ssl();
       if (ssl.sslContext() != null) {
@@ -28,7 +29,6 @@ synchronized (lock) {
     PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport> poolFactory=new PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport>(new TransportObjectFactory(codec,this,topologyId,pingOnStartup),configuration.connectionPool());
     createAndPreparePool(poolFactory);
     balancer.setServers(servers);
-    updateTransportCount();
   }
   if (configuration.pingOnStartup())   pingServers();
 }
