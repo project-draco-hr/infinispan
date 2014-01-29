@@ -1,6 +1,12 @@
 {
   PassivationManager current=TestingUtil.extractComponent(cache,PassivationManager.class);
   ControlledPassivationManager controlledPassivationManager=new ControlledPassivationManager(current);
+  controlledPassivationManager.beforePassivate=new Runnable(){
+    @Override public void run(){
+      latch.blockIfNeeded();
+    }
+  }
+;
   TestingUtil.replaceComponent(cache,PassivationManager.class,controlledPassivationManager,true);
   return controlledPassivationManager;
 }

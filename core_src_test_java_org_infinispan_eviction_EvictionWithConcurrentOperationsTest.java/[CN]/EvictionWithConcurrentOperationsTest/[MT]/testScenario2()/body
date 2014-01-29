@@ -2,14 +2,8 @@
   final Object key1=new SameHashCodeKey("key1");
   initializeKeyAndCheckData(key1,"v1");
   final Object key2=new SameHashCodeKey("key2");
-  final ControlledPassivationManager controlledPassivationManager=replacePassivationManager();
   final Latch latch=new Latch();
-  controlledPassivationManager.afterPassivate=new Runnable(){
-    @Override public void run(){
-      latch.blockIfNeeded();
-    }
-  }
-;
+  final ControlledPassivationManager controlledPassivationManager=replacePassivationManager(latch);
   latch.enable();
   Future<Object> put=cache.putAsync(key2,"v2");
   latch.waitToBlock(30,TimeUnit.SECONDS);

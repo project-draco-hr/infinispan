@@ -8,7 +8,6 @@
   final TransactionManager tm0=cache0.getTransactionManager();
   StateProvider stateProvider=TestingUtil.extractComponent(cache0,StateProvider.class);
   StateProvider spyProvider=spy(stateProvider);
-  TestingUtil.replaceComponent(cache0,StateProvider.class,spyProvider,true);
   doAnswer(new Answer<Object>(){
     @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
       Object[] arguments=invocation.getArguments();
@@ -21,6 +20,7 @@
     }
   }
 ).when(spyProvider).getTransactionsForSegments(any(Address.class),anyInt(),anySetOf(Integer.class));
+  TestingUtil.replaceComponent(cache0,StateProvider.class,spyProvider,true);
   StateTransferManager stm0=TestingUtil.extractComponent(cache0,StateTransferManager.class);
   int initialTopologyId=stm0.getCacheTopology().getTopologyId();
   int rebalanceTopologyId=initialTopologyId + 1;

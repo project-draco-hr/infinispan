@@ -2,7 +2,6 @@
   final LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(manager(1),LocalTopologyManager.class);
   final CheckPoint checkpoint=new CheckPoint();
   LocalTopologyManager spyLocalTopologyManager=spy(localTopologyManager);
-  TestingUtil.replaceComponent(manager(1),LocalTopologyManager.class,spyLocalTopologyManager,true);
   doAnswer(new Answer<Object>(){
     @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
       int viewId=(Integer)invocation.getArguments()[0];
@@ -13,6 +12,7 @@
     }
   }
 ).when(spyLocalTopologyManager).handleStatusRequest(anyInt());
+  TestingUtil.replaceComponent(manager(1),LocalTopologyManager.class,spyLocalTopologyManager,true);
   log.debugf("Killing coordinator");
   manager(0).stop();
   TestingUtil.blockUntilViewsReceived(30000,false,manager(1),manager(2));
