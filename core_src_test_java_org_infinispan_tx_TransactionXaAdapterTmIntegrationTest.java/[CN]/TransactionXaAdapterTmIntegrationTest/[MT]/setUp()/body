@@ -1,14 +1,21 @@
 {
+  Cache mockCache=mock(Cache.class);
+  configuration=new ConfigurationBuilder().build();
   txTable=new XaTransactionTable();
+  txTable.initialize(null,configuration,null,null,null,null,null,null,null,null,mockCache,null);
+  txTable.start();
+  txTable.startXidMapping();
   TransactionFactory gtf=new TransactionFactory();
   gtf.init(false,false,true,false);
   globalTransaction=gtf.newGlobalTransaction(null,false);
-  localTx=new LocalXaTransaction(new DummyTransaction(null),globalTransaction,false,1,AnyEquivalence.getInstance());
+  DummyBaseTransactionManager tm=new DummyBaseTransactionManager();
+  localTx=new LocalXaTransaction(new DummyTransaction(tm),globalTransaction,false,1,AnyEquivalence.getInstance());
   xid=new DummyXid(uuid);
-  localTx.setXid(xid);
-  txTable.addLocalTransactionMapping(localTx);
-  configuration=new ConfigurationBuilder().build();
+  InvocationContextFactory icf=new TransactionalInvocationContextFactory();
+  CommandsFactory commandsFactory=mock(CommandsFactory.class);
+  InterceptorChain invoker=mock(InterceptorChain.class);
   txCoordinator=new TransactionCoordinator();
-  txCoordinator.init(null,null,null,null,configuration);
+  txCoordinator.init(commandsFactory,icf,invoker,txTable,configuration);
   xaAdapter=new TransactionXaAdapter(localTx,txTable,null,txCoordinator,null,null,new ClusteringDependentLogic.InvalidationLogic(),configuration,"");
+  xaAdapter.start(xid,0);
 }
