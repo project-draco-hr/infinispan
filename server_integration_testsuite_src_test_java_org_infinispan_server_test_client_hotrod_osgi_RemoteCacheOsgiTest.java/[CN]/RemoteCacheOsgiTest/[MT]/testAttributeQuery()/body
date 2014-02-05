@@ -1,0 +1,26 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.addServer().host(SERVER_HOST).port(HOTROD_PORT).marshaller(new ProtoStreamMarshaller());
+  RemoteCacheManager manager=new RemoteCacheManager(builder.build());
+  RemoteCache<Integer,User> cache=manager.getCache(INDEXED_CACHE);
+  SerializationContext ctx=ProtoStreamMarshaller.getSerializationContext(manager);
+  URL resourceUrl=bundleContext.getBundle().getResource("/sample_bank_account/bank.protobin");
+  ctx.registerProtofile(resourceUrl.openStream());
+  ctx.registerMarshaller(User.class,new UserMarshaller());
+  ctx.registerMarshaller(User.Gender.class,new GenderMarshaller());
+  ctx.registerMarshaller(Address.class,new AddressMarshaller());
+  ctx.registerMarshaller(Account.class,new AccountMarshaller());
+  ctx.registerMarshaller(Account.Limits.class,new LimitsMarshaller());
+  ctx.registerMarshaller(Transaction.class,new TransactionMarshaller());
+  cache.put(1,createUser1());
+  cache.put(2,createUser2());
+  User fromCache=cache.get(1);
+  assertUser(fromCache);
+  QueryFactory qf=Search.getQueryFactory(cache);
+  Query query=qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+  List<User> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(User.class,list.get(0).getClass());
+  assertUser(list.get(0));
+}

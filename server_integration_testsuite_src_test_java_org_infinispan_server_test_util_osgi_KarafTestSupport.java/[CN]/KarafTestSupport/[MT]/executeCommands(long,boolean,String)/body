@@ -1,0 +1,49 @@
+{
+  String response=null;
+  final ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+  final PrintStream printStream=new PrintStream(byteArrayOutputStream);
+  final CommandProcessor commandProcessor=ServiceLocator.getOsgiService(CommandProcessor.class);
+  final CommandSession commandSession=commandProcessor.createSession(System.in,printStream,printStream);
+  commandSession.put("APPLICATION",System.getProperty("karaf.name","root"));
+  commandSession.put("USER","karaf");
+  FutureTask<String> commandFuture=new FutureTask<String>(new Callable<String>(){
+    public String call() throws Exception {
+      for (      String command : commands) {
+        boolean keepRunning=true;
+        if (!silent) {
+          System.out.println(command);
+          System.out.flush();
+        }
+        while (!Thread.currentThread().isInterrupted() && keepRunning) {
+          try {
+            commandSession.execute(command);
+            keepRunning=false;
+          }
+ catch (          Exception e) {
+            if (retryException(e)) {
+              keepRunning=true;
+              sleep(1000);
+            }
+ else {
+              throw new CommandExecutionException(e);
+            }
+          }
+        }
+      }
+      printStream.flush();
+      return byteArrayOutputStream.toString();
+    }
+  }
+);
+  try {
+    executor.submit(commandFuture);
+    response=commandFuture.get(timeout,TimeUnit.MILLISECONDS);
+  }
+ catch (  ExecutionException e) {
+    throw CommandExecutionException.launderThrowable(e.getCause());
+  }
+catch (  Exception e) {
+    throw CommandExecutionException.launderThrowable(e);
+  }
+  return response;
+}

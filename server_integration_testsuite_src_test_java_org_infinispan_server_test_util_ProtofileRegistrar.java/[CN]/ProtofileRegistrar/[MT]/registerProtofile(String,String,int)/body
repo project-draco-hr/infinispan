@@ -1,0 +1,8 @@
+{
+  JMXConnector jmxConnector=JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:remoting-jmx://" + host + ":"+ jmxPort));
+  MBeanServerConnection jmxConnection=jmxConnector.getMBeanServerConnection();
+  ObjectName objName=new ObjectName("jboss.infinispan:type=RemoteQuery,name=" + ObjectName.quote("local") + ",component=ProtobufMetadataManager");
+  byte[] descriptor=readClasspathResource(protofilePath);
+  jmxConnection.invoke(objName,"registerProtofile",new Object[]{descriptor},new String[]{byte[].class.getName()});
+  System.out.printf("Successfully registered protofile %s at %s/%d\n",protofilePath,host,jmxPort);
+}
