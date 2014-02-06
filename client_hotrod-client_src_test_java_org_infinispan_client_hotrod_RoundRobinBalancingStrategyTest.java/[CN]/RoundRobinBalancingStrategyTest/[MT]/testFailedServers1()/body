@@ -1,0 +1,19 @@
+{
+  strategy.setServers(defaultServers);
+  Set<SocketAddress> failedServers=Collections.singleton(addr1);
+  final int LOOPS=10;
+  int c1=0, c2=0;
+  for (int i=0; i < LOOPS; ++i) {
+    SocketAddress server=strategy.nextServer(failedServers);
+    assertNotNull(server);
+    assertNotSame(addr1,server);
+    if (server.equals(addr2)) {
+      c1++;
+    }
+ else     if (server.equals(addr3)) {
+      c2++;
+    }
+  }
+  assertEquals(LOOPS,c1 + c2);
+  assertTrue(Math.abs(c1 - c2) <= 1);
+}

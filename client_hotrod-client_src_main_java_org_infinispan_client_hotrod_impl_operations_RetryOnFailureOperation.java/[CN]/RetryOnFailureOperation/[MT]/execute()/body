@@ -1,12 +1,17 @@
 {
   int retryCount=0;
+  Set<SocketAddress> failedServers=null;
   while (shouldRetry(retryCount)) {
     Transport transport=null;
     try {
-      transport=getTransport(retryCount);
+      transport=getTransport(retryCount,failedServers);
       return executeOperation(transport);
     }
  catch (    TransportException te) {
+      if (failedServers == null) {
+        failedServers=new HashSet<SocketAddress>();
+      }
+      failedServers.add(te.getServerAddress());
       transportFactory.invalidateTransport(te.getServerAddress(),transport);
       logErrorAndThrowExceptionIfNeeded(retryCount,te);
     }
