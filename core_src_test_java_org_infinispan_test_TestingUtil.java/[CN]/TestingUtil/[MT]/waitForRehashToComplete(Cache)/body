@@ -1,6 +1,6 @@
 {
-  int gracetime=90000;
-  long giveup=System.currentTimeMillis() + gracetime;
+  final int REHASH_TIMEOUT_SECONDS=180;
+  final long giveup=System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
   for (  Cache c : caches) {
     StateTransferManager stateTransferManager=extractComponent(c,StateTransferManager.class);
     DefaultRebalancePolicy rebalancePolicy=(DefaultRebalancePolicy)TestingUtil.extractGlobalComponent(c.getCacheManager(),RebalancePolicy.class);
@@ -11,7 +11,7 @@
       boolean chIsBalanced=!rebalanceInProgress && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
       boolean chContainsAllMembers=cacheTopology.getCurrentCH().getMembers().size() == caches.length;
       if (chIsBalanced && chContainsAllMembers)       break;
-      if (System.currentTimeMillis() > giveup) {
+      if (System.nanoTime() > giveup) {
         String message;
         if (!chContainsAllMembers) {
           Address[] addresses=new Address[caches.length];
