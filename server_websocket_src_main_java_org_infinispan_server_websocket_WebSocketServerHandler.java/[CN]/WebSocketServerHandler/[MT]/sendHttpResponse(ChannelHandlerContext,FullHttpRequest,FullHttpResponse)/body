@@ -1,0 +1,10 @@
+{
+  if (res.getStatus().code() != 200) {
+    res.content().writeBytes(res.getStatus().toString().getBytes(CharsetUtil.UTF_8));
+    HttpHeaders.setContentLength(res,res.content().readableBytes());
+  }
+  ChannelFuture f=ctx.channel().writeAndFlush(res);
+  if (!isKeepAlive(req) || res.getStatus().code() != 200) {
+    f.addListener(ChannelFutureListener.CLOSE);
+  }
+}

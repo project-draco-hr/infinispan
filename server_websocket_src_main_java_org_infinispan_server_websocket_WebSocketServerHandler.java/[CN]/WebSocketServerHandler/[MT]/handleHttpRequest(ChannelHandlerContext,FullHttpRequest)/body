@@ -1,0 +1,31 @@
+{
+  if (req.getMethod() != GET) {
+    sendHttpResponse(ctx,req,new DefaultFullHttpResponse(HTTP_1_1,FORBIDDEN,Unpooled.EMPTY_BUFFER));
+    return;
+  }
+  if (!connectionUpgraded && req.getUri().equalsIgnoreCase("/" + INFINISPAN_WS_JS_FILENAME)) {
+    DefaultFullHttpResponse res=new DefaultFullHttpResponse(HTTP_1_1,OK);
+    loadScriptToResponse(req,res);
+    sendHttpResponse(ctx,req,res);
+  }
+ else {
+    WebSocketServerHandshakerFactory wsFactory=new WebSocketServerHandshakerFactory(getWebSocketLocation(req),null,false);
+    handshaker=wsFactory.newHandshaker(req);
+    if (handshaker == null) {
+      WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
+    }
+ else {
+      handshaker.handshake(ctx.channel(),req).addListener(new ChannelFutureListener(){
+        @Override public void operationComplete(        ChannelFuture future) throws Exception {
+          if (!future.isSuccess()) {
+            future.channel().pipeline().fireExceptionCaught(future.cause());
+          }
+ else {
+            connectionUpgraded=true;
+          }
+        }
+      }
+);
+    }
+  }
+}

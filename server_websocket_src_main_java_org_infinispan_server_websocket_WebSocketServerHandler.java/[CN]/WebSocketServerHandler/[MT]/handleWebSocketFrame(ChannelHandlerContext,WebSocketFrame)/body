@@ -1,13 +1,13 @@
 {
   if (frame instanceof PingWebSocketFrame) {
-    ctx.getChannel().write(new PongWebSocketFrame(frame.getBinaryData()));
+    ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
   }
  else   if (frame instanceof CloseWebSocketFrame) {
-    handshaker.close(ctx.getChannel(),(CloseWebSocketFrame)frame);
+    handshaker.close(ctx.channel(),((CloseWebSocketFrame)frame).retain());
   }
  else {
     try {
-      ChannelBuffer binaryData=frame.getBinaryData();
+      ByteBuf binaryData=frame.content();
       if (binaryData == null) {
         return;
       }
