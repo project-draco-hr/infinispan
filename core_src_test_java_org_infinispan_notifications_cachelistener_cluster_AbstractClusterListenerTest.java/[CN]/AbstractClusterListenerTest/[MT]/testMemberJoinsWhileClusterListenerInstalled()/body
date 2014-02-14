@@ -1,0 +1,25 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  final Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  CheckPoint checkPoint=new CheckPoint();
+  waitUntilListenerInstalled(cache0,checkPoint);
+  checkPoint.triggerForever("post_add_listener_release_" + cache0);
+  final ClusterListener clusterListener=new ClusterListener();
+  Future<Void> future=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      cache1.addListener(clusterListener);
+      return null;
+    }
+  }
+);
+  checkPoint.awaitStrict("pre_add_listener_invoked_" + cache0,10,TimeUnit.SECONDS);
+  log.info("Adding a new node ..");
+  addClusterEnabledCacheManager(builderUsed);
+  log.info("Added a new node");
+  waitForClusterToForm(CACHE_NAME);
+  Cache<Object,String> cache3=cache(3,CACHE_NAME);
+  checkPoint.triggerForever("pre_add_listener_release_" + cache0);
+  future.get(10,TimeUnit.SECONDS);
+  MagicKey key=new MagicKey(cache3);
+  verifySimpleInsertion(cache3,key,FIRST_VALUE,null,clusterListener,FIRST_VALUE);
+}

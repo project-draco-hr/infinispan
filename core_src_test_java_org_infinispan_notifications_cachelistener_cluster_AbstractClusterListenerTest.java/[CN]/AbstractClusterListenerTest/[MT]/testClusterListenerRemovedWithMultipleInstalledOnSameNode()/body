@@ -1,0 +1,34 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  int initialCache0ListenerSize=cache0.getAdvancedCache().getListeners().size();
+  int initialCache1ListenerSize=cache1.getAdvancedCache().getListeners().size();
+  int initialCache2ListenerSize=cache2.getAdvancedCache().getListeners().size();
+  ClusterListener clusterListener=new ClusterListener();
+  cache0.addListener(clusterListener);
+  assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 1);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 1);
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 1);
+  ClusterListener clusterListener2=new ClusterListener();
+  cache0.addListener(clusterListener2);
+  assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 2);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 2);
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 2);
+  MagicKey key=new MagicKey(cache2,cache1);
+  cache1.put(key,FIRST_VALUE);
+  assertEquals(clusterListener.events.size(),1);
+  assertEquals(clusterListener2.events.size(),1);
+  verifySimpleInsertionEvents(clusterListener,key,FIRST_VALUE);
+  verifySimpleInsertionEvents(clusterListener2,key,FIRST_VALUE);
+  cache0.removeListener(clusterListener);
+  assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 1);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 1);
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 1);
+  cache2.put(key,SECOND_VALUE);
+  assertEquals(clusterListener2.events.size(),2);
+  CacheEntryEvent event=clusterListener2.events.get(1);
+  assertEquals(Event.Type.CACHE_ENTRY_MODIFIED,event.getType());
+  assertEquals(key,event.getKey());
+  assertEquals(SECOND_VALUE,((CacheEntryModifiedEvent)event).getValue());
+}

@@ -1,0 +1,30 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  final Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  final ClusterListener clusterListener=new ClusterListener();
+  cache1.addListener(clusterListener);
+  assertEquals(manager(0).getAddress(),manager(0).getMembers().get(0));
+  CheckPoint checkPoint=new CheckPoint();
+  waitUntilRequestingListeners(cache0,checkPoint);
+  checkPoint.triggerForever("pre_cluster_listeners_release_" + cache0);
+  log.info("Adding a new node ..");
+  addClusterEnabledCacheManager(builderUsed);
+  log.info("Added a new node");
+  Future<Cache<Object,String>> future=fork(new Callable<Cache<Object,String>>(){
+    @Override public Cache<Object,String> call() throws Exception {
+      return cache(3,CACHE_NAME);
+    }
+  }
+);
+  checkPoint.awaitStrict("post_cluster_listeners_invoked_" + cache0,10,TimeUnit.SECONDS);
+  log.info("Killing node 1 ..");
+  TestingUtil.killCacheManagers(manager(1));
+  cacheManagers.remove(1);
+  log.info("Node 1 killed");
+  checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
+  waitForClusterToForm(CACHE_NAME);
+  Cache<Object,String> cache3=future.get(10,TimeUnit.SECONDS);
+  for (  Object listener : cache3.getAdvancedCache().getListeners()) {
+    assertFalse(listener instanceof RemoteClusterListener);
+  }
+}

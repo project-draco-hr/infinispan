@@ -1,0 +1,19 @@
+{
+  CacheManagerNotifier cmn=TestingUtil.extractGlobalComponent(cacheContainer,CacheManagerNotifier.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(cmn);
+  CacheManagerNotifier mockNotifier=mock(CacheManagerNotifier.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_view_listener_invoked_" + uniqueId);
+      checkPoint.awaitStrict("pre_view_listener_release_" + uniqueId,10,TimeUnit.SECONDS);
+      try {
+        return forwardedAnswer.answer(invocation);
+      }
+  finally {
+        checkPoint.trigger("post_view_listener_invoked_" + uniqueId);
+      }
+    }
+  }
+).when(mockNotifier).notifyViewChange(anyList(),anyList(),any(Address.class),anyInt());
+  TestingUtil.replaceComponent(cacheContainer,CacheManagerNotifier.class,mockNotifier,true);
+}

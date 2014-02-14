@@ -1,0 +1,26 @@
+{
+  Listener l=testListenerClassValidity(listener.getClass());
+  UUID generatedId=UUID.randomUUID();
+  boolean foundMethods=false;
+  boolean foundClusterMethods=false;
+  Map<Class<? extends Annotation>,Class<?>> allowedListeners=getAllowedMethodAnnotations();
+  for (  Method m : listener.getClass().getMethods()) {
+    for (    Map.Entry<Class<? extends Annotation>,Class<?>> annotationEntry : allowedListeners.entrySet()) {
+      Class<? extends Annotation> key=annotationEntry.getKey();
+      Class<?> value=annotationEntry.getValue();
+      if (m.isAnnotationPresent(key)) {
+        testListenerMethodValidity(m,value,key.getName());
+        m.setAccessible(true);
+        addListenerInvocation(key,createListenerInvocation(listener,m,l,filter,converter,classLoader,generatedId));
+        foundMethods=true;
+        if (l.clustered()) {
+          foundClusterMethods=true;
+        }
+      }
+    }
+  }
+  if (!foundMethods)   getLog().noAnnotateMethodsFoundInListener(listener.getClass());
+ else {
+    addedListener(listener,generatedId,foundClusterMethods,filter,converter);
+  }
+}

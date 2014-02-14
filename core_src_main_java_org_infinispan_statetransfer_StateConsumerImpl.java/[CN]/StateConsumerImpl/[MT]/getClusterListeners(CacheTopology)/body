@@ -1,0 +1,25 @@
+{
+  for (  Address source : topology.getMembers()) {
+    if (!source.equals(rpcManager.getAddress())) {
+      if (trace) {
+        log.tracef("Requesting cluster listeners of cache %s from node %s",cacheName,source);
+      }
+      try {
+        StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,rpcManager.getAddress(),0,null);
+        Map<Address,Response> responses=rpcManager.invokeRemotely(Collections.singleton(source),cmd,rpcOptions);
+        Response response=responses.get(source);
+        if (response instanceof SuccessfulResponse) {
+          return (Collection<DistributedCallable>)((SuccessfulResponse)response).getResponseValue();
+        }
+ else {
+          log.unsuccessfulResponseForClusterListeners(source,response);
+        }
+      }
+ catch (      CacheException e) {
+        log.exceptionDuringClusterListenerRetrieval(source,e);
+      }
+    }
+  }
+  log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
+  return Collections.emptySet();
+}

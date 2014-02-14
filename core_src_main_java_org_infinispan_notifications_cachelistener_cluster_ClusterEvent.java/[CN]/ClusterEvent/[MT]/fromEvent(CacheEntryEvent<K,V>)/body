@@ -1,0 +1,30 @@
+{
+  if (event instanceof ClusterEvent) {
+    return (ClusterEvent)event;
+  }
+  V oldValue=null;
+  Type eventType=event.getType();
+  boolean commandRetried;
+switch (eventType) {
+case CACHE_ENTRY_REMOVED:
+    oldValue=((CacheEntryRemovedEvent<K,V>)event).getOldValue();
+  commandRetried=((CacheEntryRemovedEvent<K,V>)event).isCommandRetried();
+break;
+case CACHE_ENTRY_CREATED:
+commandRetried=((CacheEntryCreatedEvent<K,V>)event).isCommandRetried();
+break;
+case CACHE_ENTRY_MODIFIED:
+commandRetried=((CacheEntryModifiedEvent<K,V>)event).isCommandRetried();
+break;
+default :
+throw new IllegalArgumentException("Cluster Event can only be created from a CacheEntryRemoved, CacheEntryCreated or CacheEntryModified event!");
+}
+GlobalTransaction transaction=((TransactionalEvent)event).getGlobalTransaction();
+Metadata metadata=null;
+if (event instanceof EventImpl) {
+metadata=((EventImpl)event).getMetadata();
+}
+ClusterEvent<K,V> clusterEvent=new ClusterEvent<K,V>(event.getKey(),event.getValue(),oldValue,metadata,eventType,event.getCache().getCacheManager().getAddress(),transaction,commandRetried);
+clusterEvent.cache=event.getCache();
+return clusterEvent;
+}

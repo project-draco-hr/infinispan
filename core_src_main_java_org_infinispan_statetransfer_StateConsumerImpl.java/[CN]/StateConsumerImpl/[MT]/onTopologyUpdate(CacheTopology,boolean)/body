@@ -49,6 +49,16 @@
       Set<Integer> addedSegments;
       if (previousWriteCh == null) {
         addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+        Collection<DistributedCallable> callables=getClusterListeners(cacheTopology);
+        for (        DistributedCallable callable : callables) {
+          callable.setEnvironment(cache,null);
+          try {
+            callable.call();
+          }
+ catch (          Exception e) {
+            log.clusterListenerInstallationFailure(e);
+          }
+        }
         if (trace) {
           log.tracef("On cache %s we have: added segments: %s",cacheName,addedSegments);
         }

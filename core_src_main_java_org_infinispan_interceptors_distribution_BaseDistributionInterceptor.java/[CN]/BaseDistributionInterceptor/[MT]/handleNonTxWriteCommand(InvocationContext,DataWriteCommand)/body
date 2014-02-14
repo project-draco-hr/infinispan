@@ -26,9 +26,10 @@
         log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",command);
         return localResult;
       }
+      List<Address> recipients=recipientGenerator.generateRecipients();
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       try {
-        rpcManager.invokeRemotely(recipientGenerator.generateRecipients(),command,rpcManager.getDefaultRpcOptions(isSync));
+        rpcManager.invokeRemotely(recipients,command,determineRpcOptionsForBackupReplication(rpcManager,isSync,recipients));
       }
   finally {
         command.setValueMatcher(valueMatcher.matcherForRetry());
@@ -48,7 +49,7 @@
       if (!isSingleOwnerAndLocal) {
         command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
         try {
-          rpcManager.invokeRemotely(recipients,command,rpcManager.getDefaultRpcOptions(isSync));
+          rpcManager.invokeRemotely(recipients,command,determineRpcOptionsForBackupReplication(rpcManager,isSync,recipients));
         }
   finally {
           command.setValueMatcher(valueMatcher.matcherForRetry());

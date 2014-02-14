@@ -1,0 +1,20 @@
+{
+  CacheNotifier cn=TestingUtil.extractComponent(cache,CacheNotifier.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(cn);
+  CacheNotifier mockNotifier=mock(CacheNotifier.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_add_listener_invoked_" + cache);
+      checkPoint.awaitStrict("pre_add_listener_release_" + cache,10,TimeUnit.SECONDS);
+      try {
+        return forwardedAnswer.answer(invocation);
+      }
+  finally {
+        checkPoint.trigger("post_add_listener_invoked_" + cache);
+        checkPoint.awaitStrict("post_add_listener_release_" + cache,10,TimeUnit.SECONDS);
+      }
+    }
+  }
+).when(mockNotifier).addListener(anyObject(),any(KeyValueFilter.class),any(Converter.class));
+  TestingUtil.replaceComponent(cache,CacheNotifier.class,mockNotifier,true);
+}

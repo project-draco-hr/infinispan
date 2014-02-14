@@ -25,13 +25,5 @@
   TestingUtil.waitForRehashToComplete(partition1.get(0),partition1.get(1));
   TestingUtil.waitForRehashToComplete(c);
   controlledRpcManager.stopBlocking();
-  try {
-    future.get();
-    fail("The expected ExecutionException did not occur!");
-  }
- catch (  ExecutionException e) {
-    Throwable cause=e.getCause();
-    assertTrue(cause instanceof SuspectException);
-    assertTrue(cause.getMessage().startsWith("One or more nodes have left the cluster while replicating command"));
-  }
+  assertEquals(future.get(10,TimeUnit.SECONDS),Boolean.FALSE);
 }

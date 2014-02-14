@@ -1,4 +1,9 @@
 {
   if (onlyPrimary && !isLocalNodePrimaryOwner)   return false;
-  return filter == null || ((event instanceof EventImpl) && filter.accept(((EventImpl)event).getKey()));
+  if (event instanceof EventImpl) {
+    EventImpl eventImpl=(EventImpl)event;
+    if (eventImpl.isPre() && clustered)     return false;
+    if (filter != null && !filter.accept(eventImpl.getKey(),eventImpl.getValue(),eventImpl.getMetadata()))     return false;
+  }
+  return true;
 }

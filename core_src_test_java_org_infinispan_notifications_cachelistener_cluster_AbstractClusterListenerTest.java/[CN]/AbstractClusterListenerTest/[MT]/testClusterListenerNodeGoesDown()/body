@@ -1,0 +1,17 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  ClusterListener clusterListener=new ClusterListener();
+  cache0.addListener(clusterListener);
+  int cache1ListenerSize=cache1.getAdvancedCache().getListeners().size();
+  int cache2ListenerSize=cache2.getAdvancedCache().getListeners().size();
+  log.info("Killing node 0 ..");
+  TestingUtil.killCacheManagers(manager(0));
+  cacheManagers.remove(0);
+  log.info("Node 0 killed");
+  TestingUtil.blockUntilViewsReceived(60000,false,cache1,cache2);
+  TestingUtil.waitForRehashToComplete(cache1,cache2);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),cache1ListenerSize - 1);
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),cache2ListenerSize - 1);
+}

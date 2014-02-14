@@ -1,0 +1,20 @@
+{
+  StateProvider sp=TestingUtil.extractComponent(cache,StateProvider.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(sp);
+  StateProvider mockProvider=mock(StateProvider.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_cluster_listeners_invoked_" + cache);
+      checkPoint.awaitStrict("pre_cluster_listeners_release_" + cache,10,TimeUnit.SECONDS);
+      try {
+        return forwardedAnswer.answer(invocation);
+      }
+  finally {
+        checkPoint.trigger("post_cluster_listeners_invoked_" + cache);
+        checkPoint.awaitStrict("post_cluster_listeners_release_" + cache,10,TimeUnit.SECONDS);
+      }
+    }
+  }
+).when(mockProvider).getClusterListenersToInstall();
+  TestingUtil.replaceComponent(cache,StateProvider.class,mockProvider,true);
+}

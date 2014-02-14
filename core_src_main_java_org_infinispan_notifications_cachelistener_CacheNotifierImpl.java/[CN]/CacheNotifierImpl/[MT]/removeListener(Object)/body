@@ -1,0 +1,18 @@
+{
+  super.removeListener(listener);
+  UUID id=clusterListenerIDs.remove(listener);
+  if (id != null) {
+    List<Future<?>> futures=distExecutorService.submitEverywhere(new ClusterListenerRemoveCallable(id));
+    for (    Future<?> future : futures) {
+      try {
+        future.get();
+      }
+ catch (      InterruptedException e) {
+        throw new CacheListenerException(e);
+      }
+catch (      ExecutionException e) {
+        throw new CacheListenerException(e);
+      }
+    }
+  }
+}

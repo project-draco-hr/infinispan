@@ -1,0 +1,80 @@
+{
+  Cache<String,Integer> cache0=cache(0,CACHE_NAME);
+  ClusterListenerAggregator listener=new ClusterListenerAggregator();
+  cache0.addListener(listener);
+  int threadCount=10;
+  final CountDownLatch latch=new CountDownLatch(threadCount);
+  Callable<CreateModifyRemovals> callable=new Callable<CreateModifyRemovals>(){
+    @Override public CreateModifyRemovals call() throws Exception {
+      latch.countDown();
+      latch.await();
+      int creationCount=0;
+      int modifyCount=0;
+      int removalCount=0;
+      for (int i=0; i < 1000; i++) {
+        int random=ThreadLocalRandom.current().nextInt(0,23);
+        boolean key=random > 11;
+        int cache=random / 8;
+        int operation=random % 4;
+        Cache<String,Integer> cacheToUse=cache(cache,CACHE_NAME);
+        String keyToUse=key ? KEY : KEY + "2";
+switch (operation) {
+case 0:
+          Integer prevValue=cacheToUse.put(keyToUse,i);
+        if (prevValue != null) {
+          modifyCount++;
+        }
+ else {
+          creationCount++;
+        }
+      break;
+case 1:
+    cacheToUse.remove(keyToUse);
+  removalCount++;
+break;
+case 2:
+prevValue=cacheToUse.get(keyToUse);
+if (prevValue != null) {
+if (cacheToUse.replace(keyToUse,prevValue,i)) {
+modifyCount++;
+}
+}
+ else {
+if (cacheToUse.putIfAbsent(keyToUse,i) == null) {
+creationCount++;
+}
+}
+break;
+case 3:
+prevValue=cacheToUse.get(keyToUse);
+if (prevValue != null) {
+if (cacheToUse.remove(keyToUse,prevValue)) {
+removalCount++;
+}
+}
+break;
+default :
+throw new IllegalArgumentException("Unsupported case!, provided " + operation);
+}
+}
+return new CreateModifyRemovals(creationCount,modifyCount,removalCount);
+}
+}
+;
+Future<CreateModifyRemovals>[] futures=new Future[threadCount];
+for (int i=0; i < threadCount; ++i) {
+futures[i]=fork(callable);
+}
+int creationCount=0;
+int modifyCount=0;
+int removalCount=0;
+for (Future<CreateModifyRemovals> future : futures) {
+CreateModifyRemovals cmr=future.get();
+creationCount+=cmr.creationCount;
+modifyCount+=cmr.modifyCount;
+removalCount+=cmr.removalCount;
+}
+assertEquals(listener.creationCount.get(),creationCount);
+assertEquals(listener.modifyCount.get(),modifyCount);
+assertEquals(listener.removalCount.get(),removalCount);
+}

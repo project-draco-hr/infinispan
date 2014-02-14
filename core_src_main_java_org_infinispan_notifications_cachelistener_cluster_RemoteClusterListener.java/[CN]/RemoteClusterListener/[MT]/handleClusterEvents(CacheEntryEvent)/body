@@ -1,0 +1,15 @@
+{
+  if (!event.isPre()) {
+    GlobalTransaction transaction=event.getGlobalTransaction();
+    if (transaction != null) {
+      Queue<CacheEntryEvent> events=transactionChanges.get(transaction);
+      events.add(event);
+    }
+ else {
+      if (log.isTraceEnabled()) {
+        log.tracef("Submitting Event %s to cluster listener to %s",event,origin);
+      }
+      distExecService.submit(origin,new ClusterEventCallable(id,ClusterEvent.fromEvent(event))).get();
+    }
+  }
+}

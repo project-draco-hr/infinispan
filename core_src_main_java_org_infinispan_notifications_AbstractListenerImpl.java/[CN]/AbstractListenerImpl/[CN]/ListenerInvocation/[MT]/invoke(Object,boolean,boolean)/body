@@ -8,6 +8,15 @@
           contextClassLoader=setContextClassLoader(classLoader.get());
         }
         try {
+          if (!unKeyed && converter != null) {
+            if (event instanceof EventImpl) {
+              EventImpl eventImpl=(EventImpl)event;
+              eventImpl.setValue(converter.convert(eventImpl.getKey(),eventImpl.getValue(),eventImpl.getMetadata()));
+            }
+ else {
+              throw new IllegalArgumentException("Provided event should be EventImpl when a converter is" + "being used!");
+            }
+          }
           method.invoke(target,event);
         }
  catch (        InvocationTargetException exception) {
