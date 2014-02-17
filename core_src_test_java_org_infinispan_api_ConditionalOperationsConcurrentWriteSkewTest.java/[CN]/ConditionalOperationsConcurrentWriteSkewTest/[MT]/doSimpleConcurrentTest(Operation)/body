@@ -18,7 +18,6 @@
     }
 );
     controller.awaitCommit.await();
-    controller.awaitPrepare=new CountDownLatch(1);
     controller.blockRemoteGet=new CountDownLatch(1);
     final Future<Boolean> tx2=fork(new Callable<Boolean>(){
       @Override public Boolean call() throws Exception {
@@ -39,10 +38,9 @@ return Boolean.TRUE;
 }
 }
 );
-controller.awaitPrepare.await();
+assertTrue("Tx2 has not finished",tx2.get(20,TimeUnit.SECONDS));
 controller.reset();
 assertTrue("Tx1 has not finished",tx1.get(20,TimeUnit.SECONDS));
-assertTrue("Tx2 has not finished",tx2.get(20,TimeUnit.SECONDS));
 assertNoTransactions();
 for (Cache cache : caches()) {
 assertEquals("Wrong value for cache " + address(cache),"tx1",cache.get(key));
