@@ -1,0 +1,46 @@
+def main(args):
+    verbose = args.verbose
+    server_base_url = args.base_url
+    user = args.user
+    password = args.password
+    days = args.days
+    build_type_names = args.build
+    url = ('%s/guestAuth/app/rest/' % server_base_url)
+    filters = []
+    if user:
+        auth = BasicAuth(user, password)
+        filters = [auth]
+        url = ('%s/httpAuth/app/rest/' % server_base_url)
+    resource = Resource(url, filters=filters)
+    buildTypes = get_json(resource, 'buildTypes')
+    watched_build_type_ids = [bt['id'] for bt in buildTypes['buildType'] if (bt['name'] in default_build_types)]
+    if verbose:
+        print ('Found build ids: %s' % watched_build_type_ids)
+    unstable_tests = []
+    for btid in watched_build_type_ids:
+        days_delta = datetime.timedelta(days=default_days)
+        days_ago = (datetime.datetime.utcnow() - days_delta)
+        date = (days_ago.strftime('%Y%m%dT%H%M%S') + '+0000')
+        builds_path = ('buildTypes/id:%s/builds' % btid)
+        builds = get_json(resource, builds_path, locator=build_locator(sinceDate=date, status='FAILURE'))
+        build_ids = [build['id'] for build in builds['build']]
+        if verbose:
+            print ('Found build ids for build type %s: %s' % (btid, build_ids))
+        for bid in build_ids:
+            build_path = ('builds/id:%s' % bid)
+            build = get_json(resource, build_path)
+            bname = ('%s#%s' % (build['buildType']['name'], build['number']))
+            bdate = build['startDate']
+            test_occurrences_path = 'testOccurrences'
+            failed_tests = get_json(resource, test_occurrences_path, locator=build_locator(build=('(id:%s)' % bid), status='FAILURE'))
+            if ('testOccurrence' in failed_tests):
+                failed_test_names = [test['name'] for test in failed_tests['testOccurrence']]
+                if verbose:
+                    print ('Found failed tests for build %s: %s' % (bid, failed_test_names))
+                for test_name in failed_test_names:
+                    clean_test_name = test_name.replace('TestSuite: ', '')
+                    unstable_tests.append((extract_class_name(clean_test_name), clean_test_name, bname, bdate))
+    unstable_tests = sorted(unstable_tests)
+    csvwriter = csv.writer(sys.stdout, dialect='excel-tab')
+    for row in unstable_tests:
+        csvwriter.writerow(row)

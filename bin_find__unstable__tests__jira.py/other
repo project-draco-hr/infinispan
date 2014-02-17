@@ -1,0 +1,21 @@
+'\n  Search JIRA using the restkit library (yum install python-restkit).\n\n  JIRA REST API documentation: https://docs.atlassian.com/jira/REST/5.0-m5\n'
+import json
+import re
+from restkit import Resource, BasicAuth, request
+from pprint import pprint
+import argparse
+from getpass import getpass
+import csv
+import sys
+default_base_url = 'https://issues.jboss.org'
+jql_search = 'project = ISPN AND (component in ("Test Suite - Core", "Test Suite - Server", "Test Suite - Query") OR labels = testsuite_stability) AND status in (Open, "Coding In Progress", Reopened, "Pull Request Sent") ORDER BY priority DESC'
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--url', help='site URL', default=default_base_url)
+    parser.add_argument('-u', '--user', help='user name', required=True)
+    parser.add_argument('-p', '--password', help='password')
+    parser.add_argument('-v', '--verbose', help='print debugging information', action='store_true')
+    args = parser.parse_args()
+    if (args.user and (not args.password)):
+        args.password = getpass()
+    main(args)

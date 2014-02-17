@@ -1,0 +1,21 @@
+def main(args):
+    verbose = args.verbose
+    annotations_file = args.annotations_file
+    jiras_file = args.jira_file
+    teamcity_file = args.teamcity_file
+    location = args.find_missing
+    if verbose:
+        print csv.list_dialects()
+        print os.getcwd()
+    annotations = parse_tsv(annotations_file, 'annotation', verbose)
+    jiras = parse_tsv(jiras_file, 'jira', verbose)
+    teamcity_failures = parse_tsv(teamcity_file, 'failure', verbose)
+    if ((location == 'jira') or (location == 'all')):
+        print 'Tests annotated as unstable or failing in TeamCity missing an issue in JIRA:'
+        print_diffs(jiras, annotations, teamcity_failures, verbose)
+    if ((location == 'annotation') or (location == 'all')):
+        print 'Tests with a random failure issue in JIRA or failing in TeamCity missing the unstable annotation:'
+        print_diffs(annotations, jiras, teamcity_failures, verbose)
+    if ((location == 'teamcity') or (location == 'all')):
+        print 'Tests annotated as unstable or with a random failure issue in JIRA but not failing in TeamCity:'
+        print_diffs(teamcity_failures, annotations, jiras, verbose)

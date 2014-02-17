@@ -1,0 +1,26 @@
+def main(args):
+    verbose = args.verbose
+    server_base_url = args.url
+    user = args.user
+    password = args.password
+    filters = []
+    if user:
+        auth = BasicAuth(user, password)
+        filters = [auth]
+    url = ('%s/rest/api/latest' % server_base_url)
+    resource = Resource(url, filters=filters)
+    issueList = get_json(resource, 'search', jql=jql_search, fields='key,issuetype,created,status,summary', expand='renderedFields', maxResults=500)
+    if verbose:
+        pprint(issueList)
+    tests = []
+    for issue in issueList['issues']:
+        id = issue['key']
+        summary = issue['fields']['summary']
+        match = re.search('\\w+Test', summary)
+        if match:
+            test = match.group(0)
+            tests.append((test, id, summary))
+    tests = sorted(tests)
+    csvwriter = csv.writer(sys.stdout, dialect='excel-tab')
+    for row in tests:
+        csvwriter.writerow(row)

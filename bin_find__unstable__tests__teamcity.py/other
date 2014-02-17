@@ -1,0 +1,25 @@
+'\n  Search JIRA using the restkit library (yum install python-restkit).\n\n  Teamcity REST API documentation: http://confluence.jetbrains.com/display/TCD8/REST+API\n'
+import json
+import re
+from restkit import Resource, BasicAuth, request
+from pprint import pprint
+import argparse
+import datetime
+from getpass import getpass
+import csv
+import sys
+default_base_url = 'http://ci.infinispan.org'
+default_build_types = ['Master Hotspot JDK6', 'Master Hotspot JDK7', 'Master Unstable Tests JDK6']
+default_days = 15
+if (__name__ == '__main__'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--base-url', help='base URL', default=default_base_url)
+    parser.add_argument('-u', '--user', help='user name')
+    parser.add_argument('-p', '--password', help='password')
+    parser.add_argument('-d', '--days', help='days to search back', default=default_days)
+    parser.add_argument('--build', help='one or more builds to search', nargs='*', action='append', default=default_build_types)
+    parser.add_argument('-v', '--verbose', help='print debugging information', action='store_true')
+    args = parser.parse_args()
+    if (args.user and (not args.password)):
+        args.password = getpass()
+    main(args)
