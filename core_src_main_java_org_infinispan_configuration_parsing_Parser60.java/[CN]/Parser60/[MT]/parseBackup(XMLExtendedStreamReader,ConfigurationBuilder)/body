@@ -30,5 +30,27 @@ default :
 throw ParseUtils.unexpectedElement(reader);
 }
 }
+boolean takeOfflineParsed=false;
+boolean stateTransferParsed=false;
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case TAKE_OFFLINE:
 parseTakeOffline(reader,backup);
+if (takeOfflineParsed) {
+throw new CacheConfigurationException("Only one 'takeOffline' element allowed within a 'backup'");
+}
+takeOfflineParsed=true;
+break;
+case STATE_TRANSFER:
+parseXSiteStateTransfer(reader,backup);
+if (stateTransferParsed) {
+throw new CacheConfigurationException("Only one 'stateTransfer' element allowed within a 'backup'");
+}
+stateTransferParsed=true;
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
 }

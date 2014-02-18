@@ -1,0 +1,34 @@
+{
+  takeSiteOffline(LON,NYC);
+  assertOffline(LON,NYC);
+  assertNoStateTransferInReceivingSite(NYC);
+  assertNoStateTransferInSendingSite(LON);
+  final int amountOfData=chunkSize(LON) * 4;
+  for (int i=0; i < amountOfData; ++i) {
+    cache(LON,0).put(key(i),value(0));
+  }
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertTrue(cache.isEmpty());
+    }
+  }
+);
+  startStateTransfer(LON,NYC);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return extractComponent(cache(LON,0),XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
+    }
+  }
+,TimeUnit.SECONDS.toMillis(30));
+  assertOnline(LON,NYC);
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      for (int i=0; i < amountOfData; ++i) {
+        assertEquals(value(0),cache.get(key(i)));
+      }
+    }
+  }
+);
+  assertNoStateTransferInReceivingSite(NYC);
+  assertNoStateTransferInSendingSite(LON);
+}

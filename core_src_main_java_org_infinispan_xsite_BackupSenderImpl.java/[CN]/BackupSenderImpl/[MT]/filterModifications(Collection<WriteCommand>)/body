@@ -1,0 +1,23 @@
+{
+  if (modifications == null || modifications.isEmpty()) {
+    return Collections.emptyList();
+  }
+  List<WriteCommand> filtered=new ArrayList<WriteCommand>(modifications.size());
+  for (  WriteCommand writeCommand : modifications) {
+    if (!writeCommand.isSuccessful()) {
+      continue;
+    }
+    WriteCommand filteredCommand=writeCommand;
+    if (writeCommand instanceof PutKeyValueCommand && ((PutKeyValueCommand)writeCommand).isPutIfAbsent()) {
+      filteredCommand=commandsFactory.buildPutKeyValueCommand(((PutKeyValueCommand)writeCommand).getKey(),((PutKeyValueCommand)writeCommand).getValue(),writeCommand.getMetadata(),writeCommand.getFlags());
+    }
+ else     if (writeCommand instanceof ReplaceCommand) {
+      filteredCommand=commandsFactory.buildPutKeyValueCommand(((ReplaceCommand)writeCommand).getKey(),((ReplaceCommand)writeCommand).getNewValue(),writeCommand.getMetadata(),writeCommand.getFlags());
+    }
+ else     if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
+      filteredCommand=commandsFactory.buildRemoveCommand(((RemoveCommand)writeCommand).getKey(),null,writeCommand.getFlags());
+    }
+    filtered.add(filteredCommand);
+  }
+  return filtered;
+}

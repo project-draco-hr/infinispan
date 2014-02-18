@@ -1,11 +1,11 @@
 {
-  boolean isPutForStateTransfer=command == null ? isFromStateTransfer(ctx) : isFromStateTransfer(command);
-  if (!isPutForStateTransfer && stateConsumer != null && ctx instanceof TxInvocationContext && ((TxInvocationContext)ctx).getCacheTransaction().hasModification(ClearCommand.class)) {
-    stateConsumer.stopApplyingState();
+  final Flag stateTransferFlag=extractStateTransferFlag(ctx,command);
+  if (stateTransferFlag == null) {
+    stopStateTransferIfNeeded(ctx,command);
   }
   if (ctx instanceof SingleKeyNonTxInvocationContext) {
     SingleKeyNonTxInvocationContext singleKeyCtx=(SingleKeyNonTxInvocationContext)ctx;
-    commitEntryIfNeeded(ctx,command,singleKeyCtx.getKey(),singleKeyCtx.getCacheEntry(),isPutForStateTransfer,metadata);
+    commitEntryIfNeeded(ctx,command,singleKeyCtx.getCacheEntry(),stateTransferFlag,metadata);
   }
  else {
     Set<Map.Entry<Object,CacheEntry>> entries=ctx.getLookedUpEntries().entrySet();
@@ -14,7 +14,7 @@
     while (it.hasNext()) {
       Map.Entry<Object,CacheEntry> e=it.next();
       CacheEntry entry=e.getValue();
-      if (!commitEntryIfNeeded(ctx,command,e.getKey(),entry,isPutForStateTransfer,metadata)) {
+      if (!commitEntryIfNeeded(ctx,command,entry,stateTransferFlag,metadata)) {
         if (trace) {
           if (entry == null)           log.tracef("Entry for key %s is null : not calling commitUpdate",e.getKey());
  else           log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate",e.getKey(),entry);

@@ -1,20 +1,28 @@
 {
   ClusteringDependentLogic cdl1=cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
-  ClusteringDependentLogic spyCdl1=spy(cdl1);
-  doAnswer(new Answer(){
-    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
-      Object[] arguments=invocation.getArguments();
-      CacheEntry entry=(CacheEntry)arguments[0];
-      Object key=entry.getKey();
-      InvocationContext ctx=(InvocationContext)arguments[3];
-      Address source=ctx.getOrigin();
-      checkPoint.trigger("pre_commit_entry_" + key + "_from_"+ source);
-      checkPoint.awaitStrict("resume_commit_entry_" + key + "_from_"+ source,10,SECONDS);
-      Object result=invocation.callRealMethod();
-      checkPoint.trigger("post_commit_entry_" + key + "_from_"+ source);
-      return result;
+  ClusteringDependentLogic replaceCdl=new ClusteringDependentLogicDelegator(cdl1){
+    @Override public void commitEntry(    CacheEntry entry,    Metadata metadata,    FlagAffectedCommand command,    InvocationContext ctx,    Flag trackFlag,    boolean l1Invalidation){
+      final Address source=ctx.getOrigin();
+      CacheEntry newEntry=new CacheEntryDelegator(entry){
+        @Override public void commit(        DataContainer container,        Metadata metadata){
+          checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_"+ source);
+          try {
+            checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_"+ source,10,SECONDS);
+          }
+ catch (          InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+catch (          TimeoutException e) {
+            throw new RuntimeException(e);
+          }
+          super.commit(container,metadata);
+          checkPoint.trigger("post_commit_entry_" + getKey() + "_from_"+ source);
+        }
+      }
+;
+      super.commitEntry(newEntry,metadata,command,ctx,trackFlag,l1Invalidation);
     }
   }
-).when(spyCdl1).commitEntry(any(CacheEntry.class),any(Metadata.class),any(FlagAffectedCommand.class),any(InvocationContext.class));
-  TestingUtil.replaceComponent(cache,ClusteringDependentLogic.class,spyCdl1,true);
+;
+  TestingUtil.replaceComponent(cache,ClusteringDependentLogic.class,replaceCdl,true);
 }

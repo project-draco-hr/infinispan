@@ -1,0 +1,26 @@
+{
+  final ClusteringDependentLogic clusteringDependentLogic=cache.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+  final Map<Address,List<XSiteState>> primaryOwnersChunks=new HashMap<Address,List<XSiteState>>();
+  for (  XSiteState state : cmd.getChunk()) {
+    final Address primaryOwner=clusteringDependentLogic.getPrimaryOwner(state.key());
+    List<XSiteState> primaryOwnerList=primaryOwnersChunks.get(primaryOwner);
+    if (primaryOwnerList == null) {
+      primaryOwnerList=new LinkedList<XSiteState>();
+      primaryOwnersChunks.put(primaryOwner,primaryOwnerList);
+    }
+    primaryOwnerList.add(state);
+  }
+  final List<XSiteState> localChunks=primaryOwnersChunks.remove(clusteringDependentLogic.getAddress());
+  final List<Future<?>> remoteFutures=new ArrayList<Future<?>>(primaryOwnersChunks.size());
+  for (  Map.Entry<Address,List<XSiteState>> entry : primaryOwnersChunks.entrySet()) {
+    sendStateTo(entry.getKey(),entry.getValue(),remoteFutures);
+  }
+  if (localChunks != null) {
+    LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(localChunks)).call();
+    localChunks.clear();
+  }
+  primaryOwnersChunks.clear();
+  for (  Future<?> future : remoteFutures) {
+    future.get();
+  }
+}

@@ -1,5 +1,10 @@
 {
-  BackupFilter filter=!command.isOnePhaseCommit() ? BackupFilter.KEEP_2PC_ONLY : BackupFilter.KEEP_ALL;
+  List<WriteCommand> modifications=filterModifications(command.getModifications());
+  if (modifications.isEmpty()) {
+    return EMPTY_RESPONSE;
+  }
+  PrepareCommand prepare=commandsFactory.buildPrepareCommand(command.getGlobalTransaction(),modifications,command.isOnePhaseCommit());
+  BackupFilter filter=!prepare.isOnePhaseCommit() ? BackupFilter.KEEP_2PC_ONLY : BackupFilter.KEEP_ALL;
   List<XSiteBackup> backups=calculateBackupInfo(filter);
-  return backupCommand(command,backups);
+  return backupCommand(prepare,backups);
 }

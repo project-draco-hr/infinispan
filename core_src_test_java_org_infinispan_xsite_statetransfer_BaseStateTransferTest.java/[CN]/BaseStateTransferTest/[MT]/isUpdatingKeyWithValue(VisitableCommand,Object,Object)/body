@@ -1,0 +1,25 @@
+{
+  if (command instanceof PutKeyValueCommand) {
+    return key.equals(((PutKeyValueCommand)command).getKey()) && value.equals(((PutKeyValueCommand)command).getValue());
+  }
+ else   if (command instanceof RemoveCommand) {
+    return key.equals(((RemoveCommand)command).getKey());
+  }
+ else   if (command instanceof ReplaceCommand) {
+    return key.equals(((ReplaceCommand)command).getKey()) && value.equals(((ReplaceCommand)command).getNewValue());
+  }
+ else   if (command instanceof ClearCommand) {
+    return true;
+  }
+ else   if (command instanceof PutMapCommand) {
+    return ((PutMapCommand)command).getMap().containsKey(key) && ((PutMapCommand)command).getMap().get(key).equals(value);
+  }
+ else   if (command instanceof PrepareCommand) {
+    for (    WriteCommand writeCommand : ((PrepareCommand)command).getModifications()) {
+      if (isUpdatingKeyWithValue(writeCommand,key,value)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

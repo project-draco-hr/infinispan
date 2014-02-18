@@ -1,0 +1,43 @@
+{
+  assertNotNull(operation);
+  assertTrue(operation.replicates());
+  takeSiteOffline(LON,NYC);
+  assertOffline(LON,NYC);
+  assertNoStateTransferInReceivingSite(NYC);
+  assertNoStateTransferInSendingSite(LON);
+  final Object key=key(0);
+  operation.init(cache(LON,0),key);
+  assertNull(operation.initialValue());
+  final XSiteStateProviderControl control=XSiteStateProviderControl.replaceInCache(cache(LON,0));
+  final Thread thread=fork(new Runnable(){
+    @Override public void run(){
+      startStateTransfer(LON,NYC);
+    }
+  }
+,false);
+  control.await();
+  assertOnline(LON,NYC);
+  operation.perform(cache(LON,0),key).get();
+  control.trigger();
+  thread.join(TimeUnit.SECONDS.toMillis(30));
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return extractComponent(cache(LON,0),XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
+    }
+  }
+,TimeUnit.SECONDS.toMillis(30));
+  assertEventuallyNoStateTransferInReceivingSite(NYC,30,TimeUnit.SECONDS);
+  assertEventuallyNoStateTransferInSendingSite(LON,30,TimeUnit.SECONDS);
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertEquals(operation.finalValue(),cache.get(key));
+    }
+  }
+);
+  assertInSite(LON,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertEquals(operation.finalValue(),cache.get(key));
+    }
+  }
+);
+}

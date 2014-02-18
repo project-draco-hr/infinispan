@@ -1,0 +1,9 @@
+{
+  final RpcManager rpcManager=cache.getAdvancedCache().getRpcManager();
+  final NotifyingNotifiableFuture<Object> remoteFuture=new NotifyingFutureImpl<Object>();
+  final Map<Address,Response> responseMap=new HashMap<Address,Response>();
+  rpcManager.invokeRemotelyInFuture(null,command,rpcManager.getDefaultRpcOptions(true,false),remoteFuture);
+  responseMap.put(rpcManager.getAddress(),LocalInvocation.newInstanceFromCache(cache,command).call());
+  responseMap.putAll((Map<? extends Address,? extends Response>)remoteFuture.get());
+  return responseMap;
+}

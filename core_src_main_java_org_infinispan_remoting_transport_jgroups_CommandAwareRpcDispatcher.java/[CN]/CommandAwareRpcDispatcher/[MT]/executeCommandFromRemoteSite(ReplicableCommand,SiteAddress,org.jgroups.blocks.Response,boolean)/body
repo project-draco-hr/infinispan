@@ -1,16 +1,19 @@
 {
-  if (!(cmd instanceof SingleRpcCommand)) {
-    throw new IllegalStateException("Only CacheRpcCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
+  if (!(cmd instanceof XSiteReplicateCommand)) {
+    throw new IllegalStateException("Only XSiteReplicateCommand commands expected as a result of xsite calls but got " + cmd.getClass().getName());
   }
+  if (trace) {
+    log.tracef("Handling command %s from remote site %s",cmd,src);
+  }
+  final BackupReceiver receiver=backupReceiverRepository.getBackupReceiver(src.getSite(),((XSiteReplicateCommand)cmd).getCacheName());
   if (preserveOrder) {
-    reply(response,backupReceiverRepository.handleRemoteCommand((SingleRpcCommand)cmd,src));
+    reply(response,((XSiteReplicateCommand)cmd).performInLocalSite(receiver));
     return;
   }
   remoteCommandsExecutor.execute(new Runnable(){
     @Override public void run(){
       try {
-        Object retVal=backupReceiverRepository.handleRemoteCommand((SingleRpcCommand)cmd,src);
-        reply(response,retVal);
+        reply(response,((XSiteReplicateCommand)cmd).performInLocalSite(receiver));
       }
  catch (      InterruptedException e) {
         log.shutdownHandlingCommand(cmd);

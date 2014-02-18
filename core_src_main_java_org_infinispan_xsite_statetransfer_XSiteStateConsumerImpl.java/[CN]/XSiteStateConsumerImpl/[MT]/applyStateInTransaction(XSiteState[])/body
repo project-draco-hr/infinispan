@@ -1,0 +1,22 @@
+{
+  try {
+    transactionManager.begin();
+    InvocationContext ctx=invocationContextFactory.createInvocationContext(transactionManager.getTransaction(),true);
+    ((TxInvocationContext)ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_X_SITE_STATE_TRANSFER);
+    for (    XSiteState siteState : chunk) {
+      interceptorChain.invoke(ctx,createPut(siteState));
+      if (trace) {
+        log.tracef("Successfully applied key'%s'",siteState);
+      }
+    }
+    transactionManager.commit();
+    if (debug) {
+      log.debugf("Successfully applied state. %s keys inserted",chunk.length);
+    }
+  }
+ catch (  Exception e) {
+    log.unableToApplyXSiteState(e);
+    safeRollback();
+    throw e;
+  }
+}

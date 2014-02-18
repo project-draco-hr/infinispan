@@ -1,6 +1,10 @@
 {
+  final LocalTransaction localTx=txTable.getLocalTransaction(command.getGlobalTransaction());
+  List<WriteCommand> modifications=filterModifications(localTx.getModifications());
+  if (modifications.isEmpty()) {
+    return EMPTY_RESPONSE;
+  }
   List<XSiteBackup> backups=calculateBackupInfo(BackupFilter.KEEP_1PC_ONLY);
-  LocalTransaction localTx=txTable.getLocalTransaction(command.getGlobalTransaction());
-  PrepareCommand prepare=new PrepareCommand(cacheName,localTx.getGlobalTransaction(),localTx.getModifications(),true);
+  PrepareCommand prepare=commandsFactory.buildPrepareCommand(command.getGlobalTransaction(),modifications,true);
   return backupCommand(prepare,backups);
 }

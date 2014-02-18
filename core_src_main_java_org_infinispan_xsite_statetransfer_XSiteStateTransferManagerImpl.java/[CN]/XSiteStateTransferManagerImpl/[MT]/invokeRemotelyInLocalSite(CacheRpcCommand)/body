@@ -1,0 +1,10 @@
+{
+  commandsFactory.initializeReplicableCommand(command,false);
+  final NotifyingNotifiableFuture<Object> remoteFuture=new NotifyingFutureImpl<Object>();
+  rpcManager.invokeRemotelyInFuture(null,command,rpcManager.getDefaultRpcOptions(true,false),remoteFuture);
+  final Future<Response> localFuture=asyncExecutor.submit(LocalInvocation.newInstance(responseGenerator,command,commandsFactory,rpcManager.getAddress()));
+  final Map<Address,Response> responseMap=new HashMap<Address,Response>();
+  responseMap.put(rpcManager.getAddress(),localFuture.get());
+  responseMap.putAll((Map<? extends Address,? extends Response>)remoteFuture.get());
+  return responseMap;
+}

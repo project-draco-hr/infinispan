@@ -1,0 +1,26 @@
+{
+  int chunkSize=0;
+  long timeout=0;
+  boolean found=false;
+  for (  BackupConfiguration backupConfiguration : configuration.sites().allBackups()) {
+    if (backupConfiguration.site().equals(siteName)) {
+      chunkSize=backupConfiguration.stateTransfer().chunkSize();
+      timeout=backupConfiguration.stateTransfer().timeout();
+      found=true;
+      break;
+    }
+  }
+  if (!found) {
+    throw new CacheException("Unable to start X-Site State Transfer! Backup configuration not found for " + siteName + "!");
+  }
+  StateProviderRunnable runnable=new StateProviderRunnable(siteName,chunkSize,timeout,origin);
+  if (runningStateTransfer.putIfAbsent(siteName,runnable) == null) {
+    if (debug) {
+      log.debugf("Starting state transfer to site '%s'",siteName);
+    }
+    executorService.execute(runnable);
+  }
+ else   if (debug) {
+    log.debugf("Do not start state transfer to site '%s'. It has already started!",siteName);
+  }
+}

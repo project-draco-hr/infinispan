@@ -1,0 +1,17 @@
+{
+  if (canceled.get()) {
+    taskContext.stop();
+    return;
+  }
+  if (chunkSize > 0 && chunk.size() == chunkSize) {
+    try {
+      sendFromSharedBuffer(xSiteBackup,chunk,responses);
+    }
+ catch (    Exception e) {
+      log.unableToSendXSiteState(xSiteBackup.getSiteName(),e);
+      taskContext.stop();
+    }
+    chunk.clear();
+  }
+  chunk.add(XSiteState.fromCacheLoader(marshalledEntry));
+}

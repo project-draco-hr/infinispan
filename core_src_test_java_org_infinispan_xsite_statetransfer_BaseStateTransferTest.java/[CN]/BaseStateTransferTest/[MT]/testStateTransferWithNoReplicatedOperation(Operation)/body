@@ -1,0 +1,55 @@
+{
+  assertNotNull(operation);
+  assertFalse(operation.replicates());
+  takeSiteOffline(LON,NYC);
+  assertOffline(LON,NYC);
+  assertNoStateTransferInReceivingSite(NYC);
+  assertNoStateTransferInSendingSite(LON);
+  final Object key=key(0);
+  final CheckPoint checkPoint=new CheckPoint();
+  final AtomicBoolean commandReceived=new AtomicBoolean(false);
+  operation.init(cache(LON,0),key);
+  assertNotNull(operation.initialValue());
+  final BackupListener listener=new BackupListener(){
+    @Override public void beforeCommand(    VisitableCommand command) throws Exception {
+      commandReceived.set(true);
+    }
+    @Override public void afterCommand(    VisitableCommand command) throws Exception {
+      commandReceived.set(true);
+    }
+    @Override public void beforeState(    XSiteStatePushCommand command) throws Exception {
+      checkPoint.trigger("before-state");
+      checkPoint.awaitStrict("before-update",30,TimeUnit.SECONDS);
+    }
+  }
+;
+  for (  CacheContainer cacheContainer : site(NYC).cacheManagers()) {
+    BackupReceiverRepositoryWrapper.replaceInCache(cacheContainer,listener);
+  }
+  startStateTransfer(LON,NYC);
+  assertOnline(LON,NYC);
+  checkPoint.awaitStrict("before-state",30,TimeUnit.SECONDS);
+  operation.perform(cache(LON,0),key).get();
+  assertFalse(commandReceived.get());
+  checkPoint.trigger("before-update");
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return extractComponent(cache(LON,0),XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
+    }
+  }
+,TimeUnit.SECONDS.toMillis(30));
+  assertEventuallyNoStateTransferInReceivingSite(NYC,30,TimeUnit.SECONDS);
+  assertEventuallyNoStateTransferInSendingSite(LON,30,TimeUnit.SECONDS);
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertEquals(operation.finalValue(),cache.get(key));
+    }
+  }
+);
+  assertInSite(LON,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertEquals(operation.finalValue(),cache.get(key));
+    }
+  }
+);
+}

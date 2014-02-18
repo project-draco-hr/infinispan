@@ -1,0 +1,20 @@
+{
+  if (siteName == null) {
+    throw new NullPointerException("Site name cannot be null!");
+  }
+  final XSiteBackup xSiteBackup=findSite(siteName);
+  if (xSiteBackup == null) {
+    throw new IllegalArgumentException("Site " + siteName + " not found!");
+  }
+  if (siteCollector.putIfAbsent(siteName,new XSiteStateTransferCollector(rpcManager.getMembers())) != null) {
+    throw new Exception(format("X-Site state transfer to '%s' already started!",siteName));
+  }
+  try {
+    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.START_RECEIVE);
+    controlStateTransferOnLocalSite(StateTransferControl.START_SEND,siteName);
+  }
+ catch (  Throwable throwable) {
+    handleFailure(xSiteBackup);
+    throw new Exception(throwable);
+  }
+}

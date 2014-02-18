@@ -1,0 +1,23 @@
+{
+  return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName,cacheName)){
+    @Override public Object handleRemoteCommand(    VisitableCommand command) throws Throwable {
+      listener.beforeCommand(command);
+      try {
+        return super.handleRemoteCommand(command);
+      }
+  finally {
+        listener.afterCommand(command);
+      }
+    }
+    @Override public void handleStateTransferState(    XSiteStatePushCommand cmd) throws Exception {
+      listener.beforeState(cmd);
+      try {
+        super.handleStateTransferState(cmd);
+      }
+  finally {
+        listener.afterState(cmd);
+      }
+    }
+  }
+;
+}
