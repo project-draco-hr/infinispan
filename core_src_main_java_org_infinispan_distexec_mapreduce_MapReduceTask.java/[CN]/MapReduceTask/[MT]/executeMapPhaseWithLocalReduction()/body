@@ -43,7 +43,20 @@
   Map<KOut,VOut> reducedResult=new HashMap<KOut,VOut>();
   try {
     for (    MapTaskPart<Map<KOut,List<VOut>>> mapTaskPart : futures) {
-      mergeResponse(mapPhasesResult,mapTaskPart.get());
+      Map<KOut,List<VOut>> result=null;
+      try {
+        result=mapTaskPart.get();
+      }
+ catch (      ExecutionException ee) {
+        Throwable cause=ee.getCause();
+        if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+          throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress() + " did not complete within "+ rpcOptionsBuilder.timeout(TimeUnit.SECONDS)+ " sec timeout",cause);
+        }
+ else {
+          throw ee;
+        }
+      }
+      mergeResponse(mapPhasesResult,result);
     }
   }
   finally {

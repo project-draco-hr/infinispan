@@ -34,7 +34,20 @@
   }
   try {
     for (    MapTaskPart<Set<KOut>> mapTaskPart : futures) {
-      mapPhasesResult.addAll(mapTaskPart.get());
+      Set<KOut> result=null;
+      try {
+        result=mapTaskPart.get();
+      }
+ catch (      ExecutionException ee) {
+        Throwable cause=ee.getCause();
+        if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+          throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress() + " did not complete within "+ rpcOptionsBuilder.timeout(TimeUnit.SECONDS)+ " sec timeout",cause);
+        }
+ else {
+          throw ee;
+        }
+      }
+      mapPhasesResult.addAll(result);
     }
   }
   finally {
