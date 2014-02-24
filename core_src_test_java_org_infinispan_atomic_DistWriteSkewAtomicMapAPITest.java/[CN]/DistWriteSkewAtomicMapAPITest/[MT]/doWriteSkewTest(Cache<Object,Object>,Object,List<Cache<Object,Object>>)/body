@@ -1,0 +1,27 @@
+{
+  final TransactionManager tm=tm(cache);
+  Map<Object,Object> atomicMap=getAtomicMap(cache,mapKey,true);
+  atomicMap.put("k1","v1");
+  tm.begin();
+  AssertJUnit.assertEquals("v1",atomicMap.get("k1"));
+  final Transaction tx1=tm.suspend();
+  tm.begin();
+  AssertJUnit.assertEquals("v1",atomicMap.get("k1"));
+  final Transaction tx2=tm.suspend();
+  tm.resume(tx1);
+  atomicMap.put("k1","v2");
+  tm.commit();
+  tm.resume(tx2);
+  AssertJUnit.assertEquals("v1",atomicMap.get("k1"));
+  atomicMap.put("k1","v3");
+  try {
+    tm.commit();
+    fail();
+  }
+ catch (  RollbackException e) {
+    safeRollback(tm);
+  }
+  for (  Cache<Object,Object> cache1 : caches) {
+    AssertJUnit.assertEquals("v2",getAtomicMap(cache1,mapKey).get("k1"));
+  }
+}
