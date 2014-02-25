@@ -1,9 +1,19 @@
 {
-  StringBuffer sb=new StringBuffer("http://" + servers.get(server).getHostname() + ":"+ (port + offset)+ servers.get(server).getRestServerPath()+ "/"+ cache);
-  if (key == null) {
-    return sb.toString();
+  StringBuffer queryBuilder=new StringBuffer(servers.get(server).getRestServerPath() + "/" + cache);
+  if (key != null) {
+    queryBuilder.append("/").append(key);
   }
- else {
-    return sb.append("/").append(key).toString();
+  URI uri=null;
+  URL url=null;
+  try {
+    url=new URL("http",servers.get(server).getHostname(),port + offset,queryBuilder.toString());
+    uri=new URI(url.getProtocol(),url.getUserInfo(),url.getHost(),url.getPort(),url.getPath(),url.getQuery(),null);
   }
+ catch (  MalformedURLException e) {
+    System.out.println("URL " + url.toString() + " is a malformed URL");
+  }
+catch (  URISyntaxException e) {
+    System.out.println("URI " + uri.toString() + " is a malformed URL");
+  }
+  return uri;
 }
