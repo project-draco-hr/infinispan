@@ -3,9 +3,9 @@
   assertNotLocked(advancedCache,"k");
   tm.begin();
   advancedCache.withFlags(Flag.FORCE_WRITE_LOCK).get("k");
-  InvocationContext ic=advancedCache.getInvocationContextContainer().getInvocationContext(true);
-  CacheEntry cacheEntry=ic.getLookedUpEntries().get("k");
-  assert(cacheEntry instanceof ReadCommittedEntry && cacheEntry.isChanged());
+  TransactionTable txTable=advancedCache.getComponentRegistry().getComponent(TransactionTable.class);
+  LocalTransaction tx=txTable.getLocalTransaction(tm.getTransaction());
+  assertTrue(tx.ownsLock("k"));
   assertLocked(advancedCache,"k");
   tm.commit();
   assertNotLocked(advancedCache,"k");
