@@ -1,7 +1,9 @@
 {
   if (fe != null) {
     channel.write(ByteBuffer.wrap(ZERO_INT),fe.offset + KEYLEN_POS);
-    if (trace)     log.tracef("Deleted entry at %d",fe.offset);
-    freeList.add(fe);
+    if (!freeList.add(fe)) {
+      throw new IllegalStateException(String.format("Trying to free an entry that was not allocated: %s",fe));
+    }
+    if (trace)     log.tracef("Deleted entry at %d:%d, there are now %d free entries",fe.offset,fe.size,freeList.size());
   }
 }

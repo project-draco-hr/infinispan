@@ -5,11 +5,12 @@ synchronized (freeList) {
       FileEntry free=it.next();
       if (free.isLocked())       continue;
       it.remove();
+      if (trace)       log.tracef("Found free entry at %d:%d, %d free entries remaining",free.offset,free.size,freeList.size());
       return free;
     }
     FileEntry fe=new FileEntry(filePos,len);
     filePos+=len;
-    log.tracef("New entry allocated, file size is %d",filePos);
+    if (trace)     log.tracef("New entry allocated at %d:%d, %d free entries, file size is %d",fe.offset,fe.size,freeList.size(),filePos);
     return fe;
   }
 }
