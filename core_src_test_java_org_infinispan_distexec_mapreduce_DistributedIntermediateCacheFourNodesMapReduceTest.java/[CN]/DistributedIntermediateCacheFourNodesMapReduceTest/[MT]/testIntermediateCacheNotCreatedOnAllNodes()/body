@@ -1,0 +1,12 @@
+{
+  String cacheNameConfig="notCreatedOnAllNodes";
+  Cache c=cache(0,cacheName());
+  MapReduceTask<String,String,String,Integer> t=new MapReduceTask<String,String,String,Integer>(c,true,false);
+  ConfigurationBuilder cacheConfig=new ConfigurationBuilder();
+  cacheConfig.unsafe().unreliableReturnValues(true).clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync();
+  Iterator<EmbeddedCacheManager> iterator=getCacheManagers().iterator();
+  iterator.next().defineConfiguration(cacheNameConfig,cacheConfig.build());
+  t.usingIntermediateCache(cacheNameConfig);
+  t.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
+  t.execute();
+}

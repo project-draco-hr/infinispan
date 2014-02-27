@@ -1,16 +1,11 @@
 {
   String taskId=mcc.getTaskId();
-  Set<KOut> mapPhaseKeys=new HashSet<KOut>();
-  Cache<Object,DeltaAwareList<VOut>> tmpCache=null;
-  if (mcc.isEmitCompositeIntermediateKeys()) {
-    tmpCache=cacheManager.getCache(DEFAULT_TMP_CACHE_CONFIGURATION_NAME);
-  }
- else {
-    tmpCache=cacheManager.getCache(taskId);
-  }
+  String tmpCacheName=mcc.getIntermediateCacheName();
+  Cache<Object,DeltaAwareList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
   if (tmpCache == null) {
-    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " not found on "+ cdl.getAddress());
+    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " named "+ tmpCacheName+ " not found on "+ cdl.getAddress());
   }
+  Set<KOut> mapPhaseKeys=new HashSet<KOut>();
   if (mcc.hasCombiner()) {
     Reducer<KOut,VOut> combiner=mcc.getCombiner();
     Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
