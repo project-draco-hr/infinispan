@@ -1,49 +1,16 @@
 {
-  Configuration config=report.getResourceConfiguration();
-  String flavor=config.getSimpleValue(FLAVOR,null);
-  if (flavor == null) {
-    report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
-    report.setErrorMessage("No flavor given");
-    return report;
-  }
-  String newName=report.getUserSpecifiedResourceName();
-  Address address=new Address(this.getAddress());
-  address.add(flavor,newName);
-  Operation add=new Operation("add",address);
-  for (  Property prop : config.getProperties()) {
-    if (prop.getName().equals(FLAVOR)) {
-      continue;
+  report=super.createResource(report);
+  if (report.getStatus() == CreateResourceStatus.SUCCESS) {
+    ConfigurationUpdateReport updateReport=new ConfigurationUpdateReport(report.getResourceConfiguration());
+    ConfigurationDefinition configDef=report.getResourceType().getResourceConfigurationDefinition();
+    Address address=new Address(getAddress());
+    address.add(report.getPluginConfiguration().getSimpleValue("path"),report.getUserSpecifiedResourceName());
+    ConfigurationWriteDelegate delegate=new ConfigurationWriteDelegate(configDef,getASConnection(),address);
+    delegate.updateResourceConfiguration(updateReport);
+    if (updateReport.getStatus() != ConfigurationUpdateStatus.SUCCESS) {
+      report.setErrorMessage(updateReport.getErrorMessage());
+      report.setStatus(CreateResourceStatus.FAILURE);
     }
-    if (prop instanceof PropertyList) {
-      List<Property> list=((PropertyList)prop).getList();
-      Map<String,String> properties=new HashMap<String,String>();
-      for (      Property property : list) {
-        if (property instanceof PropertyMap) {
-          PropertyMap propertyMap=(PropertyMap)property;
-          properties.put(((PropertySimple)propertyMap.get("name")).getStringValue(),((PropertySimple)propertyMap.get("value")).getStringValue());
-        }
-      }
-      List<Object> propList=new ArrayList<Object>();
-      propList.add(properties);
-      add.addAdditionalProperty(prop.getName(),propList);
-    }
- else     if (prop instanceof PropertySimple) {
-      PropertySimple ps=(PropertySimple)prop;
-      add.addAdditionalProperty(prop.getName(),ps.getStringValue());
-    }
- else {
-      throw new IllegalArgumentException("Unsupported Property provided, was " + prop.getClass().getName());
-    }
-  }
-  Result result=getASConnection().execute(add);
-  if (result.isSuccess()) {
-    report.setResourceKey(address.getPath());
-    report.setResourceName(address.getPath());
-    report.setStatus(CreateResourceStatus.SUCCESS);
-  }
- else {
-    report.setErrorMessage(result.getFailureDescription());
-    report.setStatus(CreateResourceStatus.FAILURE);
   }
   return report;
 }
