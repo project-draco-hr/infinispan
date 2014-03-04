@@ -3,9 +3,17 @@
   if (log.isTraceEnabled()) {
     log.tracef("JPQL string : %s",jpqlString);
   }
-  SearchFactoryIntegrator searchFactory=(SearchFactoryIntegrator)searchManager.getSearchFactory();
-  LuceneProcessingChain processingChain=new LuceneProcessingChain.Builder(searchFactory,entityNamesResolver).buildProcessingChainForClassBasedEntities();
-  QueryParser queryParser=new QueryParser();
-  LuceneQueryParsingResult parsingResult=queryParser.parseQuery(jpqlString,processingChain);
+  LuceneQueryParsingResult parsingResult;
+  if (queryCache != null) {
+    KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpqlString,LuceneQueryParsingResult.class);
+    parsingResult=queryCache.get(queryCacheKey);
+    if (parsingResult == null) {
+      parsingResult=parse(jpqlString);
+      queryCache.put(queryCacheKey,parsingResult);
+    }
+  }
+ else {
+    parsingResult=parse(jpqlString);
+  }
   return new EmbeddedLuceneQuery(searchManager,parsingResult,startOffset,maxResults);
 }

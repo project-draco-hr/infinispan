@@ -1,6 +1,17 @@
 {
   if (objectFilter == null) {
-    objectFilter=matcher.getObjectFilter(jpaQuery);
+    if (queryCache != null) {
+      KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpaQuery,matcherImplClass);
+      ObjectFilter of=queryCache.get(queryCacheKey);
+      if (of == null) {
+        of=matcher.getObjectFilter(jpaQuery);
+        queryCache.put(queryCacheKey,of);
+      }
+      objectFilter=of;
+    }
+ else {
+      objectFilter=matcher.getObjectFilter(jpaQuery);
+    }
   }
   return objectFilter;
 }

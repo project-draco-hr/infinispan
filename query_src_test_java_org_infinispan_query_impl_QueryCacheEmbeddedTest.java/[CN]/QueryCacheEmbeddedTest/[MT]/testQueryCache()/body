@@ -1,0 +1,34 @@
+{
+  UserHS user=new UserHS();
+  user.setId(1);
+  user.setName("John");
+  cache.put("user_" + user.getId(),user);
+  QueryCache queryCache=TestingUtil.extractGlobalComponent(cacheManager,QueryCache.class);
+  QueryCache queryCacheSpy=spy(queryCache);
+  TestingUtil.replaceComponent(cacheManager,QueryCache.class,queryCacheSpy,true);
+  QueryFactory qf=Search.getQueryFactory(cache);
+  QueryBuilder<Query> queryQueryBuilder=qf.from(UserHS.class).having("name").eq("John").toBuilder();
+  String jpaQuery=((BaseQueryBuilder<Query>)queryQueryBuilder).accept(new JPAQueryGenerator());
+  AtomicReference<Object> lastGetResult=captureLastGetResult(queryCacheSpy);
+  KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpaQuery,LuceneQueryParsingResult.class);
+  LuceneQueryParsingResult cachedParsingResult=queryCache.get(queryCacheKey);
+  assertNull(cachedParsingResult);
+  queryQueryBuilder.build();
+  cachedParsingResult=queryCache.get(queryCacheKey);
+  assertNotNull(cachedParsingResult);
+  InOrder inOrder=inOrder(queryCacheSpy);
+  inOrder.verify(queryCacheSpy,calls(1)).get(queryCacheKey);
+  ArgumentCaptor<LuceneQueryParsingResult> captor=ArgumentCaptor.forClass(LuceneQueryParsingResult.class);
+  inOrder.verify(queryCacheSpy,calls(1)).put(eq(queryCacheKey),captor.capture());
+  inOrder.verifyNoMoreInteractions();
+  assertNull(lastGetResult.get());
+  assertTrue(captor.getValue() == cachedParsingResult);
+  reset(queryCacheSpy);
+  lastGetResult=captureLastGetResult(queryCacheSpy);
+  queryQueryBuilder.build();
+  inOrder=inOrder(queryCacheSpy);
+  inOrder.verify(queryCacheSpy,calls(1)).get(queryCacheKey);
+  inOrder.verify(queryCacheSpy,never()).put(any(KeyValuePair.class),any(LuceneQueryParsingResult.class));
+  inOrder.verifyNoMoreInteractions();
+  assertTrue(lastGetResult.get() == cachedParsingResult);
+}

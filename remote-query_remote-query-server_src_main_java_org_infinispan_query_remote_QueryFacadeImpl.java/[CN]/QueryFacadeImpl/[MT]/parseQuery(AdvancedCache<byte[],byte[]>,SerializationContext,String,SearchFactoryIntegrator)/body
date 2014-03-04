@@ -1,0 +1,58 @@
+{
+  LuceneProcessingChain processingChain;
+  if (cache.getCacheConfiguration().compatibility().enabled()) {
+    final QueryInterceptor queryInterceptor=ComponentRegistryUtils.getQueryInterceptor(cache);
+    EntityNamesResolver entityNamesResolver=new EntityNamesResolver(){
+      @Override public Class<?> getClassFromName(      String entityName){
+        MessageMarshaller messageMarshaller=(MessageMarshaller)serCtx.getMarshaller(entityName);
+        Class clazz=messageMarshaller.getJavaClass();
+        return queryInterceptor.isIndexed(clazz) ? clazz : null;
+      }
+    }
+;
+    processingChain=new LuceneProcessingChain.Builder(searchFactory,entityNamesResolver).buildProcessingChainForClassBasedEntities();
+  }
+ else {
+    EntityNamesResolver entityNamesResolver=new EntityNamesResolver(){
+      @Override public Class<?> getClassFromName(      String entityName){
+        return serCtx.canMarshall(entityName) ? ProtobufValueWrapper.class : null;
+      }
+    }
+;
+    FieldBridgeProvider fieldBridgeProvider=new FieldBridgeProvider(){
+      @Override public FieldBridge getFieldBridge(      String type,      String propertyPath){
+        Descriptor md=serCtx.getMessageDescriptor(type);
+        FieldDescriptor fd=getFieldDescriptor(md,propertyPath);
+switch (fd.getType()) {
+case DOUBLE:
+          return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
+case FLOAT:
+        return NumericFieldBridge.FLOAT_FIELD_BRIDGE;
+case INT64:
+case UINT64:
+case FIXED64:
+case SFIXED64:
+case SINT64:
+      return NumericFieldBridge.LONG_FIELD_BRIDGE;
+case INT32:
+case FIXED32:
+case UINT32:
+case SFIXED32:
+case SINT32:
+case BOOL:
+case ENUM:
+    return NumericFieldBridge.INT_FIELD_BRIDGE;
+case STRING:
+case BYTES:
+case GROUP:
+case MESSAGE:
+  return new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE),NULL_TOKEN);
+}
+return null;
+}
+}
+;
+processingChain=new LuceneProcessingChain.Builder(searchFactory,entityNamesResolver).buildProcessingChainForDynamicEntities(fieldBridgeProvider);
+}
+return new QueryParser().parseQuery(queryString,processingChain);
+}
