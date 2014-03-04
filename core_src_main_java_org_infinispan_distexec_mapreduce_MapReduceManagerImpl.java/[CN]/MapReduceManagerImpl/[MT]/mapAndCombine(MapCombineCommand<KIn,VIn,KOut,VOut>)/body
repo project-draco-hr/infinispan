@@ -1,0 +1,50 @@
+{
+  final Cache<KIn,VIn> cache=cacheManager.getCache(mcc.getCacheName());
+  Set<KIn> keys=mcc.getKeys();
+  int maxCSize=mcc.getMaxCollectorSize();
+  final Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
+  final boolean inputKeysSpecified=keys != null && !keys.isEmpty();
+  MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
+  final DefaultCollector<KOut,VOut> c=new DefaultCollector<KOut,VOut>(maxCSize,!inputKeysSpecified);
+  DataContainer dc=cache.getAdvancedCache().getDataContainer();
+  log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,mcc.getKeys());
+  long start=log.isTraceEnabled() ? timeService.time() : 0;
+  final Set<KOut> intermediateKeys=Collections.synchronizedSet(new HashSet<KOut>());
+  try {
+    taskLifecycleService.onPreExecute(mapper,cache);
+    if (inputKeysSpecified) {
+      for (      KIn key : keys) {
+        VIn value=cache.get(key);
+        mapper.map(key,value,c);
+      }
+      Map<KOut,List<VOut>> combinedValues=combine(mcc,c.removeCollectedValues());
+      Set<KOut> s=migrateIntermediateKeysAndValues(mcc,combinedValues);
+      intermediateKeys.addAll(s);
+    }
+ else {
+      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(c,mcc,maxCSize);
+      dc.executeTask(new PrimaryOwnerFilter(cdl),task);
+      intermediateKeys.addAll(task.getIntermediateKeys());
+      Map<KOut,List<VOut>> combinedValues=combine(mcc,c.removeCollectedValues());
+      Set<KOut> lastOne=migrateIntermediateKeysAndValues(mcc,combinedValues);
+      intermediateKeys.addAll(lastOne);
+    }
+    if (persistenceManager != null && !inputKeysSpecified) {
+      final DefaultCollector<KOut,VOut> pmc=new DefaultCollector<KOut,VOut>(maxCSize,true);
+      AdvancedCacheLoader.KeyFilter<?> keyFilter=new CompositeFilter(new PrimaryOwnerFilter(cdl),new CollectionKeyFilter(dc.keySet()));
+      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(pmc,mcc,maxCSize);
+      persistenceManager.processOnAllStores(keyFilter,task,true,false);
+      intermediateKeys.addAll(task.getIntermediateKeys());
+      Map<KOut,List<VOut>> combinedValues=combine(mcc,pmc.removeCollectedValues());
+      Set<KOut> lastOne=migrateIntermediateKeysAndValues(mcc,combinedValues);
+      intermediateKeys.addAll(lastOne);
+    }
+  }
+  finally {
+    if (log.isTraceEnabled()) {
+      log.tracef("Map phase for task %s took %s milliseconds",mcc.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
+    }
+    taskLifecycleService.onPostExecute(mapper);
+  }
+  return intermediateKeys;
+}

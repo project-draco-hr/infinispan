@@ -1,21 +1,14 @@
 {
-  String taskId=mcc.getTaskId();
-  String tmpCacheName=mcc.getIntermediateCacheName();
-  Cache<Object,DeltaAwareList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
-  if (tmpCache == null) {
-    throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " named "+ tmpCacheName+ " not found on "+ cdl.getAddress());
-  }
-  Set<KOut> mapPhaseKeys=new HashSet<KOut>();
+  Map<KOut,List<VOut>> combinedMap=null;
   if (mcc.hasCombiner()) {
+    combinedMap=new HashMap<KOut,List<VOut>>();
     Reducer<KOut,VOut> combiner=mcc.getCombiner();
     Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
-    log.tracef("For m/r task %s invoking combiner %s at %s",taskId,mcc,cdl.getAddress());
+    log.tracef("For m/r task %s invoking combiner %s at %s",mcc.getTaskId(),mcc,cdl.getAddress());
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
-    Map<KOut,List<VOut>> combinedMap=new ConcurrentHashMap<KOut,List<VOut>>();
     long start=log.isTraceEnabled() ? timeService.time() : 0;
     try {
       taskLifecycleService.onPreExecute(combiner,cache);
-      Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
       for (      Entry<KOut,List<VOut>> e : collectedValues.entrySet()) {
         List<VOut> mapped=e.getValue();
         List<VOut> combined;
@@ -26,7 +19,7 @@
           combined=Arrays.asList(combiner.reduce(e.getKey(),mapped.iterator()));
         }
         combinedMap.put(e.getKey(),combined);
-        log.tracef("For m/r task %s combined %s to %s at %s",taskId,e.getKey(),combined,cdl.getAddress());
+        log.tracef("For m/r task %s combined %s to %s at %s",mcc.getTaskId(),e.getKey(),combined,cdl.getAddress());
       }
     }
   finally {
@@ -35,11 +28,9 @@
       }
       taskLifecycleService.onPostExecute(combiner);
     }
-    migrateIntermediateKeys(mcc,mapPhaseKeys,tmpCache,combinedMap);
   }
  else {
-    Map<KOut,List<VOut>> collectedValues=collector.collectedValues();
-    migrateIntermediateKeys(mcc,mapPhaseKeys,tmpCache,collectedValues);
+    combinedMap=collectedValues;
   }
-  return mapPhaseKeys;
+  return combinedMap;
 }

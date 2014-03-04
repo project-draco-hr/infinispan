@@ -20,7 +20,7 @@
         filter=new IntermediateKeyFilter<KOut>(taskId);
       }
       DataContainer dc=cache.getAdvancedCache().getDataContainer();
-      dc.executeTask(filter,new StatelessDataContainerTask<KOut,List<VOut>>(){
+      dc.executeTask(filter,new DataContainerTask<KOut,List<VOut>>(){
         @Override public void apply(        Object k,        InternalCacheEntry v){
           KOut key=null;
           if (useIntermediateKeys) {
@@ -31,11 +31,12 @@
             key=(KOut)k;
           }
           List<VOut> value=getValue(v);
-          if (value != null) {
-            VOut reduced=reducer.reduce(key,value.iterator());
-            result.put(key,reduced);
-            log.tracef("For m/r task %s reduced %s to %s at %s ",taskId,key,reduced,cdl.getAddress());
+          if (value == null) {
+            throw new IllegalStateException("Found invalid value in intermediate cache, for key " + key + " during reduce phase execution on "+ cacheManager.getAddress()+ " for M/R task "+ taskId);
           }
+          VOut reduced=reducer.reduce(key,value.iterator());
+          result.put(key,reduced);
+          log.tracef("For m/r task %s reduced %s to %s at %s ",taskId,key,reduced,cdl.getAddress());
         }
       }
 );
