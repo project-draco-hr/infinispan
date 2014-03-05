@@ -11,8 +11,8 @@
   final Map<String,String> map2=createAtomicMap(cache2,"testConcurrentTx",false);
   assertMap(expectedMap,map1);
   assertMap(expectedMap,map2);
-  Thread t1=fork(new Runnable(){
-    @Override public void run(){
+  Future<Void> t1=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
       try {
         tm1.begin();
         map1.put("k1","tx1Value");
@@ -20,12 +20,14 @@
       }
  catch (      Exception e) {
         log.error(e);
+        throw e;
       }
+      return null;
     }
   }
-,false);
-  Thread t2=fork(new Runnable(){
-    @Override public void run(){
+);
+  Future<Void> t2=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
       try {
         tm2.begin();
         map2.put("k2","tx2Value");
@@ -33,12 +35,14 @@
       }
  catch (      Exception e) {
         log.error(e);
+        throw e;
       }
+      return null;
     }
   }
-,false);
-  t2.join();
-  t1.join();
+);
+  t2.get();
+  t1.get();
   expectedMap=createMap("k1","tx1Value","k2","tx2Value");
   assertMap(expectedMap,map1);
   assertMap(expectedMap,map2);
