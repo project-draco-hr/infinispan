@@ -3,15 +3,15 @@
   if (log.isTraceEnabled()) {
     log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s",identifier,filter,converter);
   }
-  Itr<K,C> itr=new DistributedItr<K,C>(batchSize,identifier);
-  Set<Integer> remoteSegments=new HashSet<>();
   ConsistentHash hash=getCurrentHash();
-  AtomicReferenceArray<Set<K>> referenceArray=new AtomicReferenceArray<Set<K>>(hash.getNumSegments());
-  for (int i=0; i < referenceArray.length(); ++i) {
-    referenceArray.set(i,new ConcurrentHashSet<K>());
+  DistributedItr<K,C> itr=new DistributedItr<>(batchSize,identifier,hash);
+  Set<Integer> remoteSegments=new HashSet<>();
+  AtomicReferenceArray<Set<K>> processedKeys=new AtomicReferenceArray<Set<K>>(hash.getNumSegments());
+  for (int i=0; i < processedKeys.length(); ++i) {
+    processedKeys.set(i,new ConcurrentHashSet<K>());
     remoteSegments.add(i);
   }
-  IterationStatus status=new IterationStatus<>(itr,listener,filter,converter,referenceArray);
+  IterationStatus status=new IterationStatus<>(itr,listener,filter,converter,processedKeys);
   iteratorDetails.put(identifier,status);
   Set<Integer> ourSegments=hash.getPrimarySegmentsForOwner(localAddress);
   remoteSegments.removeAll(ourSegments);

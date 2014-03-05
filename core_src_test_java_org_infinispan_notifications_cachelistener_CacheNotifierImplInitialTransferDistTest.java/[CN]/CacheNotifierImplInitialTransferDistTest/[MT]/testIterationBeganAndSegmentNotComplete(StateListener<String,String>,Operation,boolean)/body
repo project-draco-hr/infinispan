@@ -1,0 +1,104 @@
+{
+  final Map<String,String> expectedValues=new HashMap<String,String>(10);
+  final Cache<String,String> cache=cache(0,CACHE_NAME);
+  for (int i=0; i < 10; i++) {
+    String key="key-" + i;
+    String value="value-" + i;
+    expectedValues.put(key,value);
+    cache.put(key,value);
+  }
+  String value;
+  String keyToChange=findKeyBasedOnOwnership(expectedValues.keySet(),cache.getAdvancedCache().getDistributionManager().getConsistentHash(),shouldBePrimaryOwner,cache.getCacheManager().getAddress());
+switch (operation) {
+case CREATE:
+    keyToChange="new-key";
+  value="new-value";
+break;
+case PUT:
+value=cache.get(keyToChange) + "-changed";
+break;
+case REMOVE:
+value=null;
+break;
+default :
+throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+}
+CheckPoint checkPoint=new CheckPoint();
+int segmentToUse=cache.getAdvancedCache().getDistributionManager().getConsistentHash().getSegment(keyToChange);
+ClusterCacheNotifier notifier=waitUntilClosingSegment(cache,segmentToUse,checkPoint);
+Future<Void> future=fork(new Callable<Void>(){
+@Override public Void call() throws Exception {
+cache.addListener(listener);
+return null;
+}
+}
+);
+checkPoint.awaitStrict("pre_complete_segment_invoked",10,TimeUnit.SECONDS);
+try {
+Object oldValue=operation.perform(cache,keyToChange,value);
+checkPoint.triggerForever("pre_complete_segment_released");
+future.get(10,TimeUnit.SECONDS);
+boolean isClustered=isClustered(listener);
+assertEquals(listener.events.size(),isClustered ? expectedValues.size() + 1 : (expectedValues.size() + 1) * 2);
+if (isClustered) {
+CacheEntryEvent event=null;
+boolean foundEarlierCreate=false;
+for (int i=listener.events.size() - 1; i > 0; --i) {
+CacheEntryEvent currentEvent=listener.events.get(i);
+if (currentEvent.getKey().equals(keyToChange) && operation.getType() == currentEvent.getType()) {
+if (event == null) {
+event=currentEvent;
+listener.events.remove(i);
+if (operation.getType() == Event.Type.CACHE_ENTRY_CREATED) {
+foundEarlierCreate=true;
+break;
+}
+}
+ else {
+fail("There should only be a single event in the event queue!");
+}
+}
+ else if (event != null && (foundEarlierCreate=event.getKey().equals(currentEvent.getKey()))) {
+break;
+}
+}
+assertTrue(foundEarlierCreate,"There was no matching create event for key " + event.getKey());
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getValue(),value);
+}
+boolean isPost=true;
+int position=0;
+for (; position < (isClustered ? expectedValues.size() : expectedValues.size() * 2); ++position) {
+if (!isClustered) {
+isPost=!isPost;
+}
+CacheEntryEvent event=listener.events.get(position);
+assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+assertTrue(expectedValues.containsKey(event.getKey()));
+assertEquals(event.isPre(),!isPost);
+if (isPost) {
+assertEquals(event.getValue(),expectedValues.get(event.getKey()));
+}
+ else {
+assertNull(event.getValue());
+}
+}
+if (!isClustered) {
+CacheEntryEvent<String,String> event=listener.events.get(position);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),true);
+assertEquals(event.getKey(),keyToChange);
+assertEquals(event.getValue(),oldValue);
+event=listener.events.get(position + 1);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),keyToChange);
+assertEquals(event.getValue(),value);
+}
+}
+  finally {
+TestingUtil.replaceComponent(cache,CacheNotifier.class,notifier,true);
+TestingUtil.replaceComponent(cache,ClusterCacheNotifier.class,notifier,true);
+}
+}

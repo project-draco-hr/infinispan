@@ -1,0 +1,48 @@
+{
+  final Map<String,String> expectedValues=new HashMap<>(10);
+  final Cache<String,String> cache=cache(0,CACHE_NAME);
+  for (int i=0; i < 10; i++) {
+    String key="key-" + i;
+    String value="value-" + i;
+    expectedValues.put(key,value);
+    cache.put(key,value);
+  }
+  final CheckPoint checkPoint=new CheckPoint();
+  EntryRetriever retriever=waitUntilRetrievingIterator(cache,checkPoint);
+  try {
+    Future<Void> future=fork(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        cache.addListener(listener);
+        return null;
+      }
+    }
+);
+    checkPoint.awaitStrict("pre_retrieve_entry_invoked",10,TimeUnit.SECONDS);
+    String value;
+    String keyToChange=findKeyBasedOnOwnership(expectedValues.keySet(),cache.getAdvancedCache().getDistributionManager().getConsistentHash(),shouldBePrimaryOwner,cache.getCacheManager().getAddress());
+switch (operation) {
+case CREATE:
+      keyToChange="new-key";
+    value="new-value";
+  expectedValues.put(keyToChange,value);
+break;
+case PUT:
+value=cache.get(keyToChange) + "-changed";
+expectedValues.put(keyToChange,value);
+break;
+case REMOVE:
+value=null;
+expectedValues.remove(keyToChange);
+break;
+default :
+throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+}
+operation.perform(cache,keyToChange,value);
+checkPoint.triggerForever("pre_retrieve_entry_released");
+future.get(10,TimeUnit.SECONDS);
+verifyEvents(isClustered(listener),listener,expectedValues);
+}
+  finally {
+TestingUtil.replaceComponent(cache,EntryRetriever.class,retriever,true);
+}
+}

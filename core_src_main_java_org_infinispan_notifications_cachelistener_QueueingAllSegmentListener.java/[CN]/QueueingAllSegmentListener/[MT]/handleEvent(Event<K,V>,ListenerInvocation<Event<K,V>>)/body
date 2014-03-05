@@ -1,0 +1,20 @@
+{
+  boolean queued=!completed.get();
+  if (queued) {
+    boolean continueQueueing=true;
+    if (event instanceof CacheEntryEvent) {
+      CacheEntryEvent<K,V> cacheEvent=(CacheEntryEvent<K,V>)event;
+      if (addEvent(cacheEvent.getKey(),cacheEvent.getValue() != null ? cacheEvent.getValue() : REMOVED)) {
+        continueQueueing=false;
+      }
+    }
+    if (continueQueueing) {
+      KeyValuePair<Event<K,V>,ListenerInvocation<Event<K,V>>> eventPair=new KeyValuePair<Event<K,V>,ListenerInvocation<Event<K,V>>>(event,invocation);
+      queue.add(eventPair);
+      if (completed.get() && queue.remove(eventPair)) {
+        invocation.invoke(event);
+      }
+    }
+  }
+  return queued;
+}

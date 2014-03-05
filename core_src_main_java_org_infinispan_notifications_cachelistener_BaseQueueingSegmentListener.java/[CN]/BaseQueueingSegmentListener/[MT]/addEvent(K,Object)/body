@@ -1,0 +1,28 @@
+{
+  boolean returnValue;
+  Object prevEvent=notifiedKeys.get(key);
+  if (prevEvent == null) {
+    Object nowPrevious=notifiedKeys.putIfAbsent(key,value);
+    if (nowPrevious == null) {
+      returnValue=true;
+    }
+ else     if (nowPrevious != NOTIFIED) {
+      returnValue=addEvent(key,value);
+    }
+ else {
+      returnValue=false;
+    }
+  }
+ else   if (prevEvent != NOTIFIED) {
+    if (notifiedKeys.replace(key,prevEvent,value)) {
+      returnValue=true;
+    }
+ else {
+      returnValue=addEvent(key,value);
+    }
+  }
+ else {
+    returnValue=false;
+  }
+  return returnValue;
+}

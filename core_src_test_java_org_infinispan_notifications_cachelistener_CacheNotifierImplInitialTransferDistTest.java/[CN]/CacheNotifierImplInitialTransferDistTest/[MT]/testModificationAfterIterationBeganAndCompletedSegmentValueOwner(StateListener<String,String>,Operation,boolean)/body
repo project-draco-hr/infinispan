@@ -1,0 +1,82 @@
+{
+  final Map<String,String> expectedValues=new HashMap<String,String>(10);
+  final Cache<String,String> cache=cache(0,CACHE_NAME);
+  for (int i=0; i < 10; i++) {
+    String key="key-" + i;
+    String value="value-" + i;
+    expectedValues.put(key,value);
+    cache.put(key,value);
+  }
+  CheckPoint checkPoint=new CheckPoint();
+  EntryRetriever retriever=waitUntilClosingIterator(cache,checkPoint);
+  try {
+    Future<Void> future=fork(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        cache.addListener(listener);
+        return null;
+      }
+    }
+);
+    checkPoint.awaitStrict("pre_close_iter_invoked",10,TimeUnit.SECONDS);
+    String value;
+    String keyToChange=findKeyBasedOnOwnership(expectedValues.keySet(),cache.getAdvancedCache().getDistributionManager().getConsistentHash(),shouldBePrimaryOwner,cache.getCacheManager().getAddress());
+switch (operation) {
+case CREATE:
+      keyToChange="new-key";
+    value="new-value";
+  break;
+case PUT:
+value=cache.get(keyToChange) + "-changed";
+break;
+case REMOVE:
+value=null;
+break;
+default :
+throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+}
+Object oldValue=operation.perform(cache,keyToChange,value);
+checkPoint.triggerForever("pre_close_iter_released");
+future.get(10,TimeUnit.SECONDS);
+boolean isClustered=isClustered(listener);
+assertEquals(listener.events.size(),isClustered ? expectedValues.size() + 1 : (expectedValues.size() + 1) * 2);
+boolean isPost=true;
+int position=0;
+for (; position < (isClustered ? expectedValues.size() : expectedValues.size() * 2); ++position) {
+if (!isClustered) {
+isPost=!isPost;
+}
+CacheEntryEvent event=listener.events.get(position);
+assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+assertTrue(expectedValues.containsKey(event.getKey()));
+assertEquals(event.isPre(),!isPost);
+if (isPost) {
+assertEquals(event.getValue(),expectedValues.get(event.getKey()));
+}
+ else {
+assertNull(event.getValue());
+}
+}
+if (isClustered) {
+CacheEntryEvent<String,String> event=listener.events.get(position);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),keyToChange);
+assertEquals(event.getValue(),value);
+}
+ else {
+CacheEntryEvent<String,String> event=listener.events.get(position);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),true);
+assertEquals(event.getKey(),keyToChange);
+assertEquals(event.getValue(),oldValue);
+event=listener.events.get(position + 1);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),keyToChange);
+assertEquals(event.getValue(),value);
+}
+}
+  finally {
+TestingUtil.replaceComponent(cache,EntryRetriever.class,retriever,true);
+}
+}

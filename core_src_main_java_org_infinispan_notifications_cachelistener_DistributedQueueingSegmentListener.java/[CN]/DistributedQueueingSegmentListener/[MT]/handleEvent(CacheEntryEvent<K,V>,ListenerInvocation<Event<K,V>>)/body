@@ -1,0 +1,21 @@
+{
+  K key=event.getKey();
+  boolean enqueued=!completed.get();
+  if (enqueued && !addEvent(key,event.getValue() != null ? event.getValue() : REMOVED)) {
+    int segment=distributionManager.getReadConsistentHash().getSegment(key);
+    Queue<KeyValuePair<CacheEntryEvent<K,V>,ListenerInvocation<Event<K,V>>>> queue;
+    if ((queue=queues.get(segment)) != null) {
+      KeyValuePair<CacheEntryEvent<K,V>,ListenerInvocation<Event<K,V>>> eventPair=new KeyValuePair<>(event,invocation);
+      queue.add(eventPair);
+      if (queues.get(segment) == null) {
+        if (queue.remove(eventPair)) {
+          enqueued=false;
+        }
+      }
+    }
+ else {
+      enqueued=false;
+    }
+  }
+  return enqueued;
+}

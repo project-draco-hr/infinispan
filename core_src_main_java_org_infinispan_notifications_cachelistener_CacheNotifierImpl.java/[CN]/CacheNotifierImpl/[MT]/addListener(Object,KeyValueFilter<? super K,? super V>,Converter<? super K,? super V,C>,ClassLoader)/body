@@ -1,3 +1,138 @@
 {
-  validateAndAddListenerInvocation(listener,filter,converter,classLoader);
+  Listener l=testListenerClassValidity(listener.getClass());
+  UUID generatedId=UUID.randomUUID();
+  CacheInvocationBuilder builder=new CacheInvocationBuilder();
+  builder.setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? true : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setIncludeCurrentState(l.includeCurrentState()).setClassLoader(classLoader);
+  boolean foundMethods=validateAndAddListenerInvocation(listener,builder);
+  if (foundMethods && l.clustered()) {
+    if (config.clustering().cacheMode().isInvalidation()) {
+      throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
+    }
+    clusterListenerIDs.put(listener,generatedId);
+    EmbeddedCacheManager manager=cache.getCacheManager();
+    Address ourAddress=manager.getAddress();
+    List<Address> members=manager.getMembers();
+    if (members != null && members.size() > 1) {
+      DistributedExecutionCompletionService decs=new DistributedExecutionCompletionService(distExecutorService);
+      if (log.isTraceEnabled()) {
+        log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",members,generatedId);
+      }
+      Callable callable=new ClusterListenerReplicateCallable(generatedId,ourAddress,filter,converter);
+      for (      Address member : members) {
+        if (!member.equals(ourAddress)) {
+          decs.submit(member,callable);
+        }
+      }
+      for (int i=0; i < members.size() - 1; ++i) {
+        try {
+          decs.take().get();
+        }
+ catch (        InterruptedException e) {
+          throw new CacheListenerException(e);
+        }
+catch (        ExecutionException e) {
+          throw new CacheListenerException(e);
+        }
+      }
+      int extraCount=0;
+      List<Address> membersAfter=manager.getMembers();
+      for (      Address member : membersAfter) {
+        if (!members.contains(member) && !member.equals(ourAddress)) {
+          if (log.isTraceEnabled()) {
+            log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",member,generatedId);
+          }
+          extraCount++;
+          decs.submit(member,callable);
+        }
+      }
+      for (int i=0; i < extraCount; ++i) {
+        try {
+          decs.take().get();
+        }
+ catch (        InterruptedException e) {
+          throw new CacheListenerException(e);
+        }
+catch (        ExecutionException e) {
+          throw new CacheListenerException(e);
+        }
+      }
+    }
+  }
+  QueueingSegmentListener handler=segmentHandler.remove(generatedId);
+  if (handler != null) {
+    if (log.isTraceEnabled()) {
+      log.tracef("Listener %s requests initial state for cache",generatedId);
+    }
+    CloseableIterator<Map.Entry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,handler);
+    try {
+      while (iterator.hasNext()) {
+        Map.Entry<K,C> entry=iterator.next();
+        Object value=handler.markKeyAsProcessing(entry.getKey());
+        if (value == null) {
+          value=entry.getValue();
+        }
+ else         if (value == BaseQueueingSegmentListener.REMOVED) {
+          continue;
+        }
+        EventImpl preEvent;
+        if (l.clustered()) {
+          preEvent=null;
+        }
+ else {
+          preEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+          preEvent.setKey(entry.getKey());
+          preEvent.setPre(true);
+        }
+        EventImpl postEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+        postEvent.setKey(entry.getKey());
+        postEvent.setValue(value);
+        postEvent.setPre(false);
+        for (        CacheEntryListenerInvocation<K,V> invocation : cacheEntryCreatedListeners) {
+          if (invocation.getIdentifier() == generatedId) {
+            if (preEvent != null) {
+              invocation.invokeNoChecks(preEvent,true,false);
+            }
+            invocation.invokeNoChecks(postEvent,true,false);
+          }
+        }
+        handler.notifiedKey(entry.getKey());
+      }
+    }
+  finally {
+      try {
+        iterator.close();
+      }
+ catch (      Exception e) {
+        log.ignoringException("addListener",e.toString(),e);
+      }
+    }
+    Set<Map.Entry> entries=handler.findCreatedEntries();
+    for (    Map.Entry entry : entries) {
+      EventImpl preEvent;
+      if (l.clustered()) {
+        preEvent=null;
+      }
+ else {
+        preEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+        preEvent.setKey(entry.getKey());
+        preEvent.setPre(true);
+      }
+      EventImpl postEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+      postEvent.setKey(entry.getKey());
+      postEvent.setValue(entry.getValue());
+      postEvent.setPre(false);
+      for (      CacheEntryListenerInvocation<K,V> invocation : cacheEntryCreatedListeners) {
+        if (invocation.getIdentifier() == generatedId) {
+          if (preEvent != null) {
+            invocation.invokeNoChecks(preEvent,true,false);
+          }
+          invocation.invokeNoChecks(postEvent,true,false);
+        }
+      }
+    }
+    if (log.isTraceEnabled()) {
+      log.tracef("Listener %s initial state for cache completed",generatedId);
+    }
+    handler.transferComplete();
+  }
 }

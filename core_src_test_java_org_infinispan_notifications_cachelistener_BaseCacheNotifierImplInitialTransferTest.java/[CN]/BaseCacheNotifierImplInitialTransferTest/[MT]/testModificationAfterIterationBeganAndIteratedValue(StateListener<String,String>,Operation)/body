@@ -1,0 +1,96 @@
+{
+  final List<CacheEntry<String,String>> initialValues=new ArrayList<CacheEntry<String,String>>();
+  for (int i=0; i < 10; i++) {
+    String key="key-" + i;
+    String value="value-" + i;
+    initialValues.add(new ImmortalCacheEntry(key,value));
+  }
+  final CyclicBarrier barrier=new CyclicBarrier(2);
+  final CloseableIterator closeable=mock(CloseableIterator.class,withSettings().defaultAnswer(AdditionalAnswers.delegatesTo(initialValues.iterator())));
+  doAnswer(new Answer<Void>(){
+    @Override public Void answer(    InvocationOnMock invocationOnMock) throws Throwable {
+      barrier.await(10,TimeUnit.SECONDS);
+      barrier.await(10,TimeUnit.SECONDS);
+      return null;
+    }
+  }
+).when(closeable).close();
+  when(retriever.retrieveEntries(Mockito.any(KeyValueFilter.class),Mockito.any(Converter.class),Mockito.any(EntryRetriever.SegmentListener.class))).thenReturn(closeable);
+  Future<Void> future=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      n.addListener(listener);
+      return null;
+    }
+  }
+);
+  barrier.await(10,TimeUnit.SECONDS);
+  String key;
+  String prevValue;
+  String value;
+switch (operation) {
+case REMOVE:
+    key="key-3";
+  value=null;
+prevValue=initialValues.get(3).getValue();
+break;
+case CREATE:
+key="new-key";
+value="new-value";
+prevValue=null;
+break;
+case PUT:
+key="key-3";
+value="key-3-new";
+prevValue=initialValues.get(3).getValue();
+break;
+default :
+throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+}
+operation.raiseEvent(n,key,prevValue,value,ctx);
+barrier.await(10,TimeUnit.SECONDS);
+future.get(10,TimeUnit.MINUTES);
+boolean isClustered=isClustered(listener);
+assertEquals(listener.events.size(),isClustered ? initialValues.size() + 1 : (initialValues.size() + 1) * 2);
+int position=0;
+for (CacheEntry<String,String> expected : initialValues) {
+if (isClustered) {
+CacheEntryEvent<String,String> event=listener.events.get(position);
+assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),expected.getKey());
+assertEquals(event.getValue(),expected.getValue());
+}
+ else {
+CacheEntryEvent<String,String> event=listener.events.get(position * 2);
+assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+assertEquals(event.isPre(),true);
+assertEquals(event.getKey(),expected.getKey());
+assertNull(event.getValue());
+event=listener.events.get((position * 2) + 1);
+assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),expected.getKey());
+assertEquals(event.getValue(),expected.getValue());
+}
+position++;
+}
+if (isClustered) {
+CacheEntryEvent<String,String> event=listener.events.get(position);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),key);
+assertEquals(event.getValue(),value);
+}
+ else {
+CacheEntryEvent<String,String> event=listener.events.get(position * 2);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),true);
+assertEquals(event.getKey(),key);
+assertEquals(event.getValue(),prevValue);
+event=listener.events.get((position * 2) + 1);
+assertEquals(event.getType(),operation.getType());
+assertEquals(event.isPre(),false);
+assertEquals(event.getKey(),key);
+assertEquals(event.getValue(),value);
+}
+}

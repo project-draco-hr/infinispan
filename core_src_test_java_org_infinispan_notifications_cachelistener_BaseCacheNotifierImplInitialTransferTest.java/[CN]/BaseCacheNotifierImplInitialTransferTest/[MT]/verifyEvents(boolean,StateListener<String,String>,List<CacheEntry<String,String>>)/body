@@ -1,0 +1,26 @@
+{
+  assertEquals(listener.events.size(),isClustered ? expected.size() : expected.size() * 2);
+  int eventPosition=0;
+  for (  CacheEntryEvent<String,String> event : listener.events) {
+    int position;
+    boolean isPost;
+    if (isClustered) {
+      isPost=true;
+      position=eventPosition;
+    }
+ else {
+      isPost=(eventPosition & 1) == 1;
+      position=eventPosition / 2;
+    }
+    assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+    assertEquals(event.getKey(),expected.get(position).getKey());
+    assertEquals(event.isPre(),!isPost);
+    if (isPost) {
+      assertEquals(event.getValue(),expected.get(position).getValue());
+    }
+ else {
+      assertNull(event.getValue());
+    }
+    eventPosition++;
+  }
+}

@@ -1,0 +1,29 @@
+{
+  ListenerInvocation<Event<K,V>> invocation=new ListenerInvocationImpl(target,method,sync,classLoader,subject);
+  CacheEntryListenerInvocation<K,V> returnValue;
+  if (includeCurrentState) {
+    if (clustered) {
+      QueueingSegmentListener handler=segmentHandler.get(identifier);
+      if (handler == null) {
+        if (config.clustering().cacheMode().isDistributed()) {
+          handler=new DistributedQueueingSegmentListener(distributionManager);
+        }
+ else {
+          handler=new QueueingAllSegmentListener();
+        }
+        QueueingSegmentListener currentQueue=segmentHandler.putIfAbsent(identifier,handler);
+        if (currentQueue != null) {
+          handler=currentQueue;
+        }
+      }
+      returnValue=new ClusteredListenerInvocation<K,V>(invocation,handler,filter,converter,identifier);
+    }
+ else {
+      returnValue=new BaseCacheEntryListenerInvocation(invocation,filter,converter,onlyPrimary,clustered,identifier);
+    }
+  }
+ else {
+    returnValue=new BaseCacheEntryListenerInvocation(invocation,filter,converter,onlyPrimary,clustered,identifier);
+  }
+  return returnValue;
+}

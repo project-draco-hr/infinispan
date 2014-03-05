@@ -1,0 +1,17 @@
+{
+  Set<Map.Entry<K,Object>> set=new HashSet<>();
+  for (  Map.Entry<K,Object> entry : notifiedKeys.entrySet()) {
+    Object value=entry.getValue();
+    if (value != NOTIFIED) {
+      K key=entry.getKey();
+      Object replaceValue=value;
+      while (replaceValue != NOTIFIED && !notifiedKeys.replace(key,replaceValue,NOTIFIED)) {
+        replaceValue=notifiedKeys.get(key);
+      }
+      if (replaceValue != NOTIFIED && replaceValue != REMOVED) {
+        set.add(new ImmortalCacheEntry(key,replaceValue));
+      }
+    }
+  }
+  return set;
+}

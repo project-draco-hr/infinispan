@@ -1,0 +1,16 @@
+{
+  for (  Map.Entry<Integer,ConcurrentHashSet<K>> entry : keysForSegment.entrySet()) {
+    Set<K> values=entry.getValue();
+    if (values.isEmpty()) {
+      notifyListenerCompletedSegment(entry.getKey(),false);
+    }
+ else {
+      Set<K> prevValues=keysNeededToComplete.putIfAbsent(entry.getKey(),values);
+      if (prevValues != null) {
+        for (        K value : values) {
+          prevValues.add(value);
+        }
+      }
+    }
+  }
+}

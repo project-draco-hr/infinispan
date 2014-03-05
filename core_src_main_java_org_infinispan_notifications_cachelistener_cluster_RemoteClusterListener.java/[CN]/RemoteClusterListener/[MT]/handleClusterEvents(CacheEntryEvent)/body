@@ -3,6 +3,13 @@
     GlobalTransaction transaction=event.getGlobalTransaction();
     if (transaction != null) {
       Queue<CacheEntryEvent> events=transactionChanges.get(transaction);
+      if (events == null) {
+        events=new ConcurrentLinkedQueue<>();
+        Queue<CacheEntryEvent> otherQueue=transactionChanges.putIfAbsent(transaction,events);
+        if (otherQueue != null) {
+          events=otherQueue;
+        }
+      }
       events.add(event);
     }
  else {
