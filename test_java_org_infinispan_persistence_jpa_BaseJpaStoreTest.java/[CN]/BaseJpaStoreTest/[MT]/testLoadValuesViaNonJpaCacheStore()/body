@@ -1,0 +1,14 @@
+{
+  TestObject obj1=createTestObject("testLoadViaNonJpaCacheStore1");
+  TestObject obj2=createTestObject("testLoadViaNonJpaCacheStore2");
+  cs.write(createEntry(obj1));
+  cs.write(createEntry(obj2));
+  assertEquals(cs.size(),2);
+  assertTrue(cs.contains(obj1.getKey()));
+  assertTrue(cs.contains(obj1.getKey()));
+  EntityManagerFactory emf=Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+  EntityManager em=emf.createEntityManager();
+  assertEquals(em.find(obj1.getValue().getClass(),obj1.getKey()),obj1.getValue());
+  assertEquals(em.find(obj2.getValue().getClass(),obj2.getKey()),obj2.getValue());
+  em.close();
+}
