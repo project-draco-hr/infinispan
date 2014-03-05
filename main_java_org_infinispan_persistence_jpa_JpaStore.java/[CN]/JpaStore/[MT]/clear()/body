@@ -7,15 +7,15 @@
       try {
         log.trace("Clearing JPA Store");
         String entityTable=em.getMetamodel().entity(configuration.entityClass()).getName();
-        Query clearEntities=em.createQuery("DELETE FROM " + entityTable);
-        clearEntities.executeUpdate();
+        @SuppressWarnings("unchecked") List<Object> items=em.createQuery("FROM " + entityTable).getResultList();
+        for (        Object o : items)         em.remove(o);
         if (configuration.storeMetadata()) {
           String metadataTable=em.getMetamodel().entity(MetadataEntity.class).getName();
           Query clearMetadata=em.createQuery("DELETE FROM " + metadataTable);
           clearMetadata.executeUpdate();
         }
-        em.clear();
         txn.commit();
+        em.clear();
         break;
       }
  catch (      Exception e) {
