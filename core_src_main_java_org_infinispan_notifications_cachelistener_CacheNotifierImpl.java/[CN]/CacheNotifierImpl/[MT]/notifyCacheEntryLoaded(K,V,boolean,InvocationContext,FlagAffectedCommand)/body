@@ -1,0 +1,13 @@
+{
+  if (isNotificationAllowed(command,cacheEntryLoadedListeners)) {
+    boolean originLocal=ctx.isOriginLocal();
+    EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_LOADED);
+    e.setOriginLocal(originLocal);
+    e.setPre(pre);
+    e.setKey(key);
+    e.setValue(value);
+    setTx(ctx,e);
+    boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+    for (    ListenerInvocation listener : cacheEntryLoadedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
+  }
+}

@@ -1,0 +1,32 @@
+{
+  for (  Event<? extends K,? extends V> event : events) {
+    if (event.isPre()) {
+      throw new IllegalArgumentException("Events for cluster listener should never be pre change");
+    }
+switch (event.getType()) {
+case CACHE_ENTRY_MODIFIED:
+      for (      ListenerInvocation listener : cacheEntryModifiedListeners) {
+        if (listener.clustered && uuid.equals(listener.generatedId)) {
+          listener.invoke(event,true,true);
+        }
+      }
+    break;
+case CACHE_ENTRY_CREATED:
+  for (  ListenerInvocation listener : cacheEntryCreatedListeners) {
+    if (listener.clustered && uuid.equals(listener.generatedId)) {
+      listener.invoke(event,true,true);
+    }
+  }
+break;
+case CACHE_ENTRY_REMOVED:
+for (ListenerInvocation listener : cacheEntryRemovedListeners) {
+if (listener.clustered && uuid.equals(listener.generatedId)) {
+  listener.invoke(event,true,true);
+}
+}
+break;
+default :
+throw new IllegalArgumentException("Unexpected event type encountered!");
+}
+}
+}

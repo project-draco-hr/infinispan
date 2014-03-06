@@ -1,0 +1,15 @@
+{
+  boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+  if (isNotificationAllowed(command,cacheEntriesEvictedListeners)) {
+    EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+    Map<K,V> map=Collections.singletonMap(key,value);
+    e.setEntries(map);
+    for (    ListenerInvocation listener : cacheEntriesEvictedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
+  }
+  if (isNotificationAllowed(command,cacheEntryEvictedListeners)) {
+    EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+    e.setKey(key);
+    e.setValue(value);
+    for (    ListenerInvocation listener : cacheEntryEvictedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
+  }
+}

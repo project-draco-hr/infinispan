@@ -1,0 +1,35 @@
+{
+  if (!entries.isEmpty()) {
+    if (isNotificationAllowed(command,cacheEntriesEvictedListeners)) {
+      EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+      Map<K,V> evictedKeysAndValues=transformCollectionToMap(entries,new InfinispanCollections.MapMakerFunction<K,V,InternalCacheEntry<? extends K,? extends V>>(){
+        @Override public Map.Entry<K,V> transform(        final InternalCacheEntry<? extends K,? extends V> input){
+          return new Map.Entry<K,V>(){
+            @Override public K getKey(){
+              return input.getKey();
+            }
+            @Override public V getValue(){
+              return input.getValue();
+            }
+            @Override public V setValue(            V value){
+              throw new UnsupportedOperationException();
+            }
+          }
+;
+        }
+      }
+);
+      e.setEntries(evictedKeysAndValues);
+      for (      ListenerInvocation listener : cacheEntriesEvictedListeners)       listener.invoke(e);
+    }
+    if (isNotificationAllowed(command,cacheEntryEvictedListeners)) {
+      for (      InternalCacheEntry<? extends K,? extends V> ice : entries) {
+        EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
+        e.setKey(ice.getKey());
+        e.setValue(ice.getValue());
+        boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(ice.getKey());
+        for (        ListenerInvocation listener : cacheEntryEvictedListeners)         listener.invoke(e,isLocalNodePrimaryOwner);
+      }
+    }
+  }
+}
