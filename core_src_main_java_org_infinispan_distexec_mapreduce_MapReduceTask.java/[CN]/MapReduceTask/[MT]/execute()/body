@@ -1,35 +1,3 @@
 {
-  ensureAccessPermissions(cache);
-  if (mapper == null)   throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
-  if (reducer == null)   throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
-  if (!isLocalOnly && distributeReducePhase()) {
-    boolean useCompositeKeys=useIntermediateSharedCache();
-    try {
-      executeTaskInit(getIntermediateCacheName());
-    }
- catch (    Exception e) {
-      throw new CacheException(e);
-    }
-    try {
-      Set<KOut> allMapPhasesResponses=executeMapPhase(useCompositeKeys);
-      return executeReducePhase(allMapPhasesResponses,useCompositeKeys);
-    }
- catch (    Exception cause) {
-      throw new CacheException(cause);
-    }
- finally {
-      if (useIntermediatePerTaskCache()) {
-        EmbeddedCacheManager cm=cache.getCacheManager();
-        cm.removeCache(getIntermediateCacheName());
-      }
-    }
-  }
- else {
-    try {
-      return executeMapPhaseWithLocalReduction();
-    }
- catch (    Exception cause) {
-      throw new CacheException(cause);
-    }
-  }
+  return executeHelper(null);
 }

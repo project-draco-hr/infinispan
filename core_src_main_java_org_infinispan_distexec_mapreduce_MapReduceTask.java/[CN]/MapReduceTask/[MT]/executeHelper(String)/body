@@ -1,0 +1,45 @@
+{
+  ensureAccessPermissions(cache);
+  if (mapper == null)   throw new NullPointerException("A valid reference of Mapper is not set " + mapper);
+  if (reducer == null)   throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
+  Map<KOut,VOut> result=null;
+  if (!isLocalOnly && distributeReducePhase()) {
+    boolean useCompositeKeys=useIntermediateSharedCache();
+    try {
+      executeTaskInit(getIntermediateCacheName());
+    }
+ catch (    Exception e) {
+      throw new CacheException(e);
+    }
+    try {
+      Set<KOut> allMapPhasesResponses=executeMapPhase(useCompositeKeys);
+      result=executeReducePhase(resultCache,allMapPhasesResponses,useCompositeKeys);
+    }
+ catch (    Exception cause) {
+      throw new CacheException(cause);
+    }
+ finally {
+      if (useIntermediatePerTaskCache()) {
+        EmbeddedCacheManager cm=cache.getCacheManager();
+        cm.removeCache(getIntermediateCacheName());
+      }
+    }
+  }
+ else {
+    try {
+      if (resultCache == null || resultCache.isEmpty()) {
+        result=new HashMap<KOut,VOut>();
+        executeMapPhaseWithLocalReduction(result);
+      }
+ else {
+        EmbeddedCacheManager cm=cache.getCacheManager();
+        Cache<KOut,VOut> c=cm.getCache(resultCache);
+        executeMapPhaseWithLocalReduction(c);
+      }
+    }
+ catch (    Exception cause) {
+      throw new CacheException(cause);
+    }
+  }
+  return result;
+}

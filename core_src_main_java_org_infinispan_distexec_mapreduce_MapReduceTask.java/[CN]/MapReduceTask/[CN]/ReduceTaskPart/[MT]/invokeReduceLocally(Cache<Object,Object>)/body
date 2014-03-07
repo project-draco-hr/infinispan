@@ -3,7 +3,13 @@
   Map<KOut,VOut> localReduceResult=null;
   try {
     log.debugf("Invoking %s locally ",rc);
-    localReduceResult=mapReduceManager.reduce(rc);
+    if (rc.emitsIntoResultingCache()) {
+      mapReduceManager.reduce(rc,rc.getResultCacheName());
+      localReduceResult=Collections.emptyMap();
+    }
+ else {
+      localReduceResult=mapReduceManager.reduce(rc);
+    }
     log.debugf("Invoked %s locally",rc);
   }
  catch (  Throwable e1) {
