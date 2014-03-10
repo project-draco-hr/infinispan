@@ -177,16 +177,9 @@
     try {
       Object instance=newInstance(className);
       StoreConfigurationBuilder storeConfigurationBuilder;
-      if (instance instanceof org.infinispan.loaders.CacheLoader) {
-        Adaptor52xStoreConfigurationBuilder scb=persistenceBuilder.addStore(Adaptor52xStoreConfigurationBuilder.class);
-        scb.loader((org.infinispan.loaders.CacheLoader)instance);
-        storeConfigurationBuilder=scb;
-      }
- else {
-        Class<?> storeImplClass=CacheLoader.class.getClassLoader().loadClass(className);
-        Class<? extends StoreConfigurationBuilder> builderClass=StoreConfigurationBuilder.class.getClassLoader().loadClass(storeImplClass.getName() + "ConfigurationBuilder").asSubclass(StoreConfigurationBuilder.class);
-        storeConfigurationBuilder=persistenceBuilder.addStore(builderClass);
-      }
+      Class<?> storeImplClass=CacheLoader.class.getClassLoader().loadClass(className);
+      Class<? extends StoreConfigurationBuilder> builderClass=StoreConfigurationBuilder.class.getClassLoader().loadClass(storeImplClass.getName() + "ConfigurationBuilder").asSubclass(StoreConfigurationBuilder.class);
+      storeConfigurationBuilder=persistenceBuilder.addStore(builderClass);
       return storeConfigurationBuilder;
     }
  catch (    Exception e) {
