@@ -8,31 +8,34 @@
     return null;
   }
   final boolean isDelta=cmd instanceof ApplyDeltaCommand;
-  try {
-    while (!cdl.lock(key,false))     ;
-    InternalCacheEntry ice=dataContainer.get(key);
-    if (ice != null) {
-      wrapInternalCacheEntry(ctx,key,cmd,ice,isDelta,false);
-      return null;
+  final AtomicReference<Boolean> isLoaded=new AtomicReference<Boolean>();
+  dataContainer.compute(key,new DataContainer.ComputeAction(){
+    @Override public InternalCacheEntry compute(    Object key,    InternalCacheEntry oldEntry,    InternalEntryFactory factory){
+      if (oldEntry != null) {
+        wrapInternalCacheEntry(ctx,key,cmd,oldEntry,isDelta);
+        isLoaded.set(null);
+        return oldEntry;
+      }
+      MarshalledEntry loaded=internalLoadAndUpdateStats(key,ctx);
+      if (loaded == null) {
+        isLoaded.set(Boolean.FALSE);
+        return null;
+      }
+      InternalCacheEntry newEntry;
+      InternalMetadata metadata=loaded.getMetadata();
+      if (metadata != null) {
+        Metadata actual=metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl)metadata).actual() : metadata;
+        newEntry=factory.create(loaded.getKey(),loaded.getValue(),actual,metadata.created(),metadata.lifespan(),metadata.lastUsed(),metadata.maxIdle());
+      }
+ else {
+        newEntry=factory.create(loaded.getKey(),loaded.getValue(),(Metadata)null);
+      }
+      CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,newEntry,isDelta);
+      recordLoadedEntry(ctx,key,wrappedEntry,newEntry,cmd);
+      isLoaded.set(Boolean.TRUE);
+      return newEntry;
     }
-    MarshalledEntry loaded=persistenceManager.loadFromAllStores(key,ctx);
-    if (getLog().isTraceEnabled()) {
-      getLog().tracef("Loaded %s for key %s from persistence.",loaded,key);
-    }
-    if (loaded == null) {
-      return Boolean.FALSE;
-    }
-    InternalMetadata metadata=loaded.getMetadata();
-    if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
-      return Boolean.FALSE;
-    }
-    ice=iceFactory.create(loaded.getKey(),loaded.getValue(),metadata);
-    CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,ice,isDelta,true);
-    recordLoadedEntry(ctx,key,wrappedEntry,ice,cmd,isDelta);
-    afterSuccessfullyLoaded(wrappedEntry);
-    return Boolean.TRUE;
   }
-  finally {
-    cdl.unlock(key);
-  }
+);
+  return isLoaded.get();
 }

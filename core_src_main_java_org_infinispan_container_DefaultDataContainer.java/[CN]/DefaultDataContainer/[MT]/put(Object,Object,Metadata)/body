@@ -1,16 +1,14 @@
 {
   InternalCacheEntry e=entries.get(k);
+  if (trace) {
+    log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s",e,metadata,v);
+  }
   if (e != null) {
-    e.setValue(v);
-    InternalCacheEntry original=e;
-    e=entryFactory.update(e,metadata);
-    if (isMortalEntry(e) && original == e) {
-      e.reincarnate(timeService.wallClockTime());
-    }
+    e=entryFactory.update(e,v,metadata);
   }
  else {
     e=entryFactory.create(k,v,metadata);
   }
   if (trace)   log.tracef("Store %s in container",e);
-  entries.put(k,e);
+  extendedMap.putAndActivate(e);
 }

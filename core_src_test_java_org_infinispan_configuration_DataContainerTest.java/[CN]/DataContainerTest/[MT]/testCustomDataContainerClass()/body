@@ -5,7 +5,9 @@
   try {
     AdvancedCache<Object,Object> cache=cm.getCache().getAdvancedCache();
     DataContainer ddc=DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
-    ((DefaultDataContainer)ddc).initialize(null,null,new InternalEntryFactoryImpl(),null,null,TIME_SERVICE);
+    ActivationManager activationManager=mock(ActivationManager.class);
+    doNothing().when(activationManager).activate(Mockito.anyObject());
+    ((DefaultDataContainer)ddc).initialize(null,null,new InternalEntryFactoryImpl(),activationManager,null,TIME_SERVICE);
     QueryableDataContainer.setDelegate(ddc);
     Assert.assertEquals(cm.getDefaultCacheConfiguration().dataContainer().dataContainer().getClass().getName(),QueryableDataContainer.class.getName());
     Assert.assertEquals(cache.getDataContainer().getClass(),QueryableDataContainer.class);

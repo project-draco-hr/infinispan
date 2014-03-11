@@ -1,16 +1,12 @@
 {
   InterceptorChain chain=TestingUtil.extractComponent(injectInCache,InterceptorChain.class);
-  if (chain.containsInterceptorType(DistCacheWriterInterceptor.class)) {
-    injectInCache.getAdvancedCache().addInterceptorAfter(this,DistCacheWriterInterceptor.class);
+  List<CommandInterceptor> list=chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
+  if (list.isEmpty()) {
+    list=chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
   }
- else   if (chain.containsInterceptorType(CacheWriterInterceptor.class)) {
-    injectInCache.getAdvancedCache().addInterceptorAfter(this,CacheWriterInterceptor.class);
-  }
- else   if (chain.containsInterceptorType(PassivationInterceptor.class)) {
-    injectInCache.getAdvancedCache().addInterceptorAfter(this,PassivationInterceptor.class);
-  }
- else {
+  if (list.isEmpty()) {
     throw new IllegalStateException("Should not happen!");
   }
+  injectInCache.getAdvancedCache().addInterceptorAfter(this,list.get(0).getClass());
   return this;
 }
