@@ -1,0 +1,14 @@
+{
+  String config=INFINISPAN_START_TAG_NO_SCHEMA + "<default>\n" + "<persistence >\n"+ "<store class=\"org.infinispan.persistence.dummy.DummyInMemoryStore\" >\n"+ "<properties >"+ "<property name=\"storeName\" value=\"myStore\"/>"+ "</properties >"+ "</store >\n"+ "</persistence >\n"+ "</default>\n"+ INFINISPAN_END_TAG;
+  InputStream is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      PersistenceConfiguration cfg=cm.getDefaultCacheConfiguration().persistence();
+      StoreConfiguration config=cfg.stores().get(0);
+      assertTrue(config instanceof DummyInMemoryStoreConfiguration);
+      DummyInMemoryStoreConfiguration dummyInMemoryStoreConfiguration=(DummyInMemoryStoreConfiguration)config;
+      assertEquals("myStore",dummyInMemoryStoreConfiguration.storeName());
+    }
+  }
+);
+}

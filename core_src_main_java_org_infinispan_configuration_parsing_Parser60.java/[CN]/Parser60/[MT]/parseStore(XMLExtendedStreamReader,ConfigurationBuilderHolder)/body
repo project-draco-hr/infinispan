@@ -47,5 +47,31 @@ parseStoreChildren(reader,sfs);
 ClusterLoaderConfigurationBuilder cscb=builder.persistence().addClusterLoader();
 parseLoaderChildren(reader,cscb);
 }
+ else {
+ConfiguredBy annotation=store.getClass().getAnnotation(ConfiguredBy.class);
+Class<? extends StoreConfigurationBuilder> builderClass=null;
+if (annotation != null) {
+Class<?> configuredBy=annotation.value();
+if (configuredBy != null) {
+BuiltBy builtBy=configuredBy.getAnnotation(BuiltBy.class);
+builderClass=builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+}
+}
+if (builderClass == null) {
+builderClass=BaseStoreConfigurationBuilder.class;
+}
+StoreConfigurationBuilder configBuilder=builder.persistence().addStore(builderClass);
+if (fetchPersistentState != null) configBuilder.fetchPersistentState(fetchPersistentState);
+if (ignoreModifications != null) configBuilder.ignoreModifications(ignoreModifications);
+if (purgeOnStartup != null) configBuilder.purgeOnStartup(purgeOnStartup);
+if (preload != null) configBuilder.preload(preload);
+if (shared != null) configBuilder.shared(shared);
+if (store instanceof CacheWriter) {
+parseStoreChildren(reader,configBuilder);
+}
+ else if (store instanceof CacheLoader) {
+parseLoaderChildren(reader,configBuilder);
+}
+}
 }
 }

@@ -176,11 +176,7 @@
     String className=store.require(ModelKeys.CLASS).asString();
     try {
       Object instance=newInstance(className);
-      StoreConfigurationBuilder storeConfigurationBuilder;
-      Class<?> storeImplClass=CacheLoader.class.getClassLoader().loadClass(className);
-      Class<? extends StoreConfigurationBuilder> builderClass=StoreConfigurationBuilder.class.getClassLoader().loadClass(storeImplClass.getName() + "ConfigurationBuilder").asSubclass(StoreConfigurationBuilder.class);
-      storeConfigurationBuilder=persistenceBuilder.addStore(builderClass);
-      return storeConfigurationBuilder;
+      return handleStoreOrLoaderClass(className,persistenceBuilder);
     }
  catch (    Exception e) {
       throw InfinispanMessages.MESSAGES.invalidCacheStore(e,className);

@@ -1,0 +1,16 @@
+{
+  Class<?> storeImplClass=CacheLoader.class.getClassLoader().loadClass(className);
+  ConfiguredBy annotation=storeImplClass.getAnnotation(ConfiguredBy.class);
+  Class<? extends StoreConfigurationBuilder> builderClass=null;
+  if (annotation != null) {
+    Class<?> configuredBy=annotation.value();
+    if (configuredBy != null) {
+      BuiltBy builtBy=configuredBy.getAnnotation(BuiltBy.class);
+      builderClass=builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+    }
+  }
+  if (builderClass == null) {
+    builderClass=BaseStoreConfigurationBuilder.class;
+  }
+  return persistenceBuilder.addStore(builderClass);
+}
