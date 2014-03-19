@@ -1,0 +1,42 @@
+{
+  if (asyncSkipsThread(explicitFlags,key)) {
+    return wrapInFuture(get(key,explicitFlags,explicitClassLoader));
+  }
+ else {
+    final EnumSet<Flag> appliedFlags;
+    if (explicitFlags == null) {
+      appliedFlags=null;
+    }
+ else {
+      appliedFlags=explicitFlags.clone();
+      explicitFlags.clear();
+    }
+    final NotifyingFutureImpl<V> result=new NotifyingFutureImpl<V>();
+    Callable<V> c=new Callable<V>(){
+      @Override public V call() throws Exception {
+        try {
+          V retval=get(key,appliedFlags,explicitClassLoader);
+          try {
+            result.notifyDone(retval);
+          }
+ catch (          Throwable t) {
+            log.trace("Error when notifying",t);
+          }
+          return retval;
+        }
+ catch (        Exception e) {
+          try {
+            result.notifyException(e);
+          }
+ catch (          Throwable t) {
+            log.trace("Error when notifying",t);
+          }
+          throw e;
+        }
+      }
+    }
+;
+    result.setFuture(asyncExecutor.submit(c));
+    return result;
+  }
+}
