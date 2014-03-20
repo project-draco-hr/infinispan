@@ -1,4 +1,5 @@
 {
+  FileLookup fileLookup=new FileLookup();
   String cfg;
   if (props != null) {
     if (props.containsKey(CHANNEL_LOOKUP)) {
@@ -21,7 +22,7 @@ catch (      Exception e) {
     }
     if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
       cfg=props.getProperty(CONFIGURATION_FILE);
-      URL conf=FileLookupFactory.newInstance().lookupFileLocation(cfg,configuration.classLoader());
+      URL conf=fileLookup.lookupFileLocation(cfg,configuration.classLoader());
       if (conf == null) {
         throw new CacheConfigurationException(CONFIGURATION_FILE + " property specifies value " + cfg+ " that could not be read!",new FileNotFoundException(cfg));
       }
@@ -57,7 +58,7 @@ catch (      Exception e) {
   if (channel == null) {
     log.unableToUseJGroupsPropertiesProvided(props);
     try {
-      channel=new JChannel(FileLookupFactory.newInstance().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE,configuration.classLoader()));
+      channel=new JChannel(fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE,configuration.classLoader()));
     }
  catch (    Exception e) {
       throw new CacheException("Unable to start JGroups channel",e);

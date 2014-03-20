@@ -1,0 +1,33 @@
+{
+  final List<Enumeration<URL>> enumerations=new ArrayList<Enumeration<URL>>();
+  for (  Bundle bundle : bundles) {
+    try {
+      final Enumeration<URL> resources=bundle.getResources(name);
+      if (resources != null) {
+        enumerations.add(resources);
+      }
+    }
+ catch (    Exception ignore) {
+    }
+  }
+  final Enumeration<URL> aggEnumeration=new Enumeration<URL>(){
+    @Override public boolean hasMoreElements(){
+      for (      Enumeration<URL> enumeration : enumerations) {
+        if (enumeration != null && enumeration.hasMoreElements()) {
+          return true;
+        }
+      }
+      return false;
+    }
+    @Override public URL nextElement(){
+      for (      Enumeration<URL> enumeration : enumerations) {
+        if (enumeration != null && enumeration.hasMoreElements()) {
+          return enumeration.nextElement();
+        }
+      }
+      throw new NoSuchElementException();
+    }
+  }
+;
+  return aggEnumeration;
+}
