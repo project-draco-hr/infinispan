@@ -1,0 +1,71 @@
+{
+  return new AuthorizingCallbackHandler(){
+    Subject subject=new Subject();
+    Principal userPrincipal;
+    public void handle(    final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+      String userName=null;
+      String realmName=null;
+      for (      Callback callback : callbacks) {
+        if (callback instanceof NameCallback) {
+          final NameCallback nameCallback=(NameCallback)callback;
+          final String defaultName=nameCallback.getDefaultName();
+          userName=defaultName.toLowerCase().trim();
+          nameCallback.setName(userName);
+          userPrincipal=new SimpleUserPrincipal(userName);
+          subject.getPrincipals().add(userPrincipal);
+        }
+ else         if (callback instanceof RealmCallback) {
+          final RealmCallback realmCallback=(RealmCallback)callback;
+          final String defaultRealm=realmCallback.getDefaultText();
+          if (defaultRealm != null) {
+            realmName=defaultRealm.toLowerCase().trim();
+            realmCallback.setText(realmName);
+          }
+        }
+ else         if (callback instanceof PasswordCallback) {
+          final PasswordCallback passwordCallback=(PasswordCallback)callback;
+          Entry entry=null;
+          if (realmName == null) {
+synchronized (map) {
+              for (              Map<String,Entry> realmMap : map.values()) {
+                if (realmMap.containsKey(userName)) {
+                  entry=realmMap.get(userName);
+                  break;
+                }
+              }
+            }
+          }
+ else {
+synchronized (map) {
+              final Map<String,Entry> realmMap=map.get(realmName);
+              if (realmMap != null) {
+                entry=realmMap.get(userName);
+              }
+            }
+          }
+          if (entry == null) {
+            throw new AuthenticationException("No matching user found");
+          }
+          for (          String group : entry.getGroups()) {
+            subject.getPrincipals().add(new SimpleGroupPrincipal(group));
+          }
+          passwordCallback.setPassword(entry.getPassword());
+        }
+ else         if (callback instanceof AuthorizeCallback) {
+          final AuthorizeCallback authorizeCallback=(AuthorizeCallback)callback;
+          authorizeCallback.setAuthorized(authorizeCallback.getAuthenticationID().equals(authorizeCallback.getAuthorizationID()));
+        }
+ else {
+          throw new UnsupportedCallbackException(callback,"Callback not supported: " + callback);
+        }
+      }
+    }
+    @Override public SubjectUserInfo getSubjectUserInfo(    Collection<Principal> principals){
+      if (principals != null) {
+        subject.getPrincipals().addAll(principals);
+      }
+      return new SimpleSubjectUserInfo(userPrincipal.getName(),subject);
+    }
+  }
+;
+}

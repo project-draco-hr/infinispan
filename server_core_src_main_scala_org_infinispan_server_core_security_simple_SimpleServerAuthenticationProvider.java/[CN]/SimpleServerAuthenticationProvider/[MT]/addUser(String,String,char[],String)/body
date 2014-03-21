@@ -1,0 +1,21 @@
+{
+  if (userName == null) {
+    throw new IllegalArgumentException("userName is null");
+  }
+  if (userRealm == null) {
+    throw new IllegalArgumentException("userRealm is null");
+  }
+  if (password == null) {
+    throw new IllegalArgumentException("password is null");
+  }
+  final String canonUserRealm=userRealm.toLowerCase().trim();
+  final String canonUserName=userName.toLowerCase().trim();
+synchronized (map) {
+    Map<String,Entry> realmMap=map.get(canonUserRealm);
+    if (realmMap == null) {
+      realmMap=new HashMap<String,Entry>();
+      map.put(canonUserRealm,realmMap);
+    }
+    realmMap.put(canonUserName,new Entry(canonUserName,canonUserRealm,password,groups != null ? groups : new String[0]));
+  }
+}

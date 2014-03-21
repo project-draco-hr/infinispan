@@ -1,0 +1,34 @@
+{
+  Set<T> factories=new LinkedHashSet<T>();
+  final ServiceLoader<T> loader=ServiceLoader.load(type,classLoader);
+  for (  T factory : loader) {
+    factories.add(factory);
+  }
+  if (includeGlobal) {
+    Set<String> loadedClasses=new HashSet<String>();
+    final String filter=type.getSimpleName() + ".";
+    Provider[] providers=Security.getProviders();
+    for (    Provider currentProvider : providers) {
+      final ClassLoader cl=currentProvider.getClass().getClassLoader();
+      for (      Object currentKey : currentProvider.keySet()) {
+        if (currentKey instanceof String && ((String)currentKey).startsWith(filter) && ((String)currentKey).indexOf(' ') < 0) {
+          String className=currentProvider.getProperty((String)currentKey);
+          if (className != null && loadedClasses.add(className)) {
+            try {
+              factories.add(Class.forName(className,true,cl).asSubclass(type).newInstance());
+            }
+ catch (            ClassNotFoundException e) {
+            }
+catch (            ClassCastException e) {
+            }
+catch (            InstantiationException e) {
+            }
+catch (            IllegalAccessException e) {
+            }
+          }
+        }
+      }
+    }
+  }
+  return factories.iterator();
+}
