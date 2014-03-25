@@ -1,0 +1,28 @@
+{
+  final StateSequencer sequencer=new StateSequencer();
+  sequencer.logicalThread("tx1","tx1:begin","tx1:block_commit_on_backup","tx1:after_rollback_on_primary","tx1:block_rollback_on_backup","tx1:resume_commit_on_backup","tx1:after_commit_on_backup","tx1:resume_rollback_on_backup","tx1:after_rollback_on_backup","tx1:check");
+  advanceOnInterceptor(sequencer,cache(2),StateTransferInterceptor.class,matchCommand(CommitCommand.class).matchCount(0).build()).before("tx1:block_commit_on_backup","tx1:resume_commit_on_backup").after("tx1:after_commit_on_backup");
+  advanceOnInterceptor(sequencer,cache(1),StateTransferInterceptor.class,matchCommand(RollbackCommand.class).build()).after("tx1:after_rollback_on_primary");
+  advanceOnInterceptor(sequencer,cache(2),StateTransferInterceptor.class,matchCommand(RollbackCommand.class).build()).before("tx1:block_rollback_on_backup").after("tx1:after_rollback_on_backup");
+  assertEquals(Arrays.asList(address(1),address(2)),advancedCache(0).getDistributionManager().locate(TEST_KEY));
+  Future<Object> lockCheckFuture=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      sequencer.enter("tx1:resume_rollback_on_backup");
+      try {
+        assertTrue(TestingUtil.extractLockManager(cache(1)).isLocked(TEST_KEY));
+      }
+  finally {
+        sequencer.exit("tx1:resume_rollback_on_backup");
+      }
+      return null;
+    }
+  }
+);
+  sequencer.advance("tx1:begin");
+  tm(0).begin();
+  cache(0).put(TEST_KEY,TX1_VALUE);
+  tm(0).commit();
+  sequencer.advance("tx1:check");
+  assertFalse(TestingUtil.extractLockManager(cache(1)).isLocked(TEST_KEY));
+  lockCheckFuture.get(10,TimeUnit.SECONDS);
+}

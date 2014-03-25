@@ -1,8 +1,14 @@
 {
+  GlobalTransaction gtx=ctx.getGlobalTransaction();
+  if (!ctx.isOriginLocal() && txTable.isTransactionCompleted(gtx)) {
+    log.tracef("Transaction %s already completed, skipping commit",gtx);
+    return null;
+  }
   if (this.statisticsEnabled)   commits.incrementAndGet();
+  txTable.markTransactionCompleted(gtx);
   Object result=invokeNextInterceptor(ctx,command);
   if (!ctx.isOriginLocal() || isTotalOrder) {
-    txTable.remoteTransactionCommitted(ctx.getGlobalTransaction(),false);
+    txTable.remoteTransactionCommitted(gtx,false);
   }
   return result;
 }

@@ -7,7 +7,9 @@
     log.errorProcessing2pcCommitCommand(e);
   }
   try {
-    if (!(onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder())) {
+    boolean isRecoveryEnabled=recoveryManager != null;
+    boolean isTotalOrder=onePhaseCommit && configuration.transaction().transactionProtocol().isTotalOrder();
+    if (!isRecoveryEnabled && !isTotalOrder) {
       rollbackInternal(ctx);
     }
   }
