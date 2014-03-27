@@ -23,10 +23,10 @@
             throw new JpaStoreException("Cannot marshall key",e);
           }
           long metadataFindBegin=timeService.time();
-          MetadataEntity metadata=em.find(MetadataEntity.class,keyBytes);
+          MetadataEntity metadata=em.find(MetadataEntity.class,new MetadataEntityKey(keyBytes));
           stats.addMetadataFind(timeService.time() - metadataFindBegin);
           if (trace)           log.trace("Metadata " + key + " -> "+ toString(metadata));
-          return metadata == null || metadata.expiration > timeService.wallClockTime();
+          return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
         }
  else {
           return true;
