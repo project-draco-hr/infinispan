@@ -1,0 +1,30 @@
+{
+  globalConfig=new GlobalConfigurationBuilder();
+  globalConfig.globalJmxStatistics().disable();
+  globalConfig.globalJmxStatistics().mBeanServerLookup(null);
+  GlobalAuthorizationConfigurationBuilder globalRoles=globalConfig.security().authorization().principalRoleMapper(new IdentityRoleMapper());
+  cacheConfig=new ConfigurationBuilder();
+  cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
+  cacheConfig.invocationBatching().enable();
+  cacheConfig.jmxStatistics().disable();
+  AuthorizationConfigurationBuilder authConfig=cacheConfig.security().enable().authorization();
+  Map<String,AuthorizationPermission[]> rolePermissionMap=getRolePermissionMap();
+  for (  Entry<String,AuthorizationPermission[]> role : rolePermissionMap.entrySet()) {
+    authConfig=authConfig.role(role.getKey());
+    GlobalRoleConfigurationBuilder roleBuilder=globalRoles.role(role.getKey());
+    for (    AuthorizationPermission permission : role.getValue()) {
+      roleBuilder=roleBuilder.permission(permission);
+    }
+  }
+  Subject admin=getAdminSubject();
+  Subject.doAs(admin,new PrivilegedExceptionAction<Void>(){
+    public Void run() throws Exception {
+      manager=new DefaultCacheManager(globalConfig.build());
+      manager.defineConfiguration(CACHE_NAME,cacheConfig.build());
+      secureCache=manager.getCache(CACHE_NAME);
+      secureCache.put("predefined key","predefined value");
+      return null;
+    }
+  }
+);
+}

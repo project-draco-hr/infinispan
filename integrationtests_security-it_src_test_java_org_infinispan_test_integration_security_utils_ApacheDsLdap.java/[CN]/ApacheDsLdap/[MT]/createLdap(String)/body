@@ -1,0 +1,16 @@
+{
+  final String initFile=System.getProperty("ldap.init.file",LDAP_INIT_FILE);
+  final String ldifContent=IOUtils.toString(getClass().getClassLoader().getResource(initFile));
+  final SchemaManager schemaManager=directoryService.getSchemaManager();
+  try {
+    for (    LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(ldifContent))) {
+      directoryService.getAdminSession().add(new DefaultEntry(schemaManager,ldifEntry.getEntry()));
+    }
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    throw e;
+  }
+  final CreateLdapServer createLdapServer=(CreateLdapServer)AnnotationUtils.getInstance(CreateLdapServer.class);
+  ldapServer=ServerAnnotationProcessor.instantiateLdapServer(createLdapServer,directoryService);
+}
