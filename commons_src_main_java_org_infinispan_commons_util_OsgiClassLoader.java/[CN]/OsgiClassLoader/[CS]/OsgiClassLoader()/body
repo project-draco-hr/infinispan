@@ -3,9 +3,13 @@
   final ClassLoader cl=OsgiClassLoader.class.getClassLoader();
   if (cl instanceof BundleReference) {
     final BundleContext bundleContext=((BundleReference)OsgiClassLoader.class.getClassLoader()).getBundle().getBundleContext();
-    bundles=bundleContext.getBundles();
+    Bundle[] foundBundles=bundleContext.getBundles();
+    bundles=new ArrayList<WeakReference<Bundle>>(foundBundles.length);
+    for (    Bundle foundBundle : foundBundles) {
+      bundles.add(new WeakReference<Bundle>(foundBundle));
+    }
   }
  else {
-    bundles=new Bundle[0];
+    bundles=Collections.EMPTY_LIST;
   }
 }
