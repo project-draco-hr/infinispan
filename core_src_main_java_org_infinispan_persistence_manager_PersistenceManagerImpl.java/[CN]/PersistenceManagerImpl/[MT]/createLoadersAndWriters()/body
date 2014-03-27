@@ -1,10 +1,19 @@
 {
   for (  StoreConfiguration cfg : configuration.persistence().stores()) {
     ConfigurationFor annotation=cfg.getClass().getAnnotation(ConfigurationFor.class);
+    Class classAnnotation=null;
     if (annotation == null) {
+      if (cfg instanceof CustomStoreConfiguration) {
+        classAnnotation=((CustomStoreConfiguration)cfg).customStoreClass();
+      }
+    }
+ else {
+      classAnnotation=annotation.value();
+    }
+    if (classAnnotation == null) {
       throw log.loaderConfigurationDoesNotSpecifyLoaderClass(cfg.getClass().getName());
     }
-    Object instance=Util.getInstance(annotation.value());
+    Object instance=Util.getInstance(classAnnotation);
     CacheWriter writer=instance instanceof CacheWriter ? (CacheWriter)instance : null;
     CacheLoader loader=instance instanceof CacheLoader ? (CacheLoader)instance : null;
     if (cfg.ignoreModifications())     writer=null;
