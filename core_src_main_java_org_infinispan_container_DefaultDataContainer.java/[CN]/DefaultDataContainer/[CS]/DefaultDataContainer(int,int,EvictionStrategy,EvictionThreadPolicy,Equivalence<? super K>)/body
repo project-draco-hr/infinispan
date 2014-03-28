@@ -20,34 +20,6 @@ break;
 default :
 throw new IllegalArgumentException("No such eviction strategy " + strategy);
 }
-final BoundedConcurrentHashMap<K,InternalCacheEntry<K,V>> boundedMap=new BoundedConcurrentHashMap<K,InternalCacheEntry<K,V>>(maxEntries,concurrencyLevel,eviction,evictionListener,keyEquivalence,AnyEquivalence.getInstance());
-entries=boundedMap;
-extendedMap=new ExtendedMap<K,V>(){
-@Override public void evict(K key){
-boundedMap.evict(key);
-}
-@Override public void compute(K key,final ComputeAction<K,V> action){
-boundedMap.lock(key);
-try {
-InternalCacheEntry<K,V> oldEntry=boundedMap.get(key);
-InternalCacheEntry<K,V> newEntry=action.compute(key,oldEntry,entryFactory);
-if (oldEntry == newEntry) {
-return;
-}
- else if (newEntry == null) {
-boundedMap.remove(key);
-return;
-}
-if (trace) log.tracef("Store %s in container",newEntry);
-boundedMap.put(key,newEntry);
-}
-  finally {
-boundedMap.unlock(key);
-}
-}
-@Override public void putAndActivate(InternalCacheEntry<K,V> newEntry){
-boundedMap.put(newEntry.getKey(),newEntry);
-}
-}
-;
+entries=new BoundedConcurrentHashMap<K,InternalCacheEntry<K,V>>(maxEntries,concurrencyLevel,eviction,evictionListener,keyEquivalence,AnyEquivalence.getInstance());
+extendedMap=new BoundedConcurrentExtendedMap();
 }

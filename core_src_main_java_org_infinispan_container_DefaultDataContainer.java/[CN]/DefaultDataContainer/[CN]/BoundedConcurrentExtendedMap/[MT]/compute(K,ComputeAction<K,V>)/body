@@ -1,0 +1,20 @@
+{
+  final BoundedConcurrentHashMap<K,InternalCacheEntry<K,V>> boundedMap=((BoundedConcurrentHashMap<K,InternalCacheEntry<K,V>>)entries);
+  boundedMap.lock(key);
+  try {
+    InternalCacheEntry<K,V> oldEntry=boundedMap.get(key);
+    InternalCacheEntry<K,V> newEntry=action.compute(key,oldEntry,entryFactory);
+    if (oldEntry == newEntry) {
+      return;
+    }
+ else     if (newEntry == null) {
+      boundedMap.remove(key);
+      return;
+    }
+    if (trace)     log.tracef("Store %s in container",newEntry);
+    boundedMap.put(key,newEntry);
+  }
+  finally {
+    boundedMap.unlock(key);
+  }
+}
