@@ -1,0 +1,35 @@
+{
+  n.left=n.right=sentinel;
+  Node<K,V> y=root;
+  Node<K,V> x=root != null ? root.left : null;
+  while (x != sentinel) {
+    y=x;
+    if (x.interval.equals(n.interval)) {
+      return x;
+    }
+    if (compareLowerBound(n.interval,y.interval)) {
+      x=x.left;
+    }
+ else {
+      x=x.right;
+    }
+    y.max=max(n.max,y.max);
+    if (y.parent == root) {
+      root.max=y.max;
+    }
+  }
+  n.parent=y;
+  if (root != null && y == root) {
+    root.max=n.max;
+  }
+  if (y != null) {
+    if (y == root || compareLowerBound(n.interval,y.interval)) {
+      y.left=n;
+    }
+ else {
+      y.right=n;
+    }
+  }
+  rebalanceAfterAdd(n);
+  return n;
+}

@@ -1,0 +1,31 @@
+{
+  if (genericFieldType instanceof ParameterizedType) {
+    ParameterizedType type=(ParameterizedType)genericFieldType;
+    Type fieldArgType=type.getActualTypeArguments()[1];
+    if (fieldArgType instanceof TypeVariable) {
+      TypeVariable genericComponentType=(TypeVariable)fieldArgType;
+      return (Class)genericComponentType.getBounds()[0];
+    }
+ else {
+      return (Class)fieldArgType;
+    }
+  }
+ else   if (genericFieldType instanceof Class) {
+    Class genericFieldType1=(Class)genericFieldType;
+    if (genericFieldType1.getGenericSuperclass() != null && Map.class.isAssignableFrom(genericFieldType1.getSuperclass())) {
+      Class x=determineMapValueTypeParam(genericFieldType1.getGenericSuperclass());
+      if (x != null) {
+        return x;
+      }
+    }
+    for (    Type t : genericFieldType1.getGenericInterfaces()) {
+      if (t instanceof Class && Map.class.isAssignableFrom((Class<?>)t) || t instanceof ParameterizedType && Map.class.isAssignableFrom((Class)((ParameterizedType)t).getRawType())) {
+        Class x=determineMapValueTypeParam(t);
+        if (x != null) {
+          return x;
+        }
+      }
+    }
+  }
+  return null;
+}

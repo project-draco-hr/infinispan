@@ -1,0 +1,24 @@
+{
+  return new FilterRegistry<String>(new BETreeMaker.AttributePathTranslator<String>(){
+    @Override public List<String> translatePath(    List<String> path){
+      return path;
+    }
+    @Override public boolean isRepeated(    List<String> path){
+      Class<?> entityClass=clazz;
+      for (      String propName : path) {
+        Class elementType=ReflectionHelper.getElementType(entityClass,propName);
+        if (elementType != null) {
+          return true;
+        }
+ else {
+          entityClass=ReflectionHelper.getPropertyType(entityClass,propName);
+        }
+        if (entityClass == null) {
+          break;
+        }
+      }
+      return false;
+    }
+  }
+,clazz.getCanonicalName());
+}

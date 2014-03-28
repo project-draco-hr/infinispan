@@ -1,0 +1,19 @@
+{
+  if (child instanceof NotExpr) {
+    PrimaryPredicateExpr condition=(PrimaryPredicateExpr)((NotExpr)child).getChild();
+    makePredicateNode(parent,nodes,treeCounters,condition,true);
+  }
+ else   if (child instanceof PrimaryPredicateExpr) {
+    PrimaryPredicateExpr condition=(PrimaryPredicateExpr)child;
+    makePredicateNode(parent,nodes,treeCounters,condition,false);
+  }
+ else   if (child instanceof OrExpr) {
+    makeBooleanOperatorNode((OrExpr)child,nodes,treeCounters,new OrNode(parent));
+  }
+ else   if (child instanceof AndExpr) {
+    makeBooleanOperatorNode((AndExpr)child,nodes,treeCounters,new AndNode(parent));
+  }
+ else {
+    throw new IllegalStateException("Unexpected *Expr node type: " + child);
+  }
+}

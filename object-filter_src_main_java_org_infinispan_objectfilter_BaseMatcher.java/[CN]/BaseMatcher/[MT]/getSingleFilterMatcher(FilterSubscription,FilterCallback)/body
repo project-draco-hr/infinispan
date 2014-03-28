@@ -1,0 +1,28 @@
+{
+  final FilterSubscriptionImpl filterSubscriptionImpl=(FilterSubscriptionImpl)filterSubscription;
+  final Set<String> types=Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
+  final PredicateIndex<AttributeId> predicateIndex=new PredicateIndex<AttributeId>();
+  for (  BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
+    if (node instanceof PredicateNode) {
+      final PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
+      Predicate.Callback predicateCallback=new Predicate.Callback(){
+        @Override public void handleValue(        MatcherEvalContext<?> ctx,        boolean isMatching){
+          FilterEvalContext context=ctx.getFilterContext(filterSubscriptionImpl);
+          predicateNode.handleChildValue(predicateNode,isMatching,context);
+        }
+      }
+;
+      predicateIndex.addSubscriptionForPredicate(predicateNode,predicateCallback);
+    }
+  }
+  return new Matcher(){
+    @Override public void match(    Object instance){
+      MatcherEvalContext<AttributeId> ctx=startContext(instance,types);
+      if (ctx != null) {
+        ctx.process(predicateIndex.getRoot());
+        filterCallback.onFilterResult(ctx.getInstance(),null,ctx.getFilterContext(filterSubscriptionImpl).getResult());
+      }
+    }
+  }
+;
+}

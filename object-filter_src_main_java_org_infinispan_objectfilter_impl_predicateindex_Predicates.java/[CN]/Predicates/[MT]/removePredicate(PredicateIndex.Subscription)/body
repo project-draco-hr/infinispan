@@ -1,0 +1,36 @@
+{
+  if (subscription.getPredicate().getInterval() != null) {
+    if (orderedPredicates != null) {
+      IntervalTree.Node<AttributeDomain,Subscriptions> n=orderedPredicates.findNode(subscription.getPredicate().getInterval());
+      if (n != null) {
+        n.value.remove(subscription);
+        if (n.value.subscriptions.isEmpty()) {
+          orderedPredicates.remove(n);
+        }
+      }
+ else {
+        throwIllegalStateException();
+      }
+    }
+ else {
+      throwIllegalStateException();
+    }
+  }
+ else {
+    if (unorderedPredicates != null) {
+      Subscriptions subscriptions=unorderedPredicates.get(subscription.getPredicate());
+      if (subscriptions != null) {
+        subscriptions.remove(subscription);
+        if (subscriptions.subscriptions.isEmpty()) {
+          unorderedPredicates.remove(subscription.getPredicate());
+        }
+      }
+ else {
+        throwIllegalStateException();
+      }
+    }
+ else {
+      throwIllegalStateException();
+    }
+  }
+}

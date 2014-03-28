@@ -1,0 +1,52 @@
+{
+  n.max=Interval.getMinusInf();
+  for (Node<K,V> i=n.parent; i != root; i=i.parent) {
+    i.max=max(i.left.max,i.right.max);
+    if (i.parent == root) {
+      root.max=i.max;
+    }
+  }
+  Node<K,V> y;
+  Node<K,V> x;
+  if (n.left == sentinel || n.right == sentinel) {
+    y=n;
+  }
+ else {
+    y=findSuccessor(n);
+  }
+  if (y.left == sentinel) {
+    x=y.right;
+  }
+ else {
+    x=y.left;
+  }
+  x.parent=y.parent;
+  if (root == x.parent) {
+    root.left=x;
+  }
+ else   if (y == y.parent.left) {
+    y.parent.left=x;
+  }
+ else {
+    y.parent.right=x;
+  }
+  if (y != n) {
+    if (!y.isRed) {
+      rebalanceAfterRemove(x);
+    }
+    y.left=n.left;
+    y.right=n.right;
+    y.parent=n.parent;
+    y.isRed=n.isRed;
+    n.left.parent=n.right.parent=y;
+    if (n == n.parent.left) {
+      n.parent.left=y;
+    }
+ else {
+      n.parent.right=y;
+    }
+  }
+ else   if (!y.isRed) {
+    rebalanceAfterRemove(x);
+  }
+}

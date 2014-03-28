@@ -1,0 +1,18 @@
+{
+  AttributeNode<AttributeId> current=root;
+  for (  AttributeId attribute : predicateNode.getAttributePath()) {
+    current=current.getChild(attribute);
+    if (current == null) {
+      throw new IllegalStateException("Child not found : " + attribute);
+    }
+  }
+  current.removePredicateSubscription(this);
+  while (current != root) {
+    if (current.getNumChildren() > 0 || current.hasPredicates() || current.hasProjections()) {
+      return;
+    }
+    AttributeId childId=current.getAttribute();
+    current=current.getParent();
+    current.removeChild(childId);
+  }
+}

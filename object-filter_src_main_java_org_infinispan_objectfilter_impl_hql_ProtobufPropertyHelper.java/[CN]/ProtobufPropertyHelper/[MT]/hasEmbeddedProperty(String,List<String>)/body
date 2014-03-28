@@ -1,0 +1,22 @@
+{
+  Descriptors.Descriptor messageDescriptor;
+  try {
+    messageDescriptor=serializationContext.getMessageDescriptor(entityType);
+  }
+ catch (  Exception e) {
+    throw new IllegalStateException("Unknown entity name " + entityType);
+  }
+  for (  String p : propertyPath) {
+    Descriptors.FieldDescriptor field=messageDescriptor.findFieldByName(p);
+    if (field == null) {
+      return false;
+    }
+    if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+      messageDescriptor=field.getMessageType();
+    }
+ else {
+      return false;
+    }
+  }
+  return true;
+}

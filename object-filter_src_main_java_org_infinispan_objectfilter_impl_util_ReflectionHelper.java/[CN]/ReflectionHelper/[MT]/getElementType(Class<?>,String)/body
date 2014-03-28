@@ -1,0 +1,24 @@
+{
+  try {
+    Field field=entityClass.getDeclaredField(fieldName);
+    Class<?> fieldClass=field.getType();
+    if (fieldClass.isArray()) {
+      Type genericType=field.getGenericType();
+      if (genericType instanceof Class) {
+        return fieldClass.getComponentType();
+      }
+      GenericArrayType genericArrayType=(GenericArrayType)genericType;
+      TypeVariable genericComponentType=(TypeVariable)genericArrayType.getGenericComponentType();
+      return (Class)genericComponentType.getBounds()[0];
+    }
+ else     if (Collection.class.isAssignableFrom(fieldClass)) {
+      return determineCollectionElementTypeParam(field.getGenericType());
+    }
+ else     if (Map.class.isAssignableFrom(fieldClass)) {
+      return determineMapValueTypeParam(field.getGenericType());
+    }
+  }
+ catch (  NoSuchFieldException e) {
+  }
+  return null;
+}

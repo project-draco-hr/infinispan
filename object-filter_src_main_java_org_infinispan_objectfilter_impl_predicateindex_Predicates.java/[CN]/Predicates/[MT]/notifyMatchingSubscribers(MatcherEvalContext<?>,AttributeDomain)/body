@@ -1,0 +1,23 @@
+{
+  if (orderedPredicates != null) {
+    for (    IntervalTree.Node<AttributeDomain,Subscriptions> n : orderedPredicates.stab(attributeValue)) {
+      Subscriptions subscriptions=n.value;
+      if (subscriptions.isActive(ctx)) {
+        for (        PredicateIndex.Subscription s : subscriptions.subscriptions) {
+          s.handleValue(ctx,true);
+        }
+      }
+    }
+  }
+  if (unorderedPredicates != null) {
+    for (    Map.Entry<Predicate<AttributeDomain>,Subscriptions> e : unorderedPredicates.entrySet()) {
+      Subscriptions subscriptions=e.getValue();
+      if (subscriptions.isActive(ctx)) {
+        boolean conditionSatisfied=e.getKey().getCondition().match(attributeValue);
+        for (        PredicateIndex.Subscription s : subscriptions.subscriptions) {
+          s.handleValue(ctx,conditionSatisfied);
+        }
+      }
+    }
+  }
+}

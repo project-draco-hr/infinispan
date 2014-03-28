@@ -1,0 +1,27 @@
+{
+  if (evalContext.treeCounters[index] <= 0) {
+    throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
+  }
+  if (parent == null) {
+    evalContext.treeCounters[0]=childValue ? 0 : -1;
+    for (int i=index; i < span; i++) {
+      evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+    }
+    return true;
+  }
+  if (childValue) {
+    if (--evalContext.treeCounters[index] == 0) {
+      return parent.handleChildValue(this,true,evalContext);
+    }
+ else {
+      for (int i=child.index; i < child.span; i++) {
+        evalContext.treeCounters[i]=0;
+        evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+      }
+      return false;
+    }
+  }
+ else {
+    return parent.handleChildValue(this,false,evalContext);
+  }
+}

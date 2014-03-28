@@ -1,0 +1,27 @@
+{
+  Subscriptions subscriptions;
+  if (subscription.getPredicate().getInterval() != null) {
+    if (orderedPredicates == null) {
+      orderedPredicates=new IntervalTree<AttributeDomain,Subscriptions>(new ComparableComparator());
+    }
+    IntervalTree.Node<AttributeDomain,Subscriptions> n=orderedPredicates.add(subscription.getPredicate().getInterval());
+    if (n.value == null) {
+      subscriptions=new Subscriptions(subscription.getPredicate());
+      n.value=subscriptions;
+    }
+ else {
+      subscriptions=n.value;
+    }
+  }
+ else {
+    if (unorderedPredicates == null) {
+      unorderedPredicates=new HashMap<Predicate<AttributeDomain>,Subscriptions>();
+    }
+    subscriptions=unorderedPredicates.get(subscription.getPredicate());
+    if (subscriptions == null) {
+      subscriptions=new Subscriptions(subscription.getPredicate());
+      unorderedPredicates.put(subscription.getPredicate(),subscriptions);
+    }
+  }
+  subscriptions.add(subscription);
+}

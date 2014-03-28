@@ -1,0 +1,17 @@
+{
+  if (child != this) {
+    throw new IllegalArgumentException();
+  }
+  if (evalContext.treeCounters[index] <= 0) {
+    throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
+  }
+  if (isNegated) {
+    childValue=!childValue;
+  }
+  evalContext.treeCounters[index]=childValue ? 0 : -1;
+  if (parent == null) {
+    suspendSubscription(evalContext);
+    return true;
+  }
+  return parent.handleChildValue(this,childValue,evalContext);
+}

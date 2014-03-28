@@ -1,0 +1,34 @@
+{
+  if (condition instanceof ComparisonExpr) {
+    ComparisonExpr expr=(ComparisonExpr)condition;
+    ConstantValueExpr right=(ConstantValueExpr)expr.getRightChild();
+    Interval<Object> i;
+switch (expr.getComparisonType()) {
+case EQUALS:
+      i=new Interval<Object>(right.getConstantValue(),true,right.getConstantValue(),true);
+    break;
+case LESS:
+  i=new Interval<Object>(Interval.getMinusInf(),false,right.getConstantValue(),false);
+break;
+case LESS_OR_EQUAL:
+i=new Interval<Object>(Interval.getMinusInf(),false,right.getConstantValue(),true);
+break;
+case GREATER:
+i=new Interval<Object>(right.getConstantValue(),false,Interval.getPlusInf(),false);
+break;
+case GREATER_OR_EQUAL:
+i=new Interval<Object>(right.getConstantValue(),true,Interval.getPlusInf(),false);
+break;
+default :
+throw new IllegalStateException("Unknown comparison type: " + expr.getComparisonType());
+}
+return new Predicate<Object>(i);
+}
+ else if (condition instanceof IsNullExpr) {
+return new Predicate<Object>(IsNullCondition.INSTANCE);
+}
+ else if (condition instanceof RegexExpr) {
+return new Predicate<String>(new RegexCondition(((RegexExpr)condition).getPattern()));
+}
+throw new IllegalStateException("Unexpected condition type: " + condition);
+}

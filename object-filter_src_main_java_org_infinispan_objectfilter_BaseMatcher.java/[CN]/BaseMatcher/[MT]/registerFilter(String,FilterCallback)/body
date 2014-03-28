@@ -1,0 +1,16 @@
+{
+  FilterParsingResult<TypeMetadata> parsingResult=queryParser.parseQuery(jpaQuery,createFilterProcessingChain(null));
+  BooleanExpr normalizedFilter=booleanFilterNormalizer.normalize(parsingResult.getQuery());
+  write.lock();
+  try {
+    FilterRegistry filterRegistry=filtersByType.get(parsingResult.getTargetEntityName());
+    if (filterRegistry == null) {
+      filterRegistry=createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
+      filtersByType.put(parsingResult.getTargetEntityName(),filterRegistry);
+    }
+    return filterRegistry.addFilter(normalizedFilter,parsingResult.getProjections(),callback);
+  }
+  finally {
+    write.unlock();
+  }
+}
