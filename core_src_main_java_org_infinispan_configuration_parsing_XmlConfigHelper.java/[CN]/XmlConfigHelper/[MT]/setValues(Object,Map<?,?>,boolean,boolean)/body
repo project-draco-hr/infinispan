@@ -1,5 +1,6 @@
 {
   Class<?> objectClass=target.getClass();
+  Map<Object,Object> ignoredAttribs=new HashMap<Object,Object>();
   for (  Map.Entry<?,?> entry : attribs.entrySet()) {
     String propName=(String)entry.getKey();
     String setter=BeanUtils.setterName(propName);
@@ -50,7 +51,8 @@ catch (    Exception e) {
       throw new CacheConfigurationException("Couldn't find a setter named [" + setter + "] which takes a single parameter, for parameter "+ propName+ " on class ["+ objectClass+ "]");
     }
  else {
-      log.unrecognizedAttribute(propName);
+      ignoredAttribs.put(propName,attribs.get(propName));
     }
   }
+  return ignoredAttribs;
 }
