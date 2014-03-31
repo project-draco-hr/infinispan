@@ -1,10 +1,13 @@
 {
-  AuthorizationHelper.checkPermission(globalConfiguration.security(),AuthorizationPermission.LIFECYCLE);
+  authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
   if (globalConfiguration.security().authorization().enabled() && System.getSecurityManager() == null) {
     log.authorizationEnabledWithoutSecurityManager();
   }
   globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
   String clusterName=globalConfiguration.transport().clusterName();
   String nodeName=globalConfiguration.transport().nodeName();
+  if (globalConfiguration.security().authorization().enabled()) {
+    globalConfiguration.security().authorization().principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
+  }
   log.debugf("Started cache manager %s on %s",clusterName,nodeName);
 }
