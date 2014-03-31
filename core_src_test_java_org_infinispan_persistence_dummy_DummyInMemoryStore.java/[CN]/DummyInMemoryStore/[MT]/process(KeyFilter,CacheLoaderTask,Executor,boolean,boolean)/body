@@ -1,5 +1,6 @@
 {
   record("process");
+  log.tracef("Processing entries in store %s with filter %s and callback %s",storeName,filter,task);
   final long currentTimeMillis=System.currentTimeMillis();
   TaskContext tx=new TaskContextImpl();
   for (Iterator<Map.Entry<Object,byte[]>> i=store.entrySet().iterator(); i.hasNext(); ) {
@@ -8,7 +9,7 @@
     if (filter == null || filter.shouldLoadKey(entry.getKey())) {
       MarshalledEntry se=deserialize(entry.getKey(),entry.getValue());
       if (isExpired(se,currentTimeMillis)) {
-        log.debugf("Key %s exists, but has expired.  Entry is %s",entry.getKey(),se);
+        log.tracef("Key %s exists, but has expired.  Entry is %s",entry.getKey(),se);
         i.remove();
       }
  else {

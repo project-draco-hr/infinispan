@@ -1,0 +1,26 @@
+{
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.persistence().passivation(false);
+  cb.customInterceptors().addInterceptor().index(0).interceptor(new BaseCustomInterceptor(){
+    @Override public Object visitInvalidateCommand(    InvocationContext ctx,    InvalidateCommand invalidateCommand) throws Throwable {
+      incrementCounter(invalidationCounts,index,invalidateCommand.getKeys().length);
+      return invokeNextInterceptor(ctx,invalidateCommand);
+    }
+    @Override public Object visitInvalidateL1Command(    InvocationContext ctx,    InvalidateL1Command invalidateL1Command) throws Throwable {
+      incrementCounter(l1InvalidationCounts,index,invalidateL1Command.getKeys().length);
+      return invokeNextInterceptor(ctx,invalidateL1Command);
+    }
+  }
+);
+  DummyInMemoryStoreConfigurationBuilder dummyCB=cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+  dummyCB.debug(true).preload(preload).shared(true).purgeOnStartup(false);
+  dummyCB.storeName(SharedStoreInvalidationDuringRehashTest.class.getSimpleName());
+  if (clustered) {
+    cb.clustering().l1().disable();
+    cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+    cb.clustering().hash().numOwners(1);
+    cb.clustering().stateTransfer().fetchInMemoryState(true);
+    cb.clustering().hash().groups().enabled();
+  }
+  return cb.build(true);
+}

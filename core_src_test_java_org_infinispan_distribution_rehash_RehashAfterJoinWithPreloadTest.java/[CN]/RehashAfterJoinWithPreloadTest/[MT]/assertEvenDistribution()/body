@@ -2,8 +2,15 @@
   for (int i=0; i < getCacheManagers().size(); i++) {
     Cache<String,String> testCache=manager(i).getCache(testCacheName);
     DistributionManager dm=testCache.getAdvancedCache().getDistributionManager();
-    for (    Object key : testCache.getAdvancedCache().getDataContainer().keySet()) {
-      assertTrue("Key '" + key + "' is not owned by node "+ address(i)+ " but it still appears there",dm.getLocality(key).isLocal());
+    DataContainer dataContainer=testCache.getAdvancedCache().getDataContainer();
+    for (int j=0; j < NUM_KEYS; j++) {
+      String key="key" + j;
+      if (dm.getLocality(key).isLocal()) {
+        assertTrue("Key '" + key + "' is owned by node "+ address(i)+ " but it doesn't appears there",dataContainer.containsKey(key));
+      }
+ else {
+        assertTrue("Key '" + key + "' is not owned by node "+ address(i)+ " but it still appears there",!dataContainer.containsKey(key));
+      }
     }
   }
 }

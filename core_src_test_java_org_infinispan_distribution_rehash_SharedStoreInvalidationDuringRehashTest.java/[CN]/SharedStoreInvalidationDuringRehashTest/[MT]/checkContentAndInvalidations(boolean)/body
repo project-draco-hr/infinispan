@@ -1,0 +1,41 @@
+{
+  int clusterSize=getCacheManagers().size();
+  int joiner=clusterSize - 1;
+  for (int i=0; i < clusterSize; i++) {
+    Cache<String,String> testCache=manager(i).getCache(TEST_CACHE_NAME);
+    DistributionManager dm=testCache.getAdvancedCache().getDistributionManager();
+    DataContainer dataContainer=testCache.getAdvancedCache().getDataContainer();
+    for (int j=0; j < NUM_KEYS; j++) {
+      String key="key" + j;
+      if (!dm.getLocality(key).isLocal()) {
+        assertFalse("Key '" + key + "' is not owned by node "+ address(i)+ " but it still appears there",dataContainer.containsKey(key));
+      }
+ else       if (preload) {
+        assertTrue("Key '" + key + "' is owned by node "+ address(i)+ " but it does not appear there",dataContainer.containsKey(key));
+      }
+    }
+  }
+  DummyInMemoryStore store=(DummyInMemoryStore)TestingUtil.getFirstLoader(cache(0,TEST_CACHE_NAME));
+  for (int i=0; i < NUM_KEYS; i++) {
+    String key="key" + i;
+    assertTrue("Key " + key + " is missing from the shared store",store.keySet().contains(key));
+  }
+  log.debugf("Invalidations: %s, L1 invalidations: %s",invalidationCounts,l1InvalidationCounts);
+  int joinerSize=advancedCache(joiner,TEST_CACHE_NAME).getDataContainer().size();
+  if (preload) {
+    assertEquals(0,getCounter(l1InvalidationCounts,joiner));
+    assertEquals(NUM_KEYS - joinerSize,getCounter(invalidationCounts,joiner));
+    assertEquals(NUM_KEYS - joinerSize,getSum(invalidationCounts));
+  }
+ else {
+    assertEquals(0,getCounter(l1InvalidationCounts,joiner));
+    assertEquals(0,getCounter(invalidationCounts,joiner));
+    assertEquals(0,getSum(invalidationCounts));
+  }
+  if (joiner > 0) {
+    assertEquals(joinerSize,getSum(l1InvalidationCounts));
+  }
+  store.clearStats();
+  invalidationCounts.clear();
+  l1InvalidationCounts.clear();
+}
