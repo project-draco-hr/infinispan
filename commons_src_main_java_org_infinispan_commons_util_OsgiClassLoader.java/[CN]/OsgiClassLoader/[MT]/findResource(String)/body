@@ -3,14 +3,16 @@
     return resourceCache.get(name);
   }
   for (  WeakReference<Bundle> bundle : bundles) {
-    try {
-      final URL resource=bundle.get().getResource(name);
-      if (resource != null) {
-        resourceCache.put(name,resource);
-        return resource;
+    if (bundle.get().getState() == Bundle.ACTIVE) {
+      try {
+        final URL resource=bundle.get().getResource(name);
+        if (resource != null) {
+          resourceCache.put(name,resource);
+          return resource;
+        }
       }
-    }
- catch (    Exception ignore) {
+ catch (      Exception ignore) {
+      }
     }
   }
   return null;

@@ -3,14 +3,16 @@
     return classCache.get(name);
   }
   for (  WeakReference<Bundle> bundle : bundles) {
-    try {
-      final Class clazz=bundle.get().loadClass(name);
-      if (clazz != null) {
-        classCache.put(name,clazz);
-        return clazz;
+    if (bundle.get().getState() == Bundle.ACTIVE) {
+      try {
+        final Class clazz=bundle.get().loadClass(name);
+        if (clazz != null) {
+          classCache.put(name,clazz);
+          return clazz;
+        }
       }
-    }
- catch (    Exception ignore) {
+ catch (      Exception ignore) {
+      }
     }
   }
   throw new ClassNotFoundException("Could not load requested class : " + name);
