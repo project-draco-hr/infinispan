@@ -1,0 +1,14 @@
+{
+  Random random=new Random();
+  for (int i=0; i < count; ++i) {
+    byte[] data=new byte[size];
+    random.nextBytes(data);
+    String key="key" + i;
+    Huge value=new Huge(key,data);
+    long lifespan=provider == null ? -1 : provider.get();
+    MarshalledEntryImpl entry=lifespan < 0 ? createEntry(key,value) : createEntry(key,value,lifespan);
+    cs.write(entry);
+    if (i % 100 == 0)     log.info("Writing key " + key);
+  }
+  log.info("All keys written");
+}

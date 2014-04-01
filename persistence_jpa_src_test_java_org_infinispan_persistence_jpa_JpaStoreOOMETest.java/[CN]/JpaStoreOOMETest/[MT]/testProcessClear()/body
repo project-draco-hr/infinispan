@@ -1,0 +1,18 @@
+{
+  assertEquals(cs.size(),0);
+  fillStore(NUM_ENTRIES,VALUE_SIZE,null);
+  assertEquals(cs.size(),NUM_ENTRIES);
+  final AtomicInteger processed=new AtomicInteger();
+  cs.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+      int entries=processed.incrementAndGet();
+      if (entries % 100 == 0) {
+        log.info("Processed " + entries + " entries");
+      }
+    }
+  }
+,new WithinThreadExecutor(),true,false);
+  assertEquals(processed.get(),NUM_ENTRIES);
+  cs.clear();
+  assertEquals(cs.size(),0);
+}

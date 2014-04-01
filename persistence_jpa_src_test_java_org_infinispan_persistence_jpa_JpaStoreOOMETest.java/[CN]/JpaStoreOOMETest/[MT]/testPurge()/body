@@ -1,0 +1,31 @@
+{
+  assertEquals(cs.size(),0);
+  fillStore(NUM_ENTRIES,VALUE_SIZE,new LifespanProvider(){
+    private boolean even=false;
+    @Override public long get(){
+      even=!even;
+      return even ? LIFESPAN : -1;
+    }
+  }
+);
+  try {
+    Thread.sleep(LIFESPAN);
+  }
+ catch (  InterruptedException e) {
+    e.printStackTrace();
+  }
+  final AtomicInteger purged=new AtomicInteger();
+  cs.purge(new WithinThreadExecutor(),new AdvancedCacheWriter.PurgeListener(){
+    @Override public void entryPurged(    Object key){
+      int entries=purged.incrementAndGet();
+      if (entries % 100 == 0) {
+        log.info("Purged " + entries + " entries");
+      }
+    }
+  }
+);
+  assertEquals(purged.get(),NUM_ENTRIES / 2);
+  assertEquals(cs.size(),NUM_ENTRIES / 2);
+  cs.clear();
+  assertEquals(cs.size(),0);
+}
