@@ -1,11 +1,16 @@
 {
-  checkNotClosed();
-  verifyKeys(keys);
-  verifyEntryProcessor(entryProcessor);
-  Map<K,T> result=new HashMap<K,T>(keys.size());
+  checkNotClosed().checkNull(entryProcessor,"entryProcessor").verifyKeys(keys);
+  Map<K,EntryProcessorResult<T>> map=new HashMap<K,EntryProcessorResult<T>>(keys.size());
   for (  K key : keys) {
-    T t=invoke(key,entryProcessor,arguments);
-    if (t != null)     result.put(key,t);
+    EntryProcessorResult<T> result;
+    try {
+      T t=invoke(key,entryProcessor,arguments);
+      result=t == null ? null : new SuccessEntryProcessorResult<T>(t);
+    }
+ catch (    Throwable t) {
+      result=new FailureEntryProcessorResult<T>(t);
+    }
+    if (result != null)     map.put(key,result);
   }
-  return result;
+  return map;
 }

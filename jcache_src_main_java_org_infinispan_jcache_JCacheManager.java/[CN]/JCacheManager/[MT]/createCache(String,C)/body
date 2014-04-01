@@ -1,0 +1,18 @@
+{
+  checkNotClosed().checkNull(cacheName,"cacheName").checkNull(configuration,"configuration");
+synchronized (caches) {
+    JCache<?,?> cache=caches.get(cacheName);
+    if (cache == null) {
+      ConfigurationAdapter<K,V> adapter=ConfigurationAdapter.create(configuration);
+      cm.defineConfiguration(cacheName,adapter.build());
+      AdvancedCache<K,V> ispnCache=cm.<K,V>getCache(cacheName).getAdvancedCache();
+      if (!ispnCache.getStatus().allowInvocations())       ispnCache.start();
+      cache=new JCache<K,V>(ispnCache,this,adapter);
+      caches.put(cache.getName(),cache);
+    }
+ else {
+      if (cache.getConfiguration(Configuration.class).equals(configuration))       throw log.cacheAlreadyRegistered(cacheName,cache.getConfiguration(Configuration.class),configuration);
+    }
+    return unchecked(cache);
+  }
+}

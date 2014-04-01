@@ -1,11 +1,9 @@
 {
-  checkNotClosed();
-  verifyKey(key);
-  verifyEntryProcessor(entryProcessor);
+  checkNotClosed().checkNull(key,"key").checkNull(entryProcessor,"entryProcessor");
   if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
   return new WithProcessorLock<T>().call(key,new Callable<T>(){
     @Override public T call() throws Exception {
-      V oldValue=skipCacheLoadAndStatsCache.get(key);
+      V oldValue=skipCacheLoadCache.get(key);
       V safeOldValue=oldValue;
       if (configuration.isStoreByValue()) {
         safeOldValue=safeCopy(oldValue);
@@ -16,16 +14,15 @@ switch (mutable.getOperation()) {
 case NONE:
         break;
 case ACCESS:
-      skipCacheLoadCache.get(key);
-    updateTTLForAccessed(cache,key,oldValue);
-  break;
+      updateTTLForAccessed(cache,key,oldValue);
+    break;
 case UPDATE:
-V newValue=mutable.getNewValue();
+  V newValue=mutable.getNewValue();
 if (oldValue != null) {
-replace(cache,key,oldValue,newValue,true);
+  replace(cache,skipCacheLoadAndStatsCache,key,oldValue,newValue,true);
 }
  else {
-put(cache,skipCacheLoadCache,key,newValue,true);
+  put(cache,skipCacheLoadCache,key,newValue,true);
 }
 break;
 case REMOVE:
