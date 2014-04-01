@@ -8,9 +8,7 @@
     long txnBegin=timeService.time();
     txn.begin();
     try {
-      long entityFindBegin=timeService.time();
-      Object entity=em.find(configuration.entityClass(),key);
-      stats.addEntityFind(timeService.time() - entityFindBegin);
+      Object entity=findEntity(em,key);
       if (trace)       log.trace("Entity " + key + " -> "+ entity);
       try {
         if (entity == null)         return false;
@@ -22,9 +20,7 @@
  catch (          Exception e) {
             throw new JpaStoreException("Cannot marshall key",e);
           }
-          long metadataFindBegin=timeService.time();
-          MetadataEntity metadata=em.find(MetadataEntity.class,new MetadataEntityKey(keyBytes));
-          stats.addMetadataFind(timeService.time() - metadataFindBegin);
+          MetadataEntity metadata=findMetadata(em,new MetadataEntityKey(keyBytes));
           if (trace)           log.trace("Metadata " + key + " -> "+ toString(metadata));
           return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
         }

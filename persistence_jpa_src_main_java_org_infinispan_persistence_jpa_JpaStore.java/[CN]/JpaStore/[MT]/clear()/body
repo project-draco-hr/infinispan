@@ -1,33 +1,50 @@
 {
-  EntityManager em=emf.createEntityManager();
-  EntityTransaction txn=em.getTransaction();
+  EntityManager emStream=emf.createEntityManager();
   try {
-    for (int i=0; ; ++i) {
-      txn.begin();
-      try {
-        log.trace("Clearing JPA Store");
-        String entityTable=em.getMetamodel().entity(configuration.entityClass()).getName();
-        @SuppressWarnings("unchecked") List<Object> items=em.createQuery("FROM " + entityTable).getResultList();
-        for (        Object o : items)         em.remove(o);
-        if (configuration.storeMetadata()) {
-          String metadataTable=em.getMetamodel().entity(MetadataEntity.class).getName();
-          Query clearMetadata=em.createQuery("DELETE FROM " + metadataTable);
-          clearMetadata.executeUpdate();
+    ScrollableResults results=null;
+    ArrayList<Object> batch=new ArrayList<Object>((int)configuration.batchSize());
+    EntityTransaction txStream=emStream.getTransaction();
+    txStream.begin();
+    try {
+      log.trace("Clearing JPA Store");
+      Session session=emStream.unwrap(Session.class);
+      Criteria criteria=session.createCriteria(configuration.entityClass()).setReadOnly(true).setProjection(Projections.id());
+      if (setFetchSizeMinInteger) {
+        criteria.setFetchSize(Integer.MIN_VALUE);
+      }
+      results=criteria.scroll(ScrollMode.FORWARD_ONLY);
+      while (results.next()) {
+        Object o=results.get(0);
+        batch.add(o);
+        if (batch.size() == configuration.batchSize()) {
+          session.clear();
+          removeBatch(batch);
         }
-        txn.commit();
-        em.clear();
-        break;
       }
- catch (      Exception e) {
-        log.trace("Failed to clear store",e);
-        if (i >= 10)         throw new JpaStoreException("Exception caught in clear()",e);
+      if (configuration.storeMetadata()) {
+        results.close();
+        results=null;
+        String metadataTable=emStream.getMetamodel().entity(MetadataEntity.class).getName();
+        Query clearMetadata=emStream.createQuery("DELETE FROM " + metadataTable);
+        clearMetadata.executeUpdate();
       }
- finally {
-        if (txn != null && txn.isActive())         txn.rollback();
+      txStream.commit();
+    }
+  finally {
+      removeBatch(batch);
+      if (results != null) {
+        results.close();
+      }
+      if (txStream != null && txStream.isActive()) {
+        txStream.rollback();
       }
     }
   }
-  finally {
-    em.close();
+ catch (  RuntimeException e) {
+    log.error("Error in clear",e);
+    throw e;
+  }
+ finally {
+    emStream.close();
   }
 }

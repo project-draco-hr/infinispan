@@ -8,9 +8,7 @@
     long txnBegin=timeService.time();
     txn.begin();
     try {
-      long entityFindBegin=timeService.time();
-      Object entity=em.find(configuration.entityClass(),key);
-      stats.addEntityFind(timeService.time() - entityFindBegin);
+      Object entity=findEntity(em,key);
       try {
         if (entity == null)         return null;
         InternalMetadata m=null;
@@ -22,9 +20,7 @@
  catch (          Exception e) {
             throw new JpaStoreException("Failed to marshall key",e);
           }
-          long metadataFindBegin=timeService.time();
-          MetadataEntity metadata=em.find(MetadataEntity.class,new MetadataEntityKey(keyBytes));
-          stats.addMetadataFind(timeService.time() - metadataFindBegin);
+          MetadataEntity metadata=findMetadata(em,new MetadataEntityKey(keyBytes));
           if (metadata != null && metadata.getMetadata() != null) {
             try {
               m=(InternalMetadata)marshaller.objectFromByteBuffer(metadata.getMetadata());

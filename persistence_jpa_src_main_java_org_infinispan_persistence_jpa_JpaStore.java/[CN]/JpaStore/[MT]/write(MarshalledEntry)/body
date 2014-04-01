@@ -16,13 +16,9 @@
       try {
         if (trace)         log.trace("Writing " + entity + "("+ toString(metadata)+ ")");
         txn.begin();
-        long entityMergeBegin=timeService.time();
-        em.merge(entity);
-        stats.addEntityMerge(timeService.time() - entityMergeBegin);
+        mergeEntity(em,entity);
         if (metadata != null && metadata.hasBytes()) {
-          long metadataMergeBegin=timeService.time();
-          em.merge(metadata);
-          stats.addMetadataMerge(timeService.time() - metadataMergeBegin);
+          mergeMetadata(em,metadata);
         }
         txn.commit();
         stats.addWriteTxCommited(timeService.time() - txnBegin);

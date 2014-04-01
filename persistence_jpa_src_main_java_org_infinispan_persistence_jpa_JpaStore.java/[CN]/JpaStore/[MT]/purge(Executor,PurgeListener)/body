@@ -1,67 +1,39 @@
 {
   ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(threadPool);
-  EntityManager em=emf.createEntityManager();
+  EntityManager emStream=emf.createEntityManager();
   try {
-    CriteriaBuilder cb=em.getCriteriaBuilder();
-    CriteriaQuery<MetadataEntity> cq=cb.createQuery(MetadataEntity.class);
-    Root root=cq.from(MetadataEntity.class);
-    long currentTime=timeService.wallClockTime();
-    cq.where(cb.le(root.get(MetadataEntity.EXPIRATION),currentTime));
-    for (    MetadataEntity metadata : em.createQuery(cq).getResultList()) {
-      EntityTransaction txn=em.getTransaction();
-      final Object key;
-      try {
-        key=marshaller.objectFromByteBuffer(metadata.getKeyBytes());
+    EntityTransaction txStream=emStream.getTransaction();
+    ScrollableResults metadataKeys=null;
+    txStream.begin();
+    try {
+      long currentTime=timeService.wallClockTime();
+      Session session=emStream.unwrap(Session.class);
+      Criteria criteria=session.createCriteria(MetadataEntity.class).setReadOnly(true).add(Restrictions.le(MetadataEntity.EXPIRATION,currentTime)).setProjection(Projections.id());
+      if (setFetchSizeMinInteger) {
+        criteria.setFetchSize(Integer.MIN_VALUE);
       }
- catch (      Exception e) {
-        throw new JpaStoreException("Cannot unmarshall key",e);
-      }
-      long txnBegin=timeService.time();
-      txn.begin();
-      try {
-        long metadataFindBegin=timeService.time();
-        metadata=em.find(MetadataEntity.class,metadata.getKey());
-        stats.addMetadataFind(timeService.time() - metadataFindBegin);
-        if (metadata.getExpiration() > currentTime) {
-          txn.rollback();
-          continue;
-        }
-        long entityFindBegin=timeService.time();
-        Object entity=em.find(configuration.entityClass(),key);
-        stats.addEntityFind(timeService.time() - entityFindBegin);
-        if (entity != null) {
-          long entityRemoveBegin=timeService.time();
-          em.remove(entity);
-          stats.addEntityRemove(timeService.time() - entityRemoveBegin);
-        }
-        long metadataRemoveBegin=timeService.time();
-        em.remove(metadata);
-        stats.addMetadataRemove(timeService.time() - metadataRemoveBegin);
-        txn.commit();
-        stats.addRemoveTxCommitted(timeService.time() - txnBegin);
-        if (trace)         log.trace("Expired " + key + " -> "+ entity+ "("+ toString(metadata)+ ")");
-        if (listener != null) {
-          eacs.submit(new Runnable(){
-            @Override public void run(){
-              listener.entryPurged(key);
-            }
-          }
-,null);
+      metadataKeys=criteria.scroll(ScrollMode.FORWARD_ONLY);
+      ArrayList<MetadataEntityKey> batch=new ArrayList<MetadataEntityKey>((int)configuration.batchSize());
+      while (metadataKeys.next()) {
+        MetadataEntityKey mKey=(MetadataEntityKey)metadataKeys.get(0);
+        batch.add(mKey);
+        if (batch.size() == configuration.batchSize()) {
+          purgeBatch(batch,listener,eacs,currentTime);
+          batch.clear();
         }
       }
- catch (      RuntimeException e) {
-        stats.addRemoveTxFailed(timeService.time() - txnBegin);
-        throw e;
-      }
- finally {
-        if (txn != null && txn.isActive()) {
-          txn.rollback();
-        }
+      purgeBatch(batch,listener,eacs,currentTime);
+      txStream.commit();
+    }
+  finally {
+      if (metadataKeys != null)       metadataKeys.close();
+      if (txStream != null && txStream.isActive()) {
+        txStream.rollback();
       }
     }
   }
   finally {
-    em.close();
+    emStream.close();
   }
   eacs.waitUntilAllCompleted();
   if (eacs.isExceptionThrown()) {

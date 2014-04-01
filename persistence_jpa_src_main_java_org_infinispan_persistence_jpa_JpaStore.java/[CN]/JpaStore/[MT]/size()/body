@@ -1,5 +1,7 @@
 {
   EntityManager em=emf.createEntityManager();
+  EntityTransaction txn=em.getTransaction();
+  txn.begin();
   try {
     CriteriaBuilder builder=em.getCriteriaBuilder();
     CriteriaQuery<Long> cq=builder.createQuery(Long.class);
@@ -7,6 +9,14 @@
     return em.createQuery(cq).getSingleResult().intValue();
   }
   finally {
+    try {
+      txn.commit();
+    }
+  finally {
+      if (txn != null && txn.isActive()) {
+        txn.rollback();
+      }
+    }
     em.close();
   }
 }

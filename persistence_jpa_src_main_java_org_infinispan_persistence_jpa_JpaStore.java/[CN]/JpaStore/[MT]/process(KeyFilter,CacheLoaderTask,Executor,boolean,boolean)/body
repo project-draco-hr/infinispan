@@ -1,73 +1,96 @@
 {
   ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContextImpl taskContext=new TaskContextImpl();
-  EntityManager em=emf.createEntityManager();
+  EntityManager emStream=emf.createEntityManager();
   try {
-    CriteriaBuilder cb=em.getCriteriaBuilder();
-    CriteriaQuery cq=cb.createQuery();
-    Root root=cq.from(configuration.entityClass());
-    Type idType=root.getModel().getIdType();
-    SingularAttribute idAttr=root.getModel().getId(idType.getJavaType());
-    cq.select(root.get(idAttr));
-    for (    final Object key : em.createQuery(cq).getResultList()) {
-      if (taskContext.isStopped())       break;
-      if (filter != null && !filter.shouldLoadKey(key)) {
-        if (trace)         log.trace("Key " + key + " filtered");
-        continue;
+    EntityTransaction txStream=emStream.getTransaction();
+    ScrollableResults keys=null;
+    txStream.begin();
+    try {
+      Session session=emStream.unwrap(Session.class);
+      Criteria criteria=session.createCriteria(configuration.entityClass()).setReadOnly(true).setProjection(Projections.id());
+      if (setFetchSizeMinInteger) {
+        criteria.setFetchSize(Integer.MIN_VALUE);
       }
-      EntityTransaction txn=em.getTransaction();
-      Object tempEntity=null;
-      InternalMetadata tempMetadata=null;
-      boolean loaded=false;
-      txn.begin();
-      try {
-        do {
+      keys=criteria.scroll(ScrollMode.FORWARD_ONLY);
+      while (keys.next()) {
+        if (taskContext.isStopped())         break;
+        final Object key=keys.get(0);
+        if (filter != null && !filter.shouldLoadKey(key)) {
+          if (trace)           log.trace("Key " + key + " filtered");
+          continue;
+        }
+        Object tempEntity=null;
+        InternalMetadata tempMetadata=null;
+        boolean loaded=false;
+        EntityManager emExec=emf.createEntityManager();
+        try {
+          EntityTransaction txExec=emExec.getTransaction();
+          txExec.begin();
           try {
-            tempEntity=fetchValue ? em.find(configuration.entityClass(),key) : null;
-            tempMetadata=fetchMetadata ? getMetadata(em,key) : null;
+            do {
+              try {
+                tempEntity=fetchValue ? findEntity(emExec,key) : null;
+                tempMetadata=fetchMetadata ? getMetadata(emExec,key) : null;
+              }
+  finally {
+                try {
+                  txExec.commit();
+                  loaded=true;
+                }
+ catch (                Exception e) {
+                  log.trace("Failed to load once",e);
+                }
+              }
+            }
+ while (!loaded);
           }
   finally {
+            if (txExec != null && txExec.isActive()) {
+              txExec.rollback();
+            }
+          }
+        }
+  finally {
+          if (emExec != null) {
+            emExec.close();
+          }
+        }
+        final Object entity=tempEntity;
+        final InternalMetadata metadata=tempMetadata;
+        if (trace)         log.trace("Processing " + key + " -> "+ entity+ "("+ metadata+ ")");
+        if (metadata != null && metadata.isExpired(timeService.wallClockTime()))         continue;
+        eacs.submit(new Callable<Void>(){
+          @Override public Void call() throws Exception {
             try {
-              txn.commit();
-              loaded=true;
+              final MarshalledEntry marshalledEntry=marshallerEntryFactory.newMarshalledEntry(key,entity,metadata);
+              if (marshalledEntry != null) {
+                task.processEntry(marshalledEntry,taskContext);
+              }
+              return null;
             }
  catch (            Exception e) {
-              log.trace("Failed to load once",e);
+              log.errorExecutingParallelStoreTask(e);
+              throw e;
             }
           }
         }
- while (!loaded);
-      }
-  finally {
-        if (txn != null && txn.isActive())         txn.rollback();
-      }
-      final Object entity=tempEntity;
-      final InternalMetadata metadata=tempMetadata;
-      if (trace)       log.trace("Processing " + key + " -> "+ entity+ "("+ metadata+ ")");
-      if (metadata != null && metadata.isExpired(timeService.wallClockTime()))       continue;
-      eacs.submit(new Callable<Void>(){
-        @Override public Void call() throws Exception {
-          try {
-            final MarshalledEntry marshalledEntry=marshallerEntryFactory.newMarshalledEntry(key,entity,metadata);
-            if (marshalledEntry != null) {
-              task.processEntry(marshalledEntry,taskContext);
-            }
-            return null;
-          }
- catch (          Exception e) {
-            log.errorExecutingParallelStoreTask(e);
-            throw e;
-          }
-        }
-      }
 );
+      }
+      txStream.commit();
     }
-    eacs.waitUntilAllCompleted();
-    if (eacs.isExceptionThrown()) {
-      throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!",eacs.getFirstException());
+  finally {
+      if (keys != null)       keys.close();
+      if (txStream != null && txStream.isActive()) {
+        txStream.rollback();
+      }
     }
   }
   finally {
-    em.close();
+    emStream.close();
+  }
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!",eacs.getFirstException());
   }
 }

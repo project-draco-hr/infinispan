@@ -24,4 +24,11 @@
   if (idJavaType.isAnnotationPresent(GeneratedValue.class)) {
     throw new JpaStoreException("Entity class has one identifier, but it must not have @GeneratedValue annotation");
   }
+  SessionFactory sessionFactory=emf.createEntityManager().unwrap(Session.class).getSessionFactory();
+  if (sessionFactory instanceof SessionFactoryImplementor) {
+    Dialect dialect=((SessionFactoryImplementor)sessionFactory).getDialect();
+    if (dialect instanceof MySQLDialect) {
+      setFetchSizeMinInteger=true;
+    }
+  }
 }

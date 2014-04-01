@@ -1,0 +1,49 @@
+{
+  EntityManager emExec=emf.createEntityManager();
+  try {
+    EntityTransaction txn=emExec.getTransaction();
+    txn.begin();
+    try {
+      for (      MetadataEntityKey metadataKey : batch) {
+        MetadataEntity metadata=findMetadata(emExec,metadataKey);
+        if (metadata.getExpiration() > currentTime) {
+          continue;
+        }
+        final Object key;
+        try {
+          key=marshaller.objectFromByteBuffer(metadata.getKeyBytes());
+        }
+ catch (        Exception e) {
+          throw new JpaStoreException("Cannot unmarshall key",e);
+        }
+        Object entity=null;
+        try {
+          entity=emExec.getReference(configuration.entityClass(),key);
+          removeEntity(emExec,entity);
+        }
+ catch (        EntityNotFoundException e) {
+          log.trace("Expired entity with key " + key + " not found",e);
+        }
+        removeMetadata(emExec,metadata);
+        if (trace)         log.trace("Expired " + key + " -> "+ entity+ "("+ toString(metadata)+ ")");
+        if (listener != null) {
+          eacs.submit(new Runnable(){
+            @Override public void run(){
+              listener.entryPurged(key);
+            }
+          }
+,null);
+        }
+      }
+      txn.commit();
+    }
+  finally {
+      if (txn != null && txn.isActive()) {
+        txn.rollback();
+      }
+    }
+  }
+  finally {
+    emExec.close();
+  }
+}

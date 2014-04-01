@@ -1,0 +1,36 @@
+{
+  for (int i=10; i >= 0; --i) {
+    EntityManager emExec=emf.createEntityManager();
+    EntityTransaction txn=null;
+    try {
+      txn=emExec.getTransaction();
+      txn.begin();
+      try {
+        for (        Object key : batch) {
+          try {
+            Object entity=emExec.getReference(configuration.entityClass(),key);
+            removeEntity(emExec,entity);
+          }
+ catch (          EntityNotFoundException e) {
+            log.trace("Cleared entity with key " + key + " not found",e);
+          }
+        }
+        txn.commit();
+        batch.clear();
+        break;
+      }
+ catch (      Exception e) {
+        if (i != 0) {
+          log.trace("Remove batch failed once",e);
+        }
+ else {
+          throw new JpaStoreException("Remove batch failing",e);
+        }
+      }
+    }
+  finally {
+      if (txn != null && txn.isActive())       txn.rollback();
+      emExec.close();
+    }
+  }
+}
