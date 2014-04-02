@@ -1,7 +1,8 @@
 {
+  String clusterName=configuration.transport().clusterName();
   try {
     if (disconnectChannel && channel != null && channel.isConnected()) {
-      log.disconnectJGroups();
+      log.disconnectJGroups(clusterName);
       if (globalStatsEnabled) {
         JmxConfigurator.unregisterChannel((JChannel)channel,mbeanServer,domain,channel.getClusterName());
       }
@@ -12,10 +13,10 @@
     }
   }
  catch (  Exception toLog) {
-    log.problemClosingChannel(toLog);
+    log.problemClosingChannel(toLog,clusterName);
   }
   if (dispatcher != null) {
-    log.stoppingRpcDispatcher();
+    log.stoppingRpcDispatcher(clusterName);
     dispatcher.stop();
     if (channel != null) {
       UpHandler handler=channel.getUpHandler();
