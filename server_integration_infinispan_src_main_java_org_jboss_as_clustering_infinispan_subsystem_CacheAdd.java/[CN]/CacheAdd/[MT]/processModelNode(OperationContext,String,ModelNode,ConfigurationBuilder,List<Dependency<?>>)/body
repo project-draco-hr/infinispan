@@ -76,6 +76,17 @@
       }
     }
   }
+  if (cache.hasDefined(ModelKeys.SECURITY) && cache.get(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME).isDefined()) {
+    ModelNode securityModel=cache.get(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME);
+    if (securityModel.hasDefined(ModelKeys.AUTHORIZATION) && securityModel.get(ModelKeys.AUTHORIZATION).hasDefined(ModelKeys.AUTHORIZATION_NAME)) {
+      ModelNode authzModel=securityModel.get(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+      AuthorizationConfigurationBuilder authzBuilder=builder.security().authorization();
+      authzBuilder.enabled(CacheAuthorizationResource.ENABLED.resolveModelAttribute(context,authzModel).asBoolean());
+      for (      ModelNode role : CacheAuthorizationResource.ROLES.resolveModelAttribute(context,authzModel).asList()) {
+        authzBuilder.role(role.asString());
+      }
+    }
+  }
   for (  String loaderKey : loaderKeys) {
     handleLoaderProperties(context,cache,loaderKey,containerName,builder,dependencies);
   }

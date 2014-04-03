@@ -37,7 +37,26 @@
       controllers.add(provider.install(target,name));
     }
   }
-  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,statistics,moduleId,stack,transportConfig,transportExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
+  Authorization authorizationConfig=null;
+  if (containerModel.hasDefined(ModelKeys.SECURITY) && containerModel.get(ModelKeys.SECURITY).hasDefined(ModelKeys.SECURITY_NAME)) {
+    ModelNode securityModel=containerModel.get(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME);
+    if (securityModel.hasDefined(ModelKeys.AUTHORIZATION) && securityModel.get(ModelKeys.AUTHORIZATION).hasDefined(ModelKeys.AUTHORIZATION_NAME)) {
+      ModelNode authzModel=securityModel.get(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+      authorizationConfig=new Authorization();
+      authorizationConfig.setEnabled(CacheContainerAuthorizationResource.ENABLED.resolveModelAttribute(context,authzModel).asBoolean());
+      authorizationConfig.setPrincipalMapper((resolvedValue=CacheContainerAuthorizationResource.MAPPER.resolveModelAttribute(context,authzModel)).isDefined() ? resolvedValue.asString() : null);
+      for (      ModelNode roleNode : authzModel.get(ModelKeys.ROLE).asList()) {
+        ModelNode role=roleNode.get(0);
+        String roleName=AuthorizationRoleResource.NAME.resolveModelAttribute(context,role).asString();
+        List<String> permissions=new ArrayList<String>();
+        for (        ModelNode permission : AuthorizationRoleResource.PERMISSIONS.resolveModelAttribute(context,role).asList()) {
+          permissions.add(permission.asString());
+        }
+        authorizationConfig.getRoles().put(roleName,permissions);
+      }
+    }
+  }
+  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,statistics,moduleId,stack,transportConfig,authorizationConfig,transportExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
   controllers.add(this.installContainerService(target,name,aliases,transportConfig,initialMode,verificationHandler));
   controllers.add(this.installJndiService(target,name,InfinispanJndiName.createCacheContainerJndiName(jndiName,name),verificationHandler));
   controllers.add(this.installKeyAffinityServiceFactoryService(target,name,verificationHandler));

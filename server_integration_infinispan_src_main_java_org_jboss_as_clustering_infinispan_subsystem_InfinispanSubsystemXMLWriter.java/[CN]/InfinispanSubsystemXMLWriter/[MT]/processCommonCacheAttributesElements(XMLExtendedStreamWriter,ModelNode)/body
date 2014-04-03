@@ -52,6 +52,18 @@
     CompatibilityResource.MARSHALLER.marshallAsAttribute(compatibility,writer);
     writer.writeEndElement();
   }
+  if (cache.hasDefined(ModelKeys.SECURITY)) {
+    writer.writeStartElement(Element.SECURITY.getLocalName());
+    ModelNode security=cache.get(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME);
+    if (security.hasDefined(ModelKeys.AUTHORIZATION)) {
+      writer.writeStartElement(Element.AUTHORIZATION.getLocalName());
+      ModelNode authorization=security.get(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+      CacheAuthorizationResource.ENABLED.marshallAsAttribute(authorization,writer);
+      this.writeListAsAttribute(writer,Attribute.ROLES,authorization,ModelKeys.ROLES);
+      writer.writeEndElement();
+    }
+    writer.writeEndElement();
+  }
   if (cache.get(ModelKeys.LOADER).isDefined()) {
     for (    Property clusterLoaderEntry : cache.get(ModelKeys.LOADER).asPropertyList()) {
       ModelNode loader=clusterLoaderEntry.getValue();

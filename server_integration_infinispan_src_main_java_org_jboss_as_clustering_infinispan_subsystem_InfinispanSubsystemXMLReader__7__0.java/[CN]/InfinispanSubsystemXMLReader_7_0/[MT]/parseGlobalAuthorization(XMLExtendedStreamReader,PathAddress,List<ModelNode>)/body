@@ -1,0 +1,43 @@
+{
+  PathAddress authorizationAddress=securityAddress.append(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+  ModelNode authorization=Util.createAddOperation(authorizationAddress);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+{
+        CacheContainerAuthorizationResource.ENABLED.parseAndSetParameter(value,authorization,reader);
+        break;
+      }
+case MAPPER:
+{
+      CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(value,authorization,reader);
+      break;
+    }
+default :
+{
+    throw ParseUtils.unexpectedAttribute(reader,i);
+  }
+}
+}
+List<ModelNode> additionalConfigurationOperations=new ArrayList<ModelNode>();
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ROLE:
+{
+  this.parseGlobalRole(reader,authorizationAddress,additionalConfigurationOperations);
+  break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+operations.add(authorization);
+for (ModelNode additionalOperation : additionalConfigurationOperations) {
+operations.add(additionalOperation);
+}
+}
