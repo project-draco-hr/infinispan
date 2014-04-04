@@ -28,10 +28,13 @@
         throw new Exception(String.format("Method %s on class %s is missing the TestCachePermission annotation",methodName,driver.getClass().getName()));
       }
       final AuthorizationPermission expectedPerm=annotation.value();
-      System.out.printf("Method: %s ",methodName);
       for (      final AuthorizationPermission perm : AuthorizationPermission.values()) {
         if (perm == AuthorizationPermission.NONE)         continue;
-        System.out.printf(" %s",perm.toString());
+        if (annotation.needsSecurityManager() && System.getSecurityManager() == null) {
+          log.debugf("Method %s (skipped, needs SecurityManager)",methodName);
+          break;
+        }
+        log.debugf("Method %s > %s",methodName,perm.toString());
         if (expectedPerm == AuthorizationPermission.NONE) {
           try {
             method.invoke(driver,cache);
@@ -45,7 +48,7 @@
             @Override public Void run() throws Exception {
               try {
                 method.invoke(driver,cache);
-                if (perm != expectedPerm && perm != AuthorizationPermission.ALL) {
+                if (!perm.implies(expectedPerm)) {
                   throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",methodName,perm.toString()));
                 }
                 return null;
@@ -53,7 +56,7 @@
  catch (              InvocationTargetException e) {
                 Throwable cause=e.getCause();
                 if (cause instanceof SecurityException) {
-                  if (perm == expectedPerm && perm != AuthorizationPermission.ALL) {
+                  if (perm.implies(expectedPerm)) {
                     throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s",methodName,perm.toString()),e);
                   }
  else {
@@ -67,7 +70,6 @@
 );
         }
       }
-      System.out.println();
     }
  catch (    NoSuchMethodException e) {
       throw new Exception(String.format("Class %s needs to declare a method with the following signature: void %s(SecureCache<String, String> cache) {}\n",driver.getClass().getName(),methodName),e);

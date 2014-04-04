@@ -2,6 +2,9 @@
   final int REHASH_TIMEOUT_SECONDS=180;
   final long giveup=System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
   for (  Cache c : caches) {
+    if (c instanceof SecureCacheImpl) {
+      c=(Cache)extractField(SecureCacheImpl.class,c,"delegate");
+    }
     StateTransferManager stateTransferManager=extractComponent(c,StateTransferManager.class);
     DefaultRebalancePolicy rebalancePolicy=(DefaultRebalancePolicy)TestingUtil.extractGlobalComponent(c.getCacheManager(),RebalancePolicy.class);
     Address cacheAddress=c.getAdvancedCache().getRpcManager().getAddress();

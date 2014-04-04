@@ -1,5 +1,10 @@
 {
   if ((subjectMask & perm.getMask()) != perm.getMask()) {
-    throw log.unauthorizedAccess(subject == null ? "null" : subject.toString(),perm.toString());
+    if (System.getSecurityManager() == null) {
+      throw log.unauthorizedAccess(String.valueOf(subject),perm.toString());
+    }
+ else {
+      System.getSecurityManager().checkPermission(perm.getSecurityPermission());
+    }
   }
 }

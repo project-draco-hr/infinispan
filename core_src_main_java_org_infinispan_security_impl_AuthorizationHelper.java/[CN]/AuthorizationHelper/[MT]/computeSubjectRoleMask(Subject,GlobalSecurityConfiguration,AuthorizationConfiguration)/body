@@ -1,14 +1,16 @@
 {
   PrincipalRoleMapper roleMapper=globalConfiguration.authorization().principalRoleMapper();
   int mask=0;
-  for (  Principal principal : subject.getPrincipals()) {
-    Set<String> roleNames=roleMapper.principalToRoles(principal);
-    if (roleNames != null) {
-      for (      String roleName : roleNames) {
-        if (configuration != null && !configuration.roles().contains(roleName))         continue;
-        Role role=globalConfiguration.authorization().roles().get(roleName);
-        if (role != null) {
-          mask|=role.getMask();
+  if (subject != null) {
+    for (    Principal principal : subject.getPrincipals()) {
+      Set<String> roleNames=roleMapper.principalToRoles(principal);
+      if (roleNames != null) {
+        for (        String roleName : roleNames) {
+          if (configuration != null && !configuration.roles().contains(roleName))           continue;
+          Role role=globalConfiguration.authorization().roles().get(roleName);
+          if (role != null) {
+            mask|=role.getMask();
+          }
         }
       }
     }

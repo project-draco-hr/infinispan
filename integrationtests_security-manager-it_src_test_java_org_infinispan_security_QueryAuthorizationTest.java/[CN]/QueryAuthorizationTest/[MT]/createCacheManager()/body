@@ -1,0 +1,12 @@
+{
+  final ConfigurationBuilder builder=getDefaultStandaloneCacheConfig(true);
+  builder.indexing().index(Index.LOCAL).addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT").security().authorization().enable().role("admin").role("query").role("noquery");
+  return Subject.doAs(ADMIN,new PrivilegedAction<EmbeddedCacheManager>(){
+    @Override public EmbeddedCacheManager run(){
+      EmbeddedCacheManager ecm=TestCacheManagerFactory.createCacheManager(getSecureGlobalConfiguration(),builder);
+      ecm.getCache();
+      return ecm;
+    }
+  }
+);
+}

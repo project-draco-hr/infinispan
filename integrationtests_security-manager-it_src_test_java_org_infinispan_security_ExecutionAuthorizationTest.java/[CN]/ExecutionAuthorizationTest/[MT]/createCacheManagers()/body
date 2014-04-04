@@ -1,0 +1,17 @@
+{
+  final ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  builder.security().authorization().enable().role("admin").role("exec").role("noexec");
+  Subject.doAs(ADMIN,new PrivilegedAction<Void>(){
+    @Override public Void run(){
+      addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(),builder);
+      addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(),builder);
+      for (      EmbeddedCacheManager cm : cacheManagers) {
+        cm.defineConfiguration(EXECUTION_CACHE,builder.build());
+        cm.getCache(EXECUTION_CACHE);
+      }
+      waitForClusterToForm(EXECUTION_CACHE);
+      return null;
+    }
+  }
+);
+}

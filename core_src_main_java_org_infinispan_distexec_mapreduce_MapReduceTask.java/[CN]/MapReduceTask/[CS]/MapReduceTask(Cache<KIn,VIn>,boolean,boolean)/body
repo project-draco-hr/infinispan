@@ -4,9 +4,10 @@
   ensureProperCacheState(masterCacheNode.getAdvancedCache());
   this.cache=masterCacheNode.getAdvancedCache();
   this.keys=new LinkedList<KIn>();
-  this.marshaller=cache.getComponentRegistry().getComponent(StreamingMarshaller.class,CACHE_MARSHALLER);
-  this.mapReduceManager=cache.getComponentRegistry().getComponent(MapReduceManager.class);
-  this.cancellationService=cache.getComponentRegistry().getComponent(CancellationService.class);
+  ComponentRegistry componentRegistry=SecurityActions.getCacheComponentRegistry(cache);
+  this.marshaller=componentRegistry.getComponent(StreamingMarshaller.class,CACHE_MARSHALLER);
+  this.mapReduceManager=componentRegistry.getComponent(MapReduceManager.class);
+  this.cancellationService=componentRegistry.getComponent(CancellationService.class);
   this.taskId=UUID.randomUUID();
   if (useIntermediateSharedCache) {
     this.customIntermediateCacheName=DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
@@ -17,7 +18,7 @@
   this.distributeReducePhase=distributeReducePhase;
   this.useIntermediateSharedCache=useIntermediateSharedCache;
   this.cancellableTasks=Collections.synchronizedList(new ArrayList<CancellableTaskPart>());
-  this.clusteringDependentLogic=cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
-  this.isLocalOnly=cache.getRpcManager() == null;
-  this.rpcOptionsBuilder=isLocalOnly ? null : new RpcOptionsBuilder(cache.getRpcManager().getDefaultRpcOptions(true));
+  this.clusteringDependentLogic=componentRegistry.getComponent(ClusteringDependentLogic.class);
+  this.isLocalOnly=SecurityActions.getCacheRpcManager(cache) == null;
+  this.rpcOptionsBuilder=isLocalOnly ? null : new RpcOptionsBuilder(SecurityActions.getCacheRpcManager(cache).getDefaultRpcOptions(true));
 }

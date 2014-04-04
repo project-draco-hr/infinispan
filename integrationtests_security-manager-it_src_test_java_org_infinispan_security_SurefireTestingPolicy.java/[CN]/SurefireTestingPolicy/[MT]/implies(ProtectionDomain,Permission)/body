@@ -1,0 +1,30 @@
+{
+  String location=domain.getCodeSource().getLocation().getPath();
+  if (location.endsWith(".jar") || location.endsWith(MODULE_CLASSES)) {
+    if (logPolicyChecks) {
+      StringBuilder sb=new StringBuilder();
+      sb.append(location.substring(location.lastIndexOf(File.separator) + 1));
+      sb.append("> permission ");
+      sb.append(permission.getClass().getName());
+      sb.append(" \"");
+      sb.append(permission.getName());
+      sb.append("\"");
+      if (permission.getActions().length() > 0) {
+        sb.append(" \"");
+        sb.append(permission.getActions());
+        sb.append("\"");
+      }
+      sb.append(";");
+      String grant=sb.toString();
+      if (!grants.contains(grant)) {
+        grants.add(grant);
+        System.out.println(grant);
+      }
+    }
+    return true;
+  }
+  if (location.endsWith(MODULE_TEST_CLASSES) && !(permission instanceof CachePermission)) {
+    return true;
+  }
+  return false;
+}
