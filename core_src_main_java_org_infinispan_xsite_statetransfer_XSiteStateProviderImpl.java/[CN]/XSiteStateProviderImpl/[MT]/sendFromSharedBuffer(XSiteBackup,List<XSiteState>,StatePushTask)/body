@@ -1,0 +1,15 @@
+{
+  if (sharedBuffer.size() == 0) {
+    return;
+  }
+  XSiteState[] privateBuffer=sharedBuffer.toArray(new XSiteState[sharedBuffer.size()]);
+  if (trace) {
+    log.debugf("Sending chunk to site '%s'. Chunk contains %s",xSiteBackup.getSiteName(),Arrays.toString(privateBuffer));
+  }
+ else   if (debug) {
+    log.debugf("Sending chunk to site '%s'. Chunk has %s keys.",xSiteBackup.getSiteName(),privateBuffer.length);
+  }
+  XSiteStatePushCommand command=commandsFactory.buildXSiteStatePushCommand(privateBuffer);
+  RetryOnFailureXSiteCommand remoteSite=RetryOnFailureXSiteCommand.newInstance(xSiteBackup,command,task.retryPolicy);
+  remoteSite.execute(rpcManager.getTransport(),task.waitTime,TimeUnit.MILLISECONDS);
+}

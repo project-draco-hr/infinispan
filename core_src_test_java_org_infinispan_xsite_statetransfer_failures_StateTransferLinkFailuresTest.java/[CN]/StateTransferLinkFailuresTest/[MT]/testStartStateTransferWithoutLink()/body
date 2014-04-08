@@ -1,0 +1,16 @@
+{
+  initBeforeTest();
+  List<ControllerTransport> transports=replaceTransportInSite(LON);
+  for (  ControllerTransport transport : transports) {
+    transport.fail=true;
+  }
+  assertTrue(!SUCCESS.equals(extractComponent(cache(LON,0),XSiteAdminOperations.class).pushState(NYC)));
+  assertDataInSite(LON);
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      AssertJUnit.assertTrue(cache.isEmpty());
+    }
+  }
+);
+  assertTrue(getStatus(LON).isEmpty());
+}

@@ -1,0 +1,12 @@
+{
+  List<Cache<K,V>> caches=new ArrayList<Cache<K,V>>(numMembersInCluster);
+  final TransportFlags flags=transportFlags();
+  for (int i=0; i < numMembersInCluster; i++) {
+    EmbeddedCacheManager cm=addClusterEnabledCacheManager(flags,gcb,builder);
+    if (cacheName != null)     cm.defineConfiguration(cacheName,builder.build());
+    Cache<K,V> cache=cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName);
+    caches.add(cache);
+  }
+  waitForClusterToForm(cacheName);
+  return caches;
+}

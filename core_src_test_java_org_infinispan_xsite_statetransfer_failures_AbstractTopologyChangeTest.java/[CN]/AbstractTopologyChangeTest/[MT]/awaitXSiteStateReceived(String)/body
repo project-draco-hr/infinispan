@@ -1,0 +1,9 @@
+{
+  log.debugf("Await until all nodes in '%s' has received the state!",site);
+  assertEventuallyInSite(site,new EventuallyAssertCondition<Object,Object>(){
+    @Override public boolean assertInCache(    Cache<Object,Object> cache){
+      return !extractComponent(cache,CommitManager.class).isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+    }
+  }
+,30,TimeUnit.SECONDS);
+}

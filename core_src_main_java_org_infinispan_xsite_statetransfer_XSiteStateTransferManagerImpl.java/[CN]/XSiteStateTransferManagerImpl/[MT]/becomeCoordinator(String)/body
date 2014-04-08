@@ -1,0 +1,21 @@
+{
+  startCoordinating(Collections.singleton(siteName),rpcManager.getMembers());
+  if (stateTransferManager.isStateTransferInProgress()) {
+    try {
+      log.debugf("Canceling x-site state transfer for site %s",siteName);
+      controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND,siteName);
+    }
+ catch (    Exception e) {
+      log.debugf(e,"Unable to cancel x-site state transfer for site %s",siteName);
+    }
+  }
+ else {
+    log.debugf("Restarting x-site state transfer for site %s",siteName);
+    try {
+      controlStateTransferOnLocalSite(StateTransferControl.RESTART_SEND,siteName);
+    }
+ catch (    Exception e) {
+      log.failedToRestartXSiteStateTransfer(siteName,e);
+    }
+  }
+}

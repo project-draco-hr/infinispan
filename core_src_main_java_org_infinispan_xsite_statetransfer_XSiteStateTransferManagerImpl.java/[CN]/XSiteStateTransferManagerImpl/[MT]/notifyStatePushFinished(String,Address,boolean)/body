@@ -1,0 +1,13 @@
+{
+  XSiteStateTransferCollector collector=siteCollector.get(siteName);
+  if (collector == null) {
+    return;
+  }
+  final XSiteBackup xSiteBackup=findSite(siteName);
+  if (collector.confirmStateTransfer(node,statusOk)) {
+    siteCollector.remove(siteName);
+    status.put(siteName,collector.isStatusOk() ? STATUS_OK : STATUS_ERROR);
+    controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND,siteName);
+    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.FINISH_RECEIVE,backupRpcConfiguration(siteName));
+  }
+}

@@ -1,0 +1,33 @@
+{
+  if (backups.isEmpty()) {
+    if (debug) {
+      log.debugf("Executing '%s' but backup list is empty.",this);
+    }
+    return;
+  }
+  assertNotNull(transport,"Transport");
+  assertNotNull(unit,"TimeUnit");
+  assertGreaterThanZero(waitTimeBetweenRetries,"WaitTimeBetweenRetries");
+  do {
+    if (trace) {
+      log.tracef("Sending %s to %s",command,backups);
+    }
+    BackupResponse response=transport.backupRemotely(backups,command);
+    response.waitForBackupToFinish();
+    Throwable throwable=extractThrowable(response);
+    if (throwable == null) {
+      if (trace) {
+        log.trace("Successfull Response received.");
+      }
+      return;
+    }
+ else     if (!retryPolicy.retry(throwable,transport)) {
+      if (trace) {
+        log.tracef("Exception Response received. Exception is %s",throwable);
+      }
+      throw throwable;
+    }
+    unit.sleep(waitTimeBetweenRetries);
+  }
+ while (true);
+}

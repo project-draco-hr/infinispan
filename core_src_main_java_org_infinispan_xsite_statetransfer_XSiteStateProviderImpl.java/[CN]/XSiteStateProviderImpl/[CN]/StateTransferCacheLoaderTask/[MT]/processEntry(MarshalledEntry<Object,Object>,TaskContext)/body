@@ -1,14 +1,15 @@
 {
-  if (canceled.get()) {
+  if (task.canceled) {
     taskContext.stop();
+    log.debugf("[X-Site State Transfer - %s] State transfer canceled!",xSiteBackup.getSiteName());
     return;
   }
-  if (chunkSize > 0 && chunk.size() == chunkSize) {
+  if (task.chunkSize > 0 && chunk.size() == task.chunkSize) {
     try {
-      sendFromSharedBuffer(xSiteBackup,chunk,responses);
+      sendFromSharedBuffer(xSiteBackup,chunk,task);
     }
- catch (    Exception e) {
-      log.unableToSendXSiteState(xSiteBackup.getSiteName(),e);
+ catch (    Throwable t) {
+      log.unableToSendXSiteState(xSiteBackup.getSiteName(),t);
       taskContext.stop();
     }
     chunk.clear();

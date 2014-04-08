@@ -1,12 +1,22 @@
 {
+  if (debug) {
+    log.debugf("Handle start state transfer failure to %s",xSiteBackup.getSiteName());
+  }
+  siteCollector.remove(xSiteBackup.getSiteName());
   try {
     controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND,xSiteBackup.getSiteName());
   }
  catch (  Exception e) {
+    if (debug) {
+      log.debugf(e,"Exception while cancel sending to remote site %s",xSiteBackup.getSiteName());
+    }
   }
   try {
-    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.FINISH_RECEIVE);
+    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.FINISH_RECEIVE,null);
   }
  catch (  Throwable throwable) {
+    if (debug) {
+      log.debugf(throwable,"Exception while cancel receiving in remote site %s",xSiteBackup.getSiteName());
+    }
   }
 }

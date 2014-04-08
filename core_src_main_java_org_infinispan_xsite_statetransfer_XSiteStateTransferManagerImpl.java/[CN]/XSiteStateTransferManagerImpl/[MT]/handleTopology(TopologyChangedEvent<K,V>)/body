@@ -1,0 +1,37 @@
+{
+  if (debug) {
+    log.debugf("Topology change detected! %s",topologyChangedEvent);
+  }
+  if (topologyChangedEvent.isPre()) {
+    return;
+  }
+  final List<Address> newMembers=topologyChangedEvent.getConsistentHashAtEnd().getMembers();
+  final boolean amINewCoordinator=newMembers.get(0).equals(rpcManager.getAddress());
+  Collection<String> missingCoordinatorSites=provider.getSitesMissingCoordinator(new HashSet<>(newMembers));
+  if (amINewCoordinator) {
+    startCoordinating(missingCoordinatorSites,newMembers);
+  }
+  if (stateTransferManager.isStateTransferInProgress()) {
+    for (    String siteName : siteCollector.keySet()) {
+      try {
+        log.debugf("Topology change detected! Canceling x-site state transfer for site %s",siteName);
+        controlStateTransferOnLocalSite(StateTransferControl.CANCEL_SEND,siteName);
+      }
+ catch (      Exception e) {
+        log.debugf(e,"Unable to cancel x-site state transfer for site %s",siteName);
+      }
+    }
+  }
+ else {
+    for (    Map.Entry<String,XSiteStateTransferCollector> entry : siteCollector.entrySet()) {
+      entry.setValue(new XSiteStateTransferCollector(newMembers));
+      log.debugf("Topology change detected! Restarting x-site state transfer for site %s",entry.getKey());
+      try {
+        controlStateTransferOnLocalSite(StateTransferControl.RESTART_SEND,entry.getKey());
+      }
+ catch (      Exception e) {
+        log.failedToRestartXSiteStateTransfer(entry.getKey(),e);
+      }
+    }
+  }
+}

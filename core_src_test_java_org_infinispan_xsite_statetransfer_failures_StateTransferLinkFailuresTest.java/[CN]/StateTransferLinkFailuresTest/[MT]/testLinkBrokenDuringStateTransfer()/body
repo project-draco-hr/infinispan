@@ -1,0 +1,35 @@
+{
+  initBeforeTest();
+  initBeforeTest();
+  List<ControllerTransport> transports=replaceTransportInSite(LON);
+  for (  ControllerTransport transport : transports) {
+    transport.failAfterFirstChunk=true;
+  }
+  startStateTransfer(cache(LON,0),NYC);
+  assertOnline(LON,NYC);
+  assertEventuallyInSite(LON,new EventuallyAssertCondition<Object,Object>(){
+    @Override public boolean assertInCache(    Cache<Object,Object> cache){
+      return extractComponent(cache,XSiteStateTransferManager.class).getRunningStateTransfers().isEmpty();
+    }
+  }
+,1,TimeUnit.MINUTES);
+  assertEquals(1,getStatus(LON).size());
+  assertEquals(XSiteStateTransferManager.STATUS_ERROR,getStatus(LON).get(NYC));
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertTrue(extractComponent(cache,CommitManager.class).isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER));
+      assertEquals(LON,extractComponent(cache,XSiteAdminOperations.class).getSendingSiteName());
+    }
+  }
+);
+  assertEquals(SUCCESS,extractComponent(cache(NYC,0),XSiteAdminOperations.class).cancelReceiveState(LON));
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      assertFalse(extractComponent(cache,CommitManager.class).isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER));
+      assertNull(extractComponent(cache,XSiteAdminOperations.class).getSendingSiteName());
+    }
+  }
+);
+  assertEquals(SUCCESS,extractComponent(cache(LON,0),XSiteAdminOperations.class).clearPushStateStatus());
+  assertTrue(getStatus(LON).isEmpty());
+}

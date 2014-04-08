@@ -1,6 +1,12 @@
 {
+  if (!cache.getStatus().allowInvocations()) {
+    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+  }
   final ClusteringDependentLogic clusteringDependentLogic=cache.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
   final Map<Address,List<XSiteState>> primaryOwnersChunks=new HashMap<Address,List<XSiteState>>();
+  if (trace) {
+    log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.",cmd);
+  }
   for (  XSiteState state : cmd.getChunk()) {
     final Address primaryOwner=clusteringDependentLogic.getPrimaryOwner(state.key());
     List<XSiteState> primaryOwnerList=primaryOwnersChunks.get(primaryOwner);
@@ -11,16 +17,36 @@
     primaryOwnerList.add(state);
   }
   final List<XSiteState> localChunks=primaryOwnersChunks.remove(clusteringDependentLogic.getAddress());
-  final List<Future<?>> remoteFutures=new ArrayList<Future<?>>(primaryOwnersChunks.size());
+  final List<StatePushTask> tasks=new ArrayList<StatePushTask>(primaryOwnersChunks.size());
   for (  Map.Entry<Address,List<XSiteState>> entry : primaryOwnersChunks.entrySet()) {
-    sendStateTo(entry.getKey(),entry.getValue(),remoteFutures);
-  }
-  if (localChunks != null) {
-    LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(localChunks)).call();
-    localChunks.clear();
+    if (entry.getValue() == null || entry.getValue().isEmpty()) {
+      continue;
+    }
+    if (trace) {
+      log.tracef("Node '%s' will apply %s",entry.getKey(),entry.getValue());
+    }
+    StatePushTask task=new StatePushTask(entry.getValue(),entry.getKey(),cache);
+    tasks.add(task);
+    task.executeRemote();
   }
   primaryOwnersChunks.clear();
-  for (  Future<?> future : remoteFutures) {
-    future.get();
+  if (trace) {
+    log.tracef("Local node '%s' will apply %s",cache.getAdvancedCache().getRpcManager().getAddress(),localChunks);
+  }
+  if (localChunks != null) {
+    LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(cache,localChunks)).call();
+    localChunks.clear();
+  }
+  if (trace) {
+    log.tracef("Waiting for the remote tasks...");
+  }
+  while (!tasks.isEmpty()) {
+    for (Iterator<StatePushTask> iterator=tasks.iterator(); iterator.hasNext(); ) {
+      awaitRemoteTask(cache,iterator.next());
+      iterator.remove();
+    }
+  }
+  if (!cache.getStatus().allowInvocations()) {
+    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
   }
 }

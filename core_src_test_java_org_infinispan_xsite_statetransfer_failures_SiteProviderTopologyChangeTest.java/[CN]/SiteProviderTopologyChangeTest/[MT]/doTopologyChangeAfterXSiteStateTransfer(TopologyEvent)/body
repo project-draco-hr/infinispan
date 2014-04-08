@@ -1,0 +1,57 @@
+{
+  log.debugf("Start topology change after x-site state transfer with %s",event);
+  initBeforeTest();
+  log.debug("Setting blocking conditions");
+  final TestCaches<Object,Object> testCaches=createTestCache(event,LON);
+  final AtomicReference<StateTransferRequest> pendingRequest=new AtomicReference<>(null);
+  log.debugf("Controlled cache=%s, Coordinator cache=%s, Cache to remove=%s",addressOf(testCaches.controllerCache),addressOf(testCaches.coordinator),testCaches.removeIndex < 0 ? "NONE" : addressOf(cache(LON,testCaches.removeIndex)));
+  if (testCaches.removeIndex >= 0) {
+    log.debugf("Discard x-site state transfer start command in cache %s to remove",addressOf(cache(LON,testCaches.removeIndex)));
+    wrapComponent(cache(LON,testCaches.removeIndex),XSiteStateProvider.class,new WrapFactory<XSiteStateProvider,XSiteStateProvider,Cache<?,?>>(){
+      @Override public XSiteStateProvider wrap(      Cache<?,?> wrapOn,      XSiteStateProvider current){
+        return new XSiteProviderDelegator(current){
+          @Override public void startStateTransfer(          String siteName,          Address requestor,          int minTopologyId){
+            log.debugf("Discard state transfer request to %s from %s",siteName,requestor);
+          }
+        }
+;
+      }
+    }
+,true);
+  }
+ else {
+    log.debugf("Block x-site state transfer start command in cache %s",addressOf(cache(LON,1)));
+    wrapComponent(cache(LON,1),XSiteStateProvider.class,new WrapFactory<XSiteStateProvider,XSiteStateProvider,Cache<?,?>>(){
+      @Override public XSiteStateProvider wrap(      Cache<?,?> wrapOn,      XSiteStateProvider current){
+        return new XSiteProviderDelegator(current){
+          @Override public void startStateTransfer(          String siteName,          Address requestor,          int minTopologyId){
+            log.debugf("Blocking state transfer request to %s from %s",siteName,requestor);
+            pendingRequest.set(new StateTransferRequest(siteName,requestor,minTopologyId,xSiteStateProvider));
+          }
+        }
+;
+      }
+    }
+,true);
+  }
+  log.debug("Start x-site state transfer");
+  startStateTransfer(testCaches.coordinator,NYC);
+  assertOnline(LON,NYC);
+  log.debug("Await until X-Site state transfer is finished!");
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return extractComponent(testCaches.controllerCache,XSiteStateProvider.class).getCurrentStateSending().isEmpty();
+    }
+  }
+,TimeUnit.SECONDS.toMillis(30));
+  Future<Void> topologyEventFuture=triggerTopologyChange(LON,testCaches.removeIndex);
+  topologyEventFuture.get();
+  awaitLocalStateTransfer(LON);
+  if (pendingRequest.get() != null) {
+    log.debug("Let the blocked x-site state transfer request to proceed");
+    pendingRequest.get().execute();
+  }
+  awaitXSiteStateSent(LON);
+  log.debug("Check data in both sites.");
+  assertData();
+}

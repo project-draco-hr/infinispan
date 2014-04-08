@@ -1,0 +1,20 @@
+{
+  if (rpcManager.getAddress().equals(origin)) {
+    executorService.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        try {
+          stateTransferManager.notifyStatePushFinished(siteName,origin,!error);
+        }
+ catch (        Throwable throwable) {
+        }
+        return null;
+      }
+    }
+);
+  }
+ else {
+    XSiteStateTransferControlCommand command=commandsFactory.buildXSiteStateTransferControlCommand(FINISH_SEND,siteName);
+    command.setStatusOk(!error);
+    rpcManager.invokeRemotely(Collections.singleton(origin),command,rpcManager.getDefaultRpcOptions(false));
+  }
+}

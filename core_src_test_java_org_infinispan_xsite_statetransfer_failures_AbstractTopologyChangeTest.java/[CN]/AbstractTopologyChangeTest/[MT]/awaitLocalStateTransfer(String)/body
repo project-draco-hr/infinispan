@@ -1,0 +1,9 @@
+{
+  log.debugf("Await until rebalance in site '%s' is finished!",site);
+  assertEventuallyInSite(site,new EventuallyAssertCondition<Object,Object>(){
+    @Override public boolean assertInCache(    Cache<Object,Object> cache){
+      return !extractComponent(cache,StateConsumer.class).isStateTransferInProgress() && !extractComponent(cache,StateProvider.class).isStateTransferInProgress();
+    }
+  }
+,30,TimeUnit.SECONDS);
+}

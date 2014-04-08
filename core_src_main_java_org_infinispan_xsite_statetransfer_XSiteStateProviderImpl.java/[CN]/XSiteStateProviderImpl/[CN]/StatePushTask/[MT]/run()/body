@@ -1,0 +1,94 @@
+{
+  try {
+    if (debug) {
+      log.debugf("[X-Site State Transfer - %s] wait for min topology %s",xSiteBackup.getSiteName(),minTopologyId);
+    }
+    waitForTopology(minTopologyId);
+    final List<XSiteState> chunk=new ArrayList<>(chunkSize <= 0 ? DEFAULT_CHUNK_SIZE : chunkSize);
+    if (debug) {
+      log.debugf("[X-Site State Transfer - %s] start DataContainer iteration",xSiteBackup.getSiteName());
+    }
+    for (    InternalCacheEntry ice : dataContainer) {
+      if (canceled) {
+        log.debugf("[X-Site State Transfer - %s] State transfer canceled!",xSiteBackup.getSiteName());
+        return;
+      }
+      if (chunkSize > 0 && chunk.size() == chunkSize) {
+        try {
+          sendFromSharedBuffer(xSiteBackup,chunk,this);
+        }
+ catch (        Throwable t) {
+          error=true;
+          log.unableToSendXSiteState(xSiteBackup.getSiteName(),t);
+          return;
+        }
+        chunk.clear();
+      }
+      if (shouldSendKey(ice.getKey())) {
+        if (trace) {
+          log.tracef("Added key '%s' to current chunk",ice.getKey());
+        }
+        chunk.add(XSiteState.fromDataContainer(ice));
+      }
+    }
+    if (canceled) {
+      return;
+    }
+    if (chunk.size() > 0) {
+      try {
+        sendFromSharedBuffer(xSiteBackup,chunk,this);
+      }
+ catch (      Throwable t) {
+        error=true;
+        log.unableToSendXSiteState(xSiteBackup.getSiteName(),t);
+        return;
+      }
+    }
+    if (debug) {
+      log.debugf("[X-Site State Transfer - %s] finish DataContainer iteration",xSiteBackup.getSiteName());
+    }
+    @SuppressWarnings("unchecked") AdvancedCacheLoader<Object,Object> stProvider=persistenceManager.getStateTransferProvider();
+    if (stProvider != null) {
+      if (debug) {
+        log.debugf("[X-Site State Transfer - %s] start Persistence iteration",xSiteBackup.getSiteName());
+      }
+      KeyFilter<Object> filter=new CacheLoaderFilter<>(new ReadOnlyDataContainerBackedKeySet(dataContainer));
+      StateTransferCacheLoaderTask task=new StateTransferCacheLoaderTask(xSiteBackup,chunk,this);
+      try {
+        stProvider.process(filter,task,EXECUTOR_SERVICE,true,true);
+        if (canceled) {
+          log.debugf("[X-Site State Transfer - %s] State transfer canceled!",xSiteBackup.getSiteName());
+          return;
+        }
+        task.sendRemainingState();
+      }
+ catch (      CacheException e) {
+        error=true;
+        log.failedLoadingKeysFromCacheStore(e);
+        return;
+      }
+catch (      Throwable t) {
+        error=true;
+        log.unableToSendXSiteState(xSiteBackup.getSiteName(),t);
+        return;
+      }
+      if (debug) {
+        log.debugf("[X-Site State Transfer - %s] finish Persistence iteration",xSiteBackup.getSiteName());
+      }
+    }
+ else     if (debug) {
+      log.debugf("[X-Site State Transfer - %s] skip Persistence iteration",xSiteBackup.getSiteName());
+    }
+  }
+ catch (  InterruptedException e) {
+    error=true;
+    log.unableToSendXSiteState(xSiteBackup.getSiteName(),e);
+  }
+ finally {
+    finished=true;
+    log.debugf("[X-Site State Transfer - %s] State transfer finished!",xSiteBackup.getSiteName());
+    if (!canceled) {
+      notifyStateTransferEnd(xSiteBackup.getSiteName(),origin,error);
+    }
+  }
+}

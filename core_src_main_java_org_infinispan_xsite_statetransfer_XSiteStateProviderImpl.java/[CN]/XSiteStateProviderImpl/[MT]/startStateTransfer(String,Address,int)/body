@@ -1,0 +1,25 @@
+{
+  XSiteStateTransferConfiguration stateTransferConfiguration=null;
+  for (  BackupConfiguration backupConfiguration : configuration.sites().allBackups()) {
+    if (backupConfiguration.site().equals(siteName)) {
+      stateTransferConfiguration=backupConfiguration.stateTransfer();
+      break;
+    }
+  }
+  if (stateTransferConfiguration == null) {
+    throw new CacheException("Unable to start X-Site State Transfer! Backup configuration not found for " + siteName + "!");
+  }
+  StatePushTask task=new StatePushTask(siteName,origin,stateTransferConfiguration,minTopologyId);
+  if (runningStateTransfer.putIfAbsent(siteName,task) == null) {
+    if (debug) {
+      log.debugf("Starting state transfer to site '%s'",siteName);
+    }
+    executorService.execute(task);
+  }
+ else   if (debug) {
+    log.debugf("Do not start state transfer to site '%s'. It has already started!",siteName);
+  }
+  if (rpcManager.getAddress().equals(rpcManager.getMembers().get(0)) && !rpcManager.getMembers().contains(origin)) {
+    stateTransferManager.becomeCoordinator(siteName);
+  }
+}

@@ -1,0 +1,58 @@
+{
+  log.debugf("Start topology change during x-site state transfer with %s",event);
+  initBeforeTest();
+  final TestCaches<Object,Object> testCaches=createTestCache(event,NYC);
+  printTestCaches(testCaches);
+  final CheckPoint checkPoint=new CheckPoint();
+  final AtomicBoolean discard=new AtomicBoolean(true);
+  wrapGlobalComponent(cache(NYC,0).getCacheManager(),BackupReceiverRepository.class,new WrapFactory<BackupReceiverRepository,BackupReceiverRepository,CacheContainer>(){
+    @Override public BackupReceiverRepository wrap(    final CacheContainer wrapOn,    final BackupReceiverRepository current){
+      BackupReceiverRepositoryDelegator delegator=new BackupReceiverRepositoryDelegator(current){
+        private final Set<Address> addressSet=new HashSet<>();
+        @Override public BackupReceiver getBackupReceiver(        String originSiteName,        String cacheName){
+          return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName,cacheName)){
+            @Override public void handleStateTransferState(            XSiteStatePushCommand cmd) throws Exception {
+              log.debugf("Applying state: %s",cmd);
+              if (!discard.get()) {
+                delegate.handleStateTransferState(cmd);
+                return;
+              }
+              DistributionManager manager=delegate.getCache().getAdvancedCache().getDistributionManager();
+synchronized (addressSet) {
+                if (addressSet.size() == 3) {
+                  checkPoint.trigger("before-block");
+                  checkPoint.awaitStrict("blocked",30,TimeUnit.SECONDS);
+                  delegate.handleStateTransferState(cmd);
+                  return;
+                }
+                for (                XSiteState state : cmd.getChunk()) {
+                  addressSet.add(manager.getPrimaryLocation(state.key()));
+                }
+              }
+              delegate.handleStateTransferState(cmd);
+            }
+          }
+;
+        }
+      }
+;
+      JGroupsTransport t=(JGroupsTransport)extractGlobalComponent(wrapOn,Transport.class);
+      CommandAwareRpcDispatcher card=t.getCommandAwareRpcDispatcher();
+      replaceField(delegator,"backupReceiverRepository",card,CommandAwareRpcDispatcher.class);
+      return delegator;
+    }
+  }
+,true);
+  log.debug("Start x-site state transfer");
+  startStateTransfer(testCaches.coordinator,NYC);
+  assertOnline(LON,NYC);
+  checkPoint.awaitStrict("before-block",30,TimeUnit.SECONDS);
+  Future<?> topologyChangeFuture=triggerTopologyChange(NYC,testCaches.removeIndex);
+  discard.set(false);
+  checkPoint.triggerForever("blocked");
+  topologyChangeFuture.get();
+  awaitXSiteStateSent(LON);
+  awaitLocalStateTransfer(NYC);
+  awaitXSiteStateReceived(NYC);
+  assertData();
+}

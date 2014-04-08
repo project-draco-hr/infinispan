@@ -1,0 +1,18 @@
+{
+  log.debugf("Start topology change during x-site state transfer with %s",event);
+  initBeforeTest();
+  final TestCaches<Object,Object> testCaches=createTestCache(event,LON);
+  log.debugf("Controlled cache=%s, Coordinator cache=%s, Cache to remove=%s",addressOf(testCaches.controllerCache),addressOf(testCaches.coordinator),testCaches.removeIndex < 0 ? "NONE" : addressOf(cache(LON,testCaches.removeIndex)));
+  final BlockingLocalTopologyManager topologyManager=replaceTopologyManager(testCaches.controllerCache.getCacheManager());
+  topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  final Future<Void> topologyEventFuture=triggerTopologyChange(LON,testCaches.removeIndex);
+  topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  log.debug("Start x-site state transfer");
+  startStateTransfer(testCaches.coordinator,NYC);
+  assertOnline(LON,NYC);
+  topologyManager.stopBlockingAll();
+  topologyEventFuture.get();
+  awaitLocalStateTransfer(LON);
+  awaitXSiteStateSent(LON);
+  assertData();
+}

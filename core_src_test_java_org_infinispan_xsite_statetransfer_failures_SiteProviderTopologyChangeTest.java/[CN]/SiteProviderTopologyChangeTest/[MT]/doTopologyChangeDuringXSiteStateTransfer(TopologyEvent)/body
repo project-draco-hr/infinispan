@@ -1,0 +1,37 @@
+{
+  log.debugf("Start topology change during x-site state transfer with %s",event);
+  initBeforeTest();
+  final TestCaches<Object,Object> testCaches=createTestCache(event,LON);
+  log.debugf("Controlled cache=%s, Coordinator cache=%s, Cache to remove=%s",addressOf(testCaches.controllerCache),addressOf(testCaches.coordinator),testCaches.removeIndex < 0 ? "NONE" : addressOf(cache(LON,testCaches.removeIndex)));
+  final CheckPoint checkPoint=new CheckPoint();
+  final AtomicBoolean firstChunk=new AtomicBoolean(false);
+  wrapGlobalComponent(testCaches.controllerCache.getCacheManager(),Transport.class,new WrapFactory<Transport,Transport,CacheContainer>(){
+    @Override public Transport wrap(    CacheContainer wrapOn,    Transport current){
+      return new AbstractDelegatingTransport(current){
+        @Override public void start(){
+        }
+        @Override public BackupResponse backupRemotely(        Collection<XSiteBackup> backups,        XSiteReplicateCommand rpcCommand) throws Exception {
+          if (rpcCommand instanceof XSiteStatePushCommand) {
+            if (firstChunk.compareAndSet(false,true)) {
+              checkPoint.trigger("before-second-chunk");
+              checkPoint.awaitStrict("second-chunk",30,TimeUnit.SECONDS);
+            }
+          }
+          return super.backupRemotely(backups,rpcCommand);
+        }
+      }
+;
+    }
+  }
+,true);
+  log.debug("Start x-site state transfer");
+  startStateTransfer(testCaches.coordinator,NYC);
+  assertOnline(LON,NYC);
+  checkPoint.awaitStrict("before-second-chunk",30,TimeUnit.SECONDS);
+  final Future<Void> topologyEventFuture=triggerTopologyChange(LON,testCaches.removeIndex);
+  topologyEventFuture.get();
+  checkPoint.triggerForever("second-chunk");
+  awaitLocalStateTransfer(LON);
+  awaitXSiteStateSent(LON);
+  assertData();
+}

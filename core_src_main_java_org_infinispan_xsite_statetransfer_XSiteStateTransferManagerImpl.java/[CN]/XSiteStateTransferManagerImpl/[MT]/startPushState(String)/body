@@ -10,8 +10,15 @@
     throw new Exception(format("X-Site state transfer to '%s' already started!",siteName));
   }
   try {
-    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.START_RECEIVE);
-    controlStateTransferOnLocalSite(StateTransferControl.START_SEND,siteName);
+    controlStateTransferOnRemoteSite(xSiteBackup,StateTransferControl.START_RECEIVE,null);
+    if (!stateTransferManager.isStateTransferInProgress()) {
+      controlStateTransferOnLocalSite(StateTransferControl.START_SEND,siteName);
+    }
+ else {
+      if (debug) {
+        log.debugf("Not start sending keys to site '%s' while rebalance in progress. Wait until it is finished!",siteName);
+      }
+    }
   }
  catch (  Throwable throwable) {
     handleFailure(xSiteBackup);

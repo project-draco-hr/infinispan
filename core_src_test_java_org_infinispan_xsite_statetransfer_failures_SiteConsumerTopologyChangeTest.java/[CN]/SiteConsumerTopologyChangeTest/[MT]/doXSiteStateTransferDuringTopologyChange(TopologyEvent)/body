@@ -1,0 +1,42 @@
+{
+  log.debugf("Start topology change during x-site state transfer with %s",event);
+  initBeforeTest();
+  final TestCaches<Object,Object> testCaches=createTestCache(event,NYC);
+  printTestCaches(testCaches);
+  final BlockingLocalTopologyManager topologyManager=replaceTopologyManager(testCaches.controllerCache.getCacheManager());
+  final CheckPoint checkPoint=new CheckPoint();
+  wrapGlobalComponent(cache(NYC,0).getCacheManager(),BackupReceiverRepository.class,new WrapFactory<BackupReceiverRepository,BackupReceiverRepository,CacheContainer>(){
+    @Override public BackupReceiverRepository wrap(    final CacheContainer wrapOn,    final BackupReceiverRepository current){
+      BackupReceiverRepositoryDelegator delegator=new BackupReceiverRepositoryDelegator(current){
+        @Override public BackupReceiver getBackupReceiver(        String originSiteName,        String cacheName){
+          return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName,cacheName)){
+            @Override public void handleStateTransferState(            XSiteStatePushCommand cmd) throws Exception {
+              checkPoint.trigger("before-chunk");
+              delegate.handleStateTransferState(cmd);
+            }
+          }
+;
+        }
+      }
+;
+      JGroupsTransport t=(JGroupsTransport)extractGlobalComponent(wrapOn,Transport.class);
+      CommandAwareRpcDispatcher card=t.getCommandAwareRpcDispatcher();
+      replaceField(delegator,"backupReceiverRepository",card,CommandAwareRpcDispatcher.class);
+      return delegator;
+    }
+  }
+,true);
+  topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  final Future<Void> topologyEventFuture=triggerTopologyChange(NYC,testCaches.removeIndex);
+  topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+  log.debug("Start x-site state transfer");
+  startStateTransfer(testCaches.coordinator,NYC);
+  assertOnline(LON,NYC);
+  checkPoint.awaitStrict("before-chunk",30,TimeUnit.SECONDS);
+  topologyManager.stopBlockingAll();
+  topologyEventFuture.get();
+  awaitXSiteStateSent(LON);
+  awaitLocalStateTransfer(NYC);
+  awaitXSiteStateReceived(NYC);
+  assertData();
+}
