@@ -1,0 +1,18 @@
+{
+  lock.lock();
+  try {
+    State state=stateMap.get(stateName);
+    if (state == null) {
+      throw new IllegalArgumentException("Trying to add an action for an invalid state: " + stateName);
+    }
+    if (state.action != null) {
+      throw new IllegalStateException("Trying to overwrite an existing action for state " + stateName);
+    }
+    state.action=action;
+    log.tracef("Action added for state %s",stateName);
+  }
+  finally {
+    lock.unlock();
+  }
+  return this;
+}

@@ -1,0 +1,16 @@
+{
+  log.tracef("Exiting state %s",stateName);
+  lock.lock();
+  try {
+    if (!running)     return;
+    State state=stateMap.get(stateName);
+    if (state.signalled) {
+      throw new IllegalStateException(String.format("State %s exited twice",stateName));
+    }
+    state.signalled=true;
+    condition.signalAll();
+  }
+  finally {
+    lock.unlock();
+  }
+}

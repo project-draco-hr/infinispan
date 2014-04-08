@@ -1,0 +1,11 @@
+{
+  if (ourHandler == null) {
+    GlobalComponentRegistry globalComponentRegistry=cacheManager.getGlobalComponentRegistry();
+    InboundInvocationHandler handler=globalComponentRegistry.getComponent(InboundInvocationHandler.class);
+    ourHandler=new SequencerInboundInvocationHandler(handler,stateSequencer,matcher);
+    TestingUtil.replaceComponent(cacheManager,InboundInvocationHandler.class,ourHandler,true);
+    JGroupsTransport t=(JGroupsTransport)globalComponentRegistry.getComponent(Transport.class);
+    CommandAwareRpcDispatcher card=t.getCommandAwareRpcDispatcher();
+    TestingUtil.replaceField(ourHandler,"inboundInvocationHandler",card,CommandAwareRpcDispatcher.class);
+  }
+}

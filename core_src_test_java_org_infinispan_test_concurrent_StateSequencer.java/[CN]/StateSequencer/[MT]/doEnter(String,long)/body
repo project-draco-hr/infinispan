@@ -1,0 +1,34 @@
+{
+  lock.lock();
+  try {
+    State state=stateMap.get(stateName);
+    if (state == null) {
+      throw new IllegalArgumentException("Trying to advance to a non-existing state: " + stateName);
+    }
+    if (!running) {
+      log.tracef("Sequencer stopped, not entering state %s",stateName);
+      return;
+    }
+    log.tracef("Waiting for states %s to enter %s",state.dependencies,stateName);
+    for (    String dependency : state.dependencies) {
+      State depState=stateMap.get(dependency);
+      nanos=waitForState(depState,nanos);
+      if (nanos <= 0 && !depState.signalled) {
+        reportTimeout(state);
+      }
+    }
+    log.tracef("Entering state %s",stateName);
+    logicalThreads.get(state.threadName).setCurrentState(stateName);
+    if (state.action != null) {
+      try {
+        state.action.call();
+      }
+ catch (      Exception e) {
+        throw new RuntimeException("Action failed for state " + stateName,e);
+      }
+    }
+  }
+  finally {
+    lock.unlock();
+  }
+}

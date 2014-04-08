@@ -1,0 +1,21 @@
+{
+  Set<String> visitedStates=new HashSet<String>();
+  Set<String> remainingStates=new HashSet<String>(stateMap.keySet());
+  while (!remainingStates.isEmpty()) {
+    List<String> freeStates=new ArrayList<String>();
+    for (Iterator<String> it=remainingStates.iterator(); it.hasNext(); ) {
+      State s=stateMap.get(it.next());
+      if (visitedStates.containsAll(s.dependencies)) {
+        freeStates.add(s.name);
+        it.remove();
+      }
+    }
+    visitedStates.addAll(freeStates);
+    if (freeStates.size() != 0) {
+      visitor.visitStates(freeStates);
+    }
+ else {
+      visitor.visitCycle(remainingStates);
+    }
+  }
+}

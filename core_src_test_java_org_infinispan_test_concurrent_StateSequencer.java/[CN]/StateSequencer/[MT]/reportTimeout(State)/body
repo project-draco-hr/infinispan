@@ -1,0 +1,12 @@
+{
+  List<String> timedOutStates=new ArrayList<String>(1);
+  for (  String dependencyName : state.dependencies) {
+    State dependency=stateMap.get(dependencyName);
+    if (!dependency.signalled) {
+      timedOutStates.add(dependencyName);
+    }
+  }
+  String errorMessage=String.format("Timed out waiting to enter state %s. Dependencies not satisfied " + "are %s. Full sequencer order is %s",state.name,timedOutStates,this);
+  log.trace(errorMessage);
+  throw new TimeoutException(errorMessage);
+}

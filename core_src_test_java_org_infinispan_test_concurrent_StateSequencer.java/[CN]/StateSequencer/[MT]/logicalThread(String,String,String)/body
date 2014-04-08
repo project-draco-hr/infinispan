@@ -1,0 +1,32 @@
+{
+  lock.lock();
+  try {
+    if (logicalThreads.containsKey(threadName)) {
+      throw new IllegalArgumentException("Logical thread " + threadName + " already exists");
+    }
+    List<String> states;
+    if (additionalStates == null) {
+      states=Collections.singletonList(initialState);
+    }
+ else {
+      states=new ArrayList<String>(additionalStates.length + 1);
+      states.add(initialState);
+      states.addAll(Arrays.asList(additionalStates));
+    }
+    LogicalThread thread=new LogicalThread(threadName,states);
+    logicalThreads.put(threadName,thread);
+    for (    String stateName : states) {
+      if (stateMap.containsKey(stateName)) {
+        throw new IllegalArgumentException("State " + stateName + " already exists");
+      }
+      State state=new State(threadName,stateName);
+      stateMap.put(stateName,state);
+    }
+    doOrder(states);
+    log.tracef("Added logical thread %s, with states %s",threadName,Arrays.asList(states));
+  }
+  finally {
+    lock.unlock();
+  }
+  return this;
+}
