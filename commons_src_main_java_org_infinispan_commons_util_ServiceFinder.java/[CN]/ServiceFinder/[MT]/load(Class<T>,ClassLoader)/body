@@ -1,0 +1,22 @@
+{
+  Set<T> services=new LinkedHashSet<T>();
+  for (  ClassLoader loader : loaders) {
+    if (loader == null)     continue;
+    try {
+      ServiceLoader<T> loadedServices=ServiceLoader.load(contract,loader);
+      if (loadedServices.iterator().hasNext()) {
+        for (        T loadedService : loadedServices) {
+          LOG.debugf("Loading service impl: %s",loadedService.getClass().getSimpleName());
+          services.add(loadedService);
+        }
+      }
+    }
+ catch (    Exception e) {
+    }
+  }
+  addOsgiServices(contract,services);
+  if (services.isEmpty()) {
+    LOG.debugf("No service impls found: %s",contract.getSimpleName());
+  }
+  return services;
+}

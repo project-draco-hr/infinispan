@@ -1,0 +1,18 @@
+{
+  ClassLoader loader=ServiceFinder.class.getClassLoader();
+  if (loader instanceof BundleReference) {
+    final BundleContext bundleContext=((BundleReference)loader).getBundle().getBundleContext();
+    final ServiceTracker<T,T> serviceTracker=new ServiceTracker<T,T>(bundleContext,contract.getName(),null);
+    serviceTracker.open();
+    try {
+      final Object[] osgiServices=serviceTracker.getServices();
+      if (osgiServices != null) {
+        for (        Object osgiService : osgiServices) {
+          services.add((T)osgiService);
+        }
+      }
+    }
+ catch (    Exception e) {
+    }
+  }
+}
