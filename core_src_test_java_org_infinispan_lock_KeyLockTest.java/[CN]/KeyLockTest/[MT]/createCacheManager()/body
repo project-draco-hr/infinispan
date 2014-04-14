@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.LOCAL);
+  builder.locking().lockAcquisitionTimeout(100,TimeUnit.MILLISECONDS);
+  builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
+  EmbeddedCacheManager cacheManager=TestCacheManagerFactory.createCacheManager(builder);
+  for (  CacheName cacheName : CacheName.values()) {
+    cacheName.configure(builder);
+    cacheManager.defineConfiguration(cacheName.name(),builder.build());
+  }
+  return cacheManager;
+}

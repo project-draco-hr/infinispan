@@ -1,0 +1,16 @@
+{
+  AdvancedCache<?,?> advancedCache=cache(cacheName).getAdvancedCache();
+  final CheckPoint checkPoint=new CheckPoint();
+  advancedCache.addInterceptorBefore(new BaseCustomInterceptor(){
+    private final AtomicBoolean first=new AtomicBoolean(false);
+    @Override public Object visitPutKeyValueCommand(    InvocationContext ctx,    PutKeyValueCommand command) throws Throwable {
+      if (first.compareAndSet(false,true)) {
+        checkPoint.trigger("before-block");
+        checkPoint.awaitStrict("block",30,TimeUnit.SECONDS);
+      }
+      return invokeNextInterceptor(ctx,command);
+    }
+  }
+,CallInterceptor.class);
+  return checkPoint;
+}
