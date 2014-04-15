@@ -1,0 +1,14 @@
+{
+  JdbcStringBasedStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
+  TableManipulation tableManipulation=new TableManipulation(storeBuilder.table().create(),null);
+  tableManipulation.setCacheName("GuessDialect");
+  PooledConnectionFactory factory=new PooledConnectionFactory();
+  ConnectionFactoryConfiguration config=UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
+  factory.start(config,Thread.currentThread().getContextClassLoader());
+  tableManipulation.start(factory);
+  tableManipulation.getUpdateRowSql();
+  UnitTestDatabaseManager.verifyConnectionLeaks(factory);
+  tableManipulation.stop();
+  factory.stop();
+}

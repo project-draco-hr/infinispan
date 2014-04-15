@@ -1,0 +1,21 @@
+{
+  boolean useStringKeyedTable=store.hasDefined(ModelKeys.STRING_KEYED_TABLE);
+  boolean useBinaryKeyedTable=store.hasDefined(ModelKeys.BINARY_KEYED_TABLE);
+  if (useStringKeyedTable && !useBinaryKeyedTable) {
+    JdbcStringBasedStoreConfigurationBuilder builder=loadersBuilder.addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+    builder.dialect(dialect);
+    this.buildStringKeyedTable(builder.table(),context,store.get(ModelKeys.STRING_KEYED_TABLE));
+    return builder;
+  }
+ else   if (useBinaryKeyedTable && !useStringKeyedTable) {
+    JdbcBinaryStoreConfigurationBuilder builder=loadersBuilder.addStore(JdbcBinaryStoreConfigurationBuilder.class);
+    builder.dialect(dialect);
+    this.buildBinaryKeyedTable(builder.table(),context,store.get(ModelKeys.BINARY_KEYED_TABLE));
+    return builder;
+  }
+  JdbcMixedStoreConfigurationBuilder builder=loadersBuilder.addStore(JdbcMixedStoreConfigurationBuilder.class);
+  builder.dialect(dialect);
+  this.buildStringKeyedTable(builder.stringTable(),context,store.get(ModelKeys.STRING_KEYED_TABLE));
+  this.buildBinaryKeyedTable(builder.binaryTable(),context,store.get(ModelKeys.BINARY_KEYED_TABLE));
+  return builder;
+}

@@ -25,7 +25,9 @@
     return builder;
   }
  else   if (storeKey.equals(ModelKeys.STRING_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.BINARY_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.MIXED_KEYED_JDBC_STORE)) {
-    final AbstractJdbcStoreConfigurationBuilder<?,?> builder=this.buildJdbcStore(persistenceBuilder,context,store);
+    ModelNode dialectNode=BaseJDBCStoreResource.DIALECT.resolveModelAttribute(context,store);
+    Dialect dialect=dialectNode.isDefined() ? Dialect.valueOf(dialectNode.asString()) : null;
+    AbstractJdbcStoreConfigurationBuilder<?,?> builder=buildJdbcStore(persistenceBuilder,context,store,dialect);
     final String datasource=BaseJDBCStoreResource.DATA_SOURCE.resolveModelAttribute(context,store).asString();
     dependencies.add(new Dependency<Object>(ServiceName.JBOSS.append("data-source",datasource)));
     builder.dataSource().jndiUrl(datasource);

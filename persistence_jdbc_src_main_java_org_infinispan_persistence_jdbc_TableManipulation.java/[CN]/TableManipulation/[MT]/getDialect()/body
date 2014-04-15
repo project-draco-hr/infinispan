@@ -1,0 +1,37 @@
+{
+  if (dialect == null) {
+    Connection connection=null;
+    try {
+      connection=connectionFactory.getConnection();
+      String dbProduct=connection.getMetaData().getDatabaseProductName();
+      dialect=guessDialect(dbProduct);
+    }
+ catch (    Exception e) {
+      log.debug("Unable to guess dialect from JDBC metadata.",e);
+    }
+ finally {
+      connectionFactory.releaseConnection(connection);
+    }
+    if (dialect == null) {
+      log.debug("Unable to detect database dialect using connection metadata.  Attempting to guess on driver name.");
+      try {
+        connection=connectionFactory.getConnection();
+        String dbProduct=connectionFactory.getConnection().getMetaData().getDriverName();
+        dialect=guessDialect(dbProduct);
+      }
+ catch (      Exception e) {
+        log.debug("Unable to guess database dialect from JDBC driver name.",e);
+      }
+ finally {
+        connectionFactory.releaseConnection(connection);
+      }
+    }
+    if (dialect == null) {
+      throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(Dialect.values()));
+    }
+ else {
+      log.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s",dialect,Arrays.toString(Dialect.values()));
+    }
+  }
+  return dialect;
+}
