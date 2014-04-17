@@ -1,7 +1,7 @@
 {
   String taskId=mcc.getTaskId();
   String tmpCacheName=mcc.getIntermediateCacheName();
-  Cache<Object,DeltaAwareList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
+  Cache<Object,DeltaList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
   if (tmpCache == null) {
     throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " named "+ tmpCacheName+ " not found on "+ cdl.getAddress());
   }
@@ -21,7 +21,7 @@
           int entryTransferCount=chunkSize;
           for (int i=0; i < values.size(); i+=entryTransferCount) {
             List<VOut> chunk=values.subList(i,Math.min(values.size(),i + entryTransferCount));
-            DeltaAwareList<VOut> delta=new DeltaAwareList<VOut>(chunk);
+            DeltaList<VOut> delta=new DeltaList<VOut>(chunk);
             if (emitCompositeIntermediateKeys) {
               tmpCache.put(new IntermediateCompositeKey<KOut>(taskId,key),delta);
             }
