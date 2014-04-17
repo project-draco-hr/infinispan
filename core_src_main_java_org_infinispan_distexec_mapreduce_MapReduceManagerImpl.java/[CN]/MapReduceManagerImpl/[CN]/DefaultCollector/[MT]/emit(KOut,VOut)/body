@@ -1,10 +1,12 @@
 {
-  if (atomicEmit) {
-synchronized (this) {
-      emitHelper(key,value);
-    }
+  List<VOut> list=store.get(key);
+  if (list == null) {
+    list=new ArrayList<VOut>(128);
+    store.put(key,list);
   }
- else {
-    emitHelper(key,value);
+  list.add(value);
+  emitCount.incrementAndGet();
+  if (isOverflown() && mcc.hasCombiner()) {
+    combine(mcc,this);
   }
 }

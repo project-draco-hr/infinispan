@@ -1,7 +1,5 @@
 {
-  Map<KOut,List<VOut>> combinedMap=null;
   if (mcc.hasCombiner()) {
-    combinedMap=new HashMap<KOut,List<VOut>>();
     Reducer<KOut,VOut> combiner=mcc.getCombiner();
     Cache<?,?> cache=cacheManager.getCache(mcc.getCacheName());
     log.tracef("For m/r task %s invoking combiner %s at %s",mcc.getTaskId(),mcc,cdl.getAddress());
@@ -9,17 +7,12 @@
     long start=log.isTraceEnabled() ? timeService.time() : 0;
     try {
       taskLifecycleService.onPreExecute(combiner,cache);
-      for (      Entry<KOut,List<VOut>> e : collectedValues.entrySet()) {
+      for (      Entry<KOut,List<VOut>> e : c.collectedValues().entrySet()) {
         List<VOut> mapped=e.getValue();
-        List<VOut> combined;
-        if (mapped.size() == 1) {
-          combined=mapped;
+        if (mapped.size() > 1) {
+          VOut reduced=combiner.reduce(e.getKey(),mapped.iterator());
+          c.emitReduced(e.getKey(),reduced);
         }
- else {
-          combined=Arrays.asList(combiner.reduce(e.getKey(),mapped.iterator()));
-        }
-        combinedMap.put(e.getKey(),combined);
-        log.tracef("For m/r task %s combined %s to %s at %s",mcc.getTaskId(),e.getKey(),combined,cdl.getAddress());
       }
     }
   finally {
@@ -29,8 +22,4 @@
       taskLifecycleService.onPostExecute(combiner);
     }
   }
- else {
-    combinedMap=collectedValues;
-  }
-  return combinedMap;
 }

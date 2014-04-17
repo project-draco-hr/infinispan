@@ -5,37 +5,36 @@
   final Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
   final boolean inputKeysSpecified=keys != null && !keys.isEmpty();
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
-  final DefaultCollector<KOut,VOut> c=new DefaultCollector<KOut,VOut>(maxCSize,!inputKeysSpecified);
   DataContainer dc=cache.getAdvancedCache().getDataContainer();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,mcc.getKeys());
   long start=log.isTraceEnabled() ? timeService.time() : 0;
-  final Set<KOut> intermediateKeys=Collections.synchronizedSet(new HashSet<KOut>());
+  final Set<KOut> intermediateKeys=new HashSet<KOut>();
   try {
     taskLifecycleService.onPreExecute(mapper,cache);
     if (inputKeysSpecified) {
+      DefaultCollector<KIn,VIn,KOut,VOut> c=new DefaultCollector<KIn,VIn,KOut,VOut>(mcc,maxCSize);
       for (      KIn key : keys) {
         VIn value=cache.get(key);
         mapper.map(key,value,c);
       }
-      Map<KOut,List<VOut>> combinedValues=combine(mcc,c.removeCollectedValues());
-      Set<KOut> s=migrateIntermediateKeysAndValues(mcc,combinedValues);
+      combine(mcc,c);
+      Set<KOut> s=migrateIntermediateKeysAndValues(mcc,c.collectedValues());
       intermediateKeys.addAll(s);
     }
  else {
-      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(c,mcc,maxCSize);
+      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(mcc,maxCSize);
       dc.executeTask(new PrimaryOwnerFilter(cdl),task);
-      intermediateKeys.addAll(task.getIntermediateKeys());
-      Map<KOut,List<VOut>> combinedValues=combine(mcc,c.removeCollectedValues());
+      intermediateKeys.addAll(task.getMigratedIntermediateKeys());
+      Map<KOut,List<VOut>> combinedValues=task.collectedValues();
       Set<KOut> lastOne=migrateIntermediateKeysAndValues(mcc,combinedValues);
       intermediateKeys.addAll(lastOne);
     }
     if (persistenceManager != null && !inputKeysSpecified) {
-      final DefaultCollector<KOut,VOut> pmc=new DefaultCollector<KOut,VOut>(maxCSize,true);
       KeyFilter<?> keyFilter=new CompositeKeyFilter(new PrimaryOwnerFilter(cdl),new CollectionKeyFilter(dc.keySet()));
-      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(pmc,mcc,maxCSize);
+      MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(mcc,maxCSize);
       persistenceManager.processOnAllStores(keyFilter,task,true,false);
-      intermediateKeys.addAll(task.getIntermediateKeys());
-      Map<KOut,List<VOut>> combinedValues=combine(mcc,pmc.removeCollectedValues());
+      intermediateKeys.addAll(task.getMigratedIntermediateKeys());
+      Map<KOut,List<VOut>> combinedValues=task.collectedValues();
       Set<KOut> lastOne=migrateIntermediateKeysAndValues(mcc,combinedValues);
       intermediateKeys.addAll(lastOne);
     }
