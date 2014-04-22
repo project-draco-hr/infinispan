@@ -1,0 +1,16 @@
+{
+  if (closed.get()) {
+    throw new IllegalStateException("Iterable has been closed - cannot be reused");
+  }
+  CloseableIterator<Map.Entry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,null);
+  iterators.add(iterator);
+  if (closed.get()) {
+    try {
+      iterator.close();
+    }
+ catch (    IOException e) {
+    }
+    throw new IllegalStateException("Iterable has been closed - cannot be reused");
+  }
+  return iterator;
+}

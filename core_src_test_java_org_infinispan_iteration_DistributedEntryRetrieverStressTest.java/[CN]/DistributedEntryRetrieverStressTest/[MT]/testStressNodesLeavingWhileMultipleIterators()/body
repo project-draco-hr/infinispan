@@ -1,0 +1,114 @@
+{
+  final Map<Integer,Integer> masterValues=new HashMap<Integer,Integer>();
+  for (int i=0; i < CACHE_ENTRY_COUNT; ++i) {
+    masterValues.put(i,i);
+  }
+  cache(0,CACHE_NAME).putAll(masterValues);
+  final AtomicBoolean complete=new AtomicBoolean(false);
+  final Exchanger<Exception> exchanger=new Exchanger<Exception>();
+  Future<Void>[] futures=new Future[(CACHE_COUNT - 1) * THREAD_MULTIPLIER + 1];
+  for (int j=0; j < THREAD_MULTIPLIER; ++j) {
+    for (int i=0; i < CACHE_COUNT - 1; ++i) {
+      final Cache<Integer,Integer> cache=cache(i,CACHE_NAME);
+      futures[i + j * (CACHE_COUNT - 1)]=fork(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          try {
+            int iteration=0;
+            while (!complete.get()) {
+              log.tracef("Starting iteration %s",iteration);
+              Map<Integer,Integer> seenValues=new HashMap<Integer,Integer>();
+              CloseableIterable<Map.Entry<Integer,Integer>> iterable=cache.getAdvancedCache().filterEntries(new AllEntriesFilter());
+              try {
+                for (                Map.Entry<Integer,Integer> entry : iterable) {
+                  if (seenValues.containsKey(entry.getKey())) {
+                    log.tracef("Seen values were: %s",seenValues);
+                    throw new IllegalArgumentException(Thread.currentThread() + "-Found duplicate value: " + entry.getKey()+ " on iteration "+ iteration);
+                  }
+ else                   if (!masterValues.get(entry.getKey()).equals(entry.getValue())) {
+                    log.tracef("Seen values were: %s",seenValues);
+                    throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect value: " + entry.getKey()+ " with value "+ entry.getValue()+ " on iteration "+ iteration);
+                  }
+                  seenValues.put(entry.getKey(),entry.getValue());
+                }
+                if (seenValues.size() != masterValues.size()) {
+                  Map<Integer,Set<Map.Entry<Integer,Integer>>> target=generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(),masterValues.entrySet());
+                  Map<Integer,Set<Map.Entry<Integer,Integer>>> actual=generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(),seenValues.entrySet());
+                  for (                  Map.Entry<Integer,Set<Map.Entry<Integer,Integer>>> entry : target.entrySet()) {
+                    Set<Map.Entry<Integer,Integer>> entrySet=entry.getValue();
+                    Set<Map.Entry<Integer,Integer>> actualEntries=actual.get(entry.getKey());
+                    if (actualEntries != null) {
+                      entrySet.removeAll(actualEntries);
+                    }
+                    if (!entrySet.isEmpty()) {
+                      throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect amount of entries for segment " + entry.getKey()+ " missing entries "+ entrySet+ " on iteration "+ iteration);
+                    }
+                  }
+                }
+                iteration++;
+              }
+  finally {
+                iterable.close();
+              }
+            }
+            return null;
+          }
+ catch (          Exception e) {
+            complete.set(true);
+            exchanger.exchange(e);
+            throw e;
+          }
+        }
+      }
+);
+    }
+  }
+  futures[futures.length - 1]=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      TestCacheManagerFactory.backgroundTestStarted(DistributedEntryRetrieverStressTest.this);
+      try {
+        Cache<?,?> cacheToKill=cache(CACHE_COUNT - 1);
+        while (!complete.get()) {
+          Thread.sleep(1000);
+          if (cacheManagers.remove(cacheToKill.getCacheManager())) {
+            log.trace("Killing cache to force rehash");
+            cacheToKill.getCacheManager().stop();
+            List<Cache<Object,Object>> caches=caches(CACHE_NAME);
+            if (caches.size() > 0) {
+              TestingUtil.blockUntilViewsReceived(60000,false,caches);
+              TestingUtil.waitForRehashToComplete(caches);
+            }
+          }
+ else {
+            throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() + " wasn't found for some reason!");
+          }
+          log.trace("Adding new cache again to force rehash");
+          cacheToKill=createClusteredCaches(1,CACHE_NAME,builderUsed).get(0);
+          log.trace("Added new cache again to force rehash");
+        }
+        return null;
+      }
+ catch (      Exception e) {
+        complete.set(true);
+        exchanger.exchange(e);
+        throw e;
+      }
+    }
+  }
+);
+  try {
+    Exception e=exchanger.exchange(null,5,TimeUnit.MINUTES);
+    fail("Found an exception in at least 1 thread",e);
+  }
+ catch (  TimeoutException e) {
+  }
+  complete.set(true);
+  for (int i=0; i < futures.length; ++i) {
+    try {
+      futures[i].get(2,TimeUnit.MINUTES);
+    }
+ catch (    TimeoutException e) {
+      System.err.println("Future " + i + " did not complete in time allotted.");
+      throw e;
+    }
+  }
+}

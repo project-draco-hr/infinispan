@@ -3,12 +3,11 @@
   Set<Object> keysToLoad=new HashSet<Object>(entries.size());
 synchronized (entries) {
     for (    Object k : entries.keySet()) {
-      if (filter.shouldLoadKey(k))       keysToLoad.add(k);
+      if (filter.accept(k))       keysToLoad.add(k);
     }
   }
   ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContextImpl taskContext=new TaskContextImpl();
-  int taskCount=0;
   for (  final Object key : keysToLoad) {
     if (taskContext.isStopped())     break;
     eacs.submit(new Callable<Void>(){

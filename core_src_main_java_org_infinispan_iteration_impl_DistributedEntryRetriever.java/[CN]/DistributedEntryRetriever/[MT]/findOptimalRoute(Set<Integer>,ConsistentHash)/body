@@ -1,0 +1,29 @@
+{
+  Map.Entry<Address,Set<Integer>> route=null;
+  Map<Address,Set<Integer>> routes;
+  int segmentCount=hash.getNumSegments();
+  routes=new HashMap<>();
+  for (int i=0; i < segmentCount; ++i) {
+    if (segmentsToFind == null || segmentsToFind.contains(i)) {
+      Address address=hash.locatePrimaryOwnerForSegment(i);
+      Set<Integer> segments=routes.get(address);
+      if (segments == null) {
+        segments=new HashSet<>();
+        routes.put(address,segments);
+      }
+      segments.add(i);
+    }
+  }
+  for (  Map.Entry<Address,Set<Integer>> mappedRoute : routes.entrySet()) {
+    if (mappedRoute.getKey().equals(localAddress)) {
+      continue;
+    }
+    if (route == null) {
+      route=mappedRoute;
+    }
+ else     if (route.getValue().size() > mappedRoute.getValue().size()) {
+      route=mappedRoute;
+    }
+  }
+  return route;
+}

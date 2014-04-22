@@ -1,0 +1,27 @@
+{
+  boolean shouldRun=false;
+  boolean updated=false;
+  IterationStatus<K,V,?> details=iteratorDetails.get(identifier);
+  if (details != null) {
+    AtomicReference<LocalStatus> localRunning=details.localRunning;
+    while (!updated) {
+      LocalStatus status=localRunning.get();
+      if (status == null) {
+        throw new IllegalStateException("Status should never be null");
+      }
+ else {
+switch (status) {
+case IDLE:
+          throw new IllegalStateException("This should never be seen as IDLE by the running thread");
+case REPEAT:
+        updated=shouldRun=localRunning.compareAndSet(LocalStatus.REPEAT,LocalStatus.RUNNING);
+      break;
+case RUNNING:
+    updated=localRunning.compareAndSet(LocalStatus.RUNNING,LocalStatus.IDLE);
+  break;
+}
+}
+}
+}
+return shouldRun;
+}

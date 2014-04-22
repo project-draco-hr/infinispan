@@ -1,0 +1,30 @@
+{
+  UUID identifier=UUID.randomUUID();
+  if (log.isTraceEnabled()) {
+    log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s",identifier,filter,converter);
+  }
+  Itr<K,C> itr=new DistributedItr<K,C>(batchSize,identifier);
+  Set<Integer> remoteSegments=new HashSet<>();
+  ConsistentHash hash=getCurrentHash();
+  AtomicReferenceArray<Set<K>> referenceArray=new AtomicReferenceArray<Set<K>>(hash.getNumSegments());
+  for (int i=0; i < referenceArray.length(); ++i) {
+    referenceArray.set(i,new ConcurrentHashSet<K>());
+    remoteSegments.add(i);
+  }
+  IterationStatus status=new IterationStatus<>(itr,listener,filter,converter,referenceArray);
+  iteratorDetails.put(identifier,status);
+  Set<Integer> ourSegments=hash.getPrimarySegmentsForOwner(localAddress);
+  remoteSegments.removeAll(ourSegments);
+  if (!remoteSegments.isEmpty()) {
+    eventuallySendRequest(identifier,status);
+  }
+  if (!ourSegments.isEmpty()) {
+    startRetrievingValuesLocal(identifier,ourSegments,status,new SegmentBatchHandler<K,C>(){
+      @Override public void handleBatch(      UUID identifier,      boolean complete,      Set<Integer> completedSegments,      Set<Integer> inDoubtSegments,      Collection<Map.Entry<K,C>> entries){
+        processData(identifier,localAddress,completedSegments,inDoubtSegments,entries);
+      }
+    }
+);
+  }
+  return itr;
+}

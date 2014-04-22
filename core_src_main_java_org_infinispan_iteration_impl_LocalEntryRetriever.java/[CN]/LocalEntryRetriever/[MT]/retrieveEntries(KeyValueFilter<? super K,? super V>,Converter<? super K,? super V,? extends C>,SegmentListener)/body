@@ -1,0 +1,74 @@
+{
+  final Itr<K,C> iterator=new Itr<K,C>(batchSize);
+  final ItrQueuerHandler<C> handler=new ItrQueuerHandler<C>(iterator);
+  executorService.submit(new Runnable(){
+    @Override public void run(){
+      try {
+        final Set<K> processedKeys=new ConcurrentHashSet<K>();
+        Queue<Map.Entry<K,C>> queue=new ArrayDeque<Map.Entry<K,C>>(batchSize){
+          @Override public boolean add(          Map.Entry<K,C> kcEntry){
+            processedKeys.add(kcEntry.getKey());
+            return super.add(kcEntry);
+          }
+        }
+;
+        MapAction<C> action=new MapAction(batchSize,converter,queue,handler);
+        PassivationListener<K,V> listener=null;
+        try {
+          int interruptCheck=0;
+          for (          InternalCacheEntry<K,V> entry : dataContainer) {
+            K key=entry.getKey();
+            if (filter != null) {
+              if (!filter.accept(key,entry.getValue(),entry.getMetadata())) {
+                continue;
+              }
+            }
+            action.apply(key,entry);
+            if (interruptCheck++ % batchSize == 0) {
+              if (Thread.interrupted()) {
+                throw new CacheException("Entry Iterator was interrupted!");
+              }
+            }
+          }
+          if (persistenceManager.size() > 0) {
+            if (passivationEnabled) {
+              listener=new PassivationListener<K,V>();
+              cache.addListener(listener);
+            }
+            KeyFilter<K> loaderFilter;
+            if (filter != null) {
+              loaderFilter=new CompositeKeyFilter<K>(new CollectionKeyFilter<K>(processedKeys),new KeyValueFilterAsKeyFilter<K>(filter));
+            }
+ else {
+              loaderFilter=new CollectionKeyFilter<K>(processedKeys);
+            }
+            persistenceManager.processOnAllStores(withinThreadExecutor,loaderFilter,new KeyValueActionForCacheLoaderTask(action),true,true);
+          }
+        }
+  finally {
+          if (listener != null) {
+            cache.removeListener(listener);
+            AdvancedCache<K,V> advancedCache=cache.getAdvancedCache();
+            for (            K key : listener.activatedKeys) {
+              if (!processedKeys.contains(key)) {
+                Map.Entry entry=advancedCache.getCacheEntry(key);
+                if (entry != null) {
+                  queue.add(entry);
+                }
+              }
+            }
+          }
+        }
+        if (log.isTraceEnabled()) {
+          log.trace("Completed transfer of entries from cache");
+        }
+        handler.handleBatch(true,queue);
+      }
+ catch (      Throwable e) {
+        log.exceptionProcessingEntryRetrievalValues(e);
+      }
+    }
+  }
+);
+  return iterator;
+}

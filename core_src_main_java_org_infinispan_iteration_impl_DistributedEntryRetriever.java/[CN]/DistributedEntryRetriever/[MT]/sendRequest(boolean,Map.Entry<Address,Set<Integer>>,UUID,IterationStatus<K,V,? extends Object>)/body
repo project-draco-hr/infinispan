@@ -1,0 +1,69 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Sending request to %s for identifier %s",route,identifier);
+  }
+  Address address=route.getKey();
+  status.awaitingResponseFrom.set(address);
+  Set<Integer> segments=route.getValue();
+  Set<K> keysToFilter=new HashSet<K>();
+  AtomicReferenceArray<Set<K>> ourEntries=status.processedKeys;
+  for (  Integer segment : segments) {
+    Set<K> valuesSeen=ourEntries.get(segment);
+    if (valuesSeen != null) {
+      keysToFilter.addAll(valuesSeen);
+    }
+  }
+  KeyValueFilter<? super K,? super V> filterToSend;
+  if (status.filter == null) {
+    if (!keysToFilter.isEmpty()) {
+      if (log.isTraceEnabled()) {
+        log.tracef("Applying filter for %s of keys",keysToFilter.size());
+      }
+      filterToSend=new KeyFilterAsKeyValueFilter<K,V>(new CollectionKeyFilter<K>(keysToFilter));
+    }
+ else {
+      if (log.isTraceEnabled()) {
+        log.trace("No filter applied");
+      }
+      filterToSend=null;
+    }
+  }
+ else {
+    if (!keysToFilter.isEmpty()) {
+      if (log.isTraceEnabled()) {
+        log.tracef("Applying filter for %s of keys with provided filter %s",keysToFilter.size(),status.filter);
+      }
+      filterToSend=new CompositeKeyValueFilter<K,V>(new KeyFilterAsKeyValueFilter<K,V>(new CollectionKeyFilter<K>(keysToFilter)),status.filter);
+    }
+ else {
+      if (log.isTraceEnabled()) {
+        log.tracef("Using provided filter %s",status.filter);
+      }
+      filterToSend=status.filter;
+    }
+  }
+  EntryRequestCommand<K,V,? extends Object> command=commandsFactory.buildEntryRequestCommand(identifier,segments,filterToSend,status.converter);
+  try {
+    RpcOptions options=rpcManager.getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS).build();
+    Map<Address,Response> responseMap=rpcManager.invokeRemotely(Collections.singleton(address),command,options);
+    if (sync) {
+      Response response=responseMap.values().iterator().next();
+      if (!response.isSuccessful()) {
+        Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
+        if (log.isTraceEnabled()) {
+          log.tracef(cause,"Unsuccessful response received from node %s for %s, must resend to a new node!",route.getKey(),identifier);
+        }
+        atomicRemove(status.awaitingResponseFrom,address);
+        return false;
+      }
+    }
+    return true;
+  }
+ catch (  SuspectException e) {
+    if (log.isTraceEnabled()) {
+      log.tracef("Request to %s for %s was suspect, must resend to a new node!",route,identifier);
+    }
+    atomicRemove(status.awaitingResponseFrom,address);
+    return false;
+  }
+}

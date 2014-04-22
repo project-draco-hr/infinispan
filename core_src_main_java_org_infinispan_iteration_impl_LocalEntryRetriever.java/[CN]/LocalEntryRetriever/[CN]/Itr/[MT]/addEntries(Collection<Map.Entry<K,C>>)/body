@@ -1,0 +1,25 @@
+{
+  boolean wasCompleted=completed;
+  Iterator<Map.Entry<K,C>> itr=entries.iterator();
+  while (!wasCompleted && itr.hasNext()) {
+    Map.Entry<K,C> entry=null;
+    while (itr.hasNext()) {
+      entry=itr.next();
+      if (!queue.offer(entry)) {
+        break;
+      }
+      entry=null;
+    }
+    nextLock.lock();
+    try {
+      wasCompleted=completed;
+      nextCondition.signalAll();
+    }
+  finally {
+      nextLock.unlock();
+    }
+    if (!wasCompleted && entry != null) {
+      queue.put(entry);
+    }
+  }
+}

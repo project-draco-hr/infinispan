@@ -1,0 +1,38 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  addClusterEnabledCacheManager(builderUsed);
+  Map<Object,String> values=new HashMap<Object,String>();
+  for (int i=0; i < 501; ++i) {
+    MagicKey key=new MagicKey(cache0);
+    cache1.put(key,key.toString());
+    values.put(key,key.toString());
+  }
+  CheckPoint checkPoint=new CheckPoint();
+  checkPoint.triggerForever("post_iterator_released");
+  waitUntilDataContainerWillBeIteratedOn(cache0,checkPoint);
+  final EntryRetriever<Object,String> retriever=cache2.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+  final BlockingQueue<Map.Entry<Object,String>> returnQueue=new LinkedBlockingQueue<Map.Entry<Object,String>>();
+  Future<Void> future=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      Iterator<Map.Entry<Object,String>> iter=retriever.retrieveEntries(null,null,null);
+      while (iter.hasNext()) {
+        Map.Entry<Object,String> entry=iter.next();
+        returnQueue.add(entry);
+      }
+      return null;
+    }
+  }
+);
+  checkPoint.awaitStrict("pre_iterator_invoked",10,TimeUnit.SECONDS);
+  killMember(1,CACHE_NAME);
+  checkPoint.triggerForever("pre_iterator_released");
+  future.get(10,TimeUnit.SECONDS);
+  ConsistentHash hash=cache0.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getReadConsistentHash();
+  Map<Integer,Set<Map.Entry<Object,String>>> expected=generateEntriesPerSegment(hash,values.entrySet());
+  Map<Integer,Set<Map.Entry<Object,String>>> answer=generateEntriesPerSegment(hash,returnQueue);
+  for (  Map.Entry<Integer,Set<Map.Entry<Object,String>>> entry : expected.entrySet()) {
+    assertEquals(answer.get(entry.getKey()),entry.getValue(),"Segment " + entry.getKey() + " had a mismatch");
+  }
+}

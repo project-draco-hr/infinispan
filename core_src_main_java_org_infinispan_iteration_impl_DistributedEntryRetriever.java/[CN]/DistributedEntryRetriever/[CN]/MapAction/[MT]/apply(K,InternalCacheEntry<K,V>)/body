@@ -1,0 +1,21 @@
+{
+  ConsistentHash hash=getCurrentHash();
+  if (segments.contains(hash.getSegment(k))) {
+    C value;
+    if (converter != null) {
+      value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+    }
+ else {
+      value=(C)kvInternalCacheEntry.getValue();
+    }
+    queue.add(new ImmortalCacheEntry(k,value));
+    if (insertionCount.incrementAndGet() % batchSize == 0) {
+      Collection<Map.Entry<K,C>> entriesToSend=new ArrayList<Map.Entry<K,C>>(batchSize);
+      while (entriesToSend.size() != batchSize) {
+        entriesToSend.add(queue.poll());
+      }
+      Set<Integer> emptySet=Collections.emptySet();
+      handler.handleBatch(identifier,false,emptySet,emptySet,entriesToSend);
+    }
+  }
+}

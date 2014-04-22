@@ -1,0 +1,14 @@
+{
+  storesMutex.readLock().lock();
+  try {
+    for (    CacheLoader loader : loaders) {
+      if (skipSharedStore && configMap.get(loader).shared())       continue;
+      if (loader instanceof AdvancedCacheLoader) {
+        ((AdvancedCacheLoader)loader).process(keyFilter,task,executor,fetchValue,fetchMetadata);
+      }
+    }
+  }
+  finally {
+    storesMutex.readLock().unlock();
+  }
+}

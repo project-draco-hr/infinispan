@@ -1,0 +1,34 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Map<Object,String> values=new HashMap<Object,String>();
+  int chunkSize=cache0.getCacheConfiguration().clustering().stateTransfer().chunkSize();
+  for (int i=0; i < chunkSize + 10; ++i) {
+    MagicKey key=new MagicKey(cache1);
+    cache1.put(key,key.toString());
+    values.put(key,key.toString());
+  }
+  CheckPoint checkPoint=new CheckPoint();
+  checkPoint.trigger("pre_send_response_released");
+  waitUntilSendingResponse(cache1,checkPoint);
+  final EntryRetriever<Object,String> retriever=cache0.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+  final BlockingQueue<Map.Entry<Object,String>> returnQueue=new LinkedBlockingQueue<Map.Entry<Object,String>>();
+  Future<Void> future=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      Iterator<Map.Entry<Object,String>> iter=retriever.retrieveEntries(null,null,null);
+      while (iter.hasNext()) {
+        Map.Entry<Object,String> entry=iter.next();
+        returnQueue.add(entry);
+      }
+      return null;
+    }
+  }
+);
+  checkPoint.awaitStrict("post_send_response_invoked",10,TimeUnit.SECONDS);
+  Map.Entry<Object,String> value=returnQueue.poll(10,TimeUnit.SECONDS);
+  killMember(1,CACHE_NAME);
+  future.get(10,TimeUnit.SECONDS);
+  for (  Map.Entry<Object,String> entry : values.entrySet()) {
+    assertTrue(returnQueue.contains(entry) || entry.equals(value),"Entry wasn't found:" + entry);
+  }
+}

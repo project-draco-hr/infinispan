@@ -1,0 +1,21 @@
+{
+  RpcManager rpc=TestingUtil.extractComponent(cache,RpcManager.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(rpc);
+  RpcManager mockManager=mock(RpcManager.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_send_response_invoked");
+      checkPoint.awaitStrict("pre_send_response_released",10,TimeUnit.SECONDS);
+      try {
+        return forwardedAnswer.answer(invocation);
+      }
+  finally {
+        checkPoint.trigger("post_send_response_invoked");
+        checkPoint.awaitStrict("post_send_response_released",10,TimeUnit.SECONDS);
+      }
+    }
+  }
+).when(mockManager).invokeRemotely(anyCollectionOf(Address.class),any(EntryRequestCommand.class),any(RpcOptions.class));
+  TestingUtil.replaceComponent(cache,RpcManager.class,mockManager,true);
+  return rpc;
+}

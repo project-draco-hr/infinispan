@@ -6,7 +6,7 @@
       ownsData=true;
     }
     rebalanceInProgress.set(true);
-    cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getTopologyId(),true);
+    cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getUnionCH(),cacheTopology.getTopologyId(),true);
     if (isTotalOrder) {
       if (log.isTraceEnabled()) {
         log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
@@ -88,7 +88,7 @@
       if (!isRebalance && cacheTopology.getPendingCH() == null) {
         boolean changed=rebalanceInProgress.compareAndSet(true,false);
         if (changed) {
-          cacheNotifier.notifyDataRehashed(previousReadCh,cacheTopology.getCurrentCH(),cacheTopology.getTopologyId(),false);
+          cacheNotifier.notifyDataRehashed(previousReadCh,cacheTopology.getCurrentCH(),previousWriteCh,cacheTopology.getTopologyId(),false);
           if (log.isTraceEnabled()) {
             log.tracef("Unlock State Transfer in Progress for topology ID %s",cacheTopology.getTopologyId());
           }

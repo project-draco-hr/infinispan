@@ -1,0 +1,20 @@
+{
+  C value;
+  if (converter != null) {
+    value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+  }
+ else {
+    value=(C)kvInternalCacheEntry.getValue();
+  }
+  queue.add(new ImmortalCacheEntry(k,value));
+  if (insertionCount.incrementAndGet() % batchSize == 0) {
+    try {
+      handler.handleBatch(false,queue);
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      ;
+    }
+    queue.clear();
+  }
+}

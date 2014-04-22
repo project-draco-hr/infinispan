@@ -14,9 +14,12 @@
     try {
       Cache<?,?> cache=cacheManager.getCache(reduceCommand.getCacheName());
       taskLifecycleService.onPreExecute(reducer,cache);
-      AdvancedCacheLoader.KeyFilter<?> filter=AdvancedCacheLoader.KeyFilter.LOAD_ALL_FILTER;
+      KeyFilter<?> filter;
       if (useIntermediateKeys) {
         filter=new IntermediateKeyFilter<KOut>(taskId);
+      }
+ else {
+        filter=KeyFilter.LOAD_ALL_FILTER;
       }
       DataContainer dc=cache.getAdvancedCache().getDataContainer();
       dc.executeTask(filter,new DataContainerTask<KOut,List<VOut>>(){

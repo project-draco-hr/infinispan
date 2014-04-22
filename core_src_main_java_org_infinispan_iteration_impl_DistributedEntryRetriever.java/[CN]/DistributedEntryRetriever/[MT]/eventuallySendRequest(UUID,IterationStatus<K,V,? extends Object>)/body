@@ -1,0 +1,23 @@
+{
+  boolean sent=false;
+  while (!sent) {
+    ConsistentHash hash=getCurrentHash();
+    Set<Integer> missingRemoteSegments=findMissingRemoteSegments(status.processedKeys,hash);
+    if (!missingRemoteSegments.isEmpty()) {
+      Map.Entry<Address,Set<Integer>> route=findOptimalRoute(missingRemoteSegments,hash);
+      if (status.awaitingResponseFrom.compareAndSet(null,route.getKey())) {
+        sent=sendRequest(true,route,identifier,status);
+      }
+ else {
+        break;
+      }
+    }
+ else {
+      if (log.isTraceEnabled()) {
+        log.tracef("Cannot send remote request as there are no longer any remote segments missing for %s",identifier);
+      }
+      break;
+    }
+  }
+  return sent;
+}
