@@ -1,0 +1,19 @@
+{
+  Subject admin=getAdminSubject();
+  Subject.doAs(admin,new PrivilegedExceptionAction<Void>(){
+    public Void run() throws Exception {
+      assertEquals(TEST_ENTRY_VALUE,secureCache.get(TEST_ENTRY_KEY));
+      secureCache.put("test","test value");
+      assertEquals("test value",secureCache.get("test"));
+      Cache<Object,Object> c=manager.getCache("adminCache");
+      c.start();
+      c.put("test","value");
+      assertEquals("value",c.get("test"));
+      c.remove("test");
+      assertEquals(null,c.get("test"));
+      c.stop();
+      return null;
+    }
+  }
+);
+}
