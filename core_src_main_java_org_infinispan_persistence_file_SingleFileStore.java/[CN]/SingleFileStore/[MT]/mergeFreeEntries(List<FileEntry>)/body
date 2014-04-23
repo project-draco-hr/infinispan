@@ -1,0 +1,49 @@
+{
+  long startTime=0;
+  if (trace)   startTime=System.currentTimeMillis();
+  FileEntry lastEntry=null;
+  FileEntry newEntry=null;
+  int mergeCounter=0;
+  for (Iterator<FileEntry> it=entries.iterator(); it.hasNext(); ) {
+    FileEntry fe=it.next();
+    if (fe.isLocked()) {
+      continue;
+    }
+    if ((lastEntry != null) && (lastEntry.offset == (fe.offset + fe.size))) {
+      if (newEntry == null) {
+        newEntry=new FileEntry(fe.offset,fe.size + lastEntry.size);
+        freeList.remove(lastEntry);
+        mergeCounter++;
+      }
+ else {
+        newEntry=new FileEntry(fe.offset,fe.size + newEntry.size);
+      }
+      freeList.remove(fe);
+      mergeCounter++;
+    }
+ else {
+      if (newEntry != null) {
+        try {
+          addNewFreeEntry(newEntry);
+          if (trace)           log.tracef("Merged entries: " + mergeCounter + ", merged size: "+ newEntry.size);
+        }
+ catch (        IOException e) {
+          throw new PersistenceException("Could not add new merged entry",e);
+        }
+        newEntry=null;
+        mergeCounter=0;
+      }
+    }
+    lastEntry=fe;
+  }
+  if (newEntry != null) {
+    try {
+      addNewFreeEntry(newEntry);
+      if (trace)       log.tracef("Merged entries: " + mergeCounter + ", merged space: "+ newEntry.size);
+    }
+ catch (    IOException e) {
+      throw new PersistenceException("Could not add new merged entry",e);
+    }
+  }
+  if (trace)   log.tracef("Total time taken for mergeFreeEntries: " + (System.currentTimeMillis() - startTime) + " (ms)");
+}

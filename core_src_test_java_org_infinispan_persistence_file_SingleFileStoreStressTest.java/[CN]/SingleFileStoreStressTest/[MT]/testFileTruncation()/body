@@ -1,7 +1,7 @@
 {
   final int NUM_WRITER_THREADS=1;
   final int NUM_READER_THREADS=1;
-  final int NUM_KEYS=100;
+  final int NUM_KEYS=10;
   final int TEST_DURATION_SECONDS=2;
   Cache<String,String> cache=cacheManager.getCache(CACHE_NAME);
   PersistenceManager persistenceManager=TestingUtil.extractComponent(cache,PersistenceManager.class);
@@ -11,7 +11,10 @@
   final List<String> keys=new ArrayList<String>(NUM_KEYS);
   for (int j=0; j < NUM_KEYS; j++) {
     String key="key" + j;
+    String value=key + "_value_" + j;
     keys.add(key);
+    MarshalledEntryImpl entry=new MarshalledEntryImpl<String,String>(key,value,null,marshaller);
+    store.write(entry);
   }
   final CountDownLatch stopLatch=new CountDownLatch(1);
   Future[] writeFutures=new Future[NUM_WRITER_THREADS];
@@ -20,9 +23,8 @@
   }
   Future[] readFutures=new Future[NUM_READER_THREADS];
   for (int i=0; i < NUM_READER_THREADS; i++) {
-    readFutures[i]=fork(stopOnException(new ReadTask(store,keys,true,stopLatch),stopLatch));
+    readFutures[i]=fork(stopOnException(new ReadTask(store,keys,false,stopLatch),stopLatch));
   }
-  Future clearFuture=fork(stopOnException(new ClearTask(store,stopLatch),stopLatch));
   stopLatch.await(TEST_DURATION_SECONDS,SECONDS);
   stopLatch.countDown();
   for (int i=0; i < NUM_WRITER_THREADS; i++) {
@@ -31,5 +33,23 @@
   for (int i=0; i < NUM_READER_THREADS; i++) {
     readFutures[i].get();
   }
-  clearFuture.get();
+  File file=new File(location,CACHE_NAME + ".dat");
+  long length1=file.length();
+  ExecutorService executor=Executors.newSingleThreadExecutor();
+  store.purge(executor,null);
+  MILLISECONDS.sleep(200);
+  long length2=file.length();
+  for (int j=0; j < NUM_KEYS; j++) {
+    String key="key" + j;
+    String value=key + "_value_" + j;
+    keys.add(key);
+    MarshalledEntryImpl entry=new MarshalledEntryImpl<String,String>(key,value,null,marshaller);
+    store.write(entry);
+  }
+  store.purge(executor,null);
+  MILLISECONDS.sleep(200);
+  long length3=file.length();
+  executor.shutdown();
+  assertTrue(length2 <= length1);
+  assertTrue(length3 < length2);
 }

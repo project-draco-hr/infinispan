@@ -1,0 +1,33 @@
+{
+  long startTime=0;
+  if (trace)   startTime=System.currentTimeMillis();
+  int reclaimedSpace=0;
+  int removedEntries=0;
+  long truncateOffset=-1;
+  for (Iterator<FileEntry> it=entries.iterator(); it.hasNext(); ) {
+    FileEntry fe=it.next();
+    if (!fe.isLocked() && ((fe.offset + fe.size) == filePos)) {
+      truncateOffset=fe.offset;
+      filePos=fe.offset;
+      freeList.remove(fe);
+      it.remove();
+      reclaimedSpace+=fe.size;
+      removedEntries++;
+    }
+ else {
+      break;
+    }
+  }
+  if (truncateOffset > 0) {
+    try {
+      channel.truncate(truncateOffset);
+    }
+ catch (    IOException e) {
+      throw new PersistenceException("Error while truncating file",e);
+    }
+  }
+  if (trace) {
+    log.tracef("Removed entries: " + removedEntries + ", Reclaimed Space: "+ reclaimedSpace);
+    log.tracef("Time taken for truncateFile: " + (System.currentTimeMillis() - startTime) + " (ms)");
+  }
+}

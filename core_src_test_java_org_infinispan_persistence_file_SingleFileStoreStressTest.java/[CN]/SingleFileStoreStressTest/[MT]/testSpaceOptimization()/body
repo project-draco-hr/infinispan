@@ -1,0 +1,38 @@
+{
+  final int NUM_KEYS=100;
+  final int TIMES=10;
+  Cache<String,String> cache=cacheManager.getCache(CACHE_NAME);
+  PersistenceManager persistenceManager=TestingUtil.extractComponent(cache,PersistenceManager.class);
+  final SingleFileStore store=persistenceManager.getStores(SingleFileStore.class).iterator().next();
+  final StreamingMarshaller marshaller=TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+  store.clear();
+  long[] fileSizesWithoutPurge=new long[TIMES];
+  long[] fileSizesWithPurge=new long[TIMES];
+  File file=new File(location,CACHE_NAME + ".dat");
+  for (int i=0; i < TIMES; i++) {
+    for (int j=0; j < NUM_KEYS; j++) {
+      String key="key" + j;
+      String value=key + "_value_" + j+ "_"+ times("123456789_",i);
+      MarshalledEntryImpl entry=new MarshalledEntryImpl<String,String>(key,value,null,marshaller);
+      store.write(entry);
+    }
+    fileSizesWithoutPurge[i]=file.length();
+  }
+  store.clear();
+  ExecutorService executor=Executors.newSingleThreadExecutor();
+  for (int i=0; i < TIMES; i++) {
+    for (int j=0; j < NUM_KEYS; j++) {
+      String key="key" + j;
+      String value=key + "_value_" + j+ "_"+ times("123456789_",i);
+      MarshalledEntryImpl entry=new MarshalledEntryImpl<String,String>(key,value,null,marshaller);
+      store.write(entry);
+    }
+    store.purge(executor,null);
+    MILLISECONDS.sleep(200);
+    fileSizesWithoutPurge[i]=file.length();
+  }
+  executor.shutdown();
+  for (int j=2; j < TIMES; j++) {
+    assertTrue(fileSizesWithPurge[j] < fileSizesWithoutPurge[j]);
+  }
+}
