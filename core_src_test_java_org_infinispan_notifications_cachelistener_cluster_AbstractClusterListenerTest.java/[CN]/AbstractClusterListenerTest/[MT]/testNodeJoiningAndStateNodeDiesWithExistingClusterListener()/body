@@ -28,7 +28,8 @@
   TestingUtil.killCacheManagers(manager(0));
   cacheManagers.remove(0);
   log.info("Node 0 killed");
-  waitForClusterToForm(CACHE_NAME);
+  TestingUtil.blockUntilViewsReceived(10000,false,cacheManagers);
+  TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
   checkPoint.triggerForever("pre_cluster_listeners_invoked_" + cache0);
   Cache<Object,String> cache3=future.get(10,TimeUnit.SECONDS);
   MagicKey key=new MagicKey(cache3);
