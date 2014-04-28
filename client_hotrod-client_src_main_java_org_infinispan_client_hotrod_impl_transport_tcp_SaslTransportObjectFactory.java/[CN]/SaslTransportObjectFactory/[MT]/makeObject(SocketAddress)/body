@@ -1,0 +1,38 @@
+{
+  TcpTransport tcpTransport=new TcpTransport(address,tcpTransportFactory);
+  if (log.isTraceEnabled()) {
+    log.tracef("Created tcp transport: %s",tcpTransport);
+  }
+  List<String> serverMechs=mechList(tcpTransport,topologyId);
+  if (!serverMechs.contains(configuration.saslMechanism())) {
+    throw log.unsupportedMech(configuration.saslMechanism(),serverMechs);
+  }
+  SaslClient saslClient;
+  if (configuration.clientSubject() != null) {
+    saslClient=Subject.doAs(configuration.clientSubject(),new PrivilegedExceptionAction<SaslClient>(){
+      @Override public SaslClient run() throws Exception {
+        return Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),configuration.callbackHandler());
+      }
+    }
+);
+  }
+ else {
+    saslClient=Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),configuration.callbackHandler());
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Authenticating using mech: %s",configuration.saslMechanism());
+  }
+  byte response[]=saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(EMPTY_BYTES) : EMPTY_BYTES;
+  byte challenge[]=auth(tcpTransport,topologyId,configuration.saslMechanism(),response);
+  while (!saslClient.isComplete() && challenge != null) {
+    response=saslClient.evaluateChallenge(challenge);
+    challenge=auth(tcpTransport,topologyId,"",response);
+  }
+  saslClient.dispose();
+  if (pingOnStartup && !firstPingExecuted) {
+    log.trace("Executing first ping!");
+    firstPingExecuted=true;
+    ping(tcpTransport,topologyId);
+  }
+  return tcpTransport;
+}
