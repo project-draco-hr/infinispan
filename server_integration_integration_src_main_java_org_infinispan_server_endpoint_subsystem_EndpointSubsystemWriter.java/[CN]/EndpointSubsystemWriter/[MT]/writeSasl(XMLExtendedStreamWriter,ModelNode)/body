@@ -1,0 +1,16 @@
+{
+  if (authentication.hasDefined(ModelKeys.SASL)) {
+    ModelNode sasl=authentication.get(ModelKeys.SASL,ModelKeys.SASL_NAME);
+    writer.writeStartElement(Element.SASL.getLocalName());
+    for (    AttributeDefinition attribute : SaslResource.SASL_ATTRIBUTES) {
+      if (attribute instanceof SimpleAttributeDefinition) {
+        ((SimpleAttributeDefinition)attribute).marshallAsAttribute(sasl,true,writer);
+      }
+ else       if (attribute instanceof StringListAttributeDefinition) {
+        writeListAsAttribute(writer,attribute.getXmlName(),sasl,attribute.getName());
+      }
+    }
+    writePolicy(writer,sasl);
+    writer.writeEndElement();
+  }
+}

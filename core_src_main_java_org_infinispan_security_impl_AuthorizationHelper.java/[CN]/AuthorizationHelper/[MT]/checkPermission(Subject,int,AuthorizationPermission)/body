@@ -1,8 +1,13 @@
 {
   if ((subjectMask & perm.getMask()) != perm.getMask()) {
     if (System.getSecurityManager() == null) {
-      audit.audit(subject,context,name,perm,AuditResponse.DENY);
-      throw log.unauthorizedAccess(String.valueOf(subject),perm.toString());
+      try {
+        AccessController.getContext().checkPermission(perm.getSecurityPermission());
+      }
+ catch (      AccessControlException ace) {
+        audit.audit(subject,context,name,perm,AuditResponse.DENY);
+        throw log.unauthorizedAccess(String.valueOf(subject),perm.toString());
+      }
     }
  else {
       System.getSecurityManager().checkPermission(perm.getSecurityPermission());

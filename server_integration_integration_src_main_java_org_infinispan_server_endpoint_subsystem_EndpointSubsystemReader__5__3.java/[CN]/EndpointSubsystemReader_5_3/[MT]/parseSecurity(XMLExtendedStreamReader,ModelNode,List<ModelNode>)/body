@@ -1,24 +1,25 @@
 {
-  PathAddress address=PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME));
+  PathAddress address=PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.ENCRYPTION,ModelKeys.ENCRYPTION_NAME));
   ModelNode security=Util.createAddOperation(address);
+  boolean ssl=false;
   for (int i=0; i < reader.getAttributeCount(); i++) {
     ParseUtils.requireNoNamespaceAttribute(reader,i);
     String value=reader.getAttributeValue(i);
     Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
 switch (attribute) {
-case REQUIRE_CLIENT_AUTH:
+case REQUIRE_SSL_CLIENT_AUTH:
 {
-        SecurityResource.REQUIRE_SSL_CLIENT_AUTH.parseAndSetParameter(value,security,reader);
+        EncryptionResource.REQUIRE_SSL_CLIENT_AUTH.parseAndSetParameter(value,security,reader);
         break;
       }
 case SECURITY_REALM:
 {
-      SecurityResource.SECURITY_REALM.parseAndSetParameter(value,security,reader);
+      EncryptionResource.SECURITY_REALM.parseAndSetParameter(value,security,reader);
       break;
     }
 case SSL:
 {
-    SecurityResource.SSL.parseAndSetParameter(value,security,reader);
+    ssl=Boolean.parseBoolean(value);
     break;
   }
 default :
@@ -28,5 +29,7 @@ default :
 }
 }
 ParseUtils.requireNoContent(reader);
+if (ssl) {
 operations.add(security);
+}
 }

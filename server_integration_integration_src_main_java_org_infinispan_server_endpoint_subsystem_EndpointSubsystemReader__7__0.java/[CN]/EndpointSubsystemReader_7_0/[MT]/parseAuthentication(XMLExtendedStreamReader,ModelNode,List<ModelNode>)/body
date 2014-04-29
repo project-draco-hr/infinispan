@@ -1,0 +1,40 @@
+{
+  PathAddress address=PathAddress.pathAddress(connector.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.AUTHENTICATION,ModelKeys.AUTHENTICATION_NAME));
+  ModelNode authentication=Util.createAddOperation(address);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case SECURITY_REALM:
+{
+        AuthenticationResource.SECURITY_REALM.parseAndSetParameter(value,authentication,reader);
+        break;
+      }
+default :
+{
+      ParseUtils.unexpectedAttribute(reader,i);
+    }
+}
+}
+operations.add(authentication);
+final EnumSet<Element> visited=EnumSet.noneOf(Element.class);
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+final Element element=Element.forName(reader.getLocalName());
+if (visited.contains(element)) {
+  throw ParseUtils.unexpectedElement(reader);
+}
+visited.add(element);
+switch (element) {
+case SASL:
+{
+    parseSasl(reader,authentication,operations);
+    break;
+  }
+default :
+{
+  throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}

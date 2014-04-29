@@ -1,0 +1,21 @@
+{
+  PrivilegedAction<Boolean> action=new PrivilegedAction<Boolean>(){
+    @Override public Boolean run(){
+      if (container.getStatus().allowInvocations()) {
+        container.stop();
+        container.removeListener(listener);
+        return true;
+      }
+ else {
+        return false;
+      }
+    }
+  }
+;
+  if (System.getSecurityManager() != null) {
+    return AccessController.doPrivileged(action);
+  }
+ else {
+    return AccessController.doPrivileged(action,new AccessControlContext(AccessController.getContext(),ADMIN_COMBINER));
+  }
+}
