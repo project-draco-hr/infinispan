@@ -1,29 +1,11 @@
 {
-  FileEntry free=null;
-  boolean found=false;
 synchronized (freeList) {
     SortedSet<FileEntry> candidates=freeList.tailSet(new FileEntry(0,len));
     for (Iterator<FileEntry> it=candidates.iterator(); it.hasNext(); ) {
-      free=it.next();
+      FileEntry free=it.next();
       if (free.isLocked())       continue;
       it.remove();
-      found=true;
-      break;
-    }
-    if ((found == true) && (free != null)) {
-      int remainder=free.size - len;
-      if ((remainder >= SMALLEST_ENTRY_SIZE) && (len <= (free.size * fragmentationFactor))) {
-        try {
-          if (trace)           log.tracef("Requested len: %d, Found free entry at %d:%d, splitting it, %d free entries remaining",len,free.offset,free.size,(freeList.size() + 1));
-          addNewFreeEntry(new FileEntry(free.offset + len,remainder));
-          return new FileEntry(free.offset,len);
-        }
- catch (        IOException e) {
-          throw new PersistenceException("Cannot add new free entry",e);
-        }
-      }
-      if (trace)       log.tracef("Requested len: %d, Found free entry at %d:%d, %d free entries remaining",len,free.offset,free.size,freeList.size());
-      return free;
+      return allocateExistingEntry(free,len);
     }
     FileEntry fe=new FileEntry(filePos,len);
     filePos+=len;

@@ -5,30 +5,31 @@
     org.infinispan.commons.io.ByteBuffer metadata=marshalledEntry.getMetadataBytes();
     int metadataLength=metadata == null ? 0 : metadata.getLength();
     int len=KEY_POS + key.getLength() + data.getLength()+ metadataLength;
-    FileEntry fe=null;
+    FileEntry newEntry;
+    FileEntry oldEntry=null;
     resizeLock.readLock().lock();
     try {
-      fe=allocate(len);
+      newEntry=allocate(len);
       long expiryTime=metadata != null ? marshalledEntry.getMetadata().expiryTime() : -1;
-      fe=new FileEntry(fe,key.getLength(),data.getLength(),metadataLength,expiryTime);
+      newEntry=new FileEntry(newEntry,key.getLength(),data.getLength(),metadataLength,expiryTime);
       ByteBuffer buf=ByteBuffer.allocate(len);
-      buf.putInt(fe.size);
-      buf.putInt(fe.keyLen);
-      buf.putInt(fe.dataLen);
-      buf.putInt(fe.metadataLen);
-      buf.putLong(fe.expiryTime);
+      buf.putInt(newEntry.size);
+      buf.putInt(newEntry.keyLen);
+      buf.putInt(newEntry.dataLen);
+      buf.putInt(newEntry.metadataLen);
+      buf.putLong(newEntry.expiryTime);
       buf.put(key.getBuf(),key.getOffset(),key.getLength());
       buf.put(data.getBuf(),data.getOffset(),data.getLength());
       if (metadata != null)       buf.put(metadata.getBuf(),metadata.getOffset(),metadata.getLength());
       buf.flip();
-      channel.write(buf,fe.offset);
-      if (trace)       log.tracef("Wrote entry %s at %d:%d",marshalledEntry.getKey(),fe.offset,len);
-      fe=entries.put(marshalledEntry.getKey(),fe);
-      if (fe == null)       fe=evict();
+      channel.write(buf,newEntry.offset);
+      if (trace)       log.tracef("Wrote entry %s:%d at %d:%d",marshalledEntry.getKey(),len,newEntry.offset,newEntry.size);
+      oldEntry=entries.put(marshalledEntry.getKey(),newEntry);
+      if (oldEntry == null)       oldEntry=evict();
     }
   finally {
       try {
-        free(fe);
+        free(oldEntry);
       }
   finally {
         resizeLock.readLock().unlock();

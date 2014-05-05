@@ -1,0 +1,17 @@
+{
+  int remainder=free.size - len;
+  if ((remainder >= SMALLEST_ENTRY_SIZE) && (len <= (free.size * fragmentationFactor))) {
+    try {
+      FileEntry newFreeEntry=new FileEntry(free.offset + len,remainder);
+      addNewFreeEntry(newFreeEntry);
+      FileEntry newEntry=new FileEntry(free.offset,len);
+      if (trace)       log.tracef("Split entry at %d:%d, allocated %d:%d, free %d:%d, %d free entries",free.offset,free.size,newEntry.offset,newEntry.size,newFreeEntry.offset,newFreeEntry.size,freeList.size());
+      return newEntry;
+    }
+ catch (    IOException e) {
+      throw new PersistenceException("Cannot add new free entry",e);
+    }
+  }
+  if (trace)   log.tracef("Existing free entry allocated at %d:%d, %d free entries",free.offset,free.size,freeList.size());
+  return free;
+}
