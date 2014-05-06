@@ -1,0 +1,16 @@
+{
+  Assert.assertNull(String.format("Feature '%s' version '%s' is present in the container before install!",feature,version),service.getFeature(feature,version));
+  try {
+    service.installFeature(feature,version);
+    Assert.fail("Feature install should fail before the repository is added.");
+  }
+ catch (  Exception ex) {
+  }
+  URI repoUri=new URI(String.format("mvn:org.infinispan/%s/%s/xml/features",artifactId,version));
+  service.addRepository(repoUri);
+  service.installFeature(feature,version);
+  Assert.assertNotNull(String.format("Feature '%s' version '%s' install failed.",feature,version),service.getFeature(feature,version));
+  service.uninstallFeature(feature,version);
+  service.removeRepository(repoUri);
+  Assert.assertNull(String.format("Feature '%s' version '%s' is still present in the container after uninstall!",feature,version),service.getFeature(feature,version));
+}

@@ -1,0 +1,17 @@
+{
+  Manifest manifest=new Manifest();
+  Attributes mainAttributes=manifest.getMainAttributes();
+  mainAttributes.put(Attributes.Name.MANIFEST_VERSION,"1.0");
+  mainAttributes.putValue("Bundle-ManifestVersion","2");
+  for (  String header : headers) {
+    Matcher matcher=PATTERN_HEADER.matcher(header);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(String.format("Invalid header: %s (expecting '%s')",header,PATTERN_HEADER.pattern()));
+    }
+    mainAttributes.putValue(matcher.group(1),matcher.group(2));
+  }
+  ByteArrayOutputStream buf=new ByteArrayOutputStream();
+  JarOutputStream jar=new JarOutputStream(buf,manifest);
+  jar.close();
+  return streamBundle(new ByteArrayInputStream(buf.toByteArray()));
+}

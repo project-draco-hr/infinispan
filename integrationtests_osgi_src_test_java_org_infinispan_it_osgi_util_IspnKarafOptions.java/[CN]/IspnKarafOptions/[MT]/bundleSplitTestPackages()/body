@@ -1,0 +1,9 @@
+{
+  PaxURLUtils.registerURLHandlers();
+  UrlProvisionOption splitCoreBundle=asStreamBundle(testJarAsStreamBundle("org.infinispan","infinispan-core"),"assembly:%s!/org/infinispan/test/fwk/**");
+  UrlProvisionOption splitJDBCBundle=asStreamBundle(testJarAsStreamBundle("org.infinispan","infinispan-cachestore-jdbc"),"assembly:%s!/org/infinispan/test/fwk/**");
+  WrappedUrlProvisionOption wrappedSplitCoreBundle=wrappedBundle(splitCoreBundle).bundleSymbolicName("split-test-core").instructions("Export-Package=org.infinispan.test.fwk;partial=true;mandatory:=partial");
+  WrappedUrlProvisionOption wrappedSplitJDBCBundle=wrappedBundle(splitJDBCBundle).bundleSymbolicName("split-test-jdbc").instructions("Export-Package=org.infinispan.test.fwk;partial=true;mandatory:=partial");
+  UrlProvisionOption wrappedSplitTestBundle=emptyBundle("Bundle-SymbolicName=split-test","Export-Package=org.infinispan.test.fwk","Require-Bundle=split-test-core,split-test-jdbc");
+  return composite(wrappedSplitCoreBundle,wrappedSplitJDBCBundle,wrappedSplitTestBundle);
+}

@@ -1,0 +1,20 @@
+{
+  Bundle bundle=FrameworkUtil.getBundle(getClass());
+  Assert.assertNotNull("Failed to find class bundle.",bundle);
+  BundleContext context=bundle.getBundleContext();
+  ServiceReference<FeaturesService> serviceReference=context.getServiceReference(FeaturesService.class);
+  Assert.assertNotNull("Failed to obtain a reference to the FeaturesService.",serviceReference);
+  FeaturesService service=context.getService(serviceReference);
+  Assert.assertNotNull("Failed to obtain a FeaturesService instance.",service);
+  Properties mavenProps=MavenUtils.getProperties();
+  String version=mavenProps.getProperty(PROP_PROJECT_VERSION);
+  Assert.assertNotNull("Failed to obtain the project version from maven.",version);
+  checkInstall(service,"infinispan-commons","infinispan-commons",version);
+  checkInstall(service,"infinispan-core","infinispan-core",version);
+  checkInstall(service,"infinispan-client-hotrod","hotrod-client",version);
+  checkInstall(service,"infinispan-client-hotrod","hotrod-client-with-query",version);
+  checkInstall(service,"infinispan-cachestore-jdbc","infinispan-cachestore-jdbc",version);
+  checkInstall(service,"infinispan-cachestore-remote","infinispan-cachestore-remote",version);
+  checkInstall(service,"infinispan-cachestore-leveldb","infinispan-cachestore-leveldb-jni",version);
+  checkInstall(service,"infinispan-cachestore-leveldb","infinispan-cachestore-leveldb-java",version);
+}
