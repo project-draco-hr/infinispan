@@ -1,0 +1,19 @@
+{
+  final Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  cache1.put(KEY,VALUE);
+  ClusterListener listener=new ClusterListener();
+  cache2.addListener(listener);
+  factory.setOwnerIndexes(0,1);
+  log.trace("Triggering rebalance to cause segment ownership to change");
+  factory.triggerRebalance(cache0);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).containsKey(KEY);
+    }
+  }
+);
+  TestingUtil.waitForRehashToComplete(cache0,cache1,cache2);
+  assertEquals(listener.events.size(),0);
+}

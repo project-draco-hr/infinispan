@@ -35,7 +35,8 @@
   log.info("Node 0 killed");
   Cache<Object,String> cache3=future.get(10,TimeUnit.SECONDS);
   checkPoint.triggerForever("pre_view_listener_release_" + "manager1");
-  waitForClusterToForm(CACHE_NAME);
+  TestingUtil.blockUntilViewsReceived(60000,false,cache1,cache2);
+  TestingUtil.waitForRehashToComplete(cache1,cache2);
   MagicKey key=new MagicKey(cache3);
   cache3.put(key,FIRST_VALUE);
   assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize);

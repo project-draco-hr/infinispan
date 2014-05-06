@@ -22,7 +22,8 @@
   cacheManagers.remove(1);
   log.info("Node 1 killed");
   checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
-  waitForClusterToForm(CACHE_NAME);
+  TestingUtil.blockUntilViewsReceived(10000,false,cacheManagers);
+  TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
   Cache<Object,String> cache3=future.get(10,TimeUnit.SECONDS);
   for (  Object listener : cache3.getAdvancedCache().getListeners()) {
     assertFalse(listener instanceof RemoteClusterListener);
