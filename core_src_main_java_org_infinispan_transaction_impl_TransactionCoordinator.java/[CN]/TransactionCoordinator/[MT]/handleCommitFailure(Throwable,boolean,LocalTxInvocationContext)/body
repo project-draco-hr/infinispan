@@ -15,10 +15,15 @@
   }
  catch (  Throwable e1) {
     log.couldNotRollbackPrepared1PcTransaction(ctx.getCacheTransaction(),e1);
-    throw new XAException(XAException.XAER_RMERR);
+    XAException xe=new XAException(XAException.XAER_RMERR);
+    xe.initCause(e);
+    xe.addSuppressed(e1);
+    throw xe;
   }
  finally {
     txTable.failureCompletingTransaction(ctx.getTransaction());
   }
-  throw new XAException(XAException.XA_HEURRB);
+  XAException xe=new XAException(XAException.XA_HEURRB);
+  xe.initCause(e);
+  throw xe;
 }
