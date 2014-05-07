@@ -1,0 +1,18 @@
+{
+  byte[] listenerId=listenerNotifier.findListenerId(listener);
+  if (listenerId != null) {
+    SocketAddress address=listenerNotifier.findTransport(listenerId).getRemoteSocketAddress();
+    Transport transport=transportFactory.getAddressTransport(address);
+    try {
+      HeaderParams params=writeHeader(transport,REMOVE_CLIENT_LISTENER_REQUEST);
+      transport.writeArray(listenerId);
+      transport.flush();
+      short status=readHeaderAndValidate(transport,params);
+      if (status == NO_ERROR_STATUS)       listenerNotifier.removeClientListener(listenerId);
+    }
+  finally {
+      transportFactory.releaseTransport(transport);
+    }
+  }
+  return null;
+}

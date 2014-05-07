@@ -1,0 +1,24 @@
+{
+  ClientListener clientListener=extractClientListener();
+  HeaderParams params=writeHeader(transport,ADD_CLIENT_LISTENER_REQUEST);
+  transport.writeArray(listenerId);
+  writeNamedFactory(transport,clientListener.filterFactoryName(),filterFactoryParams);
+  writeNamedFactory(transport,clientListener.converterFactoryName(),converterFactoryParams);
+  transport.flush();
+  listenerNotifier.addClientListener(this);
+  Either<Short,ClientEvent> either;
+  do {
+    either=codec.readHeaderOrEvent(dedicatedTransport,params,listenerId,listenerNotifier.getMarshaller());
+switch (either.type()) {
+case LEFT:
+      if (either.left() == NO_ERROR_STATUS)       listenerNotifier.startClientListener(listenerId);
+ else       listenerNotifier.removeClientListener(listenerId);
+    break;
+case RIGHT:
+  listenerNotifier.invokeEvent(listenerId,either.right());
+break;
+}
+}
+ while (either.type() == Either.Type.RIGHT);
+return either.left();
+}

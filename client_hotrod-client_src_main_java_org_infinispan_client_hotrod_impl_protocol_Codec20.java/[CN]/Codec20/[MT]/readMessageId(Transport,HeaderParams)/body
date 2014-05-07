@@ -1,0 +1,12 @@
+{
+  long receivedMessageId=transport.readVLong();
+  final Log localLog=getLog();
+  if (params != null && receivedMessageId != params.messageId && receivedMessageId != 0) {
+    String message="Invalid message id. Expected %d and received %d";
+    localLog.invalidMessageId(params.messageId,receivedMessageId);
+    if (trace)     localLog.tracef("Socket dump: %s",hexDump(transport.dumpStream()));
+    throw new InvalidResponseException(String.format(message,params.messageId,receivedMessageId));
+  }
+  if (trace)   localLog.tracef("Received response for message id: %d",receivedMessageId);
+  return receivedMessageId;
+}

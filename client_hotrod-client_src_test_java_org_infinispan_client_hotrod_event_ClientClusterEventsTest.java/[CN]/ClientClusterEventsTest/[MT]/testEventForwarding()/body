@@ -1,0 +1,28 @@
+{
+  final EventLogListener eventListener=new EventLogListener();
+  withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
+    @Override public void call(){
+      RemoteCache<Integer,String> c3=client(2).getCache();
+      expectNoEvents(eventListener);
+      c3.put(1,"one");
+      expectOnlyCreatedEvent(1,eventListener,cache(0));
+      c3.put(2,"two");
+      expectOnlyCreatedEvent(2,eventListener,cache(0));
+      c3.put(3,"three");
+      expectOnlyCreatedEvent(3,eventListener,cache(0));
+      c3.replace(1,"newone");
+      expectOnlyModifiedEvent(1,eventListener,cache(0));
+      c3.replace(2,"newtwo");
+      expectOnlyModifiedEvent(2,eventListener,cache(0));
+      c3.replace(3,"newthree");
+      expectOnlyModifiedEvent(3,eventListener,cache(0));
+      c3.remove(1);
+      expectOnlyRemovedEvent(1,eventListener,cache(0));
+      c3.remove(2);
+      expectOnlyRemovedEvent(2,eventListener,cache(0));
+      c3.remove(3);
+      expectOnlyRemovedEvent(3,eventListener,cache(0));
+    }
+  }
+);
+}

@@ -1,0 +1,26 @@
+{
+  try {
+    while (true) {
+      ClientEvent clientEvent=null;
+      try {
+        clientEvent=codec.readEvent(transport,op.listenerId,marshaller);
+        invokeClientEvent(clientEvent);
+        clientEvent=null;
+      }
+ catch (      TransportException e) {
+        if (e.getCause() instanceof ClosedChannelException)         throw (ClosedChannelException)e.getCause();
+ else         if (clientEvent != null)         log.unexpectedErrorConsumingEvent(clientEvent,e);
+ else {
+          log.unableToReadEventFromServer(e,transport.getRemoteSocketAddress());
+          return;
+        }
+      }
+catch (      Throwable t) {
+        if (clientEvent != null)         log.unexpectedErrorConsumingEvent(clientEvent,t);
+ else         log.unableToReadEventFromServer(t,transport.getRemoteSocketAddress());
+      }
+    }
+  }
+ catch (  ClosedChannelException e) {
+  }
+}

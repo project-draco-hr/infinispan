@@ -1,0 +1,14 @@
+{
+  final EventLogListener eventListener=new EventLogListener();
+  withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
+    @Override public void call(){
+      RemoteCache<Integer,String> cache=rcm.getCache();
+      expectNoEvents(eventListener);
+      cache.put(1,"one");
+      expectOnlyCreatedEvent(1,eventListener,cache());
+      cache.put(2,"two");
+      expectOnlyCreatedEvent(2,eventListener,cache());
+    }
+  }
+);
+}

@@ -1,0 +1,15 @@
+{
+  final CustomEventListener eventListener=new CustomEventListener();
+  converterFactory.dynamic=true;
+  withClientListener(eventListener,null,new Object[]{2},new RemoteCacheManagerCallable(remoteCacheManager){
+    @Override public void call(){
+      RemoteCache<Integer,String> cache=rcm.getCache();
+      eventListener.expectNoEvents();
+      cache.put(1,"one");
+      eventListener.expectSingleCustomEvent(1,"one");
+      cache.put(2,"two");
+      eventListener.expectSingleCustomEvent(2,null);
+    }
+  }
+);
+}

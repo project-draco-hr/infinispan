@@ -1,0 +1,21 @@
+{
+  Map<Class<? extends Annotation>,List<ClientListenerInvocation>> listenerMethodMap=new HashMap<Class<? extends Annotation>,List<ClientListenerInvocation>>(4,0.99f);
+  for (  Method m : listener.getClass().getMethods()) {
+    for (    Map.Entry<Class<? extends Annotation>,Class<?>[]> entry : allowedListeners.entrySet()) {
+      Class<? extends Annotation> annotationType=entry.getKey();
+      Class<?>[] eventTypes=entry.getValue();
+      if (m.isAnnotationPresent(annotationType)) {
+        testListenerMethodValidity(m,eventTypes,annotationType.getName());
+        SecurityActions.setAccessible(m);
+        ClientListenerInvocation invocation=new ClientListenerInvocation(listener,m);
+        List<ClientListenerInvocation> invocables=listenerMethodMap.get(annotationType);
+        if (invocables == null) {
+          invocables=new ArrayList<ClientListenerInvocation>();
+          listenerMethodMap.put(annotationType,invocables);
+        }
+        invocables.add(invocation);
+      }
+    }
+  }
+  return listenerMethodMap;
+}

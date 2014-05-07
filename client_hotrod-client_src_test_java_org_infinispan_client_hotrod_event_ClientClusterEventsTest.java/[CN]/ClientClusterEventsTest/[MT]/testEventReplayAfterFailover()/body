@@ -1,0 +1,18 @@
+{
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  HotRodServer server=server(0);
+  builder.addServers(server.getHost() + ":" + server.getPort());
+  builder.balancingStrategy(FirstServerAvailableBalancer.class);
+  RemoteCacheManager newClient=new RemoteCacheManager(builder.build());
+  EventLogListener eventListener=new EventLogListener();
+  RemoteCache<Integer,String> c=newClient.getCache();
+  c.put(0,"zero");
+  c.remove(0);
+  c.addClientListener(eventListener);
+  c.put(1,"one");
+  expectOnlyCreatedEvent(1,eventListener,cache(0));
+  findServerAndKill(FirstServerAvailableBalancer.serverToKill);
+  c.put(2,"two");
+  expectFailoverEvent(eventListener);
+  expectUnorderedEvents(eventListener,ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED,1,2);
+}

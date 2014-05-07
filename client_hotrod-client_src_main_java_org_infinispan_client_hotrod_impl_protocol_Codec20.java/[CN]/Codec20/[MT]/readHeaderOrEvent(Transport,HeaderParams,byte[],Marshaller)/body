@@ -1,0 +1,14 @@
+{
+  readMagic(transport);
+  readMessageId(transport,null);
+  short opCode=transport.readByte();
+switch (opCode) {
+case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
+case CACHE_ENTRY_MODIFIED_EVENT_RESPONSE:
+case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
+    ClientEvent clientEvent=readPartialEvent(transport,expectedListenerId,marshaller,opCode);
+  return Either.newRight(clientEvent);
+default :
+return Either.newLeft(readPartialHeader(transport,params,opCode));
+}
+}

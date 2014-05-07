@@ -1,0 +1,17 @@
+{
+  final EventLogListener eventListener=new EventLogListener();
+  withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
+    @Override public void call(){
+      RemoteCache<CustomKey,String> cache=rcm.getCache();
+      expectNoEvents(eventListener);
+      CustomKey key=new CustomKey(1);
+      cache.put(key,"one");
+      expectOnlyCreatedEvent(key,eventListener,cache());
+      cache.replace(key,"newone");
+      expectOnlyModifiedEvent(key,eventListener,cache());
+      cache.remove(key);
+      expectOnlyRemovedEvent(key,eventListener,cache());
+    }
+  }
+);
+}

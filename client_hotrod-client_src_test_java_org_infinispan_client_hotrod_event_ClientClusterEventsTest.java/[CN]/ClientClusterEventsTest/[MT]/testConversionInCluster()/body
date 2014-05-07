@@ -1,0 +1,18 @@
+{
+  final CustomEventListener eventListener=new CustomEventListener();
+  withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
+    @Override public void call(){
+      RemoteCache<Integer,String> c3=client(2).getCache();
+      eventListener.expectNoEvents();
+      c3.put(111,"oneoneone");
+      eventListener.expectSingleCustomEvent(111,"oneoneone");
+      c3.put(222,"twotwotwo");
+      eventListener.expectSingleCustomEvent(222,"twotwotwo");
+      c3.remove(111);
+      eventListener.expectSingleCustomEvent(111,null);
+      c3.remove(222);
+      eventListener.expectSingleCustomEvent(222,null);
+    }
+  }
+);
+}
