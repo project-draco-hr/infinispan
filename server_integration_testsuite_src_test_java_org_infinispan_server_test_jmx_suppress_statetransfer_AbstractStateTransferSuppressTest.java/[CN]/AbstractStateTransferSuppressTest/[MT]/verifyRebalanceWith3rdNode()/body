@@ -1,0 +1,18 @@
+{
+  setAttribute(provider(0),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,false);
+  putDataIntoCache(NUMBER_ENTRIES);
+  checkRebalanceStatus(false,provider(0),provider(1));
+  checkRpcManagerStatistics(new String[]{"null"},OWNERS_2_MEMBERS_NODE0_NODE1,provider(0),provider(1));
+  controller.start(CONTAINER3);
+  createNewProvider(2);
+  checkRebalanceStatus(false,provider(2));
+  checkRpcManagerStatistics(new String[]{"null"},OWNERS_2_MEMBERS_NODE0_NODE1,provider(0),provider(1),provider(2));
+  assertTrue("The cache on server(2) should be empty.",server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == 0);
+  setAttribute(provider(0),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,true);
+  checkRebalanceStatus(true,provider(0),provider(1),provider(2));
+  checkRpcManagerStatistics(new String[]{"null",OWNERS_2_MEMBERS_NODE0_NODE1_NODE2},null,provider(0),provider(1),provider(2));
+  checkRpcManagerStatistics(new String[]{"null"},OWNERS_2_MEMBERS_NODE0_NODE1_NODE2,provider(0),provider(1),provider(2));
+  assertTrue(server(0).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+  assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+  assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+}

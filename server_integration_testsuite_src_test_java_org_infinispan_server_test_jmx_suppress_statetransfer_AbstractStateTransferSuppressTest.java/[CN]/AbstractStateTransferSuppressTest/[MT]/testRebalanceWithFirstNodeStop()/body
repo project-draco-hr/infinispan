@@ -1,0 +1,19 @@
+{
+  try {
+    verifyRebalanceWith3rdNode();
+    setAttribute(provider(0),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,false);
+    controller.stop(CONTAINER1);
+    checkRpcManagerStatistics(new String[]{"null",OWNERS_2_MEMBERS_NODE1_NODE2},OWNERS_2_MEMBERS_NODE1_NODE2,provider(1),provider(2));
+    checkRebalanceStatus(false,provider(1),provider(2));
+    assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+    assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() < NUMBER_ENTRIES);
+    setAttribute(provider(1),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,true);
+    checkRebalanceStatus(true,provider(1),provider(2));
+    checkRpcManagerStatistics(new String[]{"null",OWNERS_2_MEMBERS_NODE1_NODE2},OWNERS_2_MEMBERS_NODE1_NODE2,provider(1),provider(2));
+    assertTrue(server(1).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
+    assertTrue(server(2).getCacheManager(getCacheManagerName()).getCache(getCacheName()).getNumberOfEntries() == NUMBER_ENTRIES);
+  }
+  finally {
+    controller.stop(CONTAINER3);
+  }
+}

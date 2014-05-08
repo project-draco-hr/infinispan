@@ -1,0 +1,14 @@
+{
+  put(securedClient(testAlias),keyAddress(KEY_A),HttpServletResponse.SC_OK);
+  put(securedClient(test2Alias),keyAddress(KEY_B),HttpServletResponse.SC_FORBIDDEN);
+  put(securedClient(testAlias),keyAddressUnsecured(KEY_B),HttpServletResponse.SC_UNAUTHORIZED);
+  post(securedClient(testAlias),keyAddress(KEY_C),HttpServletResponse.SC_OK);
+  post(securedClient(test2Alias),keyAddress(KEY_D),HttpServletResponse.SC_FORBIDDEN);
+  HttpResponse resp=get(securedClient(test2Alias),keyAddressUnsecured(KEY_A),HttpServletResponse.SC_OK);
+  String content=new BufferedReader(new InputStreamReader(resp.getEntity().getContent())).readLine();
+  assertEquals("data",content);
+  head(securedClient(test2Alias),keyAddressUnsecured(KEY_A),HttpServletResponse.SC_OK);
+  delete(securedClient(test2Alias),keyAddress(KEY_A),HttpServletResponse.SC_FORBIDDEN);
+  delete(securedClient(testAlias),keyAddress(KEY_A),HttpServletResponse.SC_OK);
+  delete(securedClient(testAlias),keyAddress(KEY_C),HttpServletResponse.SC_OK);
+}
