@@ -1,11 +1,13 @@
 {
   try {
-    acquireRemoteIfNeeded(ctx,command.getMap().keySet(),command);
-    final TxInvocationContext txContext=(TxInvocationContext)ctx;
     boolean skipLocking=hasSkipLocking(command);
-    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
-    for (    Object key : command.getMap().keySet()) {
-      lockAndRegisterBackupLock(txContext,key,lockTimeout,skipLocking);
+    if (!skipLocking) {
+      acquireRemoteIfNeeded(ctx,command.getMap().keySet(),command);
+      final TxInvocationContext txContext=(TxInvocationContext)ctx;
+      long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
+      for (      Object key : command.getMap().keySet()) {
+        lockAndRegisterBackupLock(txContext,key,lockTimeout,skipLocking);
+      }
     }
     return invokeNextInterceptor(ctx,command);
   }

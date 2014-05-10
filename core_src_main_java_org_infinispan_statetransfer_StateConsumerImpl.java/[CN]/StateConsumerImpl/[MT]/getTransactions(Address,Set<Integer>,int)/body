@@ -2,17 +2,11 @@
   if (trace) {
     log.tracef("Requesting transactions for segments %s of cache %s from node %s",segments,cacheName,source);
   }
-  try {
-    StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS,rpcManager.getAddress(),topologyId,segments);
-    Map<Address,Response> responses=rpcManager.invokeRemotely(Collections.singleton(source),cmd,rpcOptions);
-    Response response=responses.get(source);
-    if (response instanceof SuccessfulResponse) {
-      return (List<TransactionInfo>)((SuccessfulResponse)response).getResponseValue();
-    }
-    log.failedToRetrieveTransactionsForSegments(segments,cacheName,source,null);
+  StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS,rpcManager.getAddress(),topologyId,segments);
+  Map<Address,Response> responses=rpcManager.invokeRemotely(Collections.singleton(source),cmd,rpcOptions);
+  Response response=responses.get(source);
+  if (response instanceof SuccessfulResponse) {
+    return (List<TransactionInfo>)((SuccessfulResponse)response).getResponseValue();
   }
- catch (  CacheException e) {
-    log.failedToRetrieveTransactionsForSegments(segments,cacheName,source,e);
-  }
-  return null;
+  throw log.unsuccessfulResponseRetrievingTransactionsForSegments(source,response);
 }

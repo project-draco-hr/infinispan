@@ -1,0 +1,12 @@
+{
+  sequencer=new StateSequencer();
+  sequencer.logicalThread("tx","tx:perform_op","tx:check_locks","tx:before_commit","tx:after_commit");
+  sequencer.logicalThread("rebalance","rebalance:before_get_tx","rebalance:after_get_tx","rebalance:before_confirm","rebalance:end");
+  sequencer.order("rebalance:after_get_tx","tx:perform_op","tx:check_locks","rebalance:before_confirm","rebalance:end","tx:before_commit");
+  startRebalance();
+  startTxWithPut();
+  checkLocksBeforeCommit(true);
+  waitRebalanceEnd();
+  endTx();
+  checkLocksAfterCommit();
+}

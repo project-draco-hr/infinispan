@@ -1,0 +1,16 @@
+{
+  sequencer.enter("tx:check_locks");
+  assertFalse(getTransactionTable(cache(0)).getLocalTransactions().isEmpty());
+  assertTrue(getTransactionTable(cache(0)).getRemoteTransactions().isEmpty());
+  LocalTransaction localTx=getTransactionTable(cache(0)).getLocalTransactions().iterator().next();
+  assertEquals(Collections.singleton(KEY),localTx.getLockedKeys());
+  assertEquals(Collections.emptySet(),localTx.getBackupLockedKeys());
+  assertTrue(getTransactionTable(cache(1)).getLocalTransactions().isEmpty());
+  assertEquals(backupLockOnCache1,!getTransactionTable(cache(1)).getRemoteTransactions().isEmpty());
+  assertTrue(getTransactionTable(cache(2)).getLocalTransactions().isEmpty());
+  assertFalse(getTransactionTable(cache(2)).getRemoteTransactions().isEmpty());
+  RemoteTransaction remoteTx=getTransactionTable(cache(2)).getRemoteTransactions().iterator().next();
+  assertEquals(Collections.emptySet(),remoteTx.getLockedKeys());
+  assertEquals(Collections.singleton(KEY),remoteTx.getBackupLockedKeys());
+  sequencer.exit("tx:check_locks");
+}

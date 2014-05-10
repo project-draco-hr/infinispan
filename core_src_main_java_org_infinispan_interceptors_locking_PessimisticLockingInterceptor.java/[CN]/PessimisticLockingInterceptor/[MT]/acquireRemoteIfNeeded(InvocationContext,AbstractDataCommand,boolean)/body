@@ -1,6 +1,7 @@
 {
   Object key=command.getKey();
-  if (!localNodeIsLockOwner && ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+  boolean needBackupLocks=ctx.isOriginLocal() && (!localNodeIsLockOwner || isStateTransferInProgress());
+  if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
     final TxInvocationContext txContext=(TxInvocationContext)ctx;
     LocalTransaction localTransaction=(LocalTransaction)txContext.getCacheTransaction();
     final boolean alreadyLocked=localTransaction.getAffectedKeys().contains(key);
