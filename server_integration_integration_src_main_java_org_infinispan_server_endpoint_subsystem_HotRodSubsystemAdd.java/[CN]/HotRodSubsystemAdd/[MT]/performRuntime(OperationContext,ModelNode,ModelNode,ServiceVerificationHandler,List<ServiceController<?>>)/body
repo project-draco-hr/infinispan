@@ -34,6 +34,19 @@
           authenticationBuilder.addAllowedMech(mech.asString());
         }
       }
+      String qop=listAsString(sasl,ModelKeys.QOP);
+      if (qop != null) {
+        authenticationBuilder.addMechProperty(Sasl.QOP,qop);
+      }
+      String strength=listAsString(sasl,ModelKeys.STRENGTH);
+      if (strength != null) {
+        authenticationBuilder.addMechProperty(Sasl.STRENGTH,strength);
+      }
+      if (sasl.hasDefined(ModelKeys.PROPERTY)) {
+        for (        Property property : sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
+          authenticationBuilder.addMechProperty(property.getName(),property.getValue().asProperty().getValue().asString());
+        }
+      }
     }
   }
   builder.install();

@@ -47,14 +47,21 @@ ParseUtils.unexpectedAttribute(reader,i);
 final EnumSet<Element> visited=EnumSet.noneOf(Element.class);
 while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
 final Element element=Element.forName(reader.getLocalName());
-if (visited.contains(element)) {
-throw ParseUtils.unexpectedElement(reader);
-}
-visited.add(element);
 switch (element) {
 case POLICY:
 {
+if (visited.contains(element)) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ else {
+visited.add(element);
+}
 parsePolicy(reader,sasl,list);
+break;
+}
+case PROPERTY:
+{
+parseProperty(reader,sasl,list);
 break;
 }
 default :
