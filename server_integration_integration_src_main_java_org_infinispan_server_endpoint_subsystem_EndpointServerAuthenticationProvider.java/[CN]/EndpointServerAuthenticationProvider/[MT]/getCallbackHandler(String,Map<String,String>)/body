@@ -1,0 +1,28 @@
+{
+  if (GSSAPI.equals(mechanismName)) {
+    return new GSSAPIEndpointAuthorizingCallbackHandler();
+  }
+ else   if (PLAIN.equals(mechanismName)) {
+    return new RealmAuthorizingCallbackHandler(realm.getAuthorizingCallbackHandler(AuthenticationMechanism.PLAIN));
+  }
+ else   if (DIGEST_MD5.equals(mechanismName)) {
+    if (!mechanismProperties.containsKey(SASL_OPT_REALM_PROPERTY)) {
+      mechanismProperties.put(SASL_OPT_REALM_PROPERTY,realm.getName());
+    }
+    Map<String,String> mechConfig=realm.getMechanismConfig(AuthenticationMechanism.DIGEST);
+    boolean plainTextDigest=true;
+    if (mechConfig.containsKey(RealmConfigurationConstants.DIGEST_PLAIN_TEXT)) {
+      plainTextDigest=Boolean.parseBoolean(mechConfig.get(RealmConfigurationConstants.DIGEST_PLAIN_TEXT));
+    }
+    if (!plainTextDigest) {
+      mechanismProperties.put(SASL_OPT_PRE_DIGESTED_PROPERTY,"true");
+    }
+    return new RealmAuthorizingCallbackHandler(realm.getAuthorizingCallbackHandler(AuthenticationMechanism.DIGEST));
+  }
+ else   if (EXTERNAL.equals(mechanismName)) {
+    return new RealmAuthorizingCallbackHandler(realm.getAuthorizingCallbackHandler(AuthenticationMechanism.CLIENT_CERT));
+  }
+ else {
+    throw new IllegalArgumentException("Unsupported mech " + mechanismName);
+  }
+}
