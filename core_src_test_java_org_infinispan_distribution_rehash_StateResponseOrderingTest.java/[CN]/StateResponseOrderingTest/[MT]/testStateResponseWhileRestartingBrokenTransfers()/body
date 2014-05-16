@@ -1,54 +1,69 @@
 {
-  Address primary=address(1);
-  MagicKey k1=new MagicKey("k1",cache(1));
-  cache(0).put(k1,"v1");
-  Address backup1=advancedCache(0).getDistributionManager().locate(k1).get(1);
-  Address backup2=advancedCache(0).getDistributionManager().locate(k1).get(2);
-  List<Address> nonOwners=new ArrayList<Address>(advancedCache(0).getRpcManager().getMembers());
-  nonOwners.removeAll(Arrays.asList(primary,backup1,backup2));
-  Address nonOwner=nonOwners.get(0);
-  log.debugf("Starting test with key %s, primary owner %s, backup owners %s and %s, non-owner %s",k1,primary,backup1,backup2,nonOwner);
-  AdvancedCache nonOwnerCache=manager(nonOwner).getCache().getAdvancedCache();
-  final StateTransferManager stm=nonOwnerCache.getComponentRegistry().getStateTransferManager();
-  final int initialTopologyId=stm.getCacheTopology().getTopologyId();
-  final CheckPoint checkPoint=new CheckPoint();
-  replaceInvocationHandler(checkPoint,manager(nonOwner),nonOwner);
-  replaceInvocationHandler(checkPoint,manager(primary),nonOwner);
-  replaceInvocationHandler(checkPoint,manager(backup1),nonOwner);
-  log.debugf("Killing node %s",backup2);
-  manager(backup2).getCache().stop();
+  consistentHashFactory.setOwnerIndexes(new int[]{1,2,3},new int[]{2,1,3});
+  consistentHashFactory.triggerRebalance(cache(0));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      return stm.getCacheTopology().getTopologyId() == initialTopologyId + 2;
+      return advancedCache(0).getDistributionManager().getReadConsistentHash().locatePrimaryOwnerForSegment(1).equals(address(2));
     }
   }
 );
-  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + primary);
-  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + backup1);
-  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + primary,10,SECONDS);
-  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + backup1,10,SECONDS);
-  String event=checkPoint.peek(5,TimeUnit.SECONDS,"IN_START_STATE_TRANSFER_" + primary,"IN_START_STATE_TRANSFER_" + backup1);
-  Address liveNode=event.endsWith(primary.toString()) ? primary : backup1;
-  Address nodeToKill=liveNode == primary ? backup1 : primary;
-  List<Address> keyOwners=nonOwnerCache.getDistributionManager().locate(k1);
-  log.debugf("Killing node %s. Key %s is located on %s",nodeToKill,k1,keyOwners);
-  log.debugf("Data on node %s: %s",primary,manager(primary).getCache().keySet());
-  log.debugf("Data on node %s: %s",backup1,manager(backup1).getCache().keySet());
-  checkPoint.await("IN_START_STATE_TRANSFER_" + liveNode,1,SECONDS);
-  checkPoint.trigger("OUT_START_STATE_TRANSFER_" + liveNode);
-  manager(nodeToKill).getCache().stop();
-  checkPoint.awaitStrict("IN_RESPONSE_" + liveNode,10,SECONDS);
-  checkPoint.trigger("OUT_RESPONSE_" + liveNode);
-  log.debugf("Received segments?");
-  Thread.sleep(1000);
-  checkPoint.awaitStrict("IN_GET_TRANSACTIONS_" + liveNode,10,SECONDS);
-  checkPoint.trigger("OUT_GET_TRANSACTIONS_" + liveNode);
-  checkPoint.awaitStrict("IN_START_STATE_TRANSFER_" + liveNode,10,SECONDS);
-  checkPoint.trigger("OUT_START_STATE_TRANSFER_" + liveNode);
-  checkPoint.awaitStrict("IN_RESPONSE_" + liveNode,10,SECONDS);
-  checkPoint.trigger("OUT_RESPONSE_" + liveNode);
-  TestingUtil.waitForRehashToComplete(nonOwnerCache,manager(liveNode).getCache());
-  log.debugf("Final checkpoint status: %s",checkPoint);
-  DataContainer dataContainer=TestingUtil.extractComponent(nonOwnerCache,DataContainer.class);
-  assertTrue(dataContainer.containsKey(k1));
+  StateSequencer sequencer=new StateSequencer();
+  sequencer.logicalThread("st","st:block_first_state_response","st:kill_node","st:block_second_state_request","st:resume_first_state_response","st:after_first_state_response","st:check_incomplete","st:resume_second_state_request");
+  final AtomicReference<Address> firstResponseSender=new AtomicReference<Address>();
+  CommandMatcher firstStateResponseMatcher=new CommandMatcher(){
+    CommandMatcher realMatcher=matchCommand(StateResponseCommand.class).matchCount(0).build();
+    public boolean accept(    ReplicableCommand command){
+      if (!realMatcher.accept(command))       return false;
+      firstResponseSender.set(((StateResponseCommand)command).getOrigin());
+      return true;
+    }
+  }
+;
+  advanceOnInboundRpc(sequencer,manager(0),firstStateResponseMatcher).before("st:block_first_state_response","st:resume_first_state_response").after("st:after_first_state_response");
+  CommandMatcher secondStateRequestMatcher=new CommandMatcher(){
+    private final AtomicInteger counter=new AtomicInteger();
+    @Override public boolean accept(    ReplicableCommand command){
+      if (command instanceof StateRequestCommand) {
+        StateRequestCommand stateRequestCommand=(StateRequestCommand)command;
+        if (stateRequestCommand.getType() == StateRequestCommand.Type.GET_TRANSACTIONS) {
+          if (counter.getAndIncrement() == 2)           return true;
+          log.debugf("Not blocking command %s",command);
+        }
+      }
+      return false;
+    }
+  }
+;
+  advanceOnOutboundRpc(sequencer,cache(0),secondStateRequestMatcher).before("st:block_second_state_request","st:resume_second_state_request");
+  final StateTransferManager stm0=advancedCache(0).getComponentRegistry().getStateTransferManager();
+  final int initialTopologyId=stm0.getCacheTopology().getTopologyId();
+  MagicKey k1=new MagicKey("k1",cache(1));
+  assertEquals(Arrays.asList(address(1),address(2),address(3)),stm0.getCacheTopology().getCurrentCH().locateOwners(k1));
+  cache(0).put(k1,"v1");
+  MagicKey k2=new MagicKey("k2",cache(2));
+  assertEquals(Arrays.asList(address(2),address(1),address(3)),stm0.getCacheTopology().getCurrentCH().locateOwners(k2));
+  cache(0).put(k2,"v2");
+  consistentHashFactory.setOwnerIndexes(new int[]{0,1,2},new int[]{0,2,1});
+  consistentHashFactory.triggerRebalance(cache(0));
+  sequencer.enter("st:kill_node");
+  assertNotNull(stm0.getCacheTopology().getPendingCH());
+  int nodeToKeep=managerIndex(firstResponseSender.get());
+  int nodeToKill=nodeToKeep == 1 ? 2 : 1;
+  log.debugf("Blocked state response from %s, killing %s",firstResponseSender.get(),manager(nodeToKill));
+  cache(nodeToKill).stop();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return stm0.getCacheTopology().getMembers().size() == 3;
+    }
+  }
+);
+  sequencer.exit("st:kill_node");
+  sequencer.enter("st:check_incomplete");
+  assertTrue(stm0.isStateTransferInProgress());
+  sequencer.exit("st:check_incomplete");
+  waitForRehashToComplete(cache(0),cache(nodeToKeep),cache(3));
+  assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0),k1));
+  assertTrue(stm0.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(address(0),k2));
+  assertEquals("v1",cache(0).get(k1));
+  assertEquals("v2",cache(0).get(k2));
 }

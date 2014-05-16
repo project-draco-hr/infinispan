@@ -7,18 +7,38 @@
     for (    Map.Entry<Address,Set<Integer>> sourceEntry : sources.entrySet()) {
       Address source=sourceEntry.getKey();
       Set<Integer> segmentsFromSource=sourceEntry.getValue();
+      boolean failed=false;
+      boolean exclude=false;
       try {
-        List<TransactionInfo> transactions=getTransactions(source,segmentsFromSource,topologyId);
-        applyTransactions(source,transactions,topologyId);
+        Response response=getTransactions(source,segmentsFromSource,topologyId);
+        if (response instanceof SuccessfulResponse) {
+          List<TransactionInfo> transactions=(List<TransactionInfo>)((SuccessfulResponse)response).getResponseValue();
+          applyTransactions(source,transactions,topologyId);
+        }
+ else         if (response instanceof CacheNotFoundResponse) {
+          log.debugf("Cache %s was stopped on node %s before sending transaction information",cacheName,source);
+          failed=true;
+          exclude=true;
+        }
+ else {
+          log.unsuccessfulResponseRetrievingTransactionsForSegments(source,response);
+          failed=true;
+        }
       }
  catch (      SuspectException e) {
         log.debugf("Node %s left the cluster before sending transaction information",source);
-        failedSegments.addAll(segmentsFromSource);
-        excludedSources.add(source);
+        failed=true;
+        exclude=true;
       }
-catch (      CacheException e) {
+catch (      Exception e) {
         log.failedToRetrieveTransactionsForSegments(segments,cacheName,source,e);
+        failed=true;
+      }
+      if (failed) {
         failedSegments.addAll(segmentsFromSource);
+      }
+      if (exclude) {
+        excludedSources.add(source);
       }
     }
     if (failedSegments.isEmpty()) {
