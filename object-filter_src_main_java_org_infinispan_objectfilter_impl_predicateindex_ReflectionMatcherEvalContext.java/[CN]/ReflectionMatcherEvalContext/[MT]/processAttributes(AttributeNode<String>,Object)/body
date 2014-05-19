@@ -2,17 +2,27 @@
   Iterator<AttributeNode<String>> children=node.getChildrenIterator();
   while (children.hasNext()) {
     AttributeNode<String> childAttribute=children.next();
-    ReflectionHelper.PropertyAccessor accessor=ReflectionHelper.getAccessor(instance.getClass(),childAttribute.getAttribute());
-    if (accessor.isMultiple()) {
-      Iterator valuesIt=accessor.getValueIterator(instance);
-      while (valuesIt.hasNext()) {
-        Object attributeValue=valuesIt.next();
-        processAttribute(childAttribute,attributeValue);
-      }
+    if (instance == null) {
+      processAttribute(childAttribute,null);
     }
  else {
-      Object attributeValue=accessor.getValue(instance);
-      processAttribute(childAttribute,attributeValue);
+      ReflectionHelper.PropertyAccessor accessor=ReflectionHelper.getAccessor(instance.getClass(),childAttribute.getAttribute());
+      if (accessor.isMultiple()) {
+        Iterator valuesIt=accessor.getValueIterator(instance);
+        if (valuesIt == null) {
+          processAttribute(childAttribute,null);
+        }
+ else {
+          while (valuesIt.hasNext()) {
+            Object attributeValue=valuesIt.next();
+            processAttribute(childAttribute,attributeValue);
+          }
+        }
+      }
+ else {
+        Object attributeValue=accessor.getValue(instance);
+        processAttribute(childAttribute,attributeValue);
+      }
     }
   }
 }

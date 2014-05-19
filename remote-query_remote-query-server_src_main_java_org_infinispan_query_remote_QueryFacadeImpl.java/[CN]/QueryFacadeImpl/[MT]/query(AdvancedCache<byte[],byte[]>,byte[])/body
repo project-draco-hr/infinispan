@@ -1,9 +1,14 @@
 {
-  if (!cache.getCacheConfiguration().indexing().enabled()) {
-    throw new CacheException("Indexing is not enabled for cache " + cache.getName());
+  if (cache.getCacheConfiguration().indexing().enabled()) {
+    try {
+      return executeQuery(cache,query);
+    }
+ catch (    IOException e) {
+      throw new CacheException("An exception has occurred during query execution",e);
+    }
   }
   try {
-    return executeQuery(cache,query);
+    return executeNonIndexedQuery(cache,query);
   }
  catch (  IOException e) {
     throw new CacheException("An exception has occurred during query execution",e);

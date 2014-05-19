@@ -8,14 +8,14 @@
   }
   BETree beTree=treeMaker.make(normalizedFilter);
   final FilterSubscriptionImpl<AttributeId> filterSubscription=new FilterSubscriptionImpl<AttributeId>(typeName,beTree,projection,callback,translatedProjections);
-  filterSubscription.registerProjection(predicateIndex.getRoot());
+  filterSubscription.registerProjection(predicateIndex);
   for (  BENode node : beTree.getNodes()) {
     if (node instanceof PredicateNode) {
       final PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
       Predicate.Callback predicateCallback=new Predicate.Callback(){
         @Override public void handleValue(        MatcherEvalContext<?> ctx,        boolean isMatching){
           FilterEvalContext filterEvalContext=ctx.getFilterEvalContext(filterSubscription);
-          predicateNode.handleChildValue(predicateNode,isMatching,filterEvalContext);
+          predicateNode.handleChildValue(null,isMatching,filterEvalContext);
         }
       }
 ;

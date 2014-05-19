@@ -1,0 +1,12 @@
+{
+  QueryFactory qf=Search.getQueryFactory(cache);
+  Query q=qf.from(Transaction.class).having("accountId").eq(1).and(qf.having("amount").gt(1600).or().having("description").like("%rent%")).toBuilder().build();
+  List<Transaction> list=q.list();
+  assertEquals(2,list.size());
+  List<String> descriptions=new ArrayList<String>();
+  for (  Transaction t : list) {
+    descriptions.add(t.getDescription());
+  }
+  assertTrue(descriptions.contains("Birthday present"));
+  assertTrue(descriptions.contains("Feb. rent payment"));
+}

@@ -1,0 +1,9 @@
+{
+  for (  Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+    AttributeNode<Integer> attrNode=currentNode.getChild(fd.getNumber());
+    if (attrNode != null && !messageContext.isFieldMarked(fd.getNumber())) {
+      Object defaultValue=fd.isRepeated() || fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE || fd.getType() == Descriptors.FieldDescriptor.Type.GROUP || fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+      attrNode.processValue(defaultValue,this);
+    }
+  }
+}

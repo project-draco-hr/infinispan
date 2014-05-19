@@ -1,0 +1,22 @@
+{
+  String queryString="select p.address.postCode, p.phoneNumbers.number from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
+  Matcher matcher=createMatcher();
+  Object person=createPerson1();
+  final List<Object[]> result=new ArrayList<Object[]>();
+  FilterSubscription filterSubscription=matcher.registerFilter(queryString,new FilterCallback(){
+    @Override public void onFilterResult(    Object instance,    Object[] projection){
+      result.add(projection);
+    }
+  }
+);
+  assertNotNull(filterSubscription.getProjection());
+  assertEquals(2,filterSubscription.getProjection().length);
+  assertEquals("address.postCode",filterSubscription.getProjection()[0]);
+  assertEquals("phoneNumbers.number",filterSubscription.getProjection()[1]);
+  matcher.match(person);
+  matcher.unregisterFilter(filterSubscription);
+  assertEquals(1,result.size());
+  assertEquals(2,result.get(0).length);
+  assertEquals("SW12345",result.get(0)[0]);
+  assertEquals("004012345",result.get(0)[1]);
+}

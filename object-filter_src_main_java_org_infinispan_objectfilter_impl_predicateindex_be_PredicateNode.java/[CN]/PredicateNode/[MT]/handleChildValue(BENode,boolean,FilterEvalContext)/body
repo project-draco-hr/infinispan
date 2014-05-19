@@ -1,11 +1,15 @@
 {
-  if (child != this) {
+  if (child != null) {
     throw new IllegalArgumentException();
   }
+  final int value=childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
   if (evalContext.treeCounters[index] <= 0) {
+    if (isRepeated && evalContext.treeCounters[index] == value) {
+      return false;
+    }
     throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
   }
-  evalContext.treeCounters[index]=childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
+  evalContext.treeCounters[index]=value;
   if (parent == null) {
     suspendSubscription(evalContext);
     return true;
