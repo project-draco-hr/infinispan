@@ -1,7 +1,7 @@
 {
   final Resource resource=context.readResourceForUpdate(PathAddress.EMPTY_ADDRESS);
   final ModelNode subModel=resource.getModel();
-  ModelNode type=ProtocolResource.TYPE.validateOperation(operation);
+  ModelNode type=ProtocolResourceDefinition.TYPE.validateOperation(operation);
   PathElement protocolRelativePath=PathElement.pathElement(ModelKeys.PROTOCOL,type.asString());
   if (resource.hasChild(protocolRelativePath)) {
     throw JGroupsMessages.MESSAGES.protocolAlreadyDefined(protocolRelativePath.toString());
@@ -9,7 +9,9 @@
   Resource childResource=context.createResource(PathAddress.pathAddress(protocolRelativePath));
   final ModelNode protocol=childResource.getModel();
   for (  final AttributeDefinition attribute : attributes) {
-    if (attribute.getName().equals(ModelKeys.PROPERTIES))     continue;
+    if (attribute.getName().equals(ModelKeys.PROPERTIES)) {
+      continue;
+    }
     attribute.validateAndSet(operation,protocol);
   }
   ModelNode protocols=subModel.get(ModelKeys.PROTOCOLS);
@@ -17,7 +19,6 @@
     protocols.setEmptyList();
   }
   protocols.add(type);
-  process(subModel,operation);
   if (operation.hasDefined(ModelKeys.PROPERTIES)) {
     for (    Property property : operation.get(ModelKeys.PROPERTIES).asPropertyList()) {
       final Resource param=context.createResource(PathAddress.pathAddress(protocolRelativePath,PathElement.pathElement(ModelKeys.PROPERTY,property.getName())));
@@ -25,7 +26,7 @@
       if (!value.isDefined()) {
         throw JGroupsMessages.MESSAGES.propertyNotDefined(property.getName(),protocolRelativePath.toString());
       }
-      param.getModel().get(ModelDescriptionConstants.VALUE).set(value);
+      PropertyResourceDefinition.VALUE.validateAndSet(value,param.getModel());
     }
   }
   reloadRequiredStep(context);

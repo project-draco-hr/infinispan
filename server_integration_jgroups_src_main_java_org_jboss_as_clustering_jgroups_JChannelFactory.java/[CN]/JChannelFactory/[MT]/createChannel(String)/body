@@ -46,6 +46,38 @@ synchronized (transport) {
     channel.getProtocolStack().addProtocol(relay);
     relay.init();
   }
+  final SaslConfiguration saslConfig=this.configuration.getSasl();
+  if (saslConfig != null) {
+    final String clusterRole=saslConfig.getClusterRole();
+    final SecurityRealm securityRealm=saslConfig.getSecurityRealm();
+    final String mech=saslConfig.getMech();
+    final SASL sasl=new SASL();
+    sasl.setMech(mech);
+    Map<String,String> props=saslConfig.getProperties();
+    if (props.containsKey("client_password")) {
+      String credential=props.get("client_password");
+      String name=props.get("client_name");
+      if (name == null) {
+        sasl.setClientCallbackHandler(new SaslClientCallbackHandler(securityRealm.getName(),this.configuration.getEnvironment().getNodeName(),credential));
+      }
+ else       if (name.contains("@")) {
+        sasl.setClientCallbackHandler(new SaslClientCallbackHandler(name,credential));
+      }
+ else {
+        sasl.setClientCallbackHandler(new SaslClientCallbackHandler(securityRealm.getName(),name,credential));
+      }
+    }
+ else {
+      props.put("client_password","");
+    }
+    Map<String,String> saslProps=props.containsKey("sasl_props") ? Util.parseCommaDelimitedProps(props.get("sasl_props")) : new HashMap<String,String>();
+    sasl.setServerCallbackHandler(new RealmAuthorizationCallbackHandler(securityRealm,mech,clusterRole != null ? clusterRole : id,saslProps));
+    props.put("sasl_props",new PropertyConverters.StringProperties().toString(saslProps));
+    Configurator.resolveAndAssignFields(sasl,props);
+    Configurator.resolveAndInvokePropertyMethods(sasl,props);
+    channel.getProtocolStack().insertProtocol(sasl,ProtocolStack.BELOW,GMS.class);
+    sasl.init();
+  }
   channel.setName(this.configuration.getEnvironment().getNodeName() + "/" + id);
   TransportConfiguration.Topology topology=this.configuration.getTransport().getTopology();
   if (topology != null) {

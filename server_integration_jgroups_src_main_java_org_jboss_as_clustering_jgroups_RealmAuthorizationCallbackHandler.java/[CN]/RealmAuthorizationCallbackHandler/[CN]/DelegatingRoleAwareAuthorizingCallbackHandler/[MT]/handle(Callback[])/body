@@ -1,0 +1,16 @@
+{
+  AuthorizeCallback acb=findCallbackHandler(AuthorizeCallback.class,callbacks);
+  if (acb != null) {
+    String authenticationId=acb.getAuthenticationID();
+    String authorizationId=acb.getAuthorizationID();
+    acb.setAuthorized(authenticationId.equals(authorizationId));
+    int realmSep=authorizationId.indexOf('@');
+    RealmUser realmUser=realmSep < 0 ? new RealmUser(authorizationId) : new RealmUser(authorizationId.substring(realmSep + 1),authorizationId.substring(0,realmSep));
+    List<Principal> principals=new ArrayList<Principal>();
+    principals.add(realmUser);
+    createSubjectUserInfo(principals);
+  }
+ else {
+    delegate.handle(callbacks);
+  }
+}
