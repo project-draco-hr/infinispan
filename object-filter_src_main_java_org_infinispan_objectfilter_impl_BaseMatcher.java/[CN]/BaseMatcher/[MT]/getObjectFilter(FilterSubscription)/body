@@ -1,0 +1,38 @@
+{
+  final FilterSubscriptionImpl<AttributeId> filterSubscriptionImpl=(FilterSubscriptionImpl<AttributeId>)filterSubscription;
+  final Set<String> knownTypes=Collections.singleton(filterSubscriptionImpl.getEntityTypeName());
+  final PredicateIndex<AttributeId> predicateIndex=new PredicateIndex<AttributeId>();
+  filterSubscriptionImpl.registerProjection(predicateIndex.getRoot());
+  for (  BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
+    if (node instanceof PredicateNode) {
+      final PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
+      Predicate.Callback predicateCallback=new Predicate.Callback(){
+        @Override public void handleValue(        MatcherEvalContext<?> ctx,        boolean isMatching){
+          FilterEvalContext filterEvalContext=ctx.getFilterEvalContext(filterSubscriptionImpl);
+          predicateNode.handleChildValue(predicateNode,isMatching,filterEvalContext);
+        }
+      }
+;
+      predicateIndex.addSubscriptionForPredicate(predicateNode,predicateCallback);
+    }
+  }
+  return new ObjectFilter(){
+    @Override public Object filter(    Object instance){
+      if (instance == null) {
+        throw new IllegalArgumentException("argument cannot be null");
+      }
+      MatcherEvalContext<AttributeId> matcherEvalContext=startContext(instance,knownTypes);
+      if (matcherEvalContext != null) {
+        FilterEvalContext filterEvalContext=matcherEvalContext.getFilterEvalContext(filterSubscriptionImpl);
+        matcherEvalContext.process(predicateIndex.getRoot());
+        if (!filterEvalContext.getMatchResult()) {
+          return null;
+        }
+        Object[] projection=filterEvalContext.getProjection();
+        return projection != null ? projection : matcherEvalContext.getInstance();
+      }
+      return null;
+    }
+  }
+;
+}

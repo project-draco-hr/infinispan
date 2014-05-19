@@ -1,6 +1,9 @@
 {
   ctx.process(predicateIndex.getRoot());
   for (  FilterSubscriptionImpl s : filterSubscriptions) {
-    s.callback.onFilterResult(ctx.getInstance(),null,ctx.getFilterContext(s).getResult());
+    FilterEvalContext filterEvalContext=ctx.getFilterEvalContext(s);
+    if (filterEvalContext.getMatchResult()) {
+      s.getCallback().onFilterResult(ctx.getInstance(),filterEvalContext.getProjection());
+    }
   }
 }

@@ -1,0 +1,18 @@
+{
+  String queryString="from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
+  Matcher matcher=createMatcher();
+  Object person=createPerson();
+  final int[] matchCount=new int[1];
+  FilterSubscription filterSubscription=matcher.registerFilter(queryString,new FilterCallback(){
+    @Override public void onFilterResult(    Object instance,    Object[] projection){
+      matchCount[0]++;
+    }
+  }
+);
+  ObjectFilter objectFilter=matcher.getObjectFilter(filterSubscription);
+  matcher.match(person);
+  assertEquals(1,matchCount[0]);
+  Object result=objectFilter.filter(person);
+  assertTrue(result == person);
+  assertEquals(1,matchCount[0]);
+}

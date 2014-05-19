@@ -1,0 +1,19 @@
+{
+  FilterSubscriptionImpl filterSubscriptionImpl=(FilterSubscriptionImpl)filterSubscription;
+  write.lock();
+  try {
+    FilterRegistry<AttributeId> filterRegistry=filtersByType.get(filterSubscriptionImpl.getEntityTypeName());
+    if (filterRegistry != null) {
+      filterRegistry.removeFilter(filterSubscription);
+    }
+ else {
+      throw new IllegalStateException("Reached illegal state");
+    }
+    if (filterRegistry.isEmpty()) {
+      filtersByType.remove(filterRegistry.getTypeName());
+    }
+  }
+  finally {
+    write.unlock();
+  }
+}

@@ -1,21 +1,32 @@
 {
   if (evalContext.treeCounters[index] <= 0) {
-    throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
+    throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
   }
   if (parent == null) {
-    evalContext.treeCounters[0]=childValue ? 0 : -1;
-    for (int i=index; i < span; i++) {
-      evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+    if (childValue) {
+      if (--evalContext.treeCounters[index] == BETree.EXPR_TRUE) {
+        for (int i=index; i < span; i++) {
+          evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+        }
+        return true;
+      }
+      return false;
     }
-    return true;
+ else {
+      evalContext.treeCounters[0]=BETree.EXPR_FALSE;
+      for (int i=index; i < span; i++) {
+        evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
+      }
+      return true;
+    }
   }
   if (childValue) {
-    if (--evalContext.treeCounters[index] == 0) {
+    if (--evalContext.treeCounters[index] == BETree.EXPR_TRUE) {
       return parent.handleChildValue(this,true,evalContext);
     }
  else {
       for (int i=child.index; i < child.span; i++) {
-        evalContext.treeCounters[i]=0;
+        evalContext.treeCounters[i]=BETree.EXPR_TRUE;
         evalContext.beTree.getNodes()[i].suspendSubscription(evalContext);
       }
       return false;
