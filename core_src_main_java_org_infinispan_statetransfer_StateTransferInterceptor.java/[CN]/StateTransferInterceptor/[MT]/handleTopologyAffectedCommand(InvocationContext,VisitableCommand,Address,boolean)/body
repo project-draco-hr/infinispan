@@ -1,5 +1,5 @@
 {
-  log.tracef("handleTopologyAffectedCommand for command %s",command);
+  log.tracef("handleTopologyAffectedCommand for command %s, origin %s",command,origin);
   if (isLocalOnly(ctx,command)) {
     return invokeNextInterceptor(ctx,command);
   }
@@ -8,7 +8,7 @@
   boolean isNonTransactionalWrite=!ctx.isInTxScope() && command instanceof WriteCommand;
   boolean isTransactionalAndNotRolledBack=false;
   if (ctx.isInTxScope()) {
-    isTransactionalAndNotRolledBack=!((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
+    isTransactionalAndNotRolledBack=command instanceof TransactionBoundaryCommand && !((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
   }
   if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {
     Map<Address,Response> responseMap=stateTransferManager.forwardCommandIfNeeded(((TopologyAffectedCommand)command),getAffectedKeys(ctx,command),origin,sync);

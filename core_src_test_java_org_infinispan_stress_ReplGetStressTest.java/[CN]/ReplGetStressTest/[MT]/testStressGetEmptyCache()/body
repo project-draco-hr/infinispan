@@ -1,0 +1,21 @@
+{
+  long start=System.nanoTime();
+  ConfigurationBuilder replConfig=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+  for (int i=0; i < NUM_NODES; i++) {
+    EmbeddedCacheManager cm=addClusterEnabledCacheManager();
+    defineConfigurationOnAllManagers("repl",replConfig);
+    cm.startCaches("repl");
+  }
+  System.out.println("Caches created: " + manager(0).getMembers());
+  System.out.println("Explicit txs: " + explicitTxs);
+  System.out.println("Operation count: " + NUM_ITERATIONS + "m");
+  Cache<Object,Object> replCache0=cache(0,"repl");
+  for (int i=0; i < NUM_ITERATIONS * 1000000; i++) {
+    if (explicitTxs)     tm(0,"repl").begin();
+    Object o=replCache0.get("k" + i);
+    assertNull(o);
+    if (explicitTxs)     tm(0,"repl").commit();
+  }
+  long end=System.nanoTime();
+  System.out.println("Test took " + TimeUnit.NANOSECONDS.toSeconds(end - start) + "s");
+}
