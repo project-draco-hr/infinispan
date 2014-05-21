@@ -1,6 +1,7 @@
 {
 synchronized (lock) {
     this.listenerNotifier=listenerNotifier;
+    this.configuration=configuration;
     hashFactory.init(configuration);
     boolean pingOnStartup=configuration.pingOnStartup();
     servers=new ArrayList<SocketAddress>();
@@ -8,7 +9,6 @@ synchronized (lock) {
       servers.add(new InetSocketAddress(server.host(),server.port()));
     }
     servers=Collections.unmodifiableCollection(servers);
-    balancer=createBalancer(configuration);
     tcpNoDelay=configuration.tcpNoDelay();
     tcpKeepAlive=configuration.tcpKeepAlive();
     soTimeout=configuration.socketTimeout();
@@ -26,19 +26,21 @@ synchronized (lock) {
     }
     if (log.isDebugEnabled()) {
       log.debugf("Statically configured servers: %s",servers);
-      log.debugf("Load balancer class: %s",balancer.getClass().getName());
+      log.debugf("Load balancer class: %s",configuration.balancingStrategy().getName());
       log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",tcpNoDelay,soTimeout,connectTimeout);
     }
     TransportObjectFactory connectionFactory;
     if (configuration.security().authentication().enabled()) {
-      connectionFactory=new SaslTransportObjectFactory(codec,this,topologyId,pingOnStartup,configuration.security().authentication());
+      connectionFactory=new SaslTransportObjectFactory(codec,this,defaultCacheTopologyId,pingOnStartup,configuration.security().authentication());
     }
  else {
-      connectionFactory=new TransportObjectFactory(codec,this,topologyId,pingOnStartup);
+      connectionFactory=new TransportObjectFactory(codec,this,defaultCacheTopologyId,pingOnStartup);
     }
     PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport> poolFactory=new PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport>(connectionFactory,configuration.connectionPool());
     createAndPreparePool(poolFactory);
-    balancer.setServers(servers);
+    balancers=CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE,AnyEquivalence.getInstance());
+    consistentHashes=CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE,AnyEquivalence.getInstance());
+    addBalancer(RemoteCacheManager.cacheNameBytes());
   }
   if (configuration.pingOnStartup())   pingServers();
 }

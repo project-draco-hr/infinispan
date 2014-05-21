@@ -1,0 +1,13 @@
+{
+  Cache<?,?> cache=primaryOwner.getCacheManager().getCache(cacheName);
+  Random r=new Random();
+  byte[] dummy=new byte[8];
+  int attemptsLeft=1000;
+  do {
+    r.nextBytes(dummy);
+  }
+ while (!isFirstOwner(cache,dummy) && attemptsLeft >= 0);
+  if (attemptsLeft < 0)   throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
+  log.infof("Binary key %s hashes to [cluster=%s,hotrod=%s]",Util.printArray(dummy,false),primaryOwner.getCacheManager().getAddress(),primaryOwner.getAddress());
+  return dummy;
+}

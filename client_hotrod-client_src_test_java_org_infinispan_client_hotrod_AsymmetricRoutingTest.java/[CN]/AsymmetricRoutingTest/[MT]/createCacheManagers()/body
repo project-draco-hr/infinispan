@@ -1,0 +1,15 @@
+{
+  defaultBuilder=defaultCacheConfigurationBuilder();
+  distOneBuilder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+  distOneBuilder.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(0));
+  distTwoBuilder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+  distTwoBuilder.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(1));
+  server1=addHotRodServer();
+  server2=addHotRodServer();
+  blockUntilViewReceived(manager(0).getCache(),2);
+  blockUntilCacheStatusAchieved(manager(0).getCache(),ComponentStatus.RUNNING,10000);
+  blockUntilCacheStatusAchieved(manager(1).getCache(),ComponentStatus.RUNNING,10000);
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host(server1.getHost()).port(server1.getPort()).addServer().host(server2.getHost()).port(server2.getPort());
+  rcm=new RemoteCacheManager(clientBuilder.build());
+}
