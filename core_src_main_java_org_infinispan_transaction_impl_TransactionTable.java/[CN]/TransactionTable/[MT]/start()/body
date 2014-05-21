@@ -10,7 +10,7 @@
   }
   boolean totalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
   if (clustered && !totalOrder) {
-    completedTransactionsInfo=new EquivalentConcurrentHashMapV8<Address,CompletedTransactionsPerNode>(AnyEquivalence.getInstance(),AnyEquivalence.getInstance());
+    completedTransactionsInfo=new CompletedTransactionsInfo();
     ThreadFactory tf=new ThreadFactory(){
       @Override public Thread newThread(      Runnable r){
         String address=rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
@@ -24,7 +24,7 @@
     long interval=configuration.transaction().reaperWakeUpInterval();
     executorService.scheduleAtFixedRate(new Runnable(){
       @Override public void run(){
-        cleanupCompletedTransactions();
+        completedTransactionsInfo.cleanupCompletedTransactions();
       }
     }
 ,interval,interval,TimeUnit.MILLISECONDS);

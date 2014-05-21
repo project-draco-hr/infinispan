@@ -1,0 +1,38 @@
+{
+  if (completedTransactions.isEmpty())   return;
+  try {
+    log.tracef("About to cleanup completed transaction. Initial size is %d",completedTransactions.size());
+    long beginning=timeService.time();
+    long minCompleteTimestamp=timeService.time() - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
+    int removedEntries=0;
+    Set<Address> leavers=new HashSet<>();
+    for (    Map.Entry<Address,Long> e : nodeMaxPrunedTxIds.entrySet()) {
+      if (!rpcManager.getMembers().contains(e.getKey())) {
+        leavers.add(e.getKey());
+      }
+    }
+    Iterator<Map.Entry<GlobalTransaction,Long>> txIterator=completedTransactions.entrySet().iterator();
+    while (txIterator.hasNext()) {
+      Map.Entry<GlobalTransaction,Long> e=txIterator.next();
+      long completedTime=e.getValue();
+      if (completedTime < minCompleteTimestamp) {
+        final long txId=e.getKey().getId();
+        final Address address=e.getKey().getAddress();
+        updateLastPrunedTxId(txId,address);
+        txIterator.remove();
+        removedEntries++;
+      }
+ else {
+        leavers.remove(e.getKey().getAddress());
+      }
+    }
+    for (    Address e : leavers) {
+      nodeMaxPrunedTxIds.remove(e);
+    }
+    long duration=timeService.timeDuration(beginning,TimeUnit.MILLISECONDS);
+    log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " + "current number of completed transactions is %d",removedEntries,duration,completedTransactions.size());
+  }
+ catch (  Exception e) {
+    log.errorf(e,"Failed to cleanup completed transactions: %s",e.getMessage());
+  }
+}
