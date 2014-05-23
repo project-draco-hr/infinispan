@@ -17,6 +17,9 @@
       if (sslContext == null) {
         throw ROOT_LOGGER.noSSLContext(serverName,encryptionRealm.getName());
       }
+      if (configurationBuilder.ssl().create().requireClientAuth() && !encryptionRealm.getSupportedAuthenticationMechanisms().contains(AuthenticationMechanism.CLIENT_CERT)) {
+        throw ROOT_LOGGER.noSSLTrustStore(serverName,encryptionRealm.getName());
+      }
       configurationBuilder.ssl().sslContext(sslContext);
       qual=" (SSL)";
     }
