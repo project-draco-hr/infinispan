@@ -1,0 +1,30 @@
+{
+synchronized (this) {
+    ConsistentHashFactory consistentHashFactory=getJoinInfo().getConsistentHashFactory();
+    int topologyId=getCacheTopology().getTopologyId();
+    ConsistentHash currentCH=getCacheTopology().getCurrentCH();
+    ConsistentHash pendingCH=getCacheTopology().getPendingCH();
+    if (!needConsistentHashUpdate()) {
+      log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",cacheName,getCacheTopology());
+      return false;
+    }
+    List<Address> newCurrentMembers=pruneInvalidMembers(currentCH.getMembers());
+    if (newCurrentMembers.isEmpty()) {
+      CacheTopology newTopology=new CacheTopology(topologyId + 1,null,null);
+      updateCacheTopology(newTopology);
+      log.tracef("Initial topology installed for cache %s: %s",cacheName,newTopology);
+      return false;
+    }
+    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,getCapacityFactors());
+    ConsistentHash newPendingCH=null;
+    if (pendingCH != null) {
+      List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());
+      newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,getCapacityFactors());
+    }
+    CacheTopology newTopology=new CacheTopology(topologyId + 1,newCurrentCH,newPendingCH);
+    updateCacheTopology(newTopology);
+    log.tracef("Cache %s topology updated: %s",cacheName,newTopology);
+    newTopology.logRoutingTableInformation();
+    return true;
+  }
+}

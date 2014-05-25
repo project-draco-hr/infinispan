@@ -1,8 +1,12 @@
 {
 synchronized (this) {
-    if (rebalanceStatus == null) {
-      throw new IllegalStateException("Can't end rebalance, there is no rebalance in progress");
-    }
-    rebalanceStatus=null;
+    CacheTopology currentTopology=getCacheTopology();
+    int currentTopologyId=currentTopology.getTopologyId();
+    log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,currentTopologyId);
+    int newTopologyId=currentTopologyId + 1;
+    ConsistentHash newCurrentCH=currentTopology.getPendingCH();
+    CacheTopology newTopology=new CacheTopology(newTopologyId,newCurrentCH,null);
+    updateCacheTopology(newTopology);
+    setRebalanceStatus();
   }
 }

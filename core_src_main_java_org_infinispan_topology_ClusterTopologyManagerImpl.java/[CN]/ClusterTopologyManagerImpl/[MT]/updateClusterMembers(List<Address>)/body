@@ -1,11 +1,6 @@
 {
   log.tracef("Updating cluster members for all the caches. New list is %s",newClusterMembers);
-  for (  Map.Entry<String,ClusterCacheStatus> e : cacheStatusMap.entrySet()) {
-    String cacheName=e.getKey();
-    ClusterCacheStatus cacheStatus=e.getValue();
-    boolean cacheMembersModified=cacheStatus.updateClusterMembers(newClusterMembers);
-    if (cacheMembersModified) {
-      onCacheMembershipChange(cacheName,cacheStatus);
-    }
+  for (  ClusterCacheStatus e : cacheStatusMap.values()) {
+    e.processMembershipChange(newClusterMembers);
   }
 }

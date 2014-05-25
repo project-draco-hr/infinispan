@@ -1,0 +1,11 @@
+{
+  boolean topologyChanged=updateTopologyAfterMembershipChange();
+  if (!topologyChanged)   return true;
+  boolean rebalanceCompleted=updateRebalanceMembersList();
+  if (rebalanceCompleted) {
+    setRebalanceStatus();
+  }
+  broadcastConsistentHashUpdate();
+  rebalancePolicy.updateCacheStatus(cacheName,this);
+  return false;
+}

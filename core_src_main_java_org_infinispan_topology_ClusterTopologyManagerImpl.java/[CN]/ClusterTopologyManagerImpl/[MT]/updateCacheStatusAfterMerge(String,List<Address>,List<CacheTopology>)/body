@@ -3,36 +3,8 @@
   ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
   if (partitionTopologies.isEmpty())   return;
 synchronized (cacheStatus) {
-    int unionTopologyId=0;
-    ConsistentHash currentCHUnion=null;
-    ConsistentHashFactory chFactory=cacheStatus.getJoinInfo().getConsistentHashFactory();
-    for (    CacheTopology topology : partitionTopologies) {
-      if (topology.getTopologyId() > unionTopologyId) {
-        unionTopologyId=topology.getTopologyId();
-      }
-      if (currentCHUnion == null) {
-        currentCHUnion=topology.getCurrentCH();
-      }
- else {
-        currentCHUnion=chFactory.union(currentCHUnion,topology.getCurrentCH());
-      }
-    }
-    cacheStatus.updateClusterMembers(clusterMembers);
-    List<Address> members=cacheStatus.getMembers();
-    if (members.isEmpty()) {
-      log.tracef("Cache %s has no members left, skipping topology update",cacheName);
-      return;
-    }
-    if (currentCHUnion != null) {
-      currentCHUnion=chFactory.updateMembers(currentCHUnion,members,cacheStatus.getCapacityFactors());
-    }
-    unionTopologyId+=2;
-    CacheTopology cacheTopology=new CacheTopology(unionTopologyId,currentCHUnion,null);
-    if (cacheStatus.isRebalanceInProgress()) {
-      cacheStatus.endRebalance();
-    }
-    cacheStatus.updateCacheTopology(cacheTopology);
+    cacheStatus.updateAfterMerge(clusterMembers,partitionTopologies);
   }
-  broadcastConsistentHashUpdate(cacheName,cacheStatus);
+  cacheStatus.broadcastConsistentHashUpdate();
   rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
 }
