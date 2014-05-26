@@ -1,0 +1,54 @@
+{
+  ROOT_LOGGER.endpointStarting(serverName);
+  boolean done=false;
+  try {
+    EmbeddedCacheManagerConfiguration embeddedCacheManagerConfiguration=cacheManagerConfiguration.getOptionalValue();
+    if (embeddedCacheManagerConfiguration != null) {
+      configurationBuilder.defaultCacheName(embeddedCacheManagerConfiguration.getDefaultCache());
+    }
+    SocketBinding socketBinding=getSocketBinding().getValue();
+    InetSocketAddress socketAddress=socketBinding.getSocketAddress();
+    configurationBuilder.host(socketAddress.getAddress().getHostAddress());
+    configurationBuilder.port(socketAddress.getPort());
+    SecurityRealm encryptionRealm=encryptionSecurityRealm.getOptionalValue();
+    final String qual;
+    if (encryptionRealm != null) {
+      SSLContext sslContext=encryptionRealm.getSSLContext();
+      if (sslContext == null) {
+        throw ROOT_LOGGER.noSSLContext(serverName,encryptionRealm.getName());
+      }
+      if (configurationBuilder.ssl().create().requireClientAuth() && !encryptionRealm.getSupportedAuthenticationMechanisms().contains(AuthMechanism.CLIENT_CERT)) {
+        throw ROOT_LOGGER.noSSLTrustStore(serverName,encryptionRealm.getName());
+      }
+      configurationBuilder.ssl().sslContext(sslContext);
+      qual=" (SSL)";
+    }
+ else {
+      qual="";
+    }
+    if (configurationBuilder instanceof HotRodServerConfigurationBuilder) {
+      HotRodServerConfigurationBuilder hotRodBuilder=(HotRodServerConfigurationBuilder)configurationBuilder;
+      if (serverContextName != null) {
+        hotRodBuilder.authentication().serverSubject(getServerSubject(serverContextName));
+      }
+      SecurityRealm authenticationRealm=authenticationSecurityRealm.getOptionalValue();
+      if (authenticationRealm != null) {
+        hotRodBuilder.authentication().serverAuthenticationProvider(new EndpointServerAuthenticationProvider(authenticationRealm));
+      }
+    }
+    ROOT_LOGGER.endpointStarted(serverName + qual,NetworkUtils.formatAddress(socketAddress));
+    startProtocolServer(configurationBuilder.build());
+    done=true;
+  }
+ catch (  StartException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw ROOT_LOGGER.failedStart(e,serverName);
+  }
+ finally {
+    if (!done) {
+      doStop();
+    }
+  }
+}

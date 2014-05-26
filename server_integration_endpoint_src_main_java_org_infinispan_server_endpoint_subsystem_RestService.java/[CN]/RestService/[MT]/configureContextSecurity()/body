@@ -1,0 +1,20 @@
+{
+  SecurityConstraint constraint=new SecurityConstraint();
+  WebResourceCollection webCollection=new WebResourceCollection();
+  webCollection.addUrlPattern("/rest/*");
+switch (securityMode) {
+case WRITE:
+    webCollection.addHttpMethods("PUT","POST","DELETE");
+  break;
+case READ_WRITE:
+break;
+}
+constraint.addWebResourceCollection(webCollection);
+constraint.addRoleAllowed("REST");
+deployment.addSecurityConstraint(constraint);
+LoginConfig login=new LoginConfig("ApplicationRealm").addFirstAuthMethod(authMethod);
+deployment.setLoginConfig(login);
+deployment.addSecurityRole("REST");
+SecurityDomainContext securityDomainContext=securityDomainContextInjector.getValue();
+deployment.setIdentityManager(new JAASIdentityManagerImpl(securityDomainContext));
+}
