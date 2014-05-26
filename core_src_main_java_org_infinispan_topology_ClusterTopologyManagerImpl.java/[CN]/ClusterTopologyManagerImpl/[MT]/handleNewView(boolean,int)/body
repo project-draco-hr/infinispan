@@ -13,11 +13,13 @@ synchronized (viewHandlingLock) {
         for (        Map.Entry<String,List<CacheTopology>> entry : clusterCacheMap.entrySet()) {
           String cacheName=entry.getKey();
           List<CacheTopology> topologyList=entry.getValue();
-          try {
-            updateCacheStatusAfterMerge(cacheName,transport.getMembers(),topologyList);
+          ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+          if (isCoordinator && mergeView) {
+            log.tracef("Initializing rebalance policy for cache %s, pre-existing partitions are %s",cacheName,topologyList);
+            cacheStatus.reconcileCacheTopology(transport.getMembers(),topologyList,mergeView);
           }
- catch (          Exception e) {
-            log.failedToRecoverCacheState(cacheName,e);
+ else {
+            cacheStatus.reconcileCacheTopologyWhenBecomingCoordinator(transport.getMembers(),topologyList,mergeView);
           }
         }
       }

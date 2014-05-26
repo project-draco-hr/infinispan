@@ -1,14 +1,15 @@
 {
   ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),newViewId);
   Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout(),false,false);
+  log.debugf("Got statusResponses %s. members are %s",statusResponses,transport.getMembers());
   HashMap<String,List<CacheTopology>> clusterCacheMap=new HashMap<String,List<CacheTopology>>();
   for (  Map.Entry<Address,Object> responseEntry : statusResponses.entrySet()) {
     Address sender=responseEntry.getKey();
-    Map<String,Object[]> nodeStatus=(Map<String,Object[]>)responseEntry.getValue();
-    for (    Map.Entry<String,Object[]> statusEntry : nodeStatus.entrySet()) {
+    Map<String,LocalTopologyManager.StatusResponse> nodeStatus=(Map<String,LocalTopologyManager.StatusResponse>)responseEntry.getValue();
+    for (    Map.Entry<String,LocalTopologyManager.StatusResponse> statusEntry : nodeStatus.entrySet()) {
       String cacheName=statusEntry.getKey();
-      CacheJoinInfo joinInfo=(CacheJoinInfo)statusEntry.getValue()[0];
-      CacheTopology cacheTopology=(CacheTopology)statusEntry.getValue()[1];
+      CacheJoinInfo joinInfo=statusEntry.getValue().getCacheJoinInfo();
+      CacheTopology cacheTopology=statusEntry.getValue().getCacheTopology();
       List<CacheTopology> topologyList=clusterCacheMap.get(cacheName);
       if (topologyList == null) {
         initCacheStatusIfAbsent(cacheName,joinInfo);
@@ -19,10 +20,10 @@
         topologyList.add(cacheTopology);
         for (        Address member : cacheTopology.getMembers()) {
           if (statusResponses.containsKey(member)) {
-            Map<String,Object[]> memberStatus=(Map<String,Object[]>)statusResponses.get(member);
-            Object[] cacheStatus=memberStatus.get(cacheName);
+            Map<String,LocalTopologyManager.StatusResponse> memberStatus=(Map<String,LocalTopologyManager.StatusResponse>)statusResponses.get(member);
+            LocalTopologyManager.StatusResponse cacheStatus=memberStatus.get(cacheName);
             if (cacheStatus != null) {
-              CacheJoinInfo memberJoinInfo=(CacheJoinInfo)cacheStatus[0];
+              CacheJoinInfo memberJoinInfo=cacheStatus.getCacheJoinInfo();
               float capacityFactor=memberJoinInfo.getCapacityFactor();
               cacheStatusMap.get(cacheName).addMember(member,capacityFactor);
             }

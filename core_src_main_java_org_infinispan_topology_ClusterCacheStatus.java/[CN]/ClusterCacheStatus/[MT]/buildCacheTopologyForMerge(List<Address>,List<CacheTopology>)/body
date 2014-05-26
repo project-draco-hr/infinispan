@@ -1,0 +1,24 @@
+{
+  log.trace("Building cache topology for merge.");
+  int maxTopology=0;
+  ConsistentHash agreedCh=null;
+  ConsistentHashFactory chFactory=getJoinInfo().getConsistentHashFactory();
+  for (  CacheTopology topology : partitionTopologies) {
+    if (topology.getTopologyId() > maxTopology) {
+      maxTopology=topology.getTopologyId();
+      agreedCh=topology.getCurrentCH();
+    }
+  }
+  updateClusterMembers(clusterMembers);
+  List<Address> members=getMembers();
+  if (members.isEmpty()) {
+    log.tracef("Cache %s has no members left, skipping topology update",cacheName);
+    return null;
+  }
+  if (agreedCh != null) {
+    agreedCh=chFactory.updateMembers(agreedCh,members,getCapacityFactors());
+  }
+  maxTopology+=2;
+  CacheTopology cacheTopology=new CacheTopology(maxTopology,agreedCh,null);
+  return cacheTopology;
+}

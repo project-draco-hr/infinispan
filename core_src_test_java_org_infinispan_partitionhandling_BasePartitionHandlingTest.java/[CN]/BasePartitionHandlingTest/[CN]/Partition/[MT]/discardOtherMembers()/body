@@ -1,0 +1,20 @@
+{
+  List<Address> outsideMembers=new ArrayList<Address>();
+  for (  Address a : allMembers) {
+    boolean inThisPartition=false;
+    for (    Channel c : channels) {
+      if (c.getAddress().equals(a))       inThisPartition=true;
+    }
+    if (!inThisPartition)     outsideMembers.add(a);
+  }
+  for (  Channel c : channels) {
+    DISCARD discard=new DISCARD();
+    for (    Address a : outsideMembers)     discard.addIgnoreMember(a);
+    try {
+      c.getProtocolStack().insertProtocol(discard,ProtocolStack.ABOVE,TP.class);
+    }
+ catch (    Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+}
