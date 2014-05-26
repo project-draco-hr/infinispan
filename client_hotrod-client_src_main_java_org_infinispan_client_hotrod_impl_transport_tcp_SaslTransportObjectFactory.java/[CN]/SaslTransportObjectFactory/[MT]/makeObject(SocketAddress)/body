@@ -11,7 +11,11 @@
   if (configuration.clientSubject() != null) {
     saslClient=Subject.doAs(configuration.clientSubject(),new PrivilegedExceptionAction<SaslClient>(){
       @Override public SaslClient run() throws Exception {
-        return Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),configuration.callbackHandler());
+        CallbackHandler callbackHandler=configuration.callbackHandler();
+        if (callbackHandler == null) {
+          callbackHandler=NoOpCallbackHandler.INSTANCE;
+        }
+        return Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),callbackHandler);
       }
     }
 );
