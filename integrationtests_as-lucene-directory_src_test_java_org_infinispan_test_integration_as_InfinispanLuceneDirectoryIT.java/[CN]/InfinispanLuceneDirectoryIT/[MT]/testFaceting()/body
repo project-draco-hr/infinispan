@@ -1,0 +1,19 @@
+{
+  Directory taxonomyDirectory=DirectoryBuilder.newDirectoryInstance(cache,cache,cache,"taxonomy").create();
+  DirectoryTaxonomyWriter tw=new DirectoryTaxonomyWriter(taxonomyDirectory);
+  FacetsConfig cfg=new FacetsConfig();
+  Document doc1=new Document();
+  Document doc2=new Document();
+  Document doc3=new Document();
+  doc1.add(new FacetField("category","c2"));
+  doc2.add(new FacetField("category","c2"));
+  doc3.add(new FacetField("category","c1"));
+  index(cfg.build(tw,doc1),cfg.build(tw,doc2),cfg.build(tw,doc3));
+  tw.close();
+  DirectoryTaxonomyReader tr=new DirectoryTaxonomyReader(taxonomyDirectory);
+  FacetsCollector fc=new FacetsCollector();
+  FacetsCollector.search(openSearcher(),new MatchAllDocsQuery(),10,fc);
+  Facets facets=new FastTaxonomyFacetCounts(tr,cfg,fc);
+  FacetResult category=facets.getTopChildren(10,"category");
+  assertEquals(2,category.childCount);
+}
