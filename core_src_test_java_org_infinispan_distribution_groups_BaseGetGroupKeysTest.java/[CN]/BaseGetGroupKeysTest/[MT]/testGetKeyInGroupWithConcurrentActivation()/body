@@ -1,0 +1,27 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches(PERSISTENCE_PASSIVATION_CACHE));
+  initCache(testCache.primaryOwner);
+  final BlockCommandInterceptor interceptor=injectIfAbsent(extractTargetCache(testCache));
+  interceptor.open=false;
+  Future<Map<GroupKey,String>> future=fork(new Callable<Map<GroupKey,String>>(){
+    @Override public Map<GroupKey,String> call() throws Exception {
+      return testCache.testCache.getGroup(GROUP);
+    }
+  }
+);
+  interceptor.awaitCommandBlock();
+  final AtomicReference<GroupKey> keyToActivate=new AtomicReference<>(null);
+  PersistenceManager persistenceManager=TestingUtil.extractComponent(extractTargetCache(testCache),PersistenceManager.class);
+  persistenceManager.processOnAllStores(KeyFilter.LOAD_ALL_FILTER,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+      keyToActivate.compareAndSet(null,(GroupKey)marshalledEntry.getKey());
+      taskContext.stop();
+    }
+  }
+,false,false);
+  AssertJUnit.assertNotNull(extractTargetCache(testCache).get(keyToActivate.get()));
+  interceptor.unblockCommand();
+  Map<GroupKey,String> groupKeySet=future.get();
+  Map<GroupKey,String> expectedGroupSet=createMap(0,10);
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

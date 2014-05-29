@@ -20,10 +20,10 @@
     }
     if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
     log.tracef("Retrying command because of topology change: %s",command);
-    int newTopologyId=Math.max(stateTransferManager.getCacheTopology().getTopologyId(),commandTopologyId + 1);
+    int newTopologyId=Math.max(currentTopologyId(),commandTopologyId + 1);
     command.setTopologyId(newTopologyId);
     command.setFlags(Flag.COMMAND_RETRY);
-    stateTransferLock.waitForTransactionData(newTopologyId,transactionDataTimeout,TimeUnit.MILLISECONDS);
+    waitForTransactionData(newTopologyId);
     localResult=handleNonTxWriteCommand(ctx,command);
   }
   return localResult;

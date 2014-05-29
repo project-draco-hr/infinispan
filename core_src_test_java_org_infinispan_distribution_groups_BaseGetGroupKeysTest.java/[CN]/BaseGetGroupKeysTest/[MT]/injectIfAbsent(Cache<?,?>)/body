@@ -1,0 +1,19 @@
+{
+  log.debugf("Injecting BlockCommandInterceptor in %s",cache);
+  InterceptorChain chain=TestingUtil.extractComponent(cache,InterceptorChain.class);
+  BlockCommandInterceptor interceptor;
+  if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
+    interceptor=(BlockCommandInterceptor)chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0);
+  }
+ else {
+    interceptor=new BlockCommandInterceptor(log);
+    if (!chain.addInterceptorAfter(interceptor,EntryWrappingInterceptor.class)) {
+      if (!chain.addInterceptorAfter(interceptor,VersionedEntryWrappingInterceptor.class)) {
+        AssertJUnit.assertTrue(chain.addInterceptorAfter(interceptor,TotalOrderVersionedEntryWrappingInterceptor.class));
+      }
+    }
+  }
+  interceptor.reset();
+  log.debugf("Injected BlockCommandInterceptor in %s. Interceptor=%s",cache,interceptor);
+  return interceptor;
+}

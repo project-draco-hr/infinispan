@@ -1,0 +1,23 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches(PERSISTENCE_CACHE));
+  initCache(testCache.primaryOwner);
+  Map<GroupKey,String> groupKeySet=testCache.testCache.getGroup(GROUP);
+  Map<GroupKey,String> expectedGroupSet=createMap(0,10);
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+  testCache.testCache.withFlags(Flag.SKIP_CACHE_STORE).removeGroup(GROUP);
+  final Map<GroupKey,String> expectedGroupSet2=new ConcurrentHashMap<>();
+  TestingUtil.extractComponent(extractTargetCache(testCache),PersistenceManager.class).processOnAllStores(new KeyFilter(){
+    @Override public boolean accept(    Object key){
+      return ((GroupKey)key).getGroup().equals(GROUP);
+    }
+  }
+,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+      expectedGroupSet2.put((GroupKey)marshalledEntry.getKey(),(String)marshalledEntry.getValue());
+    }
+  }
+,true,true);
+  groupKeySet=testCache.testCache.getGroup(GROUP);
+  expectedGroupSet=new HashMap<>(expectedGroupSet2);
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

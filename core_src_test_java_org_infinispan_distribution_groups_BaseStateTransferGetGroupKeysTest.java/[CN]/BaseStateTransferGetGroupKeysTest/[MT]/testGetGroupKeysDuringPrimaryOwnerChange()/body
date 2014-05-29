@@ -1,0 +1,19 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches());
+  initCache(testCache.primaryOwner);
+  final BlockCommandInterceptor interceptor=injectBlockCommandInterceptorIfAbsent(extractTargetCache(testCache));
+  interceptor.open=false;
+  Future<Map<GroupKey,String>> future=fork(new Callable<Map<GroupKey,String>>(){
+    @Override public Map<GroupKey,String> call() throws Exception {
+      return testCache.testCache.getGroup(GROUP);
+    }
+  }
+);
+  interceptor.awaitCommandBlock();
+  addClusterEnabledCacheManager(createConfigurationBuilder());
+  waitForClusterToForm();
+  interceptor.unblockCommandAndOpen();
+  Map<GroupKey,String> groupKeySet=future.get();
+  Map<GroupKey,String> expectedGroupSet=createMap(0,10);
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

@@ -3,8 +3,7 @@
   Object retVal=null;
   while (needsToPrepare) {
     try {
-      CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
-      command.setTopologyId(cacheTopology.getTopologyId());
+      command.setTopologyId(currentTopologyId());
       if (log.isTraceEnabled()) {
         log.tracef("Local transaction received %s. setting topology Id to %s",command.getGlobalTransaction().globalId(),command.getTopologyId());
       }
@@ -18,6 +17,9 @@
       }
       if (!needsToPrepare) {
         throw throwable;
+      }
+ else {
+        logRetry(command);
       }
     }
   }

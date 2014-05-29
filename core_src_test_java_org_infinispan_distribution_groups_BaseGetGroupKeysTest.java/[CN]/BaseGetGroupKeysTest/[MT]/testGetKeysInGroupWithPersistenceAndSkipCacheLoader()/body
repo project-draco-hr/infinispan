@@ -1,0 +1,12 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches(PERSISTENCE_CACHE));
+  initCache(testCache.primaryOwner);
+  Map<GroupKey,String> groupKeySet=testCache.testCache.withFlags(Flag.SKIP_CACHE_LOAD).getGroup(GROUP);
+  Map<GroupKey,String> expectedGroupSet=new HashMap<>();
+  for (  InternalCacheEntry<GroupKey,String> entry : (DataContainer<GroupKey,String>)TestingUtil.extractComponent(extractTargetCache(testCache),DataContainer.class)) {
+    if (entry.getKey().getGroup().equals(GROUP)) {
+      expectedGroupSet.put(entry.getKey(),entry.getValue());
+    }
+  }
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

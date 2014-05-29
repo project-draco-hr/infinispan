@@ -1,0 +1,17 @@
+{
+  final String groupName=command.getGroupName();
+  if (command.isGroupOwner()) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  Map<Address,Response> responseMap=rpcManager.invokeRemotely(Collections.singleton(groupManager.getPrimaryOwner(groupName)),command,rpcManager.getDefaultRpcOptions(true));
+  if (!responseMap.isEmpty()) {
+    Response response=responseMap.values().iterator().next();
+    if (response instanceof SuccessfulResponse) {
+      List<CacheEntry> cacheEntries=(List<CacheEntry>)((SuccessfulResponse)response).getResponseValue();
+      for (      CacheEntry entry : cacheEntries) {
+        entryFactory.wrapEntryForReading(ctx,entry.getKey(),entry);
+      }
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

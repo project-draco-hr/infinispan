@@ -1,0 +1,15 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches());
+  initCache(testCache.primaryOwner);
+  final TransactionManager tm=tm(testCache.testCache);
+  tm.begin();
+  testCache.testCache.put(key(10),value(10));
+  testCache.testCache.put(key(11),value(11));
+  Map<GroupKey,String> groupKeySet=testCache.testCache.getGroup(GROUP);
+  Map<GroupKey,String> expectedGroupSet=createMap(0,12);
+  tm.commit();
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+  groupKeySet=testCache.testCache.getGroup(GROUP);
+  expectedGroupSet=createMap(0,12);
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

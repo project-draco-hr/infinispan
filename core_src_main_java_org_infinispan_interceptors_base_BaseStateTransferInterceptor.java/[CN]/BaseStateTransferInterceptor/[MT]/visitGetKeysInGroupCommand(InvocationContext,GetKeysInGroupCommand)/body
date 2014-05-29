@@ -1,0 +1,31 @@
+{
+  final String groupName=command.getGroupName();
+  final boolean isOwner=groupManager.isOwner(groupName);
+  updateTopologyId(command);
+  final int commandTopologyId=command.getTopologyId();
+  if (ctx.isOriginLocal()) {
+    Object localResult;
+    try {
+      localResult=invokeNextInterceptor(ctx,command);
+      if (isOwner && currentTopologyId() != commandTopologyId) {
+        localResult=retryVisitGetKeysInGroupCommand(ctx,command,commandTopologyId);
+      }
+    }
+ catch (    CacheException e) {
+      Throwable ce=e;
+      while (ce instanceof RemoteException) {
+        ce=ce.getCause();
+      }
+      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))       throw e;
+      localResult=retryVisitGetKeysInGroupCommand(ctx,command,commandTopologyId);
+    }
+    return localResult;
+  }
+ else {
+    Object result=invokeNextInterceptor(ctx,command);
+    if (isOwner && currentTopologyId() != commandTopologyId) {
+      throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " + commandTopologyId + ", got "+ currentTopologyId());
+    }
+    return result;
+  }
+}

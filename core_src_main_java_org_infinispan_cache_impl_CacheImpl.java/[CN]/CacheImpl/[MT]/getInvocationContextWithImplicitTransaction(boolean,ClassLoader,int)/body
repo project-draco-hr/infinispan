@@ -4,15 +4,8 @@
   if (config.transaction().transactionMode().isTransactional() && !isPutForExternalRead) {
     Transaction transaction=getOngoingTransaction();
     if (transaction == null && config.transaction().autoCommit()) {
-      try {
-        transactionManager.begin();
-        transaction=transactionManager.getTransaction();
-        txInjected=true;
-        if (trace)         log.trace("Implicit transaction started!");
-      }
- catch (      Exception e) {
-        throw new CacheException("Could not start transaction",e);
-      }
+      transaction=tryBegin();
+      txInjected=true;
     }
     invocationContext=getInvocationContext(transaction,explicitClassLoader,txInjected);
   }

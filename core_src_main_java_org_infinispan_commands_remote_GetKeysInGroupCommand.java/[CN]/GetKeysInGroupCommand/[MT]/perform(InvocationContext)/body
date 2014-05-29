@@ -1,0 +1,10 @@
+{
+  final KeyValueCollector collector=ctx.isOriginLocal() ? new LocalContextKeyValueCollector() : new RemoteContextKeyValueCollector();
+  final GroupFilter<Object> filter=new GroupFilter<>(getGroupName(),groupManager);
+  for (  CacheEntry entry : ctx.getLookedUpEntries().values()) {
+    if (!entry.isRemoved() && filter.accept(entry.getKey())) {
+      collector.addCacheEntry(entry);
+    }
+  }
+  return collector.getResult();
+}
