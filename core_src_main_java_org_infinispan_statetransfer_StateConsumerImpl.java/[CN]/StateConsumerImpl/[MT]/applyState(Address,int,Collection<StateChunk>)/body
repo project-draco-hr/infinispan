@@ -2,8 +2,17 @@
   ConsistentHash wCh=cacheTopology.getWriteConsistentHash();
   if (!wCh.getMembers().contains(rpcManager.getAddress())) {
     if (trace) {
-      log.tracef("Ignoring received state because we are no longer a member");
+      log.tracef("Ignoring received state because we are no longer a member of cache %s",cacheName);
     }
+    return;
+  }
+  int rebalanceTopologyId=stateTransferTopologyId.get();
+  if (rebalanceTopologyId == NO_REBALANCE_IN_PROGRESS) {
+    log.debugf("Discarding state response with topology id %d for cache %s, we don't have a state transfer in progress",topologyId,cacheName);
+    return;
+  }
+  if (topologyId < rebalanceTopologyId) {
+    log.debugf("Discarding state response with old topology id %d for cache %s, state transfer request topology was %d",topologyId,cacheName,waitingForState.get());
     return;
   }
   if (trace) {

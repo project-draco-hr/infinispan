@@ -5,7 +5,7 @@
     if (!ownsData && cacheTopology.getMembers().contains(rpcManager.getAddress())) {
       ownsData=true;
     }
-    rebalanceInProgress.set(true);
+    stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS,cacheTopology.getTopologyId());
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getUnionCH(),cacheTopology.getTopologyId(),true);
     if (isTotalOrder) {
       if (log.isTraceEnabled()) {
@@ -83,10 +83,11 @@
         addTransfers(addedSegments);
       }
     }
-    log.tracef("Topology update processed, rebalanceInProgress = %s, isRebalance = %s, pending CH = %s",rebalanceInProgress.get(),isRebalance,cacheTopology.getPendingCH());
-    if (rebalanceInProgress.get()) {
+    int rebalanceTopologyId=stateTransferTopologyId.get();
+    log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",rebalanceTopologyId,isRebalance,cacheTopology.getPendingCH());
+    if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
       if (!isRebalance && cacheTopology.getPendingCH() == null) {
-        boolean changed=rebalanceInProgress.compareAndSet(true,false);
+        boolean changed=stateTransferTopologyId.compareAndSet(rebalanceTopologyId,NO_REBALANCE_IN_PROGRESS);
         if (changed) {
           cacheNotifier.notifyDataRehashed(previousReadCh,cacheTopology.getCurrentCH(),previousWriteCh,cacheTopology.getTopologyId(),false);
           if (log.isTraceEnabled()) {
@@ -102,7 +103,7 @@
   finally {
     stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
     remoteCommandsExecutor.checkForReadyTasks();
-    if (rebalanceInProgress.get()) {
+    if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS) {
       waitingForState.set(true);
     }
     notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
