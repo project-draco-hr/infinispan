@@ -1,9 +1,37 @@
 {
   String property=JTA;
-  if (!DUMMY_TM.equalsIgnoreCase(property)) {
-    System.out.println("Transaction manager used: JBossTM");
-    final String lookup=JBossStandaloneJTAManagerLookup.class.getName();
-    final JBossStandaloneJTAManagerLookup instance=new JBossStandaloneJTAManagerLookup();
+  if (DUMMY_TM.equalsIgnoreCase(property)) {
+    System.out.println("Transaction manager used: Dummy");
+    final String lookup=DummyTransactionManagerLookup.class.getName();
+    final DummyTransactionManagerLookup instance=new DummyTransactionManagerLookup();
+    operations=new Operations(){
+      @Override public UserTransaction getUserTransaction(){
+        return instance.getUserTransaction();
+      }
+      @Override public void cleanup(){
+        instance.cleanup();
+      }
+      @Override public String getLookup(){
+        return lookup;
+      }
+      @Override public TransactionManagerLookup lookup(){
+        return instance;
+      }
+      @Override public TransactionManager getManager(){
+        try {
+          return instance.getTransactionManager();
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+;
+  }
+ else   if (GERONIMO_TM.equalsIgnoreCase(property)) {
+    System.out.println("Transaction manager used: Geronimo");
+    final String lookup=GeronimoTransactionManagerLookup.class.getName();
+    final GeronimoTransactionManagerLookup instance=new GeronimoTransactionManagerLookup();
     operations=new Operations(){
       @Override public UserTransaction getUserTransaction(){
         try {
@@ -33,15 +61,19 @@
 ;
   }
  else {
-    System.out.println("Transaction manager used: Dummy");
-    final String lookup=DummyTransactionManagerLookup.class.getName();
-    final DummyTransactionManagerLookup instance=new DummyTransactionManagerLookup();
+    System.out.println("Transaction manager used: JBossTM");
+    final String lookup=JBossStandaloneJTAManagerLookup.class.getName();
+    final JBossStandaloneJTAManagerLookup instance=new JBossStandaloneJTAManagerLookup();
     operations=new Operations(){
       @Override public UserTransaction getUserTransaction(){
-        return instance.getUserTransaction();
+        try {
+          return instance.getUserTransaction();
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(e);
+        }
       }
       @Override public void cleanup(){
-        instance.cleanup();
       }
       @Override public String getLookup(){
         return lookup;
