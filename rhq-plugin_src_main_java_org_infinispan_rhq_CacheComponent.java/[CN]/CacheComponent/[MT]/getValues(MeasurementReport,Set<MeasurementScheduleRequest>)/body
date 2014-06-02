@@ -2,13 +2,16 @@
   boolean trace=log.isTraceEnabled();
   if (trace)   log.trace("Get values metrics");
   EmsConnection conn=getEmsConnection();
+  conn.queryBeans(namedCacheComponentPattern(cacheManagerName,cacheName,"*"));
   for (  MeasurementScheduleRequest req : metrics) {
     if (trace)     log.trace("Inspect metric " + req);
     String metric=req.getName();
     try {
-      EmsBean bean=queryComponentBean(conn,metric);
+      String metricBeanName=namedCacheComponentPattern(cacheManagerName,cacheName,metric.substring(0,metric.indexOf(".")));
+      EmsBean bean=conn.getBean(metricBeanName);
       if (bean != null) {
         if (trace)         log.trace("Retrieved mbean with name " + bean.getBeanName());
+        bean.refreshAttributes();
         String attName=metric.substring(metric.indexOf(".") + 1);
         EmsAttribute att=bean.getAttribute(attName);
         if (att != null) {

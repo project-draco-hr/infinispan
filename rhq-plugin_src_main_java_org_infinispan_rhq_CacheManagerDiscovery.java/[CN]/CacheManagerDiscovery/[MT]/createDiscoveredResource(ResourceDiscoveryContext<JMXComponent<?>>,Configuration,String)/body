@@ -11,10 +11,11 @@
     for (    EmsBean bean : beans) {
       if (CacheManagerComponent.isCacheManagerComponent(bean)) {
         String managerName=bean.getBeanName().getCanonicalName();
+        String domain=managerName.substring(0,managerName.indexOf(":"));
         String resourceName=bean.getAttribute("Name").getValue().toString();
         String version=bean.getAttribute("Version").getValue().toString();
         if (trace)         log.trace("Add resource with version '" + version + "' and type "+ ctx.getResourceType());
-        DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),resourceName,resourceName,version,"A cache manager within Infinispan",pluginConfiguration,null);
+        DiscoveredResourceDetails detail=new DiscoveredResourceDetails(ctx.getResourceType(),domain + ":name=" + ObjectName.quote(resourceName),(beans.size() > 1 ? domain + ":" : "") + resourceName,version,"A cache manager within Infinispan",pluginConfiguration,null);
         if (log.isInfoEnabled()) {
           log.info(String.format("Discovered Infinispan instance with key %s and name %s",resourceName,managerName));
         }

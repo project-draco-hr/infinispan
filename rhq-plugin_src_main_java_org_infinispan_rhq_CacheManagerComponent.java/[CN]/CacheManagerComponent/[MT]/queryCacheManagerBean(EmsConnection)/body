@@ -1,15 +1,9 @@
 {
   String pattern=cacheManagerPattern;
   if (log.isTraceEnabled())   log.trace("Pattern to query is " + pattern);
-  ObjectNameQueryUtility queryUtility=new ObjectNameQueryUtility(pattern);
-  List<EmsBean> beans=conn.queryBeans(queryUtility.getTranslatedQuery());
-  for (  EmsBean bean : beans) {
-    if (isCacheManagerComponent(bean)) {
-      return bean;
-    }
- else {
-      log.warn(String.format("MBeanServer returned spurious object %s",bean.getBeanName().getCanonicalName()));
-    }
+  EmsBean bean=conn.getBean(pattern);
+  if (bean != null) {
+    return bean;
   }
   throw new IllegalStateException("MBeanServer unexpectedly did not return any CacheManager components");
 }
