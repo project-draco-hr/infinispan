@@ -1,12 +1,14 @@
 {
   Method[] allMethods=SecureCache.class.getMethods();
   Set<String> methodNames=new HashSet<String>();
-  for (  Method m : allMethods) {
+  collectmethods:   for (  Method m : allMethods) {
     StringBuilder s=new StringBuilder("test");
     String name=m.getName();
     s.append(name.substring(0,1).toUpperCase());
     s.append(name.substring(1));
     for (    Class<?> p : m.getParameterTypes()) {
+      Package pkg=p.getPackage();
+      if (pkg != null && pkg.getName().startsWith("java.util.function"))       continue collectmethods;
       s.append("_");
       s.append(p.getSimpleName().replaceAll("\\[\\]","Array"));
     }
