@@ -8,5 +8,10 @@
   DocumentBuilderIndexedEntity docBuilder=entityIndexBinding.getDocumentBuilder();
   final String idInString=keyTransformationHandler.keyToString(key);
   UpdateLuceneWork updateTask=docBuilder.createUpdateWork(clazz,value,idInString,idInString,SimpleInitializer.INSTANCE,conversionContext);
-  collector.emit(key,updateTask);
+  try {
+    defaultBatchBackend.enqueueAsyncWork(updateTask);
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+  }
 }
