@@ -1,16 +1,14 @@
 {
   ConsistentHash hash=getCurrentHash();
   if (segments.contains(hash.getSegment(k))) {
-    C value;
+    CacheEntry<K,C> clone=(CacheEntry<K,C>)kvInternalCacheEntry.clone();
     if (converter != null) {
-      value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+      C value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+      clone.setValue(value);
     }
- else {
-      value=(C)kvInternalCacheEntry.getValue();
-    }
-    queue.add(new ImmortalCacheEntry(k,value));
+    queue.add(clone);
     if (insertionCount.incrementAndGet() % batchSize == 0) {
-      Collection<Map.Entry<K,C>> entriesToSend=new ArrayList<Map.Entry<K,C>>(batchSize);
+      Collection<CacheEntry<K,C>> entriesToSend=new ArrayList<>(batchSize);
       while (entriesToSend.size() != batchSize) {
         entriesToSend.add(queue.poll());
       }

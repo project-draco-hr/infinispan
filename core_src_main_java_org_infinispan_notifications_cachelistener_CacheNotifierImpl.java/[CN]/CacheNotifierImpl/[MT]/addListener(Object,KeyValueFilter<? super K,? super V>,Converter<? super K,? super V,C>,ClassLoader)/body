@@ -63,10 +63,10 @@ catch (        ExecutionException e) {
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s requests initial state for cache",generatedId);
     }
-    CloseableIterator<Map.Entry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,handler);
+    CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,handler);
     try {
       while (iterator.hasNext()) {
-        Map.Entry<K,C> entry=iterator.next();
+        CacheEntry<K,C> entry=iterator.next();
         Object value=handler.markKeyAsProcessing(entry.getKey());
         if (value == null) {
           value=entry.getValue();
@@ -74,27 +74,7 @@ catch (        ExecutionException e) {
  else         if (value == BaseQueueingSegmentListener.REMOVED) {
           continue;
         }
-        EventImpl preEvent;
-        if (l.clustered()) {
-          preEvent=null;
-        }
- else {
-          preEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
-          preEvent.setKey(entry.getKey());
-          preEvent.setPre(true);
-        }
-        EventImpl postEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
-        postEvent.setKey(entry.getKey());
-        postEvent.setValue(value);
-        postEvent.setPre(false);
-        for (        CacheEntryListenerInvocation<K,V> invocation : cacheEntryCreatedListeners) {
-          if (invocation.getIdentifier() == generatedId) {
-            if (preEvent != null) {
-              invocation.invokeNoChecks(preEvent,true,false);
-            }
-            invocation.invokeNoChecks(postEvent,true,false);
-          }
-        }
+        raiseEventForInitialTransfer(generatedId,entry,l.clustered());
         handler.notifiedKey(entry.getKey());
       }
     }
@@ -106,29 +86,9 @@ catch (        ExecutionException e) {
         log.ignoringException("addListener",e.toString(),e);
       }
     }
-    Set<Map.Entry> entries=handler.findCreatedEntries();
-    for (    Map.Entry entry : entries) {
-      EventImpl preEvent;
-      if (l.clustered()) {
-        preEvent=null;
-      }
- else {
-        preEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
-        preEvent.setKey(entry.getKey());
-        preEvent.setPre(true);
-      }
-      EventImpl postEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
-      postEvent.setKey(entry.getKey());
-      postEvent.setValue(entry.getValue());
-      postEvent.setPre(false);
-      for (      CacheEntryListenerInvocation<K,V> invocation : cacheEntryCreatedListeners) {
-        if (invocation.getIdentifier() == generatedId) {
-          if (preEvent != null) {
-            invocation.invokeNoChecks(preEvent,true,false);
-          }
-          invocation.invokeNoChecks(postEvent,true,false);
-        }
-      }
+    Set<CacheEntry> entries=handler.findCreatedEntries();
+    for (    CacheEntry entry : entries) {
+      raiseEventForInitialTransfer(generatedId,entry,l.clustered());
     }
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s initial state for cache completed",generatedId);

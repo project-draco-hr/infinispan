@@ -1,0 +1,24 @@
+{
+  EventImpl preEvent;
+  if (clustered) {
+    preEvent=null;
+  }
+ else {
+    preEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+    preEvent.setKey(entry.getKey());
+    preEvent.setPre(true);
+  }
+  EventImpl postEvent=EventImpl.createEvent(cache,CACHE_ENTRY_CREATED);
+  postEvent.setKey(entry.getKey());
+  postEvent.setValue(entry.getValue());
+  postEvent.setMetadata(entry.getMetadata());
+  postEvent.setPre(false);
+  for (  CacheEntryListenerInvocation<K,V> invocation : cacheEntryCreatedListeners) {
+    if (invocation.getIdentifier() == identifier) {
+      if (preEvent != null) {
+        invocation.invokeNoChecks(preEvent,true,true);
+      }
+      invocation.invokeNoChecks(postEvent,true,true);
+    }
+  }
+}

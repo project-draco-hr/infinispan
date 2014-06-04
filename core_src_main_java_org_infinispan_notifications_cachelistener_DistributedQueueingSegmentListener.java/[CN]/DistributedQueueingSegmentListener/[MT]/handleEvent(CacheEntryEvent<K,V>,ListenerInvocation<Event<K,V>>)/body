@@ -1,7 +1,8 @@
 {
   K key=event.getKey();
   boolean enqueued=!completed.get();
-  if (enqueued && !addEvent(key,event.getValue() != null ? event.getValue() : REMOVED)) {
+  CacheEntry<K,V> cacheEntry=entryFactory.create(event.getKey(),event.getValue(),event.getMetadata());
+  if (enqueued && !addEvent(key,cacheEntry.getValue() != null ? cacheEntry : REMOVED)) {
     int segment=distributionManager.getReadConsistentHash().getSegment(key);
     Queue<KeyValuePair<CacheEntryEvent<K,V>,ListenerInvocation<Event<K,V>>>> queue;
     if ((queue=queues.get(segment)) != null) {

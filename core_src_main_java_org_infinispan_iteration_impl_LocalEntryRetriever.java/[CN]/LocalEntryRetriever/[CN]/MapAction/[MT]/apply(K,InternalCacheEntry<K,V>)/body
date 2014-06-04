@@ -1,12 +1,10 @@
 {
-  C value;
+  CacheEntry<K,C> clone=(CacheEntry<K,C>)kvInternalCacheEntry.clone();
   if (converter != null) {
-    value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+    C value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+    clone.setValue(value);
   }
- else {
-    value=(C)kvInternalCacheEntry.getValue();
-  }
-  queue.add(new ImmortalCacheEntry(k,value));
+  queue.add(clone);
   if (insertionCount.incrementAndGet() % batchSize == 0) {
     try {
       handler.handleBatch(false,queue);

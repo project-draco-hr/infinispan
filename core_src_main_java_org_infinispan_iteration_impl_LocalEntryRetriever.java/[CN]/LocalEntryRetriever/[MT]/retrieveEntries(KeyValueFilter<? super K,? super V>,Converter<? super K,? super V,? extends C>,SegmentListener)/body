@@ -6,8 +6,8 @@
     @Override public void run(){
       try {
         final Set<K> processedKeys=new ConcurrentHashSet<K>();
-        Queue<Map.Entry<K,C>> queue=new ArrayDeque<Map.Entry<K,C>>(batchSize){
-          @Override public boolean add(          Map.Entry<K,C> kcEntry){
+        Queue<CacheEntry<K,C>> queue=new ArrayDeque<CacheEntry<K,C>>(batchSize){
+          @Override public boolean add(          CacheEntry<K,C> kcEntry){
             processedKeys.add(kcEntry.getKey());
             return super.add(kcEntry);
           }
@@ -52,7 +52,7 @@
             AdvancedCache<K,V> advancedCache=cache.getAdvancedCache();
             for (            K key : listener.activatedKeys) {
               if (!processedKeys.contains(key)) {
-                Map.Entry entry=advancedCache.getCacheEntry(key);
+                CacheEntry entry=advancedCache.getCacheEntry(key);
                 if (entry != null) {
                   queue.add(entry);
                 }

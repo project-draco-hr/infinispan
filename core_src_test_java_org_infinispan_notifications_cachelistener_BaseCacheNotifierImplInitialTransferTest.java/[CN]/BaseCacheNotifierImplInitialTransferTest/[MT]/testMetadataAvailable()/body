@@ -1,0 +1,26 @@
+{
+  final List<CacheEntry<String,String>> initialValues=new ArrayList<CacheEntry<String,String>>(10);
+  for (int i=0; i < 10; i++) {
+    String key="key-" + i;
+    String value="value-" + i;
+    initialValues.add(new TransientMortalCacheEntry(key,value,i,-1,System.currentTimeMillis()));
+  }
+  when(retriever.retrieveEntries(any(KeyValueFilter.class),any(Converter.class),any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String,String>>>(){
+    @Override public CloseableIterator<CacheEntry<String,String>> answer(    InvocationOnMock invocationOnMock) throws Throwable {
+      return new IteratorAsCloseableIterator<>(initialValues.iterator());
+    }
+  }
+);
+  KeyValueFilter filter=mock(KeyValueFilter.class,withSettings().serializable());
+  Converter converter=mock(Converter.class,withSettings().serializable());
+  StateListener<String,String> listener=new StateListenerClustered();
+  n.addListener(listener,filter,converter);
+  verifyEvents(isClustered(listener),listener,initialValues);
+  for (  CacheEntryEvent<String,String> event : listener.events) {
+    String key=event.getKey();
+    Metadata metadata=event.getMetadata();
+    assertNotNull(metadata);
+    assertEquals(metadata.lifespan(),-1);
+    assertEquals(metadata.maxIdle(),Long.parseLong(key.substring(4)));
+  }
+}
