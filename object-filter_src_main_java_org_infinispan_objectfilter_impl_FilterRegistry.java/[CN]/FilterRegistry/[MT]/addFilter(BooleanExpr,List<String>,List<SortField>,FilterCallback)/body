@@ -1,0 +1,34 @@
+{
+  List<List<AttributeId>> translatedProjections=null;
+  if (projection != null && !projection.isEmpty()) {
+    translatedProjections=new ArrayList<List<AttributeId>>(projection.size());
+    for (    String projectionPath : projection) {
+      translatedProjections.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(projectionPath)));
+    }
+  }
+  List<List<AttributeId>> translatedSortFields=null;
+  if (sortFields != null && !sortFields.isEmpty()) {
+    translatedSortFields=new ArrayList<List<AttributeId>>(sortFields.size());
+    for (    SortField sortField : sortFields) {
+      translatedSortFields.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(sortField.getPath())));
+    }
+  }
+  BETree beTree=treeMaker.make(normalizedFilter);
+  final FilterSubscriptionImpl<AttributeId> filterSubscription=new FilterSubscriptionImpl<AttributeId>(typeName,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields);
+  filterSubscription.registerProjection(predicateIndex);
+  for (  BENode node : beTree.getNodes()) {
+    if (node instanceof PredicateNode) {
+      final PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
+      Predicate.Callback predicateCallback=new Predicate.Callback(){
+        @Override public void handleValue(        MatcherEvalContext<?> ctx,        boolean isMatching){
+          FilterEvalContext filterEvalContext=ctx.getFilterEvalContext(filterSubscription);
+          predicateNode.handleChildValue(null,isMatching,filterEvalContext);
+        }
+      }
+;
+      predicateNode.subscribe(predicateIndex,predicateCallback);
+    }
+  }
+  filterSubscriptions.add(filterSubscription);
+  return filterSubscription;
+}

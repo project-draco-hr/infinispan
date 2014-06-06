@@ -1,21 +1,57 @@
 {
   if (results == null) {
-    FilterAndConverter filter=new FilterAndConverter(jpaQuery,matcherImplClass);
-    CloseableIterable<Map.Entry<?,T>> iterable=cache.filterEntries(filter).converter(filter);
-    results=new ArrayList<T>();
-    try {
-      for (      Map.Entry<?,T> entry : iterable) {
-        results.add(entry.getValue());
-      }
-    }
-  finally {
+    CloseableIterable<Map.Entry<?,ObjectFilter.FilterResult>> iterable=cache.filterEntries(filter).converter(filter);
+    Comparator<Comparable[]> comparator=filter.getObjectFilter().getComparator();
+    if (comparator == null) {
+      results=new ArrayList<T>(INITIAL_CAPACITY);
       try {
-        iterable.close();
+        for (        Map.Entry<?,ObjectFilter.FilterResult> entry : iterable) {
+          resultSize++;
+          if (resultSize > startOffset && (maxResults == -1 || results.size() < maxResults)) {
+            ObjectFilter.FilterResult r=entry.getValue();
+            results.add(projection != null ? r.getProjection() : r.getInstance());
+          }
+        }
       }
- catch (      Exception e) {
+  finally {
+        try {
+          iterable.close();
+        }
+ catch (        Exception e) {
+        }
       }
     }
-    projection=filter.getProjection();
+ else {
+      PriorityQueue<ObjectFilter.FilterResult> filterResults=new PriorityQueue<ObjectFilter.FilterResult>(INITIAL_CAPACITY,new ReverseFilterResultComparator(comparator));
+      try {
+        for (        Map.Entry<?,ObjectFilter.FilterResult> entry : iterable) {
+          resultSize++;
+          filterResults.add(entry.getValue());
+          if (maxResults != -1 && filterResults.size() > startOffset + maxResults) {
+            filterResults.remove();
+          }
+        }
+      }
+  finally {
+        try {
+          iterable.close();
+        }
+ catch (        Exception e) {
+        }
+      }
+      if (filterResults.size() > startOffset) {
+        Object[] res=new Object[filterResults.size() - startOffset];
+        int i=filterResults.size();
+        while (i-- > startOffset) {
+          ObjectFilter.FilterResult r=filterResults.remove();
+          res[i - startOffset]=projection != null ? r.getProjection() : r.getInstance();
+        }
+        results=Arrays.asList(res);
+      }
+ else {
+        results=Collections.emptyList();
+      }
+    }
   }
   return results;
 }

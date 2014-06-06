@@ -1,0 +1,27 @@
+{
+  Class<? extends Matcher> matcherImplClass=cache.getCacheConfiguration().compatibility().enabled() ? ReflectionMatcher.class : ProtobufMatcher.class;
+  EmbeddedQuery eq=new EmbeddedQuery(cache,request.getJpqlString(),request.getStartOffset(),request.getMaxResults(),matcherImplClass);
+  List<?> list=eq.list();
+  int projSize=0;
+  if (eq.getProjection() != null && eq.getProjection().length > 0) {
+    projSize=eq.getProjection().length;
+  }
+  List<WrappedMessage> results=new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
+  for (  Object o : list) {
+    if (projSize == 0) {
+      results.add(new WrappedMessage(o));
+    }
+ else {
+      Object[] row=(Object[])o;
+      for (int j=0; j < projSize; j++) {
+        results.add(new WrappedMessage(row[j]));
+      }
+    }
+  }
+  QueryResponse response=new QueryResponse();
+  response.setTotalResults(eq.getResultSize());
+  response.setNumResults(list.size());
+  response.setProjectionSize(projSize);
+  response.setResults(results);
+  return response;
+}

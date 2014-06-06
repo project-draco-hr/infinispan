@@ -8,12 +8,12 @@
     cache.put(key,value);
   }
   EntryRetriever<MagicKey,Person> retriever=cache(0,CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-  FilterAndConverter filterAndConverter=new FilterAndConverter<MagicKey,Person,Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31",ReflectionMatcher.class);
-  CloseableIterator<Map.Entry<MagicKey,Person>> iterator=retriever.retrieveEntries(filterAndConverter,filterAndConverter,null);
-  Map<MagicKey,Person> results=mapFromIterator(iterator);
+  FilterAndConverter filterAndConverter=new FilterAndConverter<MagicKey,Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31",ReflectionMatcher.class);
+  CloseableIterator<Map.Entry<MagicKey,ObjectFilter.FilterResult>> iterator=retriever.retrieveEntries(filterAndConverter,filterAndConverter,null);
+  Map<MagicKey,ObjectFilter.FilterResult> results=mapFromIterator(iterator);
   assertEquals(2,results.size());
-  for (  Person p : results.values()) {
-    assertNull(p.getBlurb());
-    assertTrue(p.getAge() <= 31);
+  for (  ObjectFilter.FilterResult p : results.values()) {
+    assertNull(((Person)p.getInstance()).getBlurb());
+    assertTrue(((Person)p.getInstance()).getAge() <= 31);
   }
 }

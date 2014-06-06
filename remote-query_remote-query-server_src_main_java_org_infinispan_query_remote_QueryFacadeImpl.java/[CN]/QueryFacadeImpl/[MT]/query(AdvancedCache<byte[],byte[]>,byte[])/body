@@ -1,14 +1,15 @@
 {
-  if (cache.getCacheConfiguration().indexing().enabled()) {
-    try {
-      return executeQuery(cache,query);
-    }
- catch (    IOException e) {
-      throw new CacheException("An exception has occurred during query execution",e);
-    }
-  }
   try {
-    return executeNonIndexedQuery(cache,query);
+    SerializationContext serCtx=ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+    QueryRequest request=ProtobufUtil.fromByteArray(serCtx,query,0,query.length,QueryRequest.class);
+    QueryResponse response;
+    if (cache.getCacheConfiguration().indexing().enabled()) {
+      response=executeQuery(cache,serCtx,request);
+    }
+ else {
+      response=executeNonIndexedQuery(cache,request);
+    }
+    return ProtobufUtil.toByteArray(serCtx,response);
   }
  catch (  IOException e) {
     throw new CacheException("An exception has occurred during query execution",e);
