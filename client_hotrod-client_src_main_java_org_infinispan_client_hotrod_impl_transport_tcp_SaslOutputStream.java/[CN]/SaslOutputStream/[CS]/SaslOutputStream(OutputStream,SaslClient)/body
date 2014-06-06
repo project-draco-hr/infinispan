@@ -1,4 +1,12 @@
 {
   this.saslClient=saslClient;
-  this.outStream=new BufferedOutputStream(outStream,64 * 1024);
+  this.outStream=new BufferedOutputStream(outStream,BUFFER_SIZE);
+  String maxSendBuf=(String)saslClient.getNegotiatedProperty(Sasl.RAW_SEND_SIZE);
+  if (maxSendBuf != null) {
+    bufferSize=Integer.parseInt(maxSendBuf);
+  }
+ else {
+    bufferSize=BUFFER_SIZE;
+  }
+  buffer=new ByteArrayOutputStream(bufferSize);
 }

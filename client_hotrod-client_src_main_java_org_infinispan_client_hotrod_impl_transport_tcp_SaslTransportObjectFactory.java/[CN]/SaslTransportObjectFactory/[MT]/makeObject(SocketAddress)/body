@@ -35,7 +35,13 @@
     }
     challenge=auth(tcpTransport,defaultCacheTopologyId,"",response);
   }
-  saslClient.dispose();
+  String qop=(String)saslClient.getNegotiatedProperty(Sasl.QOP);
+  if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTH_CONF))) {
+    tcpTransport.setSaslClient(saslClient);
+  }
+ else {
+    saslClient.dispose();
+  }
   if (pingOnStartup && !firstPingExecuted) {
     log.trace("Executing first ping!");
     firstPingExecuted=true;

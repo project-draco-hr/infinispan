@@ -1,0 +1,32 @@
+{
+  int len=packetLength;
+  if (len == -1) {
+    if (in.readableBytes() < 4) {
+      return;
+    }
+    len=packetLength=(int)in.readUnsignedInt();
+    if (maxBufferSize != -1 && maxBufferSize < packetLength) {
+      TooLongFrameException ex=new TooLongFrameException("Frame exceed exceed max buffer size: " + packetLength + " > "+ maxBufferSize);
+      ctx.fireExceptionCaught(ex);
+      ctx.close();
+      return;
+    }
+  }
+  if (len > in.readableBytes()) {
+    return;
+  }
+  packetLength=-1;
+  int offset;
+  byte[] array;
+  if (in.hasArray()) {
+    offset=in.readerIndex() + in.arrayOffset();
+    array=in.array();
+    in.skipBytes(len);
+  }
+ else {
+    offset=0;
+    array=new byte[len];
+    in.readBytes(array);
+  }
+  out.add(Unpooled.wrappedBuffer(server.unwrap(array,offset,len)));
+}

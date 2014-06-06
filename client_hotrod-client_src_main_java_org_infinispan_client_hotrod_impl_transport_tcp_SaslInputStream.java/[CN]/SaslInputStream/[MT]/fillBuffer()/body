@@ -1,0 +1,23 @@
+{
+  byte[] saslToken;
+  try {
+    int length=inStream.readInt();
+    saslToken=new byte[length];
+    inStream.readFully(saslToken);
+    buffer=saslClient.unwrap(saslToken,0,length);
+  }
+ catch (  EOFException e) {
+    return -1;
+  }
+catch (  SaslException se) {
+    try {
+      disposeSasl();
+    }
+ catch (    SaslException e) {
+    }
+    throw se;
+  }
+  bufferPtr=0;
+  bufferLength=buffer.length;
+  return bufferLength;
+}
