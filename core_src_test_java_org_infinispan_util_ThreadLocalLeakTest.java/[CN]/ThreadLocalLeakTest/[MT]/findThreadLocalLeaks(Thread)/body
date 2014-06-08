@@ -20,14 +20,14 @@
     Reference<ThreadLocal<?>> entry=(Reference)Array.get(table,i);
     if (entry != null) {
       ThreadLocal<?> threadLocal=entry.get();
+      Object value=valueField.get(entry);
       if (threadLocal != null) {
-        if (filterThreadLocals(threadLocal)) {
+        if (filterThreadLocals(threadLocal,value) && !ACCEPTED_THREAD_LOCALS.contains(threadLocal.getClass().getCanonicalName())) {
           log.error("Thread local leak: " + threadLocal);
-          threadLocals.put(threadLocal,threadLocal.get());
+          threadLocals.put(threadLocal,value);
         }
       }
  else {
-        Object value=valueField.get(entry);
         log.warn("Thread local is not accessible, but it wasn't removed either: " + value);
       }
     }
