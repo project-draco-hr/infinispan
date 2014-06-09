@@ -4,10 +4,12 @@
   Map.Entry<Object,String> excludedEntry=iter.next();
   iter.remove();
   Cache<MagicKey,String> cache=cache(0,CACHE_NAME);
-  EntryIterable<MagicKey,String> iterable=cache.getAdvancedCache().filterEntries(new KeyFilterAsKeyValueFilter<MagicKey,String>(new CollectionKeyFilter<Object>(Collections.singleton(excludedEntry.getKey()))));
-  Map<MagicKey,String> results=mapFromIterable(iterable.converter(new StringTruncator(2,5)));
-  assertEquals(values.size(),results.size());
-  for (  Map.Entry<Object,String> entry : values.entrySet()) {
-    assertEquals(entry.getValue().substring(2,7),results.get(entry.getKey()));
+  KeyValueFilter<MagicKey,String> filter=new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey())));
+  try (EntryIterable<MagicKey,String> iterable=cache.getAdvancedCache().filterEntries(filter)){
+    Map<MagicKey,String> results=mapFromIterable(iterable.converter(new StringTruncator(2,5)));
+    assertEquals(values.size(),results.size());
+    for (    Map.Entry<Object,String> entry : values.entrySet()) {
+      assertEquals(entry.getValue().substring(2,7),results.get(entry.getKey()));
+    }
   }
-}
+ }

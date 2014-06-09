@@ -4,7 +4,9 @@
   Map.Entry<Object,String> excludedEntry=iter.next();
   iter.remove();
   EntryRetriever<MagicKey,String> retriever=cache(0,CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-  CloseableIterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(new KeyFilterAsKeyValueFilter<MagicKey,String>(new CollectionKeyFilter<Object>(Collections.singleton(excludedEntry.getKey()))),null,null);
-  Map<MagicKey,String> results=mapFromIterator(iterator);
-  assertEquals(values,results);
-}
+  KeyValueFilter<MagicKey,String> filter=new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey())));
+  try (CloseableIterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(filter,null,null)){
+    Map<MagicKey,String> results=mapFromIterator(iterator);
+    assertEquals(values,results);
+  }
+ }

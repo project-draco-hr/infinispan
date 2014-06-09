@@ -8,13 +8,14 @@
     valuesInserted.add(new TransientMortalCacheEntry(key,key.toString(),unit.toMillis(i + 1),unit.toMillis(10),System.currentTimeMillis()));
   }
   EntryRetriever<Object,String> retriever=cache(0,CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-  CloseableIterator<CacheEntry<Object,String>> iterator=retriever.retrieveEntries(null,null,null);
   Set<CacheEntry<Object,String>> retrievedValues=new HashSet<>();
-  while (iterator.hasNext()) {
-    CacheEntry<Object,String> entry=iterator.next();
-    retrievedValues.add(entry);
+  try (CloseableIterator<CacheEntry<Object,String>> iterator=retriever.retrieveEntries(null,null,null)){
+    while (iterator.hasNext()) {
+      CacheEntry<Object,String> entry=iterator.next();
+      retrievedValues.add(entry);
+    }
   }
-  assertEquals(retrievedValues.size(),valuesInserted.size());
+   assertEquals(retrievedValues.size(),valuesInserted.size());
   for (  CacheEntry<Object,String> inserted : valuesInserted) {
     CacheEntry<Object,String> found=null;
     for (    CacheEntry<Object,String> retrieved : retrievedValues) {

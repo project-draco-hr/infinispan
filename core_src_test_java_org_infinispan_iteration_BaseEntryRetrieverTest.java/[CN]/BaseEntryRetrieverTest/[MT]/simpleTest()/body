@@ -1,7 +1,8 @@
 {
   Map<Object,String> values=putValuesInCache();
   EntryRetriever<MagicKey,String> retriever=cache(0,CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-  CloseableIterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,null);
-  Map<MagicKey,String> results=mapFromIterator(iterator);
-  assertEquals(values,results);
-}
+  try (CloseableIterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,null)){
+    Map<MagicKey,String> results=mapFromIterator(iterator);
+    assertEquals(values,results);
+  }
+ }
