@@ -45,6 +45,12 @@ CacheMgmtInterceptor cacheMgmtInterceptor=getFirstInterceptorWhichExtends(interc
 result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageWriteTime() : 0);
 break;
 }
+case AVERAGE_REMOVE_TIME:
+{
+CacheMgmtInterceptor cacheMgmtInterceptor=getFirstInterceptorWhichExtends(interceptors,CacheMgmtInterceptor.class);
+result.set(cacheMgmtInterceptor != null ? cacheMgmtInterceptor.getAverageRemoveTime() : 0);
+break;
+}
 case ELAPSED_TIME:
 {
 CacheMgmtInterceptor cacheMgmtInterceptor=getFirstInterceptorWhichExtends(interceptors,CacheMgmtInterceptor.class);
@@ -177,6 +183,21 @@ case CACHE_LOADER_STORES:
 {
 CacheWriterInterceptor interceptor=getFirstInterceptorWhichExtends(interceptors,CacheWriterInterceptor.class);
 result.set(interceptor != null ? interceptor.getWritesToTheStores() : 0);
+break;
+}
+case CACHE_NAME:
+{
+result.set(cache.getName());
+break;
+}
+case VERSION:
+{
+result.set(SecurityActions.getCacheVersion(aCache));
+break;
+}
+default :
+{
+context.getFailureDescription().set(String.format("Unknown metric %s",metric));
 break;
 }
 }
