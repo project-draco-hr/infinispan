@@ -4,12 +4,12 @@
       ClassLoader contextClassLoader=null;
       Transaction transaction=suspendIfNeeded();
       if (classLoader != null && classLoader.get() != null) {
-        contextClassLoader=setContextClassLoader(classLoader.get());
+        contextClassLoader=SecurityActions.setContextClassLoader(classLoader.get());
       }
       try {
         if (subject != null) {
           try {
-            Subject.doAs(subject,new PrivilegedExceptionAction<Void>(){
+            Security.doAs(subject,new PrivilegedExceptionAction<Void>(){
               @Override public Void run() throws Exception {
                 method.invoke(target,event);
                 return null;
@@ -49,7 +49,7 @@ catch (      IllegalAccessException exception) {
       }
  finally {
         if (classLoader != null && classLoader.get() != null) {
-          setContextClassLoader(contextClassLoader);
+          SecurityActions.setContextClassLoader(contextClassLoader);
         }
         resumeIfNeeded(transaction);
       }

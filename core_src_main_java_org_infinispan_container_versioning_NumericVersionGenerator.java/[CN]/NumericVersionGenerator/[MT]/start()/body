@@ -1,8 +1,9 @@
 {
-  cache.getCacheManager().addListener(new RankCalculator());
-  isClustered=cache.getCacheConfiguration().clustering().cacheMode().isClustered();
+  SecurityActions.addCacheManagerListener(cache.getCacheManager(),new RankCalculator());
+  isClustered=SecurityActions.getCacheConfiguration(cache.getAdvancedCache()).clustering().cacheMode().isClustered();
   if (isClustered) {
-    Transport transport=cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(Transport.class);
+    ComponentRegistry componentRegistry=SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
+    Transport transport=componentRegistry.getGlobalComponentRegistry().getComponent(Transport.class);
     calculateRank(transport.getAddress(),transport.getMembers(),transport.getViewId());
   }
 }

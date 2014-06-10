@@ -1,8 +1,28 @@
 {
   if (globalConfiguration.authorization().enabled()) {
-    AccessControlContext acc=AccessController.getContext();
-    Subject subject=Subject.getSubject(acc);
-    int subjectMask=computeSubjectRoleMask(subject,globalConfiguration,configuration);
-    checkPermission(subject,subjectMask,perm);
+    if (Security.isPrivileged()) {
+      Security.checkPermission(perm.getSecurityPermission());
+    }
+ else {
+      Subject subject=Security.getSubject();
+      try {
+        if (subject != null) {
+          int subjectMask=computeSubjectRoleMask(subject,configuration);
+          if ((subjectMask & perm.getMask()) != perm.getMask()) {
+            checkSecurityManagerPermission(perm);
+          }
+ else {
+            audit.audit(subject,context,name,perm,AuditResponse.ALLOW);
+          }
+        }
+ else {
+          checkSecurityManagerPermission(perm);
+        }
+      }
+ catch (      SecurityException e) {
+        audit.audit(subject,context,name,perm,AuditResponse.DENY);
+        throw log.unauthorizedAccess(String.valueOf(subject),perm.toString());
+      }
+    }
   }
 }

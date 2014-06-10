@@ -5,6 +5,10 @@
       clearRunningTx(cache);
     }
     if (!cacheContainer.getStatus().allowInvocations())     return;
+    Cache<?,?> registryCache=cacheContainer.getCache(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME,false);
+    if (registryCache != null && registryCache.getStatus().allowInvocations()) {
+      runningCaches.add(registryCache);
+    }
     for (    Cache cache : runningCaches) {
       clearReplicationQueues(cache);
       clearCacheLoader(cache);

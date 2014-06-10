@@ -1,0 +1,22 @@
+{
+  if (!isPrivileged() && isTrustedClass(getCallerClass(2))) {
+    try {
+      PRIVILEGED.set(true);
+      return action.run();
+    }
+ catch (    Exception e) {
+      throw new PrivilegedActionException(e);
+    }
+ finally {
+      PRIVILEGED.remove();
+    }
+  }
+ else {
+    try {
+      return action.run();
+    }
+ catch (    Exception e) {
+      throw new PrivilegedActionException(e);
+    }
+  }
+}
