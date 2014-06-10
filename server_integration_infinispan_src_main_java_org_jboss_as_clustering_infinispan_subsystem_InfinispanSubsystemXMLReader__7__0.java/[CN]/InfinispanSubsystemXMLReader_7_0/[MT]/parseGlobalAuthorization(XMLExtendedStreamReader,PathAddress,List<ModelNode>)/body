@@ -5,9 +5,8 @@
     String value=reader.getAttributeValue(i);
     Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
 switch (attribute) {
-case MAPPER:
+case AUDIT_LOGGER:
 {
-        CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(value,authorization,reader);
         break;
       }
 default :
@@ -17,20 +16,52 @@ default :
 }
 }
 List<ModelNode> additionalConfigurationOperations=new ArrayList<ModelNode>();
+String roleMapper=null;
 while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
 Element element=Element.forName(reader.getLocalName());
 switch (element) {
+case IDENTITY_ROLE_MAPPER:
+  if (roleMapper != null) {
+    throw ParseUtils.unexpectedElement(reader);
+  }
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=IdentityRoleMapper.class.getName();
+break;
+case COMMON_NAME_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=CommonNameRoleMapper.class.getName();
+break;
+case CLUSTER_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=ClusterRoleMapper.class.getName();
+break;
+case CUSTOM_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+roleMapper=ParseUtils.readStringAttributeElement(reader,Attribute.CLASS.getLocalName());
+break;
 case ROLE:
 {
-    this.parseGlobalRole(reader,authorizationAddress,additionalConfigurationOperations);
-    break;
-  }
+this.parseGlobalRole(reader,authorizationAddress,additionalConfigurationOperations);
+break;
+}
 default :
 {
-  throw ParseUtils.unexpectedElement(reader);
+throw ParseUtils.unexpectedElement(reader);
 }
 }
 }
+CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(roleMapper,authorization,reader);
 operations.add(authorization);
 for (ModelNode additionalOperation : additionalConfigurationOperations) {
 operations.add(additionalOperation);

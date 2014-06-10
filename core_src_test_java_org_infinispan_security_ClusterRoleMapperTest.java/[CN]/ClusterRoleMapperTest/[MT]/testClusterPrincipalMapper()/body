@@ -1,0 +1,18 @@
+{
+  cpm.grant("writer","A");
+  Security.doAs(SUBJECT_A,new PrivilegedAction<Void>(){
+    @Override public Void run(){
+      cacheManager.getCache().put("key","value");
+      return null;
+    }
+  }
+);
+  cpm.grant("reader","B");
+  Security.doAs(SUBJECT_B,new PrivilegedAction<Void>(){
+    @Override public Void run(){
+      assertEquals("value",cacheManager.getCache().get("key"));
+      return null;
+    }
+  }
+);
+}
