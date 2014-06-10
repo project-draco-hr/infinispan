@@ -1,0 +1,12 @@
+{
+  Interpreter interpreter=getInterpreter();
+  String sessionId=interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+  execute(interpreter,sessionId,"grant reader to jack;");
+  assertTrue(cpm.list("jack").contains("reader"));
+  execute(interpreter,sessionId,"grant reader to jill;");
+  assertTrue(cpm.list("jill").contains("reader"));
+  execute(interpreter,sessionId,"deny reader to jack;");
+  assertFalse(cpm.list("jack").contains("reader"));
+  Map<String,String> response=execute(interpreter,sessionId,"roles jill;");
+  assertEquals("[reader]",response.get(ResultKeys.OUTPUT.toString()));
+}

@@ -1,0 +1,16 @@
+{
+  GlobalAuthorizationConfiguration gac=session.getCacheManager().getCacheManagerConfiguration().security().authorization();
+  if (!gac.enabled()) {
+    throw log.authorizationNotEnabledOnContainer();
+  }
+  if (!(gac.principalRoleMapper() instanceof ClusterRoleMapper)) {
+    throw log.noClusterPrincipalMapper("ROLES");
+  }
+  ClusterRoleMapper cpm=(ClusterRoleMapper)gac.principalRoleMapper();
+  if (principalName != null) {
+    return new StringResult(cpm.list(principalName).toString());
+  }
+ else {
+    return new StringResult(cpm.listAll());
+  }
+}

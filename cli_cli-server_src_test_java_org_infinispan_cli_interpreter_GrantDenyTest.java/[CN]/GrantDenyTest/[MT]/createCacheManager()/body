@@ -1,0 +1,9 @@
+{
+  GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
+  GlobalAuthorizationConfigurationBuilder globalRoles=global.security().authorization().enable().principalRoleMapper(new ClusterRoleMapper());
+  ConfigurationBuilder config=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+  AuthorizationConfigurationBuilder authConfig=config.security().authorization().enable();
+  globalRoles.role("reader").permission(AuthorizationPermission.ALL_READ).role("writer").permission(AuthorizationPermission.ALL_WRITE).role("admin").permission(AuthorizationPermission.ALL);
+  authConfig.role("reader").role("writer").role("admin").jmxStatistics().enable();
+  return TestCacheManagerFactory.createCacheManager(global,config);
+}
