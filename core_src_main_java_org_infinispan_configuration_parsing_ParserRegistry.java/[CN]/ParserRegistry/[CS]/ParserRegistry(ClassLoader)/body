@@ -4,19 +4,9 @@
   Collection<ConfigurationParser> parsers=ServiceFinder.load(ConfigurationParser.class,cl.get(),ParserRegistry.class.getClassLoader());
   for (  ConfigurationParser parser : parsers) {
     try {
-      Namespaces namespacesAnnotation=parser.getClass().getAnnotation(Namespaces.class);
-      Namespace[] namespaces;
-      if (namespacesAnnotation != null) {
-        namespaces=namespacesAnnotation.value();
-      }
- else {
-        Namespace namespaceAnnotation=parser.getClass().getAnnotation(Namespace.class);
-        if (namespaceAnnotation != null) {
-          namespaces=new Namespace[]{namespaceAnnotation};
-        }
- else {
-          throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
-        }
+      Namespace[] namespaces=parser.getNamespaces();
+      if (namespaces == null) {
+        throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
       }
       for (      Namespace ns : namespaces) {
         QName qName=new QName(ns.uri(),ns.root());
