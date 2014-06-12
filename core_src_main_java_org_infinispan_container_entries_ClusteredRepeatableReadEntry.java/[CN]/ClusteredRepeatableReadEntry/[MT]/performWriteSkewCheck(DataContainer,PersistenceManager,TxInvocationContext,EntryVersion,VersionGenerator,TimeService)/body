@@ -1,0 +1,34 @@
+{
+  if (versionSeen == null) {
+    if (log.isTraceEnabled()) {
+      log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!",key);
+    }
+    return true;
+  }
+  EntryVersion prevVersion;
+  InternalCacheEntry ice=PersistenceUtil.loadAndStoreInDataContainer(container,persistenceManager,getKey(),ctx,timeService,ignored);
+  if (ice == null) {
+    if (log.isTraceEnabled()) {
+      log.tracef("No entry for key %s found in data container",key);
+    }
+    prevVersion=ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
+    if (prevVersion == null) {
+      if (log.isTraceEnabled()) {
+        log.tracef("No looked up remote version for key %s found in context",key);
+      }
+      return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
+    }
+  }
+ else {
+    prevVersion=ice.getMetadata().version();
+    if (prevVersion == null)     throw new IllegalStateException("Entries cannot have null versions!");
+  }
+  if (log.isTraceEnabled()) {
+    log.tracef("Is going to compare versions %s and %s for key %s.",prevVersion,versionSeen,key);
+  }
+  InequalVersionComparisonResult result=prevVersion.compareTo(versionSeen);
+  if (log.isTraceEnabled()) {
+    log.tracef("Comparing versions %s and %s for key %s: %s",prevVersion,versionSeen,key,result);
+  }
+  return InequalVersionComparisonResult.AFTER != result;
+}

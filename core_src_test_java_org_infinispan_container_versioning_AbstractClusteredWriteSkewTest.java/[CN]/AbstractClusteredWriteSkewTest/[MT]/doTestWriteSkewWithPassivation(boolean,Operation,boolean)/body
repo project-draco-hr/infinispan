@@ -1,0 +1,80 @@
+{
+  final AdvancedCache<Object,Object> primaryOwner=advancedCache(0,PASSIVATION_CACHE);
+  final Object key=new MagicKey("ignore-return-value",primaryOwner);
+  final AdvancedCache<Object,Object> executeOnCache=executeOnPrimaryOwner ? advancedCache(0,PASSIVATION_CACHE) : advancedCache(1,PASSIVATION_CACHE);
+  final TransactionManager tm=executeOnPrimaryOwner ? tm(0,PASSIVATION_CACHE) : tm(1,PASSIVATION_CACHE);
+  for (  Cache cache : caches(PASSIVATION_CACHE)) {
+    AssertJUnit.assertNull("wrong initial value for " + address(cache) + ".",cache.get(key));
+  }
+switch (operation) {
+case CONDITIONAL_REMOVE:
+case CONDITIONAL_REPLACE:
+case REPLACE:
+    log.debug("Initialize key");
+  primaryOwner.put(key,"init");
+}
+log.debugf("Start the transaction and perform a %s operation",operation);
+tm.begin();
+switch (operation) {
+case PUT:
+executeOnCache.put(key,"v1");
+break;
+case REMOVE:
+executeOnCache.remove(key);
+break;
+case REPLACE:
+executeOnCache.replace(key,"v1");
+break;
+case CONDITIONAL_PUT:
+executeOnCache.putIfAbsent(key,"v1");
+break;
+case CONDITIONAL_REMOVE:
+executeOnCache.remove(key,"init");
+break;
+case CONDITIONAL_REPLACE:
+executeOnCache.replace(key,"init","v1");
+break;
+default :
+tm.rollback();
+fail("Unknown operation " + operation);
+}
+final Transaction tx=tm.suspend();
+if (fail) {
+primaryOwner.put(key,"v2");
+}
+int i=0;
+DataContainer dataContainer=TestingUtil.extractComponent(primaryOwner,DataContainer.class);
+while (true) {
+primaryOwner.put(new MagicKey("other-key-" + i,primaryOwner),"value");
+if (!dataContainer.containsKey(key)) {
+break;
+}
+}
+log.debugf("It is going to try to commit the suspended transaction");
+try {
+tm.resume(tx);
+tm.commit();
+if (fail) {
+fail("Rollback expected!");
+}
+}
+ catch (RollbackException|HeuristicRollbackException e) {
+if (!fail) {
+fail("Rollback *not* expected!");
+}
+}
+Object finalValue;
+switch (operation) {
+case REMOVE:
+case CONDITIONAL_REMOVE:
+finalValue=fail ? "v2" : null;
+break;
+default :
+finalValue=fail ? "v2" : "v1";
+}
+log.debugf("So far so good. Check the key final value");
+assertNoTransactions();
+for (Cache cache : caches(PASSIVATION_CACHE)) {
+assertEquals("wrong final value for " + address(cache) + ".",finalValue,cache.get(key));
+}
+}

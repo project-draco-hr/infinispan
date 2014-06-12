@@ -8,34 +8,13 @@
     return null;
   }
   final boolean isDelta=cmd instanceof ApplyDeltaCommand;
-  final AtomicReference<Boolean> isLoaded=new AtomicReference<Boolean>();
-  dataContainer.compute(key,new DataContainer.ComputeAction(){
-    @Override public InternalCacheEntry compute(    Object key,    InternalCacheEntry oldEntry,    InternalEntryFactory factory){
-      if (oldEntry != null) {
-        wrapInternalCacheEntry(ctx,key,cmd,oldEntry,isDelta);
-        isLoaded.set(null);
-        return oldEntry;
-      }
-      MarshalledEntry loaded=internalLoadAndUpdateStats(key,ctx);
-      if (loaded == null) {
-        isLoaded.set(Boolean.FALSE);
-        return null;
-      }
-      InternalCacheEntry newEntry;
-      InternalMetadata metadata=loaded.getMetadata();
-      if (metadata != null) {
-        Metadata actual=metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl)metadata).actual() : metadata;
-        newEntry=factory.create(loaded.getKey(),loaded.getValue(),actual,metadata.created(),metadata.lifespan(),metadata.lastUsed(),metadata.maxIdle());
-      }
- else {
-        newEntry=factory.create(loaded.getKey(),loaded.getValue(),(Metadata)null);
-      }
-      CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,newEntry,isDelta);
-      recordLoadedEntry(ctx,key,wrappedEntry,newEntry,cmd);
-      isLoaded.set(Boolean.TRUE);
-      return newEntry;
+  final AtomicReference<Boolean> isLoaded=new AtomicReference<>();
+  InternalCacheEntry entry=PersistenceUtil.loadAndStoreInDataContainer(dataContainer,persistenceManager,key,ctx,timeService,isLoaded);
+  if (entry != null) {
+    CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,entry,isDelta);
+    if (isLoaded.get() == Boolean.TRUE) {
+      recordLoadedEntry(ctx,key,wrappedEntry,entry,cmd);
     }
   }
-);
   return isLoaded.get();
 }

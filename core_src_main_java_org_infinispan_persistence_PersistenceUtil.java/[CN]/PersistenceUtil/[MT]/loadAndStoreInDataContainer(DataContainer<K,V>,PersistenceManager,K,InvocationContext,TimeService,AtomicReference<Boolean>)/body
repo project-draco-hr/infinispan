@@ -1,0 +1,27 @@
+{
+  return dataContainer.compute(key,new DataContainer.ComputeAction<K,V>(){
+    @Override public InternalCacheEntry<K,V> compute(    K key,    InternalCacheEntry<K,V> oldEntry,    InternalEntryFactory factory){
+      if (oldEntry != null) {
+        isLoaded.set(null);
+        return oldEntry;
+      }
+      MarshalledEntry loaded=loadAndCheckExpiration(persistenceManager,key,ctx,timeService);
+      if (loaded == null) {
+        isLoaded.set(Boolean.FALSE);
+        return null;
+      }
+      InternalCacheEntry<K,V> newEntry;
+      InternalMetadata metadata=loaded.getMetadata();
+      if (metadata != null) {
+        Metadata actual=metadata instanceof InternalMetadataImpl ? ((InternalMetadataImpl)metadata).actual() : metadata;
+        newEntry=factory.create(loaded.getKey(),loaded.getValue(),actual,metadata.created(),metadata.lifespan(),metadata.lastUsed(),metadata.maxIdle());
+      }
+ else {
+        newEntry=factory.create(loaded.getKey(),loaded.getValue(),(Metadata)null);
+      }
+      isLoaded.set(Boolean.TRUE);
+      return newEntry;
+    }
+  }
+);
+}

@@ -5,14 +5,15 @@
     InternalCacheEntry<K,V> oldEntry=boundedMap.get(key);
     InternalCacheEntry<K,V> newEntry=action.compute(key,oldEntry,entryFactory);
     if (oldEntry == newEntry) {
-      return;
+      return newEntry;
     }
  else     if (newEntry == null) {
       boundedMap.remove(key);
-      return;
+      return null;
     }
     if (trace)     log.tracef("Store %s in container",newEntry);
     boundedMap.put(key,newEntry);
+    return newEntry;
   }
   finally {
     boundedMap.unlock(key);
