@@ -1,23 +1,24 @@
 {
   if (!isCancelled && isStarted.compareAndSet(false,true)) {
+    Set<Integer> segmentsCopy=getSegments();
     if (trace) {
-      log.tracef("Requesting segments %s of cache %s from node %s",segments,cacheName,source);
+      log.tracef("Requesting segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
     }
     try {
-      StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER,rpcManager.getAddress(),topologyId,segments);
+      StateRequestCommand cmd=commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER,rpcManager.getAddress(),topologyId,segmentsCopy);
       Map<Address,Response> responses=rpcManager.invokeRemotely(Collections.singleton(source),cmd,rpcOptions);
       Response response=responses.get(source);
       if (response instanceof SuccessfulResponse) {
         isStartedSuccessfully=true;
         if (trace) {
-          log.tracef("Successfully requested segments %s of cache %s from node %s",segments,cacheName,source);
+          log.tracef("Successfully requested segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
         }
         return true;
       }
-      log.failedToRequestSegments(segments,cacheName,source,null);
+      log.failedToRequestSegments(segmentsCopy,cacheName,source,null);
     }
  catch (    CacheException e) {
-      log.failedToRequestSegments(segments,cacheName,source,e);
+      log.failedToRequestSegments(segmentsCopy,cacheName,source,e);
     }
     return false;
   }
