@@ -1,0 +1,16 @@
+{
+  try {
+    Subject.doAs(READER,new PrivilegedAction<Void>(){
+      @Override public Void run(){
+        cacheManager.getCache().put("key","value");
+        return null;
+      }
+    }
+);
+  }
+ catch (  SecurityException ingnored) {
+  }
+  String actual=LOGGER.getLastRecord();
+  String expected=LOGGER.formatLogRecord(AuthorizationPermission.WRITE.toString(),AuditResponse.DENY.toString(),READER.toString());
+  assertEquals(expected,actual);
+}
