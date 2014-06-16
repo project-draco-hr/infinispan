@@ -63,30 +63,18 @@ catch (        ExecutionException e) {
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s requests initial state for cache",generatedId);
     }
-    CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,handler);
-    try {
+    try (CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(filter,converter,handler)){
       while (iterator.hasNext()) {
         CacheEntry<K,C> entry=iterator.next();
         Object value=handler.markKeyAsProcessing(entry.getKey());
-        if (value == null) {
-          value=entry.getValue();
-        }
- else         if (value == BaseQueueingSegmentListener.REMOVED) {
+        if (value == BaseQueueingSegmentListener.REMOVED) {
           continue;
         }
         raiseEventForInitialTransfer(generatedId,entry,l.clustered());
         handler.notifiedKey(entry.getKey());
       }
     }
-  finally {
-      try {
-        iterator.close();
-      }
- catch (      Exception e) {
-        log.ignoringException("addListener",e.toString(),e);
-      }
-    }
-    Set<CacheEntry> entries=handler.findCreatedEntries();
+     Set<CacheEntry> entries=handler.findCreatedEntries();
     for (    CacheEntry entry : entries) {
       raiseEventForInitialTransfer(generatedId,entry,l.clustered());
     }
