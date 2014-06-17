@@ -9,7 +9,6 @@
   cache.put("key1","1");
   assertEquals("1",cache.get("key1"));
   System.out.println("Stored via Hot Rod:");
-  printHex("key1","1");
   assertTrue(dataDir.exists());
   assertTrue(dataDir.isDirectory());
   assertTrue(expiredDir.exists());
@@ -17,10 +16,8 @@
   controller.stop(CONTAINER);
   DB db=Iq80DBFactory.factory.open(dataDir,new Options());
   System.out.println("LevelDB file " + dataDir.getAbsolutePath() + " contents:");
-  DBIterator dbi=db.iterator();
-  while (dbi.hasNext()) {
-    Entry<byte[],byte[]> entry=dbi.next();
+  for (  Entry<byte[],byte[]> entry : db) {
     System.out.println("key \"" + Hex.encodeHexString(entry.getKey()) + "\": value \""+ Hex.encodeHexString(entry.getValue())+ "\"");
+    assertNotNull(entry.getValue());
   }
-  assertNotNull(db.get(marshall("key1")));
 }
