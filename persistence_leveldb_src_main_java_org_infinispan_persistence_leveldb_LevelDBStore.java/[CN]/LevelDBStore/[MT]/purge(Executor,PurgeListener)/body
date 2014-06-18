@@ -26,11 +26,12 @@
     List<Long> times=new ArrayList<Long>();
     List<Object> keys=new ArrayList<Object>();
     DBIterator it=expiredDb.iterator(new ReadOptions().fillCache(false));
+    long now=ctx.getTimeService().wallClockTime();
     try {
       for (it.seekToFirst(); it.hasNext(); ) {
         Map.Entry<byte[],byte[]> entry=it.next();
         Long time=(Long)unmarshall(entry.getKey());
-        if (time > System.currentTimeMillis())         break;
+        if (time > now)         break;
         times.add(time);
         Object key=unmarshall(entry.getValue());
         if (key instanceof List)         keys.addAll((List<?>)key);
@@ -41,14 +42,14 @@
       }
       if (!keys.isEmpty())       log.debugf("purge (up to) %d entries",keys.size());
       int count=0;
-      long currentTimeMillis=System.currentTimeMillis();
       for (      Object key : keys) {
         byte[] keyBytes=marshall(key);
         byte[] b=db.get(keyBytes);
         if (b == null)         continue;
         MarshalledEntry me=(MarshalledEntry)ctx.getMarshaller().objectFromByteBuffer(b);
-        if (me.getMetadata() != null && me.getMetadata().isExpired(ctx.getTimeService().wallClockTime())) {
+        if (me.getMetadata() != null && me.getMetadata().isExpired(now)) {
           db.delete(keyBytes);
+          purgeListener.entryPurged(key);
           count++;
         }
       }
