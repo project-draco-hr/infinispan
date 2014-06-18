@@ -41,7 +41,7 @@
     transportBuilder.clusterName(this.name);
     Executor executor=transport.getExecutor();
     if (executor != null) {
-      builder.transport().transportThreadPool().threadPoolFactory(new ManagedThreadPoolExecutorFactory(executor));
+      builder.transport().transportThreadPool().threadPoolFactory(ThreadPoolExecutorFactories.mkManagedExecutorFactory(executor));
     }
   }
   AuthorizationConfiguration authorization=this.dependencies.getAuthorizationConfiguration();
@@ -68,15 +68,15 @@
   }
   Executor listenerExecutor=this.dependencies.getListenerExecutor();
   if (listenerExecutor != null) {
-    builder.listenerThreadPool().threadPoolFactory(new ManagedThreadPoolExecutorFactory(listenerExecutor));
+    builder.listenerThreadPool().threadPoolFactory(ThreadPoolExecutorFactories.mkManagedExecutorFactory(listenerExecutor));
   }
   ScheduledExecutorService evictionExecutor=this.dependencies.getEvictionExecutor();
   if (evictionExecutor != null) {
-    builder.evictionThreadPool().threadPoolFactory(new ManagedThreadPoolExecutorFactory(evictionExecutor));
+    builder.evictionThreadPool().threadPoolFactory(ThreadPoolExecutorFactories.mkManagedScheduledExecutorFactory(evictionExecutor));
   }
   ScheduledExecutorService replicationQueueExecutor=this.dependencies.getReplicationQueueExecutor();
   if (replicationQueueExecutor != null) {
-    builder.replicationQueueThreadPool().threadPoolFactory(new ManagedThreadPoolExecutorFactory(replicationQueueExecutor));
+    builder.replicationQueueThreadPool().threadPoolFactory(ThreadPoolExecutorFactories.mkManagedScheduledExecutorFactory(replicationQueueExecutor));
   }
   GlobalJmxStatisticsConfigurationBuilder jmxBuilder=builder.globalJmxStatistics().cacheManagerName(this.name);
   MBeanServer server=this.dependencies.getMBeanServer();
