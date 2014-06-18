@@ -2,7 +2,7 @@
   globalConfig=new GlobalConfigurationBuilder();
   globalConfig.globalJmxStatistics().disable();
   globalConfig.globalJmxStatistics().mBeanServerLookup(null);
-  GlobalAuthorizationConfigurationBuilder globalRoles=globalConfig.security().authorization().principalRoleMapper(getPrincipalRoleMapper());
+  GlobalAuthorizationConfigurationBuilder globalRoles=globalConfig.security().authorization().enable().principalRoleMapper(getPrincipalRoleMapper());
   cacheConfig=new ConfigurationBuilder();
   cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
   cacheConfig.invocationBatching().enable();
@@ -17,7 +17,7 @@
     }
   }
   Subject admin=getAdminSubject();
-  Subject.doAs(admin,new PrivilegedExceptionAction<Void>(){
+  Security.doAs(admin,new PrivilegedExceptionAction<Void>(){
     public Void run() throws Exception {
       manager=new DefaultCacheManager(globalConfig.build());
       manager.defineConfiguration(CACHE_NAME,cacheConfig.build());
