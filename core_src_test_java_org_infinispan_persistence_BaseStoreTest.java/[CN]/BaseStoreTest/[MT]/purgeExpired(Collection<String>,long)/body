@@ -1,0 +1,39 @@
+{
+  final ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,1,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
+  final Set<String> expired=new ConcurrentHashSet<String>();
+  for (  String key : expiredKeys)   expired.add(key);
+  final Set<Object> incorrect=new ConcurrentHashSet<Object>();
+  final AdvancedCacheWriter.PurgeListener purgeListener=new AdvancedCacheWriter.PurgeListener(){
+    @Override public void entryPurged(    Object key){
+      if (!expired.remove(key)) {
+        incorrect.add(key);
+      }
+    }
+  }
+;
+  long start=System.nanoTime();
+  for (; ; ) {
+    try {
+      executor.submit(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          cl.purge(executor,purgeListener);
+          return null;
+        }
+      }
+).get();
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Purge has thrown an exception",e);
+    }
+    assertEquals(Collections.emptySet(),incorrect);
+    if (expired.isEmpty() || !storePurgesAllExpired()) {
+      return;
+    }
+    if (System.nanoTime() > start + TimeUnit.MILLISECONDS.toNanos(timeout)) {
+      throw new IllegalStateException("Purge has timed out");
+    }
+ else {
+      Thread.yield();
+    }
+  }
+}

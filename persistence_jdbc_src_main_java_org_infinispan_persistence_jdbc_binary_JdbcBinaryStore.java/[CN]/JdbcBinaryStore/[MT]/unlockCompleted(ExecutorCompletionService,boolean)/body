@@ -1,0 +1,22 @@
+{
+  Future<Collection<Integer>> future;
+  int tasksCompleted=0;
+  while ((future=blocking ? ecs.take() : ecs.poll()) != null) {
+    tasksCompleted++;
+    try {
+      Collection<Integer> completed=future.get();
+      for (      Integer bucketId : completed) {
+        unlock(bucketId);
+      }
+    }
+ catch (    InterruptedException e) {
+      log.errorExecutingParallelStoreTask(e);
+      Thread.currentThread().interrupt();
+    }
+catch (    ExecutionException e) {
+      log.errorExecutingParallelStoreTask(e);
+    }
+    if (blocking)     break;
+  }
+  return tasksCompleted;
+}

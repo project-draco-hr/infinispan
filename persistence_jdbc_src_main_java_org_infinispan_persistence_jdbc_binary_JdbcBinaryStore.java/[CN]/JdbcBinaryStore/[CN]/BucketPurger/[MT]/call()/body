@@ -1,30 +1,62 @@
 {
-  PreparedStatement ps=null;
-  try {
-    String sql=tableManipulation.getUpdateRowSql();
-    ps=conn.prepareStatement(sql);
-    for (Iterator<Bucket> it=buckets.iterator(); it.hasNext(); ) {
-      Bucket bucket=it.next();
-      for (      Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
-        if (purgeListener != null)         purgeListener.entryPurged(key);
-      }
-      if (!bucket.isEmpty()) {
-        ByteBuffer byteBuffer=JdbcUtil.marshall(marshaller,bucket);
-        ps.setBinaryStream(1,new ByteArrayInputStream(byteBuffer.getBuf(),byteBuffer.getOffset(),byteBuffer.getLength()),byteBuffer.getLength());
-        ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-        ps.setString(3,bucket.getBucketIdAsString());
-        ps.addBatch();
-      }
+  log.trace("Purger task started");
+  List<Integer> purgedBuckets=new ArrayList(buckets.size());
+{
+    PreparedStatement ps=null;
+    try {
+      String sql=tableManipulation.getUpdateRowSql();
+      ps=conn.prepareStatement(sql);
+      for (      Bucket bucket : buckets) {
+        log.trace("Purging bucket " + bucket.getBucketId() + " with entries "+ bucket.getStoredEntries());
+        for (        Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
+          if (purgeListener != null)           purgeListener.entryPurged(key);
+        }
+        if (!bucket.isEmpty()) {
+          ByteBuffer byteBuffer=JdbcUtil.marshall(marshaller,bucket.getStoredEntries());
+          ps.setBinaryStream(1,new ByteArrayInputStream(byteBuffer.getBuf(),byteBuffer.getOffset(),byteBuffer.getLength()),byteBuffer.getLength());
+          ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+          ps.setString(3,bucket.getBucketIdAsString());
+          ps.addBatch();
+          purgedBuckets.add(bucket.getBucketId());
+        }
  else {
-        it.remove();
-        emptyBuckets.add(bucket);
+          emptyBuckets.add(bucket);
+        }
       }
+      log.trace("Flushing update batch");
+      ps.executeBatch();
+      log.trace("Flushed update batch");
     }
-    ps.executeBatch();
+ catch (    Exception ex) {
+      log.failedClearingJdbcCacheStore(ex);
+    }
+ finally {
+      JdbcUtil.safeClose(ps);
+    }
   }
-  finally {
-    JdbcUtil.safeClose(ps);
-    releaseLocks(buckets);
+  if (emptyBuckets.size() > BATCH_SIZE) {
+    PreparedStatement ps=null;
+    try {
+      String sql=tableManipulation.getDeleteRowSql();
+      ps=conn.prepareStatement(sql);
+      int deletionCount=0;
+      Bucket bucket;
+      while (deletionCount < BATCH_SIZE && (bucket=emptyBuckets.poll()) != null) {
+        ps.setString(1,bucket.getBucketIdAsString());
+        ps.addBatch();
+        deletionCount++;
+        purgedBuckets.add(bucket.getBucketId());
+      }
+      log.tracef("Flushing deletion batch");
+      ps.executeBatch();
+      log.tracef("Flushed deletion batch");
+    }
+ catch (    Exception ex) {
+      log.failedClearingJdbcCacheStore(ex);
+    }
+ finally {
+      JdbcUtil.safeClose(ps);
+    }
   }
-  return null;
+  return purgedBuckets;
 }
