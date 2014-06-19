@@ -1,0 +1,12 @@
+{
+  if (Util.isOSGiContext()) {
+    Bundle thisBundle=FrameworkUtil.getBundle(EntityManagerFactoryRegistry.class);
+    BundleContext context=thisBundle.getBundleContext();
+    ServiceReference<?> serviceReference=context.getServiceReference(PersistenceProvider.class.getName());
+    PersistenceProvider persistenceProvider=(PersistenceProvider)context.getService(serviceReference);
+    return persistenceProvider.createEntityManagerFactory(persistenceUnitName,null);
+  }
+ else {
+    return Persistence.createEntityManagerFactory(persistenceUnitName);
+  }
+}
