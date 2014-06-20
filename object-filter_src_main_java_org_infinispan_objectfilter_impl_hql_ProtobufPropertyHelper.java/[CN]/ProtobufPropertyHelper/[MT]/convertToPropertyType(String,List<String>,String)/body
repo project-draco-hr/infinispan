@@ -5,7 +5,7 @@
       return Integer.parseInt(value) != 0;
     }
  catch (    NumberFormatException e) {
-      return Boolean.valueOf(value);
+      return super.convertToPropertyType(entityType,propertyPath,value);
     }
   }
  else   if (field.getJavaType() == Descriptors.FieldDescriptor.JavaType.ENUM) {
@@ -18,7 +18,7 @@
       enumValue=enumType.findValueByName(value);
     }
     if (enumValue == null) {
-      throw new IllegalArgumentException("Unknown enum value for enum type " + enumType.getFullName() + " : "+ value);
+      throw log.getInvalidEnumLiteralException(value,enumType.getFullName());
     }
     return enumValue.getNumber();
   }
