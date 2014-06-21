@@ -12,9 +12,10 @@
   remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
   remoteCache=remoteCacheManager.getCache(TEST_CACHE_NAME);
   ObjectName objName=new ObjectName(JMX_DOMAIN + ":type=RemoteQuery,name=" + ObjectName.quote("DefaultCacheManager")+ ",component="+ ProtobufMetadataManager.OBJECT_NAME);
-  byte[] descriptor=readClasspathResource("/sample_bank_account/bank.protobin");
   MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
-  mBeanServer.invoke(objName,"registerProtofile",new Object[]{descriptor},new String[]{byte[].class.getName()});
+  String[] fileNames={"bank.proto","indexing.proto","descriptor.proto"};
+  String[] fileContents={read("/sample_bank_account/bank.proto"),read("/infinispan/indexing.proto"),read("/google/protobuf/descriptor.proto")};
+  mBeanServer.invoke(objName,"registerProtofiles",new Object[]{fileNames,fileContents},new String[]{String[].class.getName(),String[].class.getName()});
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
   return cacheManager;
 }

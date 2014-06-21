@@ -1,5 +1,5 @@
 {
-  for (  Descriptors.FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
+  for (  FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
     AttributeNode<Integer> attributeNode=currentNode.getChild(fd.getNumber());
     boolean fieldSeen=messageContext.isFieldMarked(fd.getNumber());
     if (attributeNode != null && (fd.isRepeated() || !fieldSeen)) {
@@ -12,11 +12,11 @@
         }
       }
  else {
-        if (fd.getJavaType() == Descriptors.FieldDescriptor.JavaType.MESSAGE) {
+        if (fd.getJavaType() == JavaType.MESSAGE) {
           processNullAttribute(attributeNode);
         }
  else {
-          Object defaultValue=fd.toProto().getDefaultValue().isEmpty() ? null : fd.getDefaultValue();
+          Object defaultValue=fd.hasDefaultValue() ? fd.getDefaultValue() : null;
           attributeNode.processValue(defaultValue,this);
         }
       }

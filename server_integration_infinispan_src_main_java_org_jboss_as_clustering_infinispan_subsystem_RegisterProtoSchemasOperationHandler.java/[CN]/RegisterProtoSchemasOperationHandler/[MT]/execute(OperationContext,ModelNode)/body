@@ -1,0 +1,31 @@
+{
+  final PathAddress address=PathAddress.pathAddress(operation.require(OP_ADDR));
+  final String cacheContainerName=address.getElement(address.size() - 1).getValue();
+  final ServiceController<?> controller=context.getServiceRegistry(false).getService(EmbeddedCacheManagerService.getServiceName(cacheContainerName));
+  EmbeddedCacheManager cacheManager=(EmbeddedCacheManager)controller.getValue();
+  ProtobufMetadataManager protoManager=cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  if (protoManager != null) {
+    try {
+      String nameParameter=CacheContainerResource.PROTO_NAMES.getName();
+      String contentParameter=CacheContainerResource.PROTO_CONTENTS.getName();
+      ModelNode names=operation.require(nameParameter);
+      ModelNode contents=operation.require(contentParameter);
+      validateParameters(names,contents);
+      List<ModelNode> descriptorsNames=names.asList();
+      List<ModelNode> descriptorsContents=contents.asList();
+      String[] nameArray=new String[descriptorsNames.size()];
+      String[] contentArray=new String[descriptorsNames.size()];
+      int i=0;
+      for (      ModelNode modelNode : descriptorsNames) {
+        nameArray[i]=modelNode.asString();
+        contentArray[i]=descriptorsContents.get(i).asString();
+        i++;
+      }
+      protoManager.registerProtofiles(nameArray,contentArray);
+    }
+ catch (    Exception e) {
+      throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+    }
+  }
+  context.stepCompleted();
+}

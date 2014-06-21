@@ -2,7 +2,16 @@
   JMXConnector jmxConnector=JMXConnectorFactory.connect(new JMXServiceURL("service:jmx:http-remoting-jmx://" + host + ":"+ jmxPort));
   MBeanServerConnection jmxConnection=jmxConnector.getMBeanServerConnection();
   ObjectName objName=new ObjectName("jboss.infinispan:type=RemoteQuery,name=" + ObjectName.quote("local") + ",component=ProtobufMetadataManager");
-  byte[] descriptor=readClasspathResource(protofilePath);
-  jmxConnection.invoke(objName,"registerProtofile",new Object[]{descriptor},new String[]{byte[].class.getName()});
-  System.out.printf("Successfully registered protofile %s at %s/%d\n",protofilePath,host,jmxPort);
+  LinkedList<String> fileNames=new LinkedList<>();
+  LinkedList<String> fileContents=new LinkedList<>();
+  for (  String protofile : protofilesPath.split(",")) {
+    String descriptor=readClasspathResource(protofile);
+    String name=Paths.get(protofile).getFileName().toString();
+    fileNames.add(name);
+    fileContents.add(descriptor);
+  }
+  String[] names=fileNames.toArray(new String[fileNames.size()]);
+  String[] contents=fileContents.toArray(new String[fileContents.size()]);
+  jmxConnection.invoke(objName,"registerProtofiles",new Object[]{names,contents},new String[]{String[].class.getName(),String[].class.getName()});
+  System.out.printf("Successfully registered protofile(s) %s at %s/%d\n",protofilesPath,host,jmxPort);
 }

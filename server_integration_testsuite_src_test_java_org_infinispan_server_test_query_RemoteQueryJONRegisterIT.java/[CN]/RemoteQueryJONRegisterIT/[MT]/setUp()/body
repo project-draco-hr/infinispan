@@ -5,9 +5,9 @@
   clientBuilder.addServer().host(getServer().getHotrodEndpoint().getInetAddress().getHostName()).port(getServer().getHotrodEndpoint().getPort()).marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=rcmFactory.createManager(clientBuilder);
   remoteCache=remoteCacheManager.getCache(cacheName);
-  URL resource=getClass().getResource("/sample_bank_account/bank.protobin");
+  ModelNode resourceList=new ModelNode().add(getClass().getResource("/infinispan/indexing.proto").toString()).add(getClass().getResource("/sample_bank_account/bank.proto").toString()).add(getClass().getResource("/google/protobuf/descriptor.proto").toString());
   ModelControllerClient client=ModelControllerClient.Factory.create(getServer().getHotrodEndpoint().getInetAddress().getHostName(),SERVER1_MGMT_PORT);
-  ModelNode addProtobufFileOp=getOperation("local","upload-proto-file",new ModelNode().add().set("proto-url",resource.toString()));
+  ModelNode addProtobufFileOp=getOperation("local","upload-proto-schemas","proto-urls",resourceList);
   ModelNode result=client.execute(addProtobufFileOp);
   Assert.assertEquals(SUCCESS,result.get(OUTCOME).asString());
   client.close();
