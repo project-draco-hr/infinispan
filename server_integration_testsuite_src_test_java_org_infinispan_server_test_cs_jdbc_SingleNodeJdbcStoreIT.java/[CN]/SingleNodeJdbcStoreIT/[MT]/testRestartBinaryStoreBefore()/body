@@ -1,0 +1,14 @@
+{
+  String key1="key1";
+  String key2="anotherExtraUniqueKey";
+  String key3="key3";
+  assertCleanCacheAndStoreHotrod(binaryCache,binaryDB.bucketTable);
+  binaryCache.put(key1,"v1");
+  binaryCache.put(key2,"v2");
+  assertTrue(!binaryDB.bucketTable.exists() || binaryDB.bucketTable.getAllRows().isEmpty());
+  binaryCache.put(key3,"v3");
+  assertTrue(2 >= server.getCacheManager(binaryMBeans.managerName).getCache(binaryMBeans.cacheName).getNumberOfEntries());
+  byte[] k1Stored=getRealKeyStored(key1,binaryCache);
+  assertTrue(!binaryDB.bucketTable.getAllRows().isEmpty());
+  assertNotNull(binaryDB.bucketTable.getBucketByKey(k1Stored));
+}

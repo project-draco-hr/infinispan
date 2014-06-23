@@ -1,0 +1,17 @@
+{
+  String key1="key1";
+  String key2="myBestPersonalKeyWhichHasNeverBeenBetter";
+  byte[] k1Stored=getRealKeyStored(key1,binaryWPCache);
+  byte[] k2Stored=getRealKeyStored(key2,binaryWPCache);
+  eventually(new ITestUtils.Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return 2 == server.getCacheManager(binaryWPMBeans.managerName).getCache(binaryWPMBeans.cacheName).getNumberOfEntries();
+    }
+  }
+,10000);
+  assertEquals("v1",binaryWPCache.get(key1));
+  assertEquals("v2",binaryWPCache.get(key2));
+  assertEquals(2,binaryWPDB.bucketTable.getAllRows().size());
+  assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k1Stored));
+  assertNotNull(binaryWPDB.bucketTable.getBucketByKey(k2Stored));
+}

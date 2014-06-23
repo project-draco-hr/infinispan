@@ -1,0 +1,19 @@
+{
+  assertEquals(0,server.getCacheManager(mixedMBeans.managerName).getCache(mixedMBeans.cacheName).getNumberOfEntries());
+  assertTrue(mixedDB.bucketTable.getAllRows().isEmpty());
+  assertNotNull(mixedDB.stringTable.getValueByKey(getStoredKey(mixedCache,"k1")));
+  if (killed) {
+    assertEquals(1,mixedDB.stringTable.getAllRows().size());
+    assertEquals("v1",mixedCache.get("k1"));
+    assertNull(mixedDB.stringTable.getValueByKey(getStoredKey(mixedCache,"k1")));
+    assertNull(mixedCache.get("k2"));
+    assertNull(mixedCache.get("k3"));
+  }
+ else {
+    assertEquals(3,mixedDB.stringTable.getAllRows().size());
+    assertEquals("v1",mixedCache.get("k1"));
+    assertEquals("v2",mixedCache.get("k2"));
+    assertEquals("v3",mixedCache.get("k3"));
+    assertNull(mixedDB.stringTable.getValueByKey(getStoredKey(mixedCache,"k3")));
+  }
+}

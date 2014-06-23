@@ -1,0 +1,13 @@
+{
+  eventually(new ITestUtils.Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return 2 == server.getCacheManager(mixedWPMBeans.managerName).getCache(mixedWPMBeans.cacheName).getNumberOfEntries();
+    }
+  }
+,10000);
+  assertEquals(2,mixedWPDB.stringTable.getAllRows().size());
+  assertEquals("v1",mixedWPCache.get("k1"));
+  assertEquals("v2",mixedWPCache.get("k2"));
+  mixedWPCache.remove("k2");
+  assertNull(mixedWPDB.stringTable.getValueByKey(getStoredKey(mixedWPCache,"k2")));
+}

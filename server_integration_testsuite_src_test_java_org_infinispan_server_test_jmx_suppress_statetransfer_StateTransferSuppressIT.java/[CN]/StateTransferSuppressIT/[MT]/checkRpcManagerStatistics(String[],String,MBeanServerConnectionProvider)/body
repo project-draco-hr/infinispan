@@ -1,0 +1,28 @@
+{
+  for (  final MBeanServerConnectionProvider provider : providers) {
+    if (expectedCommitedView != null) {
+      eventually(new ITestUtils.Condition(){
+        @Override public boolean isSatisfied() throws Exception {
+          String hotrodCommittedViewAsString=String.valueOf(getAttribute(provider,HOTROD_RPC_MANAGER_MBEAN,COMMITTED_VIEW_AS_STRING_ATTR_NAME));
+          String memcachedCommittedViewAsString=String.valueOf(getAttribute(provider,MEMCACHED_RPC_MANAGER_MBEAN,COMMITTED_VIEW_AS_STRING_ATTR_NAME));
+          return expectedCommitedView.equals(hotrodCommittedViewAsString) && expectedCommitedView.equals(memcachedCommittedViewAsString);
+        }
+      }
+,10000);
+    }
+    String hotrodPendingViewAsString=String.valueOf(getAttribute(provider,HOTROD_RPC_MANAGER_MBEAN,PENDING_VIEW_AS_STRING_ATTR_NAME));
+    String memcachedPendingViewAsString=String.valueOf(getAttribute(provider,MEMCACHED_RPC_MANAGER_MBEAN,PENDING_VIEW_AS_STRING_ATTR_NAME));
+    boolean hotrodPassed=false;
+    boolean memcachedPassed=false;
+    for (    String expectedPendingView : expectedPendingViews) {
+      if (expectedPendingView.equals(hotrodPendingViewAsString)) {
+        hotrodPassed=true;
+      }
+      if (expectedPendingView.equals(memcachedPendingViewAsString)) {
+        memcachedPassed=true;
+      }
+    }
+    assertTrue("The pending view doesn't match to any of expected ones, but is " + hotrodPendingViewAsString + ".",hotrodPassed);
+    assertTrue("The pending view doesn't match to any of expected ones, but is " + memcachedPendingViewAsString + ".",memcachedPassed);
+  }
+}

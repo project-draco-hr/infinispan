@@ -1,0 +1,18 @@
+{
+  verifyRebalanceWith3rdNode();
+  setAttribute(provider(0),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,false);
+  controller.stop(CONTAINER3);
+  checkRpcManagerStatistics(new String[]{"null",OWNERS_2_MEMBERS_NODE1_NODE2},OWNERS_2_MEMBERS_NODE1_NODE2,provider(0),provider(1));
+  checkRebalanceStatus(false,provider(0),provider(1));
+  assertTrue(numEntries(server1,HOTROD_CACHE_NAME) < NUMBER_ENTRIES);
+  assertTrue(numEntries(server2,HOTROD_CACHE_NAME) < NUMBER_ENTRIES);
+  assertTrue(numEntries(server1,MEMCACHED_CACHE_NAME) < NUMBER_ENTRIES);
+  assertTrue(numEntries(server2,MEMCACHED_CACHE_NAME) < NUMBER_ENTRIES);
+  setAttribute(provider(1),LOCAL_TOPOLOGY_MANAGER,REBALANCE_ENABLED_ATTR_NAME,true);
+  checkRebalanceStatus(true,provider(0),provider(1));
+  checkRpcManagerStatistics(new String[]{"null",OWNERS_2_MEMBERS_NODE1_NODE2},OWNERS_2_MEMBERS_NODE1_NODE2,provider(0),provider(1));
+  assertTrue(numEntries(server1,HOTROD_CACHE_NAME) == NUMBER_ENTRIES);
+  assertTrue(numEntries(server2,HOTROD_CACHE_NAME) == NUMBER_ENTRIES);
+  assertTrue(numEntries(server1,MEMCACHED_CACHE_NAME) == NUMBER_ENTRIES);
+  assertTrue(numEntries(server2,MEMCACHED_CACHE_NAME) == NUMBER_ENTRIES);
+}

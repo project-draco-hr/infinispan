@@ -1,0 +1,13 @@
+{
+  eventually(new ITestUtils.Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return 2 == server.getCacheManager(stringWPMBeans.managerName).getCache(stringWPMBeans.cacheName).getNumberOfEntries();
+    }
+  }
+,10000);
+  assertEquals("v1",stringWPCache.get("k1"));
+  assertEquals("v2",stringWPCache.get("k2"));
+  stringWPCache.remove("k1");
+  assertNull(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache,"k1")));
+  assertNotNull(stringWPDB.stringTable.getValueByKey(getStoredKey(stringWPCache,"k2")));
+}

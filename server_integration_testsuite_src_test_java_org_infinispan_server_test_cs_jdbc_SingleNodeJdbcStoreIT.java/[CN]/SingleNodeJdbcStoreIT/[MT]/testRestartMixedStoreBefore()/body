@@ -1,0 +1,12 @@
+{
+  assertCleanCacheAndStoreHotrod(mixedCache,mixedDB.stringTable);
+  assertCleanCacheAndStoreHotrod(mixedCache,mixedDB.bucketTable);
+  mixedCache.put("k1","v1");
+  mixedCache.put("k2","v2");
+  assertTrue(!mixedDB.stringTable.exists() || mixedDB.stringTable.getAllRows().isEmpty());
+  assertTrue(!mixedDB.bucketTable.exists() || mixedDB.bucketTable.getAllRows().isEmpty());
+  mixedCache.put("k3","v3");
+  assertEquals(2,server.getCacheManager(mixedMBeans.managerName).getCache(mixedMBeans.cacheName).getNumberOfEntries());
+  assertEquals(1,mixedDB.stringTable.getAllRows().size());
+  assertTrue(!mixedDB.bucketTable.exists() || mixedDB.bucketTable.getAllRows().isEmpty());
+}

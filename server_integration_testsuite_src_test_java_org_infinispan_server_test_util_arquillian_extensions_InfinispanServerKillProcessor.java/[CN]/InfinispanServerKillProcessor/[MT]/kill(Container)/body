@@ -1,0 +1,61 @@
+{
+  String osName=System.getProperty("os.name","");
+  String killSequence=null;
+  Process p=null;
+  if (osName.startsWith("Linux")) {
+    killSequence="kill -9 `ps aux | grep -v 'grep' | grep 'jboss.home.dir=[jbossHome] ' | sed -re '1,$s/[ \\t]+/ /g' | cut -d ' ' -f 2`";
+    killSequence=killSequence.replace("[jbossHome]",container.getContainerConfiguration().getContainerProperties().get("jbossHome"));
+    p=Runtime.getRuntime().exec(new String[]{"sh","-c",killSequence});
+    executeKill(p,killSequence);
+  }
+ else   if (osName.startsWith("Mac OS X")) {
+    killSequence="ps aux | grep -v grep | grep 'jboss.home.dir=[jbossHome]' | awk '{ print $2 }' |xargs kill -9";
+    killSequence=killSequence.replace("[jbossHome]",container.getContainerConfiguration().getContainerProperties().get("jbossHome"));
+    p=Runtime.getRuntime().exec(new String[]{"sh","-c",killSequence});
+    executeKill(p,killSequence);
+  }
+ else   if (osName.startsWith("SunOS")) {
+    killSequence="jps | grep jboss-modules.jar | cut -f 1 -d ' ' | head -1 | xargs kill -9";
+    p=Runtime.getRuntime().exec(new String[]{"sh","-c",killSequence});
+    executeKill(p,killSequence);
+  }
+ else   if (osName.startsWith("HP-UX")) {
+    String port="8080";
+    String vmArguments=container.getContainerConfiguration().getContainerProperties().get("javaVmArguments");
+    if (vmArguments.contains("jboss.node.name=node1")) {
+      port="8180";
+    }
+    if (vmArguments.contains("jboss.node.name=node2")) {
+      port="8280";
+    }
+    killSequence="lsof | grep '" + port + " (LISTEN)' | awk '{print $2}' | xargs kill -9";
+    p=Runtime.getRuntime().exec(new String[]{"sh","-c",killSequence});
+    executeKill(p,killSequence);
+  }
+ else   if (osName.startsWith("Windows")) {
+    String port="8080";
+    String vmArguments=container.getContainerConfiguration().getContainerProperties().get("javaVmArguments");
+    if (vmArguments.contains("jboss.node.name=node1")) {
+      port="8180";
+    }
+    if (vmArguments.contains("jboss.node.name=node2")) {
+      port="8280";
+    }
+    Process ptemp=Runtime.getRuntime().exec(new String[]{"cmd","/c","netstat -aon | findstr LISTENING | findstr 127.0.0.1:" + port});
+    ptemp.waitFor();
+    log.info("Exit value of finding process (0 = ok, else num. unexpected): " + ptemp.exitValue());
+    if (ptemp.exitValue() == 0) {
+      String idForKill=getPidForKill(ptemp.getInputStream());
+      log.info("Process ID for kill: " + idForKill + " (port: "+ port+ ")");
+      killSequence="taskkill /F /T /PID " + idForKill;
+      p=Runtime.getRuntime().exec(new String[]{"cmd","/c",killSequence});
+      executeKill(p,killSequence);
+    }
+ else {
+      throw new RuntimeException("Finding sequence failed => server not killed. (Exit value of finding process: " + p.exitValue() + " OS="+ System.getProperty("os.name")+ ")");
+    }
+  }
+ else {
+    throw new RuntimeException("System was probably NOT properly decided. Property os.name = " + System.getProperty("os.name"));
+  }
+}
