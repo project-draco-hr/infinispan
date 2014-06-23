@@ -1,5 +1,5 @@
 {
-  Cache<Object,Object> cache=session.getCache(keyData.getCacheName());
+  AdvancedCache<Object,Object> cache=session.getCache(keyData.getCacheName()).getAdvancedCache();
   Codec codec=session.getCodec();
   boolean overwrite=true;
   if (options.size() > 0) {
@@ -25,29 +25,12 @@ case IFABSENT:
 }
 Object encodedKey=codec.encodeKey(keyData.getKey());
 Object encodedValue=codec.encodeValue(value);
-if (expires == null) {
+Metadata metadata=codec.encodeMetadata(cache,expires,maxIdle);
 if (overwrite) {
-  cache.put(encodedKey,encodedValue);
+cache.put(encodedKey,encodedValue,metadata);
 }
  else {
-  cache.putIfAbsent(encodedKey,encodedValue);
-}
-}
- else if (maxIdle == null) {
-if (overwrite) {
-  cache.put(encodedKey,encodedValue,expires,TimeUnit.MILLISECONDS);
-}
- else {
-  cache.putIfAbsent(encodedKey,encodedValue,expires,TimeUnit.MILLISECONDS);
-}
-}
- else {
-if (overwrite) {
-  cache.put(encodedKey,encodedValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
-}
- else {
-  cache.putIfAbsent(encodedKey,encodedValue,expires,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
-}
+cache.putIfAbsent(encodedKey,encodedValue,metadata);
 }
 return EmptyResult.RESULT;
 }
