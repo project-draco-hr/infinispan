@@ -1,0 +1,20 @@
+{
+  for (  EmbeddedCacheManager cm : cacheManagers) {
+    JGroupsTransport t=(JGroupsTransport)cm.getGlobalComponentRegistry().getComponent(Transport.class);
+    Channel channel=t.getChannel();
+    try {
+      DISCARD discard=new DISCARD();
+      discard.setDiscardAll(true);
+      channel.getProtocolStack().insertProtocol(discard,ProtocolStack.ABOVE,TP.class);
+    }
+ catch (    Exception e) {
+      log.warn("Problems inserting discard",e);
+      throw new RuntimeException(e);
+    }
+    View view=View.create(channel.getAddress(),100);
+    ((GMS)channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
+    TEST_PING protocol=(TEST_PING)channel.getProtocolStack().findProtocol(TEST_PING.class);
+    if (protocol != null)     protocol.suspend();
+  }
+  TestingUtil.killCacheManagers(cacheManagers);
+}

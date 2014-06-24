@@ -1,0 +1,21 @@
+{
+  log.tracef("isMissingData: consistentHash == %s, routingTable == %s, newMembers == %s ",consistentHash,consistentHash.getRoutingTableAsString(),newMembers);
+  List<Address> allMembers=consistentHash.getMembers();
+  Map<Address,Set<Integer>> nodeOwnsSegments=new HashMap<Address,Set<Integer>>();
+  Set<Integer> allSegments=new HashSet<Integer>();
+  for (  Address a : allMembers) {
+    Set<Integer> segments=consistentHash.getSegmentsForOwner(a);
+    nodeOwnsSegments.put(a,segments);
+    allSegments.addAll(segments);
+  }
+  for (  Address a : consistentHash.getMembers())   if (!newMembers.contains(a)) {
+    nodeOwnsSegments.remove(a);
+  }
+  Set<Integer> existingSegments=new HashSet<Integer>();
+  for (  Set<Integer> segments : nodeOwnsSegments.values())   existingSegments.addAll(segments);
+  allSegments.removeAll(existingSegments);
+  if (!allSegments.isEmpty()) {
+    log.tracef("Segments have been lost: %s",allSegments);
+  }
+  return !allSegments.isEmpty();
+}
