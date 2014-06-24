@@ -1,10 +1,11 @@
 {
+  final boolean wasMember=ownsData;
   final boolean isMember=cacheTopology.getMembers().contains(rpcManager.getAddress());
   if (trace)   log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s",cacheName,isRebalance,isMember,cacheTopology);
+  if (!ownsData && isMember) {
+    ownsData=true;
+  }
   if (isRebalance) {
-    if (!ownsData && cacheTopology.getMembers().contains(rpcManager.getAddress())) {
-      ownsData=true;
-    }
     stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS,cacheTopology.getTopologyId());
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getUnionCH(),cacheTopology.getTopologyId(),true);
     if (isTotalOrder) {
@@ -28,12 +29,9 @@
       log.tracef("Lock State Transfer in Progress for topology ID %s",cacheTopology.getTopologyId());
     }
   }
- else {
-    if (cacheTopology.getMembers().size() == 1 && cacheTopology.getMembers().get(0).equals(rpcManager.getAddress())) {
-      ownsData=true;
-    }
-  }
   waitingForState.set(false);
+  final ConsistentHash newReadCh=cacheTopology.getReadConsistentHash();
+  final ConsistentHash newWriteCh=cacheTopology.getWriteConsistentHash();
   final ConsistentHash previousReadCh=this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
   final ConsistentHash previousWriteCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
@@ -48,7 +46,7 @@
     if (isTransactional || isFetchEnabled) {
       Set<Integer> addedSegments;
       if (previousWriteCh == null) {
-        addedSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+        addedSegments=getOwnedSegments(newWriteCh);
         Collection<DistributedCallable> callables=getClusterListeners(cacheTopology);
         for (        DistributedCallable callable : callables) {
           callable.setEnvironment(cache,null);
@@ -65,18 +63,15 @@
       }
  else {
         Set<Integer> previousSegments=getOwnedSegments(previousWriteCh);
-        Set<Integer> newSegments=getOwnedSegments(cacheTopology.getWriteConsistentHash());
+        Set<Integer> newSegments=getOwnedSegments(newWriteCh);
         Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
         removedSegments.removeAll(newSegments);
         addedSegments=new HashSet<Integer>(newSegments);
         addedSegments.removeAll(previousSegments);
         if (trace) {
-          log.tracef("On cache %s we have: removed segments: %s; new segments: %s; old segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
+          log.tracef("On cache %s we have: new segments: %s; old segments: %s; removed segments: %s; added segments: %s",cacheName,removedSegments,newSegments,previousSegments,addedSegments);
         }
         cancelTransfers(removedSegments);
-        if (isMember) {
-          invalidateSegments(newSegments,removedSegments,cacheTopology.getWriteConsistentHash(),previousReadCh);
-        }
         restartBrokenTransfers(cacheTopology,addedSegments);
       }
       if (!addedSegments.isEmpty()) {
@@ -109,6 +104,28 @@
     notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId());
     if (transactionTable != null) {
       transactionTable.cleanupStaleTransactions(cacheTopology);
+    }
+    if (isMember) {
+      Set<Integer> removedSegments;
+      if (wasMember) {
+        removedSegments=new HashSet<>(previousWriteCh.getSegmentsForOwner(rpcManager.getAddress()));
+      }
+ else {
+        removedSegments=new HashSet<Integer>(newWriteCh.getNumSegments());
+        for (int i=0; i < newWriteCh.getNumSegments(); i++) {
+          removedSegments.add(i);
+        }
+      }
+      Set<Integer> newSegments=newWriteCh.getSegmentsForOwner(rpcManager.getAddress());
+      removedSegments.removeAll(newSegments);
+      Set<Integer> staleL1Segments=computeStaleL1Segments(newSegments,newWriteCh,previousWriteCh);
+      try {
+        removeStaleData(removedSegments,staleL1Segments);
+      }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new CacheException(e);
+      }
     }
   }
 }

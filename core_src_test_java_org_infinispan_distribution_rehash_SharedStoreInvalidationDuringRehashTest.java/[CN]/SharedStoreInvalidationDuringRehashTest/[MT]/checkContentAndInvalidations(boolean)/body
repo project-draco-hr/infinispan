@@ -23,17 +23,18 @@
   log.debugf("Invalidations: %s, L1 invalidations: %s",invalidationCounts,l1InvalidationCounts);
   int joinerSize=advancedCache(joiner,TEST_CACHE_NAME).getDataContainer().size();
   if (preload) {
-    assertEquals(0,getCounter(l1InvalidationCounts,joiner));
+    assertEquals(0,getSum(l1InvalidationCounts));
     assertEquals(NUM_KEYS - joinerSize,getCounter(invalidationCounts,joiner));
-    assertEquals(NUM_KEYS - joinerSize,getSum(invalidationCounts));
+    if (clusterSize > 1) {
+      assertEquals(NUM_KEYS,getSum(invalidationCounts));
+    }
   }
  else {
-    assertEquals(0,getCounter(l1InvalidationCounts,joiner));
+    assertEquals(0,getSum(l1InvalidationCounts));
     assertEquals(0,getCounter(invalidationCounts,joiner));
-    assertEquals(0,getSum(invalidationCounts));
-  }
-  if (joiner > 0) {
-    assertEquals(joinerSize,getSum(l1InvalidationCounts));
+    if (clusterSize > 1) {
+      assertEquals(joinerSize,getSum(invalidationCounts));
+    }
   }
   store.clearStats();
   invalidationCounts.clear();
