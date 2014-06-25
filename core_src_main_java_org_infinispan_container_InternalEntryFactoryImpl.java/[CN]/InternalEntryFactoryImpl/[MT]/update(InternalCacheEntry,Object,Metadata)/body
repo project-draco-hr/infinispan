@@ -1,9 +1,11 @@
 {
-  cacheEntry.setValue(value);
-  InternalCacheEntry original=cacheEntry;
-  cacheEntry=update(cacheEntry,metadata);
-  if (cacheEntry.getLifespan() > 0 && original == cacheEntry) {
-    cacheEntry.reincarnate(timeService.wallClockTime());
+synchronized (cacheEntry) {
+    cacheEntry.setValue(value);
+    InternalCacheEntry original=cacheEntry;
+    cacheEntry=update(cacheEntry,metadata);
+    if (cacheEntry.getLifespan() > 0 && original == cacheEntry) {
+      cacheEntry.reincarnate(timeService.wallClockTime());
+    }
+    return cacheEntry;
   }
-  return cacheEntry;
 }

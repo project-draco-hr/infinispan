@@ -1,0 +1,20 @@
+{
+  while (true) {
+    VersionedValue<Integer> versioned=cache.getVersioned(key);
+    if (versioned == null) {
+      if (cache.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key,1) == null) {
+        log.info("count=" + globalCounter.getAndIncrement() + ",prev=0,new=1 (first-put)");
+        return;
+      }
+    }
+ else {
+      int val=versioned.getValue() + 1;
+      long version=versioned.getVersion();
+      if (cache.replaceWithVersion(key,val,version)) {
+        int count=globalCounter.getAndIncrement();
+        log.info("count=" + count + ",prev="+ versioned.getValue()+ ",new="+ val+ ",prev-version="+ version);
+        return;
+      }
+    }
+  }
+}
