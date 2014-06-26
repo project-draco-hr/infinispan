@@ -1,14 +1,20 @@
 {
   try {
-    IndexSearcher searcher=new IndexSearcher(index,true);
-    TopDocs topDocs=searcher.search(query,null,100);
-    ScoreDoc[] scoreDocs=topDocs.scoreDocs;
-    List<String> list=new ArrayList<String>();
-    for (    ScoreDoc sd : scoreDocs) {
-      Document doc=searcher.doc(sd.doc);
-      list.add(doc.get(MAIN_FIELD));
+    final DirectoryReader reader=DirectoryReader.open(index);
+    try {
+      IndexSearcher searcher=new IndexSearcher(reader);
+      TopDocs topDocs=searcher.search(query,null,100);
+      ScoreDoc[] scoreDocs=topDocs.scoreDocs;
+      List<String> list=new ArrayList<String>();
+      for (      ScoreDoc sd : scoreDocs) {
+        Document doc=searcher.doc(sd.doc);
+        list.add(doc.get(MAIN_FIELD));
+      }
+      return list;
     }
-    return list;
+  finally {
+      reader.close();
+    }
   }
  catch (  IOException ioe) {
     return InfinispanCollections.emptyList();
