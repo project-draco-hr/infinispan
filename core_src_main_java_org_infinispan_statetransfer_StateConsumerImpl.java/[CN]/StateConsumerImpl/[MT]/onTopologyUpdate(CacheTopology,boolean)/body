@@ -1,5 +1,4 @@
 {
-  final boolean wasMember=ownsData;
   final boolean isMember=cacheTopology.getMembers().contains(rpcManager.getAddress());
   if (trace)   log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s",cacheName,isRebalance,isMember,cacheTopology);
   if (!ownsData && isMember) {
@@ -89,14 +88,9 @@
     }
     if (isMember) {
       Set<Integer> removedSegments;
-      if (wasMember) {
-        removedSegments=new HashSet<>(previousWriteCh.getSegmentsForOwner(rpcManager.getAddress()));
-      }
- else {
-        removedSegments=new HashSet<Integer>(newWriteCh.getNumSegments());
-        for (int i=0; i < newWriteCh.getNumSegments(); i++) {
-          removedSegments.add(i);
-        }
+      removedSegments=new HashSet<>(newWriteCh.getNumSegments());
+      for (int i=0; i < newWriteCh.getNumSegments(); i++) {
+        removedSegments.add(i);
       }
       Set<Integer> newSegments=newWriteCh.getSegmentsForOwner(rpcManager.getAddress());
       removedSegments.removeAll(newSegments);
