@@ -16,7 +16,7 @@
   final BlockingQueue<Map.Entry<Object,String>> returnQueue=new LinkedBlockingQueue<Map.Entry<Object,String>>();
   Future<Void> future=fork(new Callable<Void>(){
     @Override public Void call() throws Exception {
-      Iterator<CacheEntry<Object,String>> iter=retriever.retrieveEntries(null,null,null);
+      Iterator<CacheEntry<Object,String>> iter=retriever.retrieveEntries(null,null,null,null);
       while (iter.hasNext()) {
         Map.Entry<Object,String> entry=iter.next();
         returnQueue.add(entry);
@@ -33,6 +33,6 @@
   Map<Integer,Set<Map.Entry<Object,String>>> expected=generateEntriesPerSegment(hash,values.entrySet());
   Map<Integer,Set<Map.Entry<Object,String>>> answer=generateEntriesPerSegment(hash,returnQueue);
   for (  Map.Entry<Integer,Set<Map.Entry<Object,String>>> entry : expected.entrySet()) {
-    assertEquals(answer.get(entry.getKey()),entry.getValue(),"Segment " + entry.getKey() + " had a mismatch");
+    assertEquals("Segment " + entry.getKey() + " had a mismatch",answer.get(entry.getKey()),entry.getValue());
   }
 }

@@ -9,7 +9,7 @@
   final BlockingQueue<Map.Entry<Object,String>> returnQueue=new ArrayBlockingQueue<Map.Entry<Object,String>>(10);
   Future<Void> future=fork(new Callable<Void>(){
     @Override public Void call() throws Exception {
-      Iterator<CacheEntry<Object,String>> iter=retriever.retrieveEntries(null,null,null);
+      Iterator<CacheEntry<Object,String>> iter=retriever.retrieveEntries(null,null,null,null);
       while (iter.hasNext()) {
         Map.Entry<Object,String> entry=iter.next();
         returnQueue.add(entry);
@@ -23,6 +23,6 @@
   checkPoint.trigger("pre_send_response_released");
   future.get(10,TimeUnit.SECONDS);
   for (  Map.Entry<Object,String> entry : values.entrySet()) {
-    assertTrue(returnQueue.contains(entry),"Entry wasn't found:" + entry);
+    assertTrue("Entry wasn't found:" + entry,returnQueue.contains(entry));
   }
 }
