@@ -1,8 +1,32 @@
 {
-  return new MapReduceTaskFuture<R>(new Callable<R>(){
+  final MapReduceTaskFuture<R> result=new MapReduceTaskFuture<R>();
+  ExecutorService executor=mapReduceManager.getExecutorService();
+  Future<R> returnValue=executor.submit(new Callable<R>(){
     @Override public R call() throws Exception {
-      return execute(collator);
+      try {
+        R retval=execute(collator);
+        try {
+          result.notifyDone(retval);
+          log.trace("Finished notifying");
+        }
+ catch (        Throwable e) {
+          log.trace("Exception while notifying the future",e);
+        }
+        return retval;
+      }
+ catch (      Exception e) {
+        try {
+          result.notifyException(e);
+          log.trace("Finished notifying");
+        }
+ catch (        Throwable e2) {
+          log.trace("Exception while notifying the future",e2);
+        }
+        throw e;
+      }
     }
   }
 );
+  result.setFuture(returnValue);
+  return result;
 }
