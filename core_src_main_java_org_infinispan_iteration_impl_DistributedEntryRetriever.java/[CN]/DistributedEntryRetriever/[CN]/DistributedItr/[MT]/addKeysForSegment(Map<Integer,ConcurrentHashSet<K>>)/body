@@ -2,7 +2,14 @@
   for (  Map.Entry<Integer,ConcurrentHashSet<K>> entry : keysForSegment.entrySet()) {
     Set<K> values=entry.getValue();
     if (values.isEmpty()) {
-      notifyListenerCompletedSegment(entry.getKey(),false);
+      if (!keysNeededToComplete.containsKey(entry.getKey())) {
+        notifyListenerCompletedSegment(entry.getKey(),false);
+      }
+ else {
+        if (log.isTraceEnabled()) {
+          log.tracef("No keys found for segment %s, but previous response had keys - so cannot complete " + "segment",entry.getKey());
+        }
+      }
     }
  else {
       Set<K> prevValues=keysNeededToComplete.putIfAbsent(entry.getKey(),values);
