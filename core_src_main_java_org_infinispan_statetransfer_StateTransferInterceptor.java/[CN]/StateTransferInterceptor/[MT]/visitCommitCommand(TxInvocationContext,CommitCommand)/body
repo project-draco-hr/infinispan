@@ -1,23 +1,3 @@
 {
-  if (ctx.getCacheTransaction() instanceof RemoteTransaction) {
-    RemoteTransaction remoteTx=(RemoteTransaction)ctx.getCacheTransaction();
-    if (trace) {
-      log.tracef("Remote tx topology id %d and command topology is %d",remoteTx.lookedUpEntriesTopology(),command.getTopologyId());
-    }
-    if (remoteTx.lookedUpEntriesTopology() < command.getTopologyId()) {
-      remoteTx.setLookedUpEntriesTopology(command.getTopologyId());
-      PrepareCommand prepareCommand;
-      if (useVersioning) {
-        prepareCommand=commandFactory.buildVersionedPrepareCommand(ctx.getGlobalTransaction(),ctx.getModifications(),false);
-      }
- else {
-        prepareCommand=commandFactory.buildPrepareCommand(ctx.getGlobalTransaction(),ctx.getModifications(),false);
-      }
-      commandFactory.initializeReplicableCommand(prepareCommand,true);
-      prepareCommand.setOrigin(ctx.getOrigin());
-      log.tracef("Replaying the transactions received as a result of state transfer %s",prepareCommand);
-      prepareCommand.perform(null);
-    }
-  }
   return handleTxCommand(ctx,command);
 }
