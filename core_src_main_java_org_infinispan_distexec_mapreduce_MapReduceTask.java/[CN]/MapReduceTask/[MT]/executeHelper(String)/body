@@ -11,17 +11,27 @@
  catch (    Exception e) {
       throw new CacheException(e);
     }
+    Set<KOut> allMapPhasesResponses=null;
     try {
-      Set<KOut> allMapPhasesResponses=executeMapPhase(useCompositeKeys);
+      allMapPhasesResponses=executeMapPhase(useCompositeKeys);
       result=executeReducePhase(resultCache,allMapPhasesResponses,useCompositeKeys);
     }
  catch (    Exception cause) {
       throw new CacheException(cause);
     }
  finally {
+      EmbeddedCacheManager cm=cache.getCacheManager();
+      String intermediateCache=getIntermediateCacheName();
       if (useIntermediatePerTaskCache()) {
-        EmbeddedCacheManager cm=cache.getCacheManager();
-        cm.removeCache(getIntermediateCacheName());
+        cm.removeCache(intermediateCache);
+      }
+ else {
+        Cache<KOut,VOut> sharedTmpCache=cm.getCache(intermediateCache);
+        if (sharedTmpCache != null && allMapPhasesResponses != null) {
+          for (          KOut k : allMapPhasesResponses) {
+            sharedTmpCache.removeAsync(new IntermediateCompositeKey<KOut>(taskId.toString(),k));
+          }
+        }
       }
     }
   }

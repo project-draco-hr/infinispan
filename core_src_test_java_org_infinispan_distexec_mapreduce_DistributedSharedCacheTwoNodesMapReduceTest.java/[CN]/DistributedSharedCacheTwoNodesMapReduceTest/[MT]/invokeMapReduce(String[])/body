@@ -1,0 +1,10 @@
+{
+  MapReduceTask<String,String,String,Integer> task=super.invokeMapReduce(keys,true);
+  EmbeddedCacheManager cacheManager=getCacheManagers().get(0);
+  String sharedCache=task.getIntermediateCacheName();
+  assertEquals("MapReduceTask has not use shared intermediate cache as it should have but it used " + sharedCache,MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME,sharedCache);
+  Cache<Object,Object> sharedTmpCache=cacheManager.getCache(sharedCache);
+  int elementsInCache=sharedTmpCache.size();
+  assertEquals("Shared cache " + sharedCache + " is not empty. It has "+ elementsInCache+ " keys/values",elementsInCache,0);
+  return task;
+}
