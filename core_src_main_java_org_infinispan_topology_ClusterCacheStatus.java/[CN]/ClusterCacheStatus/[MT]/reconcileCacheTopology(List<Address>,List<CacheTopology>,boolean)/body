@@ -2,7 +2,7 @@
   try {
     if (partitionTopologies.isEmpty())     return;
     CacheTopology cacheTopology;
-    if (isMergeView) {
+    if (isMergeView && partitionHandlingManager != null) {
       cacheTopology=buildCacheTopologyForMerge(clusterMembers,partitionTopologies);
     }
  else {
@@ -10,7 +10,7 @@
     }
     if (cacheTopology == null)     return;
     if (isRebalanceInProgress()) {
-      setRebalanceStatus();
+      endRebalance();
     }
     updateCacheTopology(cacheTopology);
     broadcastConsistentHashUpdate();
