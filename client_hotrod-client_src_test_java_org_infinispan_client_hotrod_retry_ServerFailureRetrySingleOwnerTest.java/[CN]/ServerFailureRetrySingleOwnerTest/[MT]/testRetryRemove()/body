@@ -1,15 +1,14 @@
 {
-  ErrorInducingListener listener=new ErrorInducingListener();
-  byte[] key=TestHelper.getKeyForServer(hotRodServer1);
-  try {
-    assertNull(remoteCache.putIfAbsent(key,1));
-    hotRodServer1.getCacheManager().getCache().addListener(listener);
-    assertFalse(listener.errorInduced);
-    assertEquals(1,remoteCache.remove(key));
-    assertTrue(listener.errorInduced);
-    assertNull(remoteCache.get(key));
+  final ErrorInducingListener listener=new ErrorInducingListener();
+  final byte[] key=TestHelper.getKeyForServer(hotRodServer1);
+  assertNull(remoteCache.putIfAbsent(key,1));
+  withListener(listener,new Runnable(){
+    @Override public void run(){
+      assertFalse(listener.errorInduced);
+      assertEquals(1,remoteCache.remove(key));
+      assertTrue(listener.errorInduced);
+      assertNull(remoteCache.get(key));
+    }
   }
-  finally {
-    hotRodServer1.getCacheManager().removeListener(listener);
-  }
+);
 }
