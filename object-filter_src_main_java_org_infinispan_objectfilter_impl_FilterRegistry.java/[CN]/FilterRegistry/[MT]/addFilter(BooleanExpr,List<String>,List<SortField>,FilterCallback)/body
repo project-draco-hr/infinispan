@@ -3,18 +3,18 @@
   if (projection != null && !projection.isEmpty()) {
     translatedProjections=new ArrayList<List<AttributeId>>(projection.size());
     for (    String projectionPath : projection) {
-      translatedProjections.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(projectionPath)));
+      translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
     }
   }
   List<List<AttributeId>> translatedSortFields=null;
   if (sortFields != null && !sortFields.isEmpty()) {
     translatedSortFields=new ArrayList<List<AttributeId>>(sortFields.size());
     for (    SortField sortField : sortFields) {
-      translatedSortFields.add(attributePathTranslator.translatePath(StringHelper.splitPropertyPath(sortField.getPath())));
+      translatedSortFields.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(sortField.getPath())));
     }
   }
   BETree beTree=treeMaker.make(normalizedFilter);
-  final FilterSubscriptionImpl<AttributeId> filterSubscription=new FilterSubscriptionImpl<AttributeId>(typeName,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields);
+  final FilterSubscriptionImpl<AttributeId> filterSubscription=new FilterSubscriptionImpl<AttributeId>(metadataAdapter,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields);
   filterSubscription.registerProjection(predicateIndex);
   for (  BENode node : beTree.getNodes()) {
     if (node instanceof PredicateNode) {
