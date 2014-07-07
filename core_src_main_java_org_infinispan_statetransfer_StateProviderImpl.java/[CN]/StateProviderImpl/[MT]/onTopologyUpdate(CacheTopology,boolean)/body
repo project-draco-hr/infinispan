@@ -1,9 +1,10 @@
 {
+  boolean stateTransferInProgress=cacheTopology.getPendingCH() != null;
   Set<Address> members=new HashSet<Address>(cacheTopology.getWriteConsistentHash().getMembers());
 synchronized (transfersByDestination) {
     for (Iterator<Address> it=transfersByDestination.keySet().iterator(); it.hasNext(); ) {
       Address destination=it.next();
-      if (!members.contains(destination)) {
+      if (!stateTransferInProgress || !members.contains(destination)) {
         List<OutboundTransferTask> transfers=transfersByDestination.get(destination);
         it.remove();
         for (        OutboundTransferTask outboundTransfer : transfers) {
