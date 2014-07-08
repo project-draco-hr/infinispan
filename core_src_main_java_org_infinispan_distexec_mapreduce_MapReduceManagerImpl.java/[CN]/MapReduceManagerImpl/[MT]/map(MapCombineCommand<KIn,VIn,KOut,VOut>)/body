@@ -5,7 +5,7 @@
   final Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
   final boolean inputKeysSpecified=keys != null && !keys.isEmpty();
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
-  final DefaultCollector<KIn,VIn,KOut,VOut> collector=new DefaultCollector<KIn,VIn,KOut,VOut>(mcc,maxCSize);
+  final CollectableCollector<KOut,VOut> collector=new SynchronizedCollector<KOut,VOut>(new DefaultCollector<KIn,VIn,KOut,VOut>(mcc,maxCSize));
   DataContainer dc=cache.getAdvancedCache().getDataContainer();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,keys);
   long start=log.isTraceEnabled() ? timeService.time() : 0;
