@@ -1,16 +1,12 @@
 {
   ConfigurationBuilder defaultConfiguration=new ConfigurationBuilder();
+  createHotRodServers(2,defaultConfiguration);
   ConfigurationBuilder builder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,false));
   builder.indexing().index(Index.ALL).addProperty("default.directory_provider","infinispan").addProperty("lucene_version","LUCENE_CURRENT");
-  createHotRodServers(2,defaultConfiguration);
   for (  EmbeddedCacheManager cm : cacheManagers) {
-    cm.defineConfiguration("queryableCache",builder.build());
-    ProtobufMetadataManager component=cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-    component.registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
+    cm.defineConfiguration(TEST_CACHE,builder.build());
   }
-  for (  RemoteCacheManager rcm : clients) {
-    MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
-  }
-  remoteCache0=client(0).getCache("queryableCache");
-  remoteCache1=client(1).getCache("queryableCache");
+  waitForClusterToForm();
+  remoteCache0=client(0).getCache(TEST_CACHE);
+  remoteCache1=client(1).getCache(TEST_CACHE);
 }

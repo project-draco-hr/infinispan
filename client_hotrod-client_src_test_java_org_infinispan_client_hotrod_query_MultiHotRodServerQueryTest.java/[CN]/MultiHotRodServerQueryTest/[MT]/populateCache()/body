@@ -1,0 +1,32 @@
+{
+  ProtobufMetadataManager protobufMetadataManager=manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  protobufMetadataManager.registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
+  for (  RemoteCacheManager rcm : clients) {
+    MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
+  }
+  User user1=new UserPB();
+  user1.setId(1);
+  user1.setName("Tom");
+  user1.setSurname("Cat");
+  user1.setGender(User.Gender.MALE);
+  user1.setAccountIds(Collections.singleton(12));
+  Address address1=new AddressPB();
+  address1.setStreet("Dark Alley");
+  address1.setPostCode("1234");
+  user1.setAddresses(Collections.singletonList(address1));
+  remoteCache0.put(1,user1);
+  assertNotNull(remoteCache0.get(1));
+  assertNotNull(remoteCache1.get(1));
+  User user2=new UserPB();
+  user2.setId(2);
+  user2.setName("Adrian");
+  user2.setSurname("Nistor");
+  user2.setGender(User.Gender.MALE);
+  Address address2=new AddressPB();
+  address2.setStreet("Old Street");
+  address2.setPostCode("XYZ");
+  user2.setAddresses(Collections.singletonList(address2));
+  remoteCache1.put(2,user2);
+  assertNotNull(remoteCache0.get(2));
+  assertNotNull(remoteCache1.get(2));
+}

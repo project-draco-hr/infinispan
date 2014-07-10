@@ -1,0 +1,22 @@
+{
+  ObjectName name=getQueryStatsObjectName(TEST_CACHE_NAME);
+  assertTrue(mBeanServer.isRegistered(name));
+  assertFalse((Boolean)mBeanServer.getAttribute(name,"StatisticsEnabled"));
+  mBeanServer.setAttribute(name,new Attribute("StatisticsEnabled",true));
+  assertTrue((Boolean)mBeanServer.getAttribute(name,"StatisticsEnabled"));
+  remoteCache.put(1,createUser(1));
+  remoteCache.put(2,createUser(2));
+  QueryFactory qf=Search.getQueryFactory(remoteCache);
+  Query query=qf.from(UserPB.class).having("addresses.postCode").eq("1231").toBuilder().build();
+  List<User> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(UserPB.class,list.get(0).getClass());
+  assertEquals("Tom1",list.get(0).getName());
+  assertEquals(2,mBeanServer.invoke(name,"getNumberOfIndexedEntities",new Object[]{ProtobufValueWrapper.class.getName()},new String[]{String.class.getName()}));
+  Set<String> classNames=(Set<String>)mBeanServer.getAttribute(name,"IndexedClassNames");
+  assertEquals(1,classNames.size());
+  assertTrue("The set should contain the ProtobufValueWrapper class name.",classNames.contains(ProtobufValueWrapper.class.getName()));
+  assertTrue("The query execution total time should be > 0.",(Long)mBeanServer.getAttribute(name,"SearchQueryTotalTime") > 0);
+  assertEquals((long)1,mBeanServer.getAttribute(name,"SearchQueryExecutionCount"));
+}

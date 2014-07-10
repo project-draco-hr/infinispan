@@ -1,0 +1,13 @@
+{
+  ConfigurationBuilder builder=getConfigurationBuilder();
+  createClusteredCaches(1,builder);
+  hotRodServer=TestHelper.startHotRodServer(manager(0));
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+  clientBuilder.marshaller(new ProtoStreamMarshaller());
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+  remoteCache=remoteCacheManager.getCache();
+  ProtobufMetadataManager protobufMetadataManager=manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  protobufMetadataManager.registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+}

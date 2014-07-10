@@ -2,12 +2,7 @@
   ConfigurationBuilder builder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,false));
   builder.indexing().index(Index.ALL).addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
   createHotRodServers(2,builder);
-  for (  EmbeddedCacheManager cm : cacheManagers) {
-    cm.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class).registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
-  }
-  for (  RemoteCacheManager rcm : clients) {
-    MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
-  }
+  waitForClusterToForm();
   remoteCache0=client(0).getCache();
   remoteCache1=client(1).getCache();
 }

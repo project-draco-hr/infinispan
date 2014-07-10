@@ -1,11 +1,11 @@
 {
-  ConfigurationBuilder defaultCacheConfiguration=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
-  defaultCacheConfiguration.clustering().stateTransfer().fetchInMemoryState(true);
-  createClusteredCaches(2,defaultCacheConfiguration);
-  ConfigurationBuilder cacheCfg=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
-  cacheCfg.clustering().stateTransfer().fetchInMemoryState(true).indexing().index(Index.LOCAL).addProperty("default.indexmanager","org.infinispan.query.indexmanager.InfinispanIndexManager").addProperty("lucene_version","LUCENE_48");
-  cacheManagers.get(0).defineConfiguration("custom",cacheCfg.build());
-  cacheManagers.get(1).defineConfiguration("custom",cacheCfg.build());
-  cache1=cacheManagers.get(0).getCache("custom");
-  cache2=cacheManagers.get(1).getCache("custom");
+  ConfigurationBuilder defaultConfiguration=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
+  defaultConfiguration.clustering().stateTransfer().fetchInMemoryState(true);
+  createClusteredCaches(2,defaultConfiguration);
+  ConfigurationBuilder cfg=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,transactionsEnabled());
+  cfg.clustering().stateTransfer().fetchInMemoryState(true).indexing().index(Index.LOCAL).addProperty("default.indexmanager","org.infinispan.query.indexmanager.InfinispanIndexManager").addProperty("lucene_version","LUCENE_48");
+  manager(0).defineConfiguration(TEST_CACHE_NAME,cfg.build());
+  manager(1).defineConfiguration(TEST_CACHE_NAME,cfg.build());
+  cache1=manager(0).getCache(TEST_CACHE_NAME);
+  cache2=manager(1).getCache(TEST_CACHE_NAME);
 }

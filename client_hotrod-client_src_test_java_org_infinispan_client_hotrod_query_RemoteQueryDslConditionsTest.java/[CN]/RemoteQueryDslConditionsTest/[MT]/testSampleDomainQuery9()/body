@@ -1,6 +1,6 @@
 {
-  QueryFactory qf=Search.getQueryFactory(remoteCache);
-  Query q=qf.from(Transaction.class).setProjection("date").having("date").between(DATE_FORMAT.parse("2013-01-01").getTime(),DATE_FORMAT.parse("2013-01-31").getTime()).toBuilder().build();
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getTransactionImplClass()).setProjection("date").having("date").between(makeDate("2013-01-01"),makeDate("2013-01-31")).toBuilder().build();
   List<Object[]> list=q.list();
   assertEquals(4,list.size());
   assertEquals(1,list.get(0).length);
@@ -9,7 +9,7 @@
   assertEquals(1,list.get(3).length);
   for (int i=0; i < 4; i++) {
     Long d=(Long)list.get(i)[0];
-    assertTrue(d <= DATE_FORMAT.parse("2013-01-31").getTime());
-    assertTrue(d >= DATE_FORMAT.parse("2013-01-01").getTime());
+    assertTrue(d <= makeDate("2013-01-31").getTime());
+    assertTrue(d >= makeDate("2013-01-01").getTime());
   }
 }
