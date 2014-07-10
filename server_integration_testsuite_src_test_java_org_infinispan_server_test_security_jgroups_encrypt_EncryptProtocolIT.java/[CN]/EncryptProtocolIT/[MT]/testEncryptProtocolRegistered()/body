@@ -9,8 +9,9 @@
     MemcachedClient mcFriend=new MemcachedClient(friend.server.getMemcachedEndpoint().getInetAddress().getHostName(),friend.server.getMemcachedEndpoint().getPort());
     assertEquals(2,coordinator.manager.getClusterSize());
     assertEquals(2,friend.manager.getClusterSize());
-    assertEquals("secret",getAttribute(providerCoordinator,ENCRYPT_MBEAN,"store_password"));
-    assertEquals("secret",getAttribute(providerFriend,ENCRYPT_MBEAN,"store_password"));
+    assertTrue(getAttribute(providerCoordinator,ENCRYPT_MBEAN,ENCRYPT_PROPERTY_KEY).endsWith(ENCRYPT_PROPERTY_VALUE_SUFFIX));
+    assertTrue(getAttribute(providerFriend,ENCRYPT_MBEAN,ENCRYPT_PROPERTY_KEY).endsWith(ENCRYPT_PROPERTY_VALUE_SUFFIX));
+    assertNull(getAttribute(providerCoordinator,ENCRYPT_MBEAN,ENCRYPT_PASSWORD_KEY));
     mcFriend.set("key1","value1");
     assertEquals("Could not read replicated pair key1/value1","value1",mcCoordinator.get("key1"));
   }
