@@ -16,9 +16,9 @@
       lastTopologyId=currentTopologyId;
       targets=new ArrayList<Address>(cacheTopology.getReadConsistentHash().locateOwners(key));
     }
- else     if (lastTopologyId == currentTopologyId) {
+ else     if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
       lastTopologyId=currentTopologyId + 1;
-      targets=new ArrayList<Address>(cacheTopology.getWriteConsistentHash().locateOwners(key));
+      targets=new ArrayList<Address>(cacheTopology.getPendingCH().locateOwners(key));
       targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
       if (targets.isEmpty()) {
         if (trace) {
