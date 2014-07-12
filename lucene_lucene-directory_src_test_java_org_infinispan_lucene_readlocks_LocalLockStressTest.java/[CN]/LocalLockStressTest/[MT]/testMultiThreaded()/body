@@ -1,0 +1,46 @@
+{
+  final Cache<Object,Object> metadata=cacheManager.getCache("metadata");
+  final Cache<Object,Object> chunks=cacheManager.getCache("chunks");
+  final Cache<Object,Integer> locks=cacheManager.getCache("locks");
+  metadata.put(new FileCacheKey("indexName","fileName"),new FileMetadata(10));
+  final LocalLockMergingSegmentReadLocker locker=new LocalLockMergingSegmentReadLocker(locks,chunks,metadata,"indexName");
+  final AtomicBoolean testFailed=new AtomicBoolean(false);
+  final ExecutorService exec=Executors.newFixedThreadPool(NUM_THREADS);
+  Runnable stressor=new Runnable(){
+    @Override public void run(){
+      try {
+        int counter=0;
+        while (testFailed.get() == false) {
+          locker.acquireReadLock("fileName");
+          Thread.sleep(2);
+          locker.deleteOrReleaseReadLock("fileName");
+          if (counter++ % 900 == 0) {
+            System.out.print(".");
+            Thread.sleep(7);
+          }
+          if (metadata.get(new FileCacheKey("indexName","fileName")) == null) {
+            testFailed.set(true);
+            System.out.print("X");
+          }
+        }
+      }
+ catch (      InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+    }
+  }
+;
+  for (int i=0; i < NUM_THREADS; i++) {
+    exec.execute(stressor);
+  }
+  System.out.println("Stressor threads started...");
+  exec.shutdown();
+  try {
+    exec.awaitTermination(TEST_MINUTES_MAX,TimeUnit.MINUTES);
+  }
+ catch (  InterruptedException e) {
+    exec.shutdownNow();
+  }
+  AssertJUnit.assertFalse(testFailed.get());
+}
