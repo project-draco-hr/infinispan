@@ -5,11 +5,12 @@
     return null;
   }
   ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(cacheName,joinInfo);
-  boolean hadEmptyConsistentHashes;
+  boolean isFirstMember;
+  CacheTopology topologyWithoutRebalance;
 synchronized (cacheStatus) {
-    hadEmptyConsistentHashes=cacheStatus.getCacheTopology().getMembers().isEmpty();
+    isFirstMember=cacheStatus.getCacheTopology().getMembers().isEmpty();
     cacheStatus.addMember(joiner,joinInfo.getCapacityFactor());
-    if (hadEmptyConsistentHashes) {
+    if (isFirstMember) {
       int newTopologyId=cacheStatus.getCacheTopology().getTopologyId() + 1;
       List<Address> initialMembers=cacheStatus.getMembers();
       ConsistentHash initialCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),initialMembers,cacheStatus.getCapacityFactors());
@@ -18,12 +19,13 @@ synchronized (cacheStatus) {
     }
  else {
     }
+    topologyWithoutRebalance=cacheStatus.getCacheTopology();
   }
-  if (hadEmptyConsistentHashes) {
+  if (isFirstMember) {
     rebalancePolicy.initCache(cacheName,cacheStatus);
   }
  else {
     rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
   }
-  return cacheStatus.getCacheTopology();
+  return topologyWithoutRebalance;
 }
