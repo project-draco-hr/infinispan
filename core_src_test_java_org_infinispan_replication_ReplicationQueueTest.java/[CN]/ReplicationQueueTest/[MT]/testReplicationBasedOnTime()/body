@@ -1,2 +1,17 @@
 {
+  cache1.put("key","value");
+  ReplicationQueue replicationQueue=TestingUtil.extractComponent(cache1,ReplicationQueue.class);
+  assertNotNull(replicationQueue);
+  assertEquals(replicationQueue.getElementsCount(),1);
+  assertNull(cache2.get("key"));
+  assertEquals(cache1.get("key"),"value");
+  replicationQueue.flush();
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return cache2.get("key") != null;
+    }
+  }
+);
+  assertEquals(cache2.get("key"),"value");
+  assertEquals(replicationQueue.getElementsCount(),0);
 }

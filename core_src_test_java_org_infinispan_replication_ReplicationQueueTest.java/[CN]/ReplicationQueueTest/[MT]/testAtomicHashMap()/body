@@ -1,2 +1,17 @@
 {
+  TransactionManager transactionManager=TestingUtil.getTransactionManager(cache1);
+  transactionManager.begin();
+  AtomicMap am=AtomicMapLookup.getAtomicMap(cache1,"foo");
+  am.put("sub-key","sub-value");
+  transactionManager.commit();
+  ReplicationQueue replicationQueue=TestingUtil.extractComponent(cache1,ReplicationQueue.class);
+  replicationQueue.flush();
+  long start=System.currentTimeMillis();
+  while (System.currentTimeMillis() - start < 5000) {
+    if (cache2.get("foo") != null)     break;
+    Thread.sleep(50);
+  }
+  assertNotNull(AtomicMapLookup.getAtomicMap(cache2,"foo",false));
+  assertNotNull(AtomicMapLookup.getAtomicMap(cache2,"foo").get("sub-key"));
+  assertEquals(AtomicMapLookup.getAtomicMap(cache2,"foo").get("sub-key"),"sub-value");
 }
