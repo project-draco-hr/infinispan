@@ -7,15 +7,14 @@
   DelayTransfer value=new DelayTransfer();
   cache1.put("delay",value);
   value.enableDelay();
-  WritingThread writerThread=new WritingThread(cache3,tx);
-  writerThread.start();
+  WritingTask writingTask=new WritingTask(cache3,tx);
+  Future<Integer> future=fork(writingTask);
   JoiningNode node2=new JoiningNode(createCacheManager());
   cache2=node2.getCache(cacheName);
   node2.waitForJoin(60000,cache1,cache2,cache3);
-  writerThread.stopThread();
-  writerThread.join();
+  writingTask.stop();
+  int count=future.get(60,SECONDS);
   node2.verifyStateTransfer(new CacheVerifier(cache2));
-  int count=writerThread.result();
   for (int c=0; c < count; c++) {
     assertEquals(c,cache2.get("test" + c));
   }
