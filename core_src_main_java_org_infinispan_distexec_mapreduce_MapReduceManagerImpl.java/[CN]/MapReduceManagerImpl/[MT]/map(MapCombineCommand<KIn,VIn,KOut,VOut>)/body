@@ -6,7 +6,7 @@
   final boolean inputKeysSpecified=keys != null && !keys.isEmpty();
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
   final CollectableCollector<KOut,VOut> collector=new SynchronizedCollector<KOut,VOut>(new DefaultCollector<KIn,VIn,KOut,VOut>(mcc,maxCSize));
-  DataContainer dc=cache.getAdvancedCache().getDataContainer();
+  DataContainer<KIn,VIn> dc=cache.getAdvancedCache().getDataContainer();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,keys);
   long start=log.isTraceEnabled() ? timeService.time() : 0;
   try {
@@ -20,19 +20,19 @@
       }
     }
  else {
-      dc.executeTask(new PrimaryOwnerFilter(cdl),new DataContainerTask<KIn,VIn>(){
-        @Override public void apply(        Object key,        InternalCacheEntry v){
+      dc.executeTask(new PrimaryOwnerFilter<KIn>(cdl),new DataContainerTask<KIn,VIn>(){
+        @Override public void apply(        KIn key,        InternalCacheEntry<KIn,VIn> v){
           VIn value=getValue(v);
           if (value != null) {
-            mapper.map((KIn)key,value,collector);
+            mapper.map(key,value,collector);
           }
         }
       }
 );
     }
     if (persistenceManager != null && !inputKeysSpecified) {
-      KeyFilter<?> keyFilter=new CompositeKeyFilter(new PrimaryOwnerFilter(cdl),new CollectionKeyFilter(dc.keySet()));
-      persistenceManager.processOnAllStores(keyFilter,new MapReduceCacheLoaderTask(mapper,collector),true,false);
+      KeyFilter<?> keyFilter=new CompositeKeyFilter<KIn>(new PrimaryOwnerFilter<KIn>(cdl),new CollectionKeyFilter<KIn>(dc.keySet()));
+      persistenceManager.processOnAllStores(keyFilter,new MapReduceCacheLoaderTask<KIn,VIn,KOut,VOut>(mapper,collector),true,false);
     }
   }
   finally {

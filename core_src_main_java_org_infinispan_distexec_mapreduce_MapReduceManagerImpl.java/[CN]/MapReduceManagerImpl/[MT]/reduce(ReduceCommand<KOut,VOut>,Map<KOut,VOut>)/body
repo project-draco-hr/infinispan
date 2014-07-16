@@ -7,31 +7,18 @@
   }
  else {
     final Reducer<KOut,VOut> reducer=reduceCommand.getReducer();
-    final boolean useIntermediateKeys=reduceCommand.isEmitCompositeIntermediateKeys();
+    final boolean sharedTmpCacheUsed=reduceCommand.isUseIntermediateSharedCache();
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,cdl.getAddress());
     long start=log.isTraceEnabled() ? timeService.time() : 0;
     try {
-      Cache<?,?> cache=cacheManager.getCache(reduceCommand.getCacheName());
+      Cache<IntermediateKey<KOut>,List<VOut>> cache=cacheManager.getCache(reduceCommand.getCacheName());
       taskLifecycleService.onPreExecute(reducer,cache);
-      KeyFilter<?> filter;
-      if (useIntermediateKeys) {
-        filter=new IntermediateKeyFilter<KOut>(taskId);
-      }
- else {
-        filter=KeyFilter.LOAD_ALL_FILTER;
-      }
-      DataContainer dc=cache.getAdvancedCache().getDataContainer();
-      dc.executeTask(filter,new DataContainerTask<KOut,List<VOut>>(){
-        @Override public void apply(        Object k,        InternalCacheEntry v){
-          KOut key=null;
-          if (useIntermediateKeys) {
-            IntermediateCompositeKey<KOut> intKey=(IntermediateCompositeKey<KOut>)k;
-            key=intKey.getKey();
-          }
- else {
-            key=(KOut)k;
-          }
+      KeyFilter<IntermediateKey<KOut>> filter=new IntermediateKeyFilter<KOut>(taskId,!sharedTmpCacheUsed);
+      DataContainer<IntermediateKey<KOut>,List<VOut>> dc=cache.getAdvancedCache().getDataContainer();
+      dc.executeTask(filter,new DataContainerTask<IntermediateKey<KOut>,List<VOut>>(){
+        @Override public void apply(        IntermediateKey<KOut> k,        InternalCacheEntry<IntermediateKey<KOut>,List<VOut>> v){
+          KOut key=k.getKey();
           Iterable<VOut> value=getValue(v);
           if (value == null) {
             throw new IllegalStateException("Found invalid value in intermediate cache, for key " + key + " during reduce phase execution on "+ cacheManager.getAddress()+ " for M/R task "+ taskId);

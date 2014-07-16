@@ -5,7 +5,7 @@
   final Mapper<KIn,VIn,KOut,VOut> mapper=mcc.getMapper();
   final boolean inputKeysSpecified=keys != null && !keys.isEmpty();
   MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
-  DataContainer dc=cache.getAdvancedCache().getDataContainer();
+  DataContainer<KIn,VIn> dc=cache.getAdvancedCache().getDataContainer();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,mcc.getKeys());
   long start=log.isTraceEnabled() ? timeService.time() : 0;
   final Set<KOut> intermediateKeys=new HashSet<KOut>();
@@ -25,14 +25,14 @@
     }
  else {
       MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(mcc,maxCSize);
-      dc.executeTask(new PrimaryOwnerFilter(cdl),task);
+      dc.executeTask(new PrimaryOwnerFilter<KIn>(cdl),task);
       intermediateKeys.addAll(task.getMigratedIntermediateKeys());
       Map<KOut,List<VOut>> combinedValues=task.collectedValues();
       Set<KOut> lastOne=migrateIntermediateKeysAndValues(mcc,combinedValues);
       intermediateKeys.addAll(lastOne);
     }
     if (persistenceManager != null && !inputKeysSpecified) {
-      KeyFilter<?> keyFilter=new CompositeKeyFilter(new PrimaryOwnerFilter(cdl),new CollectionKeyFilter(dc.keySet()));
+      KeyFilter<KIn> keyFilter=new CompositeKeyFilter<KIn>(new PrimaryOwnerFilter<KIn>(cdl),new CollectionKeyFilter<KIn>(dc.keySet()));
       MapCombineTask<KIn,VIn,KOut,VOut> task=new MapCombineTask<KIn,VIn,KOut,VOut>(mcc,maxCSize);
       persistenceManager.processOnAllStores(keyFilter,task,true,false);
       intermediateKeys.addAll(task.getMigratedIntermediateKeys());

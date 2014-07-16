@@ -4,7 +4,6 @@
   if (reducer == null)   throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
   Map<KOut,VOut> result=null;
   if (!isLocalOnly && distributeReducePhase()) {
-    boolean useCompositeKeys=useIntermediateSharedCache();
     try {
       executeTaskInit(getIntermediateCacheName());
     }
@@ -13,8 +12,8 @@
     }
     Set<KOut> allMapPhasesResponses=null;
     try {
-      allMapPhasesResponses=executeMapPhase(useCompositeKeys);
-      result=executeReducePhase(resultCache,allMapPhasesResponses,useCompositeKeys);
+      allMapPhasesResponses=executeMapPhase();
+      result=executeReducePhase(resultCache,allMapPhasesResponses,useIntermediateSharedCache());
     }
  catch (    Exception cause) {
       throw new CacheException(cause);
@@ -29,7 +28,7 @@
         Cache<KOut,VOut> sharedTmpCache=cm.getCache(intermediateCache);
         if (sharedTmpCache != null && allMapPhasesResponses != null) {
           for (          KOut k : allMapPhasesResponses) {
-            sharedTmpCache.removeAsync(new IntermediateCompositeKey<KOut>(taskId.toString(),k));
+            sharedTmpCache.removeAsync(new IntermediateKey<KOut>(taskId.toString(),k));
           }
         }
       }

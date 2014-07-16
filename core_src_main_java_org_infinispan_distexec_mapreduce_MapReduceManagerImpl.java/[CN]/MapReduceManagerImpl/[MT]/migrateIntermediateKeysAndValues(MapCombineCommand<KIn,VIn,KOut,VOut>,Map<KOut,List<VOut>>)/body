@@ -1,14 +1,13 @@
 {
   String taskId=mcc.getTaskId();
   String tmpCacheName=mcc.getIntermediateCacheName();
-  Cache<Object,DeltaList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
+  Cache<IntermediateKey<KOut>,DeltaList<VOut>> tmpCache=cacheManager.getCache(tmpCacheName);
   if (tmpCache == null) {
     throw new IllegalStateException("Temporary cache for MapReduceTask " + taskId + " named "+ tmpCacheName+ " not found on "+ cdl.getAddress());
   }
   Set<KOut> mapPhaseKeys=new HashSet<KOut>();
   DistributionManager dm=tmpCache.getAdvancedCache().getDistributionManager();
-  boolean emitCompositeIntermediateKeys=mcc.isEmitCompositeIntermediateKeys();
-  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dm,taskId,collectedValues.keySet(),emitCompositeIntermediateKeys);
+  Map<Address,List<KOut>> keysToNodes=mapKeysToNodes(dm,taskId,collectedValues.keySet());
   long start=log.isTraceEnabled() ? timeService.time() : 0;
   tmpCache=tmpCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
   try {
@@ -22,12 +21,7 @@
           for (int i=0; i < values.size(); i+=entryTransferCount) {
             List<VOut> chunk=values.subList(i,Math.min(values.size(),i + entryTransferCount));
             DeltaList<VOut> delta=new DeltaList<VOut>(chunk);
-            if (emitCompositeIntermediateKeys) {
-              tmpCache.put(new IntermediateCompositeKey<KOut>(taskId,key),delta);
-            }
- else {
-              tmpCache.put(key,delta);
-            }
+            tmpCache.put(new IntermediateKey<KOut>(taskId,key),delta);
           }
           mapPhaseKeys.add(key);
         }
