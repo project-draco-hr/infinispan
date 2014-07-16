@@ -3,41 +3,32 @@
   assertSize(cache1,0);
   final Map<String,String> map=createAtomicMap(cache1,"testConcurrentWritesAndIteration",true);
   assertSize(map,0);
-  final AtomicBoolean allOk=new AtomicBoolean(true);
-  final CountDownLatch latch=new CountDownLatch(1);
-  Thread t1=fork(new Runnable(){
-    @Override public void run(){
-      try {
-        Map<String,String> map=createAtomicMap(cache1,"testConcurrentWritesAndIteration",true);
-        latch.await();
-        for (int i=0; i < 500; i++) {
-          map.put("key-" + i,"value-" + i);
-        }
-      }
- catch (      Exception e) {
-        log.error("Unexpected error performing transaction",e);
-      }
-    }
-  }
-,false);
-  Thread t2=fork(new Runnable(){
-    @Override public void run(){
+  Callable<Void> c1=new Callable(){
+    @Override public Void call() throws Exception {
       Map<String,String> map=createAtomicMap(cache1,"testConcurrentWritesAndIteration",true);
-      try {
-        latch.await();
-        for (int i=0; i < 500; i++) {
-          map.keySet();
-        }
+      for (int i=0; i < 250; i++) {
+        map.put("key-" + i,"value-" + i);
       }
- catch (      Exception e) {
-        allOk.set(false);
-        log.error("Unexpected error performing transaction",e);
-      }
+      return null;
     }
   }
-,false);
-  latch.countDown();
-  t1.join();
-  t2.join();
-  assertTrue("Iteration raised an exception.",allOk.get());
+;
+  Callable<Void> c2=new Callable(){
+    @Override public Void call() throws Exception {
+      Map<String,String> map=createAtomicMap(cache1,"testConcurrentWritesAndIteration",true);
+      for (int i=0; i < 250; i++) {
+        map.keySet();
+      }
+      return null;
+    }
+  }
+;
+  CompletionService<Void> cs=runConcurrentlyWithCompletionService(c1,c2);
+  for (int i=0; i < 2; i++) {
+    Future<Void> future=cs.poll(1,TimeUnit.MINUTES);
+    if (future == null) {
+      fail("Execution of forked tasks didn't complete within 1 minute");
+    }
+    future.get();
+  }
 }

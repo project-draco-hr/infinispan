@@ -1,2 +1,59 @@
 {
+  final Object k=getKeyForCache(2);
+  inNewThread(new Runnable(){
+    @Override public void run(){
+      try {
+        tm(1).begin();
+        cache(1).put(k,"v");
+        transaction=(DummyTransaction)tm(1).getTransaction();
+        if (!crashBeforePrepare) {
+          transaction.runPrepare();
+        }
+      }
+ catch (      Throwable e) {
+        e.printStackTrace();
+      }
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return checkTxCount(0,0,1) && checkTxCount(1,1,0) && checkTxCount(2,0,1);
+    }
+  }
+);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return !checkLocked(0,k) && !checkLocked(1,k) && checkLocked(2,k);
+    }
+  }
+);
+  killMember(2);
+  assertEquals(2,caches().size());
+  tm(1).begin();
+  try {
+    cache(1).put(k,"v2");
+    fail("Exception expected as lock cannot be acquired on k=" + k);
+  }
+ catch (  Exception e) {
+    tm(1).rollback();
+  }
+  tm(0).begin();
+  try {
+    cache(0).put(k,"v3");
+    fail("Exception expected as lock cannot be acquired on k=" + k);
+  }
+ catch (  Exception e) {
+    tm(0).rollback();
+  }
+  tm(1).resume(transaction);
+  if (!crashBeforePrepare) {
+    transaction.runCommitTx();
+  }
+ else {
+    tm(1).commit();
+  }
+  assertEquals("v",cache(0).get(k));
+  assertEquals("v",cache(1).get(k));
+  assertNotLocked(k);
 }

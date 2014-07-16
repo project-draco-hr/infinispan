@@ -9,17 +9,17 @@
   operation.init(cache(LON,0),key);
   assertNull(operation.initialValue());
   final XSiteStateProviderControl control=XSiteStateProviderControl.replaceInCache(cache(LON,0));
-  final Thread thread=fork(new Runnable(){
+  final Future<?> f=fork(new Runnable(){
     @Override public void run(){
       startStateTransfer(LON,NYC);
     }
   }
-,false);
+);
   control.await();
   assertOnline(LON,NYC);
   operation.perform(cache(LON,0),key).get();
   control.trigger();
-  thread.join(TimeUnit.SECONDS.toMillis(30));
+  f.get(30,TimeUnit.SECONDS);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return extractComponent(cache(LON,0),XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();

@@ -1,0 +1,11 @@
+{
+  if (tasks.length == 0) {
+    throw new IllegalArgumentException("Provided tasks array was empty");
+  }
+  CompletionService<V> completionService=completionService();
+  CyclicBarrier barrier=new CyclicBarrier(tasks.length);
+  for (int i=0; i < tasks.length; i++) {
+    completionService.submit(new ConcurrentCallable<V>(new LoggingCallable<V>(tasks[i]),barrier));
+  }
+  return completionService;
+}

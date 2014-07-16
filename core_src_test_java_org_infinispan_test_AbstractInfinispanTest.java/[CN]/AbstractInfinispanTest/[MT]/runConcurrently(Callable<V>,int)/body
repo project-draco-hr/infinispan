@@ -1,0 +1,14 @@
+{
+  if (callable == null) {
+    throw new NullPointerException("Provided callable cannot be null");
+  }
+  if (invocationCount <= 0) {
+    throw new IllegalArgumentException("Provided invocationCount cannot be less than or equal to 0");
+  }
+  CompletionService<V> completionService=completionService();
+  CyclicBarrier barrier=new CyclicBarrier(invocationCount);
+  for (int i=0; i < invocationCount; ++i) {
+    completionService.submit(new ConcurrentCallable<>(new LoggingCallable<>(callable),barrier));
+  }
+  waitForCompletionServiceTasks(completionService,invocationCount);
+}

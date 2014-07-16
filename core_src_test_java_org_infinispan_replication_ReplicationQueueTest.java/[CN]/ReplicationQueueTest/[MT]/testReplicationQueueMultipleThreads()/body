@@ -1,27 +1,23 @@
 {
-  int numThreads=5;
-  final int numLoopsPerThread=2;
-  ExecutorService executor=Executors.newFixedThreadPool(numThreads,getTestThreadFactory("CachePut"));
-  for (int i=0; i < numThreads; i++) {
-    final int i1=i;
-    executor.execute(new Runnable(){
-      int index=i1;
-      public void run(){
-        for (int j=0; j < numLoopsPerThread; j++) {
-          cache1.put("key" + index + "_"+ j,"value");
-        }
+  final int numThreads=4;
+  final int numLoopsPerThread=3;
+  runConcurrently(new Callable(){
+    AtomicInteger indexOffset=new AtomicInteger();
+    public Void call(){
+      int index=indexOffset.getAndIncrement();
+      for (int j=0; j < numLoopsPerThread; j++) {
+        cache1.put("key" + index + "_"+ j,"value");
       }
+      return null;
     }
-);
   }
-  executor.shutdown();
-  executor.awaitTermination(10,TimeUnit.SECONDS);
+,numThreads);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      return cache2.size() == REPL_QUEUE_MAX_ELEMENTS;
+      return cache2.size() == numThreads * numLoopsPerThread;
     }
   }
 );
   ReplicationQueue replicationQueue=TestingUtil.extractComponent(cache1,ReplicationQueue.class);
-  assertEquals(replicationQueue.getElementsCount(),numThreads * numLoopsPerThread - REPL_QUEUE_MAX_ELEMENTS);
+  assertEquals(0,replicationQueue.getElementsCount());
 }

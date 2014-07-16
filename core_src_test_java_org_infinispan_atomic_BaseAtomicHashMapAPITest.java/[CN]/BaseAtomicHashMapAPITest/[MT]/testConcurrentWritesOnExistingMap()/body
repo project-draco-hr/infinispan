@@ -6,27 +6,23 @@
   final Map<Object,Object> expectedMap=createMap("the-1","my preciousss");
   tm(0,"atomic").begin();
   assertMap(expectedMap,map);
-  final AtomicBoolean allOk=new AtomicBoolean(false);
   map.put("the-2","a minor");
-  fork(new Runnable(){
-    @Override public void run(){
-      try {
-        tm(0,"atomic").begin();
-        Map<String,String> map=createAtomicMap(cache1,"testConcurrentReadsOnExistingMap",true);
-        assertMap(expectedMap,map);
-        assertNotContainsKey(map,"the-2");
-        map.put("the-2","a minor-different");
-        tm(0,"atomic").commit();
-      }
- catch (      org.infinispan.util.concurrent.TimeoutException e) {
-        allOk.set(true);
-      }
-catch (      Exception e) {
-        log.error("Unexpected error performing transaction",e);
-      }
+  Future<Void> f=fork(TestingUtil.withTxCallable(tm(0,"atomic"),new Callable<Void>(){
+    @Override public Void call(){
+      Map<String,String> map=createAtomicMap(cache1,"testConcurrentReadsOnExistingMap",true);
+      assertMap(expectedMap,map);
+      assertNotContainsKey(map,"the-2");
+      map.put("the-2","a minor-different");
+      return null;
     }
   }
-,true);
+));
+  try {
+    f.get(10,TimeUnit.SECONDS);
+    fail("We should have received a wrapped TimeoutException");
+  }
+ catch (  ExecutionException e) {
+    assertTrue(e.getCause() instanceof TimeoutException);
+  }
   tm(0,"atomic").commit();
-  assertTrue(allOk.get());
 }
