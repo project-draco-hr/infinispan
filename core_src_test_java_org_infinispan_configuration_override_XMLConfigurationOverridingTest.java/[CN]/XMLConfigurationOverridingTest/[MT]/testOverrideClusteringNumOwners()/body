@@ -1,6 +1,6 @@
 {
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
-    @Override public void call(){
+    @Override public void call() throws Exception {
       Configuration cnf=cm.getCacheConfiguration(distCacheToChange);
       Assert.assertEquals(CacheMode.DIST_SYNC,cnf.clustering().cacheMode());
       Assert.assertEquals(2,cnf.clustering().hash().numOwners());
@@ -22,10 +22,7 @@
         int cache2Size=cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
         Assert.assertTrue(cache2Size > 0 && cache2Size != cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
       }
- catch (      Exception e) {
-        e.printStackTrace();
-      }
- finally {
+  finally {
         TestingUtil.killCacheManagers(cm1);
       }
     }

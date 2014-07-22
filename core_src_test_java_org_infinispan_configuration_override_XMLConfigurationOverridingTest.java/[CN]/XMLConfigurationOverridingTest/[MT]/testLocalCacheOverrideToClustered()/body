@@ -1,6 +1,6 @@
 {
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
-    @Override public void call(){
+    @Override public void call() throws Exception {
       Assert.assertEquals(CacheMode.LOCAL,cm.getCacheConfiguration(simpleCacheName).clustering().cacheMode());
       Configuration newConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
       cm.defineConfiguration(simpleCacheName,newConfig);
@@ -8,24 +8,19 @@
       for (int i=0; i < 10; i++) {
         cm.getCache(simpleCacheName).put("test" + i,"value" + i);
       }
-      try {
-        final EmbeddedCacheManager cm1=TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
-        cm1.defineConfiguration(simpleCacheName,newConfig);
-        eventually(new Condition(){
-          @Override public boolean isSatisfied() throws Exception {
-            try {
-              return cm1.getCache(simpleCacheName).size() == cm.getCache(simpleCacheName).size();
-            }
+      final EmbeddedCacheManager cm1=TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
+      cm1.defineConfiguration(simpleCacheName,newConfig);
+      eventually(new Condition(){
+        @Override public boolean isSatisfied() throws Exception {
+          try {
+            return cm1.getCache(simpleCacheName).size() == cm.getCache(simpleCacheName).size();
+          }
   finally {
-              TestingUtil.killCacheManagers(cm1);
-            }
+            TestingUtil.killCacheManagers(cm1);
           }
         }
+      }
 );
-      }
- catch (      Exception e) {
-        e.printStackTrace();
-      }
     }
   }
 );

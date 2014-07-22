@@ -1,2 +1,28 @@
 {
+  final Cache<String,String> cache=cache(0,"timestamps");
+  cache.put("k","v");
+  TransactionManager tm=cache.getAdvancedCache().getTransactionManager();
+  tm.begin();
+  cache.put("k","v2");
+  Transaction tx=tm.suspend();
+  final List<Throwable> throwables=new LinkedList<Throwable>();
+  Thread th=new Thread(){
+    public void run(){
+      try {
+        cache.put("k","v3");
+      }
+ catch (      Throwable th) {
+        throwables.add(th);
+      }
+    }
+  }
+;
+  th.start();
+  th.interrupt();
+  th.join();
+  tm.resume(tx);
+  tm.rollback();
+  assertEquals(1,throwables.size());
+  assertTrue(throwables.get(0) instanceof CacheException);
+  assertTrue(throwables.get(0).getCause() instanceof InterruptedException);
 }
