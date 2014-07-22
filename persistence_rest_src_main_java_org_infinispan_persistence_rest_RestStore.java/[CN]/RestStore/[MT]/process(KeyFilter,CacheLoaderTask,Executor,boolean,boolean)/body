@@ -1,13 +1,14 @@
 {
   HttpGet get=new HttpGet(path + "?global");
   get.addHeader(HttpHeaders.ACCEPT,"text/plain");
+  get.addHeader(HttpHeaders.ACCEPT_CHARSET,"UTF-8");
   try {
     HttpResponse response=httpClient.execute(httpHost,get);
     HttpEntity entity=response.getEntity();
     int batchSize=1000;
     ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
     final TaskContext taskContext=new TaskContextImpl();
-    BufferedReader reader=new BufferedReader(new InputStreamReader(entity.getContent()));
+    BufferedReader reader=new BufferedReader(new InputStreamReader(entity.getContent(),"UTF-8"));
     Set<Object> entries=new HashSet<Object>(batchSize);
     for (String stringKey=reader.readLine(); stringKey != null; stringKey=reader.readLine()) {
       Object key=key2StringMapper.getKeyMapping(stringKey);
