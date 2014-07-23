@@ -1,0 +1,16 @@
+{
+  Class<T> serviceClass=getServiceClass();
+  List<String> services=servicesAttachment.getServiceImplementations(serviceClass.getName());
+  ModuleClassLoader classLoader=module.getClassLoader();
+  for (  String serviceName : services) {
+    try {
+      Class<? extends T> clazz=classLoader.loadClass(serviceName).asSubclass(serviceClass);
+      Constructor<? extends T> ctor=clazz.getConstructor();
+      T instance=ctor.newInstance();
+      installService(ctx,serviceName,instance);
+    }
+ catch (    Exception e) {
+      ROOT_LOGGER.cannotInstantiateClass(serviceName,e);
+    }
+  }
+}

@@ -6,7 +6,8 @@
   configureProtocolServerEncryption(configurationBuilder,config);
   configureProtocolServerTopology(configurationBuilder,config);
   final ProtocolServerService service=new ProtocolServerService(getServiceName(operation),HotRodServer.class,configurationBuilder);
-  ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"hotrod"),service);
+  final ServiceName hotRodServerServiceName=EndpointUtils.getServiceName(operation,"hotrod");
+  ServiceBuilder<?> builder=context.getServiceTarget().addService(hotRodServerServiceName,service);
   String cacheContainerName=getCacheContainerName(operation);
   EndpointUtils.addCacheContainerConfigurationDependency(builder,cacheContainerName,service.getCacheManagerConfiguration());
   EndpointUtils.addCacheContainerDependency(builder,cacheContainerName,service.getCacheManager());
@@ -49,5 +50,6 @@
       }
     }
   }
+  builder.addDependency(Constants.EXTENSION_MANAGER_NAME,ExtensionManagerService.class,service.getExtensionManager());
   builder.install();
 }

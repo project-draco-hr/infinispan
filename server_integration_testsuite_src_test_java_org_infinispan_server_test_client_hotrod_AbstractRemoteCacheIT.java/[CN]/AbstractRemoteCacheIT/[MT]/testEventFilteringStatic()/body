@@ -1,0 +1,18 @@
+{
+  final StaticFilteredEventLogListener eventListener=new StaticFilteredEventLogListener();
+  remoteCache.addClientListener(eventListener);
+  try {
+    expectNoEvents(eventListener);
+    remoteCache.put(1,"one");
+    expectNoEvents(eventListener);
+    remoteCache.put(2,"two");
+    expectOnlyCreatedEvent(2,eventListener);
+    remoteCache.remove(1);
+    expectNoEvents(eventListener);
+    remoteCache.remove(2);
+    expectOnlyRemovedEvent(2,eventListener);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}

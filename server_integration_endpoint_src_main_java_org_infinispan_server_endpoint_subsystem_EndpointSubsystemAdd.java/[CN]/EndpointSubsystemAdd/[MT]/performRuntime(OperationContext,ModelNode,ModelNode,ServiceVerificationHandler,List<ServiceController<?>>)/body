@@ -1,0 +1,14 @@
+{
+  final ServiceName serviceName=Constants.EXTENSION_MANAGER_NAME;
+  ExtensionManagerService service=new ExtensionManagerService();
+  ServiceBuilder<?> builder=ctx.getServiceTarget().addService(serviceName,service);
+  ctx.addStep(new AbstractDeploymentChainStep(){
+    protected void execute(    DeploymentProcessorTarget processorTarget){
+      processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,Phase.INSTALL,Constants.INSTALL_FILTER_FACTORY,new FilterFactoryExtensionProcessor(serviceName));
+      processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,Phase.INSTALL,Constants.INSTALL_CONVERTER_FACTORY,new ConverterFactoryExtensionProcessor(serviceName));
+      processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,Phase.DEPENDENCIES,Constants.DEPENDENCIES_FILTER_FACTORY,new ServerExtensionDependenciesProcessor());
+    }
+  }
+,OperationContext.Stage.RUNTIME);
+  builder.install();
+}

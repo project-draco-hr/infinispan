@@ -1,0 +1,26 @@
+{
+  final EventLogListener eventListener=new EventLogListener();
+  remoteCache.addClientListener(eventListener);
+  try {
+    expectNoEvents(eventListener);
+    remoteCache.putIfAbsent(1,"one");
+    expectOnlyCreatedEvent(1,eventListener);
+    remoteCache.putIfAbsent(1,"again");
+    expectNoEvents(eventListener);
+    remoteCache.replace(1,"newone");
+    expectOnlyModifiedEvent(1,eventListener);
+    remoteCache.replaceWithVersion(1,"one",0);
+    expectNoEvents(eventListener);
+    VersionedValue<String> versioned=remoteCache.getVersioned(1);
+    remoteCache.replaceWithVersion(1,"one",versioned.getVersion());
+    expectOnlyModifiedEvent(1,eventListener);
+    remoteCache.removeWithVersion(1,0);
+    expectNoEvents(eventListener);
+    versioned=remoteCache.getVersioned(1);
+    remoteCache.removeWithVersion(1,versioned.getVersion());
+    expectOnlyRemovedEvent(1,eventListener);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}

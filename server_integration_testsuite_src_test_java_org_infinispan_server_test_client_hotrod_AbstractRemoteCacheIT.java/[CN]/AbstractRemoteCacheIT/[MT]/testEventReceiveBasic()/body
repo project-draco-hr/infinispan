@@ -1,0 +1,18 @@
+{
+  final EventLogListener eventListener=new EventLogListener();
+  remoteCache.addClientListener(eventListener);
+  try {
+    expectNoEvents(eventListener);
+    remoteCache.put(1,"one");
+    expectOnlyCreatedEvent(1,eventListener);
+    remoteCache.put(2,"two");
+    expectOnlyCreatedEvent(2,eventListener);
+    remoteCache.put(1,"newone");
+    expectOnlyModifiedEvent(1,eventListener);
+    remoteCache.remove(1);
+    expectOnlyRemovedEvent(1,eventListener);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}

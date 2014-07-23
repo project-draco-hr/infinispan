@@ -1,0 +1,28 @@
+{
+  final DynamicFilteredEventLogListener eventListener=new DynamicFilteredEventLogListener();
+  remoteCache.addClientListener(eventListener,new Object[]{3},null);
+  try {
+    expectNoEvents(eventListener);
+    remoteCache.put(1,"one");
+    expectNoEvents(eventListener);
+    remoteCache.put(2,"two");
+    expectNoEvents(eventListener);
+    remoteCache.put(3,"three");
+    expectOnlyCreatedEvent(3,eventListener);
+    remoteCache.replace(1,"new-one");
+    expectNoEvents(eventListener);
+    remoteCache.replace(2,"new-two");
+    expectNoEvents(eventListener);
+    remoteCache.replace(3,"new-three");
+    expectOnlyModifiedEvent(3,eventListener);
+    remoteCache.remove(1);
+    expectNoEvents(eventListener);
+    remoteCache.remove(2);
+    expectNoEvents(eventListener);
+    remoteCache.remove(3);
+    expectOnlyRemovedEvent(3,eventListener);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}

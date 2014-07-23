@@ -1,0 +1,14 @@
+{
+  final DynamicCustomEventLogListener eventListener=new DynamicCustomEventLogListener();
+  remoteCache.addClientListener(eventListener,null,new Object[]{2});
+  try {
+    eventListener.expectNoEvents();
+    remoteCache.put(1,"one");
+    eventListener.expectSingleCustomEvent(1,"one");
+    remoteCache.put(2,"two");
+    eventListener.expectSingleCustomEvent(2,null);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}
