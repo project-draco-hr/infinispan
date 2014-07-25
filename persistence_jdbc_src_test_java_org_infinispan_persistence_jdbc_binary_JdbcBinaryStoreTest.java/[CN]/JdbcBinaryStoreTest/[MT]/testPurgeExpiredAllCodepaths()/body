@@ -1,15 +1,15 @@
 {
   FixedHashKey k1=new FixedHashKey(1,"a");
   FixedHashKey k2=new FixedHashKey(1,"b");
-  cl.write(new MarshalledEntryImpl(k1,"value",null,getMarshaller()));
+  cl.write(marshalledEntry(k1,"value",null));
   Metadata metadata=metadata(1000,null);
-  InternalMetadataImpl im=new InternalMetadataImpl(metadata,System.currentTimeMillis(),System.currentTimeMillis());
-  cl.write(new MarshalledEntryImpl(k2,"value",im,getMarshaller()));
+  InternalMetadataImpl im=new InternalMetadataImpl(metadata,timeService.wallClockTime(),timeService.wallClockTime());
+  cl.write(marshalledEntry(k2,"value",im));
   for (int i=0; i < 120; i++) {
-    cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10,"non-exp k" + i),"value",null,getMarshaller()));
-    cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10,"exp k" + i),"value",im,getMarshaller()));
+    cl.write(marshalledEntry(new FixedHashKey(i + 10,"non-exp k" + i),"value",null));
+    cl.write(marshalledEntry(new FixedHashKey(i + 10,"exp k" + i),"value",im));
   }
-  TestingUtil.sleepThread(1000);
+  timeService.advance(1001);
   assertContains(k1,true);
   assertContains(k2,false);
   cl.purge(new WithinThreadExecutor(),null);

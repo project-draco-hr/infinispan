@@ -1,0 +1,25 @@
+{
+  assertContains("k",false);
+  long lifespan=1000;
+  long idle=1000;
+  InternalCacheEntry se=internalCacheEntry("k","v",lifespan,idle);
+  InternalCacheValue icv=se.toInternalCacheValue();
+  assertEquals(se.getCreated(),icv.getCreated());
+  assertEquals(se.getLastUsed(),icv.getLastUsed());
+  assertExpired(se,false);
+  cl.write(marshalledEntry(se));
+  assertContains("k",true);
+  assertCorrectExpiry(cl.load("k"),"v",lifespan,idle,false);
+  assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(),"v",lifespan,idle,false);
+  idle=4000;
+  lifespan=1000;
+  se=internalCacheEntry("k","v",lifespan,idle);
+  assertExpired(se,false);
+  cl.write(marshalledEntry(se));
+  timeService.advance(lifespan + 1);
+  assertExpired(se,true);
+  purgeExpired("k");
+  assertEventuallyExpires("k");
+  assertContains("k",false);
+  assertIsEmpty();
+}

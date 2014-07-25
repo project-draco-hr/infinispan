@@ -1,0 +1,16 @@
+{
+  final Set<String> expired=new HashSet<>(Arrays.asList(expiredKeys));
+  final Set<Object> incorrect=new HashSet<>();
+  final AdvancedCacheWriter.PurgeListener purgeListener=new AdvancedCacheWriter.PurgeListener<String>(){
+    @Override public void entryPurged(    String key){
+      if (!expired.remove(key)) {
+        incorrect.add(key);
+      }
+    }
+  }
+;
+  cl.purge(new WithinThreadExecutor(),purgeListener);
+  assertEmpty(incorrect,true);
+  assertTrue(expired.isEmpty() || !storePurgesAllExpired());
+  assertEquals(Collections.emptySet(),incorrect);
+}

@@ -2,27 +2,26 @@
   assertIsEmpty();
   long lifespan=6000;
   long idle=4000;
-  InternalCacheEntry ice1=TestInternalCacheEntryFactory.create("k1",wrap("k1","v1"),lifespan);
+  InternalCacheEntry ice1=internalCacheEntry("k1","v1",lifespan);
   cl.write(marshalledEntry(ice1));
-  InternalCacheEntry ice2=TestInternalCacheEntryFactory.create("k2",wrap("k2","v2"),-1,idle);
+  InternalCacheEntry ice2=internalCacheEntry("k2","v2",-1,idle);
   cl.write(marshalledEntry(ice2));
-  InternalCacheEntry ice3=TestInternalCacheEntryFactory.create("k3",wrap("k3","v3"),lifespan,idle);
+  InternalCacheEntry ice3=internalCacheEntry("k3","v3",lifespan,idle);
   cl.write(marshalledEntry(ice3));
-  InternalCacheEntry ice4=TestInternalCacheEntryFactory.create("k4",wrap("k4","v4"),-1,-1);
+  InternalCacheEntry ice4=internalCacheEntry("k4","v4",-1,-1);
   cl.write(marshalledEntry(ice4));
-  InternalCacheEntry ice5=TestInternalCacheEntryFactory.create("k5",wrap("k5","v5"),lifespan * 1000,idle * 1000);
+  InternalCacheEntry ice5=internalCacheEntry("k5","v5",lifespan * 1000,idle * 1000);
   cl.write(marshalledEntry(ice5));
   assertContains("k1",true);
   assertContains("k2",true);
   assertContains("k3",true);
   assertContains("k4",true);
   assertContains("k5",true);
-  Thread.sleep(lifespan + 10);
-  HashSet<String> expiredKeys=new HashSet<>(Arrays.asList("k1","k2","k3"));
-  purgeExpired(Collections.unmodifiableSet(expiredKeys),10000);
-  for (  String key : expiredKeys) {
-    assertContains(key,false);
-  }
+  timeService.advance(lifespan + 1);
+  purgeExpired("k1","k2","k3");
+  assertContains("k1",false);
+  assertContains("k2",false);
+  assertContains("k3",false);
   assertContains("k4",true);
   assertContains("k5",true);
 }

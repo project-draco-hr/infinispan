@@ -5,6 +5,10 @@
   globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
   localCacheManager=TestCacheManagerFactory.createCacheManager(globalConfig,localBuilder);
   localCacheManager.getCache(REMOTE_CACHE);
+  GlobalComponentRegistry gcr=localCacheManager.getGlobalComponentRegistry();
+  gcr.registerComponent(timeService,TimeService.class);
+  gcr.rewire();
+  localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
   restServer=RestTestingUtil.startRestServer(localCacheManager);
   ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
   RestStoreConfigurationBuilder storeConfigurationBuilder=builder.persistence().addStore(RestStoreConfigurationBuilder.class);
