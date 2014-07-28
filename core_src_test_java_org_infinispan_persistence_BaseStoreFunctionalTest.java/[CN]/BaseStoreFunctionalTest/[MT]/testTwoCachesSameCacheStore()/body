@@ -1,26 +1,18 @@
 {
-  EmbeddedCacheManager localCacheManager=TestCacheManagerFactory.createCacheManager(false);
-  try {
-    ConfigurationBuilder cb=new ConfigurationBuilder();
-    cb.read(localCacheManager.getDefaultCacheConfiguration());
-    createCacheStoreConfig(cb.persistence(),false);
-    Configuration c=cb.build();
-    localCacheManager.defineConfiguration("first",c);
-    localCacheManager.defineConfiguration("second",c);
-    cacheNames.add("first");
-    cacheNames.add("second");
-    Cache<String,Object> first=localCacheManager.getCache("first");
-    Cache<String,Object> second=localCacheManager.getCache("second");
-    first.start();
-    second.start();
-    first.put("key",wrap("key","val"));
-    assertEquals("val",unwrap(first.get("key")));
-    assertNull(second.get("key"));
-    second.put("key2",wrap("key2","val2"));
-    assertEquals("val2",unwrap(second.get("key2")));
-    assertNull(first.get("key2"));
-  }
-  finally {
-    TestingUtil.killCacheManagers(localCacheManager);
-  }
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.read(cacheManager.getDefaultCacheConfiguration());
+  createCacheStoreConfig(cb.persistence(),false);
+  Configuration c=cb.build();
+  cacheManager.defineConfiguration("testTwoCachesSameCacheStore-1",c);
+  cacheManager.defineConfiguration("testTwoCachesSameCacheStore-2",c);
+  Cache<String,Object> first=cacheManager.getCache("testTwoCachesSameCacheStore-1");
+  Cache<String,Object> second=cacheManager.getCache("testTwoCachesSameCacheStore-2");
+  first.start();
+  second.start();
+  first.put("key",wrap("key","val"));
+  assertEquals("val",unwrap(first.get("key")));
+  assertNull(second.get("key"));
+  second.put("key2",wrap("key2","val2"));
+  assertEquals("val2",unwrap(second.get("key2")));
+  assertNull(first.get("key2"));
 }

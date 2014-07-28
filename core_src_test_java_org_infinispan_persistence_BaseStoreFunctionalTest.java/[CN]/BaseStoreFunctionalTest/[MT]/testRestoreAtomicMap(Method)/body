@@ -1,14 +1,8 @@
 {
-  CacheContainer localCacheContainer=getContainerWithCacheLoader(null,false);
-  try {
-    Cache<String,Object> cache=localCacheContainer.getCache();
-    cacheNames.add(cache.getName());
-    AtomicMap<String,String> map=AtomicMapLookup.getAtomicMap(cache,m.getName());
-    map.put("a","b");
-    cache.evict(m.getName());
-    assertEquals("b",AtomicMapLookup.getAtomicMap(cache,m.getName()).get("a"));
-  }
-  finally {
-    TestingUtil.killCacheManagers(localCacheContainer);
-  }
+  cacheManager.defineConfiguration(m.getName(),configureCacheLoader(null,false).build());
+  Cache<String,Object> cache=cacheManager.getCache(m.getName());
+  AtomicMap<String,String> map=AtomicMapLookup.getAtomicMap(cache,m.getName());
+  map.put("a","b");
+  cache.evict(m.getName());
+  assertEquals("b",AtomicMapLookup.getAtomicMap(cache,m.getName()).get("a"));
 }

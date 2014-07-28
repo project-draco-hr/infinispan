@@ -1,0 +1,32 @@
+{
+  for (  Cache c : caches) {
+    try {
+      if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
+        TransactionManager tm=c.getAdvancedCache().getTransactionManager();
+        if (tm != null) {
+          try {
+            tm.rollback();
+          }
+ catch (          Exception e) {
+          }
+        }
+        if (c.getAdvancedCache().getRpcManager() != null) {
+          log.tracef("Cache contents on %s before stopping: %s",c.getAdvancedCache().getRpcManager().getAddress(),c.entrySet());
+        }
+ else {
+          log.tracef("Cache contents before stopping: %s",c.entrySet());
+        }
+        if (clear) {
+          try {
+            c.clear();
+          }
+ catch (          Exception ignored) {
+          }
+        }
+        c.stop();
+      }
+    }
+ catch (    Throwable t) {
+    }
+  }
+}
