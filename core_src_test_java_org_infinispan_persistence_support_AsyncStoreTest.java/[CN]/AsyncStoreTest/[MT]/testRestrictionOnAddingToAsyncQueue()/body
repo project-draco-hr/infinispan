@@ -1,2 +1,18 @@
 {
+  TestResourceTracker.backgroundTestStarted(this);
+  createStore();
+  writer.delete("blah");
+  final int number=10;
+  String key="testRestrictionOnAddingToAsyncQueue-k";
+  String value="testRestrictionOnAddingToAsyncQueue-v-";
+  doTestPut(number,key,value);
+  writer.stop();
+  try {
+    writer.write(new MarshalledEntryImpl("k",(Object)null,null,marshaller()));
+    fail("Should have restricted this entry from being made");
+  }
+ catch (  CacheException expected) {
+  }
+  writer.start();
+  doTestRemove(number,key);
 }

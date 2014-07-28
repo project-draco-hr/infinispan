@@ -1,2 +1,29 @@
 {
+  try {
+    final String key="k1";
+    final CountDownLatch v1Latch=new CountDownLatch(1);
+    final CountDownLatch v2Latch=new CountDownLatch(1);
+    final CountDownLatch endLatch=new CountDownLatch(1);
+    DummyInMemoryStore underlying=new DummyInMemoryStore();
+    writer=new MockAsyncCacheWriter(key,v1Latch,v2Latch,endLatch,underlying);
+    ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+    builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(m.getName());
+    Configuration configuration=builder.build();
+    InitializationContext ctx=PersistenceMockUtil.createContext(getClass().getSimpleName(),configuration,marshaller);
+    writer.init(ctx);
+    writer.start();
+    underlying.init(ctx);
+    underlying.start();
+    writer.write(new MarshalledEntryImpl(key,"v1",null,marshaller()));
+    v2Latch.await();
+    writer.write(new MarshalledEntryImpl(key,"v2",null,marshaller()));
+    if (!endLatch.await(30000l,TimeUnit.MILLISECONDS))     fail();
+    loader=new AdvancedAsyncCacheLoader(underlying,writer.getState());
+    assertEquals("v2",loader.load(key).getValue());
+  }
+  finally {
+    writer.clear();
+    writer.stop();
+    writer=null;
+  }
 }

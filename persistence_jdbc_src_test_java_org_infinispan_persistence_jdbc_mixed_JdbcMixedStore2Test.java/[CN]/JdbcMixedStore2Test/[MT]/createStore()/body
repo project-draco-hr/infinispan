@@ -1,13 +1,11 @@
 {
-  ConfigurationBuilder cc=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-  JdbcMixedStoreConfigurationBuilder storeBuilder=cc.persistence().addStore(JdbcMixedStoreConfigurationBuilder.class);
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  JdbcMixedStoreConfigurationBuilder storeBuilder=builder.persistence().addStore(JdbcMixedStoreConfigurationBuilder.class);
   UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
   UnitTestDatabaseManager.setDialect(storeBuilder);
   UnitTestDatabaseManager.buildTableManipulation(storeBuilder.stringTable(),false);
   UnitTestDatabaseManager.buildTableManipulation(storeBuilder.binaryTable(),true);
-  cacheManager=TestCacheManagerFactory.createCacheManager(cc);
-  cache=cacheManager.getCache();
-  JdbcMixedStore jdbcMixed=TestingUtil.getFirstWriter(cache);
-  csc=jdbcMixed.getConfiguration();
+  JdbcMixedStore jdbcMixed=new JdbcMixedStore();
+  jdbcMixed.init(createContext(builder.build()));
   return jdbcMixed;
 }

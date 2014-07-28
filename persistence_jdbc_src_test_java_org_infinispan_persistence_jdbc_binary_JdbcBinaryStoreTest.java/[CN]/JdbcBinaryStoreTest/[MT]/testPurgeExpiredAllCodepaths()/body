@@ -1,2 +1,19 @@
 {
+  FixedHashKey k1=new FixedHashKey(1,"a");
+  FixedHashKey k2=new FixedHashKey(1,"b");
+  cl.write(new MarshalledEntryImpl(k1,"value",null,getMarshaller()));
+  Metadata metadata=metadata(1000,null);
+  InternalMetadataImpl im=new InternalMetadataImpl(metadata,System.currentTimeMillis(),System.currentTimeMillis());
+  cl.write(new MarshalledEntryImpl(k2,"value",im,getMarshaller()));
+  for (int i=0; i < 120; i++) {
+    cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10,"non-exp k" + i),"value",null,getMarshaller()));
+    cl.write(new MarshalledEntryImpl(new FixedHashKey(i + 10,"exp k" + i),"value",im,getMarshaller()));
+  }
+  TestingUtil.sleepThread(1000);
+  assertContains(k1,true);
+  assertContains(k2,false);
+  cl.purge(new WithinThreadExecutor(),null);
+  assertContains(k1,true);
+  assertContains(k2,false);
+  UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryStore)cl).getConnectionFactory());
 }

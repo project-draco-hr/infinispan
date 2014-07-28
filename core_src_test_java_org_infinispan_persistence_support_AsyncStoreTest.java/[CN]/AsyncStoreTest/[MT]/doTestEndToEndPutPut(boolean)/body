@@ -1,2 +1,19 @@
 {
+  TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation){
+    @Override public void call(){
+      cache.put("X","1");
+      cache.put("Y","1");
+      while (store.load("X") == null)       TestingUtil.sleepThread(10);
+      store.lock.lock();
+      try {
+        cache.put("X","2");
+        cache.put("Y","2");
+        assertEquals("cache must return X == 2","2",cache.get("X"));
+      }
+  finally {
+        store.lock.unlock();
+      }
+    }
+  }
+);
 }

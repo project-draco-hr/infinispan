@@ -1,2 +1,17 @@
 {
+  assertIsEmpty();
+  cl.write(marshalledEntry("k1","v1",null));
+  cl.write(marshalledEntry("k2","v2",null));
+  cl.write(marshalledEntry("k3","v3",null));
+  cl.write(marshalledEntry("k4","v4",null));
+  cl.write(marshalledEntry("k5","v5",null));
+  Set<MarshalledEntry> s=TestingUtil.allEntries(cl);
+  assertSize(s,5);
+  s=allEntries(cl,new CollectionKeyFilter<>(emptySet()));
+  assertSize(s,5);
+  s=allEntries(cl,new CollectionKeyFilter<>(Collections.<Object>singleton("k3")));
+  assertSize(s,4);
+  for (  MarshalledEntry me : s) {
+    assertFalse(me.getKey().equals("k3"));
+  }
 }

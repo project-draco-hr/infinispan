@@ -1,2 +1,24 @@
 {
+  CacheContainer cm=null;
+  try {
+    cm=TestCacheManagerFactory.fromXml("configs/managed/binary-managed-connection-factory.xml");
+    Cache<String,String> first=cm.getCache("first");
+    Cache<String,String> second=cm.getCache("second");
+    StoreConfiguration firstCacheLoaderConfig=first.getCacheConfiguration().persistence().stores().get(0);
+    assertNotNull(firstCacheLoaderConfig);
+    StoreConfiguration secondCacheLoaderConfig=second.getCacheConfiguration().persistence().stores().get(0);
+    assertNotNull(secondCacheLoaderConfig);
+    assertTrue(firstCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+    assertTrue(secondCacheLoaderConfig instanceof JdbcBinaryStoreConfiguration);
+    JdbcBinaryStore loader=(JdbcBinaryStore)TestingUtil.getFirstLoader(first);
+    assertTrue(loader.getConnectionFactory() instanceof ManagedConnectionFactory);
+  }
+  finally {
+    try {
+      TestingUtil.killCacheManagers(cm);
+    }
+ catch (    Throwable e) {
+      e.printStackTrace();
+    }
+  }
 }

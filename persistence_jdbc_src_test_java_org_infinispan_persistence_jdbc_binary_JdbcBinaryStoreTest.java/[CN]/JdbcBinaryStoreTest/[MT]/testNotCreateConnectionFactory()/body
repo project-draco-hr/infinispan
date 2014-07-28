@@ -1,2 +1,16 @@
 {
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  JdbcBinaryStoreConfigurationBuilder storeBuilder=builder.persistence().addStore(JdbcBinaryStoreConfigurationBuilder.class).manageConnectionFactory(false);
+  storeBuilder.table().createOnStart(false);
+  JdbcBinaryStore jdbcBucketCacheStore=new JdbcBinaryStore();
+  jdbcBucketCacheStore.init(createContext(builder.build()));
+  jdbcBucketCacheStore.start();
+  assertNull(jdbcBucketCacheStore.getConnectionFactory());
+  ConnectionFactory connectionFactory=mock(ConnectionFactory.class);
+  TableManipulation tableManipulation=mock(TableManipulation.class);
+  tableManipulation.start(connectionFactory);
+  tableManipulation.setCacheName("aName");
+  jdbcBucketCacheStore.doConnectionFactoryInitialization(connectionFactory);
+  tableManipulation.stop();
+  jdbcBucketCacheStore.stop();
 }

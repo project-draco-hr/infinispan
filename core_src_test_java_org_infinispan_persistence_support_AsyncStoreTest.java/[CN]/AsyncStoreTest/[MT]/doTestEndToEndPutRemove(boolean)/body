@@ -1,2 +1,18 @@
 {
+  TestingUtil.withCacheManager(new OneEntryCacheManagerCallable(passivation){
+    @Override public void call(){
+      cache.put("X","1");
+      cache.put("Y","1");
+      while (store.load("X") == null)       TestingUtil.sleepThread(10);
+      store.lock.lock();
+      try {
+        cache.remove("X");
+        assertNull(cache.get("X"));
+      }
+  finally {
+        store.lock.unlock();
+      }
+    }
+  }
+);
 }

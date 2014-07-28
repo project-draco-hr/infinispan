@@ -1,2 +1,14 @@
 {
+  assertIsEmpty();
+  MarshalledValue key=new MarshalledValue(new Pojo().role("key"),getMarshaller());
+  MarshalledValue key2=new MarshalledValue(new Pojo().role("key2"),getMarshaller());
+  MarshalledValue value=new MarshalledValue(new Pojo().role("value"),getMarshaller());
+  assertFalse(cl.contains(key));
+  cl.write(new MarshalledEntryImpl<Object,Object>(key,value,null,getMarshaller()));
+  assertEquals(value,cl.load(key).getValue());
+  MarshalledEntry entry=cl.load(key);
+  assertTrue("Expected an immortalEntry",entry.getMetadata() == null || entry.getMetadata().expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
+  assertContains(key,true);
+  assertFalse(cl.delete(key2));
+  assertTrue(cl.delete(key));
 }

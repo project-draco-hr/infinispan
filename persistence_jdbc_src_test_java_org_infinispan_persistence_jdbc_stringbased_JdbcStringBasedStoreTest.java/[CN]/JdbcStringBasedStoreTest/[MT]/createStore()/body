@@ -1,9 +1,9 @@
 {
-  JdbcStringBasedStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  JdbcStringBasedStoreConfigurationBuilder storeBuilder=builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
   UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
   UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
   JdbcStringBasedStore stringBasedCacheStore=new JdbcStringBasedStore();
-  stringBasedCacheStore.init(new InitializationContextImpl(storeBuilder.create(),getCache(),getMarshaller(),new DefaultTimeService(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(getMarshaller())));
-  stringBasedCacheStore.start();
+  stringBasedCacheStore.init(createContext(builder.build()));
   return stringBasedCacheStore;
 }

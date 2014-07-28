@@ -1,2 +1,11 @@
 {
+  InternalCacheEntry first=TestInternalCacheEntryFactory.create(MIRCEA,"val",1000);
+  InternalCacheEntry second=TestInternalCacheEntryFactory.create(MANIK,"val2");
+  cacheStore.write(marshalledEntry(first,marshaller));
+  cacheStore.write(marshalledEntry(second,marshaller));
+  assertRowCount(2);
+  Thread.sleep(1100);
+  cacheStore.purge(new WithinThreadExecutor(),null);
+  assertRowCount(1);
+  assertEquals("val2",cacheStore.load(MANIK).getValue());
 }

@@ -1,10 +1,10 @@
 {
   final ThreadPoolExecutor executor=new ThreadPoolExecutor(3,3,1,TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>());
-  final Set<String> expired=new ConcurrentHashSet<String>();
+  final Set<String> expired=new ConcurrentHashSet<>();
   for (  String key : expiredKeys)   expired.add(key);
-  final Set<Object> incorrect=new ConcurrentHashSet<Object>();
-  final AdvancedCacheWriter.PurgeListener purgeListener=new AdvancedCacheWriter.PurgeListener(){
-    @Override public void entryPurged(    Object key){
+  final Set<Object> incorrect=new ConcurrentHashSet<>();
+  final AdvancedCacheWriter.PurgeListener purgeListener=new AdvancedCacheWriter.PurgeListener<String>(){
+    @Override public void entryPurged(    String key){
       if (!expired.remove(key)) {
         incorrect.add(key);
       }

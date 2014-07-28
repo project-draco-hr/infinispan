@@ -1,13 +1,13 @@
 {
-  cl.write(new MarshalledEntryImpl("k1",wrap("k1","v1"),null,getMarshaller()));
-  cl.write(new MarshalledEntryImpl("k2",wrap("k2","v2"),null,getMarshaller()));
-  cl.write(new MarshalledEntryImpl("k3",wrap("k3","v3"),null,getMarshaller()));
+  assertIsEmpty();
+  cl.write(marshalledEntry("k1","v1",null));
+  cl.write(marshalledEntry("k2","v2",null));
+  cl.write(marshalledEntry("k3","v3",null));
   Set<MarshalledEntry> set=TestingUtil.allEntries(cl);
-  assertEquals(3,set.size());
-  Set expected=new HashSet();
-  expected.add("k1");
-  expected.add("k2");
-  expected.add("k3");
-  for (  MarshalledEntry se : set)   assertTrue(expected.remove(se.getKey()));
-  assertTrue(expected.isEmpty());
+  assertSize(set,3);
+  Set<String> expected=new HashSet<>(Arrays.asList("k1","k2","k3"));
+  for (  MarshalledEntry se : set) {
+    assertTrue(expected.remove(se.getKey()));
+  }
+  assertEmpty(expected,true);
 }

@@ -1,9 +1,8 @@
 {
-  DummyInMemoryStore cl=new DummyInMemoryStore();
-  final DummyInMemoryStoreConfigurationBuilder loader=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+  DummyInMemoryStore store=new DummyInMemoryStore();
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  final DummyInMemoryStoreConfigurationBuilder loader=builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
   loader.storeName(getClass().getName());
-  cl.init(new DummyInitializationContext(loader.create(),getCache(),getMarshaller(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(getMarshaller())));
-  cl.start();
-  csc=loader.create();
-  return cl;
+  store.init(createContext(builder.build()));
+  return store;
 }

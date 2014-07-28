@@ -1,9 +1,10 @@
 {
-  DummyInMemoryStoreConfigurationBuilder dummyCfg=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(AsyncStoreTest.class.getName());
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  DummyInMemoryStoreConfigurationBuilder dummyCfg=builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(AsyncStoreTest.class.getName());
   dummyCfg.async().enable().threadPoolSize(10);
   DummyInMemoryStore underlying=new DummyInMemoryStore();
   writer=new AdvancedAsyncCacheWriter(underlying);
-  DummyInitializationContext ctx=new DummyInitializationContext(dummyCfg.create(),getCache(),marshaller(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(marshaller()));
+  InitializationContext ctx=PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller);
   writer.init(ctx);
   writer.start();
   loader=new AdvancedAsyncCacheLoader(underlying,writer.getState());

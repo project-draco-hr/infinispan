@@ -1,2 +1,29 @@
 {
+  assertIsEmpty();
+  final long startTime=System.currentTimeMillis();
+  final long lifespan=3000;
+  InternalCacheEntry ice=TestInternalCacheEntryFactory.create("k1",wrap("k1","v1"),lifespan);
+  cl.write(marshalledEntry(ice));
+  while (true) {
+    MarshalledEntry entry=cl.load("k1");
+    if (System.currentTimeMillis() >= startTime + lifespan)     break;
+    assertEquals("v1",unwrap(entry.getValue()));
+    Thread.sleep(100);
+  }
+  while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+    if (cl.load("k1") == null)     break;
+  }
+  assertNull(cl.load("k1"));
+  InternalCacheEntry ice2=TestInternalCacheEntryFactory.create("k1",wrap("k1","v2"),lifespan);
+  cl.write(marshalledEntry(ice2));
+  while (true) {
+    MarshalledEntry entry=cl.load("k1");
+    if (System.currentTimeMillis() >= startTime + lifespan)     break;
+    assertEquals("v2",unwrap(entry.getValue()));
+    Thread.sleep(100);
+  }
+  while (System.currentTimeMillis() < startTime + lifespan + 20000) {
+    if (cl.load("k1") == null)     break;
+  }
+  assertNull(cl.load("k1"));
 }

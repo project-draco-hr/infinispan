@@ -1,2 +1,19 @@
 {
+  assertIsEmpty();
+  long idle=120000;
+  InternalCacheEntry se=TestInternalCacheEntryFactory.create("k",wrap("k","v"),-1,idle);
+  cl.write(marshalledEntry(se));
+  assertContains("k",true);
+  MarshalledEntry me=cl.load("k");
+  assertCorrectExpiry(me,"v",-1,idle,false);
+  assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(),"v",-1,idle,false);
+  idle=1;
+  se=TestInternalCacheEntryFactory.create("k",wrap("k","v"),-1,idle);
+  cl.write(marshalledEntry(se));
+  Thread.sleep(100);
+  purgeExpired(Collections.singleton("k"),10000);
+  assertExpired(se,true);
+  assertEventuallyExpires("k");
+  assertContains("k",false);
+  assertIsEmpty();
 }

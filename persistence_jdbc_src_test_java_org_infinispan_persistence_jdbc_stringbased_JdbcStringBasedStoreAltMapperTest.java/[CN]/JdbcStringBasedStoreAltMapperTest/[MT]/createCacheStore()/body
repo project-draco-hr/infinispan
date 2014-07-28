@@ -1,10 +1,11 @@
 {
-  JdbcStringBasedStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).key2StringMapper(PersonKey2StringMapper.class);
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  JdbcStringBasedStoreConfigurationBuilder storeBuilder=builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).key2StringMapper(PersonKey2StringMapper.class);
   UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
   UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
   cacheStore=new JdbcStringBasedStore();
   marshaller=new TestObjectStreamMarshaller();
-  cacheStore.init(new InitializationContextImpl(storeBuilder.create(),mockCache(getClass().getName()),marshaller,new DefaultTimeService(),new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(marshaller)));
+  cacheStore.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller));
   cacheStore.start();
   tableManipulation=(TableManipulation)ReflectionUtil.getValue(cacheStore,"tableManipulation");
 }

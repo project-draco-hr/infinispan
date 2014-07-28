@@ -1,2 +1,29 @@
 {
+  assertIsEmpty();
+  long lifespan=1;
+  long idle=1;
+  InternalCacheEntry se1=TestInternalCacheEntryFactory.create("k1",wrap("k1","v1"),lifespan);
+  InternalCacheEntry se2=TestInternalCacheEntryFactory.create("k2",wrap("k2","v2"));
+  InternalCacheEntry se3=TestInternalCacheEntryFactory.create("k3",wrap("k3","v3"),-1,idle);
+  InternalCacheEntry se4=TestInternalCacheEntryFactory.create("k4",wrap("k4","v4"),lifespan,idle);
+  cl.write(marshalledEntry(se1));
+  cl.write(marshalledEntry(se2));
+  cl.write(marshalledEntry(se3));
+  cl.write(marshalledEntry(se4));
+  sleepForStopStartTest();
+  cl.stop();
+  cl.start();
+  assertExpired(se1,true);
+  assertNull(cl.load("k1"));
+  assertContains("k1",false);
+  assertExpired(se2,false);
+  assertNotNull(cl.load("k2"));
+  assertContains("k2",true);
+  assertEquals("v2",unwrap(cl.load("k2").getValue()));
+  assertExpired(se3,true);
+  assertNull(cl.load("k3"));
+  assertContains("k3",false);
+  assertExpired(se4,true);
+  assertNull(cl.load("k4"));
+  assertContains("k4",false);
 }

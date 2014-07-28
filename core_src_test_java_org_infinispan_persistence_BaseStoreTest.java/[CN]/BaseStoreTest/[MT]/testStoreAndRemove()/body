@@ -1,2 +1,20 @@
 {
+  assertIsEmpty();
+  cl.write(marshalledEntry("k1","v1",null));
+  cl.write(marshalledEntry("k2","v2",null));
+  cl.write(marshalledEntry("k3","v3",null));
+  cl.write(marshalledEntry("k4","v4",null));
+  Set<MarshalledEntry> set=TestingUtil.allEntries(cl);
+  assertSize(set,4);
+  Set<String> expected=new HashSet<>(Arrays.asList("k1","k2","k3","k4"));
+  for (  MarshalledEntry se : set) {
+    assertTrue(expected.remove(se.getKey()));
+  }
+  assertEmpty(expected,true);
+  cl.delete("k1");
+  cl.delete("k2");
+  cl.delete("k3");
+  set=TestingUtil.allEntries(cl);
+  assertSize(set,1);
+  assertEquals("k4",set.iterator().next().getKey());
 }

@@ -1,2 +1,35 @@
 {
+  LockableStore underlying=new LockableStore();
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  LockableStoreConfigurationBuilder lcscsBuilder=(LockableStoreConfigurationBuilder)builder.persistence().addStore(new LockableStoreConfigurationBuilder(builder.persistence()));
+  lcscsBuilder.async().modificationQueueSize(10);
+  writer=new AdvancedAsyncCacheWriter(underlying);
+  writer.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller));
+  writer.start();
+  try {
+    final CountDownLatch done=new CountDownLatch(1);
+    underlying.lock.lock();
+    try {
+      Thread t=new Thread(){
+        @Override public void run(){
+          try {
+            for (int i=0; i < 100; i++)             writer.write(new MarshalledEntryImpl(k(m,i),v(m,i),null,marshaller()));
+          }
+ catch (          Exception e) {
+            log.error("Error storing entry",e);
+          }
+          done.countDown();
+        }
+      }
+;
+      t.start();
+      assertFalse("Background thread should have blocked after adding 10 entries",done.await(1,TimeUnit.SECONDS));
+    }
+  finally {
+      underlying.lock.unlock();
+    }
+  }
+  finally {
+    writer.stop();
+  }
 }

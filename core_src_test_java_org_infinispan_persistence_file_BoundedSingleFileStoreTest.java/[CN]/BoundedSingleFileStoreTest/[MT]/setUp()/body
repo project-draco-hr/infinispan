@@ -1,8 +1,9 @@
 {
   clearTempDir();
   store=new SingleFileStore();
-  SingleFileStoreConfiguration fileStoreConfiguration=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(SingleFileStoreConfigurationBuilder.class).location(this.tmpDirectory).maxEntries(1).create();
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  builder.persistence().addStore(SingleFileStoreConfigurationBuilder.class).location(this.tmpDirectory).maxEntries(1);
   marshaller=new TestObjectStreamMarshaller();
-  store.init(new DummyInitializationContext(fileStoreConfiguration,getCache(),marshaller,new ByteBufferFactoryImpl(),new MarshalledEntryFactoryImpl(marshaller)));
+  store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller));
   store.start();
 }
