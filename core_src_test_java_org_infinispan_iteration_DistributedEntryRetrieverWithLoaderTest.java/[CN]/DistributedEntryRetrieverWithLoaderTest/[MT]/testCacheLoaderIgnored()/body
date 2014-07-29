@@ -1,7 +1,7 @@
 {
-  Map<MagicKey,String> originalValues=insertDefaultValues(true);
+  Map<MagicKey,String> originalValues=insertDefaultValues(false);
   EntryRetriever<MagicKey,String> retriever=cache(1,CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-  Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,null,null);
+  Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,EnumSet.of(Flag.SKIP_CACHE_LOAD),null);
   int count=0;
   Map<MagicKey,String> results=new HashMap<MagicKey,String>();
   while (iterator.hasNext()) {
@@ -9,6 +9,6 @@
     results.put(entry.getKey(),entry.getValue());
     count++;
   }
-  assertEquals(count,4);
+  assertEquals(count,3);
   assertEquals(originalValues,results);
 }

@@ -10,12 +10,8 @@
   final String loaderValue="loader0";
   originalValues.put(loaderKey,loaderValue);
   cache0.putAll(originalValues);
-  PersistenceManager persistenceManager=TestingUtil.extractComponent(cache0,PersistenceManager.class);
-  DummyInMemoryStore store=persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
-  TestObjectStreamMarshaller sm=new TestObjectStreamMarshaller();
   PersistenceManager pm=null;
   try {
-    store.write(new MarshalledEntryImpl(loaderKey,loaderValue,null,sm));
     final CheckPoint checkPoint=new CheckPoint();
     pm=waitUntilAboutToProcessStoreTask(cache0,checkPoint);
     Future<Void> future=fork(new Callable<Void>(){
@@ -44,6 +40,5 @@
     if (pm != null) {
       TestingUtil.replaceComponent(cache0,PersistenceManager.class,pm,true);
     }
-    sm.stop();
   }
 }
