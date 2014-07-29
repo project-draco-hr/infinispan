@@ -1,0 +1,19 @@
+{
+  if (isTotalOrder) {
+    if (log.isTraceEnabled()) {
+      log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
+    }
+    try {
+      for (      TotalOrderLatch block : totalOrderManager.notifyStateTransferStart(cacheTopology.getTopologyId(),isRebalance)) {
+        block.awaitUntilUnBlock();
+      }
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new CacheException(e);
+    }
+    if (log.isTraceEnabled()) {
+      log.trace("State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
+    }
+  }
+}
