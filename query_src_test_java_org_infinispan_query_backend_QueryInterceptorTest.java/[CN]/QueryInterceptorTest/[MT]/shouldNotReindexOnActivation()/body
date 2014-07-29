@@ -1,0 +1,21 @@
+{
+  withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)){
+    @Override public void call(){
+      LuceneIndexTracker luceneIndexTracker=new LuceneIndexTracker(new File(indexDir + "/person"));
+      luceneIndexTracker.mark();
+      Cache<Integer,Person> cache=cm.getCache();
+      CacheListener cacheListener=new CacheListener();
+      cache.addListener(cacheListener);
+      cache.put(1,person1);
+      cache.put(2,person2);
+      assertEquals(cacheListener.numberOfPassivations(),1);
+      assertEquals(cacheListener.numberOfActivations(),0);
+      assertTrue(luceneIndexTracker.indexChanged());
+      luceneIndexTracker.mark();
+      cache.get(1);
+      assertEquals(cacheListener.numberOfActivations(),1);
+      assertFalse(luceneIndexTracker.indexChanged());
+    }
+  }
+);
+}
