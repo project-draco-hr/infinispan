@@ -1,0 +1,10 @@
+{
+  indexDir=Files.createTempDirectory("test-").toFile();
+  createIndex(indexDir,INDEX_NAME,TERMS_NUMBER,false);
+  ConfigurationBuilder c=getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC,false);
+  c.clustering().hash().numOwners(1);
+  c.jmxStatistics().enable();
+  c.persistence().addStore(LuceneLoaderConfigurationBuilder.class).preload(true).location(indexDir.getAbsolutePath());
+  createCluster(c,CLUSTER_SIZE);
+  waitForClusterToForm();
+}
