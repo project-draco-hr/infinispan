@@ -1,8 +1,11 @@
 {
   DefaultCollector<K,V,KOut,VOut> finalCollector=new DefaultCollector<K,V,KOut,VOut>(mcc,Integer.MAX_VALUE);
   for (  DefaultCollector<K,V,KOut,VOut> collector : queue) {
-    finalCollector.emit(collector.collectedValues());
-    collector.reset();
+    if (!collector.isEmpty()) {
+      finalCollector.emit(collector.collectedValues());
+      collector.reset();
+    }
   }
+  combine(mcc,finalCollector);
   return finalCollector.collectedValues();
 }
