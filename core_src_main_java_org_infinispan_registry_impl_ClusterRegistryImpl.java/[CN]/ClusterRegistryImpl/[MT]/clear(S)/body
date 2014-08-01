@@ -1,8 +1,14 @@
 {
   startRegistryCache();
-  for (  ScopedKey<S,K> key : clusterRegistryCache.keySet()) {
-    if (key.hasScope(scope)) {
-      clusterRegistryCacheWithoutReturn.remove(key);
+  Transaction tx=suspendTx();
+  try {
+    for (    ScopedKey<S,K> key : clusterRegistryCache.keySet()) {
+      if (key.hasScope(scope)) {
+        clusterRegistryCacheWithoutReturn.remove(key);
+      }
     }
+  }
+  finally {
+    resumeTx(tx);
   }
 }

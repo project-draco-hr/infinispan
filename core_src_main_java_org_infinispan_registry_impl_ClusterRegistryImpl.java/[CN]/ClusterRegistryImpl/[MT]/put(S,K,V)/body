@@ -1,5 +1,11 @@
 {
   if (value == null)   throw new IllegalArgumentException("Null values are not allowed");
   startRegistryCache();
-  clusterRegistryCacheWithoutReturn.put(new ScopedKey<S,K>(scope,key),value);
+  Transaction tx=suspendTx();
+  try {
+    clusterRegistryCacheWithoutReturn.put(new ScopedKey<S,K>(scope,key),value);
+  }
+  finally {
+    resumeTx(tx);
+  }
 }

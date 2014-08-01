@@ -1,4 +1,10 @@
 {
-  V v=get(scope,key);
-  return v != null;
+  startRegistryCache();
+  Transaction tx=suspendTx();
+  try {
+    return clusterRegistryCache.containsKey(new ScopedKey<S,K>(scope,key));
+  }
+  finally {
+    resumeTx(tx);
+  }
 }

@@ -1,4 +1,10 @@
 {
   startRegistryCache();
-  return clusterRegistryCache.get(new ScopedKey<S,K>(scope,key));
+  Transaction tx=suspendTx();
+  try {
+    return clusterRegistryCache.get(new ScopedKey<S,K>(scope,key));
+  }
+  finally {
+    resumeTx(tx);
+  }
 }
