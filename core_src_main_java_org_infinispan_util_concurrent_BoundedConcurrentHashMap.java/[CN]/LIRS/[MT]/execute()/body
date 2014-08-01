@@ -1,7 +1,8 @@
 {
   Set<HashEntry<K,V>> evicted=new HashSet<HashEntry<K,V>>();
   try {
-    for (    LIRSHashEntry<K,V> e : accessQueue) {
+    LIRSHashEntry<K,V> e;
+    while ((e=accessQueue.poll()) != null) {
       if (e.isResident()) {
         e.hit(evicted);
       }
@@ -9,7 +10,6 @@
     removeFromSegment(evicted);
   }
   finally {
-    accessQueue.clear();
     accessQueueSize.set(0);
   }
   return evicted;

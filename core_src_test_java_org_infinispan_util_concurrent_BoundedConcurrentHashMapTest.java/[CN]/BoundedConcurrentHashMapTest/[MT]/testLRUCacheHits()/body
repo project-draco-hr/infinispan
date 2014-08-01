@@ -1,0 +1,27 @@
+{
+  final int COUNT_PER_THREAD=100000;
+  final int THREADS=10;
+  final int COUNT=COUNT_PER_THREAD * THREADS;
+  final EvictionListener<Integer,Integer> l=new NullEvictionListener<Integer,Integer>(){
+    @Override public void onEntryChosenForEviction(    Integer internalCacheEntry){
+      assertEquals(COUNT,internalCacheEntry.intValue());
+    }
+  }
+;
+  final Map<Integer,Integer> bchm=new BoundedConcurrentHashMap<Integer,Integer>(COUNT + 1,1,Eviction.LRU,l,AnyEquivalence.INT,AnyEquivalence.INT);
+  for (int i=0; i <= COUNT; i++)   bchm.put(i,i);
+  Thread threads[]=new Thread[THREADS];
+  for (int i=0; i < THREADS; i++) {
+    final int start=COUNT_PER_THREAD * i;
+    final int end=start + COUNT_PER_THREAD;
+    threads[i]=new Thread(){
+      public void run(){
+        for (int i=start; i < end; i++)         assertNotNull(bchm.get(i));
+      }
+    }
+;
+  }
+  for (int i=0; i < THREADS; i++)   threads[i].start();
+  for (int i=0; i < THREADS; i++)   threads[i].join();
+  bchm.put(COUNT + 1,COUNT + 1);
+}
