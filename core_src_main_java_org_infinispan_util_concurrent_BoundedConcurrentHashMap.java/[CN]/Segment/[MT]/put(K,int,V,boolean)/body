@@ -3,7 +3,7 @@
   Set<HashEntry<K,V>> evicted=null;
   try {
     int c=count;
-    if (c++ > threshold && eviction.strategy() == Eviction.NONE) {
+    if (c++ > threshold) {
       rehash();
     }
     HashEntry<K,V>[] tab=table;
@@ -25,14 +25,9 @@
       oldValue=null;
       ++modCount;
       count=c;
-      if (eviction.strategy() != Eviction.NONE) {
-        eviction.execute();
-        tab[index]=eviction.createNewEntry(key,hash,first,value);
-        evicted=eviction.onEntryMiss(tab[index]);
-      }
- else {
-        tab[index]=eviction.createNewEntry(key,hash,first,value);
-      }
+      eviction.execute();
+      tab[index]=eviction.createNewEntry(key,hash,first,value);
+      evicted=eviction.onEntryMiss(tab[index]);
       map.evictionListener.onEntryActivated(key);
     }
     return oldValue;
