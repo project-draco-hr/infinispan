@@ -1,0 +1,12 @@
+{
+  final int COUNT=200000;
+  Map<Integer,Integer> bchm=new BoundedConcurrentHashMap<Integer,Integer>(COUNT,1,eviction,AnyEquivalence.INT,AnyEquivalence.INT);
+  for (int i=0; i < COUNT; i++)   bchm.put(i,i);
+  bchm.get(0);
+  long start=System.currentTimeMillis();
+  for (int i=1; i < COUNT; i++) {
+    bchm.get(i);
+    bchm.remove(i);
+    if (System.currentTimeMillis() - start > 5000)     fail(eviction.name() + ": removing " + COUNT+ " entries takes more than 5 seconds!");
+  }
+}
