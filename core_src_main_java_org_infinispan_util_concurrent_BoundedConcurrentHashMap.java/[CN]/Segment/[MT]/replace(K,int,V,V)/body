@@ -1,6 +1,5 @@
 {
   lock();
-  Set<HashEntry<K,V>> evicted=null;
   try {
     HashEntry<K,V> e=getFirst(hash);
     while (e != null && (e.hash != hash || !map.keyEquivalence.equals(key,e.key))) {
@@ -11,13 +10,12 @@
       replaced=true;
       e.value=newValue;
       if (eviction.onEntryHit(e)) {
-        evicted=attemptEviction(true);
+        attemptEviction(true);
       }
     }
     return replaced;
   }
   finally {
     unlock();
-    notifyEvictionListener(evicted);
   }
 }
