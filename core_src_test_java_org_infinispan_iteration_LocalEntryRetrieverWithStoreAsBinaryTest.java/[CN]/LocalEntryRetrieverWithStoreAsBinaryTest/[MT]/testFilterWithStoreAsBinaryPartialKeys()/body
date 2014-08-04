@@ -1,0 +1,13 @@
+{
+  Map<String,String> originalValues=new HashMap<>();
+  originalValues.put("value0","cache0");
+  originalValues.put("value1","cache1");
+  originalValues.put("value2","cache2");
+  cache.putAll(originalValues);
+  EntryRetriever<String,String> retriever=cache.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+  Iterator<CacheEntry<String,String>> iterator=retriever.retrieveEntries(new StringStringFilter(Collections.singletonMap("value1","cache1")),null,null,null);
+  CacheEntry<String,String> entry=iterator.next();
+  assertEquals("value1",entry.getKey());
+  assertEquals("cache1",entry.getValue());
+  assertFalse(iterator.hasNext());
+}
