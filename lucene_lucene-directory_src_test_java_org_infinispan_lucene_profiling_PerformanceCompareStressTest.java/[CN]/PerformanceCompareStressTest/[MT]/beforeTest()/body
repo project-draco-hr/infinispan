@@ -1,6 +1,10 @@
 {
-  cacheFactory=TestCacheManagerFactory.createClusteredCacheManager(CacheTestSupport.createTestConfiguration(TransactionMode.NON_TRANSACTIONAL));
-  cacheFactory.start();
-  cache=cacheFactory.getCache();
-  cache.clear();
+  for (int i=0; i < NUM_NODES; i++) {
+    DefaultCacheManager node=new DefaultCacheManager(CONFIGURATION);
+    node.start();
+    node.getCache("index_metadata").start();
+    node.getCache("index_data").start();
+    node.getCache("index_locks").start();
+    cacheManagers.put(i,node);
+  }
 }

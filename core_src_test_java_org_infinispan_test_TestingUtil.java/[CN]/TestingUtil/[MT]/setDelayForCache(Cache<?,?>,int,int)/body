@@ -2,9 +2,12 @@
   JGroupsTransport jgt=(JGroupsTransport)TestingUtil.extractComponent(cache,Transport.class);
   Channel ch=jgt.getChannel();
   ProtocolStack ps=ch.getProtocolStack();
-  DELAY delay=new DELAY();
+  DELAY delay=(DELAY)ps.findProtocol(DELAY.class);
+  if (delay == null) {
+    delay=new DELAY();
+    ps.insertProtocol(delay,ProtocolStack.ABOVE,TP.class);
+  }
   delay.setInDelay(in_delay_millis);
   delay.setOutDelay(out_delay_millis);
-  ps.insertProtocol(delay,ProtocolStack.ABOVE,TP.class);
   return delay;
 }
