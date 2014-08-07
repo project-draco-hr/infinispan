@@ -1,0 +1,16 @@
+{
+  mutating.lock();
+  try {
+    transactionHelper.runSuspendingTx(new Operation(){
+      @Override public void execute(){
+        boolean isStatisticsEnabled=searchFactory.getStatistics().isStatisticsEnabled();
+        searchFactory.addClasses(classes);
+        searchFactory.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
+      }
+    }
+);
+  }
+  finally {
+    mutating.unlock();
+  }
+}
