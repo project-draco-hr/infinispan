@@ -1,13 +1,3 @@
 {
-  log.tracef("Check write for key=%s, status=%s",key,state);
-  if (state == PartitionState.AVAILABLE)   return;
-  if (state == PartitionState.UNAVAILABLE)   throw new AvailabilityException("Cluster is UNAVAILABLE because of node failures.");
-  List<Address> owners=distributionManager.locate(key);
-  if (!rpcManager.getTransport().getMembers().containsAll(owners)) {
-    log.tracef("Partition is in %s mode, access is not allowed for key %s",state,key);
-    throw new AvailabilityException("Not all owners of key '" + key + "' are in this partition");
-  }
- else {
-    log.tracef("Key %s is writable.",key);
-  }
+  doCheck(key);
 }
