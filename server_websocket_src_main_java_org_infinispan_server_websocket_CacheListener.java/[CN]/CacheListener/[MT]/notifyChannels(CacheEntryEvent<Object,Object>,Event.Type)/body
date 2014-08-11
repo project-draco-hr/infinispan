@@ -2,18 +2,17 @@
   if (event.isPre()) {
     return;
   }
-  JSONObject jsonObject;
-  try {
-    Cache<Object,Object> cache=event.getCache();
-    Object key=event.getKey();
-    Object value;
+  JsonObject jsonObject;
+  Cache<Object,Object> cache=event.getCache();
+  Object key=event.getKey();
+  Object value;
 switch (eventType) {
 case CACHE_ENTRY_CREATED:
-      value=cache.get(key);
-    jsonObject=ChannelUtils.toJSON(key.toString(),value,cache.getName());
-  break;
+    value=cache.get(key);
+  jsonObject=ChannelUtils.toJSON(key.toString(),value,cache.getName());
+break;
 case CACHE_ENTRY_MODIFIED:
-value=((CacheEntryModifiedEvent<Object,Object>)event).getValue();
+value=event.getValue();
 jsonObject=ChannelUtils.toJSON(key.toString(),value,cache.getName());
 break;
 case CACHE_ENTRY_REMOVED:
@@ -23,10 +22,6 @@ default :
 return;
 }
 jsonObject.put("eventType",eventType.toString());
-}
- catch (JSONException e) {
-return;
-}
 String jsonString=jsonObject.toString();
 for (ChannelNotifyParams channel : channels) {
 if (channel.channel.isOpen() && channel.onEvents.contains(eventType)) {

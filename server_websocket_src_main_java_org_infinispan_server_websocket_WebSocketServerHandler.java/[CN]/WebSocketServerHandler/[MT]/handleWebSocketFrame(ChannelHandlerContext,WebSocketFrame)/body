@@ -11,16 +11,17 @@
       if (binaryData == null) {
         return;
       }
-      JSONObject payload=new JSONObject(binaryData.toString(CharsetUtil.UTF_8));
+      JsonObject payload=JsonObject.fromString(binaryData.toString(CharsetUtil.UTF_8));
       String opCode=(String)payload.get(OpHandler.OP_CODE);
-      String cacheName=(String)payload.opt(OpHandler.CACHE_NAME);
+      String cacheName=(String)payload.get(OpHandler.CACHE_NAME);
       Cache<Object,Object> cache=getCache(cacheName);
       OpHandler handler=operationHandlers.get(opCode);
       if (handler != null) {
         handler.handleOp(payload,cache,ctx);
       }
     }
- catch (    JSONException e) {
+ catch (    JsonConversionException e) {
+      log.error("Could not handle Web Socket Frame, error while converting to JSON",e);
     }
   }
 }

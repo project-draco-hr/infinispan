@@ -1,10 +1,10 @@
 {
-  JSONObject jsonObject=new JSONObject();
+  JsonObject jsonObject=JsonObject.createNew();
   jsonObject.put(OpHandler.CACHE_NAME,cacheName);
   jsonObject.put(OpHandler.KEY,key);
   if (value != null) {
-    JSONObject valueObject=new JSONObject(value);
-    if (valueObject.get("bytes") == null) {
+    if (needsJsonConversion(value)) {
+      JsonObject valueObject=getJsonObject(value);
       jsonObject.put(OpHandler.VALUE,valueObject.toString());
       jsonObject.put(OpHandler.MIME,"application/json");
     }
@@ -14,7 +14,7 @@
     }
   }
  else {
-    jsonObject.put(OpHandler.VALUE,JSONObject.NULL);
+    jsonObject.put(OpHandler.VALUE,null);
   }
   return jsonObject;
 }
