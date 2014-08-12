@@ -1,8 +1,18 @@
 {
+  if (fcc == null) {
+    throw new IllegalArgumentException("Argument cannot be null");
+  }
   if (filterCondition != null) {
     throw new IllegalStateException("Sentence already started. Cannot use 'not(..)' again.");
   }
-  NotCondition notCondition=new NotCondition(((BaseCondition)fcc).getRoot());
+  BaseCondition baseCondition=((BaseCondition)fcc).getRoot();
+  if (baseCondition.queryFactory != queryFactory) {
+    throw new IllegalArgumentException("The given condition was created by a different factory");
+  }
+  if (baseCondition.queryBuilder != null) {
+    throw new IllegalArgumentException("The given condition is already in use by another builder");
+  }
+  NotCondition notCondition=new NotCondition(queryFactory,baseCondition);
   notCondition.setQueryBuilder(this);
   filterCondition=notCondition;
   return filterCondition;

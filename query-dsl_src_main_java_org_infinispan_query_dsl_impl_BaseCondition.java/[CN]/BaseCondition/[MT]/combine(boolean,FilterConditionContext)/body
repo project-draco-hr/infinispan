@@ -1,14 +1,23 @@
 {
+  if (fcc == null) {
+    throw new IllegalArgumentException("Argument cannot be null");
+  }
   BaseCondition rightCondition=((BaseCondition)fcc).getRoot();
+  if (rightCondition.queryFactory != queryFactory) {
+    throw new IllegalArgumentException("The given condition was created by a different factory");
+  }
+  if (rightCondition.queryBuilder != null) {
+    throw new IllegalArgumentException("The given condition is already in use by another builder");
+  }
   if (isConjunction && parent instanceof OrCondition) {
-    BooleanCondition p=new AndCondition(this,rightCondition);
+    BooleanCondition p=new AndCondition(queryFactory,this,rightCondition);
     ((BooleanCondition)parent).replaceChildCondition(this,p);
     parent=p;
     rightCondition.setParent(p);
   }
  else {
     BaseCondition root=getRoot();
-    BooleanCondition p=isConjunction ? new AndCondition(root,rightCondition) : new OrCondition(root,rightCondition);
+    BooleanCondition p=isConjunction ? new AndCondition(queryFactory,root,rightCondition) : new OrCondition(queryFactory,root,rightCondition);
     root.setParent(p);
     rightCondition.setParent(p);
   }
