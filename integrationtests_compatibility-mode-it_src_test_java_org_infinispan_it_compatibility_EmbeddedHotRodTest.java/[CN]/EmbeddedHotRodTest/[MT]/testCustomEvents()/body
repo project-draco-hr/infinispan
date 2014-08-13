@@ -1,0 +1,21 @@
+{
+  StaticCustomEventLogListener eventListener=new StaticCustomEventLogListener();
+  Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
+  RemoteCache<Integer,String> remote=cacheFactory.getHotRodCache();
+  remote.addClientListener(eventListener);
+  try {
+    eventListener.expectNoEvents();
+    remote.put(1,"one");
+    assertEquals("one",embedded.get(1));
+    eventListener.expectSingleCustomEvent(1,"one");
+    remote.put(1,"new-one");
+    assertEquals("new-one",embedded.get(1));
+    eventListener.expectSingleCustomEvent(1,"new-one");
+    remote.remove(1);
+    assertNull(embedded.get(1));
+    eventListener.expectSingleCustomEvent(1,null);
+  }
+  finally {
+    remote.removeClientListener(eventListener);
+  }
+}

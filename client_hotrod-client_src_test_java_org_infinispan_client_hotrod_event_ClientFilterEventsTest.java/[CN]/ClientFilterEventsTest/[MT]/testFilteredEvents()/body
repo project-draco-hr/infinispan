@@ -1,18 +1,17 @@
 {
-  final FilteredEventLogListener eventListener=new FilteredEventLogListener();
-  filterFactory.dynamic=false;
+  final StaticFilteredEventLogListener<Integer> eventListener=new StaticFilteredEventLogListener<>();
   withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
     @Override public void call(){
       RemoteCache<Integer,String> cache=rcm.getCache();
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       cache.put(1,"one");
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       cache.put(2,"two");
-      expectOnlyCreatedEvent(2,eventListener,cache());
+      eventListener.expectOnlyCreatedEvent(2,cache());
       cache.remove(1);
-      expectNoEvents(eventListener);
+      eventListener.expectNoEvents();
       cache.remove(2);
-      expectOnlyRemovedEvent(2,eventListener,cache());
+      eventListener.expectOnlyRemovedEvent(2,cache());
     }
   }
 );

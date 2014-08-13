@@ -1,12 +1,12 @@
 {
-  final EventLogListener eventListener=new EventLogListener();
+  final EventLogListener<Integer> eventListener=new EventLogListener<>();
   RemoteCache<Integer,String> cache=remoteCacheManager.getCache();
   cache.put(1,"one");
   cache.put(2,"two");
-  expectNoEvents(eventListener);
+  eventListener.expectNoEvents();
   withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
     @Override public void call(){
-      expectUnorderedEvents(eventListener,ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED,1,2);
+      eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED,1,2);
     }
   }
 );

@@ -1,0 +1,28 @@
+{
+  EventLogListener<Integer> eventListener=new EventLogListener<>(true);
+  Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
+  RemoteCache<Integer,String> remote=cacheFactory.getHotRodCache();
+  remote.addClientListener(eventListener);
+  try {
+    eventListener.expectNoEvents();
+    remote.putIfAbsent(1,"one");
+    eventListener.expectOnlyCreatedEvent(1,embedded);
+    remote.putIfAbsent(1,"again");
+    eventListener.expectNoEvents();
+    remote.replace(1,"newone");
+    eventListener.expectOnlyModifiedEvent(1,embedded);
+    remote.replaceWithVersion(1,"one",0);
+    eventListener.expectNoEvents();
+    VersionedValue<String> versioned=remote.getVersioned(1);
+    remote.replaceWithVersion(1,"one",versioned.getVersion());
+    eventListener.expectOnlyModifiedEvent(1,embedded);
+    remote.removeWithVersion(1,0);
+    eventListener.expectNoEvents();
+    versioned=remote.getVersioned(1);
+    remote.removeWithVersion(1,versioned.getVersion());
+    eventListener.expectOnlyRemovedEvent(1,embedded);
+  }
+  finally {
+    remote.removeClientListener(eventListener);
+  }
+}
