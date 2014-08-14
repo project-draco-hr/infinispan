@@ -1,0 +1,14 @@
+{
+  List<String> values;
+  while (true) {
+    values=new ArrayList<>(cache.values());
+    if (now() >= startTime + lifespan)     break;
+    expectUnorderedEquals(valuesIn,values);
+    Thread.sleep(100);
+  }
+  while (now() < startTime + lifespan + EVICTION_CHECK_TIMEOUT) {
+    values=new ArrayList<>(cache.values());
+    if (values.size() == 0)     return;
+  }
+  assertEquals(0,values.size());
+}
