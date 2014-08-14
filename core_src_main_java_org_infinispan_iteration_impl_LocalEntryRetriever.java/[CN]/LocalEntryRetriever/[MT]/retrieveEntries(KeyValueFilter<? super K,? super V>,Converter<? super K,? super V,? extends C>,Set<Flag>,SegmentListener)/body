@@ -1,5 +1,6 @@
 {
-  wireFilterAndConverterDependencies(filter,converter);
+  final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
+  wireFilterAndConverterDependencies(filter,usedConverter);
   final Itr<K,C> iterator=new Itr<K,C>(batchSize);
   final ItrQueuerHandler<C> handler=new ItrQueuerHandler<C>(iterator);
   executorService.submit(new Runnable(){
@@ -13,7 +14,7 @@
           }
         }
 ;
-        MapAction<C> action=new MapAction(batchSize,converter,queue,handler);
+        MapAction<C> action=new MapAction(batchSize,usedConverter,queue,handler);
         PassivationListener<K,V> listener=null;
         try {
           int interruptCheck=0;
@@ -21,7 +22,16 @@
             InternalCacheEntry<K,V> clone=entryFactory.create(unwrapMarshalledvalue(entry.getKey()),unwrapMarshalledvalue(entry.getValue()),entry);
             K key=clone.getKey();
             if (filter != null) {
-              if (!filter.accept(key,clone.getValue(),clone.getMetadata())) {
+              if (filter instanceof KeyValueFilterConverter && usedConverter == null) {
+                C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
+                if (converted != null) {
+                  clone.setValue((V)converted);
+                }
+ else {
+                  continue;
+                }
+              }
+ else               if (!filter.accept(key,clone.getValue(),clone.getMetadata())) {
                 continue;
               }
             }
