@@ -1,10 +1,7 @@
 {
-  for (  Cache cache : caches) {
+  for (  Cache<String,Person> cache : cluster.iterateAllCaches()) {
     if (isMasterNode(cache)) {
-      TestingUtil.killCacheManagers(cache.getCacheManager());
-      caches.remove(cache);
-      cacheManagers.remove(cache.getCacheManager());
-      if (cache.getCacheConfiguration().clustering().cacheMode() != CacheMode.LOCAL)       TestingUtil.waitForRehashToComplete(caches);
+      cluster.killNode(cache);
       break;
     }
   }
