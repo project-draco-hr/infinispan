@@ -2,17 +2,12 @@
   failed.set(false);
   quit.set(false);
   caches.get(0).put(SHARED_KEY,"initialValue");
-  final SharedState state=new SharedState(THREAD_COUNT);
+  final SharedState state=new SharedState(threads);
   final PostOperationStateCheck stateCheck=new PostOperationStateCheck(caches,state,operation);
-  final CyclicBarrier barrier=new CyclicBarrier(THREAD_COUNT,stateCheck);
+  final CyclicBarrier barrier=new CyclicBarrier(threads,stateCheck);
   final String className=getClass().getSimpleName();
-  ExecutorService exec=Executors.newFixedThreadPool(THREAD_COUNT,new ThreadFactory(){
-    @Override public Thread newThread(    Runnable r){
-      return new Thread(r,className + "-" + threadIndex.getAndIncrement());
-    }
-  }
-);
-  for (int threadIndex=0; threadIndex < THREAD_COUNT; threadIndex++) {
+  ExecutorService exec=Executors.newFixedThreadPool(threads,getTestThreadFactory("Mover"));
+  for (int threadIndex=0; threadIndex < threads; threadIndex++) {
     Runnable validMover=new ValidMover(caches,barrier,threadIndex,state,operation);
     exec.execute(validMover);
   }
