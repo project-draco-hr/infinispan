@@ -1,0 +1,46 @@
+{
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
+  TaskContextImpl taskContext=new TaskContextImpl();
+  EntityManager emStream=emf.createEntityManager();
+  try {
+    EntityTransaction txStream=emStream.getTransaction();
+    ScrollableResults results=null;
+    txStream.begin();
+    try {
+      Session session=emStream.unwrap(Session.class);
+      Criteria criteria=strategy.getCriteria(session).setReadOnly(true);
+      if (setFetchSizeMinInteger) {
+        criteria.setFetchSize(Integer.MIN_VALUE);
+      }
+      results=criteria.scroll(ScrollMode.FORWARD_ONLY);
+      try {
+        while (results.next()) {
+          if (taskContext.isStopped())           break;
+          Object result=results.get(0);
+          Object key=strategy.getKey(result);
+          if (filter != null && !filter.accept(key)) {
+            if (trace)             log.trace("Key " + key + " filtered");
+            continue;
+          }
+          eacs.submit(strategy.getTask(task,taskContext,result,key));
+        }
+      }
+  finally {
+        if (results != null)         results.close();
+      }
+      txStream.commit();
+    }
+  finally {
+      if (txStream != null && txStream.isActive()) {
+        txStream.rollback();
+      }
+    }
+  }
+  finally {
+    emStream.close();
+  }
+  eacs.waitUntilAllCompleted();
+  if (eacs.isExceptionThrown()) {
+    throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!",eacs.getFirstException());
+  }
+}

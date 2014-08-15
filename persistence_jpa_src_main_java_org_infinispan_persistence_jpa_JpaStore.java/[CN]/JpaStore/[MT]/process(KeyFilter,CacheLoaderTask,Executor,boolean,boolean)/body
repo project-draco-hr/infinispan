@@ -1,96 +1,36 @@
 {
-  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
-  final TaskContextImpl taskContext=new TaskContextImpl();
-  EntityManager emStream=emf.createEntityManager();
-  try {
-    EntityTransaction txStream=emStream.getTransaction();
-    ScrollableResults keys=null;
-    txStream.begin();
-    try {
-      Session session=emStream.unwrap(Session.class);
-      Criteria criteria=session.createCriteria(configuration.entityClass()).setReadOnly(true).setProjection(Projections.id());
-      if (setFetchSizeMinInteger) {
-        criteria.setFetchSize(Integer.MIN_VALUE);
+  if (fetchMetadata && !configuration.storeMetadata()) {
+    log.debug("Metadata cannot be retrieved as JPA Store is not configured to persist metadata.");
+    fetchMetadata=false;
+  }
+  if (fetchValue || fetchMetadata) {
+    final boolean fv=fetchValue;
+    final boolean fm=fetchMetadata;
+    process(filter,task,executor,new ProcessStrategy(){
+      @Override public Criteria getCriteria(      Session session){
+        return session.createCriteria(configuration.entityClass()).setProjection(Projections.id());
       }
-      keys=criteria.scroll(ScrollMode.FORWARD_ONLY);
-      while (keys.next()) {
-        if (taskContext.isStopped())         break;
-        final Object key=keys.get(0);
-        if (filter != null && !filter.accept(key)) {
-          if (trace)           log.trace("Key " + key + " filtered");
-          continue;
-        }
-        Object tempEntity=null;
-        InternalMetadata tempMetadata=null;
-        boolean loaded=false;
-        EntityManager emExec=emf.createEntityManager();
-        try {
-          EntityTransaction txExec=emExec.getTransaction();
-          txExec.begin();
-          try {
-            do {
-              try {
-                tempEntity=fetchValue ? findEntity(emExec,key) : null;
-                tempMetadata=fetchMetadata ? getMetadata(emExec,key) : null;
-              }
-  finally {
-                try {
-                  txExec.commit();
-                  loaded=true;
-                }
- catch (                Exception e) {
-                  log.trace("Failed to load once",e);
-                }
-              }
-            }
- while (!loaded);
-          }
-  finally {
-            if (txExec != null && txExec.isActive()) {
-              txExec.rollback();
-            }
-          }
-        }
-  finally {
-          if (emExec != null) {
-            emExec.close();
-          }
-        }
-        final Object entity=tempEntity;
-        final InternalMetadata metadata=tempMetadata;
-        if (trace)         log.trace("Processing " + key + " -> "+ entity+ "("+ metadata+ ")");
-        if (metadata != null && metadata.isExpired(timeService.wallClockTime()))         continue;
-        eacs.submit(new Callable<Void>(){
-          @Override public Void call() throws Exception {
-            try {
-              final MarshalledEntry marshalledEntry=marshallerEntryFactory.newMarshalledEntry(key,entity,metadata);
-              if (marshalledEntry != null) {
-                task.processEntry(marshalledEntry,taskContext);
-              }
-              return null;
-            }
- catch (            Exception e) {
-              log.errorExecutingParallelStoreTask(e);
-              throw e;
-            }
-          }
-        }
+      @Override public Object getKey(      Object scrollResult){
+        return scrollResult;
+      }
+      @Override public Callable<Void> getTask(      CacheLoaderTask task,      TaskContext taskContext,      Object scrollResult,      Object key){
+        return new LoadingProcessTask(task,taskContext,key,fv,fm);
+      }
+    }
 );
-      }
-      txStream.commit();
-    }
-  finally {
-      if (keys != null)       keys.close();
-      if (txStream != null && txStream.isActive()) {
-        txStream.rollback();
-      }
-    }
   }
-  finally {
-    emStream.close();
-  }
-  eacs.waitUntilAllCompleted();
-  if (eacs.isExceptionThrown()) {
-    throw new org.infinispan.persistence.spi.PersistenceException("Execution exception!",eacs.getFirstException());
+ else {
+    process(filter,task,executor,new ProcessStrategy(){
+      @Override public Criteria getCriteria(      Session session){
+        return session.createCriteria(configuration.entityClass()).setProjection(Projections.id());
+      }
+      @Override public Object getKey(      Object scrollResult){
+        return scrollResult;
+      }
+      @Override public Callable<Void> getTask(      CacheLoaderTask task,      TaskContext taskContext,      Object scrollResult,      Object key){
+        return new ProcessTask(task,taskContext,key,null,null);
+      }
+    }
+);
   }
 }

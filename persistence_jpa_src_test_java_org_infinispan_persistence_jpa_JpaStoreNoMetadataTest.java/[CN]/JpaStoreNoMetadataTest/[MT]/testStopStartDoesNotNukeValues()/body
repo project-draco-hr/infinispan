@@ -1,0 +1,28 @@
+{
+  assertFalse(cl.contains("k1"));
+  assertFalse(cl.contains("k2"));
+  long lifespan=1;
+  long idle=1;
+  InternalCacheEntry se1=TestInternalCacheEntryFactory.create("k1",wrap("k1","v1"),lifespan);
+  InternalCacheEntry se2=TestInternalCacheEntryFactory.create("k2",wrap("k2","v2"));
+  InternalCacheEntry se3=TestInternalCacheEntryFactory.create("k3",wrap("k3","v3"),-1,idle);
+  InternalCacheEntry se4=TestInternalCacheEntryFactory.create("k4",wrap("k4","v4"),lifespan,idle);
+  cl.write(marshalledEntry(se1,getMarshaller()));
+  cl.write(marshalledEntry(se2,getMarshaller()));
+  cl.write(marshalledEntry(se3,getMarshaller()));
+  cl.write(marshalledEntry(se4,getMarshaller()));
+  timeService.advance(lifespan + 1);
+  cl.stop();
+  cl.start();
+  assertTrue(se1.isExpired(System.currentTimeMillis()));
+  assertTrue(cl.contains("k1"));
+  assertEquals("v1",unwrap(cl.load("k1").getValue()));
+  assertTrue(cl.contains("k2"));
+  assertEquals("v2",unwrap(cl.load("k2").getValue()));
+  assertTrue(se3.isExpired(System.currentTimeMillis()));
+  assertTrue(cl.contains("k3"));
+  assertEquals("v3",unwrap(cl.load("k3").getValue()));
+  assertTrue(se3.isExpired(System.currentTimeMillis()));
+  assertTrue(cl.contains("k4"));
+  assertEquals("v4",unwrap(cl.load("k4").getValue()));
+}

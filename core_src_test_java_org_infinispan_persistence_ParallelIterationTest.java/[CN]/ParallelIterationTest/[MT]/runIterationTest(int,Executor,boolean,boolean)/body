@@ -1,0 +1,64 @@
+{
+  int numEntries=insertData();
+  final ConcurrentMap<Integer,Integer> entries=new ConcurrentHashMap<>();
+  final ConcurrentMap<Integer,InternalMetadata> metadata=new ConcurrentHashMap<>();
+  final ConcurrentHashSet<Thread> threads=new ConcurrentHashSet<>();
+  final AtomicBoolean sameKeyMultipleTimes=new AtomicBoolean();
+  final AtomicInteger processed=new AtomicInteger();
+  final CyclicBarrier barrier=new CyclicBarrier(numThreads);
+  final AtomicBoolean brokenBarrier=new AtomicBoolean(false);
+  store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+    @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
+      if (threads.add(Thread.currentThread())) {
+        try {
+          barrier.await(1,TimeUnit.MINUTES);
+        }
+ catch (        BrokenBarrierException|TimeoutException e) {
+          log.warn("Exception occurred while waiting for barrier",e);
+          brokenBarrier.set(true);
+        }
+      }
+      int key=unwrapKey(marshalledEntry.getKey());
+      if (fetchValues) {
+        Integer existing=entries.put(key,unwrapValue(marshalledEntry.getValue()));
+        if (existing != null) {
+          log.warnf("Already a value present for key %s: %s",key,existing);
+          sameKeyMultipleTimes.set(true);
+        }
+      }
+      if (marshalledEntry.getMetadata() != null) {
+        log.tracef("For key %d found metdata %s",key,marshalledEntry.getMetadata());
+        InternalMetadata prevMetadata=metadata.put(key,marshalledEntry.getMetadata());
+        if (prevMetadata != null) {
+          log.warnf("Already a metadata present for key %s: %s",key,prevMetadata);
+          sameKeyMultipleTimes.set(true);
+        }
+      }
+ else {
+        log.tracef("No metadata found for key %d",key);
+      }
+      processed.incrementAndGet();
+    }
+  }
+,persistenceExecutor1,fetchValues,fetchMetadata);
+  assertFalse(sameKeyMultipleTimes.get());
+  assertFalse(brokenBarrier.get());
+  assertEquals(processed.get(),numEntries);
+  for (int i=0; i < numEntries; i++) {
+    if (fetchValues) {
+      assertEquals(entries.get(i),(Integer)i,"For key " + i);
+    }
+ else {
+      assertNull(entries.get(i),"For key " + i);
+    }
+    if (fetchMetadata && hasMetadata(i)) {
+      assertNotNull(metadata.get(i),"For key " + i);
+      assertEquals(metadata.get(i).lifespan(),lifespan(i),"For key " + i);
+      assertEquals(metadata.get(i).maxIdle(),maxIdle(i),"For key " + i);
+    }
+ else {
+      assertNull(metadata.get(i));
+    }
+  }
+  assertEquals(threads.size(),numThreads);
+}

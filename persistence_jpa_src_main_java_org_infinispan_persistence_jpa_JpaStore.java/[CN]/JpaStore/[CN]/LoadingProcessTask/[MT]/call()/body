@@ -1,0 +1,63 @@
+{
+  boolean loaded=false;
+  Object entity;
+  InternalMetadata metadata;
+  EntityManager emExec=emf.createEntityManager();
+  try {
+    EntityTransaction txExec=emExec.getTransaction();
+    txExec.begin();
+    try {
+      do {
+        try {
+          metadata=fetchMetadata ? getMetadata(emExec,key) : null;
+          if (trace) {
+            log.tracef("Fetched metadata (fetching? %s) %s",fetchMetadata,metadata);
+          }
+          if (metadata != null && metadata.isExpired(timeService.wallClockTime())) {
+            return null;
+          }
+          if (fetchValue) {
+            entity=findEntity(emExec,key);
+            if (trace) {
+              log.tracef("Fetched value %s",entity);
+            }
+          }
+ else {
+            entity=null;
+          }
+        }
+  finally {
+          try {
+            txExec.commit();
+            loaded=true;
+          }
+ catch (          Exception e) {
+            log.trace("Failed to load once",e);
+          }
+        }
+      }
+ while (!loaded);
+    }
+  finally {
+      if (txExec != null && txExec.isActive()) {
+        txExec.rollback();
+      }
+    }
+  }
+  finally {
+    if (emExec != null) {
+      emExec.close();
+    }
+  }
+  try {
+    final MarshalledEntry marshalledEntry=marshallerEntryFactory.newMarshalledEntry(key,entity,metadata);
+    if (marshalledEntry != null) {
+      task.processEntry(marshalledEntry,taskContext);
+    }
+    return null;
+  }
+ catch (  Exception e) {
+    log.errorExecutingParallelStoreTask(e);
+    throw e;
+  }
+}
