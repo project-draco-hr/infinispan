@@ -1,0 +1,31 @@
+{
+  ecs.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      try {
+        long now=ctx.getTimeService().wallClockTime();
+        for (        Map.Entry<byte[],byte[]> pair : batch) {
+          if (taskContext.isStopped()) {
+            break;
+          }
+          Object key=unmarshall(pair.getKey());
+          if (filter == null || filter.accept(key)) {
+            MarshalledEntry entry=loadValues || loadMetadata ? (MarshalledEntry)unmarshall(pair.getValue()) : null;
+            boolean isExpired=entry != null && entry.getMetadata() != null && entry.getMetadata().isExpired(now);
+            if (!isExpired) {
+              if (!loadValues || !loadMetadata) {
+                entry=ctx.getMarshalledEntryFactory().newMarshalledEntry(key,loadValues ? entry.getValue() : null,loadMetadata ? entry.getMetadata() : null);
+              }
+              cacheLoaderTask.processEntry(entry,taskContext);
+            }
+          }
+        }
+      }
+ catch (      Exception e) {
+        log.errorExecutingParallelStoreTask(e);
+        throw e;
+      }
+      return null;
+    }
+  }
+);
+}

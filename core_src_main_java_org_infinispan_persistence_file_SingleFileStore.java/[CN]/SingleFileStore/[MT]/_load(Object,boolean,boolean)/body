@@ -29,7 +29,7 @@ synchronized (entries) {
   }
   final byte[] data;
   try {
-    data=new byte[fe.keyLen + (loadValue ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
+    data=new byte[fe.keyLen + (loadValue || loadMetadata ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
     channel.read(ByteBuffer.wrap(data),fe.offset + KEY_POS);
   }
  catch (  Exception e) {
@@ -45,7 +45,9 @@ synchronized (entries) {
   org.infinispan.commons.io.ByteBuffer metadataBb=null;
   if (loadValue) {
     valueBb=factory.newByteBuffer(data,fe.keyLen,fe.dataLen);
-    if (loadMetadata && fe.metadataLen > 0)     metadataBb=factory.newByteBuffer(data,fe.keyLen + fe.dataLen,fe.metadataLen);
+  }
+  if (loadMetadata && fe.metadataLen > 0) {
+    metadataBb=factory.newByteBuffer(data,fe.keyLen + fe.dataLen,fe.metadataLen);
   }
   return ctx.getMarshalledEntryFactory().newMarshalledEntry(keyBb,valueBb,metadataBb);
 }

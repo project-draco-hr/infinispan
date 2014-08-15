@@ -4,15 +4,14 @@
       try {
         for (        Object key : batch) {
           if (taskContext.isStopped())           break;
-          if (!loadEntry && !loadMetadata) {
-            cacheLoaderTask.processEntry(ctx.getMarshalledEntryFactory().newMarshalledEntry(key,(Object)null,null),taskContext);
+          MarshalledEntry entry=null;
+          if (loadEntry || loadMetadata) {
+            entry=load(key);
           }
- else {
-            MarshalledEntry entry=load(key);
-            if (entry != null) {
-              cacheLoaderTask.processEntry(entry,taskContext);
-            }
+          if (!loadEntry || !loadMetadata) {
+            entry=ctx.getMarshalledEntryFactory().newMarshalledEntry(key,loadEntry ? entry.getValue() : null,loadMetadata ? entry.getMetadata() : null);
           }
+          cacheLoaderTask.processEntry(entry,taskContext);
         }
       }
  catch (      Exception e) {

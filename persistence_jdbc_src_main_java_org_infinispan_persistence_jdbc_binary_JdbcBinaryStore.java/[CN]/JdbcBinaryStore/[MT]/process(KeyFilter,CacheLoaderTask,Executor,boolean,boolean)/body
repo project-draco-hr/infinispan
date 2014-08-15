@@ -22,6 +22,9 @@
           try {
             for (            MarshalledEntry me : bucket.getStoredEntries(filter,ctx.getTimeService()).values()) {
               if (!taskContext.isStopped()) {
+                if (!fetchValue || !fetchMetadata) {
+                  me=ctx.getMarshalledEntryFactory().newMarshalledEntry(me.getKey(),fetchValue ? me.getValue() : null,fetchMetadata ? me.getMetadata() : null);
+                }
                 task.processEntry(me,taskContext);
               }
             }
