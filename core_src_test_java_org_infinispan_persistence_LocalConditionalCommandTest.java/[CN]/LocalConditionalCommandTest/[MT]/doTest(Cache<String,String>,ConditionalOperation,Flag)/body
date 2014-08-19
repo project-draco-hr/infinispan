@@ -1,0 +1,18 @@
+{
+  assertEmpty(cache);
+  initStore(cache);
+  final boolean skipLoad=flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;
+  try {
+    if (flag != null) {
+      operation.execute(cache.getAdvancedCache().withFlags(flag),key,value1,value2);
+    }
+ else {
+      operation.execute(cache,key,value1,value2);
+    }
+  }
+ catch (  Exception e) {
+    log.debug(e);
+  }
+  assertLoadAfterOperation(cache,skipLoad);
+  assertEquals(operation.finalValue(value1,value2,skipLoad),cache.get(key));
+}

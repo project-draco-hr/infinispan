@@ -1,0 +1,24 @@
+{
+  if (operation == ConditionalOperation.REMOVE_IF && shared) {
+    return;
+  }
+  waitForRehashToComplete(cacheList);
+  final CacheHelper<String,String> cacheHelper=create(cacheList);
+  final boolean skipLoad=flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;
+  assertEmpty(cacheList);
+  initStore(cacheHelper,shared);
+  try {
+    if (flag != null) {
+      operation.execute(cacheHelper.cache(ownership).getAdvancedCache().withFlags(flag),key,value1,value2);
+    }
+ else {
+      operation.execute(cacheHelper.cache(ownership),key,value1,value2);
+    }
+  }
+ catch (  Exception e) {
+    log.debug(e);
+  }
+  assertLoadAfterOperation(cacheHelper,operation,ownership,skipLoad);
+  assertEquals(operation.finalValue(value1,value2,skipLoad),cacheHelper.cache(Ownership.PRIMARY_OWNER).get(key));
+  assertEquals(operation.finalValue(value1,value2,skipLoad),cacheHelper.cache(Ownership.BACKUP_OWNER).get(key));
+}

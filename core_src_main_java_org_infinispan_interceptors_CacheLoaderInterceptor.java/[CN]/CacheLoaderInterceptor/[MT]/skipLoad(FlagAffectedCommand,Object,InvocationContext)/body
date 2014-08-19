@@ -1,0 +1,28 @@
+{
+  if (!shouldAttemptLookup(ctx.lookupEntry(key))) {
+    if (trace) {
+      log.tracef("Skip load for command %s. Entry already exists in context.",cmd);
+    }
+    return true;
+  }
+  if (!canLoad(key)) {
+    if (trace) {
+      log.tracef("Skip load for command %s. Cannot load the key.",cmd);
+    }
+    return true;
+  }
+  boolean skip;
+  if (cmd instanceof WriteCommand) {
+    skip=skipLoadForWriteCommand((WriteCommand)cmd,key,ctx);
+    if (trace) {
+      log.tracef("Skip load for write command %s? %s",cmd,skip);
+    }
+  }
+ else {
+    skip=hasSkipLoadFlag(cmd);
+    if (trace) {
+      log.tracef("Skip load for command %s?. %s",cmd,skip);
+    }
+  }
+  return skip;
+}

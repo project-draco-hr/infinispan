@@ -1,0 +1,15 @@
+{
+  if (skipLoad(cmd,key,ctx)) {
+    return null;
+  }
+  final boolean isDelta=cmd instanceof ApplyDeltaCommand;
+  final AtomicReference<Boolean> isLoaded=new AtomicReference<>();
+  InternalCacheEntry entry=PersistenceUtil.loadAndStoreInDataContainer(dataContainer,persistenceManager,key,ctx,timeService,isLoaded);
+  if (entry != null) {
+    CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,entry,isDelta);
+    if (isLoaded.get() == Boolean.TRUE) {
+      recordLoadedEntry(ctx,key,wrappedEntry,entry,cmd);
+    }
+  }
+  return isLoaded.get();
+}

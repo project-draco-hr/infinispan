@@ -1,0 +1,20 @@
+{
+  CacheHelper<K,V> cacheHelper=new CacheHelper<>();
+  for (  Cache<K,V> cache : cacheList) {
+    ClusteringDependentLogic clusteringDependentLogic=extractComponent(cache,ClusteringDependentLogic.class);
+    log.debugf("owners for key %s are %s",key,clusteringDependentLogic.getOwners(key));
+    if (clusteringDependentLogic.localNodeIsPrimaryOwner(key)) {
+      log.debug("Cache " + address(cache) + " is the primary owner");
+      assertTrue(cacheHelper.addCache(Ownership.PRIMARY_OWNER,cache));
+    }
+ else     if (clusteringDependentLogic.localNodeIsOwner(key)) {
+      log.debug("Cache " + address(cache) + " is the backup owner");
+      assertTrue(cacheHelper.addCache(Ownership.BACKUP_OWNER,cache));
+    }
+ else {
+      log.debug("Cache " + address(cache) + " is the non owner");
+      assertTrue(cacheHelper.addCache(Ownership.NON_OWNER,cache));
+    }
+  }
+  return cacheHelper;
+}
