@@ -1,0 +1,14 @@
+{
+  final BoundedConcurrentHashMap<Object,InternalCacheEntry<K,V>> boundedMap=((BoundedConcurrentHashMap<Object,InternalCacheEntry<K,V>>)entries);
+  boundedMap.lock(key);
+  try {
+    InternalCacheEntry<K,V> oldEntry=boundedMap.remove(key);
+    if (oldEntry == null) {
+      activator.activate(key);
+    }
+    return oldEntry;
+  }
+  finally {
+    boundedMap.unlock(key);
+  }
+}
