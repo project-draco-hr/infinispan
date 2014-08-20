@@ -1,9 +1,10 @@
 {
   try {
     globalConfiguration=holder.getGlobalConfigurationBuilder().build();
-    defaultConfiguration=holder.getDefaultConfigurationBuilder().build();
+    defaultConfiguration=holder.getDefaultConfigurationBuilder().build(globalConfiguration);
     for (    Entry<String,ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
-      org.infinispan.configuration.cache.Configuration c=entry.getValue().build();
+      ConfigurationBuilder builder=entry.getValue();
+      org.infinispan.configuration.cache.Configuration c=builder.build(globalConfiguration);
       configurationOverrides.put(entry.getKey(),c);
     }
     globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());

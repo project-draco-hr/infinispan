@@ -3,11 +3,12 @@
   ConfigurationBuilderHolder globalConfigurationBuilderHolder=parserRegistry.parseFile(globalConfigurationFile);
   ConfigurationBuilderHolder defaultConfigurationBuilderHolder=parserRegistry.parseFile(defaultConfigurationFile);
   globalConfiguration=globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build();
-  defaultConfiguration=defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build();
+  defaultConfiguration=defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build(globalConfiguration);
   if (namedCacheFile != null) {
     ConfigurationBuilderHolder namedConfigurationBuilderHolder=parserRegistry.parseFile(namedCacheFile);
     Entry<String,ConfigurationBuilder> entry=namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-    configurationOverrides.put(entry.getKey(),entry.getValue().build());
+    ConfigurationBuilder builder=entry.getValue();
+    configurationOverrides.put(entry.getKey(),builder.build(globalConfiguration));
   }
   globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this,caches.keySet());
   authzHelper=new AuthorizationHelper(globalConfiguration.security(),AuditContext.CACHEMANAGER,globalConfiguration.globalJmxStatistics().cacheManagerName());
