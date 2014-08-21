@@ -1,12 +1,13 @@
 {
   Subscriptions subscriptions;
-  if (subscription.getPredicate().getInterval() != null) {
+  Predicate<AttributeDomain> predicate=subscription.getPredicateNode().getPredicate();
+  if (predicate.getInterval() != null) {
     if (orderedPredicates == null) {
       orderedPredicates=new IntervalTree<AttributeDomain,Subscriptions>(new ComparableComparator());
     }
-    IntervalTree.Node<AttributeDomain,Subscriptions> n=orderedPredicates.add(subscription.getPredicate().getInterval());
+    IntervalTree.Node<AttributeDomain,Subscriptions> n=orderedPredicates.add(predicate.getInterval());
     if (n.value == null) {
-      subscriptions=new Subscriptions(subscription.getPredicate());
+      subscriptions=new Subscriptions(predicate);
       n.value=subscriptions;
     }
  else {
@@ -17,10 +18,10 @@
     if (unorderedPredicates == null) {
       unorderedPredicates=new HashMap<Predicate<AttributeDomain>,Subscriptions>();
     }
-    subscriptions=unorderedPredicates.get(subscription.getPredicate());
+    subscriptions=unorderedPredicates.get(predicate);
     if (subscriptions == null) {
-      subscriptions=new Subscriptions(subscription.getPredicate());
-      unorderedPredicates.put(subscription.getPredicate(),subscriptions);
+      subscriptions=new Subscriptions(predicate);
+      unorderedPredicates.put(predicate,subscriptions);
     }
   }
   subscriptions.add(subscription);

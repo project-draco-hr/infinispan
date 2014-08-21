@@ -1,0 +1,10 @@
+{
+  Matcher matcher=createMatcher();
+  Object person=createPerson1();
+  QueryFactory qf=matcher.getQueryFactory();
+  Query q=qf.from(Person.class).having("name").like("Jo%").and(qf.not().having("name").like("Jo%").or().having("id").lt(1000)).toBuilder().build();
+  ObjectFilter objectFilter=matcher.getObjectFilter(q);
+  ObjectFilter.FilterResult result=objectFilter.filter(person);
+  assertNotNull(result);
+  assertTrue(result.getInstance() == person);
+}
