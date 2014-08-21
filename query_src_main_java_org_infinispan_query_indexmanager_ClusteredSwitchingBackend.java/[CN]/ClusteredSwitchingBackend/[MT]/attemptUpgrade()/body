@@ -1,0 +1,18 @@
+{
+  if (masterLockAcquisitionAttempts >= MAX_LOCK_ACQUISITION_ATTEMPTS) {
+    indexlock.forceLockClear();
+    swapNewBackendIn(factory.createLocalIndexingBackend(),localAddress);
+    return true;
+  }
+ else {
+    masterLockAcquisitionAttempts++;
+  }
+  if (indexlock.waitForAvailability()) {
+    swapNewBackendIn(factory.createLocalIndexingBackend(),localAddress);
+    return true;
+  }
+ else {
+    log.trace("Index lock not available: index update operations postponed.");
+    return false;
+  }
+}

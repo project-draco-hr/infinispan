@@ -1,0 +1,17 @@
+{
+  RpcManager rpcManager=componentRegistry.getComponent(RpcManager.class);
+  if (rpcManager == null) {
+    LocalOnlyBackend backend=new LocalOnlyBackend(localBackendFactory);
+    backend.initialize();
+    return backend;
+  }
+ else {
+    EmbeddedCacheManager embeddedCacheManager=cacheManagerService.getEmbeddedCacheManager();
+    TransactionManager transactionManager=componentRegistry.getComponent(TransactionManager.class);
+    IndexLockController lockControl=new IndexManagerBasedLockController(indexManager,transactionManager);
+    ClusteredSwitchingBackend backend=new ClusteredSwitchingBackend(componentRegistry,indexName,localBackendFactory,lockControl);
+    backend.initialize();
+    embeddedCacheManager.addListener(backend);
+    return backend;
+  }
+}
