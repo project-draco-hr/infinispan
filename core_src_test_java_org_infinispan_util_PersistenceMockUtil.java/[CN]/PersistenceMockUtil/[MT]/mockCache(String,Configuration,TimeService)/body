@@ -1,12 +1,13 @@
 {
   String cacheName="mock-cache-" + name;
-  AdvancedCache cache=mock(AdvancedCache.class);
+  AdvancedCache cache=mock(AdvancedCache.class,RETURNS_DEEP_STUBS);
   GlobalConfiguration gc=new GlobalConfigurationBuilder().build();
   Set<String> cachesSet=new HashSet<>();
   EmbeddedCacheManager cm=mock(EmbeddedCacheManager.class);
   GlobalComponentRegistry gcr=new GlobalComponentRegistry(gc,cm,cachesSet);
   gcr.registerComponent(timeService,TimeService.class);
   ComponentRegistry registry=new ComponentRegistry(cacheName,configuration,cache,gcr,configuration.getClass().getClassLoader());
+  when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
   when(cache.getName()).thenReturn(cacheName);
   when(cache.getAdvancedCache()).thenReturn(cache);
   when(cache.getComponentRegistry()).thenReturn(registry);
