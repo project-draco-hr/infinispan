@@ -1,30 +1,44 @@
 {
   long count=0;
-  DBIterator it=db.iterator(new ReadOptions().fillCache(false));
   boolean destroyDatabase=false;
-  if (configuration.clearThreshold() <= 0) {
-    try {
-      for (it.seekToFirst(); it.hasNext(); ) {
-        Map.Entry<byte[],byte[]> entry=it.next();
-        db.delete(entry.getKey());
-        count++;
-        if (count > configuration.clearThreshold()) {
-          destroyDatabase=true;
-          break;
+  try {
+    semaphore.acquire();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore",e);
+  }
+  try {
+    if (stopped) {
+      throw new PersistenceException("LevelDB is stopped");
+    }
+    DBIterator it=db.iterator(new ReadOptions().fillCache(false));
+    if (configuration.clearThreshold() <= 0) {
+      try {
+        for (it.seekToFirst(); it.hasNext(); ) {
+          Map.Entry<byte[],byte[]> entry=it.next();
+          db.delete(entry.getKey());
+          count++;
+          if (count > configuration.clearThreshold()) {
+            destroyDatabase=true;
+            break;
+          }
+        }
+      }
+  finally {
+        try {
+          it.close();
+        }
+ catch (        IOException e) {
+          log.warnUnableToCloseDbIterator(e);
         }
       }
     }
-  finally {
-      try {
-        it.close();
-      }
- catch (      IOException e) {
-        log.warnUnableToCloseDbIterator(e);
-      }
+ else {
+      destroyDatabase=true;
     }
   }
- else {
-    destroyDatabase=true;
+  finally {
+    semaphore.release();
   }
   if (destroyDatabase) {
     try {

@@ -1,6 +1,17 @@
 {
   try {
-    MarshalledEntry me=(MarshalledEntry)unmarshall(db.get(marshall(key)));
+    byte[] marshalledEntry;
+    semaphore.acquire();
+    try {
+      if (stopped) {
+        throw new PersistenceException("LevelDB is stopped");
+      }
+      marshalledEntry=db.get(marshall(key));
+    }
+  finally {
+      semaphore.release();
+    }
+    MarshalledEntry me=(MarshalledEntry)unmarshall(marshalledEntry);
     if (me == null)     return null;
     InternalMetadata meta=me.getMetadata();
     if (meta != null && meta.isExpired(ctx.getTimeService().wallClockTime())) {

@@ -1,16 +1,30 @@
 {
   try {
-    db.close();
+    semaphore.acquire(Integer.MAX_VALUE);
   }
- catch (  IOException e) {
-    log.warnUnableToCloseDb(e);
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore",e);
   }
   try {
-    expiredDb.close();
+    if (stopped) {
+      throw new PersistenceException("LevelDB is stopped");
+    }
+    try {
+      db.close();
+    }
+ catch (    IOException e) {
+      log.warnUnableToCloseDb(e);
+    }
+    try {
+      expiredDb.close();
+    }
+ catch (    IOException e) {
+      log.warnUnableToCloseExpiredDb(e);
+    }
+    db=reinitDatabase(getQualifiedLocation(),dataDbOptions());
+    expiredDb=reinitDatabase(getQualifiedExpiredLocation(),expiredDbOptions());
   }
- catch (  IOException e) {
-    log.warnUnableToCloseExpiredDb(e);
+  finally {
+    semaphore.release(Integer.MAX_VALUE);
   }
-  db=reinitDatabase(getQualifiedLocation(),dataDbOptions());
-  expiredDb=reinitDatabase(getQualifiedExpiredLocation(),expiredDbOptions());
 }

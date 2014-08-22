@@ -1,5 +1,14 @@
 {
   try {
+    semaphore.acquire();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.",e);
+  }
+  try {
+    if (stopped) {
+      throw new PersistenceException("LevelDB is stopped");
+    }
     List<ExpiryEntry> entries=new ArrayList<ExpiryEntry>();
     expiryEntryQueue.drainTo(entries);
     for (    ExpiryEntry entry : entries) {
@@ -72,5 +81,8 @@
   }
 catch (  Exception e) {
     throw new PersistenceException(e);
+  }
+ finally {
+    semaphore.release();
   }
 }

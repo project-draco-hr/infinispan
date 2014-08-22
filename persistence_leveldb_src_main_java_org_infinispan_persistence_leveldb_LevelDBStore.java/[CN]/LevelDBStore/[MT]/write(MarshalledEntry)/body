@@ -1,12 +1,23 @@
 {
   try {
-    db.put(marshall(me.getKey()),marshall(me));
+    byte[] marshelledKey=marshall(me.getKey());
+    byte[] marshalledEntry=marshall(me);
+    semaphore.acquire();
+    try {
+      if (stopped) {
+        throw new PersistenceException("LevelDB is stopped");
+      }
+      db.put(marshelledKey,marshalledEntry);
+    }
+  finally {
+      semaphore.release();
+    }
     InternalMetadata meta=me.getMetadata();
     if (meta != null && meta.expiryTime() > -1) {
       addNewExpiry(me);
     }
   }
  catch (  Exception e) {
-    throw new DBException(e);
+    throw new PersistenceException(e);
   }
 }

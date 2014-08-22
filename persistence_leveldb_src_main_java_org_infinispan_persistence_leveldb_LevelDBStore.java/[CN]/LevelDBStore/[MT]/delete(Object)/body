@@ -1,10 +1,19 @@
 {
   try {
     byte[] keyBytes=marshall(key);
-    if (db.get(keyBytes) == null) {
-      return false;
+    semaphore.acquire();
+    try {
+      if (stopped) {
+        throw new PersistenceException("LevelDB is stopped");
+      }
+      if (db.get(keyBytes) == null) {
+        return false;
+      }
+      db.delete(keyBytes);
     }
-    db.delete(keyBytes);
+  finally {
+      semaphore.release();
+    }
     return true;
   }
  catch (  Exception e) {

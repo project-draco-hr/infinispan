@@ -1,14 +1,26 @@
 {
   try {
-    db.close();
+    semaphore.acquire(Integer.MAX_VALUE);
   }
- catch (  IOException e) {
-    log.warnUnableToCloseDb(e);
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore",e);
   }
   try {
-    expiredDb.close();
+    try {
+      db.close();
+    }
+ catch (    IOException e) {
+      log.warnUnableToCloseDb(e);
+    }
+    try {
+      expiredDb.close();
+    }
+ catch (    IOException e) {
+      log.warnUnableToCloseExpiredDb(e);
+    }
   }
- catch (  IOException e) {
-    log.warnUnableToCloseExpiredDb(e);
+  finally {
+    stopped=true;
+    semaphore.release(Integer.MAX_VALUE);
   }
 }
