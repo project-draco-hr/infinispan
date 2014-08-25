@@ -1,13 +1,16 @@
 {
-  if (attributeValue instanceof Comparable && orderedPredicates != null) {
-    for (    IntervalTree.Node<AttributeDomain,Subscriptions> n : orderedPredicates.stab(attributeValue)) {
-      Subscriptions subscriptions=n.value;
-      if (subscriptions.isActive(ctx)) {
-        for (        PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
-          s.handleValue(ctx,true);
+  if (orderedPredicates != null && attributeValue instanceof Comparable) {
+    orderedPredicates.stab(attributeValue,new IntervalTree.NodeCallback<AttributeDomain,Subscriptions>(){
+      @Override public void handle(      IntervalTree.Node<AttributeDomain,Subscriptions> n){
+        Subscriptions subscriptions=n.value;
+        if (subscriptions.isActive(ctx)) {
+          for (          PredicateIndex.PredicateSubscription s : subscriptions.subscriptions) {
+            s.handleValue(ctx,true);
+          }
         }
       }
     }
+);
   }
   if (unorderedPredicates != null) {
     for (    Map.Entry<Predicate<AttributeDomain>,Subscriptions> e : unorderedPredicates.entrySet()) {
