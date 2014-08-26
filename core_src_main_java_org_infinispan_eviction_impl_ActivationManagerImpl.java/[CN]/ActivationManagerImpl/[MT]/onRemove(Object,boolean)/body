@@ -1,0 +1,22 @@
+{
+  if (!passivation) {
+    return;
+  }
+  final boolean primaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+  try {
+    if (newEntry) {
+      AccessMode mode=primaryOwner ? BOTH : PRIVATE;
+      if (persistenceManager.deleteFromAllStores(key,mode) && statisticsEnabled) {
+        activations.incrementAndGet();
+      }
+    }
+ else {
+      if (primaryOwner && persistenceManager.deleteFromAllStores(key,SHARED) && statisticsEnabled) {
+        activations.incrementAndGet();
+      }
+    }
+  }
+ catch (  CacheException e) {
+    log.unableToRemoveEntryAfterActivation(key,e);
+  }
+}
