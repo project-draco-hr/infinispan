@@ -1,8 +1,9 @@
 {
-  if (filtersByType.keySet().contains(instance.getClass())) {
-    return createContext(instance);
+  FilterRegistry<Class<?>,ReflectionHelper.PropertyAccessor,String> filterRegistry=getFilterRegistryForType(instance.getClass());
+  if (filterRegistry != null) {
+    ReflectionMatcherEvalContext context=createContext(instance);
+    context.initMultiFilterContext(filterRegistry);
+    return context;
   }
- else {
-    return null;
-  }
+  return null;
 }
