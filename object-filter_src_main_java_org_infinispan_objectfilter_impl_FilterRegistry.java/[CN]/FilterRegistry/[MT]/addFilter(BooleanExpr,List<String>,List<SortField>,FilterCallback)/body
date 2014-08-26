@@ -14,21 +14,9 @@
     }
   }
   BETree beTree=treeMaker.make(normalizedFilter);
-  final FilterSubscriptionImpl<AttributeId> filterSubscription=new FilterSubscriptionImpl<AttributeId>(metadataAdapter,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields);
+  final FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId> filterSubscription=new FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId>(metadataAdapter,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields);
   filterSubscription.registerProjection(predicateIndex);
-  for (  BENode node : beTree.getNodes()) {
-    if (node instanceof PredicateNode) {
-      final PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
-      Predicate.Callback predicateCallback=new Predicate.Callback(){
-        @Override public void handleValue(        MatcherEvalContext<?> ctx,        boolean isMatching){
-          FilterEvalContext filterEvalContext=ctx.getFilterEvalContext(filterSubscription);
-          predicateNode.handleChildValue(null,isMatching,filterEvalContext);
-        }
-      }
-;
-      predicateNode.subscribe(predicateIndex,predicateCallback);
-    }
-  }
+  filterSubscription.subscribe(predicateIndex);
   filterSubscriptions.add(filterSubscription);
   return filterSubscription;
 }

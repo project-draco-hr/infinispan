@@ -1,0 +1,28 @@
+{
+  Iterator<AttributeNode<ReflectionHelper.PropertyAccessor,String>> children=node.getChildrenIterator();
+  while (children.hasNext()) {
+    AttributeNode<ReflectionHelper.PropertyAccessor,String> childAttribute=children.next();
+    if (instance == null) {
+      processAttribute(childAttribute,null);
+    }
+ else {
+      ReflectionHelper.PropertyAccessor accessor=childAttribute.getMetadata();
+      if (accessor.isMultiple()) {
+        Iterator valuesIt=accessor.getValueIterator(instance);
+        if (valuesIt == null) {
+          processAttribute(childAttribute,null);
+        }
+ else {
+          while (valuesIt.hasNext()) {
+            Object attributeValue=valuesIt.next();
+            processAttribute(childAttribute,attributeValue);
+          }
+        }
+      }
+ else {
+        Object attributeValue=accessor.getValue(instance);
+        processAttribute(childAttribute,attributeValue);
+      }
+    }
+  }
+}

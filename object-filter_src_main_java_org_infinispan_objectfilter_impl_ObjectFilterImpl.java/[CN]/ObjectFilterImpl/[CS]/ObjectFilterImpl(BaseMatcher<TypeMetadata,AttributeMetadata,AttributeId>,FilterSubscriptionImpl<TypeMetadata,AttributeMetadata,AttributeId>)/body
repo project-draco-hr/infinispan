@@ -1,0 +1,14 @@
+{
+  this.matcher=matcher;
+  this.filterSubscription=filterSubscriptionImpl;
+  supportedTypeNames=Collections.singleton(filterSubscriptionImpl.getMetadataAdapter().getTypeName());
+  supportedTypes=Collections.singleton(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
+  predicateIndex=new PredicateIndex<AttributeMetadata,AttributeId>(filterSubscriptionImpl.getMetadataAdapter());
+  filterSubscriptionImpl.registerProjection(predicateIndex);
+  for (  BENode node : filterSubscriptionImpl.getBETree().getNodes()) {
+    if (node instanceof PredicateNode) {
+      PredicateNode<AttributeId> predicateNode=(PredicateNode<AttributeId>)node;
+      predicateIndex.addSubscriptionForPredicate(predicateNode,filterSubscription);
+    }
+  }
+}
