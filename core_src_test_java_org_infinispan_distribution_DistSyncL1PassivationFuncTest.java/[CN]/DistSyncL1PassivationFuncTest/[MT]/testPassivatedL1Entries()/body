@@ -1,0 +1,22 @@
+{
+  final int minPassivated=2;
+  final int insertCount=MAX_ENTRIES + minPassivated;
+  List<MagicKey> keys=new ArrayList<MagicKey>(insertCount);
+  Cache<MagicKey,Object> ownerCache=cache(0,cacheName);
+  Cache<MagicKey,Object> nonOwnerCache=cache(1,cacheName);
+  for (int i=0; i < insertCount; ++i) {
+    MagicKey key=new MagicKey(ownerCache);
+    while (ownerCache.putIfAbsent(key,key) != null) {
+      key=new MagicKey(ownerCache);
+    }
+    keys.add(key);
+  }
+  assertTrue(ownerCacheStore.size() >= minPassivated);
+  assertTrue(MAX_ENTRIES >= ownerCache.getAdvancedCache().getDataContainer().size());
+  assertEquals(0,nonOwnerCache.size());
+  assertEquals(0,nonOwnerCacheStore.size());
+  for (  MagicKey key : keys) {
+    nonOwnerCache.get(key);
+  }
+  assertEquals("Some L1 values were passivated",0,nonOwnerCacheStore.size());
+}
