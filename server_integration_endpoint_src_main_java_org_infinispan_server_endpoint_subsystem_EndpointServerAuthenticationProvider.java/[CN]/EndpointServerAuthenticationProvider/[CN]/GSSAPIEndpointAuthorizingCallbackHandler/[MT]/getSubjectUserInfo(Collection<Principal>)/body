@@ -1,7 +1,10 @@
 {
-  principals.add(realmUser);
+  Collection<Principal> realmPrincipals=new ArrayList<>();
+  realmPrincipals.add(realmUser);
   try {
-    return new RealmSubjectUserInfo(delegate.createSubjectUserInfo(principals));
+    org.jboss.as.core.security.SubjectUserInfo userInfo=delegate.createSubjectUserInfo(realmPrincipals);
+    userInfo.getPrincipals().addAll(principals);
+    return new RealmSubjectUserInfo(userInfo);
   }
  catch (  IOException e) {
     throw ROOT_LOGGER.cannotRetrieveAuthorizationInformation(e,realmUser.toString());
