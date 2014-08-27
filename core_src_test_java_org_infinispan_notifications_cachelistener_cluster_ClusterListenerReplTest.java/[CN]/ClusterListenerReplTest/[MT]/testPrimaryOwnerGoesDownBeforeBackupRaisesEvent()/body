@@ -1,0 +1,28 @@
+{
+  final Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  ClusterListener clusterListener=new ClusterListener();
+  cache0.addListener(clusterListener);
+  RpcManager rpcManager=TestingUtil.extractComponent(cache1,RpcManager.class);
+  ControlledRpcManager controlledRpcManager=new ControlledRpcManager(rpcManager);
+  controlledRpcManager.blockBefore(PutKeyValueCommand.class);
+  TestingUtil.replaceComponent(cache1,RpcManager.class,controlledRpcManager,true);
+  final MagicKey key=new MagicKey(cache1,cache2);
+  Future<String> future=fork(new Callable<String>(){
+    @Override public String call() throws Exception {
+      return cache0.put(key,FIRST_VALUE);
+    }
+  }
+);
+  controlledRpcManager.waitForCommandToBlock(10,TimeUnit.SECONDS);
+  TestingUtil.killCacheManagers(cache1.getCacheManager());
+  assertNull(future.get(10,TimeUnit.SECONDS));
+  assertEquals(clusterListener.events.size(),1);
+  CacheEntryEvent<Object,String> event=clusterListener.events.get(0);
+  assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+  CacheEntryCreatedEvent<Object,String> modEvent=(CacheEntryCreatedEvent<Object,String>)event;
+  assertTrue(modEvent.isCommandRetried());
+  assertEquals(modEvent.getKey(),key);
+  assertEquals(modEvent.getValue(),FIRST_VALUE);
+}

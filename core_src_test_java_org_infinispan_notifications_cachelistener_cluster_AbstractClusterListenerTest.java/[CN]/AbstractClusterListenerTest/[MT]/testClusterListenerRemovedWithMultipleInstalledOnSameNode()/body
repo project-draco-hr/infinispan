@@ -8,13 +8,13 @@
   ClusterListener clusterListener=new ClusterListener();
   cache0.addListener(clusterListener);
   assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 1);
-  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 1);
-  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 1);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + (cacheMode.isDistributed() ? 1 : 0));
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + (cacheMode.isDistributed() ? 1 : 0));
   ClusterListener clusterListener2=new ClusterListener();
   cache0.addListener(clusterListener2);
   assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 2);
-  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 2);
-  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 2);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + (cacheMode.isDistributed() ? 2 : 0));
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + (cacheMode.isDistributed() ? 2 : 0));
   MagicKey key=new MagicKey(cache2,cache1);
   cache1.put(key,FIRST_VALUE);
   assertEquals(clusterListener.events.size(),1);
@@ -23,8 +23,8 @@
   verifySimpleInsertionEvents(clusterListener2,key,FIRST_VALUE);
   cache0.removeListener(clusterListener);
   assertEquals(cache0.getAdvancedCache().getListeners().size(),initialCache0ListenerSize + 1);
-  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + 1);
-  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + 1);
+  assertEquals(cache1.getAdvancedCache().getListeners().size(),initialCache1ListenerSize + (cacheMode.isDistributed() ? 1 : 0));
+  assertEquals(cache2.getAdvancedCache().getListeners().size(),initialCache2ListenerSize + (cacheMode.isDistributed() ? 1 : 0));
   cache2.put(key,SECOND_VALUE);
   assertEquals(clusterListener2.events.size(),2);
   CacheEntryEvent event=clusterListener2.events.get(1);

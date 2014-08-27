@@ -1,0 +1,35 @@
+{
+  final Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  ClusterListener clusterListener=new ClusterListener();
+  cache0.addListener(clusterListener);
+  CyclicBarrier barrier=new CyclicBarrier(2);
+  BlockingInterceptor blockingInterceptor=new BlockingInterceptor(barrier,PutKeyValueCommand.class,true);
+  cache0.getAdvancedCache().addInterceptorBefore(blockingInterceptor,EntryWrappingInterceptor.class);
+  final MagicKey key=new MagicKey(cache1,cache2);
+  Future<String> future=fork(new Callable<String>(){
+    @Override public String call() throws Exception {
+      return cache0.put(key,FIRST_VALUE);
+    }
+  }
+);
+  barrier.await(10,TimeUnit.SECONDS);
+  TestingUtil.killCacheManagers(cache1.getCacheManager());
+  cache0.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+  barrier.await(10,TimeUnit.SECONDS);
+  assertEquals(future.get(10,TimeUnit.SECONDS),FIRST_VALUE);
+  assertEquals(clusterListener.events.size(),2);
+  CacheEntryEvent<Object,String> event=clusterListener.events.get(0);
+  assertEquals(event.getType(),Event.Type.CACHE_ENTRY_CREATED);
+  CacheEntryCreatedEvent<Object,String> createEvent=(CacheEntryCreatedEvent<Object,String>)event;
+  assertFalse(createEvent.isCommandRetried());
+  assertEquals(createEvent.getKey(),key);
+  assertEquals(createEvent.getValue(),FIRST_VALUE);
+  event=clusterListener.events.get(1);
+  assertEquals(event.getType(),Event.Type.CACHE_ENTRY_MODIFIED);
+  CacheEntryModifiedEvent<Object,String> modEvent=(CacheEntryModifiedEvent<Object,String>)event;
+  assertTrue(modEvent.isCommandRetried());
+  assertEquals(modEvent.getKey(),key);
+  assertEquals(modEvent.getValue(),FIRST_VALUE);
+}
