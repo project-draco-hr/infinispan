@@ -1,18 +1,18 @@
 {
-  final StaticCustomEventLogWithStateListener staticEventListener=new StaticCustomEventLogWithStateListener();
+  final StaticCustomEventLogListener staticEventListener=new StaticCustomEventLogListener();
   RemoteCache<Integer,String> cache=remoteCacheManager.getCache();
   cache.put(1,"one");
   withClientListener(staticEventListener,new RemoteCacheManagerCallable(remoteCacheManager){
     @Override public void call(){
-      staticEventListener.expectOnlyCreatedCustomEvent(1,"one");
+      staticEventListener.expectNoEvents();
     }
   }
 );
-  final DynamicCustomEventWithStateLogListener dynamicEventListener=new DynamicCustomEventWithStateLogListener();
+  final DynamicCustomEventLogListener dynamicEventListener=new DynamicCustomEventLogListener();
   cache.put(2,"two");
   withClientListener(dynamicEventListener,null,new Object[]{2},new RemoteCacheManagerCallable(remoteCacheManager){
     @Override public void call(){
-      dynamicEventListener.expectOnlyCreatedCustomEvent(2,null);
+      staticEventListener.expectNoEvents();
     }
   }
 );

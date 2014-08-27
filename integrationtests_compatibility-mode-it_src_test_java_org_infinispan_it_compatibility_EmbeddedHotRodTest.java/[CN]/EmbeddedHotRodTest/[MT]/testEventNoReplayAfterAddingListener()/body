@@ -1,5 +1,5 @@
 {
-  EventLogWithStateListener<Integer> eventListener=new EventLogWithStateListener<>(true);
+  EventLogListener<Integer> eventListener=new EventLogListener<>(true);
   Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
   RemoteCache<Integer,String> remote=cacheFactory.getHotRodCache();
   remote.put(1,"one");
@@ -13,7 +13,7 @@
   eventListener.expectNoEvents();
   remote.addClientListener(eventListener);
   try {
-    eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED,1,2);
+    eventListener.expectNoEvents();
     remote.remove(1);
     eventListener.expectOnlyRemovedEvent(1,embedded);
     remote.remove(2);
