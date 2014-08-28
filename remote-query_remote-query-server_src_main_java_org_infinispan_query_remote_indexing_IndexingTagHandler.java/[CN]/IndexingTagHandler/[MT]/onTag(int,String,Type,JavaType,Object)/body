@@ -1,6 +1,10 @@
 {
   messageContext.markField(fieldNumber);
-  if (fieldName != null && isIndexed(fieldNumber)) {
-    addFieldToDocument(fieldName,type,tagValue);
+  if (fieldName != null) {
+    IndexingMetadata indexingMetadata=messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+    if (indexingMetadata == null || indexingMetadata.isFieldIndexed(fieldNumber)) {
+      boolean isStored=indexingMetadata == null || indexingMetadata.isFieldStored(fieldNumber);
+      addFieldToDocument(fieldName,type,tagValue,isStored);
+    }
   }
 }

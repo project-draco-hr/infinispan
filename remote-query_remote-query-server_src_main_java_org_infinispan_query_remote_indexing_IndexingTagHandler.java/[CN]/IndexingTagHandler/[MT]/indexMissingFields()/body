@@ -2,7 +2,11 @@
   for (  FieldDescriptor fd : messageContext.getMessageDescriptor().getFields()) {
     if (!messageContext.isFieldMarked(fd.getNumber())) {
       Object defaultValue=fd.getJavaType() == JavaType.MESSAGE || fd.hasDefaultValue() ? fd.getDefaultValue() : null;
-      addFieldToDocument(fd.getName(),fd.getType(),defaultValue);
+      IndexingMetadata indexingMetadata=messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+      if (indexingMetadata == null || indexingMetadata.isFieldIndexed(fd.getNumber())) {
+        boolean isStored=indexingMetadata == null || indexingMetadata.isFieldStored(fd.getNumber());
+        addFieldToDocument(fd.getName(),fd.getType(),defaultValue,isStored);
+      }
     }
   }
 }

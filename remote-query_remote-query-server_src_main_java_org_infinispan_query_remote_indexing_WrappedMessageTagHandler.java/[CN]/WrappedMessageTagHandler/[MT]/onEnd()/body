@@ -3,11 +3,14 @@
     if (messageDescriptor == null) {
       throw new IllegalStateException("Descriptor name is missing");
     }
-    try {
-      ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor,document),messageDescriptor,bytes);
-    }
- catch (    IOException e) {
-      throw new CacheException(e);
+    IndexingMetadata indexingMetadata=messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+    if (indexingMetadata == null || indexingMetadata.isIndexed()) {
+      try {
+        ProtobufParser.INSTANCE.parse(new IndexingTagHandler(messageDescriptor,document),messageDescriptor,bytes);
+      }
+ catch (      IOException e) {
+        throw new CacheException(e);
+      }
     }
   }
  else   if (numericValue != null) {
