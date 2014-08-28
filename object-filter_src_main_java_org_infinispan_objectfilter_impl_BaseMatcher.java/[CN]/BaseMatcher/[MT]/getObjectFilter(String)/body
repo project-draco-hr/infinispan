@@ -1,7 +1,5 @@
 {
   FilterParsingResult<TypeMetadata> parsingResult=parse(jpaQuery);
   BooleanExpr normalizedFilter=booleanFilterNormalizer.normalize(parsingResult.getQuery());
-  FilterRegistry filterRegistry=createFilterRegistryForType(parsingResult.getTargetEntityMetadata());
-  FilterSubscriptionImpl filterSubscriptionImpl=filterRegistry.addFilter(normalizedFilter,parsingResult.getProjections(),parsingResult.getSortFields(),emptyCallback);
-  return getObjectFilter(filterSubscriptionImpl);
+  return new ObjectFilterImpl<TypeMetadata,AttributeMetadata,AttributeId>(this,createMetadataAdapter(parsingResult.getTargetEntityMetadata()),jpaQuery,parsingResult,normalizedFilter);
 }
