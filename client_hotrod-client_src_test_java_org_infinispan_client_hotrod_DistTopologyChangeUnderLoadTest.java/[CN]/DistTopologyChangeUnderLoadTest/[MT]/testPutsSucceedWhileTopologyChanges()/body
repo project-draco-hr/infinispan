@@ -1,0 +1,14 @@
+{
+  RemoteCache<Integer,String> remote=client(0).getCache();
+  remote.put(1,"v1");
+  assertEquals("v1",remote.get(1));
+  PutHammer putHammer=new PutHammer();
+  Future<Void> putHammerFuture=fork(putHammer);
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
+  registerCacheManager(cm);
+  TestHelper.startHotRodServer(cm);
+  waitForClusterToForm();
+  TestingUtil.waitForRehashToComplete(cm.getCache(),cache(0));
+  putHammer.rehashCompleted=true;
+  putHammerFuture.get();
+}
