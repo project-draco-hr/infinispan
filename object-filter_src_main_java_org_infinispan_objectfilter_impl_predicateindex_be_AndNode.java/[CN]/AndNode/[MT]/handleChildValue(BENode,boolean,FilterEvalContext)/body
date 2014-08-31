@@ -1,21 +1,20 @@
 {
   if (isDecided(evalContext)) {
     if (evalContext.matcherContext.isSingleFilter()) {
-      return false;
+      return;
     }
     throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
   }
   if (childValue) {
     if (--evalContext.treeCounters[index] == 0) {
       if (parent != null) {
-        return parent.handleChildValue(this,true,evalContext);
+        parent.handleChildValue(this,true,evalContext);
       }
  else {
         BENode[] nodes=evalContext.beTree.getNodes();
         for (int i=index; i < span; i++) {
           nodes[i].suspendSubscription(evalContext);
         }
-        return true;
       }
     }
  else {
@@ -24,12 +23,11 @@
       for (int i=child.index; i < child.span; i++) {
         nodes[i].suspendSubscription(evalContext);
       }
-      return false;
     }
   }
  else {
     if (parent != null) {
-      return parent.handleChildValue(this,false,evalContext);
+      parent.handleChildValue(this,false,evalContext);
     }
  else {
       evalContext.treeCounters[0]=BETree.EXPR_FALSE;
@@ -37,7 +35,6 @@
       for (int i=index; i < span; i++) {
         nodes[i].suspendSubscription(evalContext);
       }
-      return true;
     }
   }
 }
