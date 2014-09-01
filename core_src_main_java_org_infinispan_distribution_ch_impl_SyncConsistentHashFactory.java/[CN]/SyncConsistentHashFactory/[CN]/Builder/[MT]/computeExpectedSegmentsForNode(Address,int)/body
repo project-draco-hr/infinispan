@@ -1,0 +1,23 @@
+{
+  Float nodeCapacityFactor=capacityFactors.get(node);
+  if (nodeCapacityFactor == 0)   return 0;
+  double remainingCapacity=computeTotalCapacity();
+  double remainingCopies=numCopies * numSegments;
+  for (  Address a : sortedMembers) {
+    float capacityFactor=capacityFactors.get(a);
+    double nodeSegments=capacityFactor / remainingCapacity * remainingCopies;
+    if (nodeSegments > numSegments) {
+      nodeSegments=numSegments;
+      remainingCapacity-=capacityFactor;
+      remainingCopies-=nodeSegments;
+      if (node.equals(a))       return nodeSegments;
+    }
+ else {
+      if (!node.equals(a)) {
+        nodeSegments=nodeCapacityFactor / remainingCapacity * remainingCopies;
+      }
+      return Math.max(nodeSegments,1);
+    }
+  }
+  throw new IllegalStateException("The nodes collection does not include " + node);
+}

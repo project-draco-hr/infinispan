@@ -1,12 +1,7 @@
 {
   checkCapacityFactors(members,capacityFactors);
-  Builder builder=new Builder(hashFunction,numOwners,numSegments,members,capacityFactors);
-  SortedMap<Integer,Address> primarySegments=populatePrimarySegments(builder,numSegments);
-  if (numSegments >= builder.nodesWithLoad()) {
-    populateOwnersManySegments(builder,primarySegments);
-  }
- else {
-    populateOwnersFewSegments(builder,primarySegments);
-  }
-  return new DefaultConsistentHash(hashFunction,numOwners,numSegments,members,capacityFactors,builder.getAllOwners());
+  Builder builder=createBuilder(hashFunction,numOwners,numSegments,members,capacityFactors);
+  builder.populateOwners(numSegments);
+  builder.copyOwners();
+  return new DefaultConsistentHash(hashFunction,numOwners,numSegments,members,capacityFactors,builder.segmentOwners);
 }

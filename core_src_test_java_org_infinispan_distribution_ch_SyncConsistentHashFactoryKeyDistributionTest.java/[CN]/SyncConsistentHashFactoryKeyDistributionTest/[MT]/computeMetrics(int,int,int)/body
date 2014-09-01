@@ -1,11 +1,13 @@
 {
+  List<Address> members=createAddresses(numNodes);
   Map<String,String> metrics=new HashMap<String,String>();
   long[] distribution=new long[LOOPS * numNodes];
   long[] distributionPrimary=new long[LOOPS * numNodes];
   int distIndex=0;
   for (int i=0; i < LOOPS; i++) {
-    DefaultConsistentHash ch=createConsistentHash(numSegments,numOwners,numNodes);
+    DefaultConsistentHash ch=createConsistentHash(numSegments,numOwners,members);
     OwnershipStatistics stats=new OwnershipStatistics(ch,ch.getMembers());
+    assertEquals(numSegments * numOwners,stats.sumOwned());
     for (    Address node : ch.getMembers()) {
       distribution[distIndex]=stats.getOwned(node);
       distributionPrimary[distIndex]=stats.getPrimaryOwned(node);

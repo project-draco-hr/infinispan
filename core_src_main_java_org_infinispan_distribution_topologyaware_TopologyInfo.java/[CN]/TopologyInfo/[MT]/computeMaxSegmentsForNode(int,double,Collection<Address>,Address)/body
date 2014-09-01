@@ -7,29 +7,25 @@
       return numCopies * numSegments / nodes.size();
     }
   }
-  float nodeCapacityFactor=capacityFactors.get(node);
-  if (nodeCapacityFactor == 0.0)   return 0;
-  float totalCapacity=computeTotalCapacity(nodes,capacityFactors);
-  List<Address> sortedNodes=new ArrayList<Address>(nodes);
-  Collections.sort(sortedNodes,new Comparator<Address>(){
-    @Override public int compare(    Address o1,    Address o2){
-      return (int)Math.signum(capacityFactors.get(o2) - capacityFactors.get(o1));
-    }
-  }
-);
+  Float nodeCapacityFactor=capacityFactors.get(node);
+  if (nodeCapacityFactor == 0)   return 0;
+  double remainingCapacity=computeTotalCapacity(nodes,capacityFactors);
   double remainingCopies=numCopies * numSegments;
-  for (  Address a : sortedNodes) {
-    float nodeLoad=capacityFactors.get(a);
-    double nodeSegments;
-    if (remainingCopies * nodeLoad / totalCapacity > numSegments) {
+  for (  Address a : nodes) {
+    float capacityFactor=capacityFactors.get(a);
+    double nodeSegments=capacityFactor / remainingCapacity * remainingCopies;
+    if (nodeSegments > numSegments) {
       nodeSegments=numSegments;
-      totalCapacity-=nodeLoad;
+      remainingCapacity-=capacityFactor;
       remainingCopies-=nodeSegments;
+      if (node.equals(a))       return nodeSegments;
     }
  else {
-      nodeSegments=nodeLoad != 0 ? remainingCopies * nodeLoad / totalCapacity : 0;
+      if (!node.equals(a)) {
+        nodeSegments=nodeCapacityFactor / remainingCapacity * remainingCopies;
+      }
+      return nodeSegments;
     }
-    if (node.equals(a))     return nodeSegments;
   }
   throw new IllegalStateException("The nodes collection does not include " + node);
 }

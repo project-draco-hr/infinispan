@@ -1,0 +1,14 @@
+{
+  int numVirtualNodes=numSegments;
+  for (int virtualNode=0; virtualNode < numVirtualNodes; virtualNode++) {
+    for (    Address member : sortedMembers) {
+      int virtualNodeHash=normalizedHash(hashFunction,member.hashCode());
+      if (virtualNode != 0) {
+        virtualNodeHash=normalizedHash(hashFunction,virtualNodeHash + virtualNode);
+      }
+      int segment=virtualNodeHash / segmentSize;
+      addOwner(segment,member);
+    }
+    if (stats.sumOwned() >= numSegments * actualNumOwners)     break;
+  }
+}
