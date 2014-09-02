@@ -1,0 +1,12 @@
+{
+  EmbeddedCacheManager cacheManager=createClusteredCacheManager();
+  DependencyGraph<String> graph=TestingUtil.extractField(cacheManager,"cacheDependencyGraph");
+  cacheManager.defineConfiguration("cache",getIndexedConfigWithCustomLock().build());
+  startAndIndexData("cache",cacheManager);
+  cacheManager.stop();
+  List<String> cacheOrder=graph.topologicalSort();
+  assertTrue(cacheOrder.indexOf("cache") < cacheOrder.indexOf("LuceneIndexesData"));
+  assertTrue(cacheOrder.indexOf("cache") < cacheOrder.indexOf("LuceneIndexesMetadata"));
+  assertTrue(cacheOrder.indexOf("cache") < cacheOrder.indexOf("LuceneIndexesLocking"));
+  assertEquals(cacheManager.getStatus(),ComponentStatus.TERMINATED);
+}

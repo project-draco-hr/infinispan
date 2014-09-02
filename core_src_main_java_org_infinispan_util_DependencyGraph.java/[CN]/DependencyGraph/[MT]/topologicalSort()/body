@@ -1,0 +1,40 @@
+{
+  lock.readLock().lock();
+  try {
+    ArrayList<T> result=new ArrayList<>();
+    Deque<T> noIncomingEdges=new ArrayDeque<>();
+    Map<T,Integer> temp=new HashMap<>();
+    for (    Map.Entry<T,Set<T>> incoming : incomingEdges.entrySet()) {
+      int size=incoming.getValue().size();
+      T key=incoming.getKey();
+      temp.put(key,size);
+      if (size == 0) {
+        noIncomingEdges.add(key);
+      }
+    }
+    while (!noIncomingEdges.isEmpty()) {
+      T n=noIncomingEdges.poll();
+      result.add(n);
+      temp.remove(n);
+      Set<T> elements=outgoingEdges.get(n);
+      if (elements != null) {
+        for (        T m : elements) {
+          Integer count=temp.get(m);
+          temp.put(m,--count);
+          if (count == 0) {
+            noIncomingEdges.add(m);
+          }
+        }
+      }
+    }
+    if (!temp.isEmpty()) {
+      throw new CyclicDependencyException("Cycle detected");
+    }
+ else {
+      return result;
+    }
+  }
+  finally {
+    lock.readLock().unlock();
+  }
+}

@@ -5,25 +5,29 @@ synchronized (this) {
       if (!stopping) {
         log.debugf("Stopping cache manager %s on %s",globalConfiguration.transport().clusterName(),getAddress());
         stopping=true;
+        Set<String> cachesToStop=new LinkedHashSet<>();
+        boolean defaultCacheHasDependency=false;
+        try {
+          List<String> ordered=cacheDependencyGraph.topologicalSort();
+          defaultCacheHasDependency=ordered.contains(DEFAULT_CACHE_NAME);
+          cachesToStop.addAll(ordered);
+        }
+ catch (        CyclicDependencyException e) {
+          log.stopOrderIgnored();
+        }
+        cachesToStop.addAll(caches.keySet());
         Cache<?,?> defaultCache=null;
-        for (        Map.Entry<String,CacheWrapper> entry : caches.entrySet()) {
-          if (entry.getKey().equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
+        for (        String cacheName : cachesToStop) {
+          if (cacheName.equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
           }
- else           if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
-            defaultCache=entry.getValue().cache;
+ else           if (cacheName.equals(DEFAULT_CACHE_NAME) && !defaultCacheHasDependency) {
+            defaultCache=this.caches.get(cacheName).cache;
           }
  else {
-            Cache<?,?> c=entry.getValue().cache;
-            if (c != null) {
-              unregisterCacheMBean(c);
-              c.stop();
-            }
+            terminate(this.caches.get(cacheName).cache);
           }
         }
-        if (defaultCache != null) {
-          unregisterCacheMBean(defaultCache);
-          defaultCache.stop();
-        }
+        terminate(defaultCache);
         globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
         globalComponentRegistry.stop();
       }

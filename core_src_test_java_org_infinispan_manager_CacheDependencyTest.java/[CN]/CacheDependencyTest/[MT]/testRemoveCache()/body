@@ -1,0 +1,14 @@
+{
+  Cache<?,?> cacheA=cacheManager.getCache("A");
+  Cache<?,?> cacheB=cacheManager.getCache("B");
+  Cache<?,?> cacheC=cacheManager.getCache("C");
+  cacheManager.addCacheDependency("A","B");
+  cacheManager.addCacheDependency("A","C");
+  cacheManager.addCacheDependency("B","C");
+  cacheManager.removeCache("B");
+  CacheEventListener listener=new CacheEventListener();
+  cacheManager.addListener(listener);
+  cacheManager.stop();
+  assertAllTerminated(cacheA,cacheB,cacheC);
+  assertEquals(Arrays.asList("A","C",DEFAULT_CACHE_NAME),listener.stopOrder);
+}
