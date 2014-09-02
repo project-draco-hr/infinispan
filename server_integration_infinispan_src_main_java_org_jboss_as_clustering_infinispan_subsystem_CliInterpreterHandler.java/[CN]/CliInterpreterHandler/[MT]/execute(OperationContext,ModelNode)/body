@@ -1,0 +1,29 @@
+{
+  final ModelNode result=new ModelNode();
+  try {
+    final String command=operation.require("command").asString();
+    final String cacheName=operation.has("cacheName") ? operation.get("cacheName").asString() : null;
+    String sessionId=operation.has("sessionId") ? operation.get("sessionId").asString() : null;
+    final Interpreter interpreter=getInterpreter(context,operation);
+    if (interpreter == null) {
+      context.getFailureDescription().set("Interpreter not found!");
+      context.getResult().set(result);
+      return;
+    }
+    if (sessionId == null) {
+      sessionId=interpreter.createSessionId(cacheName);
+      setInModelNode(result,"sessionId",sessionId);
+    }
+    final Map<String,String> response=SecurityActions.executeInterpreter(interpreter,sessionId,command);
+    setResponse(result,response);
+    context.getResult().set(result);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    context.getFailureDescription().set(e.getLocalizedMessage());
+    context.getResult().set(result);
+  }
+ finally {
+    context.stepCompleted();
+  }
+}

@@ -1,0 +1,12 @@
+{
+  if (!containsContainer(ctx,container)) {
+    throw new CommandLineException("No such container: " + container);
+  }
+  OperationRequestAddress address=buildOperationRequest(ctx,CONTAINER_ADDRESS + "=" + container);
+  List<String> cacheModes=Util.getNodeTypes(ctx.getModelControllerClient(),address);
+  Map<String,List<String>> caches=new HashMap<String,List<String>>();
+  for (  String cacheMode : cacheModes) {
+    caches.put(cacheMode,Util.getNodeNames(ctx.getModelControllerClient(),address,cacheMode));
+  }
+  return caches;
+}

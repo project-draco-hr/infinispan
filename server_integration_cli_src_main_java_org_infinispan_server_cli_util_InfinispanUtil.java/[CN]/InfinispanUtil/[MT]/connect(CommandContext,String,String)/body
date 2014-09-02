@@ -1,0 +1,26 @@
+{
+  if (container == null) {
+    List<String> containers=getContainerNames(ctx);
+    if (containers.isEmpty()) {
+      throw new CommandLineException("No containers found!");
+    }
+    container=containers.get(0);
+  }
+  try {
+    if (cache != null) {
+      changeToCache(ctx,container,cache);
+      cliRequest(ctx,"cache " + cache + "\n");
+    }
+ else {
+      changeToContainer(ctx,container);
+    }
+  }
+ catch (  CommandLineException e) {
+    ctx.getCurrentNodePath().reset();
+    throw e;
+  }
+catch (  CliInterpreterException e) {
+    ctx.getCurrentNodePath().reset();
+    throw new CommandLineException(e.getLocalizedMessage());
+  }
+}

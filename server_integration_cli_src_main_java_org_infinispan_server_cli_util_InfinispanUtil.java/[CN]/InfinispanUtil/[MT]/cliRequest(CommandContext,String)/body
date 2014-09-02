@@ -1,0 +1,23 @@
+{
+  final ModelNode request=buildCliRequest(ctx,command);
+  final ModelControllerClient client=ctx.getModelControllerClient();
+  final ModelNode response;
+  try {
+    response=client.execute(request);
+  }
+ catch (  Exception e) {
+    throw new CommandFormatException("Failed to perform operation: " + e.getLocalizedMessage());
+  }
+  if (!Util.isSuccess(response)) {
+    throw new CommandFormatException(Util.getFailureDescription(response));
+  }
+  if (!response.has(Util.RESULT)) {
+    return null;
+  }
+  ModelNode result=response.get(Util.RESULT);
+  if (Boolean.parseBoolean(result.get("isError").asString())) {
+    throw new CliInterpreterException(result.get("result").asString());
+  }
+  updateStateFromResponse(result,ctx);
+  return result;
+}
