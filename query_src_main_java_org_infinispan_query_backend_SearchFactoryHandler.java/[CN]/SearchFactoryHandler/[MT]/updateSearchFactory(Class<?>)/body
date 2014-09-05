@@ -1,10 +1,21 @@
 {
   mutating.lock();
   try {
+    final List<Class<?>> reducedSet=new ArrayList<>(classes.length);
+    for (    Class<?> type : classes) {
+      if (!isIndexed(type)) {
+        reducedSet.add(type);
+      }
+    }
+    if (reducedSet.isEmpty()) {
+      return;
+    }
+    final Class<?>[] newtypes=new Class<?>[reducedSet.size()];
+    reducedSet.toArray(newtypes);
     transactionHelper.runSuspendingTx(new Operation(){
       @Override public void execute(){
         boolean isStatisticsEnabled=searchFactory.getStatistics().isStatisticsEnabled();
-        searchFactory.addClasses(classes);
+        searchFactory.addClasses(newtypes);
         searchFactory.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
       }
     }
