@@ -1,6 +1,11 @@
 {
-  Cache cache=ci.getCacheManager().getCache(cacheName);
-  SearchManager searchManager=Search.getSearchManager(cache);
-  searchFactory=(SearchFactoryImplementor)searchManager.getSearchFactory();
-  queryInterceptor=ComponentRegistryUtils.getQueryInterceptor(cache);
+  if (ci.getCacheManager().cacheExists(cacheName)) {
+    Cache cache=ci.getCacheManager().getCache(cacheName);
+    SearchManager searchManager=Search.getSearchManager(cache);
+    searchFactory=(SearchFactoryImplementor)searchManager.getSearchFactory();
+    queryInterceptor=ComponentRegistryUtils.getQueryInterceptor(cache);
+  }
+ else {
+    throw new CacheException("Cache named '" + cacheName + "' does not exist on this CacheManager, or was not started");
+  }
 }
