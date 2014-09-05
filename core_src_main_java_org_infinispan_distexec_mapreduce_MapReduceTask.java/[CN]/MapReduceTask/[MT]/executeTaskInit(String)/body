@@ -10,17 +10,22 @@
         return ccc.perform(null);
       }
  catch (      Throwable e) {
-        throw new CacheException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
+        throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
       }
     }
   }
 );
-  future.get();
+  try {
+    future.get();
+  }
+ catch (  Exception e) {
+    throw new MapReduceException(e);
+  }
   rpc.invokeRemotely(cache.getRpcManager().getMembers(),ccc,rpcOptionsBuilder.build());
   Map<Address,Response> map=rpc.invokeRemotely(cache.getRpcManager().getMembers(),ccc,rpcOptionsBuilder.build());
   for (  Entry<Address,Response> e : map.entrySet()) {
     if (!e.getValue().isSuccessful()) {
-      throw new IllegalStateException("Could not initialize tmp cache " + tmpCacheName + " at "+ e.getKey()+ " for  "+ this);
+      throw new MapReduceException("Could not initialize tmp cache " + tmpCacheName + " at "+ e.getKey()+ " for  "+ this);
     }
   }
 }

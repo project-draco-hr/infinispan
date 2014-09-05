@@ -4,19 +4,15 @@
   if (reducer == null)   throw new NullPointerException("A valid reference of Reducer is not set " + reducer);
   Map<KOut,VOut> result=null;
   if (!isLocalOnly && distributeReducePhase()) {
-    try {
-      executeTaskInit(getIntermediateCacheName());
-    }
- catch (    Exception e) {
-      throw new CacheException(e);
-    }
+    executeTaskInit(getIntermediateCacheName());
     Set<KOut> allMapPhasesResponses=null;
     try {
       allMapPhasesResponses=executeMapPhase();
       result=executeReducePhase(resultCache,allMapPhasesResponses,useIntermediateSharedCache());
     }
- catch (    Exception cause) {
-      throw new CacheException(cause);
+ catch (    InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw new MapReduceException(ie);
     }
  finally {
       EmbeddedCacheManager cm=cache.getCacheManager();
@@ -46,8 +42,9 @@
         executeMapPhaseWithLocalReduction(c);
       }
     }
- catch (    Exception cause) {
-      throw new CacheException(cause);
+ catch (    InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw new MapReduceException(ie);
     }
   }
   return result;

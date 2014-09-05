@@ -47,13 +47,7 @@
         result=mapTaskPart.get();
       }
  catch (      ExecutionException ee) {
-        Throwable cause=ee.getCause();
-        if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-          throw new ExecutionException("Map phase executing at " + mapTaskPart.getAddress() + " did not complete within "+ rpcOptionsBuilder.timeout(TimeUnit.SECONDS)+ " sec timeout",cause);
-        }
- else {
-          throw ee;
-        }
+        throw new MapReduceException("Map phase failed ",ee.getCause());
       }
       mergeResponse(mapPhasesResult,result);
     }

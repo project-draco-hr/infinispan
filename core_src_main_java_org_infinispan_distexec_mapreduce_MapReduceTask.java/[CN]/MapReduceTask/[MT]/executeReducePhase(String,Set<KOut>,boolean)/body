@@ -26,13 +26,7 @@
         result=reduceTaskPart.get();
       }
  catch (      ExecutionException ee) {
-        Throwable cause=ee.getCause();
-        if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
-          throw new ExecutionException("Reduce phase executing at " + reduceTaskPart.getAddress() + " did not complete within "+ rpcOptionsBuilder.timeout(TimeUnit.SECONDS)+ " sec timeout",cause);
-        }
- else {
-          throw ee;
-        }
+        throw new MapReduceException("Reduce phase failed",ee.getCause());
       }
       reduceResult.putAll(result);
     }
