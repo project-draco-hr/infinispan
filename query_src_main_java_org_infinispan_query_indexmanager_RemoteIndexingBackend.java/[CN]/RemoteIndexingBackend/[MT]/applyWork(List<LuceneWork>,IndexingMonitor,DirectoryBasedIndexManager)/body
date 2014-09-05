@@ -4,5 +4,16 @@
   command.setSerializedWorkList(serializedModel);
   command.setIndexName(this.indexName);
   log.applyingChangeListRemotely(workList);
-  sendCommand(command,workList);
+  try {
+    sendCommand(command,workList);
+  }
+ catch (  Exception e) {
+    waitForReplacementBackend();
+    if (replacement != null) {
+      replacement.applyWork(workList,monitor,indexManager);
+    }
+ else {
+      throw e;
+    }
+  }
 }

@@ -4,5 +4,16 @@
   final byte[] serializedModel=indexManager.getSerializer().toSerializedModel(operations);
   streamCommand.setSerializedWorkList(serializedModel);
   streamCommand.setIndexName(this.indexName);
-  sendCommand(streamCommand,operations);
+  try {
+    sendCommand(streamCommand,operations);
+  }
+ catch (  Exception e) {
+    waitForReplacementBackend();
+    if (replacement != null) {
+      replacement.applyStreamWork(singleOperation,monitor,indexManager);
+    }
+ else {
+      throw e;
+    }
+  }
 }
