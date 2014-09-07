@@ -1,9 +1,20 @@
 {
-  try {
-    bufferedWork.put(work);
+  if (log.isDebugEnabled()) {
+    int remainingCapacity=bufferedWork.remainingCapacity();
+    log.debug("Need to enqueue on blocking buffer, remaining capacity to saturation: " + remainingCapacity);
   }
- catch (  InterruptedException e) {
-    log.interruptedWhileBufferingWork(e);
-    Thread.currentThread().interrupt();
+  final boolean done=bufferedWork.offer(work);
+  if (!done) {
+    if (log.isDebugEnabled()) {
+      log.debug("Buffer saturated: blocking");
+    }
+    try {
+      bufferedWork.put(work);
+      log.debug("Unblocked from wait on buffer");
+    }
+ catch (    InterruptedException e) {
+      log.interruptedWhileBufferingWork(e);
+      Thread.currentThread().interrupt();
+    }
   }
 }
