@@ -2,6 +2,9 @@
   CacheEntry<K,C> clone=(CacheEntry<K,C>)kvInternalCacheEntry.clone();
   if (converter != null) {
     C value=converter.convert(k,kvInternalCacheEntry.getValue(),kvInternalCacheEntry.getMetadata());
+    if (value == null && converter instanceof KeyValueFilterConverter) {
+      return;
+    }
     clone.setValue(value);
   }
   queue.add(clone);
@@ -11,7 +14,6 @@
     }
  catch (    InterruptedException e) {
       Thread.currentThread().interrupt();
-      ;
     }
     queue.clear();
   }

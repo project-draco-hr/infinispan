@@ -6,7 +6,7 @@
   executorService.submit(new Runnable(){
     @Override public void run(){
       try {
-        final Set<K> processedKeys=new ConcurrentHashSet<K>();
+        final Set<K> processedKeys=CollectionFactory.makeSet(keyEquivalence);
         Queue<CacheEntry<K,C>> queue=new ArrayDeque<CacheEntry<K,C>>(batchSize){
           @Override public boolean add(          CacheEntry<K,C> kcEntry){
             processedKeys.add(kcEntry.getKey());
@@ -22,7 +22,7 @@
             InternalCacheEntry<K,V> clone=entryFactory.create(unwrapMarshalledvalue(entry.getKey()),unwrapMarshalledvalue(entry.getValue()),entry);
             K key=clone.getKey();
             if (filter != null) {
-              if (filter instanceof KeyValueFilterConverter && usedConverter == null) {
+              if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
                 C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
                 if (converted != null) {
                   clone.setValue((V)converted);
@@ -48,11 +48,14 @@
               cache.addListener(listener);
             }
             KeyFilter<K> loaderFilter;
-            if (filter != null) {
-              loaderFilter=new CompositeKeyFilter<K>(new CollectionKeyFilter<K>(processedKeys),new KeyValueFilterAsKeyFilter<K>(filter));
+            if (filter == null || usedConverter == null && filter instanceof KeyValueFilterConverter) {
+              loaderFilter=new CollectionKeyFilter<K>(processedKeys);
             }
  else {
-              loaderFilter=new CollectionKeyFilter<K>(processedKeys);
+              loaderFilter=new CompositeKeyFilter<K>(new CollectionKeyFilter<K>(processedKeys),new KeyValueFilterAsKeyFilter<K>(filter));
+            }
+            if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+              action=new MapAction(batchSize,(KeyValueFilterConverter)filter,queue,handler);
             }
             persistenceManager.processOnAllStores(withinThreadExecutor,loaderFilter,new KeyValueActionForCacheLoaderTask(action),true,true);
           }
