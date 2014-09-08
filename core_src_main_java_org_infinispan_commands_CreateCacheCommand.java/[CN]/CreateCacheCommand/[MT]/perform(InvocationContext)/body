@@ -14,6 +14,16 @@
   }
   cacheManager.defineConfiguration(cacheNameToCreate,cacheConfig);
   cacheManager.getCache(cacheNameToCreate);
+  final long startTime=System.nanoTime();
+  final long maxRunTime=TimeUnit.MILLISECONDS.toNanos(cacheConfig.clustering().stateTransfer().timeout());
+  int expectedSize=cacheManager.getTransport().getMembers().size();
+  while (stm.getCacheTopology().getMembers().size() != expectedSize && stm.getCacheTopology().getPendingCH() != null) {
+    Thread.sleep(50);
+    long estimatedRunTime=System.nanoTime() - startTime;
+    if (estimatedRunTime > maxRunTime) {
+      throw log.creatingTmpCacheTimedOut(cacheNameToCreate,cacheManager.getAddress());
+    }
+  }
   log.debugf("Defined and started cache %s",cacheNameToCreate);
   return true;
 }
