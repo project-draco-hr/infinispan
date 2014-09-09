@@ -3,7 +3,12 @@
   startRegistryCache();
   Transaction tx=suspendTx();
   try {
-    clusterRegistryCacheWithoutReturn.put(new ScopedKey<S,K>(scope,key),value);
+    runCommand(new Runnable(){
+      @Override public void run(){
+        clusterRegistryCacheWithoutReturn.put(new ScopedKey<S,K>(scope,key),value);
+      }
+    }
+);
   }
   finally {
     resumeTx(tx);
