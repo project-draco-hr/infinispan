@@ -1,0 +1,23 @@
+{
+  ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),newViewId);
+  Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout(),false,false);
+  log.debugf("Got %d status responses. members are %s",statusResponses.size(),clusterMembers);
+  Map<String,Map<Address,CacheStatusResponse>> responsesByCache=new HashMap<>();
+  for (  Map.Entry<Address,Object> responseEntry : statusResponses.entrySet()) {
+    Address sender=responseEntry.getKey();
+    Map<String,CacheStatusResponse> nodeStatus=(Map<String,CacheStatusResponse>)responseEntry.getValue();
+    for (    Map.Entry<String,CacheStatusResponse> statusEntry : nodeStatus.entrySet()) {
+      String cacheName=statusEntry.getKey();
+      Map<Address,CacheStatusResponse> cacheResponses=responsesByCache.get(cacheName);
+      if (cacheResponses == null) {
+        cacheResponses=new HashMap<>();
+        responsesByCache.put(cacheName,cacheResponses);
+      }
+      cacheResponses.put(sender,statusEntry.getValue());
+    }
+  }
+  for (  Map.Entry<String,Map<Address,CacheStatusResponse>> e : responsesByCache.entrySet()) {
+    ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(e.getKey());
+    cacheStatus.doMergePartitions(e.getValue(),clusterMembers,isMergeView);
+  }
+}

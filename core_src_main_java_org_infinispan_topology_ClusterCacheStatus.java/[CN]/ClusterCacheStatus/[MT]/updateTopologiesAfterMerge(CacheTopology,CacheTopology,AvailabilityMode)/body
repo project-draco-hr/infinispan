@@ -1,0 +1,14 @@
+{
+synchronized (this) {
+    log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, availability mode = %s",cacheName,currentTopology,stableTopology,availabilityMode);
+    this.currentTopology=currentTopology;
+    this.stableTopology=stableTopology;
+    this.availabilityMode=availabilityMode;
+    if (currentTopology != null) {
+      clusterTopologyManager.broadcastTopologyUpdate(cacheName,currentTopology,availabilityMode,isTotalOrder(),isDistributed());
+    }
+    if (stableTopology != null) {
+      clusterTopologyManager.broadcastStableTopologyUpdate(cacheName,stableTopology,isTotalOrder(),isDistributed());
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+synchronized (this) {
+    if (queuedRebalanceMembers == null) {
+      if (stableTopology == null || stableTopology.getTopologyId() < currentTopology.getTopologyId()) {
+        stableTopology=currentTopology;
+        log.tracef("Updating stable topology for cache %s: %s",cacheName,stableTopology);
+        clusterTopologyManager.broadcastStableTopologyUpdate(cacheName,stableTopology,isTotalOrder(),isDistributed());
+      }
+      return;
+    }
+    CacheTopology cacheTopology=getCurrentTopology();
+    if (!isRebalanceEnabled()) {
+      log.tracef("Postponing rebalance for cache %s, rebalancing is disabled",cacheName);
+      return;
+    }
+    if (isRebalanceInProgress()) {
+      log.tracef("Postponing rebalance for cache %s, there's already a rebalance in progress: %s",cacheName,cacheTopology);
+      return;
+    }
+    if (queuedRebalanceMembers.isEmpty()) {
+      log.tracef("Ignoring request to rebalance cache %s, it doesn't have any member",cacheName);
+      return;
+    }
+    List<Address> newMembers=new ArrayList<Address>(queuedRebalanceMembers);
+    queuedRebalanceMembers=null;
+    log.tracef("Rebalancing consistent hash for cache %s, members are %s",cacheName,newMembers);
+    int newTopologyId=cacheTopology.getTopologyId() + 1;
+    int newRebalanceId=cacheTopology.getRebalanceId() + 1;
+    ConsistentHash currentCH=cacheTopology.getCurrentCH();
+    if (currentCH == null) {
+      log.tracef("Ignoring request to rebalance cache %s, it doesn't have a consistent hash",cacheName);
+      return;
+    }
+    if (!expectedMembers.containsAll(newMembers)) {
+      newMembers.removeAll(expectedMembers);
+      log.tracef("Ignoring request to rebalance cache %s, we have new leavers: %s",cacheName,newMembers);
+      return;
+    }
+    ConsistentHashFactory chFactory=getJoinInfo().getConsistentHashFactory();
+    ConsistentHash updatedMembersCH=chFactory.updateMembers(currentCH,newMembers,getCapacityFactors());
+    ConsistentHash balancedCH=chFactory.rebalance(updatedMembersCH);
+    if (balancedCH.equals(currentCH)) {
+      log.tracef("The balanced CH is the same as the current CH, not rebalancing");
+      return;
+    }
+    CacheTopology newTopology=new CacheTopology(newTopologyId,newRebalanceId,currentCH,balancedCH);
+    log.tracef("Updating cache %s topology for rebalance: %s",cacheName,newTopology);
+    newTopology.logRoutingTableInformation();
+    initRebalanceConfirmationCollector(newTopology);
+  }
+  clusterTopologyManager.broadcastRebalanceStart(cacheName,this.getCurrentTopology(),this.isTotalOrder(),this.isDistributed());
+}

@@ -3,13 +3,6 @@
   if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
     throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new="+ newCacheTopology);
   }
-  if (isRebalance && oldCacheTopology != null && oldCacheTopology.getPendingCH() != null) {
-    if (newCacheTopology.getTopologyId() < oldCacheTopology.getTopologyId() + 2) {
-      throw new IllegalArgumentException("Received a rebalance start topology " + newCacheTopology + " while there already was a rebalance in progress: "+ oldCacheTopology);
-    }
-    CacheTopology resetTopology=new CacheTopology(newCacheTopology.getTopologyId() - 1,newCacheTopology.getCurrentCH(),null);
-    doTopologyUpdate(resetTopology,false);
-  }
   if (trace) {
     log.tracef("Installing new cache topology %s on cache %s",newCacheTopology,cacheName);
   }

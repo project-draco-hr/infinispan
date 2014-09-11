@@ -10,17 +10,18 @@
     return;
   }
 synchronized (cacheStatus) {
-    CacheTopology existingTopology=cacheStatus.getTopology();
-    if (existingTopology != null && cacheTopology.getTopologyId() < existingTopology.getTopologyId()) {
-      log.debugf("Ignoring old rebalance for cache %s: %s",cacheName,cacheTopology.getTopologyId());
+    CacheTopology existingTopology=cacheStatus.getCurrentTopology();
+    if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
+      log.debugf("Ignoring old rebalance for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
       return;
     }
+    CacheTopologyHandler handler=cacheStatus.getHandler();
+    resetLocalTopologyBeforeRebalance(cacheTopology,existingTopology,handler);
     log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
     cacheTopology.logRoutingTableInformation();
-    cacheStatus.setTopology(cacheTopology);
+    cacheStatus.setCurrentTopology(cacheTopology);
     ConsistentHash unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
-    CacheTopology newTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH);
-    CacheTopologyHandler handler=cacheStatus.getHandler();
+    CacheTopology newTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH);
     handler.rebalance(newTopology);
   }
 }

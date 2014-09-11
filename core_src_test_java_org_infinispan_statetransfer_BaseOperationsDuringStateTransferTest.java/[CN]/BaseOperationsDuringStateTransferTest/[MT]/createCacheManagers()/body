@@ -11,21 +11,6 @@
   }
   cacheConfigBuilder.clustering().hash().numSegments(10).numOwners(2).l1().disable().locking().lockAcquisitionTimeout(1000l);
   cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
-  rebalanceGate=new ReclosableLatch(true);
   addClusterEnabledCacheManager(cacheConfigBuilder);
   waitForClusterToForm();
-  TestingUtil.replaceComponent(manager(0),RebalancePolicy.class,new DefaultRebalancePolicy(){
-    @Override public void updateCacheStatus(    String cacheName,    ClusterCacheStatus cacheStatus) throws Exception {
-      if (cacheStatus.getCacheTopology().getPendingCH() != null) {
-        try {
-          rebalanceGate.await();
-        }
- catch (        InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-      super.updateCacheStatus(cacheName,cacheStatus);
-    }
-  }
-,true);
 }

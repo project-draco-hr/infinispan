@@ -1,0 +1,15 @@
+{
+  if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+    log.debugf("Cache %s is not available, ignoring graceful leaver %s",context.getCacheName(),leaver);
+    return;
+  }
+  CacheTopology currentTopology=context.getCurrentTopology();
+  List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
+  newMembers.retainAll(context.getExpectedMembers());
+  if (isDataLost(context.getStableTopology().getCurrentCH(),newMembers)) {
+    log.warnf("Cache %s lost data because of graceful leaver %s, entering unavailable mode",context.getCacheName(),leaver);
+    context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);
+    return;
+  }
+  updateMembersAndRebalance(context,newMembers);
+}

@@ -1,0 +1,30 @@
+{
+  CacheTopology maxStableTopology=null;
+  for (  CacheStatusResponse response : statusResponses) {
+    CacheTopology stableTopology=response.getStableTopology();
+    if (maxStableTopology == null || maxStableTopology.getMembers().size() < stableTopology.getMembers().size()) {
+      maxStableTopology=stableTopology;
+    }
+  }
+  CacheTopology maxTopology=null;
+  for (  CacheStatusResponse response : statusResponses) {
+    CacheTopology stableTopology=response.getStableTopology();
+    if (!Objects.equals(stableTopology,maxStableTopology))     continue;
+    CacheTopology topology=response.getCacheTopology();
+    if (maxTopology == null || maxTopology.getMembers().size() < topology.getMembers().size()) {
+      maxTopology=topology;
+    }
+  }
+  CacheTopology mergedTopology=maxTopology;
+  if (maxTopology.getPendingCH() != null) {
+    mergedTopology=new CacheTopology(maxTopology.getTopologyId() + 1,maxTopology.getRebalanceId(),maxTopology.getCurrentCH(),null);
+  }
+  context.updateTopologiesAfterMerge(mergedTopology,maxStableTopology,null);
+  List<Address> newMembers=context.getExpectedMembers();
+  List<Address> survivingMembers=new ArrayList<>(newMembers);
+  if (survivingMembers.retainAll(newMembers)) {
+    checkForLostData(context,survivingMembers);
+  }
+  context.updateCurrentTopology(survivingMembers);
+  context.queueRebalance(newMembers);
+}

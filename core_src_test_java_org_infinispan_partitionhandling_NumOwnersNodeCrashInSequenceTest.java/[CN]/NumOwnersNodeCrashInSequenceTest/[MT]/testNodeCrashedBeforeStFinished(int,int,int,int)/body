@@ -39,7 +39,7 @@
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       PartitionHandlingManager phm0=TestingUtil.extractComponent(cache(a0),PartitionHandlingManager.class);
-      return phm0.getState() == PartitionHandlingManager.PartitionState.UNAVAILABLE;
+      return phm0.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE;
     }
   }
 );
@@ -47,16 +47,18 @@
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       log.trace("Testing condition");
+      ConsistentHash ch=cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
       for (      Object k : allKeys) {
+        Collection<Address> owners=ch.locateOwners(k);
         try {
           cache(a0).get(k);
-          return false;
+          if (owners.contains(address(c0)) || owners.contains(address(c1)))           return false;
         }
  catch (        AvailabilityException e) {
         }
         try {
           cache(a1).put(k,k);
-          return false;
+          if (owners.contains(address(c0)) || owners.contains(address(c1)))           return false;
         }
  catch (        AvailabilityException e) {
         }

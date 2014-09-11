@@ -8,25 +8,25 @@
   Object k3=new MagicKey(cache(p1.node(1)),cache(p0.node(0)));
   cache(3).put(k3,3);
   List<Address> allMembers=advancedCache(0).getRpcManager().getMembers();
-  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableCluster()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.AVAILABLE)       return false;
+      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)       return false;
       return true;
     }
   }
 );
   splitCluster(p0.getNodes(),p1.getNodes());
-  assertEquals(partitionHandlingManager(0).getLastStableCluster(),allMembers);
-  assertEquals(partitionHandlingManager(1).getLastStableCluster(),allMembers);
-  assertEquals(partitionHandlingManager(2).getLastStableCluster(),allMembers);
-  assertEquals(partitionHandlingManager(3).getLastStableCluster(),allMembers);
+  assertEquals(partitionHandlingManager(0).getLastStableTopology().getMembers(),allMembers);
+  assertEquals(partitionHandlingManager(1).getLastStableTopology().getMembers(),allMembers);
+  assertEquals(partitionHandlingManager(2).getLastStableTopology().getMembers(),allMembers);
+  assertEquals(partitionHandlingManager(3).getLastStableTopology().getMembers(),allMembers);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.DEGRADED_MODE)       return false;
+      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.DEGRADED_MODE)       return false;
       return true;
     }
   }
@@ -60,13 +60,13 @@
   partition(1).assertKeyNotAvailableForWrite(k1);
   partition(1).assertKeyNotAvailableForWrite(k3);
   partition(0).merge(partition(1));
-  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableCluster()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableCluster()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getState() != PartitionHandlingManager.PartitionState.AVAILABLE)       return false;
+      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)       return false;
       return true;
     }
   }

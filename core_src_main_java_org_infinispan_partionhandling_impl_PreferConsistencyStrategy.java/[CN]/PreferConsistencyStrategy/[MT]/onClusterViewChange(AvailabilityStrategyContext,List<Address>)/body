@@ -1,0 +1,27 @@
+{
+  if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+    log.debugf("Cache %s is not available, ignoring cluster view change",context.getCacheName());
+    return;
+  }
+  CacheTopology currentTopology=context.getCurrentTopology();
+  List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
+  if (!newMembers.retainAll(clusterMembers)) {
+    log.debugf("Cache %s did not lose any members, ignoring view change",context.getCacheName());
+    return;
+  }
+  CacheTopology stableTopology=context.getStableTopology();
+  List<Address> stableMembers=stableTopology.getMembers();
+  List<Address> lostMembers=new ArrayList<>(stableMembers);
+  lostMembers.removeAll(newMembers);
+  if (isDataLost(stableTopology.getCurrentCH(),newMembers)) {
+    log.warnf("Cache %s lost data because of lost members %s, assuming a network split and entering degraded mode",context.getCacheName(),lostMembers);
+    context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+    return;
+  }
+  if (lostMembers.size() >= stableMembers.size() - Math.ceil(stableMembers.size() / 2d)) {
+    log.warnf("Cache %s lost a majority of members (%d out of %d), assuming a network split and entering degraded mode",lostMembers.size(),stableMembers.size());
+    context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+    return;
+  }
+  updateMembersAndRebalance(context,newMembers);
+}

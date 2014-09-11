@@ -15,7 +15,8 @@
     }
   }
 );
-  rebalanceGate.close();
+  final ClusterTopologyManager ctm0=TestingUtil.extractGlobalComponent(manager(0),ClusterTopologyManager.class);
+  ctm0.setRebalancingEnabled(false);
   log.info("Adding a new node ..");
   addClusterEnabledCacheManager(cacheConfigBuilder);
   log.info("Added a new node");
@@ -41,7 +42,7 @@
     throw new TimeoutException();
   }
   assertTrue(cache(1).keySet().isEmpty());
-  rebalanceGate.open();
+  ctm0.setRebalancingEnabled(true);
   TestingUtil.waitForRehashToComplete(cache(0),cache(1));
   assertEquals(1,cache(1).keySet().size());
   putProceedLatch.countDown();

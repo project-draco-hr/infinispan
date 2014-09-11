@@ -1,0 +1,13 @@
+{
+synchronized (this) {
+    if (currentTopology == null)     return;
+    boolean cacheMembersModified=retainMembers(newClusterMembers);
+    availabilityStrategy.onClusterViewChange(this,newClusterMembers);
+    if (cacheMembersModified) {
+      boolean rebalanceCompleted=updateRebalanceMembers();
+      if (rebalanceCompleted) {
+        endRebalance();
+      }
+    }
+  }
+}

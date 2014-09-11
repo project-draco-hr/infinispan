@@ -1,15 +1,15 @@
 {
 synchronized (this) {
-    if (!members.contains(leaver)) {
-      if (trace)       log.tracef("Trying to remove node %s from cache %s, but it is not a member: " + "members = %s",leaver,cacheName,members);
+    if (!expectedMembers.contains(leaver)) {
+      if (trace)       log.tracef("Trying to remove node %s from cache %s, but it is not a member: " + "members = %s",leaver,cacheName,expectedMembers);
       return false;
     }
-    members=immutableRemove(members,leaver);
+    expectedMembers=immutableRemove(expectedMembers,leaver);
     HashMap<Address,Float> newCapacityFactors=new HashMap<Address,Float>(capacityFactors);
     newCapacityFactors.remove(leaver);
     capacityFactors=Immutables.immutableMapWrap(newCapacityFactors);
     joiners=immutableRemove(joiners,leaver);
-    if (trace)     log.tracef("Removed node %s from cache %s: members = %s, joiners = %s",leaver,cacheName,members,joiners);
+    if (trace)     log.tracef("Removed node %s from cache %s: members = %s, joiners = %s",leaver,cacheName,expectedMembers,joiners);
     return true;
   }
 }

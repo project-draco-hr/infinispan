@@ -1,9 +1,10 @@
 {
-  Map<String,StatusResponse> response=new HashMap<String,StatusResponse>();
+  Map<String,CacheStatusResponse> response=new HashMap<String,CacheStatusResponse>();
   for (  Map.Entry<String,LocalCacheStatus> e : runningCaches.entrySet()) {
     String cacheName=e.getKey();
     LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
-    response.put(e.getKey(),new StatusResponse(cacheStatus.getJoinInfo(),cacheStatus.getTopology()));
+    AvailabilityMode availabilityMode=cacheStatus.getPartitionHandlingManager() != null ? cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : null;
+    response.put(e.getKey(),new CacheStatusResponse(cacheStatus.getJoinInfo(),cacheStatus.getCurrentTopology(),cacheStatus.getStableTopology(),availabilityMode));
   }
   return response;
 }

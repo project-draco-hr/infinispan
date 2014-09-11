@@ -4,28 +4,6 @@
     log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",joiner,cacheName);
     return null;
   }
-  ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(cacheName,joinInfo);
-  boolean isFirstMember;
-  CacheTopology topologyWithoutRebalance;
-synchronized (cacheStatus) {
-    isFirstMember=cacheStatus.getCacheTopology().getMembers().isEmpty();
-    cacheStatus.addMember(joiner,joinInfo.getCapacityFactor());
-    if (isFirstMember) {
-      int newTopologyId=cacheStatus.getCacheTopology().getTopologyId() + 1;
-      List<Address> initialMembers=cacheStatus.getMembers();
-      ConsistentHash initialCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),initialMembers,cacheStatus.getCapacityFactors());
-      CacheTopology initialTopology=new CacheTopology(newTopologyId,initialCH,null);
-      cacheStatus.updateCacheTopology(initialTopology);
-    }
- else {
-    }
-    topologyWithoutRebalance=cacheStatus.getCacheTopology();
-  }
-  if (isFirstMember) {
-    rebalancePolicy.initCache(cacheName,cacheStatus);
-  }
- else {
-    rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
-  }
-  return topologyWithoutRebalance;
+  ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(cacheName);
+  return cacheStatus.doJoin(joiner,joinInfo);
 }

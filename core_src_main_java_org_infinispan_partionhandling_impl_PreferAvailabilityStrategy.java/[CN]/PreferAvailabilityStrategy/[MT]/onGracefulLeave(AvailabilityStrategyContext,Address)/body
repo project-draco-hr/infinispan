@@ -1,0 +1,13 @@
+{
+  CacheTopology currentTopology=context.getCurrentTopology();
+  List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
+  if (!newMembers.remove(leaver)) {
+    log.debugf("Cache %s does not have member %s, ignoring leave request",context.getCacheName(),leaver);
+    return;
+  }
+  if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(),newMembers)) {
+    log.errorf("Cache %s lost data because of graceful leaver %s",context.getCacheName(),leaver);
+  }
+  context.updateCurrentTopology(newMembers);
+  context.queueRebalance(newMembers);
+}

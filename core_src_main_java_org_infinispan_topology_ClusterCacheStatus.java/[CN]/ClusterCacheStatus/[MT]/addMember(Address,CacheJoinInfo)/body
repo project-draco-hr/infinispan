@@ -1,0 +1,17 @@
+{
+synchronized (this) {
+    if (expectedMembers.contains(joiner)) {
+      return false;
+    }
+    if (this.joinInfo == null) {
+      this.joinInfo=joinInfo;
+    }
+    HashMap<Address,Float> newCapacityFactors=new HashMap<Address,Float>(capacityFactors);
+    newCapacityFactors.put(joiner,joinInfo.getCapacityFactor());
+    capacityFactors=Immutables.immutableMapWrap(newCapacityFactors);
+    expectedMembers=immutableAdd(expectedMembers,joiner);
+    joiners=immutableAdd(joiners,joiner);
+    if (trace)     log.tracef("Added joiner %s to cache %s: members = %s, joiners = %s",joiner,cacheName,expectedMembers,joiners);
+    return true;
+  }
+}

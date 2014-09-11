@@ -5,12 +5,8 @@
   log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d",cacheName,node,topologyId);
   ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
   if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
-    throw new CacheException(String.format("Received invalid rebalance confirmation from %s " + "for cache %s, we don't have a rebalance in progress",node,cacheName));
+    log.debugf("Ignoring rebalance confirmation from %s " + "for cache %s because it doesn't have a cache status entry",node,cacheName);
+    return;
   }
-  boolean rebalanceCompleted=cacheStatus.confirmRebalanceOnNode(node,topologyId);
-  if (rebalanceCompleted) {
-    cacheStatus.endRebalance();
-    cacheStatus.broadcastConsistentHashUpdate();
-    rebalancePolicy.updateCacheStatus(cacheName,cacheStatus);
-  }
+  cacheStatus.doConfirmRebalance(node,topologyId);
 }

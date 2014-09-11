@@ -28,10 +28,10 @@
   assertNotNull(duringJoinTopology.getPendingCH());
   log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s",key,duringJoinTopology.getCurrentCH().locateOwners(key),duringJoinTopology.getPendingCH().locateOwners(key));
   CyclicBarrier beforeCache1Barrier=new CyclicBarrier(2);
-  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,PutKeyValueCommand.class,false);
+  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,PutKeyValueCommand.class,false,false);
   cache1.addInterceptorBefore(blockingInterceptor1,NonTxDistributionInterceptor.class);
   CyclicBarrier afterCache2Barrier=new CyclicBarrier(2);
-  BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(afterCache2Barrier,PutKeyValueCommand.class,true);
+  BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(afterCache2Barrier,PutKeyValueCommand.class,true,false);
   cache2.addInterceptorBefore(blockingInterceptor2,StateTransferInterceptor.class);
   Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {

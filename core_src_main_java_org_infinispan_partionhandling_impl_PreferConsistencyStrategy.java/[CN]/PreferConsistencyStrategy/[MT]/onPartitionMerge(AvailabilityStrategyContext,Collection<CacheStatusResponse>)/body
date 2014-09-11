@@ -1,0 +1,88 @@
+{
+  CacheTopology maxActiveTopology=null;
+  CacheTopology maxDegradedTopology=null;
+  CacheTopology maxUnavailableTopology=null;
+  CacheTopology maxStableTopology=null;
+  for (  CacheStatusResponse response : statusResponses) {
+    CacheTopology partitionStableTopology=response.getCacheTopology();
+    if (maxStableTopology == null || !maxStableTopology.equals(partitionStableTopology)) {
+      log.tracef("Found stable partition topology: %s",maxStableTopology);
+    }
+    if (maxStableTopology == null || maxStableTopology.getTopologyId() < partitionStableTopology.getTopologyId()) {
+      maxStableTopology=partitionStableTopology;
+    }
+    CacheTopology partitionTopology=response.getCacheTopology();
+    if (response.getAvailabilityMode() == AvailabilityMode.AVAILABLE) {
+      if (maxActiveTopology == null || !maxActiveTopology.equals(partitionTopology)) {
+        log.tracef("Found active partition topology: %s",maxActiveTopology);
+      }
+      if (maxActiveTopology == null || maxActiveTopology.getTopologyId() < partitionTopology.getTopologyId()) {
+        maxActiveTopology=partitionTopology;
+      }
+    }
+ else     if (response.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
+      if (maxDegradedTopology == null || !maxDegradedTopology.equals(partitionTopology)) {
+        log.tracef("Found degraded partition topology: %s",maxDegradedTopology);
+      }
+      if (maxDegradedTopology == null || maxDegradedTopology.getTopologyId() < partitionTopology.getTopologyId()) {
+        maxDegradedTopology=partitionTopology;
+      }
+    }
+ else     if (response.getAvailabilityMode() == AvailabilityMode.UNAVAILABLE) {
+      if (maxUnavailableTopology == null || !maxUnavailableTopology.equals(partitionTopology)) {
+        log.tracef("Found unavailable partition topology: %s",maxUnavailableTopology);
+      }
+      if (maxUnavailableTopology == null || maxUnavailableTopology.getTopologyId() < partitionTopology.getTopologyId()) {
+        maxUnavailableTopology=partitionTopology;
+      }
+    }
+ else {
+      log.errorf("Unexpected availability mode %s for partition %s",response.getAvailabilityMode(),response.getCacheTopology());
+    }
+  }
+  CacheTopology mergedTopology;
+  AvailabilityMode mergedAvailabilityMode;
+  if (maxUnavailableTopology != null) {
+    log.debugf("One of the partitions is unavailable, using that partition's topology and staying in unavailable mode");
+    mergedAvailabilityMode=AvailabilityMode.UNAVAILABLE;
+    mergedTopology=maxUnavailableTopology;
+  }
+ else   if (maxActiveTopology != null) {
+    log.debugf("One of the partitions is available, using that partition's topology and staying in available mode");
+    mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
+    mergedTopology=maxActiveTopology;
+  }
+ else {
+    mergedAvailabilityMode=AvailabilityMode.DEGRADED_MODE;
+    mergedTopology=maxDegradedTopology;
+  }
+  if (mergedTopology.getPendingCH() != null) {
+    mergedTopology=new CacheTopology(mergedTopology.getTopologyId() + 1,mergedTopology.getRebalanceId(),mergedTopology.getCurrentCH(),null);
+  }
+  log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, availability mode = %s",context.getCacheName(),mergedTopology,maxStableTopology,mergedAvailabilityMode);
+  context.updateTopologiesAfterMerge(mergedTopology,maxStableTopology,mergedAvailabilityMode);
+  if (mergedAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
+    log.debugf("After merge, cache %s is staying in unavailable mode",context.getCacheName());
+    context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);
+    return;
+  }
+  List<Address> newMembers=new ArrayList<>(mergedTopology.getMembers());
+  newMembers.retainAll(context.getExpectedMembers());
+  if (maxStableTopology != null) {
+    List<Address> stableMembers=maxStableTopology.getMembers();
+    List<Address> lostMembers=new ArrayList<>(stableMembers);
+    lostMembers.removeAll(context.getExpectedMembers());
+    if (isDataLost(maxStableTopology.getCurrentCH(),newMembers)) {
+      log.warnf("After merge, cache %s still hasn't recovered all its data (lost members %s) and must stay in degraded mode",context.getCacheName(),lostMembers);
+      context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+      return;
+    }
+    if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
+      log.warnf("After merge, cache %s still hasn't recovered a majority of members (lost %d out of %d) and must stay in degraded mode",lostMembers.size(),stableMembers.size());
+      context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+      return;
+    }
+  }
+  log.debugf("After merge, cache %s has recovered and is entering available mode");
+  updateMembersAndRebalance(context,context.getExpectedMembers());
+}

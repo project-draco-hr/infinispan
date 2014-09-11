@@ -1,0 +1,36 @@
+{
+synchronized (viewHandlingLock) {
+    if (newViewId <= viewId) {
+      log.tracef("Ignoring old cluster view notification: %s",newViewId);
+      return;
+    }
+    boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
+    isCoordinator=transport.isCoordinator();
+    log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s",newViewId,isCoordinator,becameCoordinator);
+    if (!isCoordinator)     return;
+    if (mergeView || becameCoordinator) {
+      try {
+        recoverClusterStatus(newViewId,mergeView,transport.getMembers());
+      }
+ catch (      InterruptedException e) {
+        log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+        return;
+      }
+catch (      Exception e) {
+        log.failedToRecoverClusterState(e);
+      }
+    }
+ else {
+      try {
+        updateCacheMembers(transport.getMembers());
+      }
+ catch (      Exception e) {
+        log.errorUpdatingMembersList(e);
+      }
+    }
+synchronized (viewUpdateLock) {
+      viewId=newViewId;
+      viewUpdateLock.notifyAll();
+    }
+  }
+}

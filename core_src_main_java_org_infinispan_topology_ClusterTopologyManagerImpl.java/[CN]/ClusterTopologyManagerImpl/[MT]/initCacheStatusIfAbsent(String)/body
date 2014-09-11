@@ -1,0 +1,19 @@
+{
+  ClusterCacheStatus cacheStatus=cacheStatusMap.get(cacheName);
+  if (cacheStatus == null) {
+    Configuration cacheConfiguration=cacheManager.getCacheConfiguration(cacheName);
+    AvailabilityStrategy availabilityStrategy;
+    if (cacheConfiguration != null && cacheConfiguration.clustering().partitionHandling().enabled()) {
+      availabilityStrategy=new PreferConsistencyStrategy();
+    }
+ else {
+      availabilityStrategy=new PreferAvailabilityStrategy();
+    }
+    ClusterCacheStatus newCacheStatus=new ClusterCacheStatus(cacheName,availabilityStrategy,this);
+    cacheStatus=cacheStatusMap.putIfAbsent(cacheName,newCacheStatus);
+    if (cacheStatus == null) {
+      cacheStatus=newCacheStatus;
+    }
+  }
+  return cacheStatus;
+}

@@ -27,7 +27,11 @@
     if (trace)     log.tracef("Response(s) to %s is %s",rpc,result);
     return result;
   }
- catch (  CacheException e) {
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    throw new CacheException("Thread interrupted while invoking RPC",e);
+  }
+catch (  CacheException e) {
     log.trace("replication exception: ",e);
     if (statisticsEnabled)     replicationFailures.incrementAndGet();
     throw e;

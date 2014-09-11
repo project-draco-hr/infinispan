@@ -1,0 +1,29 @@
+{
+synchronized (this) {
+    ConsistentHashFactory consistentHashFactory=getJoinInfo().getConsistentHashFactory();
+    int topologyId=currentTopology.getTopologyId();
+    int rebalanceId=currentTopology.getRebalanceId();
+    ConsistentHash currentCH=currentTopology.getCurrentCH();
+    ConsistentHash pendingCH=currentTopology.getPendingCH();
+    if (!needConsistentHashUpdate()) {
+      log.tracef("Cache %s members list was updated, but the cache topology doesn't need to change: %s",cacheName,currentTopology);
+      return;
+    }
+    if (newMembers.isEmpty()) {
+      log.tracef("Cache %s no longer has any members, removing topology",cacheName);
+      setCurrentTopology(null);
+      setStableTopology(null);
+      return;
+    }
+    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newMembers,getCapacityFactors());
+    ConsistentHash newPendingCH=null;
+    if (pendingCH != null) {
+      List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());
+      newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,getCapacityFactors());
+    }
+    CacheTopology newTopology=new CacheTopology(topologyId + 1,rebalanceId,newCurrentCH,newPendingCH);
+    setCurrentTopology(newTopology);
+    newTopology.logRoutingTableInformation();
+    clusterTopologyManager.broadcastTopologyUpdate(cacheName,newTopology,availabilityMode,isTotalOrder(),isDistributed());
+  }
+}

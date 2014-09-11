@@ -9,20 +9,23 @@ case REBALANCE_CONFIRM:
 clusterTopologyManager.handleRebalanceCompleted(cacheName,sender,topologyId,throwable,viewId);
 return null;
 case CH_UPDATE:
-localTopologyManager.handleConsistentHashUpdate(cacheName,new CacheTopology(topologyId,currentCH,pendingCH,missingData),viewId);
+localTopologyManager.handleTopologyUpdate(cacheName,new CacheTopology(topologyId,rebalanceId,currentCH,pendingCH),availabilityMode,viewId);
+return null;
+case STABLE_TOPOLOGY_UPDATE:
+localTopologyManager.handleStableTopologyUpdate(cacheName,new CacheTopology(topologyId,rebalanceId,currentCH,pendingCH),viewId);
 return null;
 case REBALANCE_START:
-localTopologyManager.handleRebalance(cacheName,new CacheTopology(topologyId,currentCH,pendingCH,missingData),viewId);
+localTopologyManager.handleRebalance(cacheName,new CacheTopology(topologyId,rebalanceId,currentCH,pendingCH),viewId);
 return null;
 case GET_STATUS:
 return localTopologyManager.handleStatusRequest(viewId);
 case POLICY_GET_STATUS:
-return rebalancePolicy.isRebalancingEnabled();
+return clusterTopologyManager.isRebalancingEnabled();
 case POLICY_ENABLE:
-rebalancePolicy.setRebalancingEnabled(true);
+clusterTopologyManager.setRebalancingEnabled(true);
 return true;
 case POLICY_DISABLE:
-rebalancePolicy.setRebalancingEnabled(false);
+clusterTopologyManager.setRebalancingEnabled(false);
 return true;
 default :
 throw new CacheException("Unknown cache topology control command type " + type);

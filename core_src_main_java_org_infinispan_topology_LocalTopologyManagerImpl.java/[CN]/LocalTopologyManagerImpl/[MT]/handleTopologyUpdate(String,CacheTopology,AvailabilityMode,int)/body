@@ -1,0 +1,39 @@
+{
+  if (!running) {
+    log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",cacheTopology.getTopologyId(),cacheName);
+    return;
+  }
+  waitForView(viewId);
+  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  if (cacheStatus == null) {
+    log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",cacheTopology.getTopologyId(),cacheName);
+    return;
+  }
+synchronized (cacheStatus) {
+    CacheTopology existingTopology=cacheStatus.getCurrentTopology();
+    if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
+      log.tracef("Ignoring consistent hash update for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
+      return;
+    }
+    CacheTopologyHandler handler=cacheStatus.getHandler();
+    resetLocalTopologyBeforeRebalance(cacheTopology,existingTopology,handler);
+    log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",cacheName,cacheTopology);
+    cacheStatus.setCurrentTopology(cacheTopology);
+    ConsistentHash unionCH=null;
+    if (cacheTopology.getPendingCH() != null) {
+      unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
+    }
+    CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH);
+    unionTopology.logRoutingTableInformation();
+    if ((existingTopology == null || existingTopology.getPendingCH() == null) && unionCH != null) {
+      log.tracef("This topology update has a pending CH, starting the rebalance now");
+      handler.rebalance(unionTopology);
+    }
+ else {
+      handler.updateConsistentHash(unionTopology);
+    }
+    if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
+      cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+    }
+  }
+}
