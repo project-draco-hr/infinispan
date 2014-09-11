@@ -1,14 +1,15 @@
 {
-  Cache<KeyValuePair<String,Class>,Object> cache=lazyCache;
-  if (cache == null) {
-synchronized (this) {
-      if (lazyCache == null) {
-        if (cacheManager.getCacheConfiguration(QUERY_CACHE_NAME) == null) {
-          cacheManager.defineConfiguration(QUERY_CACHE_NAME,getDefaultQueryCacheConfig().build());
-        }
-        cache=lazyCache=cacheManager.getCache(QUERY_CACHE_NAME);
-      }
-    }
+  final Cache<KeyValuePair<String,Class>,Object> cache=lazyCache;
+  if (cache != null) {
+    return cache;
   }
-  return cache;
+synchronized (this) {
+    if (lazyCache == null) {
+      if (cacheManager.getCacheConfiguration(QUERY_CACHE_NAME) == null) {
+        cacheManager.defineConfiguration(QUERY_CACHE_NAME,getDefaultQueryCacheConfig().build());
+      }
+      lazyCache=cacheManager.getCache(QUERY_CACHE_NAME);
+    }
+    return lazyCache;
+  }
 }
