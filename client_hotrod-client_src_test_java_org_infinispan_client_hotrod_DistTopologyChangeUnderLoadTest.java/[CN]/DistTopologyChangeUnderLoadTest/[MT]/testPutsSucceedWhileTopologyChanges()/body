@@ -9,6 +9,12 @@
   TestHelper.startHotRodServer(cm);
   waitForClusterToForm();
   TestingUtil.waitForRehashToComplete(cm.getCache(),cache(0));
-  putHammer.rehashCompleted=true;
+  TestingUtil.sleepThread(2000);
+  TestingUtil.killCacheManagers(cm);
+  TestingUtil.waitForRehashToComplete(cache(0));
+  TcpTransportFactory transportFactory=TestingUtil.extractField(client(0),"transportFactory");
+  SocketAddress[] servers=((RoundRobinBalancingStrategy)transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes())).getServers();
+  putHammer.stop=true;
   putHammerFuture.get();
+  assertEquals(1,servers.length);
 }
