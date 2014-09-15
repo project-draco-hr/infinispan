@@ -1,8 +1,14 @@
 {
-  final FileListCacheValue fileList=getFileList();
-  boolean done=fileList.add(fileName);
-  if (done) {
-    cacheNoRetrieve.put(fileListCacheKey,fileList);
-    if (trace)     log.trace("Updated file listing: added " + fileName);
+  writeLock.lock();
+  try {
+    final FileListCacheValue fileList=getFileList();
+    boolean done=fileList.add(fileName);
+    if (done) {
+      cacheNoRetrieve.put(fileListCacheKey,fileList);
+      if (trace)       log.trace("Updated file listing: added " + fileName);
+    }
+  }
+  finally {
+    writeLock.unlock();
   }
 }

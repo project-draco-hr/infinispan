@@ -1,10 +1,16 @@
 {
-  FileListCacheValue fileList=getFileList();
-  boolean done=fileList.addAndRemove(toAdd,toRemove);
-  if (done) {
-    cacheNoRetrieve.put(fileListCacheKey,fileList);
-    if (trace && done) {
-      log.trace("Updated file listing: added " + toAdd + " and removed "+ toRemove);
+  writeLock.lock();
+  try {
+    FileListCacheValue fileList=getFileList();
+    boolean done=fileList.addAndRemove(toAdd,toRemove);
+    if (done) {
+      cacheNoRetrieve.put(fileListCacheKey,fileList);
+      if (trace) {
+        log.trace("Updated file listing: added " + toAdd + " and removed "+ toRemove);
+      }
     }
+  }
+  finally {
+    writeLock.unlock();
   }
 }

@@ -1,0 +1,37 @@
+{
+  final long start=System.currentTimeMillis();
+  ExecutorService executorService=Executors.newCachedThreadPool();
+  final CountDownLatch waitFor=new CountDownLatch(1);
+  final AtomicLong id=new AtomicLong(1);
+  ArrayList<Future> futures=new ArrayList<>();
+  final Random random=new Random();
+  for (int i=0; i < NUMBER_OF_THREADS; i++) {
+    futures.add(executorService.submit(new Runnable(){
+      @Override public void run(){
+        try {
+          waitFor.await();
+          Thread.sleep(random.nextInt(3000));
+          for (int j=0; j < OBJECT_COUNT; j++) {
+            Cache<Long,Person> cache=(j % 2 == 0) ? cache1 : cache2;
+            long key=id.incrementAndGet();
+            cache.put(key,new Person("name" + key,"blurb",30));
+            if (j % 100 == 0) {
+              System.out.println(j + " in " + (System.currentTimeMillis() - start) / 1000 + "s ");
+            }
+          }
+        }
+ catch (        InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+));
+  }
+  waitFor.countDown();
+  for (  Future f : futures) {
+    f.get();
+  }
+  assertAllGood(cache1,cache2);
+  System.out.println("Test took: " + (System.currentTimeMillis() - start) / 1000 + " s");
+  killCacheManagers(cacheManagers);
+}
