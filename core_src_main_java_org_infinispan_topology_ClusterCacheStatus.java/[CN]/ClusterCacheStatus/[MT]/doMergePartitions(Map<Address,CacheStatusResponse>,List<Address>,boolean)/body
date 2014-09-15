@@ -11,8 +11,12 @@ synchronized (this) {
         Address sender=e.getKey();
         CacheStatusResponse response=e.getValue();
         joinInfos.put(sender,response.getCacheJoinInfo());
-        currentTopologies.add(response.getCacheTopology());
-        stableTopologies.add(response.getStableTopology());
+        if (response.getCacheTopology() != null) {
+          currentTopologies.add(response.getCacheTopology());
+        }
+        if (response.getStableTopology() != null) {
+          stableTopologies.add(response.getStableTopology());
+        }
       }
       log.debugf("Recovered %d partition(s) for cache %s: %s",currentTopologies.size(),cacheName,currentTopologies);
       recoverMembers(joinInfos,currentTopologies,stableTopologies);
