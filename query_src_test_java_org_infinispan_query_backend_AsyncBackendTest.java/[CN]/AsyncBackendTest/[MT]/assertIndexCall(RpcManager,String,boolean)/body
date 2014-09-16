@@ -1,0 +1,10 @@
+{
+  ArgumentCaptor<IndexUpdateCommand> argument=ArgumentCaptor.forClass(IndexUpdateCommand.class);
+  RpcOptions rpcOptions=rpcManager.getDefaultRpcOptions(sync);
+  verify(rpcManager,atLeastOnce()).invokeRemotely(anyCollection(),argument.capture(),eq(rpcOptions));
+  boolean indexCalled=false;
+  for (  IndexUpdateCommand updateCommand : argument.getAllValues()) {
+    indexCalled|=updateCommand.getParameters()[0].equals(indexName);
+  }
+  assertTrue(indexCalled);
+}

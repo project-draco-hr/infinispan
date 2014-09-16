@@ -1,0 +1,13 @@
+{
+  withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createClusteredCacheManager(cfg),TestCacheManagerFactory.createClusteredCacheManager(cfg)){
+    @Override public void call(){
+      EmbeddedCacheManager slave=isMaster(cms[0].getCache()) ? cms[1] : cms[0];
+      RpcManager wireTappedRpcManager=spyOnTransport(slave.getCache());
+      slave.getCache().put(1,new Person("person1","blurb1",20));
+      slave.getCache().put(2,new Person("person2","blurb2",27));
+      slave.getCache().put(3,new Person("person3","blurb3",56));
+      assertion.doAssertion(wireTappedRpcManager);
+    }
+  }
+);
+}
