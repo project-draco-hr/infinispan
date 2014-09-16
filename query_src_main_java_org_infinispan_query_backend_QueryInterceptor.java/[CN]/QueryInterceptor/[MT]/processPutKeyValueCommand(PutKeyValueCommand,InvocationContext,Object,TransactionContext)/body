@@ -1,12 +1,12 @@
 {
   final boolean usingSkipIndexCleanupFlag=usingSkipIndexCleanup(command);
-  if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
+  Object value=extractValue(command.getValue());
+  if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value,previousValue)) {
     if (shouldModifyIndexes(command,ctx)) {
       transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       removeFromIndexes(previousValue,extractValue(command.getKey()),transactionContext);
     }
   }
-  Object value=extractValue(command.getValue());
   if (updateKnownTypesIfNeeded(value)) {
     if (shouldModifyIndexes(command,ctx)) {
       transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;

@@ -1,0 +1,14 @@
+{
+  Directory directory=initializeAndExtractDirectory(cache);
+  Entity1 entity1=new Entity1("e1");
+  cache.put(1,entity1);
+  long commits=doRecordingCommits(directory,new Operation(){
+    @Override public void execute(){
+      cache.put(1,new Entity1("e2"));
+    }
+  }
+);
+  assertEquals(1,commits);
+  assertEquals(1,countIndexedDocuments(Entity1.class));
+  assertEquals(0,countIndexedDocuments(Entity2.class));
+}
