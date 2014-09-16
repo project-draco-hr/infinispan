@@ -1,0 +1,15 @@
+{
+  builderUsed=new ConfigurationBuilder();
+  builderUsed.clustering().cacheMode(cacheMode);
+  builderUsed.clustering().hash().numOwners(1);
+  builderUsed.persistence().passivation(false).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(cacheName);
+  if (tx) {
+    builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+  }
+  if (cacheMode.isClustered()) {
+    createClusteredCaches(3,cacheName,builderUsed);
+  }
+ else {
+    createClusteredCaches(1,cacheName,builderUsed);
+  }
+}
