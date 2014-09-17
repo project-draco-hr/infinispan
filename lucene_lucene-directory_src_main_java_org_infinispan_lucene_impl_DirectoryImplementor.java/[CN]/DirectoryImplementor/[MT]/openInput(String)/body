@@ -1,6 +1,12 @@
 {
   final FileCacheKey fileKey=new FileCacheKey(indexName,name);
-  final FileMetadata fileMetadata=metadataCache.get(fileKey);
+  FileMetadata fileMetadata;
+  try {
+    fileMetadata=metadataCache.get(fileKey);
+  }
+ catch (  PersistenceException pe) {
+    fileMetadata=null;
+  }
   if (fileMetadata == null) {
     throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
   }
