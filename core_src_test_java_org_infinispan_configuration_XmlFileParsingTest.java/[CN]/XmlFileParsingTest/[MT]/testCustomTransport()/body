@@ -1,0 +1,12 @@
+{
+  String config=INFINISPAN_START_TAG_NO_SCHEMA + "<jgroups transport=\"org.infinispan.configuration.XmlFileParsingTest$CustomTransport\"/>\n" + "<cache-container default-cache=\"default\">\n"+ "  <transport cluster=\"ispn-perf-test\"/>\n"+ "  <distributed-cache name=\"default\"/>\n"+ "</cache-container>"+ INFINISPAN_END_TAG;
+  InputStream is=new ByteArrayInputStream(config.getBytes());
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)){
+    @Override public void call(){
+      Transport transport=cm.getTransport();
+      assertNotNull(transport);
+      assertTrue(transport instanceof CustomTransport);
+    }
+  }
+);
+}
