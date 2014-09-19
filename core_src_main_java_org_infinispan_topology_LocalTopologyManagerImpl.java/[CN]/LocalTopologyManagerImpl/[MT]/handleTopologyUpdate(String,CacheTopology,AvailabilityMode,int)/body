@@ -1,6 +1,6 @@
 {
   if (!running) {
-    log.debugf("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",cacheTopology.getTopologyId(),cacheName);
+    log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",cacheTopology.getTopologyId(),cacheName);
     return;
   }
   waitForView(viewId);
@@ -12,11 +12,11 @@
 synchronized (cacheStatus) {
     CacheTopology existingTopology=cacheStatus.getCurrentTopology();
     if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
-      log.tracef("Ignoring consistent hash update for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
+      log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
       return;
     }
     CacheTopologyHandler handler=cacheStatus.getHandler();
-    resetLocalTopologyBeforeRebalance(cacheTopology,existingTopology,handler);
+    resetLocalTopologyBeforeRebalance(cacheName,cacheTopology,existingTopology,handler);
     log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",cacheName,cacheTopology);
     cacheStatus.setCurrentTopology(cacheTopology);
     ConsistentHash unionCH=null;
@@ -25,7 +25,7 @@ synchronized (cacheStatus) {
     }
     CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH);
     unionTopology.logRoutingTableInformation();
-    if ((existingTopology == null || existingTopology.getPendingCH() == null) && unionCH != null) {
+    if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
       log.tracef("This topology update has a pending CH, starting the rebalance now");
       handler.rebalance(unionTopology);
     }
