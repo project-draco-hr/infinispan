@@ -3,7 +3,12 @@
   manager=new RemoteCacheManager(builder.build());
   RemoteCache<Integer,User> cache=manager.getCache(INDEXED_CACHE);
   SerializationContext ctx=ProtoStreamMarshaller.getSerializationContext(manager);
-  ctx.registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
+  FileDescriptorSource fds=new FileDescriptorSource();
+  fds.addProtoFile("bank.proto",bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
+  Bundle sampleDomainDefinitionBundle=getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
+  fds.addProtoFile("indexing.proto",sampleDomainDefinitionBundle.getResource("/infinispan/indexing.proto").openStream());
+  fds.addProtoFile("descriptor.proto",sampleDomainDefinitionBundle.getResource("/google/protobuf/descriptor.proto").openStream());
+  ctx.registerProtoFiles(fds);
   ctx.registerMarshaller(new UserMarshaller());
   ctx.registerMarshaller(new GenderMarshaller());
   ctx.registerMarshaller(new AddressMarshaller());
