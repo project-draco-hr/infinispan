@@ -1,0 +1,9 @@
+{
+  String cacheName="persistent-distributed-size";
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false);
+  builder.eviction().maxEntries(1);
+  builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getName()).shared(true);
+  defineInAll(cacheName,builder);
+  populateCache(cacheName);
+  assertEquals(SIZE,clients.get(0).getCache(cacheName).size());
+}
