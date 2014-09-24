@@ -3,7 +3,8 @@
   if (event instanceof EventImpl) {
     EventImpl<K,V> eventImpl=(EventImpl<K,V>)event;
     if (eventImpl.isPre() && clustered)     return false;
-    if (filter != null && !filter.accept(eventImpl.getKey(),eventImpl.getValue(),eventImpl.getMetadata()))     return false;
+    EventType eventType;
+    if (filter != null && (eventType=getEvent(eventImpl)) != null && !filter.accept(eventImpl.getKey(),eventImpl.getOldValue(),eventImpl.getOldMetadata(),eventImpl.getValue(),eventImpl.getMetadata(),eventType))     return false;
   }
   return true;
 }

@@ -1,7 +1,17 @@
 {
   MVCCEntry mvccEntry;
   if (trace)   log.trace("Creating new entry.");
-  notifier.notifyCacheEntryCreated(key,null,true,ctx,cmd);
+  Object newValue;
+  if (cmd instanceof PutKeyValueCommand) {
+    newValue=((PutKeyValueCommand)cmd).getValue();
+  }
+ else   if (cmd instanceof PutMapCommand) {
+    newValue=((PutMapCommand)cmd).getMap().get(key);
+  }
+ else {
+    newValue=null;
+  }
+  notifier.notifyCacheEntryCreated(key,newValue,true,ctx,cmd);
   mvccEntry=createWrappedEntry(key,null,ctx,providedMetadata,true,false,skipRead);
   mvccEntry.setCreated(true);
   ctx.putLookedUpEntry(key,mvccEntry);
