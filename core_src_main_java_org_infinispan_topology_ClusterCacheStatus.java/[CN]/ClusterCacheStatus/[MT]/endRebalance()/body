@@ -2,6 +2,10 @@
 synchronized (this) {
     removeRebalanceConfirmationCollector();
     CacheTopology currentTopology=getCurrentTopology();
+    if (currentTopology == null) {
+      log.tracef("Rebalance finished because there are no more members in cache %s",cacheName);
+      return;
+    }
     int currentTopologyId=currentTopology.getTopologyId();
     log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d",cacheName,currentTopologyId);
     int newTopologyId=currentTopologyId + 1;

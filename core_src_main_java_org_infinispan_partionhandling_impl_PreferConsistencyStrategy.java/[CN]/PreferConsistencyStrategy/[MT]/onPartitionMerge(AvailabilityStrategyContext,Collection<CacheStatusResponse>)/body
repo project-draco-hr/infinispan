@@ -58,12 +58,17 @@
     mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
     mergedTopology=maxActiveTopology;
   }
- else {
+ else   if (maxDegradedTopology != null) {
     log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
     mergedAvailabilityMode=AvailabilityMode.DEGRADED_MODE;
     mergedTopology=maxDegradedTopology;
   }
-  if (mergedTopology.getPendingCH() != null) {
+ else {
+    log.debugf("No current topology, recovered only joiners for cache %s",context.getCacheName());
+    mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
+    mergedTopology=null;
+  }
+  if (mergedTopology != null && mergedTopology.getPendingCH() != null) {
     mergedTopology=new CacheTopology(mergedTopology.getTopologyId() + 1,mergedTopology.getRebalanceId(),mergedTopology.getCurrentCH(),null);
   }
   log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, availability mode = %s",context.getCacheName(),mergedTopology,maxStableTopology,mergedAvailabilityMode);
