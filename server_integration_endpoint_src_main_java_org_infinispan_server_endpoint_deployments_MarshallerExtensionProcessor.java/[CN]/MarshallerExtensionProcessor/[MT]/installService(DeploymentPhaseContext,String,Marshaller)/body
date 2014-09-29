@@ -1,0 +1,13 @@
+{
+  MarshallerService service=new MarshallerService(instance);
+  ServiceName extensionServiceName=Constants.DATAGRID.append(service.getServiceTypeName());
+  ServiceBuilder<Marshaller> serviceBuilder=ctx.getServiceTarget().addService(extensionServiceName,service);
+  serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE).addDependency(extensionManagerServiceName,ExtensionManagerService.class,service.getExtensionManager());
+  try {
+    serviceBuilder.install();
+  }
+ catch (  IllegalStateException e) {
+    ROOT_LOGGER.duplicateMarshallerDeployment(ctx.getDeploymentUnit().getName());
+    ROOT_LOGGER.debug("Marshaller already installed",e);
+  }
+}

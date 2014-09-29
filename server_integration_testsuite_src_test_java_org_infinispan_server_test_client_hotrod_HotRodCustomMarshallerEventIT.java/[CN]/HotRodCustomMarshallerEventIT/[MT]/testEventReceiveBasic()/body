@@ -1,0 +1,21 @@
+{
+  final IdEventListener eventListener=new IdEventListener();
+  remoteCache.addClientListener(eventListener);
+  try {
+    remoteCache.put(new Id(1),new Id(11));
+    ClientCacheEntryCreatedEvent<Id> created=eventListener.pollEvent();
+    assertEquals(new Id(1),created.getKey());
+    remoteCache.put(new Id(2),new Id(22));
+    created=eventListener.pollEvent();
+    assertEquals(new Id(2),created.getKey());
+    remoteCache.put(new Id(1),new Id(111));
+    ClientCacheEntryModifiedEvent<Id> modified=eventListener.pollEvent();
+    assertEquals(new Id(1),modified.getKey());
+    remoteCache.remove(new Id(1));
+    ClientCacheEntryRemovedEvent<Id> removed=eventListener.pollEvent();
+    assertEquals(new Id(1),removed.getKey());
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}
