@@ -1,6 +1,7 @@
 {
-  JChannel channel=new MuxChannel(this);
-  TP transport=channel.getProtocolStack().getTransport();
+  JChannel channel=new JChannel(this);
+  ProtocolStack stack=channel.getProtocolStack();
+  TP transport=stack.getTransport();
   if (transport.isSingleton()) {
 synchronized (transport) {
       this.init(transport);
@@ -9,30 +10,29 @@ synchronized (transport) {
  else {
     this.init(transport);
   }
-  final RelayConfiguration relayConfig=this.configuration.getRelay();
+  RelayConfiguration relayConfig=this.configuration.getRelay();
   if (relayConfig != null) {
-    final String localSite=relayConfig.getSiteName();
-    final List<RemoteSiteConfiguration> remoteSites=this.configuration.getRelay().getRemoteSites();
-    final List<String> sites=new ArrayList<String>(remoteSites.size() + 1);
+    String localSite=relayConfig.getSiteName();
+    List<RemoteSiteConfiguration> remoteSites=this.configuration.getRelay().getRemoteSites();
+    List<String> sites=new ArrayList<>(remoteSites.size() + 1);
     sites.add(localSite);
-    final Map<String,RelayConfig.BridgeConfig> bridges=new HashMap<String,RelayConfig.BridgeConfig>();
+    Map<String,RelayConfig.BridgeConfig> bridges=new HashMap<>();
     for (    final RemoteSiteConfiguration remoteSite : remoteSites) {
-      final String siteName=remoteSite.getName();
+      String siteName=remoteSite.getName();
       sites.add(siteName);
-      final String cluster=remoteSite.getCluster();
-      final String clusterName=(cluster != null) ? cluster : siteName;
-      final RelayConfig.BridgeConfig bridge=new RelayConfig.BridgeConfig(clusterName){
+      String clusterName=remoteSite.getClusterName();
+      RelayConfig.BridgeConfig bridge=new RelayConfig.BridgeConfig(clusterName){
         @Override public JChannel createChannel() throws Exception {
-          return (JChannel)remoteSite.getChannelFactory().createChannel(id + "/" + clusterName);
+          JChannel channel=(JChannel)remoteSite.getChannel();
+          channel.getProtocolStack().removeProtocol(FORK.class);
+          return channel;
         }
       }
 ;
       bridges.put(clusterName,bridge);
     }
-    Collections.sort(sites);
-    final RELAY2 relay=new RELAY2().site(localSite);
-    for (short i=0; i < sites.size(); ++i) {
-      final String site=sites.get(i);
+    RELAY2 relay=new RELAY2().site(localSite);
+    for (    String site : sites) {
       RelayConfig.SiteConfig siteConfig=new RelayConfig.SiteConfig(site);
       relay.addSite(site,siteConfig);
       if (site.equals(localSite)) {
@@ -43,9 +43,12 @@ synchronized (transport) {
     }
     Configurator.resolveAndAssignFields(relay,relayConfig.getProperties());
     Configurator.resolveAndInvokePropertyMethods(relay,relayConfig.getProperties());
-    channel.getProtocolStack().addProtocol(relay);
+    stack.addProtocol(relay);
     relay.init();
   }
+  FORK fork=new FORK();
+  stack.addProtocol(fork);
+  fork.init();
   final SaslConfiguration saslConfig=this.configuration.getSasl();
   if (saslConfig != null) {
     final String clusterRole=saslConfig.getClusterRole();
@@ -75,7 +78,7 @@ synchronized (transport) {
     props.put("sasl_props",new PropertyConverters.StringProperties().toString(saslProps));
     Configurator.resolveAndAssignFields(sasl,props);
     Configurator.resolveAndInvokePropertyMethods(sasl,props);
-    channel.getProtocolStack().insertProtocol(sasl,ProtocolStack.BELOW,GMS.class);
+    stack.insertProtocol(sasl,ProtocolStack.BELOW,GMS.class);
     sasl.init();
   }
   channel.setName(this.configuration.getEnvironment().getNodeName() + "/" + id);
