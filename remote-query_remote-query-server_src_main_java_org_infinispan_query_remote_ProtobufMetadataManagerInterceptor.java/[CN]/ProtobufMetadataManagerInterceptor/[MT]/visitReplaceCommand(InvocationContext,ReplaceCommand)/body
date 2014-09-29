@@ -1,0 +1,48 @@
+{
+  final Object key=command.getKey();
+  final Object value=command.getNewValue();
+  if (ctx.isOriginLocal()) {
+    if (!(key instanceof String)) {
+      throw new CacheException("The key must be a string");
+    }
+    if (!(value instanceof String)) {
+      throw new CacheException("The value must be a string");
+    }
+    if (!shouldIntercept(key)) {
+      return invokeNextInterceptor(ctx,command);
+    }
+    if (!((String)key).endsWith(PROTO_KEY_SUFFIX)) {
+      throw new CacheException("The key must end with \".proto\" : " + key);
+    }
+    VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,null,null);
+    invoker.invoke(ctx,cmd);
+    final Object result=invokeNextInterceptor(ctx,command);
+    if (command.isSuccessful()) {
+      FileDescriptorSource source=new FileDescriptorSource().addProtoFile((String)key,(String)value);
+      ProgressCallback progressCallback=null;
+      if (ctx.isOriginLocal()) {
+        progressCallback=new ProgressCallback(ctx);
+        source.withProgressCallback(progressCallback);
+      }
+ else {
+        source.withProgressCallback(EMPTY_CALLBACK);
+      }
+      try {
+        serializationContext.registerProtoFiles(source);
+      }
+ catch (      IOException e) {
+        throw new CacheException("Failed to parse proto file : " + key,e);
+      }
+catch (      DescriptorParserException e) {
+        throw new CacheException("Failed to parse proto file : " + key,e);
+      }
+      if (progressCallback != null) {
+        updateGlobalErrors(ctx,progressCallback.getErrorFiles());
+      }
+    }
+    return result;
+  }
+ else {
+    return invokeNextInterceptor(ctx,command);
+  }
+}

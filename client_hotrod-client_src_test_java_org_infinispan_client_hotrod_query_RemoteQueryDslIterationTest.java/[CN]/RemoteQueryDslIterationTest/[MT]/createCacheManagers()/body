@@ -7,7 +7,9 @@
   clientBuilder.marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
   remoteCache=remoteCacheManager.getCache();
-  ProtobufMetadataManager protobufMetadataManager=manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-  protobufMetadataManager.registerProtofiles("/sample_bank_account/bank.proto","/infinispan/indexing.proto","/google/protobuf/descriptor.proto");
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+  metadataCache.put("google/protobuf/descriptor.proto",Util.read(Util.getResourceAsStream("/google/protobuf/descriptor.proto",getClass().getClassLoader())));
+  metadataCache.put("infinispan/indexing.proto",Util.read(Util.getResourceAsStream("/infinispan/indexing.proto",getClass().getClassLoader())));
+  metadataCache.put("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 }

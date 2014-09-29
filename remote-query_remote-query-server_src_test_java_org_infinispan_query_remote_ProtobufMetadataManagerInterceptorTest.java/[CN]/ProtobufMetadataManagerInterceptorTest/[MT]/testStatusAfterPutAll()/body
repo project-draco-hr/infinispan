@@ -1,0 +1,38 @@
+{
+  Cache<String,String> cache0=cache(0);
+  Cache<String,String> cache1=cache(1);
+  assertTrue(cache0.isEmpty());
+  assertTrue(cache1.isEmpty());
+  String file1="import \"missing.proto\";";
+  String file2="package b;";
+  Map<String,String> map=new HashMap<>();
+  map.put("a.proto",file1);
+  map.put("b.proto",file2);
+  cache0.putAll(map);
+  assertEquals(file1,cache0.get("a.proto"));
+  assertEquals(file2,cache0.get("b.proto"));
+  assertEquals(file1,cache1.get("a.proto"));
+  assertEquals(file2,cache1.get("b.proto"));
+  assertEquals("Import 'missing.proto' not found",cache0.get("a.proto.errors"));
+  assertEquals("Import 'missing.proto' not found",cache1.get("a.proto.errors"));
+  assertFalse(cache0.containsKey("b.proto.errors"));
+  assertFalse(cache1.containsKey("b.proto.errors"));
+  assertTrue(cache0.containsKey(".errors"));
+  assertTrue(cache1.containsKey(".errors"));
+  assertEquals("a.proto",cache0.get(".errors"));
+  assertEquals("a.proto",cache1.get(".errors"));
+  file1="package a;";
+  map.put("a.proto",file1);
+  cache0.putAll(map);
+  assertEquals(file1,cache0.get("a.proto"));
+  assertEquals(file1,cache1.get("a.proto"));
+  assertEquals(file2,cache0.get("b.proto"));
+  assertEquals(file2,cache1.get("b.proto"));
+  assertFalse(cache0.containsKey("a.proto.errors"));
+  assertFalse(cache1.containsKey("a.proto.errors"));
+  assertFalse(cache0.containsKey("b.proto.errors"));
+  assertFalse(cache1.containsKey("b.proto.errors"));
+  assertFalse(cache0.containsKey(".errors"));
+  assertFalse(cache1.containsKey(".errors"));
+  assertNoTransactionsAndLocks();
+}

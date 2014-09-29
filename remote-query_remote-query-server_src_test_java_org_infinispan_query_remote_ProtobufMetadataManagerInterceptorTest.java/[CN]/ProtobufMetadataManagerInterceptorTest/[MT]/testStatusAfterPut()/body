@@ -1,0 +1,23 @@
+{
+  Cache<String,String> cache0=cache(0);
+  Cache<String,String> cache1=cache(1);
+  assertTrue(cache0.isEmpty());
+  assertTrue(cache1.isEmpty());
+  String value="import \"missing.proto\";";
+  cache0.put("test.proto",value);
+  assertEquals(value,cache0.get("test.proto"));
+  assertEquals(value,cache1.get("test.proto"));
+  assertEquals("Import 'missing.proto' not found",cache0.get("test.proto.errors"));
+  assertEquals("test.proto",cache0.get(".errors"));
+  assertEquals("Import 'missing.proto' not found",cache1.get("test.proto.errors"));
+  assertEquals("test.proto",cache1.get(".errors"));
+  value="package foobar;";
+  cache0.put("test.proto",value);
+  assertEquals(value,cache0.get("test.proto"));
+  assertEquals(value,cache1.get("test.proto"));
+  assertFalse(cache0.containsKey("test.proto.errors"));
+  assertFalse(cache1.containsKey("test.proto.errors"));
+  assertFalse(cache0.containsKey(".errors"));
+  assertFalse(cache1.containsKey(".errors"));
+  assertNoTransactionsAndLocks();
+}

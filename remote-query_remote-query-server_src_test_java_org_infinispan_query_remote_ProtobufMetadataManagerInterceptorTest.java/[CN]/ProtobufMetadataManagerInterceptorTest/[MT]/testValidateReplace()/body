@@ -1,0 +1,25 @@
+{
+  Cache<String,String> cache0=cache(0);
+  Cache<String,String> cache1=cache(1);
+  assertTrue(cache0.isEmpty());
+  assertTrue(cache1.isEmpty());
+  String value="package X;";
+  cache0.put("test.proto",value);
+  assertEquals(1,cache0.size());
+  assertEquals(1,cache1.size());
+  assertEquals(value,cache0.get("test.proto"));
+  assertEquals(value,cache1.get("test.proto"));
+  try {
+    cache0.replace("test.proto","package XYX");
+    fail();
+  }
+ catch (  CacheException e) {
+    assertTrue(e.getCause() instanceof DescriptorParserException);
+    assertTrue(e.getMessage().contains("Failed to parse proto file : test.proto"));
+  }
+  assertEquals(1,cache0.size());
+  assertEquals(1,cache1.size());
+  assertEquals(value,cache0.get("test.proto"));
+  assertEquals(value,cache1.get("test.proto"));
+  assertNoTransactionsAndLocks();
+}

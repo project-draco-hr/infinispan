@@ -1,0 +1,40 @@
+{
+  if (ctx.isOriginLocal()) {
+    if (!(command.getKey() instanceof String)) {
+      throw new CacheException("The key must be a string");
+    }
+    String key=(String)command.getKey();
+    if (shouldIntercept(key)) {
+      VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,null,null);
+      invoker.invoke(ctx,cmd);
+      cmd=commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX,null,null);
+      invoker.invoke(ctx,cmd);
+      serializationContext.unregisterProtoFile(key);
+      Map<String,FileDescriptor> fileDescriptors=serializationContext.getFileDescriptors();
+      StringBuilder sb=new StringBuilder();
+      for (      FileDescriptor fd : fileDescriptors.values()) {
+        if (fd.isResolved()) {
+          cmd=commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX,null,null);
+          invoker.invoke(ctx,cmd);
+        }
+ else {
+          if (sb.length() > 0) {
+            sb.append('\n');
+          }
+          sb.append(fd.getName());
+          PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX,"One of the imported files is missing or has errors",null,null);
+          put.setPutIfAbsent(true);
+          invoker.invoke(ctx,put);
+        }
+      }
+      if (sb.length() > 0) {
+        cmd=commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX,sb.toString(),null,null);
+      }
+ else {
+        cmd=commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX,null,null);
+      }
+      invoker.invoke(ctx,cmd);
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

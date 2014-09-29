@@ -1,8 +1,10 @@
 {
-  if (names.length != contents.length)   throw new MBeanException(new IllegalArgumentException("invalid parameter sizes"));
-  FileDescriptorSource fileDescriptorSource=getFileDescriptorSource();
-  for (int i=0; i < names.length; i++) {
-    fileDescriptorSource.addProtoFile(names[i],contents[i]);
+  if (names.length != contents.length) {
+    throw new MBeanException(new IllegalArgumentException("invalid parameter sizes"));
   }
-  clusterRegistry.put(REGISTRY_SCOPE,REGISTRY_KEY,fileDescriptorSource);
+  Map<String,String> files=new HashMap<String,String>(names.length);
+  for (int i=0; i < names.length; i++) {
+    files.put(names[i],contents[i]);
+  }
+  getCache().putAll(files);
 }

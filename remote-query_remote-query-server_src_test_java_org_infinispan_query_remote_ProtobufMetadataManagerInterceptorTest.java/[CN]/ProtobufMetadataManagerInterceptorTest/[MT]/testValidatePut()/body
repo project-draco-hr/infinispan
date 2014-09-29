@@ -1,0 +1,48 @@
+{
+  Cache<String,String> cache0=cache(0);
+  Cache<String,String> cache1=cache(1);
+  assertTrue(cache0.isEmpty());
+  assertTrue(cache1.isEmpty());
+  try {
+    cache(0).put(42,"import \"test.proto\";");
+    fail();
+  }
+ catch (  CacheException e) {
+    assertEquals("The key must be a string",e.getMessage());
+  }
+  try {
+    cache(0).put("some.proto",42);
+    fail();
+  }
+ catch (  CacheException e) {
+    assertEquals("The value must be a string",e.getMessage());
+  }
+  try {
+    cache0.put("some.xml","import \"test.proto\";");
+    fail();
+  }
+ catch (  CacheException e) {
+    assertEquals("The key must end with \".proto\" : some.xml",e.getMessage());
+  }
+  try {
+    cache0.put("test.proto","package x");
+    fail();
+  }
+ catch (  CacheException e) {
+    assertEquals("Failed to parse proto file : test.proto",e.getMessage());
+  }
+  try {
+    Map<String,String> map=new HashMap<>();
+    map.put("a.proto","package a");
+    map.put("b.proto","package b;");
+    cache0.putAll(map);
+    fail();
+  }
+ catch (  CacheException e) {
+    assertTrue(e.getCause() instanceof DescriptorParserException);
+    assertTrue(e.getMessage().contains("Syntax error in a.proto"));
+  }
+  assertTrue(cache0.isEmpty());
+  assertTrue(cache1.isEmpty());
+  assertNoTransactionsAndLocks();
+}
