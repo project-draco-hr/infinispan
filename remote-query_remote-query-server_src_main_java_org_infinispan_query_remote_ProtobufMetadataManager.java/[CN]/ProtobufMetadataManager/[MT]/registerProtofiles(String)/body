@@ -1,8 +1,9 @@
 {
   FileDescriptorSource fileDescriptorSource=getFileDescriptorSource();
   for (  String classPathResource : classPathResources) {
-    String fileName=Paths.get(classPathResource).getFileName().toString();
-    fileDescriptorSource.addProtoFile(fileName,Util.getResourceAsStream(classPathResource,getClass().getClassLoader()));
+    String absPath=classPathResource.startsWith("/") ? classPathResource : "/" + classPathResource;
+    String path=classPathResource.startsWith("/") ? classPathResource.substring(1) : classPathResource;
+    fileDescriptorSource.addProtoFile(path,Util.getResourceAsStream(absPath,getClass().getClassLoader()));
   }
   clusterRegistry.put(REGISTRY_SCOPE,REGISTRY_KEY,fileDescriptorSource);
 }
