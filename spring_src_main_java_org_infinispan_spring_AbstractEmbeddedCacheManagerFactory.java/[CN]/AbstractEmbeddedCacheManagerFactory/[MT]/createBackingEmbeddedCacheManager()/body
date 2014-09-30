@@ -1,7 +1,13 @@
 {
-  EmbeddedCacheManager cm;
   if (configurationFileLocation != null) {
-    return createCacheManager(configurationFileLocation.getInputStream());
+    ConfigurationBuilderHolder configurationBuilderHolder=new ParserRegistry(Thread.currentThread().getContextClassLoader()).parse(configurationFileLocation.getInputStream());
+    if (gcb != null) {
+      configurationBuilderHolder.getGlobalConfigurationBuilder().read(gcb.build());
+    }
+    if (builder != null) {
+      configurationBuilderHolder.getDefaultConfigurationBuilder().read(builder.build());
+    }
+    return new DefaultCacheManager(configurationBuilderHolder,true);
   }
  else {
     if (gcb == null) {
@@ -13,7 +19,6 @@
       if (logger.isDebugEnabled())       logger.debug("ConfigurationBuilder is null. Using default new instance.");
       builder=new ConfigurationBuilder();
     }
-    cm=createCacheManager(gcb,builder);
-    return cm;
+    return createCacheManager(gcb,builder);
   }
 }

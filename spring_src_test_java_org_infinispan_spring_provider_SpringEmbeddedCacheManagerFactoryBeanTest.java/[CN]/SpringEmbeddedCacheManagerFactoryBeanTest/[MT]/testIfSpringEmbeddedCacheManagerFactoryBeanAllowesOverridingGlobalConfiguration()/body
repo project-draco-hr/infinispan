@@ -1,0 +1,8 @@
+{
+  GlobalConfigurationBuilder overriddenConfiguration=new GlobalConfigurationBuilder();
+  overriddenConfiguration.transport().rackId("r2");
+  overriddenConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
+  objectUnderTest=SpringEmbeddedCacheManagerFactoryBeanBuilder.defaultBuilder().fromFile(NAMED_ASYNC_CACHE_CONFIG_LOCATION,getClass()).withGlobalConfiguration(overriddenConfiguration).build();
+  final SpringEmbeddedCacheManager springEmbeddedCacheManager=objectUnderTest.getObject();
+  assertEquals("Transport for cache configured in" + CACHE_NAME_FROM_CONFIGURATION_FILE + "is assigned to r1 rack. But later Global Configuration overrides "+ "this setting to r2. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support this kind "+ "of overriding.","r2",springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().transport().rackId());
+}
