@@ -1,15 +1,13 @@
 {
   final boolean trace=log.isTraceEnabled();
-  final String indexName=readLockKey.getIndexName();
-  final String filename=readLockKey.getFileName();
-  final FileCacheKey key=new FileCacheKey(indexName,filename);
+  final FileCacheKey key=new FileCacheKey(indexName,fileName);
   if (trace)   log.tracef("deleting metadata: %s",key);
   final FileMetadata file=(FileMetadata)metadataCache.remove(key);
   if (file != null) {
     final int bufferSize=file.getBufferSize();
     AdvancedCache<?,?> chunksCacheNoReturn=chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);
     for (int i=0; i < file.getNumberOfChunks(); i++) {
-      ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,filename,i,bufferSize);
+      ChunkCacheKey chunkKey=new ChunkCacheKey(indexName,fileName,i,bufferSize);
       if (trace)       log.tracef("deleting chunk: %s",chunkKey);
       if (forceSynchronousDeletes) {
         chunksCacheNoReturn.remove(chunkKey);
@@ -19,11 +17,14 @@
       }
     }
   }
-  if (trace)   log.tracef("deleting readlock: %s",readLockKey);
-  if (forceSynchronousDeletes) {
-    locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).remove(readLockKey);
-  }
+  if (file != null && file.isMultiChunked()) {
+    FileReadLockKey readLockKey=new FileReadLockKey(indexName,fileName);
+    if (trace)     log.tracef("deleting readlock: %s",readLockKey);
+    if (forceSynchronousDeletes) {
+      locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).remove(readLockKey);
+    }
  else {
-    locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
+      locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
+    }
   }
 }

@@ -1,9 +1,12 @@
 {
+  FileCacheKey fileCacheKey=new FileCacheKey(indexName,filename);
+  FileMetadata fileMetadata=metadataCache.get(fileCacheKey);
+  boolean isMultiChunked=fileMetadata.isMultiChunked();
   FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
   int newValue=0;
   boolean done=false;
   Object lockValue=locksCache.get(readLockKey);
-  while (done == false) {
+  while (!done && isMultiChunked) {
     if (lockValue == null) {
       lockValue=locksCache.putIfAbsent(readLockKey,0);
       done=(null == lockValue);
@@ -19,6 +22,6 @@
     }
   }
   if (newValue == 0) {
-    realFileDelete(readLockKey,locksCache,chunksCache,metadataCache,forceSynchronousDeletes);
+    realFileDelete(indexName,filename,locksCache,chunksCache,metadataCache,forceSynchronousDeletes);
   }
 }
