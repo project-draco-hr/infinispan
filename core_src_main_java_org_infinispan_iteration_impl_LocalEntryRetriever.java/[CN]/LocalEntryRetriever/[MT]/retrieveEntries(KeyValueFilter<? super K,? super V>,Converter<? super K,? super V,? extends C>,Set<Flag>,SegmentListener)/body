@@ -16,29 +16,32 @@
 ;
         MapAction<C> action=new MapAction(batchSize,usedConverter,queue,handler);
         PassivationListener<K,V> listener=null;
+        long currentTime=timeService.wallClockTime();
         try {
           int interruptCheck=0;
           for (          InternalCacheEntry<K,V> entry : dataContainer) {
-            InternalCacheEntry<K,V> clone=entryFactory.create(unwrapMarshalledvalue(entry.getKey()),unwrapMarshalledvalue(entry.getValue()),entry);
-            K key=clone.getKey();
-            if (filter != null) {
-              if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
-                C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
-                if (converted != null) {
-                  clone.setValue((V)converted);
-                }
+            if (!entry.isExpired(currentTime)) {
+              InternalCacheEntry<K,V> clone=entryFactory.create(unwrapMarshalledvalue(entry.getKey()),unwrapMarshalledvalue(entry.getValue()),entry);
+              K key=clone.getKey();
+              if (filter != null) {
+                if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+                  C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
+                  if (converted != null) {
+                    clone.setValue((V)converted);
+                  }
  else {
+                    continue;
+                  }
+                }
+ else                 if (!filter.accept(key,clone.getValue(),clone.getMetadata())) {
                   continue;
                 }
               }
- else               if (!filter.accept(key,clone.getValue(),clone.getMetadata())) {
-                continue;
-              }
-            }
-            action.apply(key,clone);
-            if (interruptCheck++ % batchSize == 0) {
-              if (Thread.interrupted()) {
-                throw new CacheException("Entry Iterator was interrupted!");
+              action.apply(key,clone);
+              if (interruptCheck++ % batchSize == 0) {
+                if (Thread.interrupted()) {
+                  throw new CacheException("Entry Iterator was interrupted!");
+                }
               }
             }
           }
