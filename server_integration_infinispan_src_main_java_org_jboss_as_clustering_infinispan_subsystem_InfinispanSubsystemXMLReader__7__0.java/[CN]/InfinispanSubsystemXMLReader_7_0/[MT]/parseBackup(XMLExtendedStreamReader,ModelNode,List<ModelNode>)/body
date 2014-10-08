@@ -41,6 +41,7 @@ throw ParseUtils.missingRequired(reader,Collections.singleton(Attribute.SITE));
 }
 PathAddress address=PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.BACKUP,site);
 operation.get(OP_ADDR).set(address.toModelNode());
+List<ModelNode> additionalOperations=new ArrayList<>(1);
 while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
 Element element=Element.forName(reader.getLocalName());
 switch (element) {
@@ -49,6 +50,9 @@ case TAKE_OFFLINE:
 this.parseTakeOffline(reader,operation);
 break;
 }
+case STATE_TRANSFER:
+this.parseXSiteStateTransfer(reader,operation,additionalOperations);
+break;
 default :
 {
 throw ParseUtils.unexpectedElement(reader);
@@ -56,4 +60,5 @@ throw ParseUtils.unexpectedElement(reader);
 }
 }
 operations.add(operation);
+operations.addAll(additionalOperations);
 }
