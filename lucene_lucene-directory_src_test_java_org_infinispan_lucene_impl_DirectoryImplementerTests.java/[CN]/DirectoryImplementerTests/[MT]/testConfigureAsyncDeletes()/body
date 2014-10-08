@@ -1,0 +1,26 @@
+{
+  Cache cache=cacheManager.getCache();
+  Directory dir=null;
+  Version version=Version.LUCENE_48;
+  IndexWriterConfig iwc=new IndexWriterConfig(version,new StandardAnalyzer(version));
+  iwc.setMaxBufferedDocs(2);
+  IndexWriter indexWriter=null;
+  Document document=new Document();
+  document.add(new TextField("field","whatever",Field.Store.YES));
+  TrackingThreadPoolExecutor executorService=new TrackingThreadPoolExecutor();
+  try {
+    dir=DirectoryBuilder.newDirectoryInstance(cache,cache,cache,INDEX_NAME).chunkSize(BUFFER_SIZE).deleteOperationsExecutor(executorService).create();
+    indexWriter=new IndexWriter(dir,iwc);
+    indexWriter.addDocument(document);
+    indexWriter.commit();
+    indexWriter.addDocument(document);
+    indexWriter.commit();
+    executorService.shutdown();
+    AssertJUnit.assertTrue(executorService.isSegmentDeleted("0"));
+    AssertJUnit.assertTrue(executorService.isSegmentDeleted("1"));
+  }
+  finally {
+    if (indexWriter != null)     indexWriter.close();
+    if (dir != null)     dir.close();
+  }
+}

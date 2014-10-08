@@ -1,4 +1,8 @@
 {
   EmbeddedCacheManager cm=cacheManagers.get(node);
-  return DirectoryBuilder.newDirectoryInstance(cm.getCache("index_metadata"),cm.getCache("index_data"),cm.getCache("index_locks"),indexName).writeFileListAsynchronously(ASYNC_METADATA_WRITES).chunkSize(CHUNK_SIZE).create();
+  BuildContext context=DirectoryBuilder.newDirectoryInstance(cm.getCache("index_metadata"),cm.getCache("index_data"),cm.getCache("index_locks"),indexName).writeFileListAsynchronously(ASYNC_METADATA_WRITES).chunkSize(CHUNK_SIZE);
+  if (ASYNC_DELETES) {
+    context.deleteOperationsExecutor(createDeleteExecutor());
+  }
+  return context.create();
 }
