@@ -3,7 +3,7 @@
   List<Address> members=cacheTopology.getMembers();
   if (getMinTopologyId() >= topologyId)   return;
   log.tracef("Checking for transactions originated on leavers. Current members are %s, remote transactions: %d",members,remoteTransactions.size());
-  Set<GlobalTransaction> toKill=new HashSet<GlobalTransaction>();
+  List<GlobalTransaction> toKill=new ArrayList<GlobalTransaction>();
   for (  Map.Entry<GlobalTransaction,RemoteTransaction> e : remoteTransactions.entrySet()) {
     GlobalTransaction gt=e.getKey();
     RemoteTransaction remoteTx=e.getValue();
@@ -13,11 +13,14 @@
     }
   }
   if (toKill.isEmpty()) {
-    log.tracef("No global transactions pertain to originator(s) who have left the cluster.");
+    log.tracef("No remote transactions pertain to originator(s) who have left the cluster.");
   }
  else {
-    log.tracef("%s global transactions pertain to leavers and need to be killed",toKill.size());
+    log.debugf("The originating node left the cluster for %d remote transactions",toKill.size());
   }
-  rollbackStaleTransactions(toKill);
+  for (  GlobalTransaction gtx : toKill) {
+    log.debugf("Rolling back transaction %s because originator %s left the cluster",gtx,gtx.getAddress());
+    killTransaction(gtx);
+  }
   log.tracef("Completed cleaning transactions originating on leavers. Remote transactions remaining: %d",remoteTransactions.size());
 }
