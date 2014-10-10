@@ -1,2 +1,14 @@
 {
+  TransactionManager tm=TestingUtil.getTransactionManager(cache);
+  cache.put("key","old");
+  tm.begin();
+  assertEquals("old",cache.get("key"));
+  cache.put("key","value");
+  assertEquals("value",cache.get("key"));
+  Transaction t=tm.suspend();
+  assertEquals("old",cache.get("key"));
+  tm.resume(t);
+  tm.commit();
+  assertEquals("value",cache.get("key"));
+  assertFalse(cache.isEmpty());
 }
