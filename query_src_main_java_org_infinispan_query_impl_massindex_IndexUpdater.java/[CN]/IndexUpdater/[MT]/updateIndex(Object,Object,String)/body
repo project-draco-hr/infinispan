@@ -1,0 +1,22 @@
+{
+  if (value != null) {
+    Class clazz=value.getClass();
+    EntityIndexBinding entityIndexBinding=searchIntegrator.getIndexBinding(clazz);
+    if (entityIndexBinding == null) {
+      return;
+    }
+    ConversionContext conversionContext=new ContextualExceptionBridgeHelper();
+    DocumentBuilderIndexedEntity docBuilder=entityIndexBinding.getDocumentBuilder();
+    final String idInString=keyTransformationHandler.keyToString(key);
+    UpdateLuceneWork updateTask=docBuilder.createUpdateWork(clazz,value,idInString,idInString,DefaultInstanceInitializer.DEFAULT_INITIALIZER,conversionContext);
+    try {
+      IndexManager indexManagerForAddition=entityIndexBinding.getSelectionStrategy().getIndexManagerForAddition(clazz,idInString,idInString,updateTask.getDocument());
+      if (indexManagerForAddition.getIndexName().equals(indexName)) {
+        defaultBatchBackend.enqueueAsyncWork(updateTask);
+      }
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+}

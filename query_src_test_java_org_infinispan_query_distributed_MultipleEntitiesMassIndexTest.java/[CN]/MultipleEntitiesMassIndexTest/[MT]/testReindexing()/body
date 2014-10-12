@@ -1,0 +1,31 @@
+{
+  caches.get(0).put(key("C1"),new Car("megane","white",300));
+  caches.get(1).put(key("P1"),new Person("james","blurb",23));
+  caches.get(1).put(key("P2"),new Person("tony","blurb",28));
+  caches.get(1).put(key("P3"),new Person("chris","blurb",26));
+  caches.get(1).put(key("P4"),new Person("iker","blurb",23));
+  caches.get(1).put(key("P5"),new Person("sergio","blurb",29));
+  checkIndex(5,Person.class);
+  checkIndex(1,Car.class);
+  checkIndex(1,"make","megane",Car.class);
+  checkIndex(1,"name","james",Person.class);
+  caches.get(1).put(key("C2"),new Car("megane","blue",300));
+  checkIndex(2,"make","megane",Car.class);
+  caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("C3"),new Car("megane","blue",300));
+  checkIndex(2,"make","megane",Car.class);
+  rebuildIndexes();
+  checkIndex(5,Person.class);
+  checkIndex(3,Car.class);
+  checkIndex(3,"make","megane",Car.class);
+  checkIndex(1,"name","tony",Person.class);
+  caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("C2"));
+  caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("P3"));
+  assertNull(caches.get(1).get(key("P3")));
+  assertNull(caches.get(1).get(key("C2")));
+  checkIndex(3,"make","megane",Car.class);
+  checkIndex(5,Person.class);
+  rebuildIndexes();
+  checkIndex(2,Car.class);
+  checkIndex(2,"make","megane",Car.class);
+  checkIndex(4,Person.class);
+}

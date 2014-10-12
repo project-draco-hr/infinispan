@@ -1,0 +1,13 @@
+{
+  preIndex();
+  KeyValueFilter filter=getFilter();
+  try (CloseableIterator<CacheEntry<Object,String>> iterator=entryRetriever.retrieveEntries(filter,null,Util.asSet(Flag.CACHE_MODE_LOCAL),null)){
+    while (iterator.hasNext()) {
+      CacheEntry<Object,String> next=iterator.next();
+      Object value=extractValue(next.getValue());
+      if (value != null && value.getClass().equals(entity))       indexUpdater.updateIndex(next.getKey(),value,indexName);
+    }
+  }
+   postIndex();
+  return null;
+}
