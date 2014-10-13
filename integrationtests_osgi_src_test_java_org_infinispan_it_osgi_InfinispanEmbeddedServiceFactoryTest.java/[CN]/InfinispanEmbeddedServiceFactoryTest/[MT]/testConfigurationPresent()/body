@@ -1,0 +1,33 @@
+{
+  BundleContext bundleContext=OSGiTestUtils.getBundleContext(this);
+  final CountDownLatch expectedServiceRegistrations=new CountDownLatch(2);
+  bundleContext.addServiceListener(new ServiceListener(){
+    @Override public void serviceChanged(    ServiceEvent event){
+      if (event.getType() == ServiceEvent.REGISTERED) {
+        expectedServiceRegistrations.countDown();
+      }
+    }
+  }
+,"(objectClass=org.infinispan.manager.EmbeddedCacheManager)");
+  ConfigurationAdmin configurationService=OSGiTestUtils.getService(bundleContext,ConfigurationAdmin.class);
+  Configuration[] configurations=configurationService.listConfigurations("(service.pid=org.infinispan.manager.embedded)");
+  assertNull("No configurations are expected.",configurations);
+  Configuration configuration;
+  Dictionary<String,Object> configProperties;
+  configProperties=new Hashtable<String,Object>();
+  configProperties.put("instanceId","instance1");
+  configProperties.put("config","org/infinispan/it/osgi/custom-config-1.xml");
+  configuration=configurationService.createFactoryConfiguration("org.infinispan.manager.embedded",null);
+  configuration.update(configProperties);
+  configProperties=new Hashtable<String,Object>();
+  configProperties.put("instanceId","instance2");
+  configProperties.put("config","org/infinispan/it/osgi/custom-config-2.xml");
+  configuration=configurationService.createFactoryConfiguration("org.infinispan.manager.embedded",null);
+  configuration.update(configProperties);
+  expectedServiceRegistrations.await(10,TimeUnit.SECONDS);
+  Collection<ServiceReference<EmbeddedCacheManager>> serviceReferences;
+  serviceReferences=bundleContext.getServiceReferences(EmbeddedCacheManager.class,"(instanceId=instance1)");
+  assertEquals("Expecting the service to be registered through the mananged service factory.",1,serviceReferences.size());
+  serviceReferences=bundleContext.getServiceReferences(EmbeddedCacheManager.class,"(instanceId=instance2)");
+  assertEquals("Expecting the service to be registered through the mananged service factory.",1,serviceReferences.size());
+}

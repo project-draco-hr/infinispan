@@ -1,0 +1,29 @@
+{
+  String config=(String)properties.get(PROP_CONFIG);
+  if (config == null) {
+    throw new ConfigurationException(PROP_CONFIG,"Property must be set");
+  }
+  String instanceId=(String)properties.get(PROP_INSTANCE_ID);
+  if (instanceId == null) {
+    throw new ConfigurationException(PROP_INSTANCE_ID,"Property must be set");
+  }
+  try {
+    URL configURL=this.getClass().getClassLoader().getResource(config);
+    if (configURL == null) {
+      throw new ConfigurationException(PROP_CONFIG,String.format("Failed to find the specified config '%s'.",config));
+    }
+    deleted(pid);
+    InputStream configStream=configURL.openStream();
+    DefaultCacheManager cacheManager=new DefaultCacheManager(configStream);
+    cacheManager.start();
+    Hashtable<String,String> ht=new Hashtable<String,String>();
+    ht.put(PROP_INSTANCE_ID,instanceId);
+    ht.put(PROP_CONFIG,config);
+    ServiceRegistration<EmbeddedCacheManager> serviceRegistration=bundleContext.registerService(EmbeddedCacheManager.class,cacheManager,ht);
+    managedRegistrations.put(pid,serviceRegistration);
+    cacheManagers.put(pid,cacheManager);
+  }
+ catch (  Exception e) {
+    throw new ConfigurationException(null,"Cannot start the CacheManager",e);
+  }
+}
