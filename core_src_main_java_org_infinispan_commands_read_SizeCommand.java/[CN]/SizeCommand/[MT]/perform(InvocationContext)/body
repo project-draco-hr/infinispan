@@ -1,17 +1,25 @@
 {
-  if (ctx.getLookedUpEntries().isEmpty()) {
-    return container.size();
-  }
-  int size=container.size();
-  for (  CacheEntry e : ctx.getLookedUpEntries().values()) {
-    if (container.containsKey(e.getKey())) {
-      if (e.isRemoved()) {
-        size--;
+  int size=0;
+  Map<Object,CacheEntry> contextEntries=ctx.getLookedUpEntries();
+  Set<Object> keys=new HashSet<>();
+  try (CloseableIterable<CacheEntry<Object,Void>> iterator=cache.getAdvancedCache().withFlags(flags != null ? flags.toArray(new Flag[flags.size()]) : null).filterEntries(AcceptAllKeyValueFilter.getInstance()).converter(NullValueConverter.getInstance())){
+    for (    CacheEntry<Object,Void> entry : iterator) {
+      CacheEntry value=contextEntries.get(entry.getKey());
+      if (value != null) {
+        keys.add(entry.getKey());
+        if (!value.isRemoved()) {
+          size++;
+        }
+      }
+ else {
+        size++;
       }
     }
- else     if (!e.isRemoved()) {
+  }
+   for (  Map.Entry<Object,CacheEntry> entry : contextEntries.entrySet()) {
+    if (!keys.contains(entry.getKey()) && !entry.getValue().isRemoved()) {
       size++;
     }
   }
-  return Math.max(size,0);
+  return size;
 }
