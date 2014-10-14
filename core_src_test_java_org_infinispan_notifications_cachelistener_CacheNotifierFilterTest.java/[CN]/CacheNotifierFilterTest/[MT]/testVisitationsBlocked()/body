@@ -1,0 +1,16 @@
+{
+  String key="key";
+  String value="value";
+  Cache<String,String> cache0=cache(0,CACHE_NAME);
+  cache0.put(key,value);
+  AllCacheEntryListener listener=new AllCacheEntryListener();
+  cache0.addListener(listener,new VisitedFilter(),null);
+  assertEquals(value,cache0.get(key));
+  assertEquals(0,listener.events.size());
+  String notKey="not" + key;
+  cache0.put(notKey,value);
+  cache0.get("not" + key);
+  assertEquals(2,listener.events.size());
+  assertEquals(Event.Type.CACHE_ENTRY_CREATED,listener.events.get(0).getType());
+  assertEquals(Event.Type.CACHE_ENTRY_CREATED,listener.events.get(1).getType());
+}

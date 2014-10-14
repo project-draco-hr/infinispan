@@ -1,0 +1,14 @@
+{
+  String key="key";
+  String value="value";
+  Cache<String,String> cache0=cache(0,CACHE_NAME);
+  cache0.put(key,value);
+  TestListener listener=new TestListener();
+  cache0.addListener(listener,new CollectionKeyFilter<>(Collections.singletonList(key)));
+  assertEquals(value,cache0.get(key));
+  assertEquals(0,listener.visitedEvents.size());
+  String notKey="not" + key;
+  cache0.put(notKey,value);
+  cache0.get("not" + key);
+  assertEquals(2,listener.visitedEvents.size());
+}

@@ -1,0 +1,18 @@
+{
+  String key="key";
+  String value="value";
+  Cache<String,String> cache0=cache(0,CACHE_NAME);
+  AllCacheEntryListener listener=new AllCacheEntryListener();
+  cache0.addListener(listener,new EventKeyFilter(Event.Type.CACHE_ENTRY_PASSIVATED,key),null);
+  PassivationManager passivationManager=cache0.getAdvancedCache().getComponentRegistry().getComponent(PassivationManager.class);
+  passivationManager.passivate(new ImmortalCacheEntry(key,value));
+  assertEquals(2,listener.events.size());
+  assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED,listener.events.get(0).getType());
+  assertEquals(key,listener.events.get(0).getKey());
+  assertEquals(value,listener.events.get(0).getValue());
+  assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED,listener.events.get(0).getType());
+  assertEquals(key,listener.events.get(1).getKey());
+  assertNull(listener.events.get(1).getValue());
+  passivationManager.passivate(new ImmortalCacheEntry("not" + key,value));
+  assertEquals(2,listener.events.size());
+}
