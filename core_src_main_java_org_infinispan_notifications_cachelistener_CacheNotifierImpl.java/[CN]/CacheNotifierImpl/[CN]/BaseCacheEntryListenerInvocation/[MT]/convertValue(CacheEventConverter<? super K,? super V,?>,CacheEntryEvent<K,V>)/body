@@ -1,0 +1,24 @@
+{
+  CacheEntryEvent<K,V> returnedEvent;
+  if (converter != null) {
+    if (event instanceof EventImpl) {
+      EventImpl<K,V> eventImpl=(EventImpl<K,V>)event;
+      Object newValue=converter.convert(eventImpl.getKey(),(V)eventImpl.getOldValue(),eventImpl.getOldMetadata(),(V)eventImpl.getValue(),eventImpl.getMetadata(),null);
+      if (newValue != eventImpl.getValue()) {
+        EventImpl<K,V> clone=eventImpl.clone();
+        clone.setValue((V)newValue);
+        returnedEvent=clone;
+      }
+ else {
+        returnedEvent=eventImpl;
+      }
+    }
+ else {
+      throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.eventEventImpl " + "when a converter is being used!");
+    }
+  }
+ else {
+    returnedEvent=event;
+  }
+  return returnedEvent;
+}

@@ -1,0 +1,11 @@
+{
+  Object value=new Object();
+  CacheEventFilterConverter<Object,Object,Object> filterConverter=when(mock(CacheEventFilterConverter.class).filterAndConvert(anyObject(),anyObject(),any(Metadata.class),anyObject(),any(Metadata.class),any(EventType.class))).thenReturn(value).getMock();
+  CacheListener listener=new CacheListener();
+  cache.addListener(listener,filterConverter,filterConverter);
+  cache.put("key","value");
+  assertEquals(2,listener.getInvocationCount());
+  verify(filterConverter,times(2)).filterAndConvert(anyObject(),anyObject(),any(Metadata.class),anyObject(),any(Metadata.class),any(EventType.class));
+  verify(filterConverter,never()).accept(anyObject(),anyObject(),any(Metadata.class),anyObject(),any(Metadata.class),any(EventType.class));
+  verify(filterConverter,never()).convert(anyObject(),anyObject(),any(Metadata.class),anyObject(),any(Metadata.class),any(EventType.class));
+}

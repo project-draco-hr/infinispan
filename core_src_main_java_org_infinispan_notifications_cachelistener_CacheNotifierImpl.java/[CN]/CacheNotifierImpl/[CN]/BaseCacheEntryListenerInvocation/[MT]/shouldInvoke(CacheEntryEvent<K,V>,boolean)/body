@@ -1,10 +1,25 @@
 {
-  if (onlyPrimary && !isLocalNodePrimaryOwner)   return false;
+  if (onlyPrimary && !isLocalNodePrimaryOwner)   return null;
   if (event instanceof EventImpl) {
     EventImpl<K,V> eventImpl=(EventImpl<K,V>)event;
-    if (eventImpl.isPre() && clustered)     return false;
+    if (eventImpl.isPre() && clustered)     return null;
     EventType eventType;
-    if (filter != null && (eventType=getEvent(eventImpl)) != null && !filter.accept(eventImpl.getKey(),eventImpl.getOldValue(),eventImpl.getOldMetadata(),eventImpl.getValue(),eventImpl.getMetadata(),eventType))     return false;
+    if (filter != null && (eventType=getEvent(eventImpl)) != null) {
+      if (filter == converter && filter instanceof CacheEventFilterConverter) {
+        Object newValue=((CacheEventFilterConverter)filter).filterAndConvert(eventImpl.getKey(),eventImpl.getOldValue(),eventImpl.getOldMetadata(),eventImpl.getValue(),eventImpl.getMetadata(),eventType);
+        if (newValue != null) {
+          EventImpl<K,V> clone=eventImpl.clone();
+          clone.setValue((V)newValue);
+          return clone;
+        }
+ else {
+          return null;
+        }
+      }
+ else       if (!filter.accept(eventImpl.getKey(),eventImpl.getOldValue(),eventImpl.getOldMetadata(),eventImpl.getValue(),eventImpl.getMetadata(),eventType)) {
+        return null;
+      }
+    }
   }
-  return true;
+  return event;
 }

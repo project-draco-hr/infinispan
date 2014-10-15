@@ -1,3 +1,14 @@
 {
-  return new ClusterListenerReplicateCallable((UUID)input.readObject(),(Address)input.readObject(),(CacheEventFilter)input.readObject(),(CacheEventConverter)input.readObject());
+  UUID id=(UUID)input.readObject();
+  Address address=(Address)input.readObject();
+  CacheEventFilter filter=(CacheEventFilter)input.readObject();
+  boolean sameConverter=input.readBoolean();
+  CacheEventConverter converter;
+  if (sameConverter) {
+    converter=(CacheEventFilterConverter)filter;
+  }
+ else {
+    converter=(CacheEventConverter)input.readObject();
+  }
+  return new ClusterListenerReplicateCallable(id,address,filter,converter);
 }

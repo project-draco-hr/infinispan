@@ -1,0 +1,20 @@
+{
+  cache.put("key","value");
+  int i=1;
+  for (  CacheListener listener : listeners) {
+    assertEquals("Listener" + i + "failed",2,listener.getEvents().size());
+    Event event=listener.getEvents().get(0);
+    assertEquals("Listener" + i + "failed",Event.Type.CACHE_ENTRY_CREATED,event.getType());
+    CacheEntryCreatedEvent createdEvent=(CacheEntryCreatedEvent)event;
+    assertTrue("Listener" + i + "failed",createdEvent.isPre());
+    assertEquals("Listener" + i + "failed","key",createdEvent.getKey());
+    assertEquals("Listener" + i + "failed","null-listener-" + i,createdEvent.getValue());
+    event=listener.getEvents().get(1);
+    assertEquals("Listener" + i + "failed",Event.Type.CACHE_ENTRY_CREATED,event.getType());
+    createdEvent=(CacheEntryCreatedEvent)event;
+    assertFalse("Listener" + i + "failed",createdEvent.isPre());
+    assertEquals("Listener" + i + "failed","key",createdEvent.getKey());
+    assertEquals("Listener" + i + "failed","value-listener-" + i,createdEvent.getValue());
+    ++i;
+  }
+}
