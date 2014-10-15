@@ -1,5 +1,8 @@
 {
   final String key="testkey";
+  if (op.getPreviousValue() != null) {
+    cache(0,CACHE_NAME).put(key,op.getPreviousValue());
+  }
   CheckPoint checkPoint=new CheckPoint();
   LocalTopologyManager ltm0=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
   int preJoinTopologyId=ltm0.getCacheTopology(CACHE_NAME).getTopologyId();
@@ -28,14 +31,14 @@
   assertNotNull(duringJoinTopology.getPendingCH());
   log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s",key,duringJoinTopology.getCurrentCH().locateOwners(key),duringJoinTopology.getPendingCH().locateOwners(key));
   CyclicBarrier beforeCache1Barrier=new CyclicBarrier(2);
-  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,PutKeyValueCommand.class,false,false);
+  BlockingInterceptor blockingInterceptor1=new BlockingInterceptor(beforeCache1Barrier,op.getCommandClass(),false,false);
   cache1.addInterceptorBefore(blockingInterceptor1,NonTxDistributionInterceptor.class);
   CyclicBarrier afterCache2Barrier=new CyclicBarrier(2);
-  BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(afterCache2Barrier,PutKeyValueCommand.class,true,false);
+  BlockingInterceptor blockingInterceptor2=new BlockingInterceptor(afterCache2Barrier,op.getCommandClass(),true,false);
   cache2.addInterceptorBefore(blockingInterceptor2,StateTransferInterceptor.class);
   Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
-      return conditional ? cache0.putIfAbsent(key,"v") : cache0.put(key,"v");
+      return op.perform(cache0,key);
     }
   }
 );
@@ -57,16 +60,11 @@
   afterCache2Barrier.await(10,TimeUnit.SECONDS);
   afterCache2Barrier.await(10,TimeUnit.SECONDS);
   Object result=future.get(10,TimeUnit.SECONDS);
-  if (conditional) {
-    assertNull(result);
-  }
- else {
-    assertTrue(result == null || "v".equals(result));
-  }
-  log.tracef("Put operation is done");
-  assertEquals("v",cache0.get(key));
-  assertEquals("v",cache1.get(key));
-  assertEquals("v",cache2.get(key));
+  assertEquals(op.getReturnValueWithRetry(),result);
+  log.tracef("Write operation is done");
+  assertEquals(op.getValue(),cache0.get(key));
+  assertEquals(op.getValue(),cache1.get(key));
+  assertEquals(op.getValue(),cache2.get(key));
   assertFalse(cache0.getAdvancedCache().getLockManager().isLocked(key));
   assertFalse(cache1.getAdvancedCache().getLockManager().isLocked(key));
   assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
