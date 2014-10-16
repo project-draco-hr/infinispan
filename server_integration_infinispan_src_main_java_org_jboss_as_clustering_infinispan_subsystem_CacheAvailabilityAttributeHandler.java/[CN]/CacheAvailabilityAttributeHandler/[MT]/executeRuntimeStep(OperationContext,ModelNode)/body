@@ -1,0 +1,28 @@
+{
+  final PathAddress address=PathAddress.pathAddress(operation.require(OP_ADDR));
+  final String cacheContainerName=address.getElement(address.size() - 2).getValue();
+  final String cacheName=address.getElement(address.size() - 1).getValue();
+  final ServiceController<?> controller=context.getServiceRegistry(false).getService(CacheService.getServiceName(cacheContainerName,cacheName));
+  if (controller != null) {
+    Cache<?,?> cache=(Cache<?,?>)controller.getValue();
+    if (cache != null) {
+      ComponentRegistry registry=SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+      LocalTopologyManagerImpl localTopologyManager=(LocalTopologyManagerImpl)registry.getGlobalComponentRegistry().getComponent(LocalTopologyManager.class);
+      if (localTopologyManager != null) {
+        try {
+          if (operation.hasDefined(VALUE)) {
+            ModelNode newValue=operation.get(VALUE);
+            localTopologyManager.setCacheAvailability(cacheName,AvailabilityMode.valueOf(newValue.asString()));
+          }
+ else {
+            context.getResult().set(new ModelNode().set(localTopologyManager.getCacheAvailability(cacheName).toString()));
+          }
+        }
+ catch (        Exception e) {
+          throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+        }
+      }
+    }
+  }
+  context.stepCompleted();
+}
