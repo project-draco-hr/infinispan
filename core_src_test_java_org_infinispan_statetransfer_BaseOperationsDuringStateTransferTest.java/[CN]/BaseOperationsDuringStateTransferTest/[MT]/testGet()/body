@@ -31,11 +31,11 @@
   log.info("Adding a new node ..");
   addClusterEnabledCacheManager(cacheConfigBuilder);
   log.info("Added a new node");
-  assertTrue(cache(1).keySet().isEmpty());
+  assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
   if (!applyStateStartedLatch.await(15,TimeUnit.SECONDS)) {
     throw new TimeoutException();
   }
-  assertTrue(cache(1).keySet().isEmpty());
+  assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
   Future<Object> getFuture=fork(new Callable<Object>(){
     @Override public Object call(){
       return cache(1).get("myKey");
@@ -47,7 +47,7 @@
   }
   applyStateProceedLatch.countDown();
   TestingUtil.waitForRehashToComplete(cache(0),cache(1));
-  assertEquals(1,cache(1).keySet().size());
+  assertEquals(1,cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().size());
   getKeyProceedLatch.countDown();
   Object value=getFuture.get(15,TimeUnit.SECONDS);
   assertEquals("myValue",value);

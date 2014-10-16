@@ -1,0 +1,39 @@
+{
+  CacheEntry<K,C> returnedEntry=null;
+  CacheEntry<K,C> entry;
+  while (!contextEntries.isEmpty() && (entry=contextEntries.remove(0)) != null) {
+    seenContextKeys.add(entry.getKey());
+    if (!ctx.isEntryRemovedInContext(entry.getKey())) {
+      returnedEntry=entry;
+    }
+  }
+  if (returnedEntry == null) {
+    while (realIterator.hasNext()) {
+      CacheEntry<K,C> iteratedEntry=realIterator.next();
+      CacheEntry contextEntry;
+      if ((contextEntry=ctx.lookupEntry(iteratedEntry.getKey())) == null) {
+        returnedEntry=iteratedEntry;
+        break;
+      }
+ else {
+        if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved()) {
+          returnedEntry=contextEntry;
+          break;
+        }
+      }
+    }
+  }
+  if (returnedEntry == null) {
+    for (    CacheEntry lookedUpEntry : ctx.getLookedUpEntries().values()) {
+      if (!seenContextKeys.contains(lookedUpEntry.getKey())) {
+        if (returnedEntry == null) {
+          returnedEntry=lookedUpEntry;
+        }
+ else {
+          contextEntries.add(lookedUpEntry);
+        }
+      }
+    }
+  }
+  return returnedEntry;
+}

@@ -11,13 +11,15 @@
           return !c.containsKey(key);
         }
  else {
-          return !c.keySet().contains(key);
+          InternalCacheEntry entry=c.getAdvancedCache().getDataContainer().peek(key);
+          return entry == null || entry.isExpired(System.currentTimeMillis());
         }
       }
     }
 ,3 * expectedLifetime,(int)(3 * expectedLifetime / pollInterval) + 1);
     long waitTime=Util.currentMillisFromNanotime() - startTime;
-    assertNull(c.get(key));
+    Object value=c.get(key);
+    assertNull(value);
     long lowerBound=expectedLifetime - expectedLifetime / 4;
     assertTrue("Entry evicted too soon!",lowerBound <= waitTime);
   }

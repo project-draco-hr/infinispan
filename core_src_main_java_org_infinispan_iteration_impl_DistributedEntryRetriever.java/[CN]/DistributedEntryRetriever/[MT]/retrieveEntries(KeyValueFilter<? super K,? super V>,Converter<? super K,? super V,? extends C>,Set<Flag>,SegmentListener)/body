@@ -3,13 +3,17 @@
     log.trace("Skipping distributed entry retrieval and processing local only as CACHE_MODE_LOCAL flag was set");
     return super.retrieveEntries(filter,converter,flags,listener);
   }
+  ConsistentHash hash=getCurrentHash();
+  if (!hash.getMembers().contains(localAddress)) {
+    log.trace("Skipping distributed entry retrieval and processing local since we are not part of the consistent hash");
+    return super.retrieveEntries(filter,converter,flags,listener);
+  }
   UUID identifier=UUID.randomUUID();
   final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
   if (log.isTraceEnabled()) {
     log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s",identifier,filter,usedConverter);
   }
-  ConsistentHash hash=getCurrentHash();
-  DistributedItr<K,C> itr=new DistributedItr<>(batchSize,identifier,hash);
+  DistributedItr<K,C> itr=new DistributedItr<>(batchSize,identifier,listener,hash);
   Set<Integer> remoteSegments=new HashSet<>();
   AtomicReferenceArray<Set<K>> processedKeys=new AtomicReferenceArray<Set<K>>(hash.getNumSegments());
   for (int i=0; i < processedKeys.length(); ++i) {
