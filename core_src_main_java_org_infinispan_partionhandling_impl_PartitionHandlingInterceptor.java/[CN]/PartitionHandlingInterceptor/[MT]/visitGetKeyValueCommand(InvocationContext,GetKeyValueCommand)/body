@@ -1,4 +1,17 @@
 {
-  partitionHandlingManager.checkRead(command.getKey());
-  return super.visitGetKeyValueCommand(ctx,command);
+  Object key=command.getKey();
+  Object result;
+  try {
+    result=super.visitGetKeyValueCommand(ctx,command);
+  }
+ catch (  RpcException e) {
+    throw getLog().degradedModeKeyUnavailable(key);
+  }
+  partitionHandlingManager.checkRead(key);
+  if (result == null) {
+    if (!InfinispanCollections.containsAny(transport.getMembers(),cdl.getOwners(key))) {
+      throw getLog().degradedModeKeyUnavailable(key);
+    }
+  }
+  return result;
 }

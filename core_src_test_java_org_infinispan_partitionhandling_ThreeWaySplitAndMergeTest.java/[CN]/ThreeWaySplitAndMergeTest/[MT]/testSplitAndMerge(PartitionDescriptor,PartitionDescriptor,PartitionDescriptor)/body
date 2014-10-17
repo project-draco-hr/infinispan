@@ -9,17 +9,13 @@
   cache(3).put(k3,3);
   log.trace("Before split.");
   splitCluster(p0.getNodes(),p1.getNodes(),p2.getNodes());
-  eventually(new AbstractInfinispanTest.Condition(){
-    @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < 4; i++)       if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.DEGRADED_MODE)       return false;
-      return true;
-    }
-  }
-);
+  partition(0).assertDegradedMode();
+  partition(1).assertDegradedMode();
+  partition(2).assertDegradedMode();
   partition(0).assertKeyAvailableForRead(k0,0);
-  partition(0).assertKeysNotAvailable(k1,k2,k3);
-  partition(1).assertKeysNotAvailable(k0,k1,k2,k3);
-  partition(2).assertKeysNotAvailable(k0,k1,k2,k3);
+  partition(0).assertKeysNotAvailableForRead(k1,k2,k3);
+  partition(1).assertKeysNotAvailableForRead(k0,k1,k2,k3);
+  partition(2).assertKeysNotAvailableForRead(k0,k1,k2,k3);
   assertTrue(dataContainer(p0.node(0)).containsKey(k0));
   assertFalse(dataContainer(p0.node(0)).containsKey(k1));
   assertFalse(dataContainer(p0.node(0)).containsKey(k2));
@@ -44,8 +40,8 @@
   partition(0).merge(partition(1));
   assertEquals(partitions.length,2);
   log.tracef("After the 1st merge P0 = %s, P1 = %s",partition(0),partition(1));
-  partition(0).expectPartitionState(AvailabilityMode.AVAILABLE);
-  partition(1).expectPartitionState(AvailabilityMode.DEGRADED_MODE);
+  partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
+  partition(1).assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
   partition(0).assertKeyAvailableForRead(k0,-1);
   partition(0).assertKeyAvailableForRead(k1,1);
   partition(0).assertKeyAvailableForRead(k2,2);
@@ -58,7 +54,7 @@
   assertEquals(new HashSet<>(advancedCache(p0.node(0)).getDistributionManager().getConsistentHash().getMembers()),members);
   assertEquals(new HashSet<>(advancedCache(p0.node(1)).getDistributionManager().getConsistentHash().getMembers()),members);
   assertEquals(new HashSet<>(advancedCache(p1.node(0)).getDistributionManager().getConsistentHash().getMembers()),members);
-  partition(1).assertKeysNotAvailable(k0,k1,k2,k3);
+  partition(1).assertKeysNotAvailableForRead(k0,k1,k2,k3);
   members=new HashSet<>(Arrays.asList(new Address[]{address(0),address(1),address(2),address(3)}));
   assertEquals(new HashSet<>(advancedCache(p2.node(0)).getDistributionManager().getConsistentHash().getMembers()),members);
   for (int i=0; i < 100; i++)   dataContainer(p2.node(0)).put(i,i,null);
@@ -66,7 +62,7 @@
   partition(0).merge(partition(1));
   log.tracef("After 2nd merge P0=%s",partition(0));
   assertEquals(partitions.length,1);
-  partition(0).expectPartitionState(AvailabilityMode.AVAILABLE);
+  partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
   partition(0).assertKeyAvailableForRead(k0,10);
   partition(0).assertKeyAvailableForRead(k1,11);
   partition(0).assertKeyAvailableForRead(k2,12);
