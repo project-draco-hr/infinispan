@@ -1,8 +1,8 @@
 {
   if (keyInvalidationListener != null) {
-    keyInvalidationListener.beforeInvalidation(removedSegments,staleL1Segments);
+    keyInvalidationListener.beforeInvalidation(removedSegments,InfinispanCollections.<Integer>emptySet());
   }
-  if (removedSegments.isEmpty() && staleL1Segments.isEmpty())   return;
+  if (removedSegments.isEmpty())   return;
   final ConcurrentHashSet<Object> keysToInvalidate=new ConcurrentHashSet<Object>();
   final ConcurrentHashSet<Object> keysToRemove=new ConcurrentHashSet<Object>();
   dataContainer.executeTask(KeyFilter.LOAD_ALL_FILTER,new ParallelIterableMap.KeyValueAction<Object,InternalCacheEntry<Object,Object>>(){
@@ -11,9 +11,6 @@
       int keySegment=getSegment(key);
       if (removedSegments.contains(keySegment)) {
         keysToRemove.add(key);
-      }
- else       if (staleL1Segments.contains(keySegment)) {
-        keysToInvalidate.add(key);
       }
     }
   }
@@ -37,19 +34,6 @@
     }
  catch (    CacheException e) {
       log.failedLoadingKeysFromCacheStore(e);
-    }
-  }
-  log.debugf("Removing %d stale L1 entries for segments %s of cache %s",keysToInvalidate.size(),staleL1Segments,cacheName);
-  if (!keysToInvalidate.isEmpty()) {
-    try {
-      InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateFromL1Command(EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToInvalidate);
-      InvocationContext ctx=icf.createNonTxInvocationContext();
-      interceptorChain.invoke(ctx,invalidateCmd);
-      log.debugf("Removed %d stale L1 entries, data container now has %d keys",keysToInvalidate.size(),dataContainer.size());
-      if (trace)       log.tracef("Removed stale L1 entries: %s",keysToInvalidate);
-    }
- catch (    CacheException e) {
-      log.failedToInvalidateKeys(e);
     }
   }
   log.debugf("Removing %s no longer owned entries for segments %s of cache %s",keysToRemove.size(),removedSegments,cacheName);

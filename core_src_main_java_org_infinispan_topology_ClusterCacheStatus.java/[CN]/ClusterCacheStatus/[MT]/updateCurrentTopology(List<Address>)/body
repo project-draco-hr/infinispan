@@ -18,7 +18,8 @@ synchronized (this) {
       setStableTopology(null);
       return;
     }
-    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newMembers,getCapacityFactors());
+    List<Address> updateMembers=pruneInvalidMembers(currentCH.getMembers());
+    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,updateMembers,getCapacityFactors());
     ConsistentHash newPendingCH=null;
     if (pendingCH != null) {
       List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());

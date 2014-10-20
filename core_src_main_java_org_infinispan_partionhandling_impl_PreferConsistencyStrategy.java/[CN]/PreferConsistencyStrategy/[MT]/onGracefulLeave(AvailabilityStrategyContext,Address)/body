@@ -1,11 +1,16 @@
 {
+  CacheTopology currentTopology=context.getCurrentTopology();
+  List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
+  newMembers.remove(leaver);
+  if (newMembers.isEmpty()) {
+    log.debugf("The last node of cache %s left",context.getCacheName());
+    context.updateCurrentTopology(newMembers);
+    return;
+  }
   if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
     log.debugf("Cache %s is not available, ignoring graceful leaver %s",context.getCacheName(),leaver);
     return;
   }
-  CacheTopology currentTopology=context.getCurrentTopology();
-  List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
-  newMembers.retainAll(context.getExpectedMembers());
   if (isDataLost(context.getStableTopology().getCurrentCH(),newMembers)) {
     log.enteringUnavailableModeGracefulLeaver(context.getCacheName(),leaver);
     context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);

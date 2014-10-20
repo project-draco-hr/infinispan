@@ -4,6 +4,9 @@
   if (!ownsData && isMember) {
     ownsData=true;
   }
+ else   if (ownsData && !isMember) {
+    ownsData=false;
+  }
   if (isRebalance) {
     stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS,cacheTopology.getTopologyId());
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getUnionCH(),cacheTopology.getTopologyId(),true);
@@ -89,17 +92,17 @@
     if (transactionTable != null) {
       transactionTable.cleanupStaleTransactions(cacheTopology);
     }
-    if (isMember) {
-      Set<Integer> removedSegments;
+    Set<Integer> removedSegments;
+    boolean wasMember=previousWriteCh != null ? previousWriteCh.getMembers().contains(rpcManager.getAddress()) : false;
+    if (isMember || (!isMember && wasMember)) {
       removedSegments=new HashSet<>(newWriteCh.getNumSegments());
       for (int i=0; i < newWriteCh.getNumSegments(); i++) {
         removedSegments.add(i);
       }
-      Set<Integer> newSegments=newWriteCh.getSegmentsForOwner(rpcManager.getAddress());
+      Set<Integer> newSegments=getOwnedSegments(newWriteCh);
       removedSegments.removeAll(newSegments);
-      Set<Integer> staleL1Segments=computeStaleL1Segments(newSegments,newWriteCh,previousWriteCh);
       try {
-        removeStaleData(removedSegments,staleL1Segments);
+        removeStaleData(removedSegments);
       }
  catch (      InterruptedException e) {
         Thread.currentThread().interrupt();

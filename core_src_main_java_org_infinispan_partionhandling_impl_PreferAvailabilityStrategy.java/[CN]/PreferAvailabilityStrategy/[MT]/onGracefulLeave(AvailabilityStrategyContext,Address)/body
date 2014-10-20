@@ -1,8 +1,10 @@
 {
   CacheTopology currentTopology=context.getCurrentTopology();
   List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
-  if (!newMembers.remove(leaver)) {
-    log.debugf("Cache %s does not have member %s, ignoring leave request",context.getCacheName(),leaver);
+  newMembers.remove(leaver);
+  if (newMembers.isEmpty()) {
+    log.debugf("The last node of cache %s left",context.getCacheName());
+    context.updateCurrentTopology(newMembers);
     return;
   }
   if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(),newMembers)) {

@@ -1,0 +1,16 @@
+{
+  if (maxStableTopology != null) {
+    List<Address> stableMembers=maxStableTopology.getMembers();
+    List<Address> lostMembers=new ArrayList<>(stableMembers);
+    lostMembers.removeAll(context.getExpectedMembers());
+    if (isDataLost(maxStableTopology.getCurrentCH(),newMembers)) {
+      log.keepingDegradedModeAfterMergeDataLost(context.getCacheName(),newMembers,lostMembers,stableMembers);
+      return AvailabilityMode.DEGRADED_MODE;
+    }
+    if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
+      log.keepingDegradedModeAfterMergeMinorityPartition(context.getCacheName(),newMembers,lostMembers,stableMembers);
+      return AvailabilityMode.DEGRADED_MODE;
+    }
+  }
+  return AvailabilityMode.AVAILABLE;
+}

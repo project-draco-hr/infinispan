@@ -14,7 +14,11 @@
   assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < 4; i++)       if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE)       return false;
+      for (int i=0; i < numMembersInCluster; i++) {
+        if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+          return false;
+        }
+      }
       return true;
     }
   }
