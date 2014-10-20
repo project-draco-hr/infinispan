@@ -1,0 +1,13 @@
+{
+  objectUnderTest=SpringEmbeddedCacheManagerFactoryBeanBuilder.defaultBuilder().build();
+  GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+  gcb.globalJmxStatistics().allowDuplicateDomains(true);
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+  objectUnderTest.addCustomGlobalConfiguration(gcb);
+  objectUnderTest.addCustomCacheConfiguration(builder);
+  objectUnderTest.afterPropertiesSet();
+  final EmbeddedCacheManager infinispanEmbeddedCacheManager=objectUnderTest.getObject().getNativeCacheManager();
+  assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics().allowDuplicateDomains(),true);
+  assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode().isTransactional(),false);
+}

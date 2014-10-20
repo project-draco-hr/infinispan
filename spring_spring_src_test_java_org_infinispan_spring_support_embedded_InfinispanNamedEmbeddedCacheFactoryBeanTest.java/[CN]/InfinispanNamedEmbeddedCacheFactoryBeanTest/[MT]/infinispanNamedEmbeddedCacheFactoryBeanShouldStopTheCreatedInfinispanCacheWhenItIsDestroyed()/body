@@ -1,0 +1,12 @@
+{
+  final String cacheName="test.cache.Name";
+  final String beanName="test.bean.Name";
+  final InfinispanNamedEmbeddedCacheFactoryBean<Object,Object> objectUnderTest=new InfinispanNamedEmbeddedCacheFactoryBean<Object,Object>();
+  objectUnderTest.setInfinispanEmbeddedCacheManager(DEFAULT_CACHE_MANAGER);
+  objectUnderTest.setCacheName(cacheName);
+  objectUnderTest.setBeanName(beanName);
+  objectUnderTest.afterPropertiesSet();
+  final Cache<Object,Object> cache=objectUnderTest.getObject();
+  objectUnderTest.destroy();
+  assertEquals("InfinispanNamedEmbeddedCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. " + "However, the created Infinispan is not yet terminated.",ComponentStatus.TERMINATED,cache.getStatus());
+}

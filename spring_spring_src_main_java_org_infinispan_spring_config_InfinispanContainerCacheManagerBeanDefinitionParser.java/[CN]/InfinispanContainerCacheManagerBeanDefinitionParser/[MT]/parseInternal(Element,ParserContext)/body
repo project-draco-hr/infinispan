@@ -1,0 +1,13 @@
+{
+  BeanDefinitionBuilder beanDefinitionBuilder=BeanDefinitionBuilder.rootBeanDefinition(FACTORY_BEAN_CLASS);
+  String cacheContainerRef=element.getAttribute("cache-container-ref");
+  BeanComponentDefinition innerBean=InfinispanNamespaceUtils.parseInnerBeanDefinition(element,parserContext);
+  if (innerBean != null) {
+    parserContext.registerBeanComponent(innerBean);
+  }
+  if ((!StringUtils.hasText(cacheContainerRef) && innerBean == null) || (StringUtils.hasText(cacheContainerRef) && innerBean != null)) {
+    parserContext.getReaderContext().error("Exactly one of the 'cache-container-ref' attribute " + "or an inner bean definition is required for a 'container-cache-manager' element",element);
+  }
+  beanDefinitionBuilder.addConstructorArgReference(innerBean != null ? innerBean.getBeanName() : cacheContainerRef);
+  return beanDefinitionBuilder.getBeanDefinition();
+}
