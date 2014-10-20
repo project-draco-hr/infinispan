@@ -1,0 +1,19 @@
+{
+  Interpreter lonInterpreter=interpreter("LON",0);
+  String lonCache=cache("LON",0).getName();
+  String lonSessionId=lonInterpreter.createSessionId(lonCache);
+  Interpreter nycInterpreter=interpreter("NYC",0);
+  String nycCache=cache("NYC",0).getName();
+  String nycSessionId=nycInterpreter.createSessionId(nycCache);
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --offline NYC;","ok");
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --status NYC;","offline");
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --push NYC;","ok");
+  assertEventuallyNoStateTransferInReceivingSite("NYC",nycCache,10,TimeUnit.SECONDS);
+  assertEventuallyNoStateTransferInSendingSite("LON",lonCache,10,TimeUnit.SECONDS);
+  assertInterpreterOutput(nycInterpreter,nycSessionId,"site --sendingsite;","null");
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --pushstatus;","NYC=OK");
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --clearpushstatus;","ok");
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --pushstatus;",null);
+  assertInterpreterOutput(lonInterpreter,lonSessionId,"site --cancelpush NYC;","ok");
+  assertInterpreterOutput(nycInterpreter,nycSessionId,"site --cancelreceive LON;","ok");
+}
