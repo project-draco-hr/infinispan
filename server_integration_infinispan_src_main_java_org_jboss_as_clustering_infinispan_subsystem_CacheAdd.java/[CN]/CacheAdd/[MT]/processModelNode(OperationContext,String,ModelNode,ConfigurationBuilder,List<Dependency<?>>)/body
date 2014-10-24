@@ -13,6 +13,12 @@
     }
   }
   builder.indexing().index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE).withProperties(indexingProperties).autoConfig(autoConfig);
+  if (cache.hasDefined(ModelKeys.REMOTE_CACHE)) {
+    builder.sites().backupFor().remoteCache(CacheResource.REMOTE_CACHE.resolveModelAttribute(context,cache).asString());
+  }
+  if (cache.hasDefined(ModelKeys.REMOTE_SITE)) {
+    builder.sites().backupFor().remoteSite(CacheResource.REMOTE_SITE.resolveModelAttribute(context,cache).asString());
+  }
   if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING,ModelKeys.LOCKING_NAME).isDefined()) {
     ModelNode locking=cache.get(ModelKeys.LOCKING,ModelKeys.LOCKING_NAME);
     final IsolationLevel isolationLevel=IsolationLevel.READ_COMMITTED;
