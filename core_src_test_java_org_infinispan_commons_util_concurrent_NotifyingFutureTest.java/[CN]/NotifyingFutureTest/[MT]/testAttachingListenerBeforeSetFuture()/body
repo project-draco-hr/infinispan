@@ -1,0 +1,22 @@
+{
+  final NotifyingFutureImpl<Integer> nf=createNotifyingFuture();
+  final AtomicBoolean wasListenerInvoked=new AtomicBoolean(false);
+  nf.attachListener(new FutureListener<Integer>(){
+    @Override public void futureDone(    Future<Integer> future){
+      wasListenerInvoked.set(true);
+    }
+  }
+);
+  Future<Integer> future=fork(new Callable<Integer>(){
+    @Override public Integer call() throws Exception {
+      nf.notifyDone(42);
+      return 42;
+    }
+  }
+);
+  nf.setFuture(future);
+  callGetAndExtractException(future);
+  assertTrue(wasListenerInvoked.get());
+  FutureAssertion.assertThat(nf,FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+  FutureAssertion.assertThat(future,FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+}
