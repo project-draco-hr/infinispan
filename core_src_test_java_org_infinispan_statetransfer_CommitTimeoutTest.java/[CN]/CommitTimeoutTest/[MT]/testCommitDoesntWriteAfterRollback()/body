@@ -10,7 +10,12 @@
   sequencer.advance("tx1:begin");
   tm(0).begin();
   cache(0).put(TEST_KEY,TX1_VALUE);
-  tm(0).commit();
+  try {
+    tm(0).commit();
+  }
+ catch (  RollbackException e) {
+    log.debugf("Commit timed out as expected",e);
+  }
   sequencer.advance("tx2:begin");
   LockManager lockManager1=TestingUtil.extractLockManager(cache(1));
   assertFalse(lockManager1.isLocked(TEST_KEY));
