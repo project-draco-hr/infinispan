@@ -1,2 +1,22 @@
 {
+  Cache<Integer,String> cache=cm.getCache();
+  Set<Integer> keys;
+  Map dataIn=new HashMap();
+  dataIn.put(1,v(m,1));
+  dataIn.put(2,v(m,2));
+  Set keysIn=dataIn.keySet();
+  final long startTime=now();
+  final long lifespan=EXPIRATION_TIMEOUT;
+  cache.putAll(dataIn,lifespan,TimeUnit.MILLISECONDS);
+  while (true) {
+    keys=new HashSet<>(cache.keySet());
+    if (moreThanDurationElapsed(startTime,lifespan))     break;
+    assertEquals(keysIn,keys);
+    Thread.sleep(100);
+  }
+  while (!moreThanDurationElapsed(startTime,lifespan + EVICTION_CHECK_TIMEOUT)) {
+    keys=cache.keySet();
+    if (keys.size() == 0)     break;
+  }
+  assertEquals(0,keys.size());
 }
