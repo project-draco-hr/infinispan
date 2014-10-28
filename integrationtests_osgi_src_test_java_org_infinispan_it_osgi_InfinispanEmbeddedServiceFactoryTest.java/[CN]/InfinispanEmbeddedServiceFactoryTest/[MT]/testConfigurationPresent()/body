@@ -1,6 +1,6 @@
 {
   BundleContext bundleContext=OSGiTestUtils.getBundleContext(this);
-  final CountDownLatch expectedServiceRegistrations=new CountDownLatch(2);
+  final CountDownLatch expectedServiceRegistrations=new CountDownLatch(3);
   bundleContext.addServiceListener(new ServiceListener(){
     @Override public void serviceChanged(    ServiceEvent event){
       if (event.getType() == ServiceEvent.REGISTERED) {
@@ -24,10 +24,17 @@
   configProperties.put("config","org/infinispan/it/osgi/custom-config-2.xml");
   configuration=configurationService.createFactoryConfiguration("org.infinispan.manager.embedded",null);
   configuration.update(configProperties);
+  configProperties=new Hashtable<String,Object>();
+  configProperties.put("instanceId","instance3");
+  configProperties.put("config","etc/custom-etc-infinispan-config.xml");
+  configuration=configurationService.createFactoryConfiguration("org.infinispan.manager.embedded",null);
+  configuration.update(configProperties);
   expectedServiceRegistrations.await(10,TimeUnit.SECONDS);
   Collection<ServiceReference<EmbeddedCacheManager>> serviceReferences;
   serviceReferences=bundleContext.getServiceReferences(EmbeddedCacheManager.class,"(instanceId=instance1)");
   assertEquals("Expecting the service to be registered through the mananged service factory.",1,serviceReferences.size());
   serviceReferences=bundleContext.getServiceReferences(EmbeddedCacheManager.class,"(instanceId=instance2)");
+  assertEquals("Expecting the service to be registered through the mananged service factory.",1,serviceReferences.size());
+  serviceReferences=bundleContext.getServiceReferences(EmbeddedCacheManager.class,"(instanceId=instance3)");
   assertEquals("Expecting the service to be registered through the mananged service factory.",1,serviceReferences.size());
 }
