@@ -1,0 +1,21 @@
+{
+  CacheNotifier<K,V> notifier=TestingUtil.extractComponent(cache,CacheNotifier.class);
+  final Answer<Object> forwardedAnswer=AdditionalAnswers.delegatesTo(notifier);
+  CacheNotifier mockNotifier=mock(CacheNotifier.class,withSettings().defaultAnswer(forwardedAnswer));
+  doAnswer(new Answer(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      checkPoint.trigger("pre_notify_partition_invoked");
+      checkPoint.await("pre_notify_partition_released",10,TimeUnit.SECONDS);
+      try {
+        return forwardedAnswer.answer(invocation);
+      }
+  finally {
+        checkPoint.trigger("post_notify_partition_invoked");
+        checkPoint.await("post_notify_partition_released",10,TimeUnit.SECONDS);
+      }
+    }
+  }
+).when(mockNotifier).notifyPartitionStatusChanged(eq(AvailabilityMode.DEGRADED_MODE),eq(false));
+  TestingUtil.replaceComponent(cache,CacheNotifier.class,mockNotifier,true);
+  return notifier;
+}

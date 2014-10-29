@@ -1,6 +1,12 @@
 {
   boolean sent=false;
   while (!sent) {
+    if (!iteratorDetails.containsKey(identifier)) {
+      if (log.isTraceEnabled()) {
+        log.tracef("Cannot send remote request as our iterator was concurrently closed for %s",identifier);
+      }
+      return false;
+    }
     ConsistentHash hash=getCurrentHash();
     Set<Integer> missingRemoteSegments=findMissingRemoteSegments(status.processedKeys,hash);
     if (!missingRemoteSegments.isEmpty()) {

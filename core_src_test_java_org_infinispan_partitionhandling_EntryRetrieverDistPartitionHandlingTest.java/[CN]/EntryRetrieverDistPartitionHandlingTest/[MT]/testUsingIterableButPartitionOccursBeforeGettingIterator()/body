@@ -1,0 +1,18 @@
+{
+  Cache<MagicKey,String> cache0=cache(0);
+  cache0.put(new MagicKey(cache(1),cache(2)),"not-local");
+  try (EntryIterable<MagicKey,String> iterable=cache0.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance())){
+    CheckPoint cp=new CheckPoint();
+    blockNotifierPartitionStatusChanged(cp,cache0);
+    cp.triggerForever("pre_notify_partition_released");
+    cp.triggerForever("post_notify_partition_released");
+    splitCluster(new int[]{0,1},new int[]{2,3});
+    cp.await("post_notify_partition_invoked",10,TimeUnit.SECONDS);
+    try {
+      Iterator<CacheEntry<MagicKey,String>> iterator=iterable.iterator();
+      fail("Expected AvailabilityException");
+    }
+ catch (    AvailabilityException e) {
+    }
+  }
+ }

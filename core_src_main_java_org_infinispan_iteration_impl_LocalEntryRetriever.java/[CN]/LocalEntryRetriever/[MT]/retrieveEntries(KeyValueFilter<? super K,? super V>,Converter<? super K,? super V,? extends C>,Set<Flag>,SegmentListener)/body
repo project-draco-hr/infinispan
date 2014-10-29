@@ -2,6 +2,7 @@
   final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
   wireFilterAndConverterDependencies(filter,usedConverter);
   final Itr<K,C> iterator=new Itr<K,C>(batchSize);
+  registerIterator(iterator,flags);
   final ItrQueuerHandler<C> handler=new ItrQueuerHandler<C>(iterator);
   executorService.submit(new Runnable(){
     @Override public void run(){
@@ -81,6 +82,7 @@
           log.trace("Completed transfer of entries from cache");
         }
         handler.handleBatch(true,queue);
+        partitionListener.iterators.remove(iterator);
       }
  catch (      Throwable e) {
         log.exceptionProcessingEntryRetrievalValues(e);
