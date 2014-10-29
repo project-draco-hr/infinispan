@@ -3,22 +3,12 @@
   int numEntries=insertData();
   final ConcurrentMap<Integer,Integer> entries=new ConcurrentHashMap<>();
   final ConcurrentMap<Integer,InternalMetadata> metadata=new ConcurrentHashMap<>();
-  final ConcurrentHashSet<Thread> threads=new ConcurrentHashSet<>();
   final AtomicBoolean sameKeyMultipleTimes=new AtomicBoolean();
   final AtomicInteger processed=new AtomicInteger();
   final CyclicBarrier barrier=new CyclicBarrier(numThreads);
   final AtomicBoolean brokenBarrier=new AtomicBoolean(false);
   store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
     @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-      if (threads.add(Thread.currentThread())) {
-        try {
-          barrier.await(1,TimeUnit.MINUTES);
-        }
- catch (        BrokenBarrierException|TimeoutException e) {
-          log.warn("Exception occurred while waiting for barrier",e);
-          brokenBarrier.set(true);
-        }
-      }
       int key=unwrapKey(marshalledEntry.getKey());
       if (fetchValues) {
         Integer existing=entries.put(key,unwrapValue(marshalledEntry.getValue()));
@@ -61,5 +51,4 @@
       assertMetadataEmpty(metadata.get(i));
     }
   }
-  assertEquals(threads.size(),numThreads);
 }
