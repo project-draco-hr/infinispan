@@ -5,12 +5,19 @@
     result=super.visitGetKeyValueCommand(ctx,command);
   }
  catch (  RpcException e) {
-    throw getLog().degradedModeKeyUnavailable(key);
-  }
-  partitionHandlingManager.checkRead(key);
-  if (result == null) {
-    if (!InfinispanCollections.containsAny(transport.getMembers(),cdl.getOwners(key))) {
+    if (performPartitionCheck(ctx,command)) {
       throw getLog().degradedModeKeyUnavailable(key);
+    }
+ else {
+      throw e;
+    }
+  }
+  if (performPartitionCheck(ctx,command)) {
+    partitionHandlingManager.checkRead(key);
+    if (result == null) {
+      if (!InfinispanCollections.containsAny(transport.getMembers(),cdl.getOwners(key))) {
+        throw getLog().degradedModeKeyUnavailable(key);
+      }
     }
   }
   return result;
