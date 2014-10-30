@@ -1,0 +1,18 @@
+{
+  preloadCacheAndCheckSize();
+  tm(0).begin();
+  assertEquals("v1",cache(0).get(k1));
+  final Transaction tx1=tm(0).suspend();
+  tm(0).begin();
+  cache(0).remove(k1);
+  cache(0).put(k0,"v2");
+  tm(0).commit();
+  assertEquals(1,cache(0).size());
+  assertEquals("v2",cache(0).get(k0));
+  tm(0).resume(tx1);
+  assertEquals(2,cache(0).size());
+  assertEquals("v2",cache(0).get(k0));
+  assertEquals("v1",cache(0).get(k1));
+  tm(0).commit();
+  assertNull(cache(1).get(k1));
+}
