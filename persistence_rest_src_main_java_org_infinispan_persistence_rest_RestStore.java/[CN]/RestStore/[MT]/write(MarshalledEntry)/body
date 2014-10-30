@@ -8,12 +8,13 @@
   try {
     String contentType=metadataHelper.getContentType(entry);
     put.setEntity(new ByteArrayEntity(marshall(contentType,entry),ContentType.create(contentType)));
-    httpClient.execute(httpHost,put);
+    HttpResponse response=httpClient.execute(httpHost,put);
+    EntityUtils.consume(response.getEntity());
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
   }
  finally {
-    put.abort();
+    put.reset();
   }
 }
