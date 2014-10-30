@@ -22,6 +22,8 @@
   final Transport transportConfig=containerModel.hasDefined(ModelKeys.TRANSPORT) && containerModel.get(ModelKeys.TRANSPORT).hasDefined(ModelKeys.TRANSPORT_NAME) ? new Transport() : null;
   String stack=null;
   String transportExecutor=null;
+  String totalOrderExecutor=null;
+  String remoteCommandExecutor=null;
   Collection<ServiceController<?>> controllers=new LinkedList<ServiceController<?>>();
   if (transportConfig != null) {
     ModelNode transport=containerModel.get(ModelKeys.TRANSPORT,ModelKeys.TRANSPORT_NAME);
@@ -29,6 +31,8 @@
     final String cluster=(resolvedValue=TransportResource.CLUSTER.resolveModelAttribute(context,transport)).isDefined() ? resolvedValue.asString() : name;
     long lockTimeout=TransportResource.LOCK_TIMEOUT.resolveModelAttribute(context,transport).asLong();
     transportExecutor=(resolvedValue=TransportResource.EXECUTOR.resolveModelAttribute(context,transport)).isDefined() ? resolvedValue.asString() : null;
+    totalOrderExecutor=(resolvedValue=TransportResource.TOTAL_ORDER_EXECUTOR.resolveModelAttribute(context,transport)).isDefined() ? resolvedValue.asString() : null;
+    remoteCommandExecutor=(resolvedValue=TransportResource.REMOTE_COMMAND_EXECUTOR.resolveModelAttribute(context,transport)).isDefined() ? resolvedValue.asString() : null;
     final boolean strictPeerToPeer=TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context,transport).asBoolean();
     transportConfig.setStrictPeerToPeer(strictPeerToPeer);
     transportConfig.setLockTimeout(lockTimeout);
@@ -55,7 +59,7 @@
       }
     }
   }
-  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,statistics,moduleId,stack,transportConfig,authorizationConfig,transportExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
+  controllers.add(this.installContainerConfigurationService(target,name,defaultCache,statistics,moduleId,stack,transportConfig,authorizationConfig,transportExecutor,totalOrderExecutor,remoteCommandExecutor,listenerExecutor,evictionExecutor,replicationQueueExecutor,verificationHandler));
   controllers.add(this.installContainerService(target,name,aliases,transportConfig,initialMode,verificationHandler));
   controllers.add(this.installJndiService(target,name,InfinispanJndiName.createCacheContainerJndiName(jndiName,name),verificationHandler));
   controllers.add(this.installKeyAffinityServiceFactoryService(target,name,verificationHandler));
