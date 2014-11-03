@@ -45,10 +45,16 @@ catch (        Throwable throwable) {
     final StateTransferLock stateTransferLock=cr.getStateTransferLock();
     final int commandTopologyId=extractCommandTopologyId(cmd);
     final int waitTopologyId=Math.max(commandTopologyId,0);
+    final boolean waitForTransactionData=!(cmd instanceof StateRequestCommand);
     if (!preserveOrder && cmd.canBlock()) {
       remoteCommandsExecutor.execute(new BlockingRunnable(){
         @Override public boolean isReady(){
-          return stateTransferLock.transactionDataReceived(waitTopologyId);
+          if (waitForTransactionData) {
+            return stateTransferLock.transactionDataReceived(waitTopologyId);
+          }
+ else {
+            return stateTransferLock.topologyReceived(waitTopologyId);
+          }
         }
         @Override public void run(){
           if (0 <= commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
@@ -71,7 +77,12 @@ catch (        Throwable throwable) {
 );
     }
  else {
-      stateTransferLock.waitForTransactionData(waitTopologyId,1,TimeUnit.DAYS);
+      if (waitForTransactionData) {
+        stateTransferLock.waitForTransactionData(waitTopologyId,1,TimeUnit.DAYS);
+      }
+ else {
+        stateTransferLock.waitForTopology(waitTopologyId,1,TimeUnit.DAYS);
+      }
       if (0 <= commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
         if (trace)         log.tracef("Ignoring command sent before the local node was a member " + "(command topology id is %d)",commandTopologyId);
         reply(response,null);
