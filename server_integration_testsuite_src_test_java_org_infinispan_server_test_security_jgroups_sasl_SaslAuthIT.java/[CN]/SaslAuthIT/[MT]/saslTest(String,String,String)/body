@@ -1,0 +1,20 @@
+{
+  try {
+    controller.start(joiningNode);
+    RemoteInfinispanMBeans coordinator=RemoteInfinispanMBeans.create(servers,coordinatorNode,"memcachedCache","clustered");
+    RemoteInfinispanMBeans friend=RemoteInfinispanMBeans.create(servers,joiningNode,"memcachedCache","clustered");
+    MBeanServerConnectionProvider providerCoordinator=new MBeanServerConnectionProvider(coordinator.server.getHotrodEndpoint().getInetAddress().getHostName(),ITestUtils.SERVER1_MGMT_PORT);
+    MBeanServerConnectionProvider providerFriend=new MBeanServerConnectionProvider(friend.server.getHotrodEndpoint().getInetAddress().getHostName(),ITestUtils.SERVER2_MGMT_PORT);
+    MemcachedClient mcCoordinator=new MemcachedClient(coordinator.server.getMemcachedEndpoint().getInetAddress().getHostName(),coordinator.server.getMemcachedEndpoint().getPort());
+    MemcachedClient mcFriend=new MemcachedClient(friend.server.getMemcachedEndpoint().getInetAddress().getHostName(),friend.server.getMemcachedEndpoint().getPort());
+    assertEquals(2,coordinator.manager.getClusterSize());
+    assertEquals(2,friend.manager.getClusterSize());
+    assertEquals(mech,getAttribute(providerCoordinator,SASL_MBEAN,"mech"));
+    assertEquals(mech,getAttribute(providerFriend,SASL_MBEAN,"mech"));
+    mcFriend.set("key1","value1");
+    assertEquals("Could not read replicated pair key1/value1","value1",mcCoordinator.get("key1"));
+  }
+  finally {
+    controller.stop(joiningNode);
+  }
+}
