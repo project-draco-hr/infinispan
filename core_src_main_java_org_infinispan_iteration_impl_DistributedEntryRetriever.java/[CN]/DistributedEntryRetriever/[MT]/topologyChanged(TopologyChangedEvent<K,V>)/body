@@ -15,7 +15,7 @@
       }
       for (      Map.Entry<UUID,IterationStatus<? extends Object>> details : iteratorDetails.entrySet()) {
         UUID identifier=details.getKey();
-        IterationStatus<? extends Object> status=details.getValue();
+        final IterationStatus<? extends Object> status=details.getValue();
         Set<Integer> remoteSegments=findMissingRemoteSegments(status.processedKeys,afterHash);
         if (!remoteSegments.isEmpty()) {
           Map.Entry<Address,Set<Integer>> route=findOptimalRoute(remoteSegments,afterHash);
@@ -55,6 +55,10 @@
           startRetrievingValuesLocal(identifier,processSegments,status,new SegmentBatchHandler<K,Object>(){
             @Override public void handleBatch(            UUID identifier,            boolean complete,            Set<Integer> completedSegments,            Set<Integer> inDoubtSegments,            Collection<CacheEntry<K,Object>> entries){
               processData(identifier,localAddress,completedSegments,inDoubtSegments,entries);
+            }
+            @Override public void handleException(            CacheException e){
+              status.ongoingIterator.close(e);
+              ;
             }
           }
 );

@@ -1,0 +1,25 @@
+{
+  Cache cache=cache(0,CACHE_NAME);
+  DataContainer dataContainer=TestingUtil.extractComponent(cache,DataContainer.class);
+  try {
+    Throwable t=new AssertionError();
+    DataContainer mockContainer=when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
+    TestingUtil.replaceComponent(cache,DataContainer.class,mockContainer,true);
+    try {
+      cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance()).iterator().hasNext();
+      fail("We should have gotten a CacheException");
+    }
+ catch (    CacheException e) {
+      Throwable cause=e;
+      while ((cause=cause.getCause()) != null) {
+        if (cause == t) {
+          break;
+        }
+      }
+      assertNotNull("We should have found the throwable as a cause",cause);
+    }
+  }
+  finally {
+    TestingUtil.replaceComponent(cache,DataContainer.class,dataContainer,true);
+  }
+}

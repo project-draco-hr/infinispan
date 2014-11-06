@@ -21,7 +21,7 @@
     processedKeys.set(i,new ConcurrentHashSet<K>());
     remoteSegments.add(i);
   }
-  IterationStatus<C> status=new IterationStatus<>(itr,listener,filter,usedConverter,flags,processedKeys);
+  final IterationStatus<C> status=new IterationStatus<>(itr,listener,filter,usedConverter,flags,processedKeys);
   iteratorDetails.put(identifier,status);
   Set<Integer> ourSegments=hash.getPrimarySegmentsForOwner(localAddress);
   remoteSegments.removeAll(ourSegments);
@@ -33,6 +33,9 @@
     startRetrievingValuesLocal(identifier,ourSegments,status,new SegmentBatchHandler<K,C>(){
       @Override public void handleBatch(      UUID identifier,      boolean complete,      Set<Integer> completedSegments,      Set<Integer> inDoubtSegments,      Collection<CacheEntry<K,C>> entries){
         processData(identifier,localAddress,completedSegments,inDoubtSegments,entries);
+      }
+      @Override public void handleException(      CacheException e){
+        status.ongoingIterator.close(e);
       }
     }
 );
