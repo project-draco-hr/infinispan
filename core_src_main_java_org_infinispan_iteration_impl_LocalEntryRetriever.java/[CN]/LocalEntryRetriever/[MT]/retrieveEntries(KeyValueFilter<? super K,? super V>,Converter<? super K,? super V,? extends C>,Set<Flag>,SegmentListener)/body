@@ -1,7 +1,7 @@
 {
   final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
   wireFilterAndConverterDependencies(filter,usedConverter);
-  final Itr<K,C> iterator=new Itr<K,C>(batchSize);
+  final Itr<C> iterator=new Itr<C>(batchSize);
   registerIterator(iterator,flags);
   final ItrQueuerHandler<C> handler=new ItrQueuerHandler<C>(iterator);
   executorService.submit(new Runnable(){
@@ -15,7 +15,7 @@
           }
         }
 ;
-        MapAction<C> action=new MapAction(batchSize,usedConverter,queue,handler);
+        MapAction<C> action=new MapAction<>(batchSize,usedConverter,queue,handler);
         PassivationListener<K,V> listener=null;
         long currentTime=timeService.wallClockTime();
         try {
@@ -59,7 +59,7 @@
               loaderFilter=new CompositeKeyFilter<K>(new CollectionKeyFilter<K>(processedKeys),new KeyValueFilterAsKeyFilter<K>(filter));
             }
             if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
-              action=new MapAction(batchSize,(KeyValueFilterConverter)filter,queue,handler);
+              action=new MapAction<>(batchSize,(KeyValueFilterConverter<K,V,C>)filter,queue,handler);
             }
             persistenceManager.processOnAllStores(withinThreadExecutor,loaderFilter,new KeyValueActionForCacheLoaderTask(action),true,true);
           }
@@ -70,7 +70,7 @@
             AdvancedCache<K,V> advancedCache=cache.getAdvancedCache();
             for (            K key : listener.activatedKeys) {
               if (!processedKeys.contains(key)) {
-                CacheEntry entry=advancedCache.getCacheEntry(key);
+                CacheEntry<K,C> entry=(CacheEntry<K,C>)advancedCache.getCacheEntry(key);
                 if (entry != null) {
                   queue.add(entry);
                 }
