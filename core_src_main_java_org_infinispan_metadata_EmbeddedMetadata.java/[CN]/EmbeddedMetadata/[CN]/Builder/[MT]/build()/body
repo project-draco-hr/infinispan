@@ -1,4 +1,8 @@
 {
-  if (lifespan < 0 && maxIdle < 0)   return new EmbeddedMetadata(version);
- else   return new EmbeddedExpirableMetadata(lifespan,lifespanUnit,maxIdle,maxIdleUnit,version);
+  boolean hasLifespan=hasLifespan();
+  boolean hasMaxIdle=hasMaxIdle();
+  if (hasLifespan && hasMaxIdle)   return new EmbeddedExpirableMetadata(lifespan,lifespanUnit,maxIdle,maxIdleUnit,version);
+ else   if (hasLifespan)   return new EmbeddedLifespanExpirableMetadata(lifespan,lifespanUnit,version);
+ else   if (hasMaxIdle)   return new EmbeddedMaxIdleExpirableMetadata(maxIdle,maxIdleUnit,version);
+ else   return new EmbeddedMetadata(version);
 }

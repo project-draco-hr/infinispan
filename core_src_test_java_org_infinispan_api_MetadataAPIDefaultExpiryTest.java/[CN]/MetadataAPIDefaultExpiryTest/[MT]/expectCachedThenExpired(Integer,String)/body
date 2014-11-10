@@ -1,0 +1,14 @@
+{
+  final long startTime=now();
+  final long expiration=EXPIRATION_TIMEOUT;
+  while (true) {
+    String v=this.<Integer,String>cache().get(key);
+    if (moreThanDurationElapsed(startTime,expiration))     break;
+    assertEquals(value,v);
+    sleepThread(100);
+  }
+  while (!moreThanDurationElapsed(startTime,expiration + EVICTION_CHECK_TIMEOUT)) {
+    if (cache.get(key) == null)     return;
+  }
+  assertNull(cache.get(key));
+}
