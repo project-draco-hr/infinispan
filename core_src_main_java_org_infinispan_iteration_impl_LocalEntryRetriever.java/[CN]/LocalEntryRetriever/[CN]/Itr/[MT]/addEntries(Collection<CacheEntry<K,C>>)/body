@@ -18,8 +18,19 @@
   finally {
       nextLock.unlock();
     }
-    if (!wasCompleted && entry != null) {
-      queue.put(entry);
+    if (entry != null) {
+      while (!wasCompleted) {
+        if (queue.offer(entry,100,TimeUnit.MILLISECONDS)) {
+          break;
+        }
+        nextLock.lock();
+        try {
+          wasCompleted=completed;
+        }
+  finally {
+          nextLock.unlock();
+        }
+      }
     }
   }
 }
