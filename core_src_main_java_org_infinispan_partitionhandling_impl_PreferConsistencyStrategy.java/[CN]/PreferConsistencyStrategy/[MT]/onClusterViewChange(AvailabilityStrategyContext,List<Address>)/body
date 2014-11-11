@@ -1,12 +1,13 @@
 {
-  if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
-    log.debugf("Cache %s is not available, ignoring cluster view change",context.getCacheName());
-    return;
-  }
   CacheTopology currentTopology=context.getCurrentTopology();
   List<Address> newMembers=new ArrayList<>(currentTopology.getMembers());
   if (!newMembers.retainAll(clusterMembers)) {
     log.debugf("Cache %s did not lose any members, ignoring view change",context.getCacheName());
+    return;
+  }
+  if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+    log.debugf("Cache %s is not available, updating the actual members only",context.getCacheName());
+    context.updateAvailabilityMode(newMembers,context.getAvailabilityMode(),false);
     return;
   }
   CacheTopology stableTopology=context.getStableTopology();
@@ -15,13 +16,13 @@
   lostMembers.removeAll(newMembers);
   if (isDataLost(stableTopology.getCurrentCH(),newMembers)) {
     log.enteringDegradedModeLostData(context.getCacheName(),lostMembers);
-    context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE,true);
+    context.updateAvailabilityMode(newMembers,AvailabilityMode.DEGRADED_MODE,true);
     return;
   }
   if (isMinorityPartition(stableMembers,lostMembers)) {
     log.enteringDegradedModeMinorityPartition(context.getCacheName(),newMembers,lostMembers,stableMembers);
-    context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE,true);
+    context.updateAvailabilityMode(newMembers,AvailabilityMode.DEGRADED_MODE,true);
     return;
   }
-  updateMembersAndRebalance(context,newMembers);
+  updateMembersAndRebalance(context,newMembers,newMembers);
 }

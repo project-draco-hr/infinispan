@@ -1,0 +1,52 @@
+{
+  Message msg;
+  double r;
+switch (evt.getType()) {
+case Event.MSG:
+    msg=(Message)evt.getArg();
+  Address dest=msg.getDest();
+boolean multicast=dest == null;
+if (msg.getSrc() == null) msg.setSrc(localAddress());
+if (discard_all) {
+if (dest == null || dest.equals(localAddress())) loopback(msg);
+return null;
+}
+if (!multicast && drop_down_unicasts > 0) {
+drop_down_unicasts=Math.max(0,drop_down_unicasts - 1);
+return null;
+}
+if (multicast && drop_down_multicasts > 0) {
+drop_down_multicasts=Math.max(0,drop_down_multicasts - 1);
+return null;
+}
+if (down > 0) {
+r=Math.random();
+if (r < down) {
+if (excludeItself && dest != null && dest.equals(localAddress())) {
+if (log.isTraceEnabled()) log.trace("excluding itself");
+}
+ else {
+log.trace("dropping message");
+num_down++;
+return null;
+}
+}
+}
+break;
+case Event.VIEW_CHANGE:
+View view=(View)evt.getArg();
+List<Address> mbrs=view.getMembers();
+members.clear();
+members.addAll(mbrs);
+if (discard_dialog != null) discard_dialog.handleView(mbrs);
+break;
+case Event.SET_LOCAL_ADDRESS:
+localAddress=(Address)evt.getArg();
+if (discard_dialog != null) discard_dialog.setTitle("Discard dialog (" + localAddress + ")");
+break;
+case Event.GET_PING_DATA:
+if (discard_all) return null;
+break;
+}
+return down_prot.down(evt);
+}

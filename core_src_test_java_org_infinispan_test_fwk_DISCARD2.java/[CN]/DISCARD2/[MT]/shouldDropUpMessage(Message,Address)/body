@@ -1,0 +1,22 @@
+{
+  if (discard_all && !sender.equals(localAddress()))   return true;
+  if (ignoredMembers.contains(sender)) {
+    if (log.isTraceEnabled())     log.trace(localAddress + ": dropping message from " + sender);
+    num_up++;
+    return true;
+  }
+  if (up > 0) {
+    double r=Math.random();
+    if (r < up) {
+      if (excludeItself && sender.equals(localAddress())) {
+        if (log.isTraceEnabled())         log.trace("excluding myself");
+      }
+ else {
+        if (log.isTraceEnabled())         log.trace(localAddress + ": dropping message from " + sender);
+        num_up++;
+        return true;
+      }
+    }
+  }
+  return false;
+}

@@ -18,14 +18,16 @@ synchronized (this) {
       setStableTopology(null);
       return;
     }
-    List<Address> updateMembers=pruneInvalidMembers(currentCH.getMembers());
-    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,updateMembers,getCapacityFactors());
+    List<Address> newCurrentMembers=pruneInvalidMembers(currentCH.getMembers());
+    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,getCapacityFactors());
+    List<Address> actualMembers=newCurrentMembers;
     ConsistentHash newPendingCH=null;
     if (pendingCH != null) {
       List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());
       newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,getCapacityFactors());
+      actualMembers=newPendingMembers;
     }
-    CacheTopology newTopology=new CacheTopology(topologyId + 1,rebalanceId,newCurrentCH,newPendingCH);
+    CacheTopology newTopology=new CacheTopology(topologyId + 1,rebalanceId,newCurrentCH,newPendingCH,actualMembers);
     setCurrentTopology(newTopology);
     newTopology.logRoutingTableInformation();
     clusterTopologyManager.broadcastTopologyUpdate(cacheName,newTopology,availabilityMode,isTotalOrder(),isDistributed());

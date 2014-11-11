@@ -7,13 +7,18 @@ synchronized (viewHandlingLock) {
     boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
     isCoordinator=transport.isCoordinator();
     log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s",newViewId,isCoordinator,becameCoordinator);
+    mustRecoverClusterStatus|=mergeView || becameCoordinator;
     if (!isCoordinator)     return;
-    if (mergeView || becameCoordinator) {
+    if (mustRecoverClusterStatus) {
       try {
         recoverClusterStatus(newViewId,mergeView,transport.getMembers());
+        mustRecoverClusterStatus=false;
       }
  catch (      InterruptedException e) {
         log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+        return;
+      }
+catch (      SuspectException e) {
         return;
       }
 catch (      Exception e) {

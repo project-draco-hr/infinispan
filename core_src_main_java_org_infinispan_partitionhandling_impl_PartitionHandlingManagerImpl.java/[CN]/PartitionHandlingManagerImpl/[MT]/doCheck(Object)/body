@@ -2,7 +2,8 @@
   if (trace)   log.tracef("Checking availability for key=%s, status=%s",key,availabilityMode);
   if (availabilityMode == AvailabilityMode.AVAILABLE)   return;
   List<Address> owners=distributionManager.locate(key);
-  if (!rpcManager.getTransport().getMembers().containsAll(owners)) {
+  List<Address> actualMembers=stateTransferManager.getCacheTopology().getActualMembers();
+  if (!actualMembers.containsAll(owners)) {
     if (trace)     log.tracef("Partition is in %s mode, access is not allowed for key %s",availabilityMode,key);
     throw log.degradedModeKeyUnavailable(key);
   }

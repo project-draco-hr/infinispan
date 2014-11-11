@@ -1,5 +1,5 @@
 {
-  if (trace)   log.tracef("handleNonTxWriteCommand for command %s",command);
+  if (trace)   log.tracef("handleNonTxWriteCommand for command %s, topology id %d",command,command.getTopologyId());
   if (isLocalOnly(ctx,command)) {
     return invokeNextInterceptor(ctx,command);
   }
@@ -7,6 +7,8 @@
   if (!ctx.isOriginLocal()) {
     return invokeNextInterceptor(ctx,command);
   }
+  int initialViewId=transport.getViewId();
+  List<Address> initialViewMembers=transport.getMembers();
   int commandTopologyId=command.getTopologyId();
   Object localResult;
   try {
@@ -19,11 +21,11 @@
       ce=ce.getCause();
     }
     if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
-    if (trace)     log.tracef("Retrying command because of topology change: %s",command);
+    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",command);
     int newTopologyId=Math.max(currentTopologyId(),commandTopologyId + 1);
     command.setTopologyId(newTopologyId);
-    command.setFlags(Flag.COMMAND_RETRY);
     waitForTransactionData(newTopologyId);
+    command.setFlags(Flag.COMMAND_RETRY);
     localResult=handleNonTxWriteCommand(ctx,command);
   }
   return localResult;

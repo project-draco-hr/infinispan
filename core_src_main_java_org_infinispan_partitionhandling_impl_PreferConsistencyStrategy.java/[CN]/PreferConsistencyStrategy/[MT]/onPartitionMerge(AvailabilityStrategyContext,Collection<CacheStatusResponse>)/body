@@ -4,6 +4,7 @@
   CacheTopology maxActiveTopology=null;
   Set<CacheTopology> unavailableTopologies=new HashSet<>();
   Set<CacheTopology> degradedTopologies=new HashSet<>();
+  CacheTopology maxDegradedTopology=null;
   for (  CacheStatusResponse response : statusResponses) {
     CacheTopology partitionStableTopology=response.getStableTopology();
     if (partitionStableTopology == null) {
@@ -26,6 +27,9 @@
     }
  else     if (response.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
       degradedTopologies.add(partitionTopology);
+      if (maxDegradedTopology == null || maxDegradedTopology.getTopologyId() < partitionTopology.getTopologyId()) {
+        maxDegradedTopology=partitionTopology;
+      }
     }
  else     if (response.getAvailabilityMode() == AvailabilityMode.UNAVAILABLE) {
       unavailableTopologies.add(partitionTopology);
@@ -40,49 +44,53 @@
   if (maxActiveTopology != null) {
     log.tracef("Max active partition topology: %s",maxActiveTopology);
   }
-  if (!degradedTopologies.isEmpty()) {
-    log.tracef("Found degraded partition topologies: %s",degradedTopologies);
+  if (maxDegradedTopology != null) {
+    log.tracef("Max degraded partition topology: %s, all degraded: %s",maxDegradedTopology,degradedTopologies);
   }
   if (!unavailableTopologies.isEmpty()) {
     log.tracef("Found unavailable partition topologies: %s",unavailableTopologies);
   }
+  List<Address> actualMembers=new ArrayList<>(context.getExpectedMembers());
   CacheTopology mergedTopology;
   AvailabilityMode mergedAvailabilityMode;
   if (!unavailableTopologies.isEmpty()) {
     log.debugf("At least one of the partitions is unavailable, staying in unavailable mode");
-    mergedAvailabilityMode=AvailabilityMode.UNAVAILABLE;
     mergedTopology=unavailableTopologies.iterator().next();
+    actualMembers.retainAll(mergedTopology.getMembers());
+    mergedAvailabilityMode=AvailabilityMode.UNAVAILABLE;
   }
  else   if (maxActiveTopology != null) {
     log.debugf("One of the partitions is available, using that partition's topology");
-    List<Address> newMembers=new ArrayList<>(maxActiveTopology.getMembers());
-    newMembers.retainAll(context.getExpectedMembers());
-    mergedAvailabilityMode=computeAvailabilityAfterMerge(context,maxStableTopology,newMembers);
     mergedTopology=maxActiveTopology;
+    actualMembers.retainAll(mergedTopology.getMembers());
+    mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
   }
  else   if (!degradedTopologies.isEmpty()) {
     log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
-    List<Address> newMembers=new ArrayList<>(maxStableTopology.getMembers());
-    newMembers.retainAll(context.getExpectedMembers());
-    mergedAvailabilityMode=computeAvailabilityAfterMerge(context,maxStableTopology,newMembers);
-    mergedTopology=maxStableTopology;
+    mergedTopology=maxDegradedTopology;
+    actualMembers.retainAll(mergedTopology.getMembers());
+    mergedAvailabilityMode=AvailabilityMode.DEGRADED_MODE;
   }
  else {
     log.debugf("No current topology, recovered only joiners for cache %s",context.getCacheName());
-    mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
     mergedTopology=null;
+    actualMembers=null;
+    mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
   }
   if (mergedTopology != null) {
-    mergedTopology=new CacheTopology(maxTopologyId + 1,mergedTopology.getRebalanceId(),mergedTopology.getCurrentCH(),null);
+    mergedTopology=new CacheTopology(maxTopologyId + 1,mergedTopology.getRebalanceId(),mergedTopology.getCurrentCH(),null,actualMembers);
   }
   context.updateTopologiesAfterMerge(mergedTopology,maxStableTopology,mergedAvailabilityMode);
-  if (mergedAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
+  AvailabilityMode newAvailabilityMode=computeAvailabilityAfterMerge(context,maxStableTopology,actualMembers,mergedAvailabilityMode);
+  if (newAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
     log.debugf("After merge, cache %s is staying in unavailable mode",context.getCacheName());
-    context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE,true);
-    return;
   }
- else   if (mergedAvailabilityMode == AvailabilityMode.AVAILABLE) {
+ else   if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
+    log.debugf("After merge, cache %s is staying in degraded mode",context.getCacheName());
+    context.updateAvailabilityMode(actualMembers,newAvailabilityMode,true);
+  }
+ else {
     log.debugf("After merge, cache %s has recovered and is entering available mode");
-    updateMembersAndRebalance(context,context.getExpectedMembers());
+    updateMembersAndRebalance(context,actualMembers,context.getExpectedMembers());
   }
 }

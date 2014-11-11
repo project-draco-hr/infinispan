@@ -1,0 +1,14 @@
+{
+synchronized (this) {
+    if (currentTopology == null)     return;
+    List<Address> newClusterMembers=transport.getMembers();
+    boolean cacheMembersModified=retainMembers(newClusterMembers);
+    availabilityStrategy.onClusterViewChange(this,newClusterMembers);
+    if (cacheMembersModified) {
+      boolean rebalanceCompleted=updateRebalanceMembers();
+      if (rebalanceCompleted) {
+        endRebalance();
+      }
+    }
+  }
+}

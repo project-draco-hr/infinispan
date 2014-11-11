@@ -16,7 +16,13 @@
   }
   coordinator=fromJGroupsAddress(newView.getCreator());
   isCoordinator=coordinator != null && coordinator.equals(getAddress());
-  channelConnectedLatch.countDown();
+  viewUpdateLock.lock();
+  try {
+    viewUpdateCondition.signalAll();
+  }
+  finally {
+    viewUpdateLock.unlock();
+  }
   boolean hasNotifier=notifier != null;
   if (hasNotifier) {
     String clusterName=configuration.transport().clusterName();

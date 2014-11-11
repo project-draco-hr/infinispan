@@ -8,9 +8,6 @@
     interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class),false);
   }
   interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(),InvocationContextInterceptor.class),false);
-  if (configuration.clustering().partitionHandling().enabled() && (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())) {
-    interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(),PartitionHandlingInterceptor.class),false);
-  }
   CompatibilityModeConfiguration compatibility=configuration.compatibility();
   if (compatibility.enabled()) {
     Marshaller compatibilityMarshaller=compatibility.marshaller();
@@ -29,6 +26,9 @@
       interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(),StateTransferInterceptor.class),false);
     }
     interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(),TransactionSynchronizerInterceptor.class),false);
+  }
+  if (configuration.clustering().partitionHandling().enabled() && (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())) {
+    interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(),PartitionHandlingInterceptor.class),false);
   }
   if (isTotalOrder) {
     interceptorChain.appendInterceptor(createInterceptor(new TotalOrderInterceptor(),TotalOrderInterceptor.class),false);
