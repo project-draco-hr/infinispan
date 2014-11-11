@@ -1,0 +1,25 @@
+{
+  ModelNode loader=Util.getEmptyOperation(ModelDescriptionConstants.ADD,null);
+  String name=ModelKeys.CLUSTER_LOADER_NAME;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case REMOTE_TIMEOUT:
+{
+        ClusterLoaderResource.REMOTE_TIMEOUT.parseAndSetParameter(value,loader,reader);
+        break;
+      }
+default :
+{
+      name=this.parseLoaderAttribute(name,reader,i,attribute,value,loader);
+    }
+}
+}
+loader.get(ModelKeys.NAME).set(name);
+addNameToAddress(loader,PathAddress.pathAddress(cache.get(OP_ADDR)),ModelKeys.CLUSTER_LOADER);
+List<ModelNode> additionalConfigurationOperations=new ArrayList<ModelNode>();
+this.parseLoaderElements(reader,loader,additionalConfigurationOperations);
+operations.add(loader);
+operations.addAll(additionalConfigurationOperations);
+}

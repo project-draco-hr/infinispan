@@ -1,0 +1,69 @@
+{
+  PathAddress authorizationAddress=securityAddress.append(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+  ModelNode authorization=Util.createAddOperation(authorizationAddress);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case AUDIT_LOGGER:
+{
+        break;
+      }
+default :
+{
+      throw ParseUtils.unexpectedAttribute(reader,i);
+    }
+}
+}
+List<ModelNode> additionalConfigurationOperations=new ArrayList<ModelNode>();
+String roleMapper=null;
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case IDENTITY_ROLE_MAPPER:
+  if (roleMapper != null) {
+    throw ParseUtils.unexpectedElement(reader);
+  }
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=IdentityRoleMapper.class.getName();
+break;
+case COMMON_NAME_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=CommonNameRoleMapper.class.getName();
+break;
+case CLUSTER_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ParseUtils.requireNoAttributes(reader);
+ParseUtils.requireNoContent(reader);
+roleMapper=ClusterRoleMapper.class.getName();
+break;
+case CUSTOM_ROLE_MAPPER:
+if (roleMapper != null) {
+throw ParseUtils.unexpectedElement(reader);
+}
+roleMapper=ParseUtils.readStringAttributeElement(reader,Attribute.CLASS.getLocalName());
+break;
+case ROLE:
+{
+this.parseGlobalRole(reader,authorizationAddress,additionalConfigurationOperations);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+CacheContainerAuthorizationResource.MAPPER.parseAndSetParameter(roleMapper,authorization,reader);
+operations.add(authorization);
+for (ModelNode additionalOperation : additionalConfigurationOperations) {
+operations.add(additionalOperation);
+}
+}
