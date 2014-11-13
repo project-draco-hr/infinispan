@@ -1,0 +1,20 @@
+{
+  final String cacheName="no-backups";
+  withCacheManager(new CacheManagerCallable(new DefaultCacheManager()){
+    @Override public void call(){
+      ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.LOCAL);
+      builder.sites().disableBackups(true);
+      cm.defineConfiguration(cacheName,builder.build());
+      Cache cache=cm.getCache(cacheName);
+      Interpreter interpreter=cache.getAdvancedCache().getComponentRegistry().getComponent(Interpreter.class);
+      String sessionId=interpreter.createSessionId(cacheName);
+      try {
+        assertInterpreterError(interpreter,sessionId,"site --status;","ISPN019033: The cache '" + cacheName + "' has no backups configured.");
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+);
+}
