@@ -1,0 +1,11 @@
+{
+  remoteCache.clear();
+  remoteCache.put(KEY1,VALUE1);
+  VersionedValue<String> v=remoteCache.getVersioned(KEY1);
+  assertEquals(VALUE1,v.getValue());
+  long ver=v.getVersion();
+  NotifyingFuture<Boolean> f=remoteCache.removeWithVersionAsync(KEY1,ver);
+  f.get(ASYNC_TIMEOUT,TimeUnit.SECONDS);
+  v=remoteCache.getVersioned(KEY1);
+  if (v != null)   assertTrue(ver != v.getVersion());
+}
