@@ -1,5 +1,15 @@
 {
-  builderUsed=new ConfigurationBuilder();
-  builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC);
-  createClusteredCaches(3,CACHE_NAME,builderUsed);
+  Configuration distConfig=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false).build();
+  for (int i=0; i < NUM_NODES; i++) {
+    GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+    gcb.globalJmxStatistics().allowDuplicateDomains(true);
+    gcb.transport().defaultTransport().nodeName(TestResourceTracker.getNameForIndex(i));
+    BlockingThreadPoolExecutorFactory remoteExecutorFactory=new BlockingThreadPoolExecutorFactory(10,1,0,60000);
+    gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
+    EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build());
+    registerCacheManager(cm);
+    cm.defineConfiguration(CACHE_NAME,distConfig);
+    log.infof("Started cache manager %s",cm.getAddress());
+  }
+  waitForClusterToForm(CACHE_NAME);
 }

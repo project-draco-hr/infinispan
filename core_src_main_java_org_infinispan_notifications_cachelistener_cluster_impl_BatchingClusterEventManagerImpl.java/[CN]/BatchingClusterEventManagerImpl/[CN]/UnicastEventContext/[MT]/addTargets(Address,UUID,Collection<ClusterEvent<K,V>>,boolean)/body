@@ -1,0 +1,15 @@
+{
+  TargetEvents<K,V> targetEvents=targets.get(address);
+  if (targetEvents == null) {
+    targetEvents=new TargetEvents<>();
+    targets.put(address,targetEvents);
+  }
+  Map<UUID,Collection<ClusterEvent<K,V>>> listenerEvents=targetEvents.events;
+  Collection<ClusterEvent<K,V>> prevEvents=listenerEvents.put(identifier,events);
+  if (prevEvents != null) {
+    events.addAll(prevEvents);
+  }
+  if (sync) {
+    targetEvents.sync=true;
+  }
+}

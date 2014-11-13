@@ -1,0 +1,34 @@
+{
+  DistributedExecutionCompletionService<Void> completion=new DistributedExecutionCompletionService<Void>(service);
+  int syncCount=0;
+  for (  Entry<Address,TargetEvents<K,V>> entry : targets.entrySet()) {
+    TargetEvents<K,V> value=entry.getValue();
+    if (value.events.size() > 1) {
+      if (value.sync) {
+        completion.submit(entry.getKey(),new MultiClusterEventCallable<>(value.events));
+        syncCount++;
+      }
+ else {
+        service.submit(entry.getKey(),new MultiClusterEventCallable<>(value.events));
+      }
+    }
+ else     if (value.events.size() == 1) {
+      Entry<UUID,Collection<ClusterEvent<K,V>>> entryValue=value.events.entrySet().iterator().next();
+      if (value.sync) {
+        completion.submit(entry.getKey(),new ClusterEventCallable<K,V>(entryValue.getKey(),entryValue.getValue()));
+        syncCount++;
+      }
+ else {
+        service.submit(entry.getKey(),new ClusterEventCallable<K,V>(entryValue.getKey(),entryValue.getValue()));
+      }
+    }
+  }
+  try {
+    for (int i=0; i < syncCount; ++i) {
+      completion.take();
+    }
+  }
+ catch (  InterruptedException e) {
+    throw new CacheException("Interrupted while waiting for event notifications to complete.",e);
+  }
+}

@@ -5,5 +5,8 @@
     setTx(ctx,e);
     boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
     for (    CacheEntryListenerInvocation<K,V> listener : cacheEntryRemovedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
+    if (!ctx.isInTxScope()) {
+      eventManager.sendEvents();
+    }
   }
 }

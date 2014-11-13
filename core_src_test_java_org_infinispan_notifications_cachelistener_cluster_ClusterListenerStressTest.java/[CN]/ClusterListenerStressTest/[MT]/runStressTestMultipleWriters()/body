@@ -1,7 +1,15 @@
 {
   Cache<String,Integer> cache0=cache(0,CACHE_NAME);
+  Cache<String,Integer> cache1=cache(1,CACHE_NAME);
+  Cache<String,Integer> cache2=cache(2,CACHE_NAME);
   ClusterListenerAggregator listener=new ClusterListenerAggregator();
   cache0.addListener(listener);
+  cache0.addListener(listener);
+  cache0.addListener(listener);
+  cache1.addListener(listener);
+  cache1.addListener(listener);
+  cache2.addListener(listener);
+  long begin=System.currentTimeMillis();
   int threadCount=10;
   final CountDownLatch latch=new CountDownLatch(threadCount);
   Callable<CreateModifyRemovals> callable=new Callable<CreateModifyRemovals>(){
@@ -13,9 +21,9 @@
       int removalCount=0;
       for (int i=0; i < 1000; i++) {
         int random=ThreadLocalRandom.current().nextInt(0,23);
-        boolean key=random > 11;
+        boolean key=(random & 1) == 1;
         int cache=random / 8;
-        int operation=random % 4;
+        int operation=random & 3;
         Cache<String,Integer> cacheToUse=cache(cache,CACHE_NAME);
         String keyToUse=key ? KEY : KEY + "2";
 switch (operation) {
@@ -48,9 +56,8 @@ break;
 case 3:
 prevValue=cacheToUse.get(keyToUse);
 if (prevValue != null) {
-if (cacheToUse.remove(keyToUse,prevValue)) {
+cacheToUse.remove(keyToUse,prevValue);
 removalCount++;
-}
 }
 break;
 default :
@@ -74,7 +81,9 @@ creationCount+=cmr.creationCount;
 modifyCount+=cmr.modifyCount;
 removalCount+=cmr.removalCount;
 }
-assertEquals(listener.creationCount.get(),creationCount);
-assertEquals(listener.modifyCount.get(),modifyCount);
-assertEquals(listener.removalCount.get(),removalCount);
+int listenerCount=6;
+assertEquals(listener.creationCount.get(),creationCount * listenerCount);
+assertEquals(listener.modifyCount.get(),modifyCount * listenerCount);
+assertEquals(listener.removalCount.get(),removalCount * listenerCount);
+System.out.println("Took " + (System.currentTimeMillis() - begin) + " milliseconds");
 }

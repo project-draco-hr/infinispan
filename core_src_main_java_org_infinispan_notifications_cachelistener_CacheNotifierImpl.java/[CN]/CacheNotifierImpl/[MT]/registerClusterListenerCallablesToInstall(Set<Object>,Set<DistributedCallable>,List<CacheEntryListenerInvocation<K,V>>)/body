@@ -2,12 +2,12 @@
   for (  CacheEntryListenerInvocation<K,V> listener : listenerInvocations) {
     if (!enlistedAlready.contains(listener.getTarget())) {
       if (listener.isClustered()) {
-        callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),cache.getCacheManager().getAddress(),listener.getFilter(),listener.getConverter()));
+        callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),cache.getCacheManager().getAddress(),listener.getFilter(),listener.getConverter(),listener.isSync()));
         enlistedAlready.add(listener.getTarget());
       }
  else       if (listener.getTarget() instanceof RemoteClusterListener) {
         RemoteClusterListener lcl=(RemoteClusterListener)listener.getTarget();
-        callables.add(new ClusterListenerReplicateCallable(lcl.getId(),lcl.getOwnerAddress(),listener.getFilter(),listener.getConverter()));
+        callables.add(new ClusterListenerReplicateCallable(lcl.getId(),lcl.getOwnerAddress(),listener.getFilter(),listener.getConverter(),listener.isSync()));
         enlistedAlready.add(listener.getTarget());
       }
     }
