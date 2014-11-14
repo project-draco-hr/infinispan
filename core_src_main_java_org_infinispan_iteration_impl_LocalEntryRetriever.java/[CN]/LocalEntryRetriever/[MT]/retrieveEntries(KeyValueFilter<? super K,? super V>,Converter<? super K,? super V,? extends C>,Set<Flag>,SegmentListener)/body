@@ -70,9 +70,24 @@
             AdvancedCache<K,V> advancedCache=cache.getAdvancedCache();
             for (            K key : listener.activatedKeys) {
               if (!processedKeys.contains(key)) {
-                CacheEntry<K,C> entry=(CacheEntry<K,C>)advancedCache.getCacheEntry(key);
+                CacheEntry<K,V> entry=advancedCache.getCacheEntry(key);
                 if (entry != null) {
-                  queue.add(entry);
+                  CacheEntry<K,V> clone=entry.clone();
+                  if (filter != null) {
+                    if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+                      C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
+                      if (converted != null) {
+                        clone.setValue((V)converted);
+                      }
+ else {
+                        continue;
+                      }
+                    }
+ else                     if (!filter.accept(key,clone.getValue(),clone.getMetadata())) {
+                      continue;
+                    }
+                  }
+                  action.apply(clone.getKey(),clone);
                 }
               }
             }

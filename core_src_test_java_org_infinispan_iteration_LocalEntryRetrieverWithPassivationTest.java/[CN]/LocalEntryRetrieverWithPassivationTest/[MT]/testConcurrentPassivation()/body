@@ -1,0 +1,42 @@
+{
+  final Cache<Object,String> cache=cache(0,CACHE_NAME);
+  Map<String,String> originalValues=new HashMap<>();
+  originalValues.put(cache.toString() + 1,"cache0");
+  originalValues.put(cache.toString() + 2,"cache1");
+  originalValues.put(cache.toString() + 3,"cache2");
+  final String loaderKey=cache.toString() + " loader-value";
+  final String loaderValue="loader0";
+  originalValues.put(loaderKey,loaderValue);
+  cache.putAll(originalValues);
+  PersistenceManager pm=null;
+  try {
+    final CheckPoint checkPoint=new CheckPoint();
+    pm=waitUntilAboutToProcessStoreTask(cache,checkPoint);
+    Future<Void> future=fork(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        checkPoint.awaitStrict("pre_process_on_all_stores_invoked",1000,TimeUnit.SECONDS);
+        TestingUtil.extractComponent(cache,PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey,loaderValue));
+        checkPoint.triggerForever("pre_process_on_all_stores_released");
+        return null;
+      }
+    }
+);
+    EntryRetriever<String,String> retriever=cache.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+    Iterator<CacheEntry<String,String>> iterator=retriever.retrieveEntries(null,null,null,null);
+    int count=0;
+    Map<String,String> results=new HashMap<>();
+    while (iterator.hasNext()) {
+      Map.Entry<String,String> entry=iterator.next();
+      results.put(entry.getKey(),entry.getValue());
+      count++;
+    }
+    assertEquals(4,count);
+    assertEquals(originalValues,results);
+    future.get(10,TimeUnit.SECONDS);
+  }
+  finally {
+    if (pm != null) {
+      TestingUtil.replaceComponent(cache,PersistenceManager.class,pm,true);
+    }
+  }
+}

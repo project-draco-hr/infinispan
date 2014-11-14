@@ -1,0 +1,46 @@
+{
+  final Cache<Object,String> cache=cache(0,CACHE_NAME);
+  Map<Object,String> originalValues=new HashMap<>();
+  originalValues.put(cache.toString() + 1,"cache0");
+  originalValues.put(cache.toString() + 2,"cache1");
+  originalValues.put(cache.toString() + 3,"cache2");
+  final Object loaderKey=cache.toString() + " in loader";
+  final String loaderValue="loader0";
+  cache.putAll(originalValues);
+  PersistenceManager persistenceManager=TestingUtil.extractComponent(cache,PersistenceManager.class);
+  DummyInMemoryStore store=persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
+  TestObjectStreamMarshaller sm=new TestObjectStreamMarshaller();
+  PersistenceManager pm=null;
+  try {
+    store.write(new MarshalledEntryImpl(loaderKey,loaderValue,null,sm));
+    final CheckPoint checkPoint=new CheckPoint();
+    pm=waitUntilAboutToProcessStoreTask(cache,checkPoint);
+    Future<Void> future=fork(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        checkPoint.awaitStrict("pre_process_on_all_stores_invoked",10,TimeUnit.SECONDS);
+        assertEquals(loaderValue,cache.get(loaderKey));
+        checkPoint.triggerForever("pre_process_on_all_stores_released");
+        return null;
+      }
+    }
+);
+    EntryRetriever<String,String> retriever=cache.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+    Iterator<CacheEntry<String,String>> iterator=retriever.retrieveEntries(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Immutables.immutableSetCopy(originalValues.keySet()),true)),null,null,null);
+    int count=0;
+    Map<String,String> results=new HashMap<>();
+    while (iterator.hasNext()) {
+      Map.Entry<String,String> entry=iterator.next();
+      results.put(entry.getKey(),entry.getValue());
+      count++;
+    }
+    assertEquals(count,3);
+    assertEquals(originalValues,results);
+    future.get(10,TimeUnit.SECONDS);
+  }
+  finally {
+    if (pm != null) {
+      TestingUtil.replaceComponent(cache,PersistenceManager.class,pm,true);
+    }
+    sm.stop();
+  }
+}

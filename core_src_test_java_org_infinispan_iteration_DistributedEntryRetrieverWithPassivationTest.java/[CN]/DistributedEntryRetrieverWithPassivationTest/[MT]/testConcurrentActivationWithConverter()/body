@@ -28,7 +28,7 @@
     }
 );
     EntryRetriever<MagicKey,String> retriever=cache1.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-    Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,null,null);
+    Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,new StringTruncator(1,3),null,null);
     int count=0;
     Map<MagicKey,String> results=new HashMap<MagicKey,String>();
     while (iterator.hasNext()) {
@@ -37,7 +37,9 @@
       count++;
     }
     assertEquals(count,4);
-    assertEquals(originalValues,results);
+    for (    Map.Entry<MagicKey,String> entry : originalValues.entrySet()) {
+      assertEquals(entry.getValue().substring(1,4),results.get(entry.getKey()));
+    }
     future.get(10,TimeUnit.SECONDS);
   }
   finally {

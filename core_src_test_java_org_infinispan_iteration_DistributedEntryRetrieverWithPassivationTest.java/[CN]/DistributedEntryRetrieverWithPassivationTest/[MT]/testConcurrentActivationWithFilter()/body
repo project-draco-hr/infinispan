@@ -9,7 +9,6 @@
   final MagicKey loaderKey=new MagicKey(cache0);
   final String loaderValue="loader0";
   cache0.putAll(originalValues);
-  originalValues.put(loaderKey,loaderValue);
   PersistenceManager persistenceManager=TestingUtil.extractComponent(cache0,PersistenceManager.class);
   DummyInMemoryStore store=persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
   TestObjectStreamMarshaller sm=new TestObjectStreamMarshaller();
@@ -28,7 +27,7 @@
     }
 );
     EntryRetriever<MagicKey,String> retriever=cache1.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-    Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(null,null,null,null);
+    Iterator<CacheEntry<MagicKey,String>> iterator=retriever.retrieveEntries(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Immutables.immutableSetCopy(originalValues.keySet()),true)),null,null,null);
     int count=0;
     Map<MagicKey,String> results=new HashMap<MagicKey,String>();
     while (iterator.hasNext()) {
@@ -36,7 +35,7 @@
       results.put(entry.getKey(),entry.getValue());
       count++;
     }
-    assertEquals(count,4);
+    assertEquals(count,3);
     assertEquals(originalValues,results);
     future.get(10,TimeUnit.SECONDS);
   }
