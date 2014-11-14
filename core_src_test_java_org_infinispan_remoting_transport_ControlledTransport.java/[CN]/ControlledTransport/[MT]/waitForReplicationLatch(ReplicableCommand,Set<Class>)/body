@@ -1,0 +1,18 @@
+{
+  Class cmdClass=getActualClass(rpcCommand);
+  if (!filter.contains(cmdClass)) {
+    return;
+  }
+  try {
+    if (!blockingLatch.isOpened()) {
+      getLog().debugf("Replication trigger called, releasing any waiters for command to block.");
+      blockingLatch.open();
+    }
+    getLog().debugf("Replication trigger called, waiting for latch to open.");
+    replicationLatch.await();
+    getLog().trace("Replication latch opened, continuing.");
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected exception!",e);
+  }
+}
