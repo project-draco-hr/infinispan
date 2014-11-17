@@ -1,0 +1,34 @@
+{
+  if (response.isSuccessful() && response.isValid()) {
+    Map<String,CacheStatusResponse> value=(Map<String,CacheStatusResponse>)((SuccessfulResponse)response).getResponseValue();
+    for (    Entry<String,CacheStatusResponse> entry : value.entrySet()) {
+      CacheStatusResponse csr=entry.getValue();
+      CacheTopology cacheTopology=csr.getCacheTopology();
+      CacheTopology stableTopology=csr.getStableTopology();
+      CacheTopology replaceCacheTopology=seenTopologies.get(cacheTopology);
+      if (replaceCacheTopology == null) {
+        seenTopologies.put(cacheTopology,cacheTopology);
+        replaceCacheTopology=cacheTopology;
+      }
+      CacheTopology replaceStableTopology=null;
+      if (!cacheTopology.equals(stableTopology)) {
+        replaceStableTopology=seenTopologies.get(stableTopology);
+        if (replaceStableTopology == null) {
+          seenTopologies.put(stableTopology,stableTopology);
+        }
+      }
+ else {
+        replaceStableTopology=replaceCacheTopology != null ? replaceCacheTopology : cacheTopology;
+      }
+      CacheJoinInfo info=csr.getCacheJoinInfo();
+      CacheJoinInfo replaceInfo=seenInfos.get(info);
+      if (replaceInfo == null) {
+        seenInfos.put(info,info);
+      }
+      if (replaceCacheTopology != null || replaceStableTopology != null || replaceInfo != null) {
+        entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info,replaceCacheTopology != null ? replaceCacheTopology : cacheTopology,replaceStableTopology != null ? replaceStableTopology : stableTopology,csr.getAvailabilityMode()));
+      }
+    }
+  }
+  return true;
+}

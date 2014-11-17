@@ -1,0 +1,42 @@
+{
+  ReusableData data=cachedWriteObjects.get();
+  boolean shouldRemove;
+  if (hasChildren && data == null) {
+    data=new ReusableData();
+    cachedWriteObjects.set(data);
+    shouldRemove=true;
+  }
+ else {
+    shouldRemove=false;
+  }
+  try {
+    int id;
+    if (data != null && (id=data.map.get(object,-1)) != -1) {
+      final int diff=id - data.offset;
+      if (diff >= -256) {
+        output.write(ID_REPEAT_OBJECT_NEAR);
+        output.write(diff);
+      }
+ else       if (diff >= -65536) {
+        output.write(ID_REPEAT_OBJECT_NEARISH);
+        output.writeShort(diff);
+      }
+ else {
+        output.write(ID_REPEAT_OBJECT_FAR);
+        output.writeInt(id);
+      }
+    }
+ else {
+      output.write(ID_NO_REPEAT);
+      doWriteObject(output,object);
+      if (data != null) {
+        data.map.put(object,data.offset++);
+      }
+    }
+  }
+  finally {
+    if (shouldRemove) {
+      cachedWriteObjects.remove();
+    }
+  }
+}

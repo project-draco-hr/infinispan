@@ -1,0 +1,38 @@
+{
+  List<Object> data=cachedReadObjects.get();
+  boolean shouldRemove;
+  if (hasChildren && data == null) {
+    data=new ArrayList<>();
+    cachedReadObjects.set(data);
+    shouldRemove=true;
+  }
+ else {
+    shouldRemove=false;
+  }
+  try {
+    int type=input.read();
+switch (type) {
+case ID_NO_REPEAT:
+      T object=doReadObject(input);
+    if (data != null) {
+      data.add(object);
+    }
+  return object;
+case ID_REPEAT_OBJECT_NEAR:
+int offset=input.read() | 0xffffff00;
+return getFromCache(data,offset + data.size());
+case ID_REPEAT_OBJECT_NEARISH:
+offset=input.readShort() | 0xffff0000;
+return getFromCache(data,offset + data.size());
+case ID_REPEAT_OBJECT_FAR:
+return getFromCache(data,input.readInt());
+default :
+throw new IllegalStateException("Unexpected byte encountered" + type);
+}
+}
+  finally {
+if (shouldRemove) {
+cachedReadObjects.remove();
+}
+}
+}
