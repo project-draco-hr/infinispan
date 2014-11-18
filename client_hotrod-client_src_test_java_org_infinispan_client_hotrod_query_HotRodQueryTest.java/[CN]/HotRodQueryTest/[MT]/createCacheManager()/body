@@ -1,6 +1,6 @@
 {
   GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder().nonClusteredDefault();
-  gcb.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup());
+  gcb.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(getClass().getSimpleName()).mBeanServerLookup(new PerThreadMBeanServerLookup());
   ConfigurationBuilder builder=getConfigurationBuilder();
   cacheManager=TestCacheManagerFactory.createCacheManager(gcb,new ConfigurationBuilder(),true);
   cacheManager.defineConfiguration(TEST_CACHE_NAME,builder.build());
@@ -11,8 +11,9 @@
   clientBuilder.marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
   remoteCache=remoteCacheManager.getCache(TEST_CACHE_NAME);
-  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
   metadataCache.put("sample_bank_account/bank.proto",read("/sample_bank_account/bank.proto"));
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
   return cacheManager;
 }

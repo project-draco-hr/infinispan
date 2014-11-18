@@ -10,7 +10,9 @@
   ModelControllerClient client=ModelControllerClient.Factory.create(getServer().getHotrodEndpoint().getInetAddress().getHostName(),SERVER1_MGMT_PORT);
   ModelNode addProtobufFileOp=getOperation("clustered","upload-proto-schemas",nameList,urlList);
   ModelNode result=client.execute(addProtobufFileOp);
-  Assert.assertEquals(SUCCESS,result.get(OUTCOME).asString());
+  assertEquals(SUCCESS,result.get(OUTCOME).asString());
   client.close();
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 }

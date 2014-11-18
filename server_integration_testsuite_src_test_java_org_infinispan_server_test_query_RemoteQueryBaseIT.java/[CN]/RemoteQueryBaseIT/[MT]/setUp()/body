@@ -5,7 +5,8 @@
   clientBuilder.addServer().host(getServer().getHotrodEndpoint().getInetAddress().getHostName()).port(getServer().getHotrodEndpoint().getPort()).marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=rcmFactory.createManager(clientBuilder);
   remoteCache=remoteCacheManager.getCache(cacheName);
-  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
   metadataCache.put("sample_bank_account/bank.proto",read("/sample_bank_account/bank.proto"));
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 }

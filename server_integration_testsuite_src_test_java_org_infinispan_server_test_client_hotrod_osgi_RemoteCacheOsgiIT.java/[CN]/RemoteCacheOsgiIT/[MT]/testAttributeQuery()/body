@@ -2,10 +2,11 @@
   builder.marshaller(new ProtoStreamMarshaller());
   manager=new RemoteCacheManager(builder.build());
   RemoteCache<Integer,User> cache=manager.getCache(INDEXED_CACHE);
-  RemoteCache<String,String> metadataCache=manager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+  RemoteCache<String,String> metadataCache=manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
   Bundle sampleDomainDefinitionBundle=getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
   String file=Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
   metadataCache.put("sample_bank_account/bank.proto",file);
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
   SerializationContext ctx=ProtoStreamMarshaller.getSerializationContext(manager);
   FileDescriptorSource fds=new FileDescriptorSource();
   fds.addProtoFile("sample_bank_account/bank.proto",file);

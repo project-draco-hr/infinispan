@@ -1,6 +1,6 @@
 {
   GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder().nonClusteredDefault();
-  gcb.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup());
+  gcb.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(jmxDomain).mBeanServerLookup(new PerThreadMBeanServerLookup());
   ConfigurationBuilder builder=new ConfigurationBuilder();
   builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE).valueEquivalence(ByteArrayEquivalence.INSTANCE).indexing().index(Index.ALL).addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
   cacheManager=TestCacheManagerFactory.createCacheManager(gcb,builder,true);
@@ -14,7 +14,11 @@
   remoteCache=remoteCacheManager.getCache(TEST_CACHE_NAME);
   mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
   ProtobufMetadataManagerMBean protobufMetadataManagerMBean=JMX.newMBeanProxy(mBeanServer,getProtobufMetadataManagerObjectName(),ProtobufMetadataManagerMBean.class);
-  protobufMetadataManagerMBean.registerProtofile("sample_bank_account/bank.proto",read("/sample_bank_account/bank.proto"));
+  String protofile=read("/sample_bank_account/bank.proto");
+  protobufMetadataManagerMBean.registerProtofile("sample_bank_account/bank.proto",protofile);
+  assertEquals(protofile,protobufMetadataManagerMBean.getProtofile("sample_bank_account/bank.proto"));
+  assertNull(protobufMetadataManagerMBean.getFilesWithErrors());
+  assertTrue(Arrays.asList(protobufMetadataManagerMBean.getProtofileNames()).contains("sample_bank_account/bank.proto"));
   MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
   return cacheManager;
 }
