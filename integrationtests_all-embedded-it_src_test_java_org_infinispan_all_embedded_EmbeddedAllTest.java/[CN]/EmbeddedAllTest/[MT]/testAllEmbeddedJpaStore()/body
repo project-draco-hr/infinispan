@@ -1,0 +1,20 @@
+{
+  ConfigurationBuilder builderJpaLocalCache=new ConfigurationBuilder();
+  builderJpaLocalCache.clustering().cacheMode(CacheMode.LOCAL).persistence().passivation(true).addStore(JpaStoreConfigurationBuilder.class).persistenceUnitName("org.infinispan.persistence.jpa").entityClass(KeyValueEntity.class).purgeOnStartup(false).preload(true);
+  manager.defineConfiguration("jpa-local-cache",builderJpaLocalCache.build());
+  Cache<Object,Object> jpaLocalCache=manager.getCache("jpa-local-cache");
+  KeyValueEntity kve1=new KeyValueEntity("kve_key1","kve_value1");
+  KeyValueEntity kve2=new KeyValueEntity("kve_key2","kve_value2");
+  jpaLocalCache.put("kve_key1",kve1);
+  jpaLocalCache.put("kve_key2",kve2);
+  assertEquals(kve1,jpaLocalCache.get("kve_key1"));
+  assertEquals(kve2,jpaLocalCache.get("kve_key2"));
+  jpaLocalCache.stop();
+  jpaLocalCache.start();
+  KeyValueEntity result1=(KeyValueEntity)jpaLocalCache.get("kve_key1");
+  assertEquals(kve1.getValue(),result1.getValue());
+  assertEquals(kve1.getK(),result1.getK());
+  KeyValueEntity result2=(KeyValueEntity)jpaLocalCache.get("kve_key2");
+  assertEquals(kve2.getValue(),result2.getValue());
+  assertEquals(kve2.getK(),result2.getK());
+}

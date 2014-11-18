@@ -1,0 +1,13 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().fetchInMemoryState(true).clustering().hash().numOwners(2);
+  manager.defineConfiguration("distributed-cache",builder.build());
+  manager2.defineConfiguration("distributed-cache",builder.build());
+  Cache<Object,Object> cache=manager.getCache("distributed-cache");
+  Cache<Object,Object> cache2=manager2.getCache("distributed-cache");
+  cache.put("key1","value1");
+  assertEquals("value1",cache.get("key1"));
+  cache2.put("key2","value2");
+  assertEquals("value2",cache2.get("key2"));
+  assertEquals("value1",cache2.get("key1"));
+}
