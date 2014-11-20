@@ -7,8 +7,11 @@
         InternalCacheEntry remoteEntry=remoteGetCacheEntry(ctx,key,command);
         returnValue=computeGetReturn(remoteEntry,command);
       }
-      if (returnValue == null && isValueAvailableLocally(dm.getReadConsistentHash(),key)) {
-        InternalCacheEntry localEntry=localGetCacheEntry(ctx,key,false,command);
+      if (returnValue == null) {
+        InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
+        if (localEntry != null) {
+          wrapInternalCacheEntry(localEntry,ctx,key,false,command);
+        }
         returnValue=computeGetReturn(localEntry,command);
       }
     }
