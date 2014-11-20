@@ -1,0 +1,48 @@
+{
+  short status=transport.readByte();
+  transport.readByte();
+  ClientEvent.Type eventType;
+switch (eventTypeId) {
+case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
+    eventType=ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED;
+  break;
+case CACHE_ENTRY_MODIFIED_EVENT_RESPONSE:
+eventType=ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED;
+break;
+case CACHE_ENTRY_REMOVED_EVENT_RESPONSE:
+eventType=ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED;
+break;
+case ERROR_RESPONSE:
+checkForErrorsInResponseStatus(transport,null,status);
+default :
+throw log.unknownEvent(eventTypeId);
+}
+byte[] listenerId=transport.readArray();
+if (!Arrays.equals(listenerId,expectedListenerId)) throw log.unexpectedListenerId(printArray(listenerId),printArray(expectedListenerId));
+short isCustom=transport.readByte();
+boolean isRetried=transport.readByte() == 1 ? true : false;
+if (isCustom == 1) {
+final Object eventData=MarshallerUtil.bytes2obj(marshaller,transport.readArray());
+return createCustomEvent(eventData,eventType,isRetried);
+}
+ else if (isCustom == 2) {
+return createCustomEvent(transport.readArray(),eventType,isRetried);
+}
+ else {
+switch (eventType) {
+case CLIENT_CACHE_ENTRY_CREATED:
+Object createdKey=MarshallerUtil.bytes2obj(marshaller,transport.readArray());
+long createdDataVersion=transport.readLong();
+return createCreatedEvent(createdKey,createdDataVersion,isRetried);
+case CLIENT_CACHE_ENTRY_MODIFIED:
+Object modifiedKey=MarshallerUtil.bytes2obj(marshaller,transport.readArray());
+long modifiedDataVersion=transport.readLong();
+return createModifiedEvent(modifiedKey,modifiedDataVersion,isRetried);
+case CLIENT_CACHE_ENTRY_REMOVED:
+Object removedKey=MarshallerUtil.bytes2obj(marshaller,transport.readArray());
+return createRemovedEvent(removedKey,isRetried);
+default :
+throw getLog().unknownEvent(eventTypeId);
+}
+}
+}
