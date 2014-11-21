@@ -1,0 +1,41 @@
+{
+  Map<Object,Object> map;
+  try {
+    Object returnValue=invokeNextInterceptor(ctx,command);
+    if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.hasFlag(Flag.IGNORE_RETURN_VALUES)|| !ctx.isOriginLocal()) {
+      return returnValue;
+    }
+    map=returnValue == null ? command.createMap() : (Map<Object,Object>)returnValue;
+    ConsistentHash ch=stateTransferManager.getCacheTopology().getReadConsistentHash();
+    Set<Object> requestedKeys=new HashSet<>();
+    for (    Object key : command.getKeys()) {
+      CacheEntry entry=ctx.lookupEntry(key);
+      if (entry == null || entry.isNull()) {
+        if (!isValueAvailableLocally(ch,key)) {
+          requestedKeys.add(key);
+        }
+ else {
+          if (trace) {
+            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
+          }
+          InternalCacheEntry localEntry=localGetCacheEntry(ctx,key,false,command);
+          map.put(key,command.isReturnEntries() ? localEntry : localEntry.getValue());
+        }
+      }
+    }
+    if (!requestedKeys.isEmpty()) {
+      if (trace) {
+        log.tracef("Fetching entries for keys %s from remote nodes",requestedKeys);
+      }
+      Map<Object,InternalCacheEntry> remotelyRetrieved=retrieveFromRemoteSources(requestedKeys,ctx,command.getFlags());
+      command.setRemotelyFetched(remotelyRetrieved);
+      for (      InternalCacheEntry entry : remotelyRetrieved.values()) {
+        map.put(entry.getKey(),command.isReturnEntries() ? entry : entry.getValue());
+      }
+    }
+    return map;
+  }
+ catch (  SuspectException e) {
+    throw new IllegalStateException("Unexpected SuspectException",e);
+  }
+}

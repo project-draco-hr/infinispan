@@ -1,0 +1,12 @@
+{
+  if (trace)   log.trace("Executing command: " + command + ".");
+  Object ret=command.perform(ctx);
+  if (ret != null) {
+    Map<Object,Object> map=(Map<Object,Object>)ret;
+    for (    Map.Entry<Object,Object> entry : map.entrySet()) {
+      Object value=command.isReturnEntries() ? ((CacheEntry)entry.getValue()).getValue() : entry.getValue();
+      notifyCacheEntryVisit(ctx,entry.getKey(),value,command);
+    }
+  }
+  return ret;
+}

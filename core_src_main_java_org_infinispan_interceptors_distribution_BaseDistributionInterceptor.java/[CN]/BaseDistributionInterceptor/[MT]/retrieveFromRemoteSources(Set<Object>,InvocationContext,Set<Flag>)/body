@@ -1,0 +1,51 @@
+{
+  GlobalTransaction gtx=ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  ConsistentHash ch=cacheTopology.getReadConsistentHash();
+  Map<Address,List<Object>> ownerKeys=new HashMap<>();
+  for (  Object key : requestedKeys) {
+    for (    Address owner : ch.locateOwners(key)) {
+      List<Object> requestedKeysFromNode=ownerKeys.get(owner);
+      if (requestedKeysFromNode == null) {
+        ownerKeys.put(owner,requestedKeysFromNode=new ArrayList<>());
+      }
+      requestedKeysFromNode.add(key);
+    }
+  }
+  Map<Address,ReplicableCommand> commands=new HashMap<>();
+  for (  Map.Entry<Address,List<Object>> entry : ownerKeys.entrySet()) {
+    Object[] keys=entry.getValue().toArray();
+    ClusteredGetManyCommand getMany=cf.buildClusteredGetManyCommand(keys,flags,gtx);
+    commands.put(entry.getKey(),getMany);
+    if (trace) {
+      log.tracef("Sending %s to %s",getMany,entry.getKey());
+    }
+  }
+  RpcOptionsBuilder rpcOptionsBuilder=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,false);
+  RpcOptions options=rpcOptionsBuilder.build();
+  Map<Address,Response> responses=rpcManager.invokeRemotely(commands,options);
+  Map<Object,InternalCacheEntry> entries=new HashMap<>();
+  if (responses != null) {
+    for (    Map.Entry<Address,Response> entry : responses.entrySet()) {
+      updateWithValues(((ClusteredGetManyCommand)commands.get(entry.getKey())).getKeys(),entry.getValue(),entries);
+    }
+  }
+  int originallyRequestedKeys=requestedKeys.size();
+  if (trace) {
+    log.tracef("Requested %d keys, retrieved %d entries: %s",originallyRequestedKeys,entries.size(),entries);
+  }
+  if (entries.size() == originallyRequestedKeys) {
+    return entries;
+  }
+  for (  Object key : entries.keySet()) {
+    requestedKeys.remove(key);
+  }
+  Object[] keys=requestedKeys.toArray();
+  ClusteredGetManyCommand getMany=cf.buildClusteredGetManyCommand(keys,flags,gtx);
+  responses=rpcManager.invokeRemotely(null,getMany,options);
+  updateWithValues(keys,responses,entries);
+  if (entries.size() != originallyRequestedKeys) {
+    throw new CacheException("Cannot retrieve some keys");
+  }
+  return entries;
+}

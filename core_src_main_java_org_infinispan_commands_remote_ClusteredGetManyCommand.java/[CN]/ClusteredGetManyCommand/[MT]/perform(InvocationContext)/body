@@ -1,0 +1,23 @@
+{
+  acquireLocksIfNeeded();
+  Set<Flag> commandFlags=EnumSet.of(Flag.SKIP_REMOTE_LOOKUP,Flag.CACHE_MODE_LOCAL);
+  if (this.flags != null)   commandFlags.addAll(this.flags);
+  GetManyCommand command=commandsFactory.buildGetManyCommand(createSet(keys),commandFlags,true);
+  InvocationContext invocationContext=icf.createRemoteInvocationContextForCommand(command,getOrigin());
+  Map<Object,? extends CacheEntry> map=(Map<Object,? extends CacheEntry>)invoker.invoke(invocationContext,command);
+  if (trace)   log.trace("Found: " + map);
+  InternalCacheValue[] values=new InternalCacheValue[keys.length];
+  for (int i=0; i < keys.length; ++i) {
+    CacheEntry entry=map.get(keys[i]);
+    if (entry == null) {
+      values[i]=null;
+    }
+ else     if (entry instanceof InternalCacheEntry) {
+      values[i]=((InternalCacheEntry)entry).toInternalCacheValue();
+    }
+ else {
+      values[i]=entryFactory.createValue(entry);
+    }
+  }
+  return values;
+}

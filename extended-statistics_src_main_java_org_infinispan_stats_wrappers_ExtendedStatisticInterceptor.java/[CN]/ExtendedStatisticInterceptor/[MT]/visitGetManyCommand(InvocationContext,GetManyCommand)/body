@@ -1,0 +1,26 @@
+{
+  if (log.isTraceEnabled()) {
+    log.tracef("Visit GetMany command %s. Is it in transaction scope? %s. Is it local? %s",command,ctx.isInTxScope(),ctx.isOriginLocal());
+  }
+  Object retVal;
+  if (ctx.isInTxScope()) {
+    long start=timeService.time();
+    retVal=invokeNextInterceptor(ctx,command);
+    long end=timeService.time();
+    initStatsIfNecessary(ctx);
+    int numRemote=0;
+    for (    Object key : command.getKeys()) {
+      if (isRemote(key))       numRemote++;
+    }
+    if (numRemote > 0) {
+      cacheStatisticManager.add(NUM_REMOTE_GET,numRemote,getGlobalTransaction(ctx),ctx.isOriginLocal());
+      cacheStatisticManager.add(REMOTE_GET_EXECUTION,timeService.timeDuration(start,end,NANOSECONDS),getGlobalTransaction(ctx),ctx.isOriginLocal());
+    }
+    cacheStatisticManager.add(ALL_GET_EXECUTION,timeService.timeDuration(start,end,NANOSECONDS),getGlobalTransaction(ctx),ctx.isOriginLocal());
+    cacheStatisticManager.add(NUM_GET,command.getKeys().size(),getGlobalTransaction(ctx),ctx.isOriginLocal());
+  }
+ else {
+    retVal=invokeNextInterceptor(ctx,command);
+  }
+  return retVal;
+}

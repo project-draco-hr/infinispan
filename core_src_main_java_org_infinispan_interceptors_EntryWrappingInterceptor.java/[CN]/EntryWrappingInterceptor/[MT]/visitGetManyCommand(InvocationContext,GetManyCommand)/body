@@ -1,0 +1,21 @@
+{
+  try {
+    for (    Object key : command.getKeys()) {
+      entryFactory.wrapEntryForReading(ctx,key,null);
+    }
+    return invokeNextInterceptor(ctx,command);
+  }
+  finally {
+    if (!ctx.isInTxScope()) {
+      commitContextEntries(ctx,command,null);
+    }
+ else {
+      for (      Object key : command.getKeys()) {
+        CacheEntry entry=ctx.lookupEntry(key);
+        if (entry != null) {
+          entry.setSkipLookup(true);
+        }
+      }
+    }
+  }
+}

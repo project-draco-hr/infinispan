@@ -1,0 +1,33 @@
+{
+  if (trace)   log.tracef("Replication task sending %s with response mode %s",commands,mode);
+  if (commands.isEmpty())   return new RspList<>();
+  RequestOptions opts=new RequestOptions(mode,timeout);
+  Map<Address,Future<Object>> futures=new HashMap<Address,Future<Object>>(commands.size());
+  RspList<Object> retval=new RspList<>();
+  for (  Map.Entry<Address,ReplicableCommand> cmd : commands.entrySet()) {
+    Buffer buf=marshallCall(marshaller,cmd.getValue());
+    Address dest=cmd.getKey();
+    boolean rsvp=isRsvpCommand(cmd.getValue());
+    futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,oob,mode,rsvp,false),opts));
+  }
+  TimeService timeService=card.gcr.getTimeService();
+  long waitTime=timeService.expectedEndTime(timeout,MILLISECONDS);
+  for (  Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
+    Address target=entry.getKey();
+    try {
+      retval.addRsp(target,entry.getValue().get(timeService.remainingTime(waitTime,MILLISECONDS),MILLISECONDS));
+    }
+ catch (    java.util.concurrent.TimeoutException te) {
+      throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),target));
+    }
+catch (    ExecutionException e) {
+      if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
+        log.tracef(formatString("Ignoring node %s that left during the remote call",target));
+      }
+ else {
+        throw wrapThrowableInException(e.getCause());
+      }
+    }
+  }
+  return retval;
+}
