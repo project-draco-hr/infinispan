@@ -1,0 +1,25 @@
+{
+  Cache<String,Serializable> cache1=manager(0).getCache(cachename);
+  MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  ObjectName clusterStats=getCacheObjectName(JMX_DOMAIN,cachename + "(repl_sync)","ClusterCacheStats");
+  cache1.put("a1","b1");
+  cache1.put("a2","b2");
+  cache1.put("a3","b3");
+  cache1.put("a4","b4");
+  assertAttributeValue(mBeanServer,clusterStats,"NumberOfEntries",8);
+  assertAttributeValue(mBeanServer,clusterStats,"Stores",4);
+  assertAttributeValue(mBeanServer,clusterStats,"Evictions",0);
+  assertAttributeValueGreaterThanOrEqualTo(mBeanServer,clusterStats,"AverageWriteTime",0);
+  cache1.remove("a1");
+  TestingUtil.sleepThread(ClusterCacheStatsImpl.DEFAULT_STALE_STATS_THRESHOLD + 1000);
+  assertAttributeValue(mBeanServer,clusterStats,"RemoveHits",1);
+  assertAttributeValue(mBeanServer,clusterStats,"RemoveMisses",0);
+  assertAttributeValue(mBeanServer,clusterStats,"NumberOfLocksAvailable",0);
+  assertAttributeValue(mBeanServer,clusterStats,"NumberOfLocksHeld",0);
+  assertAttributeValue(mBeanServer,clusterStats,"Activations",0);
+  assertAttributeValue(mBeanServer,clusterStats,"Passivations",0);
+  assertAttributeValue(mBeanServer,clusterStats,"Invalidations",0);
+  assertAttributeValue(mBeanServer,clusterStats,"CacheLoaderLoads",0);
+  assertAttributeValue(mBeanServer,clusterStats,"CacheLoaderMisses",0);
+  assertAttributeValue(mBeanServer,clusterStats,"StoreWrites",0);
+}

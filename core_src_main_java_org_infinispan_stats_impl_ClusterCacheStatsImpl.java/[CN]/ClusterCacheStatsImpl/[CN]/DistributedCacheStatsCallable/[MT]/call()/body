@@ -1,0 +1,61 @@
+{
+  Map<String,Number> map=new HashMap<String,Number>();
+  Stats stats=remoteCache.getStats();
+  map.put(AVERAGE_READ_TIME,stats.getAverageReadTime());
+  map.put(AVERAGE_WRITE_TIME,stats.getAverageWriteTime());
+  map.put(AVERAGE_REMOVE_TIME,stats.getAverageRemoveTime());
+  map.put(EVICTIONS,stats.getEvictions());
+  map.put(HITS,stats.getHits());
+  map.put(MISSES,stats.getMisses());
+  if (isDistributed()) {
+    map.put(NUMBER_OF_ENTRIES,stats.getCurrentNumberOfEntries() / numOwners());
+  }
+ else {
+    map.put(NUMBER_OF_ENTRIES,stats.getCurrentNumberOfEntries());
+  }
+  map.put(STORES,stats.getStores());
+  map.put(REMOVE_HITS,stats.getRemoveHits());
+  map.put(REMOVE_MISSES,stats.getRemoveMisses());
+  map.put(TIME_SINCE_START,stats.getTimeSinceStart());
+  LockManager lockManager=remoteCache.getLockManager();
+  map.put(NUMBER_OF_LOCKS_HELD,lockManager.getNumberOfLocksHeld());
+  map.put(NUMBER_OF_LOCKS_AVAILABLE,0);
+  InvalidationInterceptor invalidationInterceptor=getFirstInterceptorWhichExtends(remoteCache,InvalidationInterceptor.class);
+  if (invalidationInterceptor != null) {
+    map.put(INVALIDATIONS,invalidationInterceptor.getInvalidations());
+  }
+ else {
+    map.put(INVALIDATIONS,0);
+  }
+  PassivationManager pManager=remoteCache.getComponentRegistry().getComponent(PassivationManager.class);
+  if (pManager != null) {
+    map.put(PASSIVATIONS,pManager.getPassivations());
+  }
+ else {
+    map.put(PASSIVATIONS,0);
+  }
+  ActivationManager aManager=remoteCache.getComponentRegistry().getComponent(ActivationManager.class);
+  if (pManager != null) {
+    map.put(ACTIVATIONS,aManager.getActivationCount());
+  }
+ else {
+    map.put(ACTIVATIONS,0);
+  }
+  ActivationInterceptor aInterceptor=getFirstInterceptorWhichExtends(remoteCache,ActivationInterceptor.class);
+  if (aInterceptor != null) {
+    map.put(CACHE_LOADER_LOADS,aInterceptor.getCacheLoaderLoads());
+    map.put(CACHE_LOADER_MISSES,aInterceptor.getCacheLoaderMisses());
+  }
+ else {
+    map.put(CACHE_LOADER_LOADS,0);
+    map.put(CACHE_LOADER_MISSES,0);
+  }
+  CacheWriterInterceptor interceptor=getFirstInterceptorWhichExtends(remoteCache,CacheWriterInterceptor.class);
+  if (interceptor != null) {
+    map.put(CACHE_WRITER_STORES,interceptor.getWritesToTheStores());
+  }
+ else {
+    map.put(CACHE_WRITER_STORES,0);
+  }
+  return map;
+}

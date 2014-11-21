@@ -1,0 +1,16 @@
+{
+  ConfigurationBuilder defaultConfig=new ConfigurationBuilder();
+  GlobalConfigurationBuilder gcb1=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  gcb1.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup());
+  CacheContainer cacheManager1=TestCacheManagerFactory.createClusteredCacheManager(gcb1,defaultConfig,new TransportFlags(),true);
+  cacheManager1.start();
+  GlobalConfigurationBuilder gcb2=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  gcb2.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup());
+  CacheContainer cacheManager2=TestCacheManagerFactory.createClusteredCacheManager(gcb2,defaultConfig,new TransportFlags(),true);
+  cacheManager2.start();
+  registerCacheManager(cacheManager1,cacheManager2);
+  ConfigurationBuilder cb=new ConfigurationBuilder();
+  cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
+  defineConfigurationOnAllManagers(cachename,cb);
+  waitForClusterToForm(cachename);
+}
