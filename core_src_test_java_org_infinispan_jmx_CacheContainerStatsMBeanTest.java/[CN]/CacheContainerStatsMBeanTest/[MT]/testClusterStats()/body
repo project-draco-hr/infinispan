@@ -1,0 +1,24 @@
+{
+  Cache<String,Serializable> cache1=manager(0).getCache(cachename);
+  MBeanServer mBeanServer=PerThreadMBeanServerLookup.getThreadMBeanServer();
+  ObjectName nodeStats=getCacheManagerObjectName(JMX_DOMAIN,"DefaultCacheManager",CacheContainerStats.OBJECT_NAME);
+  cache1.put("a1","b1");
+  cache1.put("a2","b2");
+  cache1.put("a3","b3");
+  cache1.put("a4","b4");
+  assertAttributeValue(mBeanServer,nodeStats,"NumberOfEntries",4);
+  assertAttributeValue(mBeanServer,nodeStats,"Stores",4);
+  assertAttributeValue(mBeanServer,nodeStats,"Evictions",0);
+  assertAttributeValueGreaterThan(mBeanServer,nodeStats,"AverageWriteTime",0);
+  cache1.remove("a1");
+  assertAttributeValue(mBeanServer,nodeStats,"RemoveHits",1);
+  Cache<String,Serializable> cache3=manager(0).getCache(cachename2);
+  cache3.put("a10","b1");
+  cache3.put("a11","b2");
+  cache3.put("a12","b3");
+  cache3.put("a13","b4");
+  assertAttributeValue(mBeanServer,nodeStats,"NumberOfEntries",7);
+  assertAttributeValue(mBeanServer,nodeStats,"Stores",8);
+  assertAttributeValue(mBeanServer,nodeStats,"Evictions",0);
+  assertAttributeValueGreaterThan(mBeanServer,nodeStats,"AverageWriteTime",0);
+}
