@@ -1,4 +1,5 @@
 {
+  MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
   ProtobufValueWrapper wrapper1=new ProtobufValueWrapper(createMarshalledUser("Adrian","Nistor"));
   ProtobufValueWrapper wrapper2=new ProtobufValueWrapper(createMarshalledUser("John","Batman"));
   cache.put(1,wrapper1);
@@ -9,6 +10,9 @@
   Query luceneQuery=sm.buildQueryBuilderForClass(ProtobufValueWrapper.class).get().keyword().onField("name").ignoreFieldBridge().ignoreAnalyzer().matching("Adrian").createQuery();
   List<Object> list=sm.getQuery(luceneQuery).list();
   assertEquals(1,list.size());
+  ProtobufValueWrapper pvw=(ProtobufValueWrapper)list.get(0);
+  User unwrapped=(User)ProtobufUtil.fromWrappedByteArray(ProtobufMetadataManager.getSerializationContextInternal(cacheManager),pvw.getBinary());
+  assertEquals("Adrian",unwrapped.getName());
   Query luceneQuery2=searchFactory.buildQueryBuilder().forEntity(ProtobufValueWrapper.class).get().keyword().onField("name").ignoreFieldBridge().ignoreAnalyzer().matching("Adrian").createQuery();
   List<EntityInfo> queryEntityInfos=searchFactory.createHSQuery().luceneQuery(luceneQuery2).targetedEntities(Collections.<Class<?>>singletonList(ProtobufValueWrapper.class)).projection("surname").queryEntityInfos();
   assertEquals(1,queryEntityInfos.size());
