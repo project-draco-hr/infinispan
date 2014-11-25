@@ -1,8 +1,20 @@
 {
   deployer.undeploy(getJoiningNodeName());
   deployer.undeploy(COORDINATOR_NODE);
-  controller.stop(getJoiningNodeName());
+  try {
+    controller.stop(getJoiningNodeName());
+  }
+ catch (  Exception e) {
+    LOG.warn("Joining node stop failed with %s",e.getCause());
+    controller.kill(getJoiningNodeName());
+  }
+  try {
+    controller.stop(COORDINATOR_NODE);
+  }
+ catch (  Exception e) {
+    LOG.warn("Coordinator node stop failed with %s",e.getCause());
+    controller.kill(COORDINATOR_NODE);
+  }
   assertFalse(controller.isStarted(getJoiningNodeName()));
-  controller.stop(COORDINATOR_NODE);
   assertFalse(controller.isStarted(COORDINATOR_NODE));
 }
