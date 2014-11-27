@@ -4,8 +4,13 @@
       return type.getComponentType();
     }
     GenericArrayType genericArrayType=(GenericArrayType)genericType;
-    TypeVariable genericComponentType=(TypeVariable)genericArrayType.getGenericComponentType();
-    return (Class)genericComponentType.getBounds()[0];
+    Type genericComponentType=genericArrayType.getGenericComponentType();
+    if (genericComponentType instanceof ParameterizedType) {
+      return (Class)((ParameterizedType)genericComponentType).getRawType();
+    }
+ else {
+      return (Class)((TypeVariable)genericComponentType).getBounds()[0];
+    }
   }
  else   if (Collection.class.isAssignableFrom(type)) {
     return determineCollectionElementType(genericType);
