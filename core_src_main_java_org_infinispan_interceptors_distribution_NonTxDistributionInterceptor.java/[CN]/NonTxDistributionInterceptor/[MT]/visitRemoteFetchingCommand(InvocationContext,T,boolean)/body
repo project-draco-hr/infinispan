@@ -1,0 +1,18 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  if (returnValue == null) {
+    Object key=command.getKey();
+    if (needsRemoteGet(ctx,command)) {
+      InternalCacheEntry remoteEntry=remoteGetCacheEntry(ctx,key,command);
+      returnValue=computeGetReturn(remoteEntry,command,returnEntry);
+    }
+    if (returnValue == null) {
+      InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
+      if (localEntry != null) {
+        wrapInternalCacheEntry(localEntry,ctx,key,false,command);
+      }
+      returnValue=computeGetReturn(localEntry,command,returnEntry);
+    }
+  }
+  return returnValue;
+}

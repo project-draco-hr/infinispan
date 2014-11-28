@@ -1,0 +1,18 @@
+{
+  Object returnValue=invokeNextInterceptor(ctx,command);
+  CacheEntry entry=ctx.lookupEntry(command.getKey());
+  boolean skipRemoteGet=entry != null && entry.skipLookup();
+  if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
+    Object key=filterDeltaCompositeKey(command.getKey());
+    if (needsRemoteGet(ctx,command)) {
+      InternalCacheEntry ice=remoteGet(ctx,key,false,command);
+      if (ice != null) {
+        returnValue=ice.getValue();
+      }
+    }
+    if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
+      returnValue=localGet(ctx,key,false,command,isGetCacheEntry);
+    }
+  }
+  return returnValue;
+}

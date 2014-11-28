@@ -6,20 +6,10 @@
   }
   Object ret=invokeNextInterceptor(ctx,command);
   if (ret != null) {
-    if (command.isReturnEntry()) {
-      CacheEntry entry=(CacheEntry)ret;
-      Object returnValue=entry.getValue();
-      if (command.getRemotelyFetchedValue() == null) {
-        returnValue=converter.unboxValue(entry.getValue());
-      }
-      return entryFactory.create(entry.getKey(),returnValue,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle());
+    if (command.getRemotelyFetchedValue() == null) {
+      return converter.unboxValue(ret);
     }
- else {
-      if (command.getRemotelyFetchedValue() == null) {
-        return converter.unboxValue(ret);
-      }
-      return ret;
-    }
+    return ret;
   }
   return null;
 }

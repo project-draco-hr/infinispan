@@ -12,13 +12,6 @@
       throw e;
     }
   }
-  if (performPartitionCheck(ctx,command)) {
-    partitionHandlingManager.checkRead(key);
-    if (result == null) {
-      if (!InfinispanCollections.containsAny(transport.getMembers(),cdl.getOwners(key))) {
-        throw getLog().degradedModeKeyUnavailable(key);
-      }
-    }
-  }
+  postOperationPartitionCheck(ctx,command,key,result);
   return result;
 }

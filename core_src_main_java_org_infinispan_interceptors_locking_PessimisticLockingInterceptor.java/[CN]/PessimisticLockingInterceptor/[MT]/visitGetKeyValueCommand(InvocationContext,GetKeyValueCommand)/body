@@ -1,17 +1,3 @@
 {
-  try {
-    if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-      acquireRemoteIfNeeded(ctx,command,cdl.localNodeIsPrimaryOwner(command.getKey()));
-      long lockTimeout=getLockAcquisitionTimeout(command,false);
-      lockKeyAndCheckOwnership(ctx,command.getKey(),lockTimeout,false);
-    }
-    return invokeNextInterceptor(ctx,command);
-  }
- catch (  Throwable t) {
-    releaseLocksOnFailureBeforePrepare(ctx);
-    throw t;
-  }
- finally {
-    if (!ctx.isInTxScope())     lockManager.unlockAll(ctx);
-  }
+  return visitDataReadCommand(ctx,command);
 }

@@ -1,15 +1,16 @@
 {
   CacheEntry entry=ctx.lookupEntry(key);
   if (entry == null || entry.isNull()) {
+    if (trace) {
+      log.trace("Entry not found");
+    }
     return null;
   }
   if (entry.isRemoved()) {
+    if (trace) {
+      log.tracef("Entry has been deleted and is of type %s",entry.getClass().getSimpleName());
+    }
     return null;
   }
-  if (returnEntry) {
-    CacheEntry copy=entryFactory.copy(entry);
-    return copy;
-  }
-  final Object value=entry.getValue();
-  return value;
+  return entry.getValue();
 }
