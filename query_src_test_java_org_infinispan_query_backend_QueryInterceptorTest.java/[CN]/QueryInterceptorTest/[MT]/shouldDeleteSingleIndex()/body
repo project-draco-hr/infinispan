@@ -1,0 +1,21 @@
+{
+  withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)){
+    @Override public void call(){
+      Cache<String,Object> cache=cm.getCache();
+      cache.put("P1",person1);
+      cache.put("P2",person2);
+      cache.put("C1",car1);
+      cache.put("C2",car2);
+      SearchManager searchManager=Search.getSearchManager(cache);
+      assertEquals(2,countIndex(Car.class,cache));
+      assertEquals(2,countIndex(Person.class,cache));
+      searchManager.purge(Car.class);
+      assertEquals(0,countIndex(Car.class,cache));
+      assertEquals(2,countIndex(Person.class,cache));
+      searchManager.purge(Person.class);
+      assertEquals(0,countIndex(Car.class,cache));
+      assertEquals(0,countIndex(Person.class,cache));
+    }
+  }
+);
+}
