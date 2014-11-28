@@ -4,4 +4,22 @@
   viewListener=new ClusterViewListener();
   cacheManagerNotifier.addListener(viewListener);
   handleClusterView(false,transport.getViewId());
+  if (!isCoordinator) {
+    ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),transport.getViewId());
+    Address coordinator=transport.getCoordinator();
+    Map<Address,Response> responseMap=null;
+    try {
+      responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,getGlobalTimeout(),true,null,false,false);
+      Response response=responseMap.get(coordinator);
+      if (response instanceof SuccessfulResponse) {
+        isRebalancingEnabled=((Boolean)((SuccessfulResponse)response).getResponseValue());
+      }
+ else {
+        log.errorReadingRebalancingStatus(transport.getCoordinator(),null);
+      }
+    }
+ catch (    Exception e) {
+      log.errorReadingRebalancingStatus(transport.getCoordinator(),e);
+    }
+  }
 }
