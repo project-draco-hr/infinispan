@@ -1,7 +1,8 @@
 {
   dcc=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
   dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-  dcc.clustering().hash().numOwners(1).stateTransfer().fetchInMemoryState(true);
+  consistentHashFactory=new ControlledConsistentHashFactory(1);
+  dcc.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(consistentHashFactory);
   createCluster(dcc,2);
   waitForClusterToForm();
 }

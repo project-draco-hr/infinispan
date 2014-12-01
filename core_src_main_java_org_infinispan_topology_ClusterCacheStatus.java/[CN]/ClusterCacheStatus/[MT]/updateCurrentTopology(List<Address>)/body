@@ -16,6 +16,9 @@ synchronized (this) {
       log.tracef("Cache %s no longer has any members, removing topology",cacheName);
       setCurrentTopology(null);
       setStableTopology(null);
+      if (isRebalanceInProgress()) {
+        removeRebalanceConfirmationCollector();
+      }
       return;
     }
     List<Address> newCurrentMembers=pruneInvalidMembers(currentCH.getMembers());

@@ -4,7 +4,7 @@
   final Map<Object,DummyTransaction> keys2Tx=new HashMap<Object,DummyTransaction>(TX_COUNT);
   int viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
   log.tracef("ViewId before %s",viewId);
-  fork(new Callable<Object>(){
+  Future<Object> future=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       for (int i=0; i < TX_COUNT; i++) {
         Object k=getKeyForCache(1);
@@ -25,6 +25,7 @@
   }
 );
   log.tracef("Viewid middle %s",viewId);
+  consistentHashFactory.setOwnerIndexes(2);
   addClusterEnabledCacheManager(dcc);
   waitForClusterToForm();
   viewId=advancedCache(0).getRpcManager().getTransport().getViewId();
@@ -36,7 +37,7 @@
     }
   }
   log.tracef("Number of migrated tx is %s",migratedTx.size());
-  if (migratedTx.size() == 0)   return;
+  assertEquals(TX_COUNT,migratedTx.size());
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == migratedTx.size();
@@ -45,6 +46,7 @@
 );
   log.trace("Releasing the gate");
   ccf.gate.open();
+  future.get(10,TimeUnit.SECONDS);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
       return TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 0;
