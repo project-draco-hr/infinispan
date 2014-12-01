@@ -8,9 +8,9 @@
     valuesInserted.put(key,value);
   }
   int expectedTime=2;
-  long beforeInsert=System.nanoTime();
   cache.put("expired","this shouldn't be returned",expectedTime,TimeUnit.SECONDS);
-  waitUntil(beforeInsert + TimeUnit.SECONDS.toNanos(2) + 50);
+  long afterInsert=System.nanoTime();
+  waitUntil(afterInsert + TimeUnit.SECONDS.toNanos(expectedTime));
   cache.getAdvancedCache().filterEntries(new KeyFilterAsKeyValueFilter<Object,String>(new CollectionKeyFilter<>(Collections.emptySet())));
   Map<Object,String> results;
   try (EntryIterable<Object,String> iterable=cache.getAdvancedCache().filterEntries(new KeyFilterAsKeyValueFilter<Object,String>(new CollectionKeyFilter<>(Collections.emptySet())))){
