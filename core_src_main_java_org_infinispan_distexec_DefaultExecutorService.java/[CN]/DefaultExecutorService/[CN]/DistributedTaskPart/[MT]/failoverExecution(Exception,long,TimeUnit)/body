@@ -15,8 +15,9 @@
     }
   }
 ;
-  Address target=getOwningTask().getTaskFailoverPolicy().failover(fc);
-  DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,getInputKeys(),target,failedOverCount);
+  Address failoverTarget=getOwningTask().getTaskFailoverPolicy().failover(fc);
+  log.distributedTaskFailover(fc.executionFailureLocation(),failoverTarget,cause);
+  DistributedTaskPart<V> part=createDistributedTaskPart(owningTask,distCommand,getInputKeys(),failoverTarget,failedOverCount);
   part.execute();
   return part.get(timeout,unit);
 }
