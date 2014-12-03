@@ -1,0 +1,11 @@
+{
+  if (!configuration.clustering().cacheMode().isClustered()) {
+    return null;
+  }
+ else   if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().transactionProtocol().isTotalOrder()) {
+    return (T)new TotalOrderTxPerCacheInboundInvocationHandler();
+  }
+ else {
+    return (T)new NonTotalOrderPerCacheInboundInvocationHandler();
+  }
+}

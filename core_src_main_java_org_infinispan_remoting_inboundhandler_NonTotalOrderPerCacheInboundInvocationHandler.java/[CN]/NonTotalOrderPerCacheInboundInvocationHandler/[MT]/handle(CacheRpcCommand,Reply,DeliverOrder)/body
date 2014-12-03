@@ -1,0 +1,31 @@
+{
+  if (order == DeliverOrder.TOTAL) {
+    unexpectedDeliverMode(command,order);
+  }
+  try {
+    boolean onExecutorService=!order.preserveOrder() && command.canBlock();
+    BlockingRunnable runnable;
+switch (command.getCommandId()) {
+case SingleRpcCommand.COMMAND_ID:
+      runnable=createDefaultRunnable(command,reply,extractCommandTopologyId((SingleRpcCommand)command),true,onExecutorService);
+    break;
+case MultipleRpcCommand.COMMAND_ID:
+  runnable=createDefaultRunnable(command,reply,extractCommandTopologyId((MultipleRpcCommand)command),true,onExecutorService);
+break;
+case StateRequestCommand.COMMAND_ID:
+runnable=createDefaultRunnable(command,reply,NO_TOPOLOGY_COMMAND,false,onExecutorService);
+break;
+default :
+int commandTopologyId=NO_TOPOLOGY_COMMAND;
+if (command instanceof TopologyAffectedCommand) {
+commandTopologyId=extractCommandTopologyId((TopologyAffectedCommand)command);
+}
+runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
+break;
+}
+handleRunnable(runnable,onExecutorService);
+}
+ catch (Throwable throwable) {
+reply.reply(exceptionHandlingCommand(command,throwable));
+}
+}

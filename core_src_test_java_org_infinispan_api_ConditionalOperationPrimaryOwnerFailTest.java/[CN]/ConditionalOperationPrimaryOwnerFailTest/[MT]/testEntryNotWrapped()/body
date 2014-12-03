@@ -3,7 +3,7 @@
   final Object key=new MagicKey(cache(0),cache(1));
   final Cache<Object,Object> futureBackupOwnerCache=cache(2);
   cache(0).put(key,INITIAL_VALUE);
-  final InboundInvocationHandler spyHandler=spyInvocationHandler(futureBackupOwnerCache);
+  final PerCacheInboundInvocationHandler spyHandler=spyInvocationHandler(futureBackupOwnerCache);
   final EntryFactory spyEntryFactory=spyEntryFactory(futureBackupOwnerCache);
   final CountDownLatch latch1=new CountDownLatch(1);
   final CountDownLatch latch2=new CountDownLatch(1);
@@ -18,7 +18,7 @@
       return invocation.callRealMethod();
     }
   }
-).when(spyHandler).handle(any(CacheRpcCommand.class),any(Address.class),any(Response.class),anyBoolean());
+).when(spyHandler).handle(any(CacheRpcCommand.class),any(Reply.class),any(DeliverOrder.class));
   doAnswer(new Answer(){
     @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
       InvocationContext context=(InvocationContext)invocation.getArguments()[0];
@@ -28,7 +28,6 @@
     }
   }
 ).when(spyEntryFactory).wrapEntryForPut(any(InvocationContext.class),anyObject(),any(InternalCacheEntry.class),anyBoolean(),any(FlagAffectedCommand.class),anyBoolean());
-  replaceComponent(futureBackupOwnerCache.getCacheManager(),InboundInvocationHandler.class,spyHandler,true);
   fork(new Runnable(){
     @Override public void run(){
       killMember(1);

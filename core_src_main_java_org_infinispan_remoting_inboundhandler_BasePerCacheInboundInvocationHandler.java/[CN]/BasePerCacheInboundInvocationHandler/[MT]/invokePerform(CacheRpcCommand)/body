@@ -1,0 +1,20 @@
+{
+  try {
+    if (isTraceEnabled()) {
+      getLog().tracef("Calling perform() on %s",cmd);
+    }
+    if (cmd instanceof CancellableCommand) {
+      cancellationService.register(Thread.currentThread(),((CancellableCommand)cmd).getUUID());
+    }
+    Response response=responseGenerator.getResponse(cmd,cmd.perform(null));
+    if (isTraceEnabled()) {
+      getLog().tracef("About to send back response %s for command %s",response,cmd);
+    }
+    return response;
+  }
+  finally {
+    if (cmd instanceof CancellableCommand) {
+      cancellationService.unregister(((CancellableCommand)cmd).getUUID());
+    }
+  }
+}

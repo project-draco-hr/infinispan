@@ -1,0 +1,23 @@
+{
+  try {
+    if (command instanceof CacheRpcCommand) {
+      handleCacheRpcCommand(origin,(CacheRpcCommand)command,reply,order);
+    }
+ else {
+      if (trace) {
+        log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]",command,origin);
+      }
+      Runnable runnable=create(command,reply);
+      if (order.preserveOrder() || !command.canBlock()) {
+        runnable.run();
+      }
+ else {
+        remoteCommandsExecutor.execute(runnable);
+      }
+    }
+  }
+ catch (  Throwable throwable) {
+    log.debug(throwable);
+    reply.reply(new ExceptionResponse(new CacheException(throwable)));
+  }
+}

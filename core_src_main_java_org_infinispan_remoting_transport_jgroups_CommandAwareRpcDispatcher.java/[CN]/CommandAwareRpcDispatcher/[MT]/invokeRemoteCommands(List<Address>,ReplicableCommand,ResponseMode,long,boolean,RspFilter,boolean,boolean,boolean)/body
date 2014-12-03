@@ -1,32 +1,10 @@
 {
-  if (asyncMarshalling) {
-    asyncExecutor.submit(new Callable<RspList<Object>>(){
-      @Override public RspList<Object> call() throws Exception {
-        return processCalls(command,recipients == null,timeout,filter,recipients,mode,req_marshaller,CommandAwareRpcDispatcher.this,oob,ignoreLeavers,totalOrder);
-      }
-    }
-);
-    return null;
+  DeliverOrder deliverOrder=DeliverOrder.PER_SENDER;
+  if (totalOrder) {
+    deliverOrder=DeliverOrder.TOTAL;
   }
- else {
-    RspList<Object> response;
-    try {
-      response=processCalls(command,recipients == null,timeout,filter,recipients,mode,req_marshaller,this,oob,ignoreLeavers,totalOrder);
-    }
- catch (    InterruptedException e) {
-      throw e;
-    }
-catch (    SuspectedException e) {
-      throw new SuspectException("One of the nodes " + recipients + " was suspected",e);
-    }
-catch (    org.jgroups.TimeoutException e) {
-      throw new TimeoutException("One of the nodes " + recipients + " timed out",e);
-    }
-catch (    Exception e) {
-      throw rewrapAsCacheException(e);
-    }
-    if (mode == ResponseMode.GET_NONE)     return null;
-    if (response.isEmpty() || containsOnlyNulls(response))     return null;
- else     return response;
+ else   if (oob) {
+    deliverOrder=DeliverOrder.NONE;
   }
+  return invokeRemoteCommands(recipients,command,mode,timeout,filter,deliverOrder,asyncMarshalling,ignoreLeavers);
 }

@@ -1,8 +1,6 @@
 {
-  ControllerInboundInvocationHandler handler=new ControllerInboundInvocationHandler(extractComponent(cache,InboundInvocationHandler.class));
-  replaceComponent(cache.getCacheManager(),InboundInvocationHandler.class,handler,true);
-  JGroupsTransport t=(JGroupsTransport)extractComponent(cache,Transport.class);
-  CommandAwareRpcDispatcher card=t.getCommandAwareRpcDispatcher();
-  replaceField(handler,"inboundInvocationHandler",card,CommandAwareRpcDispatcher.class);
+  ControllerInboundInvocationHandler handler=new ControllerInboundInvocationHandler(extractComponent(cache,PerCacheInboundInvocationHandler.class));
+  replaceComponent(cache,PerCacheInboundInvocationHandler.class,handler,true);
+  replaceField(handler,"inboundInvocationHandler",cache.getAdvancedCache().getComponentRegistry(),ComponentRegistry.class);
   return handler;
 }

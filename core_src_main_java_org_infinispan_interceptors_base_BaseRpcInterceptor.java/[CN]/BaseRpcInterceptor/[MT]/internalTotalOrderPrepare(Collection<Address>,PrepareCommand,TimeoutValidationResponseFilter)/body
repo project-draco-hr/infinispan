@@ -1,10 +1,9 @@
 {
   if (defaultSynchronous) {
-    RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,false);
+    RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,DeliverOrder.TOTAL);
     if (responseFilter != null) {
       builder.responseFilter(responseFilter);
     }
-    builder.totalOrder(true);
     Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,prepareCommand,builder.build());
     if (responseFilter != null) {
       responseFilter.validate();
@@ -12,8 +11,7 @@
     return responseMap;
   }
  else {
-    RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),false);
-    builder.totalOrder(true);
+    RpcOptionsBuilder builder=rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),DeliverOrder.TOTAL);
     return rpcManager.invokeRemotely(recipients,prepareCommand,builder.build());
   }
 }

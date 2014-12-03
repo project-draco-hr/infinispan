@@ -1,0 +1,28 @@
+{
+  try {
+    if (beforeInvoke()) {
+      response=handler.invokePerform(command);
+    }
+    afterInvoke();
+  }
+ catch (  InterruptedException e) {
+    response=handler.interruptedException(command);
+    onException(e);
+  }
+catch (  OutdatedTopologyException oe) {
+    response=handler.outdatedTopology(oe);
+    onException(oe);
+  }
+catch (  Exception e) {
+    response=handler.exceptionHandlingCommand(command,e);
+    onException(e);
+  }
+catch (  Throwable throwable) {
+    response=handler.exceptionHandlingCommand(command,throwable);
+    onException(throwable);
+  }
+ finally {
+    reply.reply(response);
+    onFinally();
+  }
+}

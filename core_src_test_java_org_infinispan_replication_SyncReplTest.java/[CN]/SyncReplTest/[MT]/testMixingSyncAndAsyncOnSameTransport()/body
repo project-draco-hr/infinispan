@@ -1,6 +1,6 @@
 {
-  Cache cache1=cache(0,"replSync");
-  Cache cache2=cache(1,"replSync");
+  Cache<String,String> cache1=cache(0,"replSync");
+  cache(1,"replSync");
   waitForClusterToForm("replSync");
   Transport originalTransport=null;
   RpcManagerImpl rpcManager=null;
@@ -9,20 +9,20 @@
     ConfigurationBuilder asyncCache=getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC,false);
     asyncCache.clustering().async().asyncMarshalling(true);
     defineConfigurationOnAllManagers("asyncCache",asyncCache);
-    Cache asyncCache1=manager(0).getCache("asyncCache");
-    Cache asyncCache2=manager(1).getCache("asyncCache");
+    Cache<String,String> asyncCache1=manager(0).getCache("asyncCache");
+    manager(1).getCache("asyncCache");
     waitForClusterToForm("asyncCache");
     originalTransport=TestingUtil.extractGlobalComponent(cache1.getCacheManager(),Transport.class);
     Transport mockTransport=spy(originalTransport);
     rpcManager=(RpcManagerImpl)TestingUtil.extractComponent(cache1,RpcManager.class);
     rpcManager.setTransport(mockTransport);
     cache1.put("k","v");
-    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean(),anyBoolean());
+    verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),any(ReplicableCommand.class),eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS),anyLong(),any(ResponseFilter.class),any(DeliverOrder.class),anyBoolean());
     asyncRpcManager=(RpcManagerImpl)TestingUtil.extractComponent(asyncCache1,RpcManager.class);
     asyncRpcManager.setTransport(mockTransport);
     reset(mockTransport);
     asyncCache1.put("k","v");
-    verify(mockTransport).invokeRemotely((List<Address>)anyObject(),(CacheRpcCommand)anyObject(),eq(ResponseMode.ASYNCHRONOUS),anyLong(),anyBoolean(),(ResponseFilter)anyObject(),anyBoolean(),anyBoolean());
+    verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),any(ReplicableCommand.class),eq(ResponseMode.ASYNCHRONOUS),anyLong(),any(ResponseFilter.class),any(DeliverOrder.class),anyBoolean());
   }
   finally {
     if (rpcManager != null)     rpcManager.setTransport(originalTransport);

@@ -1,0 +1,47 @@
+{
+  try {
+    int commandTopologyId=NO_TOPOLOGY_COMMAND;
+    boolean onExecutorService=!order.preserveOrder() && command.canBlock();
+    BlockingRunnable runnable;
+switch (command.getCommandId()) {
+case MultipleRpcCommand.COMMAND_ID:
+      commandTopologyId=extractCommandTopologyId((MultipleRpcCommand)command);
+    runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
+  break;
+case SingleRpcCommand.COMMAND_ID:
+commandTopologyId=extractCommandTopologyId((SingleRpcCommand)command);
+runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
+break;
+case StateRequestCommand.COMMAND_ID:
+runnable=createDefaultRunnable(command,reply,commandTopologyId,false,onExecutorService);
+break;
+case TotalOrderVersionedPrepareCommand.COMMAND_ID:
+case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
+if (!stateTransferManager.ownsData()) {
+log.debugf("No Data in local node.");
+reply.reply(null);
+return;
+}
+TotalOrderRemoteTransactionState state=((TotalOrderPrepareCommand)command).getOrCreateState();
+totalOrderManager.ensureOrder(state,((PrepareCommand)command).getAffectedKeysToLock(false));
+runnable=createRunnableForPrepare(state,(PrepareCommand)command,reply);
+onExecutorService=true;
+break;
+case TotalOrderCommitCommand.COMMAND_ID:
+case TotalOrderVersionedCommitCommand.COMMAND_ID:
+case RollbackCommand.COMMAND_ID:
+runnable=createRunnableForCommitOrRollback(command,reply);
+break;
+default :
+if (command instanceof TopologyAffectedCommand) {
+commandTopologyId=extractCommandTopologyId((TopologyAffectedCommand)command);
+}
+runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
+break;
+}
+handleRunnable(runnable,onExecutorService);
+}
+ catch (Throwable throwable) {
+reply.reply(exceptionHandlingCommand(command,throwable));
+}
+}

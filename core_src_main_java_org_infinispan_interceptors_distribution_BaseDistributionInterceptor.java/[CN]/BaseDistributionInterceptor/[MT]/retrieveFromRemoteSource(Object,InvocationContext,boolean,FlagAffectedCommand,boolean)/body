@@ -2,7 +2,7 @@
   GlobalTransaction gtx=ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,command.getFlags(),acquireRemoteLock,gtx);
   get.setWrite(isWrite);
-  RpcOptionsBuilder rpcOptionsBuilder=rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE,false);
+  RpcOptionsBuilder rpcOptionsBuilder=rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE,DeliverOrder.NONE);
   int lastTopologyId=-1;
   InternalCacheEntry value=null;
   while (value == null) {
@@ -14,11 +14,11 @@
     List<Address> targets;
     if (lastTopologyId < currentTopologyId) {
       lastTopologyId=currentTopologyId;
-      targets=new ArrayList<Address>(cacheTopology.getReadConsistentHash().locateOwners(key));
+      targets=new ArrayList<>(cacheTopology.getReadConsistentHash().locateOwners(key));
     }
  else     if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
       lastTopologyId=currentTopologyId + 1;
-      targets=new ArrayList<Address>(cacheTopology.getPendingCH().locateOwners(key));
+      targets=new ArrayList<>(cacheTopology.getPendingCH().locateOwners(key));
       targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
       if (targets.isEmpty()) {
         if (trace) {

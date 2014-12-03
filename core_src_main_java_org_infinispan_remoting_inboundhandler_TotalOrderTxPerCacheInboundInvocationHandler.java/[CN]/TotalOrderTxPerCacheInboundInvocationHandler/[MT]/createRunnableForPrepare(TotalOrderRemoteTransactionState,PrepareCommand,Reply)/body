@@ -1,0 +1,35 @@
+{
+  return new BaseBlockingRunnable(this,command,reply){
+    @Override public boolean isReady(){
+      for (      TotalOrderLatch block : state.getConflictingTransactionBlocks()) {
+        if (block.isBlocked()) {
+          return false;
+        }
+      }
+      return true;
+    }
+    @Override protected void onException(    Throwable throwable){
+      if (throwable instanceof RetryPrepareException) {
+        RetryPrepareException retry=(RetryPrepareException)throwable;
+        log.debugf(retry,"Prepare [%s] conflicted with state transfer",command);
+        response=new ExceptionResponse(retry);
+      }
+      log.debugf("Exception received on prepare. Releasing state.");
+      totalOrderManager.release(state);
+    }
+    @Override protected void afterInvoke(){
+      if (response instanceof ExceptionResponse) {
+        if (trace) {
+          log.trace("Exception received on prepare. Releasing state.");
+        }
+        totalOrderManager.release(state);
+      }
+    }
+    @Override protected void onFinally(){
+      if (((PrepareCommand)command).isOnePhaseCommit() || response instanceof ExceptionResponse) {
+        remoteCommandsExecutor.checkForReadyTasks();
+      }
+    }
+  }
+;
+}
