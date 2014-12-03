@@ -22,6 +22,10 @@ synchronized (this) {
       return;
     }
     List<Address> newCurrentMembers=pruneInvalidMembers(currentCH.getMembers());
+    if (newCurrentMembers.isEmpty()) {
+      createInitialCacheTopology();
+      return;
+    }
     ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,getCapacityFactors());
     List<Address> actualMembers=newCurrentMembers;
     ConsistentHash newPendingCH=null;
@@ -32,7 +36,6 @@ synchronized (this) {
     }
     CacheTopology newTopology=new CacheTopology(topologyId + 1,rebalanceId,newCurrentCH,newPendingCH,actualMembers);
     setCurrentTopology(newTopology);
-    newTopology.logRoutingTableInformation();
     clusterTopologyManager.broadcastTopologyUpdate(cacheName,newTopology,availabilityMode,isTotalOrder(),isDistributed());
   }
 }

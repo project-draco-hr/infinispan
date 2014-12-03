@@ -24,6 +24,10 @@ synchronized (this) {
     List<Address> newMembers=new ArrayList<Address>(queuedRebalanceMembers);
     queuedRebalanceMembers=null;
     log.tracef("Rebalancing consistent hash for cache %s, members are %s",cacheName,newMembers);
+    if (cacheTopology == null) {
+      createInitialCacheTopology();
+      return;
+    }
     int newTopologyId=cacheTopology.getTopologyId() + 1;
     int newRebalanceId=cacheTopology.getRebalanceId() + 1;
     ConsistentHash currentCH=cacheTopology.getCurrentCH();
@@ -45,7 +49,7 @@ synchronized (this) {
     }
     CacheTopology newTopology=new CacheTopology(newTopologyId,newRebalanceId,currentCH,balancedCH,balancedCH.getMembers());
     log.tracef("Updating cache %s topology for rebalance: %s",cacheName,newTopology);
-    newTopology.logRoutingTableInformation();
+    setCurrentTopology(newTopology);
     initRebalanceConfirmationCollector(newTopology);
   }
   clusterTopologyManager.broadcastRebalanceStart(cacheName,this.getCurrentTopology(),this.isTotalOrder(),this.isDistributed());

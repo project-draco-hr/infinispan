@@ -1,0 +1,18 @@
+{
+  final LocalTopologyManager localTopologyManager=TestingUtil.extractGlobalComponent(manager,LocalTopologyManager.class);
+  LocalTopologyManager spyLocalTopologyManager=spy(localTopologyManager);
+  doAnswer(new Answer<Object>(){
+    @Override public Object answer(    InvocationOnMock invocation) throws Throwable {
+      CacheTopology topology=(CacheTopology)invocation.getArguments()[1];
+      List<Address> members=topology.getMembers();
+      checkpoint.trigger("rebalance_" + members);
+      if (members.size() == numMembers) {
+        log.debugf("Blocking the REBALANCE_START command with members %s on %s",members,manager.getAddress());
+        checkpoint.awaitStrict("merge",30,TimeUnit.SECONDS);
+      }
+      return invocation.callRealMethod();
+    }
+  }
+).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME),any(CacheTopology.class),anyInt());
+  TestingUtil.replaceComponent(manager,LocalTopologyManager.class,spyLocalTopologyManager,true);
+}
