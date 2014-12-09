@@ -1,0 +1,13 @@
+{
+  if (!cache.getStatus().allowInvocations()) {
+    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+  }
+  final List<XSiteState> localChunks=Arrays.asList(cmd.getChunk());
+  if (trace) {
+    log.tracef("Local node will apply %s",localChunks);
+  }
+  LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(cache,localChunks)).call();
+  if (!cache.getStatus().allowInvocations()) {
+    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
+  }
+}
