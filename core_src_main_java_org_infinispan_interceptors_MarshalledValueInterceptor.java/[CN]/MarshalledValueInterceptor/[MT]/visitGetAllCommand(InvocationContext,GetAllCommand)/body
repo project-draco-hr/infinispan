@@ -1,0 +1,21 @@
+{
+  if (wrapKeys) {
+    Set<Object> marshalledKeys=new HashSet<>();
+    for (    Object key : command.getKeys()) {
+      if (!isTypeExcluded(key.getClass())) {
+        MarshalledValue mv=createMarshalledValue(key,ctx);
+        marshalledKeys.add(mv);
+      }
+ else {
+        marshalledKeys.add(key);
+      }
+    }
+    command.setKeys(marshalledKeys);
+  }
+  Map<Object,Object> map=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
+  Map<Object,Object> unmarshalled=command.createMap();
+  for (  Map.Entry<Object,Object> entry : map.entrySet()) {
+    unmarshalled.put(processRetVal(entry.getKey(),ctx),processRetVal(entry.getValue(),ctx));
+  }
+  return unmarshalled;
+}

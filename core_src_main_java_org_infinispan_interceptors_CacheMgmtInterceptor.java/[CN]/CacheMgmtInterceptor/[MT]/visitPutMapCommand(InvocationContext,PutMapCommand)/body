@@ -3,10 +3,10 @@
   boolean statisticsEnabled=getStatisticsEnabled(command);
   if (statisticsEnabled)   start=timeService.time();
   final Object retval=invokeNextInterceptor(ctx,command);
-  if (statisticsEnabled) {
+  if (statisticsEnabled && ctx.isOriginLocal()) {
     final long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
     final Map<Object,Object> data=command.getMap();
-    if (data != null && ctx.isOriginLocal() && !data.isEmpty()) {
+    if (data != null && !data.isEmpty()) {
       storeTimes.add(intervalMilliseconds);
       stores.add(data.size());
     }

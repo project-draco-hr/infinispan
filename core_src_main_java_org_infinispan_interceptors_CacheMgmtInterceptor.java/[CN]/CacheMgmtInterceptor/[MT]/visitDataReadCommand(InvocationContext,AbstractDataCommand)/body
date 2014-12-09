@@ -3,17 +3,15 @@
   boolean statisticsEnabled=getStatisticsEnabled(command);
   if (statisticsEnabled)   start=timeService.time();
   Object retval=invokeNextInterceptor(ctx,command);
-  if (statisticsEnabled) {
+  if (statisticsEnabled && ctx.isOriginLocal()) {
     long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
-    if (ctx.isOriginLocal()) {
-      if (retval == null) {
-        missTimes.add(intervalMilliseconds);
-        misses.increment();
-      }
+    if (retval == null) {
+      missTimes.add(intervalMilliseconds);
+      misses.increment();
+    }
  else {
-        hitTimes.add(intervalMilliseconds);
-        hits.increment();
-      }
+      hitTimes.add(intervalMilliseconds);
+      hits.increment();
     }
   }
   return retval;

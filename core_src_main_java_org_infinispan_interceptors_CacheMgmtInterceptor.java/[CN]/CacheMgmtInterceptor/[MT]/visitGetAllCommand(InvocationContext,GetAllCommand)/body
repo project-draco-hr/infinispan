@@ -1,0 +1,26 @@
+{
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
+  Object retval=invokeNextInterceptor(ctx,command);
+  if (statisticsEnabled && ctx.isOriginLocal()) {
+    long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
+    int requests=command.getKeys().size();
+    int hitCount=((Map<Object,Object>)retval).size();
+    for (    Entry<Object,Object> entry : ((Map<Object,Object>)retval).entrySet()) {
+      if (entry.getValue() != null) {
+        hitCount++;
+      }
+    }
+    int missCount=requests - hitCount;
+    if (hitCount > 0) {
+      hits.add(hitCount);
+      hitTimes.add(intervalMilliseconds * hitCount / requests);
+    }
+    if (missCount > 0) {
+      misses.add(missCount);
+      missTimes.add(intervalMilliseconds * missCount / requests);
+    }
+  }
+  return retval;
+}

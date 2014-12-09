@@ -1,0 +1,59 @@
+{
+  Map<Object,Object> map=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
+  if (map == null)   map=command.createMap();
+  if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)|| command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+    return map;
+  }
+  Set<Object> requestedKeys=new HashSet<>(command.getKeys().size());
+  for (  Object key : command.getKeys()) {
+    CacheEntry entry=ctx.lookupEntry(key);
+    boolean skipRemoteGet=entry != null && entry.skipLookup();
+    if (!skipRemoteGet && map.get(key) == null) {
+      boolean shouldFetchFromRemote=false;
+      if (entry == null || entry.isNull()) {
+        ConsistentHash ch=stateTransferManager.getCacheTopology().getReadConsistentHash();
+        shouldFetchFromRemote=!isValueAvailableLocally(ch,key);
+        if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
+          getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
+        }
+      }
+      if (shouldFetchFromRemote) {
+        requestedKeys.add(key);
+      }
+ else       if (!ctx.isEntryRemovedInContext(key)) {
+        Object localValue=localGet(ctx,key,false,command,command.isReturnEntries());
+        if (localValue != null) {
+          map.put(key,localValue);
+        }
+      }
+    }
+  }
+  if (!requestedKeys.isEmpty()) {
+    if (trace) {
+      log.tracef("Fetching entries for keys %s from remote nodes",requestedKeys);
+    }
+    Map<Object,InternalCacheEntry> previouslyRetrieved=command.getRemotelyFetched();
+    Map<Object,InternalCacheEntry> justRetrieved=retrieveFromRemoteSources(requestedKeys,ctx,command.getFlags());
+    if (previouslyRetrieved != null) {
+      previouslyRetrieved.putAll(justRetrieved);
+    }
+ else {
+      command.setRemotelyFetched(justRetrieved);
+    }
+    for (    Entry<Object,InternalCacheEntry> entry : justRetrieved.entrySet()) {
+      Object key=entry.getKey();
+      InternalCacheEntry value=entry.getValue();
+      map.put(entry.getKey(),command.isReturnEntries() ? value : value != null ? value.getValue() : null);
+      if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+        ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,value.getMetadata().version());
+      }
+      if (!ctx.replaceValue(key,value)) {
+        ctx.putLookedUpEntry(key,value);
+        if (ctx.isInTxScope()) {
+          ((TxInvocationContext)ctx).getCacheTransaction().replaceVersionRead(key,value.getMetadata().version());
+        }
+      }
+    }
+  }
+  return map;
+}

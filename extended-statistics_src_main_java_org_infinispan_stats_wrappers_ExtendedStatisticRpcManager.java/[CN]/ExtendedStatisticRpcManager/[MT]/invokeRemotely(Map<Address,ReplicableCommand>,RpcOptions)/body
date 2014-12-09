@@ -1,6 +1,8 @@
 {
   long start=timeService.time();
   Map<Address,Response> responseMap=actual.invokeRemotely(rpcs,options);
-  updateStats(null,options.responseMode().isSynchronous(),timeService.timeDuration(start,NANOSECONDS),recipients);
+  for (  Entry<Address,ReplicableCommand> entry : rpcs.entrySet()) {
+    updateStats(entry.getValue(),options.responseMode().isSynchronous(),timeService.timeDuration(start,NANOSECONDS),Collections.singleton(entry.getKey()));
+  }
   return responseMap;
 }
