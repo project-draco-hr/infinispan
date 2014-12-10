@@ -1,0 +1,33 @@
+{
+synchronized (operationQueue) {
+switch (cacheRpcCommand.getCommandId()) {
+case PutKeyValueCommand.COMMAND_ID:
+      operationQueue.add(Operation.PUT);
+    break;
+case ReplaceCommand.COMMAND_ID:
+  operationQueue.add(Operation.REPLACE);
+break;
+case RemoveCommand.COMMAND_ID:
+operationQueue.add(Operation.REMOVE);
+break;
+case ClearCommand.COMMAND_ID:
+operationQueue.add(Operation.CLEAR);
+break;
+case PutMapCommand.COMMAND_ID:
+operationQueue.add(Operation.PUT_MAP);
+break;
+case PrepareCommand.COMMAND_ID:
+case VersionedPrepareCommand.COMMAND_ID:
+case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
+case TotalOrderVersionedPrepareCommand.COMMAND_ID:
+for (WriteCommand command : ((PrepareCommand)cacheRpcCommand).getModifications()) {
+checkCommand(command);
+}
+break;
+case SingleRpcCommand.COMMAND_ID:
+checkCommand(((SingleRpcCommand)cacheRpcCommand).getCommand());
+break;
+}
+operationQueue.notifyAll();
+}
+}
