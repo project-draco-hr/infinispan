@@ -1,0 +1,139 @@
+{
+  final PathAddress address=PathAddress.pathAddress(operation.require(OP_ADDR));
+  final String cacheContainerName=address.getElement(address.size() - 2).getValue();
+  final String cacheName=address.getLastElement().getValue();
+  final String attrName=operation.require(NAME).asString();
+  final ServiceController<?> controller=context.getServiceRegistry(false).getService(CacheService.getServiceName(cacheContainerName,cacheName));
+  Cache<?,?> cache=(Cache<?,?>)controller.getValue();
+  ClusteredCacheMetrics metric=ClusteredCacheMetrics.getStat(attrName);
+  ModelNode result=new ModelNode();
+  if (metric == null) {
+    context.getFailureDescription().set(String.format("Unknown metric %s",attrName));
+  }
+ else   if (cache == null) {
+    context.getFailureDescription().set(String.format("Unavailable cache %s",attrName));
+  }
+ else {
+    AdvancedCache<?,?> aCache=cache.getAdvancedCache();
+    ClusterCacheStats clusterCacheStats=aCache.getComponentRegistry().getComponent(ClusterCacheStats.class);
+switch (metric) {
+case NUMBER_OF_LOCKS_AVAILABLE:
+{
+        result.set(clusterCacheStats.getNumberOfLocksAvailable());
+        break;
+      }
+case NUMBER_OF_LOCKS_HELD:
+{
+      result.set(clusterCacheStats.getNumberOfLocksHeld());
+      break;
+    }
+case AVERAGE_READ_TIME:
+{
+    result.set(clusterCacheStats.getAverageReadTime());
+    break;
+  }
+case ELAPSED_TIME:
+{
+  result.set(clusterCacheStats.getTimeSinceStart());
+  break;
+}
+case AVERAGE_WRITE_TIME:
+{
+result.set(clusterCacheStats.getAverageWriteTime());
+break;
+}
+case AVERAGE_REMOVE_TIME:
+{
+result.set(clusterCacheStats.getAverageRemoveTime());
+break;
+}
+case EVICTIONS:
+{
+result.set(clusterCacheStats.getEvictions());
+break;
+}
+case HIT_RATIO:
+{
+result.set(clusterCacheStats.getHitRatio());
+break;
+}
+case HITS:
+{
+result.set(clusterCacheStats.getHits());
+break;
+}
+case MISSES:
+{
+result.set(clusterCacheStats.getMisses());
+break;
+}
+case NUMBER_OF_ENTRIES:
+{
+result.set(clusterCacheStats.getCurrentNumberOfEntries());
+break;
+}
+case READ_WRITE_RATIO:
+{
+result.set(clusterCacheStats.getReadWriteRatio());
+break;
+}
+case REMOVE_HITS:
+{
+result.set(clusterCacheStats.getRemoveHits());
+break;
+}
+case REMOVE_MISSES:
+{
+result.set(clusterCacheStats.getRemoveMisses());
+break;
+}
+case STORES:
+{
+result.set(clusterCacheStats.getStores());
+break;
+}
+case TIME_SINCE_RESET:
+{
+result.set(clusterCacheStats.getTimeSinceStart());
+break;
+}
+case INVALIDATIONS:
+{
+result.set(clusterCacheStats.getInvalidations());
+break;
+}
+case PASSIVATIONS:
+{
+result.set(clusterCacheStats.getPassivations());
+break;
+}
+case ACTIVATIONS:
+{
+result.set(clusterCacheStats.getActivations());
+break;
+}
+case CACHE_LOADER_LOADS:
+{
+result.set(clusterCacheStats.getCacheLoaderLoads());
+break;
+}
+case CACHE_LOADER_MISSES:
+{
+result.set(clusterCacheStats.getCacheLoaderMisses());
+break;
+}
+case CACHE_LOADER_STORES:
+{
+result.set(clusterCacheStats.getStoreWrites());
+break;
+}
+default :
+{
+context.getFailureDescription().set(String.format("Unknown metric %s",metric));
+break;
+}
+}
+context.getResult().set(result);
+}
+context.stepCompleted();
+}

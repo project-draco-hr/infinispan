@@ -5,8 +5,16 @@
     if (cm.cacheExists(cn)) {
       existingCacheCounter++;
       Stats stats=cm.getCache(cn).getAdvancedCache().getStats();
-      totalHitsOverMisses+=stats.getHits() / stats.getMisses();
+      long misses=stats.getMisses();
+      if (misses > 0) {
+        totalHitsOverMisses+=stats.getHits() / misses;
+      }
     }
   }
-  return totalHitsOverMisses / existingCacheCounter;
+  if (existingCacheCounter > 0) {
+    return totalHitsOverMisses / existingCacheCounter;
+  }
+ else {
+    return -1;
+  }
 }

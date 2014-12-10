@@ -5,8 +5,16 @@
     if (cm.cacheExists(cn)) {
       existingCacheCounter++;
       Stats stats=cm.getCache(cn).getAdvancedCache().getStats();
-      totalRWRatio+=(double)((stats.getHits() + stats.getMisses()) / stats.getStores());
+      long stores=stats.getStores();
+      if (stores > 0) {
+        totalRWRatio+=(double)((stats.getHits() + stats.getMisses()) / stores);
+      }
     }
   }
-  return totalRWRatio / existingCacheCounter;
+  if (existingCacheCounter > 0) {
+    return totalRWRatio / existingCacheCounter;
+  }
+ else {
+    return -1;
+  }
 }
