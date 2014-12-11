@@ -7,7 +7,7 @@
   final CheckPoint checkPoint=new CheckPoint();
   wrapGlobalComponent(cache(NYC,0).getCacheManager(),BackupReceiverRepository.class,new WrapFactory<BackupReceiverRepository,BackupReceiverRepository,CacheContainer>(){
     @Override public BackupReceiverRepository wrap(    final CacheContainer wrapOn,    final BackupReceiverRepository current){
-      BackupReceiverRepositoryDelegator delegator=new BackupReceiverRepositoryDelegator(current){
+      return new BackupReceiverRepositoryDelegator(current){
         @Override public BackupReceiver getBackupReceiver(        String originSiteName,        String cacheName){
           return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName,cacheName)){
             @Override public void handleStateTransferState(            XSiteStatePushCommand cmd) throws Exception {
@@ -19,10 +19,6 @@
         }
       }
 ;
-      JGroupsTransport t=(JGroupsTransport)extractGlobalComponent(wrapOn,Transport.class);
-      CommandAwareRpcDispatcher card=t.getCommandAwareRpcDispatcher();
-      replaceField(delegator,"backupReceiverRepository",card,CommandAwareRpcDispatcher.class);
-      return delegator;
     }
   }
 ,true);
