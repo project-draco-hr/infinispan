@@ -1,0 +1,75 @@
+{
+  if (definitions.size() == 0)   return;
+  Result operationResult=connection.execute(op);
+  if (!operationResult.isSuccess()) {
+    if (definitions.size() == 1 && definitions.get(0).isRequired() == false) {
+      return;
+    }
+    throw new IOException("Operation " + op + " failed: "+ operationResult.getFailureDescription());
+  }
+  if (operationResult.getResult() instanceof List) {
+    PropertyList propertyList=loadHandlePropertyList((PropertyDefinitionList)definitions.get(0),operationResult.getResult());
+    if (propertyList != null)     config.put(propertyList);
+    return;
+  }
+  Map<String,Object> results=(Map<String,Object>)operationResult.getResult();
+  for (  PropertyDefinition propDef : definitions) {
+    String propertyName=propDef.getName();
+    if (propDef instanceof PropertyDefinitionList && (propertyName.startsWith("*"))) {
+      propDef=((PropertyDefinitionList)propDef).getMemberDefinition();
+      if (!(propDef instanceof PropertyDefinitionMap)) {
+        log.error("Embedded child is not a map");
+        return;
+      }
+      PropertyList list=new PropertyList(propertyName);
+      if (results != null) {
+        for (        Map.Entry<String,Object> entry : results.entrySet()) {
+          Object val=entry.getValue();
+          String key=entry.getKey();
+          PropertyMap propertyMap=loadHandlePropertyMap((PropertyDefinitionMap)propDef,val,key);
+          if (nameFromPathProperty != null) {
+            PropertySimple ps=new PropertySimple(nameFromPathProperty,key);
+            propertyMap.put(ps);
+          }
+          if (propertyMap != null)           list.add(propertyMap);
+        }
+      }
+      config.put(list);
+    }
+ else     if (propDef instanceof PropertyDefinitionMap && (propertyName.startsWith("*"))) {
+      Map<String,Object> mapResult=results;
+      PropertyMap propertyMap=loadHandlePropertyMap((PropertyDefinitionMap)propDef,mapResult,propertyName);
+      config.put(propertyMap);
+    }
+ else {
+      Object valueObject;
+      if (propertyName.contains(":")) {
+        try {
+          Integer.parseInt(propertyName.substring(propertyName.lastIndexOf(':') + 1));
+          propertyName=propertyName.substring(0,propertyName.lastIndexOf(':'));
+        }
+ catch (        Exception e) {
+        }
+      }
+      if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed") || propertyName.endsWith(":nullable")) {
+        String realName=propertyName.substring(0,propertyName.indexOf(":"));
+        valueObject=results.get(realName);
+      }
+ else {
+        valueObject=results.get(propertyName);
+      }
+      if (propDef instanceof PropertyDefinitionSimple) {
+        PropertySimple value=loadHandlePropertySimple((PropertyDefinitionSimple)propDef,valueObject);
+        if (value != null)         config.put(value);
+      }
+ else       if (propDef instanceof PropertyDefinitionList) {
+        PropertyList propertyList=loadHandlePropertyList((PropertyDefinitionList)propDef,valueObject);
+        if (propertyList != null)         config.put(propertyList);
+      }
+ else       if (propDef instanceof PropertyDefinitionMap) {
+        PropertyMap propertyMap=loadHandlePropertyMap((PropertyDefinitionMap)propDef,valueObject,null);
+        if (propertyMap != null)         config.put(propertyMap);
+      }
+    }
+  }
+}
