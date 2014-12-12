@@ -1,0 +1,10 @@
+{
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getTransactionImplClass()).having("date").between(makeDate("2013-01-01"),makeDate("2013-01-31")).includeUpper(false).toBuilder().build();
+  List<Transaction> list=q.list();
+  assertEquals(3,list.size());
+  for (  Transaction t : list) {
+    assertTrue(t.getDate().compareTo(makeDate("2013-01-31")) < 0);
+    assertTrue(t.getDate().compareTo(makeDate("2013-01-01")) >= 0);
+  }
+}

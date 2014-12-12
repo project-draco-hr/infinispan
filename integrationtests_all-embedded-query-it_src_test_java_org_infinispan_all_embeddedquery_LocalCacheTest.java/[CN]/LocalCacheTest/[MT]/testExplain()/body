@@ -1,0 +1,19 @@
+{
+  loadTestingData();
+  CacheQuery cacheQuery=createCacheQuery(cache,"blurb","Eats");
+  int matchCounter=0;
+  int i=0;
+  while (true) {
+    try {
+      Explanation found=cacheQuery.explain(i);
+      if (found.isMatch())       matchCounter++;
+      i++;
+      if (i >= 10 || matchCounter == 2)       break;
+    }
+ catch (    ArrayIndexOutOfBoundsException ex) {
+      break;
+    }
+  }
+  assertEquals(2,matchCounter);
+  StaticTestingErrorHandler.assertAllGood(cache);
+}

@@ -1,0 +1,24 @@
+{
+  loadTestingData();
+  Sort sort=new Sort(new SortField("age",SortField.Type.STRING));
+{
+    CacheQuery cacheQuery=createCacheQuery(cache,"name","Goat");
+    List<Object> found=cacheQuery.list();
+    assertPeopleInList(found,person2,person3);
+    cacheQuery.sort(sort);
+    found=cacheQuery.list();
+    assertPeopleInSortedList(found,person3,person2);
+  }
+  StaticTestingErrorHandler.assertAllGood(cache);
+  person2.setAge(10);
+  cache.put(key2,person2);
+{
+    CacheQuery cacheQuery=createCacheQuery(cache,"name","Goat");
+    List<Object> found=cacheQuery.list();
+    assertPeopleInList(found,person2,person3);
+    cacheQuery.sort(sort);
+    found=cacheQuery.list();
+    assertPeopleInSortedList(found,person2,person3);
+  }
+  StaticTestingErrorHandler.assertAllGood(cache);
+}

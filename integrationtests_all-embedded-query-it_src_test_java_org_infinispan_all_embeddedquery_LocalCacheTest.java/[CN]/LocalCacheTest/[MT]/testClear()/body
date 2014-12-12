@@ -1,0 +1,14 @@
+{
+  loadTestingData();
+  Term navin=new Term("name","navin");
+  Term goat=new Term("name","goat");
+  BooleanQuery luceneQuery=new BooleanQuery();
+  luceneQuery.add(new TermQuery(goat),Occur.SHOULD);
+  luceneQuery.add(new TermQuery(navin),Occur.SHOULD);
+  CacheQuery cacheQuery=Search.getSearchManager(cache).getQuery(luceneQuery);
+  assertEquals("Expected 3, got " + cacheQuery.getResultSize(),3,cacheQuery.getResultSize());
+  cache.clear();
+  cacheQuery=Search.getSearchManager(cache).getQuery(luceneQuery);
+  assertEquals(0,cacheQuery.getResultSize());
+  StaticTestingErrorHandler.assertAllGood(cache);
+}

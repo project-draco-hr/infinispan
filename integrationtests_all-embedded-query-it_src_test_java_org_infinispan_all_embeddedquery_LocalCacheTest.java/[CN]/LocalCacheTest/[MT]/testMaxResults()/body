@@ -1,0 +1,28 @@
+{
+  loadTestingData();
+  CacheQuery cacheQuery=createCacheQuery(cache,"blurb","eats").maxResults(1);
+  assertEquals(2,cacheQuery.getResultSize());
+  assertEquals(1,cacheQuery.list().size());
+  ResultIterator eagerIterator=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.EAGER));
+  try {
+    assertEquals(1,countElements(eagerIterator));
+  }
+  finally {
+    eagerIterator.close();
+  }
+  ResultIterator lazyIterator=cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
+  try {
+    assertEquals(1,countElements(lazyIterator));
+  }
+  finally {
+    lazyIterator.close();
+  }
+  ResultIterator defaultIterator=cacheQuery.iterator();
+  try {
+    assertEquals(1,countElements(defaultIterator));
+  }
+  finally {
+    defaultIterator.close();
+  }
+  StaticTestingErrorHandler.assertAllGood(cache);
+}
