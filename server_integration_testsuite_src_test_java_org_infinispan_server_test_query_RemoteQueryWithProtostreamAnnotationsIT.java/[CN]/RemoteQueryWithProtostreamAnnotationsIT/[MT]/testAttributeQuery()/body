@@ -1,0 +1,13 @@
+{
+  remoteCache.put(1,createUser1());
+  remoteCache.put(2,createUser2());
+  AnnotatedUser fromCache=remoteCache.get(1);
+  assertUser1(fromCache);
+  QueryFactory qf=Search.getQueryFactory(remoteCache);
+  Query query=qf.from(AnnotatedUser.class).having("name").eq("Tom").toBuilder().build();
+  List<AnnotatedUser> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(AnnotatedUser.class,list.get(0).getClass());
+  assertUser1(list.get(0));
+}
