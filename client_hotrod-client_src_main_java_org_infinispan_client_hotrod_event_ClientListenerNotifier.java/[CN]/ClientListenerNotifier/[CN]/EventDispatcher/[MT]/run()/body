@@ -9,6 +9,7 @@
  catch (    TransportException e) {
       if (e.getCause() instanceof ClosedChannelException) {
         log.debug("Channel closed, exiting event reader thread");
+        stopped=true;
         return;
       }
  else       if (clientEvent != null) {
@@ -16,11 +17,13 @@
       }
  else {
         log.unrecoverableErrorReadingEvent(e,transport.getRemoteSocketAddress());
+        stopped=true;
         return;
       }
     }
 catch (    CancelledKeyException e) {
       log.debug("Key cancelled, most likely channel closed, exiting event reader thread");
+      stopped=true;
       return;
     }
 catch (    Throwable t) {

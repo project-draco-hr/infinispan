@@ -1,0 +1,12 @@
+{
+  assertClient.expectNoNearEvents();
+  assertClient.put(1,"v1").expectNearPut(1,"v1");
+  final AssertsNearCache<Integer,String> newAsserts=createClient();
+  withRemoteCacheManager(new RemoteCacheManagerCallable(newAsserts.manager){
+    @Override public void call(){
+      newAsserts.expectNoNearEvents();
+      newAsserts.get(1,"v1").expectNearGetNull(1).expectNearPutIfAbsent(1,"v1");
+    }
+  }
+);
+}

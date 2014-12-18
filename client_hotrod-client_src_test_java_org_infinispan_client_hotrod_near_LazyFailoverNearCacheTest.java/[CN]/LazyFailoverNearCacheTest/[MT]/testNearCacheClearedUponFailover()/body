@@ -1,0 +1,18 @@
+{
+  AssertsNearCache<Integer,String> stickyClient=createStickyAssertClient();
+  try {
+    stickyClient.put(1,"v1").expectNearRemove(1,headClient(),tailClient());
+    stickyClient.get(1,"v1").expectNearGetNull(1).expectNearPutIfAbsent(1,"v1");
+    stickyClient.put(2,"v1").expectNearRemove(2,headClient(),tailClient());
+    stickyClient.get(2,"v1").expectNearGetNull(2).expectNearPutIfAbsent(2,"v1");
+    stickyClient.put(3,"v1").expectNearRemove(3,headClient(),tailClient());
+    stickyClient.get(3,"v1").expectNearGetNull(3).expectNearPutIfAbsent(3,"v1");
+    findServerAndKill(stickyClient.manager,servers,cacheManagers);
+    stickyClient.get(1,"v1").expectNearClear().expectNearPutIfAbsent(1,"v1");
+    headClient().get(2,"v1").expectNearClear().expectNearPutIfAbsent(2,"v1");
+    tailClient().get(3,"v1").expectNearClear().expectNearPutIfAbsent(3,"v1");
+  }
+  finally {
+    stickyClient.stop();
+  }
+}

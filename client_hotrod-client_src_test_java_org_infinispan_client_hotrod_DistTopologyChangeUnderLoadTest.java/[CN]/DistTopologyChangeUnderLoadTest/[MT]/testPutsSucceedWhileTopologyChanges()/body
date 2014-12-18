@@ -6,14 +6,14 @@
   Future<Void> putHammerFuture=fork(putHammer);
   EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
   registerCacheManager(cm);
-  TestHelper.startHotRodServer(cm);
+  HotRodClientTestingUtil.startHotRodServer(cm);
   waitForClusterToForm();
   TestingUtil.waitForRehashToComplete(cm.getCache(),cache(0));
   TestingUtil.sleepThread(2000);
   TestingUtil.killCacheManagers(cm);
   TestingUtil.waitForRehashToComplete(cache(0));
-  TcpTransportFactory transportFactory=TestingUtil.extractField(client(0),"transportFactory");
-  SocketAddress[] servers=((RoundRobinBalancingStrategy)transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes())).getServers();
+  RoundRobinBalancingStrategy strategy=getLoadBalancer(client(0));
+  SocketAddress[] servers=strategy.getServers();
   putHammer.stop=true;
   putHammerFuture.get();
   assertEquals(1,servers.length);

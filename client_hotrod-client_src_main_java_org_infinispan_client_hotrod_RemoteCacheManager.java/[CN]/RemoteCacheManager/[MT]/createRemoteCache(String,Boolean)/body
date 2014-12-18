@@ -1,7 +1,7 @@
 {
 synchronized (cacheName2RemoteCache) {
     if (!cacheName2RemoteCache.containsKey(cacheName)) {
-      RemoteCacheImpl<K,V> result=new RemoteCacheImpl<K,V>(this,cacheName);
+      RemoteCacheImpl<K,V> result=createRemoteCache(cacheName);
       RemoteCacheHolder rcc=new RemoteCacheHolder(result,forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
       AtomicInteger topologyId=cacheName.isEmpty() ? defaultCacheTopologyId : new AtomicInteger(-1);
       startRemoteCache(rcc,topologyId);
@@ -10,6 +10,7 @@ synchronized (cacheName2RemoteCache) {
           return null;
         }
       }
+      result.start();
       cacheName2RemoteCache.put(cacheName,rcc);
       return result;
     }
