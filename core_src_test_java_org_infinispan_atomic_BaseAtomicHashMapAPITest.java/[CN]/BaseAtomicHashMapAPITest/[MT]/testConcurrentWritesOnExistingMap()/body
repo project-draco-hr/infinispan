@@ -22,7 +22,14 @@
     fail("We should have received a wrapped TimeoutException");
   }
  catch (  ExecutionException e) {
-    assertTrue(e.getCause() instanceof TimeoutException);
+    Throwable t=e;
+    do {
+      if (t instanceof TimeoutException) {
+        break;
+      }
+    }
+ while ((t=t.getCause()) != null);
+    assertNotNull("We should have found a TimeoutException!",t);
   }
   tm(0,"atomic").commit();
 }

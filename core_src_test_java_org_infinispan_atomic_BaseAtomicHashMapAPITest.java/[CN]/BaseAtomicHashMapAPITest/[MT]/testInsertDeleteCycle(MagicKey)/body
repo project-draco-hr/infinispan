@@ -1,0 +1,29 @@
+{
+  final Cache<MagicKey,Object> cache1=cache(0,"atomic");
+  final Cache<MagicKey,Object> cache2=cache(1,"atomic");
+  assertSize(cache1,0);
+  assertSize(cache2,0);
+{
+    TestingUtil.getTransactionManager(cache1).begin();
+    Map<String,Object> am=createAtomicMap(cache1,key);
+    am.put("k1","v1");
+    TestingUtil.getTransactionManager(cache1).commit();
+  }
+{
+    TestingUtil.getTransactionManager(cache1).begin();
+    Map<String,Object> am=createAtomicMap(cache1,key);
+    am.put("k3","v3");
+    removeAtomicMap(cache1,key);
+    am=createAtomicMap(cache1,key);
+    am.put("k2","v2");
+    TestingUtil.getTransactionManager(cache1).commit();
+  }
+  final boolean fails;
+{
+    TestingUtil.getTransactionManager(cache1).begin();
+    Map<String,Object> am=createAtomicMap(cache1,key);
+    fails=am.containsKey("k1");
+    TestingUtil.getTransactionManager(cache1).commit();
+  }
+  Assert.assertFalse(fails);
+}

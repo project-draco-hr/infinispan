@@ -1,0 +1,37 @@
+{
+  container.compute(key,new DataContainer.ComputeAction<K,DeltaAware>(){
+    @Override public InternalCacheEntry<K,DeltaAware> compute(    K key,    InternalCacheEntry<K,DeltaAware> oldEntry,    InternalEntryFactory factory){
+      InternalCacheEntry<K,DeltaAware> newEntry=oldEntry;
+      DeltaAware containerValue=oldEntry == null ? null : (DeltaAware)oldEntry.getValue();
+      if (containerValue != null && containerValue != value) {
+        value=containerValue;
+      }
+      if (!deltas.isEmpty()) {
+        if (isCreated()) {
+          value=null;
+          for (          Delta delta : deltas) {
+            value=delta.merge(value);
+          }
+          value.commit();
+          newEntry=factory.create(key,value,extractMetadata(null,metadata));
+        }
+ else         if (value != null) {
+          final boolean makeCopy=value instanceof CopyableDeltaAware;
+          if (makeCopy) {
+            value=((CopyableDeltaAware)value).copy();
+          }
+          for (          Delta delta : deltas) {
+            delta.merge(value);
+          }
+          if (makeCopy) {
+            newEntry=oldEntry == null ? factory.create(key,value,extractMetadata(null,metadata)) : factory.update(oldEntry,value,extractMetadata(oldEntry,metadata));
+          }
+          value.commit();
+        }
+      }
+      reset();
+      return newEntry;
+    }
+  }
+);
+}
