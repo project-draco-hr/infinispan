@@ -11,21 +11,21 @@
     while (realIterator.hasNext()) {
       CacheEntry<K,C> iteratedEntry=realIterator.next();
       CacheEntry contextEntry;
-      if ((contextEntry=ctx.lookupEntry(iteratedEntry.getKey())) == null) {
-        returnedEntry=iteratedEntry;
-        break;
-      }
- else {
+      if ((contextEntry=ctx.lookupEntry(iteratedEntry.getKey())) != null) {
         if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved()) {
           returnedEntry=contextEntry;
           break;
         }
       }
+ else {
+        returnedEntry=iteratedEntry;
+        break;
+      }
     }
   }
   if (returnedEntry == null) {
     for (    CacheEntry lookedUpEntry : ctx.getLookedUpEntries().values()) {
-      if (!seenContextKeys.contains(lookedUpEntry.getKey())) {
+      if (seenContextKeys.add(lookedUpEntry.getKey()) && !lookedUpEntry.isRemoved()) {
         if (returnedEntry == null) {
           returnedEntry=lookedUpEntry;
         }
