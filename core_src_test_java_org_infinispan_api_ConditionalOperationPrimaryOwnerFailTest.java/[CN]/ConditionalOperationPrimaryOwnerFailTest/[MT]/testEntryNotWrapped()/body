@@ -28,7 +28,7 @@
     }
   }
 ).when(spyEntryFactory).wrapEntryForPut(any(InvocationContext.class),anyObject(),any(InternalCacheEntry.class),anyBoolean(),any(FlagAffectedCommand.class),anyBoolean());
-  fork(new Runnable(){
+  Future<?> killMemberResult=fork(new Runnable(){
     @Override public void run(){
       killMember(1);
     }
@@ -37,4 +37,5 @@
   latch2.await();
   futureBackupOwnerCache.put(key,FINAL_VALUE);
   latch1.countDown();
+  killMemberResult.get(30,TimeUnit.SECONDS);
 }
