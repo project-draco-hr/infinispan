@@ -1,10 +1,12 @@
 {
-  BeanManager bm=BeanManagerProvider.getInstance().getBeanManager();
-  ContextInputCache.set(inputCache);
-  Class<Callable<T>> clazz=(Class<Callable<T>>)task.getClass();
-  AnnotatedType<Callable<T>> type=bm.createAnnotatedType(clazz);
-  InjectionTarget<Callable<T>> it=bm.createInjectionTarget(type);
-  CreationalContext<Callable<T>> ctx=bm.createCreationalContext(null);
-  it.inject(task,ctx);
-  it.postConstruct(task);
+  if (HAVE_CDI) {
+    BeanManager bm=BeanManagerProvider.getInstance().getBeanManager();
+    ContextInputCache.set(inputCache);
+    Class<Callable<T>> clazz=(Class<Callable<T>>)task.getClass();
+    AnnotatedType<Callable<T>> type=bm.createAnnotatedType(clazz);
+    InjectionTarget<Callable<T>> it=bm.createInjectionTarget(type);
+    CreationalContext<Callable<T>> ctx=bm.createCreationalContext(null);
+    it.inject(task,ctx);
+    it.postConstruct(task);
+  }
 }
