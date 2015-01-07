@@ -2,7 +2,6 @@
   int maxTopologyId=0;
   CacheTopology maxStableTopology=null;
   CacheTopology maxActiveTopology=null;
-  Set<CacheTopology> unavailableTopologies=new HashSet<>();
   Set<CacheTopology> degradedTopologies=new HashSet<>();
   CacheTopology maxDegradedTopology=null;
   for (  CacheStatusResponse response : statusResponses) {
@@ -31,9 +30,6 @@
         maxDegradedTopology=partitionTopology;
       }
     }
- else     if (response.getAvailabilityMode() == AvailabilityMode.UNAVAILABLE) {
-      unavailableTopologies.add(partitionTopology);
-    }
  else {
       log.unexpectedAvailabilityMode(context.getAvailabilityMode(),context.getCacheName(),response.getCacheTopology());
     }
@@ -47,26 +43,17 @@
   if (maxDegradedTopology != null) {
     log.tracef("Max degraded partition topology: %s, all degraded: %s",maxDegradedTopology,degradedTopologies);
   }
-  if (!unavailableTopologies.isEmpty()) {
-    log.tracef("Found unavailable partition topologies: %s",unavailableTopologies);
-  }
   List<Address> actualMembers=new ArrayList<>(context.getExpectedMembers());
   CacheTopology mergedTopology;
   AvailabilityMode mergedAvailabilityMode;
-  if (!unavailableTopologies.isEmpty()) {
-    log.debugf("At least one of the partitions is unavailable, staying in unavailable mode");
-    mergedTopology=unavailableTopologies.iterator().next();
-    actualMembers.retainAll(mergedTopology.getMembers());
-    mergedAvailabilityMode=AvailabilityMode.UNAVAILABLE;
-  }
- else   if (maxActiveTopology != null) {
+  if (maxActiveTopology != null) {
     log.debugf("One of the partitions is available, using that partition's topology");
     mergedTopology=maxActiveTopology;
     actualMembers.retainAll(mergedTopology.getMembers());
     mergedAvailabilityMode=AvailabilityMode.AVAILABLE;
   }
  else   if (!degradedTopologies.isEmpty()) {
-    log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
+    log.debugf("No active partitions, so all the partitions must be in degraded mode.");
     mergedTopology=maxDegradedTopology;
     actualMembers.retainAll(mergedTopology.getMembers());
     mergedAvailabilityMode=AvailabilityMode.DEGRADED_MODE;
@@ -82,10 +69,7 @@
   }
   context.updateTopologiesAfterMerge(mergedTopology,maxStableTopology,mergedAvailabilityMode);
   AvailabilityMode newAvailabilityMode=computeAvailabilityAfterMerge(context,maxStableTopology,actualMembers,mergedAvailabilityMode);
-  if (newAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
-    log.debugf("After merge, cache %s is staying in unavailable mode",context.getCacheName());
-  }
- else   if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
+  if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
     log.debugf("After merge, cache %s is staying in degraded mode",context.getCacheName());
     context.updateAvailabilityMode(actualMembers,newAvailabilityMode,true);
   }
