@@ -1,0 +1,14 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false);
+  addClusterEnabledCacheManager(builder);
+  final EmbeddedCacheManager cacheManager1=manager(0);
+  TestingUtil.wrapGlobalComponent(cacheManager1,Transport.class,new TestingUtil.WrapFactory<Transport,Transport,CacheContainer>(){
+    @Override public Transport wrap(    CacheContainer wrapOn,    Transport current){
+      return new CacheNotFoundResponseTransport(current);
+    }
+  }
+,true);
+  addClusterEnabledCacheManager(builder);
+  addClusterEnabledCacheManager(builder);
+  waitForClusterToForm(cacheName());
+}

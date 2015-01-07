@@ -1,0 +1,21 @@
+{
+  long taskTimeout=TimeUnit.SECONDS.toMillis(15);
+  EmbeddedCacheManager cacheManager1=manager(0);
+  final EmbeddedCacheManager cacheManager2=manager(1);
+  Cache<Object,Object> cache1=cacheManager1.getCache();
+  Cache<Object,Object> cache2=cacheManager2.getCache();
+  DistributedExecutorService des=null;
+  try {
+    des=new DefaultExecutorService(cache1);
+    Address target=cache2.getAdvancedCache().getRpcManager().getAddress();
+    DistributedTaskBuilder<Integer> builder=des.createDistributedTaskBuilder(new SimpleCallable()).failoverPolicy(DefaultExecutorService.RANDOM_NODE_FAILOVER).timeout(taskTimeout,TimeUnit.MILLISECONDS);
+    Future<Integer> future=des.submit(target,builder.build());
+    AssertJUnit.assertEquals((Integer)1,future.get());
+  }
+ catch (  Exception ex) {
+    AssertJUnit.fail("Task did not failover properly " + ex);
+  }
+ finally {
+    des.shutdown();
+  }
+}

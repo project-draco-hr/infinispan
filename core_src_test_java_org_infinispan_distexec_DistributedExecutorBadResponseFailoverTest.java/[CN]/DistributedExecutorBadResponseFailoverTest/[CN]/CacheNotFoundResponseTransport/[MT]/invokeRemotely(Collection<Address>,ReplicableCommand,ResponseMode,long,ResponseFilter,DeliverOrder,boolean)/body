@@ -1,0 +1,13 @@
+{
+  Map<Address,Response> properResponse=super.invokeRemotely(recipients,rpcCommand,mode,timeout,responseFilter,deliverOrder,anycast);
+  if (rpcCommand instanceof DistributedExecuteCommand) {
+    Map<Address,Response> cacheNotFoundResponse=new HashMap<Address,Response>();
+    for (    Entry<Address,Response> e : properResponse.entrySet()) {
+      cacheNotFoundResponse.put(e.getKey(),CacheNotFoundResponse.INSTANCE);
+    }
+    return cacheNotFoundResponse;
+  }
+ else {
+    return properResponse;
+  }
+}
