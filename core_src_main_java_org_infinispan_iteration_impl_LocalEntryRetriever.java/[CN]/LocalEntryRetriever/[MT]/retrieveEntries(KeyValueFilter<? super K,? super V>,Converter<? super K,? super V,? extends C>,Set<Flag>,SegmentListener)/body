@@ -1,6 +1,13 @@
 {
   final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
   wireFilterAndConverterDependencies(filter,usedConverter);
+  if (flags != null && flags.contains(Flag.SKIP_CACHE_LOAD) || !cache.getCacheConfiguration().persistence().usingStores()) {
+    if ((flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL)) && partitionListener.currentMode != AvailabilityMode.AVAILABLE) {
+      throw log.partitionDegraded();
+    }
+    final Iterator<InternalCacheEntry<K,V>> iterator=dataContainer.iterator();
+    return new DataContainerIterator<>(iterator,filter,usedConverter);
+  }
   final Itr<C> iterator=new Itr<C>(batchSize);
   registerIterator(iterator,flags);
   final ItrQueuerHandler<C> handler=new ItrQueuerHandler<C>(iterator);
