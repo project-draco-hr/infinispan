@@ -1,0 +1,14 @@
+{
+  if (!event.getKey().equals(key))   return;
+  if (event.isPre())   return;
+  try {
+    GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
+    byte[] bb=(byte[])event.getValue();
+    Call call=(Call)marshaller.objectFromByteBuffer(bb);
+    if (log.isDebugEnabled())     log.debugf("Receive %s (isOriginLocal=%s) ",call,event.isOriginLocal());
+    callExecutor.execute(new AtomicObjectContainerTask(call));
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+  }
+}

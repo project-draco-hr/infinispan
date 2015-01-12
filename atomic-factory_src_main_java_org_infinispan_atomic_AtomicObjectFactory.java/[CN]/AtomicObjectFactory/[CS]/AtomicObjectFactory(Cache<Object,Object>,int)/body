@@ -1,0 +1,27 @@
+{
+  cache=c;
+  maxSize=m;
+  registeredContainers=new LinkedHashMap<ContainerSignature,Container>(){
+    @Override protected boolean removeEldestEntry(    final java.util.Map.Entry<ContainerSignature,Container> eldest){
+      if (maxSize != 0 && this.size() >= maxSize) {
+        evictionExecutor.submit(new Callable<Void>(){
+          @Override public Void call() throws IOException {
+            try {
+              if (log.isDebugEnabled())               log.debugf("Disposing %s",eldest.getValue().toString());
+              eldest.getValue().dispose(false);
+            }
+ catch (            Exception e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+        }
+);
+        return true;
+      }
+      return false;
+    }
+  }
+;
+  log=LogFactory.getLog(this.getClass());
+}

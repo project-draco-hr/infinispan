@@ -1,0 +1,40 @@
+{
+  cache=c;
+  clazz=cl;
+  key=clazz.getSimpleName() + "#" + k.toString();
+  withReadOptimization=readOptimization;
+  listenerState=0;
+  updateMethods=methods;
+  registeredCalls=new ConcurrentHashMap<Long,CallFuture>();
+  MethodHandler handler=new MethodHandler(){
+    public Object invoke(    Object self,    Method m,    Method proceed,    Object[] args) throws Throwable {
+      GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
+      if (withReadOptimization && !updateMethods.contains(m.getName())) {
+        if (log.isDebugEnabled())         log.debugf("Executing %s locally",m.getName());
+        return callObject(object,m.getName(),args);
+      }
+      initObject(true,forceNew,initArgs);
+      long callID=nextCallID();
+      CallInvoke invoke=new CallInvoke(callID,m.getName(),args);
+      byte[] bb=marshaller.objectToByteBuffer(invoke);
+      CallFuture future=new CallFuture();
+      registeredCalls.put(callID,future);
+      cache.put(Container.this.key,bb);
+      if (log.isDebugEnabled())       log.debugf("Waiting on %s",future.toString());
+      Object ret=future.get(CALL_TTIMEOUT_TIME,TimeUnit.MILLISECONDS);
+      registeredCalls.remove(callID);
+      if (!future.isDone()) {
+        throw new TimeoutException("Unable to execute " + invoke + " on "+ clazz+ " @ "+ Container.this.key);
+      }
+      if (log.isDebugEnabled())       log.debugf("Return %s %s ",invoke.toString(),(ret == null ? "null" : ret.toString()));
+      return ret;
+    }
+  }
+;
+  ProxyFactory fact=new ProxyFactory();
+  fact.setSuperclass(clazz);
+  fact.setFilter(methodFilter);
+  proxy=fact.createClass().newInstance();
+  ((ProxyObject)proxy).setHandler(handler);
+  initObject(false,forceNew,initArgs);
+}

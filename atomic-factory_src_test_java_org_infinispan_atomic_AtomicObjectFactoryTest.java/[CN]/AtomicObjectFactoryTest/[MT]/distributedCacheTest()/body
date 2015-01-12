@@ -1,0 +1,25 @@
+{
+  ExecutorService service=Executors.newCachedThreadPool();
+  List<HashSet> sets=new ArrayList<HashSet>();
+  List<AtomicObjectFactory> factories=new ArrayList<AtomicObjectFactory>();
+  List<Future<Integer>> futures=new ArrayList<Future<Integer>>();
+  AtomicObjectFactory factory;
+  HashSet set;
+  for (  EmbeddedCacheManager manager : cacheManagers) {
+    Cache cache=manager.getCache();
+    caches.add(cache);
+    factory=new AtomicObjectFactory(cache);
+    factories.add(factory);
+    set=factory.getInstanceOf(HashSet.class,"aset",false,null,false);
+    set.add(-1);
+    sets.add(set);
+  }
+  for (  Set s : sets) {
+    futures.add(service.submit(new ExerciseAtomicSetTask(s,NCALLS)));
+  }
+  Integer total=0;
+  for (  Future<Integer> future : futures) {
+    total+=future.get();
+  }
+  assertEquals("obtained = " + total + "; espected = "+ (NCALLS),Integer.valueOf(NCALLS),total);
+}

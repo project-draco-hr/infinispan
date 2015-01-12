@@ -1,0 +1,49 @@
+{
+  if (!(Serializable.class.isAssignableFrom(clazz))) {
+    throw new InvalidCacheUsageException("The object must be serializable.");
+  }
+  ContainerSignature signature=new ContainerSignature(clazz,key);
+  Container container;
+  try {
+synchronized (registeredContainers) {
+      container=registeredContainers.get(signature);
+    }
+    if (container == null) {
+      List<String> methods=Collections.EMPTY_LIST;
+      if (Updatable.class.isAssignableFrom(clazz)) {
+        methods=new ArrayList<String>();
+        for (        Method m : clazz.getDeclaredMethods()) {
+          if (m.isAnnotationPresent(Update.class))           methods.add(m.getName());
+        }
+      }
+ else {
+        for (        Class c : updateMethods.keySet()) {
+          if (c.isAssignableFrom(clazz)) {
+            methods=updateMethods.get(c);
+            break;
+          }
+        }
+        if (methods.isEmpty()) {
+          methods=new ArrayList<String>();
+          for (          Method m : clazz.getDeclaredMethods()) {
+            methods.add(m.getName());
+          }
+        }
+      }
+      container=new Container(cache,clazz,key,withReadOptimization,forceNew,methods,initArgs);
+synchronized (registeredContainers) {
+        if (registeredContainers.containsKey(signature)) {
+          container.dispose(false);
+        }
+ else {
+          registeredContainers.put(signature,container);
+        }
+      }
+    }
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    throw new InvalidCacheUsageException(e.getCause());
+  }
+  return (T)container.getProxy();
+}

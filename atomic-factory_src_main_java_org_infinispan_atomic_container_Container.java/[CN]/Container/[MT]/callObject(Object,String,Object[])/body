@@ -1,0 +1,28 @@
+{
+  if (log.isDebugEnabled())   log.debugf("Calling %s()",method.toString());
+  boolean isFound=false;
+  Object ret=null;
+  for (  Method m : obj.getClass().getMethods()) {
+    if (method.equals(m.getName())) {
+      boolean isAssignable=true;
+      Class[] argsTypes=m.getParameterTypes();
+      if (argsTypes.length == args.length) {
+        for (int i=0; i < argsTypes.length; i++) {
+          if (!argsTypes[i].isAssignableFrom(args[i].getClass())) {
+            isAssignable=false;
+            break;
+          }
+        }
+      }
+ else {
+        isAssignable=false;
+      }
+      if (!isAssignable)       continue;
+      ret=m.invoke(obj,args);
+      isFound=true;
+      break;
+    }
+  }
+  if (!isFound)   throw new IllegalStateException("Method " + method + " not found.");
+  return ret;
+}

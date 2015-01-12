@@ -1,0 +1,23 @@
+{
+  log.debug("adding " + k + "="+ v);
+  V ret;
+  K key;
+  TreeMap<K,V> tree;
+  SortedMap<K,TreeMap<K,V>> headMap;
+  headMap=forest.headMap(k);
+  if (!headMap.isEmpty() && allocateTree(headMap.lastKey()).size() < threshold)   key=headMap.lastKey();
+ else   key=k;
+  tree=allocateTree(key);
+  ret=tree.put(k,v);
+  log.debug("in tree " + key + " -> "+ tree);
+  if (key != k && tree.firstKey().equals(k)) {
+    forest.remove(key);
+    forest.put(k,tree);
+  }
+  if (tree.size() > threshold) {
+    Entry<K,V> entry=tree.lastEntry();
+    tree.remove(entry.getKey());
+    put(entry.getKey(),entry.getValue());
+  }
+  return ret;
+}

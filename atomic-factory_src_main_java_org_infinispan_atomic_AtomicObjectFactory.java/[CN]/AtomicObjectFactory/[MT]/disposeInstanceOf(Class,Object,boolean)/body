@@ -1,0 +1,18 @@
+{
+  ContainerSignature signature=new ContainerSignature(clazz,key);
+  if (log.isDebugEnabled())   log.debugf("Disposing %s",signature.toString());
+  Container container;
+synchronized (registeredContainers) {
+    container=registeredContainers.get(signature);
+    if (container == null)     return;
+    if (!container.getClazz().equals(clazz))     throw new InvalidCacheUsageException("The object is not of the right class.");
+    registeredContainers.remove(signature);
+  }
+  try {
+    container.dispose(keepPersistent);
+  }
+ catch (  Exception e) {
+    e.printStackTrace();
+    throw new InvalidCacheUsageException("Error while disposing object " + key);
+  }
+}

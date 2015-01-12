@@ -1,0 +1,18 @@
+{
+  if (log.isDebugEnabled())   log.debugf("Disposing ");
+  if (!registeredCalls.isEmpty()) {
+    log.warnf("Cannot dispose - registeredCalls non-empty");
+    return;
+  }
+  if (listenerState == 1) {
+    cache.removeListener(listener);
+    if (keepPersistent) {
+      if (log.isDebugEnabled())       log.debugf("Persisted");
+      GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
+      CallPersist persist=new CallPersist(0,object);
+      byte[] bb=marshaller.objectToByteBuffer(persist);
+      cache.put(key,bb);
+    }
+  }
+  listenerState=-1;
+}
