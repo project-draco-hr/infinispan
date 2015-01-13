@@ -1,0 +1,29 @@
+{
+  Cache<Object,Object> c0=manager(0).getCache();
+  Cache<Object,Object> c1=manager(1).getCache();
+  final TransactionTable tt0=TestingUtil.extractComponent(c0,TransactionTable.class);
+  LocalTopologyManager ltm0=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
+  ltm0.setRebalancingEnabled(false);
+  addClusterEnabledCacheManager(configurationBuilder);
+  Cache<Object,Object> c2=manager(2).getCache();
+  tm(2).begin();
+  c2.put("key1","value1");
+  assertEquals(1,tt0.getRemoteGlobalTransaction().size());
+  Transaction tx2=tm(2).suspend();
+  tm(1).begin();
+  c1.put("key2","value2");
+  assertEquals(2,tt0.getRemoteGlobalTransaction().size());
+  Transaction tx1=tm(1).suspend();
+  manager(1).stop();
+  TestingUtil.blockUntilViewsReceived(60000,false,c0,c2);
+  TestingUtil.waitForRehashToComplete(c0);
+  assertEquals(Arrays.asList(address(0)),c0.getAdvancedCache().getDistributionManager().getConsistentHash().getMembers());
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return tt0.getRemoteTransactions().size() == 1;
+    }
+  }
+);
+  tm(2).resume(tx2);
+  tm(2).commit();
+}

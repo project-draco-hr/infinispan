@@ -1,14 +1,13 @@
 {
-  int topologyId=cacheTopology.getTopologyId();
-  List<Address> members=cacheTopology.getMembers();
-  if (getMinTopologyId() >= topologyId)   return;
-  log.tracef("Checking for transactions originated on leavers. Current members are %s, remote transactions: %d",members,remoteTransactions.size());
+  if (remoteTransactions == null)   return;
+  log.tracef("Checking for transactions originated on leavers. Current cache members are %s, remote transactions: %d",members,remoteTransactions.size());
+  HashSet<Address> membersSet=new HashSet<>(members);
   List<GlobalTransaction> toKill=new ArrayList<GlobalTransaction>();
   for (  Map.Entry<GlobalTransaction,RemoteTransaction> e : remoteTransactions.entrySet()) {
     GlobalTransaction gt=e.getKey();
     RemoteTransaction remoteTx=e.getValue();
     log.tracef("Checking transaction %s",gt);
-    if (remoteTx.getTopologyId() < topologyId && !members.contains(gt.getAddress())) {
+    if (!membersSet.contains(gt.getAddress())) {
       toKill.add(gt);
     }
   }

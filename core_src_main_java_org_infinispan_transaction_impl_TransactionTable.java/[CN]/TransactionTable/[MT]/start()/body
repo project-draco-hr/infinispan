@@ -2,16 +2,10 @@
   final int concurrencyLevel=configuration.locking().concurrencyLevel();
   localTransactions=CollectionFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel,new IdentityEquivalence<Transaction>(),AnyEquivalence.getInstance());
   globalToLocalTransactions=CollectionFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel);
-  if (configuration.clustering().cacheMode().isClustered()) {
+  boolean transactional=configuration.transaction().transactionMode().isTransactional();
+  if (clustered && transactional) {
     minTopologyRecalculationLock=new ReentrantLock();
     remoteTransactions=CollectionFactory.makeConcurrentMap(concurrencyLevel,0.75f,concurrencyLevel);
-    notifier.addListener(this);
-    clustered=true;
-  }
-  boolean transactional=configuration.transaction().transactionMode().isTransactional();
-  boolean totalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
-  if (clustered && transactional && !totalOrder) {
-    completedTransactionsInfo=new CompletedTransactionsInfo();
     ThreadFactory tf=new ThreadFactory(){
       @Override public Thread newThread(      Runnable r){
         String address=rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
@@ -22,18 +16,24 @@
     }
 ;
     executorService=Executors.newSingleThreadScheduledExecutor(tf);
-    long interval=configuration.transaction().reaperWakeUpInterval();
-    executorService.scheduleAtFixedRate(new Runnable(){
-      @Override public void run(){
-        completedTransactionsInfo.cleanupCompletedTransactions();
+    notifier.addListener(this);
+    cacheManagerNotifier.addListener(this);
+    boolean totalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
+    if (!totalOrder) {
+      completedTransactionsInfo=new CompletedTransactionsInfo();
+      long interval=configuration.transaction().reaperWakeUpInterval();
+      executorService.scheduleAtFixedRate(new Runnable(){
+        @Override public void run(){
+          completedTransactionsInfo.cleanupCompletedTransactions();
+        }
       }
-    }
 ,interval,interval,TimeUnit.MILLISECONDS);
-    executorService.scheduleAtFixedRate(new Runnable(){
-      @Override public void run(){
-        cleanupTimedOutTransactions();
+      executorService.scheduleAtFixedRate(new Runnable(){
+        @Override public void run(){
+          cleanupTimedOutTransactions();
+        }
       }
-    }
 ,interval,interval,TimeUnit.MILLISECONDS);
+    }
   }
 }

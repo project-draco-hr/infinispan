@@ -25,7 +25,9 @@
  else {
       interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(),StateTransferInterceptor.class),false);
     }
-    interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(),TransactionSynchronizerInterceptor.class),false);
+    if (configuration.transaction().transactionMode().isTransactional()) {
+      interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(),TransactionSynchronizerInterceptor.class),false);
+    }
   }
   if (configuration.clustering().partitionHandling().enabled() && (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())) {
     interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(),PartitionHandlingInterceptor.class),false);

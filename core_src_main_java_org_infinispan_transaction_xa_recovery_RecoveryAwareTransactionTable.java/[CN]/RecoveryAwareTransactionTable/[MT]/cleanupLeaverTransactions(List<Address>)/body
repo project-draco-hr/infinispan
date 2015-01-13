@@ -1,0 +1,12 @@
+{
+  Iterator<RemoteTransaction> it=getRemoteTransactions().iterator();
+  while (it.hasNext()) {
+    RecoveryAwareRemoteTransaction recTx=(RecoveryAwareRemoteTransaction)it.next();
+    recTx.computeOrphan(members);
+    if (recTx.isInDoubt()) {
+      recoveryManager.registerInDoubtTransaction(recTx);
+      it.remove();
+    }
+  }
+  super.cleanupLeaverTransactions(members);
+}
