@@ -1,0 +1,28 @@
+{
+  takeSiteOffline(LON,NYC);
+  final Object key=new MagicKey(cache(NYC,1));
+  final DiscardHandler handler=DiscardHandler.replaceOn(cache(NYC,1));
+  final FailureXSiteConsumer failureXSiteConsumer=FailureXSiteConsumer.replaceOn(cache(NYC,0));
+  final CounterBackupReceiverRepository counterRepository=CounterBackupReceiverRepository.replaceOn(cache(NYC,0).getCacheManager());
+  failureXSiteConsumer.fail(3);
+  cache(LON,0).put(key,VALUE);
+  startStateTransfer(cache(LON,0),NYC);
+  assertOnline(LON,NYC);
+  eventually(new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return handler.discarded;
+    }
+  }
+);
+  triggerTopologyChange(NYC,1).get();
+  awaitXSiteStateSent(LON);
+  awaitXSiteStateReceived(NYC);
+  AssertJUnit.assertEquals(0,failureXSiteConsumer.remainingFails());
+  AssertJUnit.assertEquals(1,counterRepository.counter.get());
+  assertInSite(NYC,new AssertCondition<Object,Object>(){
+    @Override public void assertInCache(    Cache<Object,Object> cache){
+      AssertJUnit.assertEquals(VALUE,cache.get(key));
+    }
+  }
+);
+}

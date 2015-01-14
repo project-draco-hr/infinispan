@@ -3,14 +3,10 @@
     if (trace) {
       log.tracef("Waiting reply from %s",task.address);
     }
-    Map<Address,Response> responseMap=task.awaitRemote();
+    Response response=task.awaitResponse();
     if (trace) {
-      log.tracef("Response received is %s",responseMap);
+      log.tracef("Response received is %s",response);
     }
-    if (responseMap.size() > 1 || !responseMap.containsKey(task.address)) {
-      throw new IllegalStateException("Shouldn't happen. Map is " + responseMap);
-    }
-    Response response=responseMap.get(task.address);
     if (response == CacheNotFoundResponse.INSTANCE) {
       if (trace) {
         log.tracef("Cache not found in node '%s'. Retrying locally!",task.address);
@@ -25,17 +21,20 @@
     if (!cache.getStatus().allowInvocations()) {
       throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
     }
-    if (cache.getAdvancedCache().getRpcManager().getMembers().contains(task.address)) {
+    if (cache.getAdvancedCache().getRpcManager().getMembers().contains(task.address) && !cache.getAdvancedCache().getRpcManager().getAddress().equals(task.address)) {
       if (trace) {
         log.tracef(e,"An exception was sent by %s. Retrying!",task.address);
       }
       task.executeRemote();
+      return false;
     }
  else {
       if (trace) {
         log.tracef(e,"An exception was sent by %s. Retrying locally!",task.address);
       }
       task.executeLocal();
+      return false;
     }
   }
+  return true;
 }

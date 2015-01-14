@@ -1,3 +1,19 @@
 {
-  return LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(cache,chunk)).call();
+  try {
+    final Response response=LocalInvocation.newInstanceFromCache(cache,newStatePushCommand(cache,chunk)).call();
+    this.remoteFuture=new AbstractInProcessFuture<Map<Address,Response>>(){
+      @Override public Map<Address,Response> get() throws InterruptedException, ExecutionException {
+        return Collections.singletonMap(address,response);
+      }
+    }
+;
+  }
+ catch (  final Exception e) {
+    this.remoteFuture=new AbstractInProcessFuture<Map<Address,Response>>(){
+      @Override public Map<Address,Response> get() throws InterruptedException, ExecutionException {
+        throw new ExecutionException(e);
+      }
+    }
+;
+  }
 }

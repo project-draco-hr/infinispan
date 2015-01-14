@@ -1,0 +1,17 @@
+{
+  if (command instanceof XSiteStatePushCommand) {
+    boolean fail;
+synchronized (this) {
+      fail=nFailures == FAIL_FOR_EVER;
+      if (nFailures > 0) {
+        fail=true;
+        nFailures--;
+      }
+    }
+    if (fail) {
+      reply.reply(new ExceptionResponse(new CacheException("Induced Fail.")));
+      return false;
+    }
+  }
+  return true;
+}
