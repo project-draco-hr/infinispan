@@ -1,0 +1,16 @@
+{
+  LRUNode<K,V> eviction=(LRUNode<K,V>)e.eviction;
+synchronized (eviction) {
+    if (eviction.queueNode != null) {
+      Node<K,V> item=eviction.queueNode.item;
+      if (item != null && eviction.queueNode.casItem(item,null)) {
+        deque.unlink(eviction.queueNode);
+      }
+      eviction.queueNode=null;
+    }
+    if (!eviction.removed) {
+      eviction.removed=true;
+      incrementSizeEviction(currentSize,-1,0);
+    }
+  }
+}

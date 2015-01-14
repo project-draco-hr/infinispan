@@ -1,0 +1,26 @@
+{
+  boolean pruned=false;
+  while (!pruned) {
+    Object[] LIRDetails=pruneIncludingLIR();
+    if (LIRDetails == null) {
+      return;
+    }
+ else {
+      DequeNode<LIRSNode<K,V>> removedDequeNode=(DequeNode<LIRSNode<K,V>>)LIRDetails[0];
+      LIRSNode<K,V> removedLIR=(LIRSNode<K,V>)LIRDetails[1];
+synchronized (removedLIR) {
+        if (removedDequeNode != removedLIR.stackNode) {
+          continue;
+        }
+        if (removedLIR.state != Recency.REMOVED) {
+          removedLIR.setState(Recency.HIR_RESIDENT);
+          removedLIR.setStackNode(null);
+          DequeNode<LIRSNode<K,V>> queueNode=new DequeNode<>(removedLIR);
+          removedLIR.setQueueNode(queueNode);
+          queue.linkLast(queueNode);
+          pruned=true;
+        }
+      }
+    }
+  }
+}

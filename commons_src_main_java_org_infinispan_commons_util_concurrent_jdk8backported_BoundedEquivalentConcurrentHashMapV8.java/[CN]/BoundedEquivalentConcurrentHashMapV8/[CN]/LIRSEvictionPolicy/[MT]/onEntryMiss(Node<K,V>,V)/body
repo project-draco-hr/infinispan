@@ -1,0 +1,64 @@
+{
+  boolean pruneLIR=false;
+  boolean evictHIR=false;
+  boolean skipIncrement;
+  LIRSNode<K,V> lirsNode=(LIRSNode<K,V>)e.eviction;
+synchronized (lirsNode) {
+    skipIncrement=lirsNode.created;
+    lirsNode.created=true;
+    Recency recency=lirsNode.state;
+    if (recency == null) {
+      if (skipIncrement) {
+        throw new IllegalStateException("Created should always be false for a" + "newly created evictio node!");
+      }
+      if (addToLIRIfNotFullHot(lirsNode,true)) {
+        return;
+      }
+      lirsNode.setState(Recency.HIR_RESIDENT);
+      DequeNode<LIRSNode<K,V>> stackNode=new DequeNode<>(lirsNode);
+      lirsNode.setStackNode(stackNode);
+      stack.linkLast(stackNode);
+      DequeNode<LIRSNode<K,V>> queueNode=new DequeNode<>(lirsNode);
+      lirsNode.setQueueNode(queueNode);
+      queue.linkLast(queueNode);
+    }
+ else {
+      if (skipIncrement) {
+switch (recency) {
+case HIR_NONRESIDENT:
+          e.val=value;
+        if (addToLIRIfNotFullHot(lirsNode,true)) {
+          return;
+        }
+      promoteHIRToLIR(lirsNode);
+    pruneLIR=true;
+  skipIncrement=false;
+break;
+case EVICTING:
+e.val=value;
+evictHIR=true;
+lirsNode.setState(Recency.HIR_RESIDENT);
+DequeNode<LIRSNode<K,V>> stackNode=new DequeNode<>(lirsNode);
+lirsNode.setStackNode(stackNode);
+stack.linkLast(stackNode);
+DequeNode<LIRSNode<K,V>> queueNode=new DequeNode<>(lirsNode);
+lirsNode.setQueueNode(queueNode);
+queue.linkLast(queueNode);
+break;
+case REMOVED:
+case EVICTED:
+throw new IllegalStateException("Cannot have a miss on a key and then " + "get a node in " + recency);
+case HIR_RESIDENT:
+case LIR_RESIDENT:
+break;
+}
+}
+}
+}
+if (pruneLIR) {
+hotDemotion.incrementAndGet();
+}
+if (!skipIncrement || evictHIR) {
+incrementSizeEviction(currentSize,1,0);
+}
+}

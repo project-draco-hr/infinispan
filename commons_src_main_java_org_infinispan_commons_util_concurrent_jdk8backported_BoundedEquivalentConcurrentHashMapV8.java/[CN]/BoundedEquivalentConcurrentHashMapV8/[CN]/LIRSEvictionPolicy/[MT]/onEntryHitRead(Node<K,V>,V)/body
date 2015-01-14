@@ -1,0 +1,32 @@
+{
+  boolean reAttempt=false;
+  LIRSNode<K,V> lirsNode=(LIRSNode<K,V>)e.eviction;
+synchronized (lirsNode) {
+    Recency recency=lirsNode.state;
+    if (recency == Recency.HIR_NONRESIDENT || recency == Recency.EVICTING) {
+      reAttempt=true;
+    }
+ else {
+      onEntryHitWrite(e,value);
+    }
+  }
+  if (reAttempt) {
+    int hash=spread(map.keyEq.hashCode(lirsNode.getKey()));
+    for (Node<K,V>[] tab=map.table; ; ) {
+      Node<K,V> f;
+      int n, i;
+      if (tab == null || (n=tab.length) == 0 || (f=tabAt(tab,i=(n - 1) & hash)) == null)       break;
+ else       if (f.hash == MOVED)       tab=map.helpTransfer(tab,f);
+ else {
+synchronized (f) {
+          if (tabAt(tab,i) == f) {
+synchronized (lirsNode) {
+              onEntryHitWrite(e,value);
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+}

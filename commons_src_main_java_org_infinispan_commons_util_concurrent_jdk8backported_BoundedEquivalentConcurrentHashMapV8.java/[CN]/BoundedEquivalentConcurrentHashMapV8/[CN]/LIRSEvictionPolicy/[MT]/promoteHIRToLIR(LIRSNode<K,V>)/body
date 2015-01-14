@@ -1,0 +1,24 @@
+{
+{
+    DequeNode<LIRSNode<K,V>> stackNode=lirsNode.stackNode;
+    if (stackNode != null) {
+      LIRSNode<K,V> item=stackNode.item;
+      if (item != null && stackNode.casItem(item,null)) {
+        stack.unlink(stackNode);
+      }
+      lirsNode.setStackNode(null);
+    }
+    DequeNode<LIRSNode<K,V>> queueNode=lirsNode.queueNode;
+    if (queueNode != null) {
+      LIRSNode<K,V> item=queueNode.item;
+      if (item != null && queueNode.casItem(item,null)) {
+        queue.unlink(queueNode);
+      }
+      lirsNode.setQueueNode(null);
+    }
+  }
+  lirsNode.setState(Recency.LIR_RESIDENT);
+  DequeNode<LIRSNode<K,V>> stackNode=new DequeNode<>(lirsNode);
+  lirsNode.setStackNode(stackNode);
+  stack.linkLast(stackNode);
+}

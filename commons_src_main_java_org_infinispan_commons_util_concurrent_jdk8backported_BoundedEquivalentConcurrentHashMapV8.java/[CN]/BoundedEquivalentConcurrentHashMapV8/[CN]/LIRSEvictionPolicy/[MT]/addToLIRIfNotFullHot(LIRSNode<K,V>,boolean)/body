@@ -1,0 +1,16 @@
+{
+  long currentHotSize;
+  while ((currentHotSize=hotSize.get()) < maximumHotSize) {
+    if (hotSize.compareAndSet(currentHotSize,currentHotSize + 1)) {
+      if (incrementSize) {
+        incrementSizeEviction(currentSize,1,0);
+      }
+      DequeNode<LIRSNode<K,V>> stackNode=new DequeNode<>(lirsNode);
+      lirsNode.setStackNode(stackNode);
+      lirsNode.setState(Recency.LIR_RESIDENT);
+      stack.linkLast(stackNode);
+      return true;
+    }
+  }
+  return false;
+}

@@ -1,0 +1,50 @@
+{
+  long extra;
+  while (true) {
+    SizeAndEvicting existingSize=currentSize.get();
+    long size=existingSize.size;
+    long evicting=existingSize.evicting;
+    if ((extra=size - evicting - maxSize) > 0) {
+      SizeAndEvicting newSize=new SizeAndEvicting(size,evicting + extra);
+      if (currentSize.compareAndSet(existingSize,newSize)) {
+        break;
+      }
+    }
+ else {
+      break;
+    }
+  }
+  List<Node<K,V>> evictedEntries=null;
+  if (extra > 0) {
+    evictedEntries=new ArrayList<>((int)extra & 0x7fffffff);
+    long decCreate=0;
+    long decEvict=0;
+    for (long j=0; j < extra; ++j) {
+      Node<K,V> node=deque.pollFirst();
+      boolean removed=false;
+      if (node != null) {
+        LRUNode<K,V> lruNode=(LRUNode<K,V>)node.eviction;
+synchronized (lruNode) {
+          if (!lruNode.removed) {
+            lruNode.removed=true;
+            removed=true;
+          }
+        }
+      }
+      if (removed) {
+        map.replaceNode(node.key,null,null,true);
+        evictedEntries.add(node);
+        decCreate--;
+        decEvict--;
+      }
+ else {
+        decEvict--;
+      }
+    }
+    if (decEvict != 0)     incrementSizeEviction(currentSize,decCreate,decEvict);
+  }
+ else {
+    evictedEntries=InfinispanCollections.emptyList();
+  }
+  return evictedEntries;
+}

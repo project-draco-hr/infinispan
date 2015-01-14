@@ -42,14 +42,18 @@ final Transaction tx=tm.suspend();
 if (fail) {
 primaryOwner.put(key,"v2");
 }
+boolean evicted=false;
 int i=0;
 DataContainer dataContainer=TestingUtil.extractComponent(primaryOwner,DataContainer.class);
-while (true) {
+while (i < MAX_ENTRIES * 2) {
 primaryOwner.put(new MagicKey("other-key-" + i,primaryOwner),"value");
-if (!dataContainer.containsKey(key)) {
+if (dataContainer.peek(key) == null) {
+evicted=true;
 break;
 }
+++i;
 }
+assertTrue("The key was not evicted after " + MAX_ENTRIES + " inserts",evicted);
 log.debugf("It is going to try to commit the suspended transaction");
 try {
 tm.resume(tx);

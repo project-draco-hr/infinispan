@@ -1,0 +1,20 @@
+{
+  Map<HashCodeControlled,Object> bchm=createMap(2,evictionPolicy());
+  CyclicBarrier barrier=new CyclicBarrier(3);
+  ExecutorService service=Executors.newFixedThreadPool(2);
+  try {
+    for (int i=0; i < 5000; i++) {
+      Future<?> f1=service.submit(new HashCodeControlledPutCallable(0,bchm,barrier));
+      Future<?> f2=service.submit(new HashCodeControlledPutCallable(1,bchm,barrier));
+      barrier.await(10,TimeUnit.SECONDS);
+      f1.get(1000,TimeUnit.SECONDS);
+      f2.get(10,TimeUnit.SECONDS);
+      if (bchm.size() != 2) {
+        assertEquals(2,bchm.size());
+      }
+    }
+  }
+  finally {
+    service.shutdownNow();
+  }
+}

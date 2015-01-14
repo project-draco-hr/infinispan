@@ -1,0 +1,34 @@
+{
+  LIRSNode<K,V> lirsNode=(LIRSNode<K,V>)e.eviction;
+synchronized (lirsNode) {
+switch (lirsNode.state) {
+case LIR_RESIDENT:
+      hotSize.decrementAndGet();
+case HIR_RESIDENT:
+    incrementSizeEviction(currentSize,-1,0);
+case HIR_NONRESIDENT:
+case EVICTING:
+  lirsNode.setState(Recency.REMOVED);
+break;
+case REMOVED:
+case EVICTED:
+}
+DequeNode<LIRSNode<K,V>> queueNode=lirsNode.queueNode;
+if (queueNode != null) {
+LIRSNode<K,V> item=queueNode.item;
+if (item != null && queueNode.casItem(item,null)) {
+queue.unlink(queueNode);
+}
+lirsNode.setQueueNode(null);
+}
+lirsNode.setQueueNode(null);
+DequeNode<LIRSNode<K,V>> stackNode=lirsNode.stackNode;
+if (stackNode != null) {
+LIRSNode<K,V> item=stackNode.item;
+if (item != null && stackNode.casItem(item,null)) {
+stack.unlink(stackNode);
+}
+lirsNode.setStackNode(null);
+}
+}
+}

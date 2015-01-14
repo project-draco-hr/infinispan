@@ -1,0 +1,79 @@
+{
+  boolean demoteLIR=false;
+  boolean evictHIR=false;
+  LIRSNode<K,V> lirsNode=(LIRSNode<K,V>)e.eviction;
+synchronized (lirsNode) {
+    Recency recency=lirsNode.state;
+    if (recency == null) {
+      if (addToLIRIfNotFullHot(lirsNode,false)) {
+        return;
+      }
+      recency=Recency.LIR_RESIDENT;
+      lirsNode.setState(recency);
+      demoteLIR=true;
+    }
+switch (recency) {
+case LIR_RESIDENT:
+      DequeNode<LIRSNode<K,V>> stackNode=lirsNode.stackNode;
+    if (stackNode != null) {
+      LIRSNode<K,V> item=stackNode.item;
+      if (item != null && stackNode.casItem(item,null)) {
+        stack.unlink(stackNode);
+      }
+    }
+  DequeNode<LIRSNode<K,V>> newStackNode=new DequeNode<>(lirsNode);
+lirsNode.setStackNode(newStackNode);
+stack.linkLast(newStackNode);
+break;
+case HIR_NONRESIDENT:
+if (e.val == NULL_VALUE) {
+e.val=value;
+map.addCount(1,-1);
+}
+if (addToLIRIfNotFullHot(lirsNode,true)) {
+return;
+}
+promoteHIRToLIR(lirsNode);
+evictHIR=true;
+demoteLIR=true;
+break;
+case EVICTED:
+break;
+case EVICTING:
+evictHIR=true;
+lirsNode.setState(Recency.HIR_RESIDENT);
+if (e.val == NULL_VALUE) {
+e.val=value;
+map.addCount(1,-1);
+}
+case HIR_RESIDENT:
+if (lirsNode.stackNode != null) {
+promoteHIRToLIR(lirsNode);
+demoteLIR=true;
+}
+ else {
+if (lirsNode.queueNode != null) {
+LIRSNode<K,V> item=lirsNode.queueNode.item;
+if (item != null && lirsNode.queueNode.casItem(item,null)) {
+queue.unlink(lirsNode.queueNode);
+}
+}
+newStackNode=new DequeNode<>(lirsNode);
+lirsNode.setStackNode(newStackNode);
+stack.linkLast(newStackNode);
+DequeNode<LIRSNode<K,V>> newQueueNode=new DequeNode<>(lirsNode);
+lirsNode.setQueueNode(newQueueNode);
+queue.linkLast(newQueueNode);
+}
+break;
+case REMOVED:
+break;
+}
+}
+if (demoteLIR) {
+hotDemotion.incrementAndGet();
+}
+if (evictHIR) {
+incrementSizeEviction(currentSize,1,0);
+}
+}

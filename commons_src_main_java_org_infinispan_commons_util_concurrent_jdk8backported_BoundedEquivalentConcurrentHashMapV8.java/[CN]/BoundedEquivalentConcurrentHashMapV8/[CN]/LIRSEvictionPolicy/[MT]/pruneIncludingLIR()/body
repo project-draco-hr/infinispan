@@ -1,0 +1,41 @@
+{
+  LIRSNode<K,V> removedLIR=null;
+  Object[] nodeDetails=new Object[2];
+  while (true) {
+    if (!stack.pollFirstNode(nodeDetails)) {
+      long hot;
+      while ((hot=hotSize.get()) < 0) {
+        if (hotSize.compareAndSet(hot,hot + 1)) {
+          return null;
+        }
+      }
+      continue;
+    }
+    DequeNode<LIRSNode<K,V>> removedStackNode=(DequeNode<LIRSNode<K,V>>)nodeDetails[0];
+    removedLIR=(LIRSNode<K,V>)nodeDetails[1];
+synchronized (removedLIR) {
+      if (removedStackNode != removedLIR.stackNode) {
+        continue;
+      }
+switch (removedLIR.state) {
+case LIR_RESIDENT:
+        return nodeDetails;
+case HIR_NONRESIDENT:
+      removedLIR.setState(Recency.EVICTING);
+    Collection<LIRSNode<K,V>> nodesToEvict=nodesToEvictTL.get();
+  if (nodesToEvict == null) {
+    nodesToEvict=new ArrayList<>();
+    nodesToEvictTL.set(nodesToEvict);
+  }
+nodesToEvict.add(removedLIR);
+case HIR_RESIDENT:
+removedLIR.setStackNode(null);
+break;
+case REMOVED:
+case EVICTING:
+case EVICTED:
+break;
+}
+}
+}
+}

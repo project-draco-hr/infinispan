@@ -1,0 +1,38 @@
+{
+  int count=50;
+  final Map<String,Integer> bchm=createMap(count,evictionPolicy());
+  final AtomicInteger threadOffset=new AtomicInteger();
+  final int COUNT_PER_THREAD=10000;
+  final int THREADS=10;
+  String keptKey=0 + " " + 0;
+  bchm.put(keptKey,0);
+  ExecutorService service=Executors.newFixedThreadPool(THREADS);
+  Future<Void>[] futures=new Future[THREADS];
+  for (int i=0; i < THREADS; ++i) {
+    futures[i]=service.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        int offset=threadOffset.getAndIncrement();
+        for (int i=1; i < COUNT_PER_THREAD; i++) {
+          String keyValue=offset + " " + i;
+          bchm.put(keyValue,i);
+        }
+        return null;
+      }
+    }
+);
+  }
+  service.shutdown();
+  service.awaitTermination(10,TimeUnit.SECONDS);
+  for (int i=0; i < THREADS; ++i) {
+    futures[i].get(10,TimeUnit.SECONDS);
+  }
+  assertEquals(count,bchm.size());
+  int manualCount=0;
+  for (  Entry<String,Integer> entry : bchm.entrySet()) {
+    if (entry.getValue() != null) {
+      manualCount++;
+    }
+  }
+  assertEquals(count,manualCount);
+  assertTrue(bchm.containsKey(keptKey));
+}

@@ -1,0 +1,139 @@
+{
+  long hotDemotions;
+  while ((hotDemotions=hotDemotion.get()) > 0) {
+    if (hotDemotion.compareAndSet(hotDemotions,0)) {
+      break;
+    }
+  }
+  for (long i=0; i < hotDemotions; ++i) {
+    demoteLowestLIR();
+  }
+  int evictCount;
+  while (true) {
+    SizeAndEvicting sizeEvict=currentSize.get();
+    long size=sizeEvict.size;
+    long evict=sizeEvict.evicting;
+    long longEvictCount=(size - evict - maximumSize);
+    if (longEvictCount > 0) {
+      evictCount=(int)longEvictCount & 0x7fffffff;
+      if (currentSize.compareAndSet(sizeEvict,new SizeAndEvicting(size,evict + evictCount))) {
+        break;
+      }
+    }
+ else {
+      evictCount=0;
+      break;
+    }
+  }
+  Collection<LIRSNode<K,V>> tlEvicted=nodesToEvictTL.get();
+  if (tlEvicted == null) {
+    tlEvicted=InfinispanCollections.emptyList();
+  }
+ else {
+    nodesToEvictTL.remove();
+  }
+  if (evictCount != 0 || !tlEvicted.isEmpty()) {
+    @SuppressWarnings("unchecked") LIRSNode<K,V>[] queueContents=new LIRSNode[evictCount + tlEvicted.size()];
+    Iterator<LIRSNode<K,V>> tlIterator=tlEvicted.iterator();
+    int offset=0;
+    while (tlIterator.hasNext()) {
+      queueContents[evictCount + offset]=tlIterator.next();
+      offset++;
+    }
+    int evictedValues=evictCount;
+    int decEvict=evictCount;
+    Object[] hirDetails=new Object[2];
+    for (int i=0; i < evictCount; ++i) {
+      boolean foundNode=false;
+      while (!foundNode) {
+        if (!queue.pollFirstNode(hirDetails)) {
+          SizeAndEvicting sizeEvict=currentSize.get();
+          if (sizeEvict.size - sizeEvict.evicting < maximumSize) {
+            SizeAndEvicting newSizeEvict=new SizeAndEvicting(sizeEvict.size,sizeEvict.evicting - 1);
+            if (currentSize.compareAndSet(sizeEvict,newSizeEvict)) {
+              evictedValues--;
+              decEvict--;
+              break;
+            }
+          }
+          LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+          continue;
+        }
+        DequeNode<LIRSNode<K,V>> removedDequeNode=(DequeNode<LIRSNode<K,V>>)hirDetails[0];
+        LIRSNode<K,V> removedHIR=(LIRSNode<K,V>)hirDetails[1];
+synchronized (removedHIR) {
+          if (removedHIR.queueNode != removedDequeNode) {
+            continue;
+          }
+          removedHIR.setQueueNode(null);
+switch (removedHIR.state) {
+case HIR_RESIDENT:
+            if (removedHIR.stackNode != null) {
+              removedHIR.setState(Recency.HIR_NONRESIDENT);
+              queueContents[i]=removedHIR;
+            }
+ else {
+              removedHIR.setState(Recency.EVICTING);
+              queueContents[i]=removedHIR;
+            }
+          foundNode=true;
+        break;
+case REMOVED:
+      evictedValues--;
+    foundNode=true;
+  break;
+case LIR_RESIDENT:
+case EVICTING:
+case EVICTED:
+case HIR_NONRESIDENT:
+break;
+}
+}
+}
+}
+incrementSizeEviction(currentSize,-evictedValues,-decEvict);
+Collection<Node<K,V>> removedNodes=new ArrayList<>(queueContents.length);
+for (int j=0; j < queueContents.length; ++j) {
+LIRSNode<K,V> evict=queueContents[j];
+if (evict == null) {
+continue;
+}
+if (evict.state == Recency.EVICTING || evict.state == Recency.HIR_NONRESIDENT) {
+int hash=spread(map.keyEq.hashCode(evict.getKey()));
+for (Node<K,V>[] tab=map.table; ; ) {
+Node<K,V> f;
+int n, i;
+if (tab == null || (n=tab.length) == 0 || (f=tabAt(tab,i=(n - 1) & hash)) == null) break;
+ else if (f.hash == MOVED) tab=map.helpTransfer(tab,f);
+ else {
+synchronized (f) {
+if (tabAt(tab,i) == f) {
+synchronized (evict) {
+    if (evict.state == Recency.EVICTING) {
+      evict.setState(Recency.EVICTED);
+      V prevValue=map.replaceNode(evict.getKey(),null,null,true);
+      removedNodes.add(new Node<>(-1,null,evict.getKey(),prevValue,null));
+    }
+ else     if (evict.state == Recency.HIR_NONRESIDENT) {
+      Node<K,V> node=f.find(hash,evict.getKey());
+      V prevValue=node.val;
+      if (prevValue != NULL_VALUE) {
+        node.val=(V)NULL_VALUE;
+        map.addCount(-1,-1);
+        Node<K,V> nonResidentNode=new Node<K,V>(-1,null,evict.getKey(),prevValue,null);
+        removedNodes.add(nonResidentNode);
+        map.notifyListenerOfRemoval(nonResidentNode,true);
+      }
+    }
+  }
+  break;
+}
+}
+}
+}
+}
+}
+return removedNodes;
+}
+return InfinispanCollections.emptySet();
+}
