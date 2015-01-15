@@ -1,0 +1,23 @@
+{
+  String key="key";
+  String value="value";
+  Cache<String,String> cache0=cache(0,CACHE_NAME);
+  cache0.put(key,value);
+  AllCacheEntryListener listener=new AllCacheEntryListener();
+  cache0.addListener(listener);
+  String value2="value2";
+  cache(1,CACHE_NAME).put(key,value2);
+  assertEquals(2,listener.events.size());
+  CacheEntryEvent event=listener.events.get(0);
+  assertEquals(Type.CACHE_ENTRY_INVALIDATED,event.getType());
+  assertEquals(key,event.getKey());
+  assertEquals(value,event.getValue());
+  assertTrue(event.isPre());
+  assertFalse(event.isOriginLocal());
+  event=listener.events.get(1);
+  assertEquals(Type.CACHE_ENTRY_INVALIDATED,event.getType());
+  assertEquals(key,event.getKey());
+  assertEquals(value,event.getValue());
+  assertFalse(event.isPre());
+  assertFalse(event.isOriginLocal());
+}
