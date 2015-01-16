@@ -7,6 +7,10 @@
     if (fd == null) {
       throw new IllegalArgumentException("Unknown field " + name + " in type "+ messageDescriptor.getFullName());
     }
+    IndexingMetadata indexingMetadata=messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+    if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+      throw new IllegalArgumentException("Field " + name + " from type "+ messageDescriptor.getFullName()+ " is not indexed");
+    }
     if (i < split.length - 1) {
       messageDescriptor=fd.getMessageType();
     }

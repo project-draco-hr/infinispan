@@ -1,0 +1,32 @@
+{
+  String authorSchemaFile="/* @Indexed */\n" + "message Author {\n" + "   required int32 id = 1;\n"+ "   /* @IndexedField */\n"+ "   required string name = 2;\n"+ "}";
+  SerializationContext serializationContext=ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+  serializationContext.registerProtoFiles(FileDescriptorSource.fromString("author.proto",authorSchemaFile));
+  serializationContext.registerMarshaller(new MessageMarshaller<Author>(){
+    @Override public Author readFrom(    ProtoStreamReader reader) throws IOException {
+      int id=reader.readInt("id");
+      String name=reader.readString("name");
+      Author author=new Author();
+      author.setId(id);
+      author.setName(name);
+      return author;
+    }
+    @Override public void writeTo(    ProtoStreamWriter writer,    Author author) throws IOException {
+      writer.writeInt("id",author.getId());
+      writer.writeString("name",author.getName());
+    }
+    @Override public Class<? extends Author> getJavaClass(){
+      return Author.class;
+    }
+    @Override public String getTypeName(){
+      return "Author";
+    }
+  }
+);
+  ProtoSchemaBuilder protoSchemaBuilder=new ProtoSchemaBuilder();
+  String memoSchemaFile=protoSchemaBuilder.fileName("memo.proto").addClass(Memo.class).build(serializationContext);
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+  metadataCache.put("author.proto",authorSchemaFile);
+  metadataCache.put("memo.proto",memoSchemaFile);
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+}

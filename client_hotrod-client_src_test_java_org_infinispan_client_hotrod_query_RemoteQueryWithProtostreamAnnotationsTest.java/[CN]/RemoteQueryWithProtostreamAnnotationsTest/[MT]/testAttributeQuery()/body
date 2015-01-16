@@ -1,0 +1,20 @@
+{
+  RemoteCache<Integer,Memo> remoteCache=remoteCacheManager.getCache();
+  remoteCache.put(1,createMemo1());
+  remoteCache.put(2,createMemo2());
+  Memo fromCache=remoteCache.get(1);
+  assertMemo1(fromCache);
+  QueryFactory qf=Search.getQueryFactory(remoteCache);
+  Query query=qf.from(Memo.class).having("text").like("%ipsum%").toBuilder().build();
+  List<Memo> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(Memo.class,list.get(0).getClass());
+  assertMemo1(list.get(0));
+  query=qf.from(Memo.class).having("author.name").eq("Adrian").toBuilder().build();
+  list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertEquals(Memo.class,list.get(0).getClass());
+  assertMemo2(list.get(0));
+}
