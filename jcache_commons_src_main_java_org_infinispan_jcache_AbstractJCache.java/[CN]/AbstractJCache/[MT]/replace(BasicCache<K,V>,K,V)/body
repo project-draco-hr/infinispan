@@ -1,0 +1,19 @@
+{
+  checkNotNull(value,"value");
+  boolean exists=cache.containsKey(key);
+  if (exists) {
+    Duration ttl=Expiration.getExpiry(expiryPolicy,Expiration.Operation.UPDATE);
+    if (ttl == null || ttl.isEternal()) {
+      return cache.replace(key,value);
+    }
+ else     if (ttl.equals(Duration.ZERO)) {
+      return cache.remove(key);
+    }
+ else {
+      long duration=ttl.getDurationAmount();
+      TimeUnit timeUnit=ttl.getTimeUnit();
+      return cache.replace(key,value,duration,timeUnit);
+    }
+  }
+  return null;
+}

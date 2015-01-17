@@ -1,0 +1,34 @@
+{
+  checkNotClosed();
+  checkNotNull(key,"key");
+  checkNotNull(entryProcessor,"entryProcessor");
+  if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
+  V oldValue=cacheWithCacheStore.get(key);
+  MutableJCacheEntry<K,V> mutable=createMutableCacheEntry(oldValue,key);
+  T ret=processEntryProcessor(mutable,entryProcessor,arguments);
+switch (mutable.getOperation()) {
+case NONE:
+    break;
+case ACCESS:
+  updateTTLForAccessed(cache,key,oldValue);
+break;
+case UPDATE:
+V newValue=mutable.getNewValue();
+if (newValue == null) {
+throw new EntryProcessorException();
+}
+if (oldValue != null) {
+replace(cache,cache,key,oldValue,newValue,true);
+}
+ else {
+put(cache,cache,key,newValue,true);
+}
+writeToCacheWriter(key,newValue);
+break;
+case REMOVE:
+cache.remove(key);
+removeFromCacheWriter(key);
+break;
+}
+return ret;
+}

@@ -1,0 +1,22 @@
+{
+  ConfigurationAdapter<K,V> adapter=ConfigurationAdapter.create(configuration);
+  try {
+    if (!sm.containsCache(cacheName)) {
+      sm.addCache(cacheName);
+    }
+  }
+ catch (  NotAvailableException ex) {
+  }
+catch (  ManagementClientException ex) {
+    throw log.cacheCreationFailed(cacheName,ex);
+  }
+  RemoteCache<K,V> ispnCache=cm.getCache(cacheName);
+  if (ispnCache == null) {
+    throw log.cacheNotFound(cacheName);
+  }
+  RemoteCache<K,V> ispnCacheForceReturnValue=cmForceReturnValue.getCache(cacheName);
+  if (ispnCacheForceReturnValue == null) {
+    throw log.cacheNotFound(cacheName);
+  }
+  return new JCache<K,V>(ispnCache,ispnCacheForceReturnValue,this,adapter);
+}

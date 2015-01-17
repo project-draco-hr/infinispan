@@ -1,0 +1,16 @@
+{
+synchronized (cacheManagers) {
+    if (uri != null) {
+      Map<URI,CacheManager> map=cacheManagers.get(classLoader);
+      if (map != null) {
+        CacheManager cacheManager=map.remove(uri);
+        if (map.isEmpty())         cacheManagers.remove(classLoader);
+        if (cacheManager != null)         cacheManager.close();
+      }
+    }
+ else {
+      Map<URI,CacheManager> cacheManagersToClose=cacheManagers.remove(classLoader);
+      if (cacheManagersToClose != null)       close(cacheManagersToClose);
+    }
+  }
+}

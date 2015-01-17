@@ -1,0 +1,20 @@
+{
+  URI globalUri=uri == null ? getDefaultURI() : uri;
+  ClassLoader globalClassLoader=classLoader == null ? getDefaultClassLoader() : classLoader;
+  Properties globalProperties=properties == null ? new Properties() : properties;
+synchronized (cacheManagers) {
+    Map<URI,CacheManager> map=cacheManagers.get(globalClassLoader);
+    if (map == null) {
+      if (log.isTraceEnabled())       log.tracef("No cache managers registered under '%s'",globalUri);
+      map=new HashMap<URI,CacheManager>();
+      cacheManagers.put(globalClassLoader,map);
+    }
+    CacheManager cacheManager=map.get(globalUri);
+    if (cacheManager == null || cacheManager.isClosed()) {
+      cacheManager=createCacheManager(globalClassLoader,globalUri,globalProperties);
+      if (log.isTraceEnabled())       log.tracef("Created '%s' cache manager",globalUri);
+      map.put(globalUri,cacheManager);
+    }
+    return cacheManager;
+  }
+}

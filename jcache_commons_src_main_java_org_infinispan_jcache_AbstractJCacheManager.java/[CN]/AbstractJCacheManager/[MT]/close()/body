@@ -1,0 +1,19 @@
+{
+  if (!isClosed()) {
+    ArrayList<AbstractJCache<?,?>> cacheList;
+synchronized (caches) {
+      cacheList=new ArrayList<AbstractJCache<?,?>>(caches.values());
+      caches.clear();
+    }
+    for (    AbstractJCache<?,?> cache : cacheList) {
+      try {
+        cache.close();
+        unregisterCacheMBeans(cache);
+      }
+ catch (      Exception e) {
+      }
+    }
+    delegateStop();
+    isClosed=true;
+  }
+}

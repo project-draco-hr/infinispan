@@ -1,0 +1,14 @@
+{
+  checkNotClosed().checkNull(cacheName,"cacheName").checkNull(configuration,"configuration");
+synchronized (caches) {
+    AbstractJCache<?,?> cache=caches.get(cacheName);
+    if (cache == null) {
+      cache=create(cacheName,configuration);
+      caches.put(cache.getName(),cache);
+    }
+ else {
+      throw log.cacheAlreadyRegistered(cacheName,cache.getConfiguration(Configuration.class),configuration);
+    }
+    return unchecked(cache);
+  }
+}

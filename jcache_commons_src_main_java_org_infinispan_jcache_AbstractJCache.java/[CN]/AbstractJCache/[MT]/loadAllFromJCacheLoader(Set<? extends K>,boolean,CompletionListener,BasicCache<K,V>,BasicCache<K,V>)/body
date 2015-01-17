@@ -1,0 +1,24 @@
+{
+  final List<K> keysToLoad=filterLoadAllKeys(keys,replaceExistingValues,false);
+  if (keysToLoad.isEmpty()) {
+    setListenerCompletion(listener);
+    return;
+  }
+  try {
+    Map<K,V> loaded=loadAllKeys(keysToLoad);
+    Iterator<Map.Entry<K,V>> it=loaded.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<K,V> entry=it.next();
+      if (entry.getValue() == null)       it.remove();
+    }
+    for (    Map.Entry<K,V> entry : loaded.entrySet()) {
+      K loadedKey=entry.getKey();
+      V loadedValue=entry.getValue();
+      put(cache,createCheckCache,loadedKey,loadedValue,false);
+    }
+    setListenerCompletion(listener);
+  }
+ catch (  Throwable t) {
+    setListenerException(listener,t);
+  }
+}

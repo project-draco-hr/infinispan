@@ -1,0 +1,26 @@
+{
+  checkNotNull(value,"value");
+  if (isConditional) {
+    checkNotNull(oldValue,"oldValue");
+  }
+  V current=existsCheckCache.get(key);
+  if (current != null) {
+    if (isConditional && !current.equals(oldValue)) {
+      updateTTLForAccessed(cache,key,value);
+      return false;
+    }
+    Duration ttl=Expiration.getExpiry(expiryPolicy,Expiration.Operation.UPDATE);
+    if (ttl == null || ttl.isEternal()) {
+      return isConditional ? cache.replace(key,oldValue,value) : cache.replace(key,value) != null;
+    }
+ else     if (ttl.equals(Duration.ZERO)) {
+      return cache.remove(key) != null;
+    }
+ else {
+      long duration=ttl.getDurationAmount();
+      TimeUnit timeUnit=ttl.getTimeUnit();
+      return isConditional ? cache.replace(key,oldValue,value,duration,timeUnit) : cache.replace(key,value,duration,timeUnit) != null;
+    }
+  }
+  return false;
+}

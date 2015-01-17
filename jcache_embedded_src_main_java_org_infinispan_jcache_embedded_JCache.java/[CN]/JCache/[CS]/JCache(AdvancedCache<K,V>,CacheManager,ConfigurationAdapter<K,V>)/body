@@ -1,0 +1,19 @@
+{
+  super(c.getConfiguration(),cacheManager,new JCacheNotifier<K,V>());
+  this.cache=cache;
+  this.processorLocks=new ReentrantPerEntryLockContainer(32,cache.getCacheConfiguration().dataContainer().keyEquivalence());
+  this.ignoreReturnValuesCache=cache.withFlags(Flag.IGNORE_RETURN_VALUES);
+  this.skipCacheLoadCache=cache.withFlags(Flag.SKIP_CACHE_LOAD);
+  this.skipCacheLoadAndStatsCache=cache.withFlags(Flag.SKIP_CACHE_LOAD,Flag.SKIP_STATISTICS);
+  this.skipListenerCache=cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+  this.skipStatisticsCache=cache.withFlags(Flag.SKIP_STATISTICS);
+  this.mxBean=new RIDelegatingCacheMXBean<K,V>(this);
+  this.stats=new RICacheStatistics(this.cache);
+  this.lockTimeout=cache.getCacheConfiguration().locking().lockAcquisitionTimeout();
+  addConfigurationListeners();
+  setCacheLoader(configuration);
+  setCacheWriter(configuration);
+  addExpirationTrackingInterceptor(cache,notifier);
+  if (configuration.isManagementEnabled())   setManagementEnabled(true);
+  if (configuration.isStatisticsEnabled())   setStatisticsEnabled(true);
+}

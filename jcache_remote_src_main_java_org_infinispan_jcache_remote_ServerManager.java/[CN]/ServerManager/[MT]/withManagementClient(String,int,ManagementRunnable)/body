@@ -1,0 +1,23 @@
+{
+  InetAddress addr;
+  try {
+    addr=InetAddress.getByName(host);
+  }
+ catch (  UnknownHostException ex) {
+    throw new ManagementClientException(String.format("Failed to resolve host '%s'.",host),ex);
+  }
+  ModelControllerClient client=ModelControllerClient.Factory.create("http-remoting",addr,port);
+  try {
+    runnable.run(client);
+  }
+ catch (  Exception ex) {
+    throw new ManagementClientException("",ex);
+  }
+ finally {
+    try {
+      client.close();
+    }
+ catch (    IOException e) {
+    }
+  }
+}
