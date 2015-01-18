@@ -1,8 +1,11 @@
 {
   takeOfflineBuilder.validate();
   stateTransferBuilder.validate();
-  if (site == null)   throw new CacheConfigurationException("The 'site' must be specified!");
+  if (site == null)   throw log.backupSiteNullName();
   if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
-    throw new CacheConfigurationException("It is required to specify a 'failurePolicyClass' when using a " + "custom backup failure policy!");
+    throw log.customBackupFailurePolicyClassNotSpecified();
+  }
+  if (useTwoPhaseCommit && strategy == BackupConfiguration.BackupStrategy.ASYNC) {
+    throw log.twoPhaseCommitAsyncBackup();
   }
 }
