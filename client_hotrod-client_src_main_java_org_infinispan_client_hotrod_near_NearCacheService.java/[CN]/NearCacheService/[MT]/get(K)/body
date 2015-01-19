@@ -1,3 +1,10 @@
 {
-  return isConnected() ? cache.get(key) : null;
+  boolean listenerConnected=isConnected();
+  if (listenerConnected) {
+    VersionedValue<V> value=cache.get(key);
+    if (log.isTraceEnabled())     log.tracef("Get key=%s returns value=%s (listenerId=%s)",key,value,Util.printArray(listenerId));
+    return value;
+  }
+  if (log.isTraceEnabled())   log.tracef("Near cache disconnected from server, returning null for key=%s (listenedId=%s)",key,Util.printArray(listenerId));
+  return null;
 }
