@@ -4,14 +4,16 @@
   }
   finally {
     if (!ctx.isOriginLocal()) {
-      boolean originatorMissing=!rpcManager.getTransport().getMembers().contains(command.getOrigin());
+      Address origin=ctx.getGlobalTransaction().getAddress();
+      boolean originatorMissing=!rpcManager.getTransport().getMembers().contains(origin);
       boolean alreadyCompleted=txTable.isTransactionCompleted(command.getGlobalTransaction()) || !txTable.containRemoteTx(command.getGlobalTransaction());
+      boolean completedSuccessfully=alreadyCompleted && !ctx.getCacheTransaction().isMarkedForRollback();
       if (trace) {
         log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s",originatorMissing,alreadyCompleted);
       }
       if (alreadyCompleted || originatorMissing) {
         if (trace) {
-          log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no " + "longer in the cluster(%s).",command.getGlobalTransaction(),alreadyCompleted,originatorMissing);
+          log.tracef("Rolling back remote transaction %s because either already completed (%s) or originator no " + "longer in the cluster (%s).",command.getGlobalTransaction(),alreadyCompleted,originatorMissing);
         }
         RollbackCommand rollback=new RollbackCommand(command.getCacheName(),command.getGlobalTransaction());
         try {
@@ -22,6 +24,9 @@
           remoteTx.markForRollback(true);
           txTable.removeRemoteTransaction(command.getGlobalTransaction());
         }
+      }
+      if (originatorMissing && !completedSuccessfully) {
+        throw log.orphanTransactionRolledBack(ctx.getGlobalTransaction());
       }
     }
   }
