@@ -5,11 +5,11 @@
     String name=split[i];
     fd=messageDescriptor.findFieldByName(name);
     if (fd == null) {
-      throw new IllegalArgumentException("Unknown field " + name + " in type "+ messageDescriptor.getFullName());
+      throw log.unknownField(name,messageDescriptor.getFullName());
     }
     IndexingMetadata indexingMetadata=messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
     if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
-      throw new IllegalArgumentException("Field " + name + " from type "+ messageDescriptor.getFullName()+ " is not indexed");
+      throw log.fieldIsNotIndexed(name,messageDescriptor.getFullName());
     }
     if (i < split.length - 1) {
       messageDescriptor=fd.getMessageType();
