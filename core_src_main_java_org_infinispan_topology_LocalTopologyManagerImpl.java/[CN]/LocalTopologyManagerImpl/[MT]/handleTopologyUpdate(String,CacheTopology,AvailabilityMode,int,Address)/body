@@ -17,8 +17,7 @@ synchronized (cacheStatus) {
     }
     CacheTopologyHandler handler=cacheStatus.getHandler();
     resetLocalTopologyBeforeRebalance(cacheName,cacheTopology,existingTopology,handler);
-    log.debugf("Updating local consistent hash(es) for cache %s: new topology = %s",cacheName,cacheTopology);
-    cacheStatus.setCurrentTopology(cacheTopology);
+    if (!updateCacheTopology(cacheName,cacheTopology,sender,cacheStatus))     return;
     ConsistentHash unionCH=null;
     if (cacheTopology.getPendingCH() != null) {
       unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
