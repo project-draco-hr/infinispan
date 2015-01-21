@@ -1,0 +1,13 @@
+{
+  final NotifyingFutureImpl<T> notifyingFuture=new NotifyingFutureImpl<>();
+  Future<T> future=fork(new Callable<T>(){
+    @Override public T call() throws Exception {
+      Thread.sleep(afterHowLong);
+      notifyingFuture.notifyDone(result);
+      return result;
+    }
+  }
+);
+  notifyingFuture.setFuture(future);
+  return notifyingFuture;
+}

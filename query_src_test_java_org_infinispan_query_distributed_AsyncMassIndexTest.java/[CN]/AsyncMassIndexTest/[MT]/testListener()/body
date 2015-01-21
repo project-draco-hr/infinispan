@@ -1,0 +1,16 @@
+{
+  Cache<Integer,Transaction> cache=caches.get(0);
+  int elements=50;
+  populate(elements);
+  SearchManager searchManager=Search.getSearchManager(cache);
+  NotifyingFuture<Void> future=searchManager.getMassIndexer().startAsync();
+  final CountDownLatch endLatch=new CountDownLatch(1);
+  future.attachListener(new FutureListener<Void>(){
+    @Override public void futureDone(    Future<Void> future){
+      endLatch.countDown();
+    }
+  }
+);
+  endLatch.await();
+  checkIndex(elements,Transaction.class);
+}

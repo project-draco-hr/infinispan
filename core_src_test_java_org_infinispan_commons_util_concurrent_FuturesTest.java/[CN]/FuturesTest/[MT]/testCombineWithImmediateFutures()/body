@@ -1,0 +1,26 @@
+{
+  List<NotifyingFuture<String>> futures=new ArrayList<>();
+  final CountDownLatch startLatch=new CountDownLatch(1);
+  final CountDownLatch endLatch=new CountDownLatch(1);
+  for (int i=0; i < 100; i++) {
+    futures.add(createImmediate("res" + i,startLatch));
+  }
+  NotifyingFuture<Void> compositeFuture=Futures.combine(futures);
+  final AtomicInteger triggerCount=new AtomicInteger(0);
+  compositeFuture.attachListener(new FutureListener<Void>(){
+    @Override public void futureDone(    Future<Void> future){
+      assertTrue(future.isDone());
+      assertFalse(future.isCancelled());
+      assertNoErrors(future);
+      triggerCount.incrementAndGet();
+      endLatch.countDown();
+    }
+  }
+);
+  startLatch.countDown();
+  endLatch.await();
+  assertEquals(1,triggerCount.get());
+  assertTrue(compositeFuture.isDone());
+  assertFalse(compositeFuture.isCancelled());
+  assertAllDone(futures);
+}

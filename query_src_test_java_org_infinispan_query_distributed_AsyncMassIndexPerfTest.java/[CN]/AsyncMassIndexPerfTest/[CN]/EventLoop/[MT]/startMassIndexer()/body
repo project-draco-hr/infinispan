@@ -1,0 +1,22 @@
+{
+  System.out.println("Running MassIndexer");
+  final StopTimer stopTimer=new StopTimer();
+  future=massIndexer.startAsync();
+  future.attachListener(new FutureListener<Void>(){
+    @Override public void futureDone(    Future<Void> future){
+      stopTimer.stop();
+      try {
+        future.get();
+        System.out.printf("\nMass indexer run in %d seconds",stopTimer.getElapsedIn(TimeUnit.SECONDS));
+        System.out.println();
+        waitForIndexSize(nexIndex.get());
+        System.out.println("Mass Indexing complete.");
+      }
+ catch (      Exception e) {
+        System.out.println("Error executing massindexer");
+        e.printStackTrace();
+      }
+    }
+  }
+);
+}

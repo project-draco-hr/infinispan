@@ -1,0 +1,25 @@
+{
+  List<NotifyingFuture<Integer>> futures=new ArrayList<>();
+  Random random=new Random();
+  for (int i=0; i < 10; i++) {
+    futures.add(createDelayedFuture(i,random.nextInt(20)));
+  }
+  NotifyingFuture<Void> compositeFuture=Futures.combine(futures);
+  final AtomicInteger fireCount=new AtomicInteger(0);
+  final CountDownLatch listenersDone=new CountDownLatch(100);
+  for (int i=0; i < 100; i++) {
+    compositeFuture.attachListener(new FutureListener<Void>(){
+      @Override public void futureDone(      Future<Void> future){
+        assertTrue(future.isDone());
+        fireCount.incrementAndGet();
+        listenersDone.countDown();
+      }
+    }
+);
+  }
+  listenersDone.await();
+  assertEquals(fireCount.get(),100);
+  assertTrue(compositeFuture.isDone());
+  assertFalse(compositeFuture.isCancelled());
+  assertAllDone(futures);
+}
