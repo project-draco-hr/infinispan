@@ -7,5 +7,14 @@
       throw new CacheException("Unable to unmarshall return value");
     }
   }
+  if (target instanceof byte[]) {
+    try {
+      ObjectInputStream ois=new ObjectInputStream(new ByteArrayInputStream((byte[])target));
+      return ois.readObject();
+    }
+ catch (    Exception ee) {
+      if (log.isDebugEnabled())       log.debugf("Standard deserialization not in use for %s",Util.printArray((byte[])target));
+    }
+  }
   return target;
 }

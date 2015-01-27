@@ -1,0 +1,15 @@
+{
+  final String key="77";
+  Person p=new Person("Iker");
+  EntityEnclosingMethod put=new PutMethod(cacheFactory.getRestUrl() + "/" + key);
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  try (ObjectOutputStream oos=new ObjectOutputStream(bout)){
+    oos.writeObject(p);
+  }
+   put.setRequestHeader("Content-Type","application/x-java-serialized-object");
+  put.setRequestEntity(new InputStreamRequestEntity(new ByteArrayInputStream(bout.toByteArray())));
+  cacheFactory.getRestClient().executeMethod(put);
+  RemoteCache<String,Object> remote=cacheFactory.getHotRodCache();
+  assertEquals(p,remote.get(key));
+  assertEquals(p,cacheFactory.getEmbeddedCache().get(key));
+}
