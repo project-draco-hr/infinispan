@@ -6,18 +6,19 @@
     return;
   }
   List<Address> oldMembers=members;
-  members=fromJGroupsAddressList(newMembers);
-  if (log.isDebugEnabled() && oldMembers != null) {
-    List<Address> joined=new ArrayList<Address>(members);
-    joined.removeAll(oldMembers);
-    List<Address> left=new ArrayList<Address>(oldMembers);
-    left.removeAll(members);
-    log.debugf("Joined: %s, Left: %s",joined,left);
-  }
-  coordinator=fromJGroupsAddress(newView.getCreator());
-  isCoordinator=coordinator != null && coordinator.equals(getAddress());
   viewUpdateLock.lock();
   try {
+    viewId=(int)newView.getViewId().getId();
+    members=fromJGroupsAddressList(newMembers);
+    if (log.isDebugEnabled() && oldMembers != null) {
+      List<Address> joined=new ArrayList<Address>(members);
+      joined.removeAll(oldMembers);
+      List<Address> left=new ArrayList<Address>(oldMembers);
+      left.removeAll(members);
+      log.debugf("Joined: %s, Left: %s",joined,left);
+    }
+    coordinator=fromJGroupsAddress(newView.getCreator());
+    isCoordinator=coordinator != null && coordinator.equals(getAddress());
     viewUpdateCondition.signalAll();
   }
   finally {
