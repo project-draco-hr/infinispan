@@ -1,0 +1,75 @@
+{
+  GlobalConfigurationBuilder globalBuilder=holder.getGlobalConfigurationBuilder();
+  if (holder.getGlobalConfigurationBuilder().transport().getTransport() == null) {
+    holder.getGlobalConfigurationBuilder().transport().defaultTransport();
+  }
+  TransportConfigurationBuilder transport=holder.getGlobalConfigurationBuilder().transport();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case STACK:
+{
+        boolean stackFound=transport.getProperty("stack-" + value) != null;
+        if (stackFound) {
+          String filePath=transport.getProperty("stackFilePath-" + value);
+          transport.addProperty("stack",value);
+          transport.addProperty("configurationFile",filePath);
+        }
+        break;
+      }
+case CLUSTER:
+{
+      globalBuilder.transport().clusterName(value);
+      break;
+    }
+case EXECUTOR:
+{
+    globalBuilder.transport().transportThreadPool().read(createThreadPoolConfiguration(value,ASYNC_TRANSPORT_EXECUTOR));
+    break;
+  }
+case TOTAL_ORDER_EXECUTOR:
+{
+  globalBuilder.transport().totalOrderThreadPool().read(createThreadPoolConfiguration(value,TOTAL_ORDER_EXECUTOR));
+  break;
+}
+case REMOTE_COMMAND_EXECUTOR:
+{
+globalBuilder.transport().remoteCommandThreadPool().read(createThreadPoolConfiguration(value,REMOTE_COMMAND_EXECUTOR));
+break;
+}
+case LOCK_TIMEOUT:
+{
+globalBuilder.transport().distributedSyncTimeout(Long.valueOf(value));
+break;
+}
+case NODE_NAME:
+{
+globalBuilder.transport().nodeName(value);
+for (DefaultThreadFactory threadFactory : threadFactories.values()) threadFactory.setNode(value);
+break;
+}
+case MACHINE_ID:
+{
+globalBuilder.transport().machineId(value);
+break;
+}
+case RACK_ID:
+{
+globalBuilder.transport().rackId(value);
+break;
+}
+case SITE:
+{
+globalBuilder.transport().siteId(value);
+globalBuilder.site().localSite(value);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+ParseUtils.requireNoContent(reader);
+}

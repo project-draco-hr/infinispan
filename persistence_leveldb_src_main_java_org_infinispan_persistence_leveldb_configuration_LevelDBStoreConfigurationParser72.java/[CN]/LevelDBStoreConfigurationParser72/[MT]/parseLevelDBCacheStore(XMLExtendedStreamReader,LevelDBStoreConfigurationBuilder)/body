@@ -1,0 +1,64 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String attributeValue=reader.getAttributeValue(i);
+    String value=StringPropertyReplacer.replaceProperties(attributeValue);
+    String attrName=reader.getAttributeLocalName(i);
+    Attribute attribute=Attribute.forName(attrName);
+switch (attribute) {
+case PATH:
+{
+        builder.location(value);
+        break;
+      }
+case RELATIVE_TO:
+{
+      log.ignoreXmlAttribute(attribute);
+      break;
+    }
+case CLEAR_THRESHOLD:
+{
+    builder.clearThreshold(Integer.valueOf(value));
+    break;
+  }
+case BLOCK_SIZE:
+{
+  builder.blockSize(Integer.valueOf(value));
+  break;
+}
+case CACHE_SIZE:
+{
+builder.cacheSize(Long.valueOf(value));
+break;
+}
+default :
+{
+Parser72.parseStoreAttribute(reader,i,builder);
+}
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case EXPIRATION:
+{
+this.parseLevelDBCacheStoreExpiry(reader,builder);
+break;
+}
+case COMPRESSION:
+{
+this.parseLevelDBCacheStoreCompression(reader,builder);
+break;
+}
+case IMPLEMENTATION:
+{
+this.parseLevelDBCacheStoreImplementation(reader,builder);
+break;
+}
+default :
+{
+Parser72.parseStoreElement(reader,builder);
+}
+}
+}
+}

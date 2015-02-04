@@ -1,0 +1,37 @@
+{
+switch (attribute) {
+case ASYNC_MARSHALLING:
+{
+      ClusteringConfigurationBuilder clustering=builder.clustering();
+      if (!clustering.cacheMode().isSynchronous())       clustering.async().asyncMarshalling(Boolean.parseBoolean(value));
+      break;
+    }
+case MODE:
+{
+    Mode mode=Mode.valueOf(value);
+    builder.clustering().cacheMode(mode.apply(baseCacheMode));
+    break;
+  }
+case QUEUE_SIZE:
+{
+  int queueSize=Integer.parseInt(value);
+  builder.clustering().async().useReplQueue(queueSize > 0);
+  builder.clustering().async().replQueueMaxElements(queueSize);
+  break;
+}
+case QUEUE_FLUSH_INTERVAL:
+{
+builder.clustering().async().replQueueInterval(Long.parseLong(value));
+break;
+}
+case REMOTE_TIMEOUT:
+{
+builder.clustering().sync().replTimeout(Long.parseLong(value));
+break;
+}
+default :
+{
+this.parseCacheAttribute(reader,index,attribute,value,builder);
+}
+}
+}
