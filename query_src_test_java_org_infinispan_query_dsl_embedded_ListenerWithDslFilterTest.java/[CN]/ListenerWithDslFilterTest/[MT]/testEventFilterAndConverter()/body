@@ -1,0 +1,17 @@
+{
+  QueryFactory qf=Search.getQueryFactory(cache());
+  Query query=qf.from(Person.class).having("age").lte(31).toBuilder().setProjection("name","age").build();
+  EntryListener listener=new EntryListener();
+  cache().addListener(listener,Search.makeFilter(query),null);
+  for (int i=0; i < 10; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    cache.put(i,value);
+  }
+  assertEquals(7,listener.results.size());
+  for (  ObjectFilter.FilterResult r : listener.results) {
+    assertTrue((Integer)r.getProjection()[1] <= 31);
+  }
+  cache().removeListener(listener);
+}

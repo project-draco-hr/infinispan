@@ -1,0 +1,35 @@
+{
+  QueryFactory qf=Search.getQueryFactory(cache(0));
+  Query query=qf.from(org.infinispan.query.test.Person.class).having("age").lte(31).toBuilder().build();
+  EntryListener listener=new EntryListener();
+  for (int i=0; i < 5; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 30);
+    Cache<Object,Person> cache=cache(i % NUM_NODES);
+    Object key=new MagicKey(cache);
+    cache.put(key,value);
+  }
+  cache(0).addListener(listener,Search.makeFilter(query),null);
+  for (int i=0; i < 10; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    Cache<Object,Person> cache=cache(i % NUM_NODES);
+    Object key=new MagicKey(cache);
+    cache.put(key,value);
+  }
+  assertEquals(9,listener.results.size());
+  for (  ObjectFilter.FilterResult r : listener.results) {
+    Person p=(Person)r.getInstance();
+    assertTrue(p.getAge() <= 31);
+  }
+  cache(0).removeListener(listener);
+  listener.results.clear();
+  Person value=new Person();
+  value.setName("George");
+  value.setAge(30);
+  Object key=new MagicKey(cache(0));
+  cache(0).put(key,value);
+  assertEquals(0,listener.results.size());
+}
