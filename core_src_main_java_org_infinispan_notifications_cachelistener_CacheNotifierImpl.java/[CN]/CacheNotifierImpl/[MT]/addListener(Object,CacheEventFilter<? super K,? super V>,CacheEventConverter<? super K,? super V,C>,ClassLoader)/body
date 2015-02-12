@@ -3,7 +3,7 @@
   UUID generatedId=UUID.randomUUID();
   CacheMode cacheMode=config.clustering().cacheMode();
   CacheInvocationBuilder builder=new CacheInvocationBuilder();
-  builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? (cacheMode.isDistributed() ? true : false) : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
+  builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
   boolean foundMethods=validateAndAddListenerInvocation(listener,builder);
   if (foundMethods && l.clustered()) {
     if (cacheMode.isInvalidation()) {
@@ -66,7 +66,17 @@ catch (          ExecutionException e) {
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s requests initial state for cache",generatedId);
     }
-    try (CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(filter == null ? null : new CacheEventFilterAsKeyValueFilter(filter),converter == null ? null : new CacheEventConverterAsConverter(converter),null,handler)){
+    final KeyValueFilter usedFilter;
+    final Converter usedConverter;
+    if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+      usedFilter=new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter)filter);
+      usedConverter=null;
+    }
+ else {
+      usedFilter=filter == null ? null : new CacheEventFilterAsKeyValueFilter(filter);
+      usedConverter=converter == null ? null : new CacheEventConverterAsConverter(converter);
+    }
+    try (CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(usedFilter,usedConverter,null,handler)){
       while (iterator.hasNext()) {
         CacheEntry<K,C> entry=iterator.next();
         Object value=handler.markKeyAsProcessing(entry.getKey());

@@ -1,0 +1,12 @@
+{
+  EntryListener listener=new EntryListener();
+  NoOpCacheEventFilterConverterWithDependencies filterConverter=new NoOpCacheEventFilterConverterWithDependencies();
+  cache(0).addListener(listener,filterConverter,filterConverter);
+  for (int i=0; i < NUM_ENTRIES; ++i) {
+    Cache<Object,String> cache=cache(i % NUM_NODES);
+    Object key=new MagicKey(cache);
+    cache.put(key,"string " + i);
+  }
+  assertEquals(NUM_ENTRIES,cache(0).size());
+  assertEquals(NUM_ENTRIES,listener.createEvents.size());
+}
