@@ -1,0 +1,26 @@
+{
+  byte[] instance=reader.readBytes("instance");
+  List<WrappedMessage> projection=reader.readCollection("projection",new ArrayList<WrappedMessage>(),WrappedMessage.class);
+  List<WrappedMessage> sortProjection=reader.readCollection("sortProjection",new ArrayList<WrappedMessage>(),WrappedMessage.class);
+  Object i=null;
+  if (instance != null) {
+    i=ProtobufUtil.fromWrappedByteArray(reader.getSerializationContext(),instance);
+  }
+  Object[] p=null;
+  if (!projection.isEmpty()) {
+    p=new Object[projection.size()];
+    int j=0;
+    for (    WrappedMessage m : projection) {
+      p[j++]=m.getValue();
+    }
+  }
+  Comparable[] sp=null;
+  if (!sortProjection.isEmpty()) {
+    sp=new Comparable[sortProjection.size()];
+    int j=0;
+    for (    WrappedMessage m : sortProjection) {
+      sp[j++]=(Comparable)m.getValue();
+    }
+  }
+  return new FilterResult(i,p,sp);
+}
