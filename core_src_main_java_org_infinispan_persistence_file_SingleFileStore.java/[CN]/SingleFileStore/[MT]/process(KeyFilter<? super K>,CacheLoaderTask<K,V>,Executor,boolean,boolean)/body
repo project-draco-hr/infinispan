@@ -1,15 +1,24 @@
 {
   filter=PersistenceUtil.notNull(filter);
-  Set<Object> keysToLoad=new HashSet<Object>(entries.size());
+  ArrayList<KeyValuePair<K,FileEntry>> keysToLoad=new ArrayList<>(entries.size());
 synchronized (entries) {
-    for (    K k : entries.keySet()) {
-      if (filter.accept(k))       keysToLoad.add(k);
+    for (    Map.Entry<K,FileEntry> e : entries.entrySet()) {
+      if (filter.accept(e.getKey()))       keysToLoad.add(new KeyValuePair<>(e.getKey(),e.getValue()));
     }
+    Collections.sort(keysToLoad,new Comparator<KeyValuePair<K,FileEntry>>(){
+      @Override public int compare(      KeyValuePair<K,FileEntry> o1,      KeyValuePair<K,FileEntry> o2){
+        long offset1=o1.getValue().offset;
+        long offset2=o2.getValue().offset;
+        return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
+      }
+    }
+);
   }
   ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContextImpl taskContext=new TaskContextImpl();
-  for (  final Object key : keysToLoad) {
+  for (  KeyValuePair<K,FileEntry> e : keysToLoad) {
     if (taskContext.isStopped())     break;
+    final K key=e.getKey();
     eacs.submit(new Callable<Void>(){
       @Override public Void call() throws Exception {
         try {

@@ -1,0 +1,29 @@
+{
+  final int NUM_WRITER_THREADS=2;
+  final int NUM_KEYS=2000;
+  final int MAX_VALUE_SIZE=100;
+  Cache<String,String> cache=cacheManager.getCache(CACHE_NAME);
+  PersistenceManager persistenceManager=TestingUtil.extractComponent(cache,PersistenceManager.class);
+  final SingleFileStore store=persistenceManager.getStores(SingleFileStore.class).iterator().next();
+  final StreamingMarshaller marshaller=TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+  assertEquals(0,store.size());
+  final List<String> keys=new ArrayList<String>(NUM_KEYS);
+  for (int j=0; j < NUM_KEYS; j++) {
+    String key="key" + j;
+    String value=key + "_value_" + j+ times("123456789_",new Random().nextInt(MAX_VALUE_SIZE / 10));
+    keys.add(key);
+    MarshalledEntryImpl entry=new MarshalledEntryImpl<String,String>(key,value,null,marshaller);
+    store.write(entry);
+  }
+  final CountDownLatch stopLatch=new CountDownLatch(1);
+  Future[] writeFutures=new Future[NUM_WRITER_THREADS];
+  for (int i=0; i < NUM_WRITER_THREADS; i++) {
+    writeFutures[i]=fork(stopOnException(new WriteTask(store,marshaller,keys,stopLatch),stopLatch));
+  }
+  Future processFuture=fork(stopOnException(new ProcessTask(store),stopLatch));
+  processFuture.get();
+  stopLatch.countDown();
+  for (int i=0; i < NUM_WRITER_THREADS; i++) {
+    writeFutures[i].get();
+  }
+}
