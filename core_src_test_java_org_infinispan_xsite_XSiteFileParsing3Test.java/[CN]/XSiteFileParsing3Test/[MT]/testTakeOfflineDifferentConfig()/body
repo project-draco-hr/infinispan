@@ -1,6 +1,7 @@
 {
   Configuration dcc=cacheManager.getCacheConfiguration("takeOfflineDifferentConfig");
   assertEquals(1,dcc.sites().allBackups().size());
-  TakeOfflineConfiguration toc=new TakeOfflineConfiguration(321,3765);
-  assertTrue(dcc.sites().allBackups().contains(new BackupConfiguration("NYC",BackupConfiguration.BackupStrategy.SYNC,12003l,BackupFailurePolicy.IGNORE,null,false,toc,DEFAULT_STATE_TRANSFER,true)));
+  BackupConfigurationBuilder nyc=new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003).useTwoPhaseCommit(false).enabled(true);
+  nyc.takeOffline().afterFailures(321).minTimeToWait(3765);
+  assertTrue(dcc.sites().allBackups().contains(nyc.create()));
 }

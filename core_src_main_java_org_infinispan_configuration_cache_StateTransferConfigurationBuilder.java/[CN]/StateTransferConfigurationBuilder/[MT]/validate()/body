@@ -1,6 +1,7 @@
 {
-  if (chunkSize <= 0) {
+  if (attributes.attribute(CHUNK_SIZE).get() <= 0) {
     throw new CacheConfigurationException("chunkSize can not be <= 0");
   }
-  if (awaitInitialTransfer != null && awaitInitialTransfer && !getClusteringBuilder().cacheMode().isReplicated() && !getClusteringBuilder().cacheMode().isDistributed())   throw new CacheConfigurationException("awaitInitialTransfer can be enabled only if cache mode is distributed or replicated.");
+  Attribute<Boolean> awaitInitialTransfer=attributes.attribute(AWAIT_INITIAL_TRANSFER);
+  if (awaitInitialTransfer.isModified() && awaitInitialTransfer.get() && !getClusteringBuilder().cacheMode().needsStateTransfer())   throw new CacheConfigurationException("awaitInitialTransfer can be enabled only if cache mode is distributed or replicated.");
 }

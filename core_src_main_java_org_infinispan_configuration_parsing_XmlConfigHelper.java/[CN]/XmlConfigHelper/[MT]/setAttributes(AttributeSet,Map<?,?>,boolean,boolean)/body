@@ -1,0 +1,17 @@
+{
+  Map<Object,Object> ignoredAttribs=new HashMap<Object,Object>();
+  for (  Entry<?,?> entry : attribs.entrySet()) {
+    String name=(String)entry.getKey();
+    if (attributes.contains(name)) {
+      Attribute<Object> attribute=attributes.attribute(name);
+      attribute.set(valueConverter(attribute.getAttributeDefinition().getType(),(String)entry.getValue()));
+    }
+ else     if (failOnMissingAttribute) {
+      throw new CacheConfigurationException("Couldn't find an attribute named [" + name + "] on attribute set ["+ attributes.getName()+ "]");
+    }
+ else {
+      ignoredAttribs.put(name,entry.getValue());
+    }
+  }
+  return ignoredAttribs;
+}

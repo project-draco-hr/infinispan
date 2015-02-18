@@ -1,9 +1,11 @@
 {
+  EvictionStrategy strategy=attributes.attribute(STRATEGY).get();
+  Integer maxEntries=attributes.attribute(MAX_ENTRIES).get();
   if (!strategy.isEnabled() && getBuilder().persistence().passivation())   log.passivationWithoutEviction();
   if (strategy == EvictionStrategy.FIFO)   log.warnFifoStrategyIsDeprecated();
   if (strategy.isEnabled() && maxEntries <= 0)   throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
   if (maxEntries > 0 && !strategy.isEnabled()) {
-    strategy=EvictionStrategy.LIRS;
+    strategy(EvictionStrategy.LIRS);
     log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s",maxEntries,strategy);
   }
 }

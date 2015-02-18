@@ -1,0 +1,15 @@
+{
+  AttributeDefinition<Boolean> def=AttributeDefinition.builder("test",false).build();
+  Attribute<Boolean> attribute=def.toAttribute();
+  final Holder<Boolean> listenerInvoked=new Holder<>(false);
+  attribute.addListener(new AttributeListener<Boolean>(){
+    @Override public void attributeChanged(    Attribute<Boolean> attribute,    Boolean oldValue){
+      assertTrue(attribute.get());
+      assertFalse(oldValue);
+      listenerInvoked.set(true);
+    }
+  }
+);
+  attribute.set(true);
+  assertTrue("Attribute listener was not invoked",listenerInvoked.get());
+}

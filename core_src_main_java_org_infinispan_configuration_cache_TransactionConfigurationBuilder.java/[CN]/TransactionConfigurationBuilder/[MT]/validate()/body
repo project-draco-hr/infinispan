@@ -1,18 +1,20 @@
 {
-  if (reaperWakeUpInterval < 0)   throw new CacheConfigurationException("reaperWakeUpInterval must be > 0, we got " + reaperWakeUpInterval);
-  if (completedTxTimeout < 0)   throw new CacheConfigurationException("completedTxTimeout must be > 0, we got " + reaperWakeUpInterval);
-  if (transactionProtocol == TransactionProtocol.TOTAL_ORDER) {
-    if (transactionMode != TransactionMode.TRANSACTIONAL) {
-      throw new CacheConfigurationException("Total Order based protocol not available in " + transactionMode + " cache");
+  Attribute<Long> reaperWakeUpInterval=attributes.attribute(REAPER_WAKE_UP_INTERVAL);
+  Attribute<Long> completedTxTimeout=attributes.attribute(COMPLETED_TX_TIMEOUT);
+  if (reaperWakeUpInterval.get() < 0)   throw log.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
+  if (completedTxTimeout.get() < 0)   throw log.invalidCompletedTxTimeout(completedTxTimeout.get());
+  if (attributes.attribute(TRANSACTION_PROTOCOL).get() == TransactionProtocol.TOTAL_ORDER) {
+    if (transactionMode() != TransactionMode.TRANSACTIONAL) {
+      throw log.invalidTxModeForTotalOrder(transactionMode());
     }
     if (!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
-      throw new CacheConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
+      throw log.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
     }
     if (recovery.create().enabled()) {
-      throw new CacheConfigurationException("Total Order based protocol not available with recovery");
+      throw log.unavailableTotalOrderWithTxRecovery();
     }
-    if (lockingMode != LockingMode.OPTIMISTIC) {
-      throw new CacheConfigurationException("Total Order based protocol not available with " + lockingMode);
+    if (lockingMode() != LockingMode.OPTIMISTIC) {
+      throw log.invalidLockingModeForTotalOrder(lockingMode());
     }
   }
   recovery.validate();

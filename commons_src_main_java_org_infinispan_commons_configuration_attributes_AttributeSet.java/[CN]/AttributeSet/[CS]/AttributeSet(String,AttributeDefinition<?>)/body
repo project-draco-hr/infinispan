@@ -1,0 +1,12 @@
+{
+  this.name=name;
+  this.attributes=new HashMap<>(attributeDefinitions.length);
+  for (  AttributeDefinition<?> def : attributeDefinitions) {
+    if (attributes.containsKey(def.name())) {
+      throw log.attributeSetDuplicateAttribute(def.name(),name);
+    }
+    Attribute<Object> attribute=(Attribute<Object>)def.toAttribute();
+    if (!attribute.isImmutable())     attribute.addListener(this);
+    this.attributes.put(def.name(),attribute);
+  }
+}
