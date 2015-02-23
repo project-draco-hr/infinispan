@@ -1,0 +1,18 @@
+{
+  final User newUser=getModelFactory().makeUser();
+  newUser.setId(15);
+  newUser.setName("Test");
+  newUser.setSurname("User");
+  newUser.setGender(User.Gender.MALE);
+  newUser.setAge(20);
+  List results=withTx(tm(0),new Callable<List>(){
+    @Override public List call() throws Exception {
+      Query q=getQueryFactory().from(getModelFactory().getUserImplClass()).not().having("age").eq(20).toBuilder().build();
+      cache(0).put("new_user_" + newUser.getId(),newUser);
+      return q.list();
+    }
+  }
+);
+  cache(0).remove("new_user_" + newUser.getId());
+  assertEquals(3,results.size());
+}
