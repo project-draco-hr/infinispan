@@ -1,20 +1,7 @@
 {
-  double totalRWRatio=0;
-  int existingCacheCounter=0;
-  for (  String cn : cm.getCacheNames()) {
-    if (cm.cacheExists(cn)) {
-      existingCacheCounter++;
-      Stats stats=cm.getCache(cn).getAdvancedCache().getStats();
-      long stores=stats.getStores();
-      if (stores > 0) {
-        totalRWRatio+=(double)((stats.getHits() + stats.getMisses()) / stores);
-      }
-    }
+  double result=-1d;
+  if (getStatisticsEnabled()) {
+    result=calculateReadWriteRatio();
   }
-  if (existingCacheCounter > 0) {
-    return totalRWRatio / existingCacheCounter;
-  }
- else {
-    return -1;
-  }
+  return result;
 }

@@ -1,13 +1,17 @@
 {
-  long ratio=0;
+  long sumOfAllReads=0;
+  long sumOfAllWrites=0;
+  double rwRatio=0;
   for (  Future<Map<String,Number>> f : responseList) {
     Map<String,Number> m=f.get();
     Number hits=m.get(HITS);
     Number misses=m.get(MISSES);
     Number stores=m.get(STORES);
-    if (stores.longValue() > 0) {
-      ratio+=((hits.longValue() + misses.longValue()) / stores.longValue());
-    }
+    sumOfAllReads+=(hits.longValue() + misses.longValue());
+    sumOfAllWrites+=stores.longValue();
   }
-  return ratio / responseList.size();
+  if (sumOfAllWrites > 0) {
+    rwRatio=(double)sumOfAllReads / sumOfAllWrites;
+  }
+  return rwRatio;
 }
