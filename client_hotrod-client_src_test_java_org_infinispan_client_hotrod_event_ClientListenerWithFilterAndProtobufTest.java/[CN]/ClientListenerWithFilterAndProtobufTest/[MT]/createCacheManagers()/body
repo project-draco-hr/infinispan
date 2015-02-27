@@ -1,0 +1,15 @@
+{
+  ConfigurationBuilder cfgBuilder=hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,false));
+  createHotRodServers(NUM_NODES,cfgBuilder);
+  waitForClusterToForm();
+  for (int i=0; i < NUM_NODES; i++) {
+    server(i).addCacheEventFilterFactory("custom-filter-factory",new CustomCacheEventFilterFactory());
+    ProtoStreamMarshaller marshaller=new CustomProtoStreamMarshaller();
+    server(i).setEventMarshaller(marshaller);
+  }
+  RemoteCache<String,String> metadataCache=client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+  metadataCache.put("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
+  remoteCache=client(0).getCache();
+}
