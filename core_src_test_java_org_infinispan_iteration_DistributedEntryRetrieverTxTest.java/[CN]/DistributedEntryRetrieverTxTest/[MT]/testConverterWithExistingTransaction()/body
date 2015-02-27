@@ -1,0 +1,22 @@
+{
+  Map<Object,String> values=putValuesInCache();
+  Cache<Object,String> cache=cache(0,CACHE_NAME);
+  TransactionManager tm=TestingUtil.extractComponent(cache,TransactionManager.class);
+  tm.begin();
+  try {
+    Object key="converted-key";
+    String value="converted-value";
+    values.put(key,value);
+    cache.put(key,"converted-value");
+    try (EntryIterable<Object,String> iterable=cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance())){
+      Map<Object,String> results=mapFromIterable(iterable.converter(new StringTruncator(2,5)));
+      assertEquals(values.size(),results.size());
+      for (      Map.Entry<Object,String> entry : values.entrySet()) {
+        assertEquals(entry.getValue().substring(2,7),results.get(entry.getKey()));
+      }
+    }
+   }
+  finally {
+    tm.rollback();
+  }
+}

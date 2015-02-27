@@ -1,24 +1,22 @@
 {
-  CacheEntry<K,C> returnedEntry=null;
-  CacheEntry<K,C> entry;
-  while (!contextEntries.isEmpty() && (entry=contextEntries.remove(0)) != null) {
+  CacheEntry<K,V> returnedEntry=null;
+  CacheEntry<K,V> entry;
+  while (returnedEntry == null && !contextEntries.isEmpty() && (entry=contextEntries.remove(0)) != null) {
     seenContextKeys.add(entry.getKey());
     if (!ctx.isEntryRemovedInContext(entry.getKey())) {
-      returnedEntry=entry;
+      returnedEntry=filterEntry(entry);
     }
   }
   if (returnedEntry == null) {
     while (realIterator.hasNext()) {
-      CacheEntry<K,C> iteratedEntry=realIterator.next();
+      CacheEntry<K,V> iteratedEntry=realIterator.next();
       CacheEntry contextEntry;
       if ((contextEntry=ctx.lookupEntry(iteratedEntry.getKey())) != null) {
-        if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved()) {
-          returnedEntry=contextEntry;
+        if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && (returnedEntry=filterEntry(contextEntry)) != null) {
           break;
         }
       }
- else {
-        returnedEntry=iteratedEntry;
+ else       if ((returnedEntry=filterEntry(iteratedEntry)) != null) {
         break;
       }
     }
@@ -35,5 +33,10 @@
       }
     }
   }
-  return returnedEntry;
+  if (returnedEntry != null && converter != null) {
+    C newValue=converter.convert(returnedEntry.getKey(),returnedEntry.getValue(),returnedEntry.getMetadata());
+    returnedEntry=entryFactory.create(returnedEntry);
+    returnedEntry.setValue((V)newValue);
+  }
+  return (CacheEntry<K,C>)returnedEntry;
 }
