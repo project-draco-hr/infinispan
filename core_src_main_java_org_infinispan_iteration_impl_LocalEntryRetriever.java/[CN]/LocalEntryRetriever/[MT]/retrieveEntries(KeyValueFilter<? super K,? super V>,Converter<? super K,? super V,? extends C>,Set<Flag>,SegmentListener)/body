@@ -1,12 +1,24 @@
 {
-  final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
+  final boolean filterAndConvert;
+  final Converter<? super K,? super V,? extends C> usedConverter;
+  if (filter instanceof KeyValueFilterConverter && (filter == converter || converter == null)) {
+    filterAndConvert=true;
+    usedConverter=null;
+    if (log.isTraceEnabled()) {
+      log.tracef("User supplied a KeyValueFilterConverter for both filter and converter, so ignoring converter");
+    }
+  }
+ else {
+    filterAndConvert=false;
+    usedConverter=converter;
+  }
   wireFilterAndConverterDependencies(filter,usedConverter);
   if (flags != null && flags.contains(Flag.SKIP_CACHE_LOAD) || !cache.getCacheConfiguration().persistence().usingStores()) {
     if ((flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL)) && partitionListener.currentMode != AvailabilityMode.AVAILABLE) {
       throw log.partitionDegraded();
     }
     final Iterator<InternalCacheEntry<K,V>> iterator=dataContainer.iterator();
-    return new DataContainerIterator<>(iterator,filter,usedConverter);
+    return new DataContainerIterator<>(iterator,filter,usedConverter,filterAndConvert);
   }
   final Itr<C> iterator=new Itr<C>(batchSize);
   registerIterator(iterator,flags);
@@ -32,7 +44,7 @@
               InternalCacheEntry<K,V> clone=entryFactory.create(unwrapMarshalledvalue(entry.getKey()),unwrapMarshalledvalue(entry.getValue()),entry);
               K key=clone.getKey();
               if (filter != null) {
-                if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+                if (filterAndConvert) {
                   C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
                   if (converted != null) {
                     clone.setValue((V)converted);
@@ -59,13 +71,13 @@
               cache.addListener(listener);
             }
             KeyFilter<K> loaderFilter;
-            if (filter == null || usedConverter == null && filter instanceof KeyValueFilterConverter) {
+            if (filter == null || filterAndConvert) {
               loaderFilter=new CollectionKeyFilter<K>(processedKeys);
             }
  else {
               loaderFilter=new CompositeKeyFilter<K>(new CollectionKeyFilter<K>(processedKeys),new KeyValueFilterAsKeyFilter<K>(filter));
             }
-            if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+            if (filterAndConvert) {
               action=new MapAction<>(batchSize,(KeyValueFilterConverter<K,V,C>)filter,queue,handler);
             }
             persistenceManager.processOnAllStores(withinThreadExecutor,loaderFilter,new KeyValueActionForCacheLoaderTask(action),true,true);
@@ -81,7 +93,7 @@
                 if (entry != null) {
                   CacheEntry<K,V> clone=entry.clone();
                   if (filter != null) {
-                    if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+                    if (filterAndConvert) {
                       C converted=((KeyValueFilterConverter<K,V,C>)filter).filterAndConvert(key,clone.getValue(),clone.getMetadata());
                       if (converted != null) {
                         clone.setValue((V)converted);

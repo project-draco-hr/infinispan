@@ -8,8 +8,17 @@
     log.trace("Skipping distributed entry retrieval and processing local since we are not part of the consistent hash");
     return super.retrieveEntries(filter,converter,flags,listener);
   }
+  final Converter<? super K,? super V,? extends C> usedConverter;
+  if (filter instanceof KeyValueFilterConverter && (filter == converter || converter == null)) {
+    usedConverter=null;
+    if (log.isTraceEnabled()) {
+      log.trace("User supplied a KeyValueFilterConverter for both filter and converter");
+    }
+  }
+ else {
+    usedConverter=converter;
+  }
   UUID identifier=UUID.randomUUID();
-  final Converter<? super K,? super V,? extends C> usedConverter=checkForKeyValueFilterConverter(filter,converter);
   if (log.isTraceEnabled()) {
     log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s",identifier,filter,usedConverter);
   }
@@ -29,7 +38,6 @@
     eventuallySendRequest(identifier,status);
   }
   if (!ourSegments.isEmpty()) {
-    wireFilterAndConverterDependencies(filter,usedConverter);
     startRetrievingValuesLocal(identifier,ourSegments,status,new SegmentBatchHandler<K,C>(){
       @Override public void handleBatch(      UUID identifier,      boolean complete,      Set<Integer> completedSegments,      Set<Integer> inDoubtSegments,      Collection<CacheEntry<K,C>> entries){
         processData(identifier,localAddress,completedSegments,inDoubtSegments,entries);

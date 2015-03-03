@@ -2,7 +2,14 @@
   super(realIterator,cache,false);
   this.ctx=ctx;
   this.filter=filter;
-  this.converter=checkForKeyValueFilterConverter(filter,converter);
+  if (filter instanceof KeyValueFilterConverter && (filter == converter || converter == null)) {
+    filterAndConvert=true;
+    this.converter=null;
+  }
+ else {
+    filterAndConvert=false;
+    this.converter=converter;
+  }
   this.entryFactory=cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
   contextEntries=new ArrayList<>(ctx.getLookedUpEntries().values());
   currentValue=getNextFromIterator();
