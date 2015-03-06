@@ -1,0 +1,16 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+  RemoteCacheManager manager=new RemoteCacheManager(builder.build());
+  RemoteCache cache=manager.getCache();
+  cache.put(1,"one");
+  cache.put(2,"two");
+  builder.nearCache().mode(getNearCacheMode());
+  assertClient=AssertsNearCache.create(this.<byte[],Object>cache(),builder);
+  assertEquals(2,assertClient.remote.size());
+  assertClient.expectNoNearEvents();
+  assertClient.get(1,"one").expectNearGetValue(1,null).expectNearPutIfAbsent(1,"one");
+  assertClient.get(2,"two").expectNearGetValue(2,null).expectNearPutIfAbsent(2,"two");
+  assertClient.remove(1).expectNearRemove(1);
+  assertClient.remove(2).expectNearRemove(2);
+}
