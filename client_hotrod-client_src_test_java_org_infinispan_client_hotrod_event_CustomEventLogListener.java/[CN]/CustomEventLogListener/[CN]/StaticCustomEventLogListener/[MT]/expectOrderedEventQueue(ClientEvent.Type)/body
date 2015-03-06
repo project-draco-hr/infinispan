@@ -1,0 +1,16 @@
+{
+  BlockingQueue<CustomEvent> queue=queue(type);
+  if (queue.size() < 2)   return;
+  try {
+    CustomEvent before=queue.poll(10,TimeUnit.SECONDS);
+    Iterator<CustomEvent> iter=queue.iterator();
+    while (iter.hasNext()) {
+      CustomEvent after=iter.next();
+      expectTimeOrdered(before,after);
+      before=after;
+    }
+  }
+ catch (  InterruptedException e) {
+    throw new AssertionError(e);
+  }
+}
