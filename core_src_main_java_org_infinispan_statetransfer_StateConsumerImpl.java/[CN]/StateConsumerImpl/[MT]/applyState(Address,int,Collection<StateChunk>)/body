@@ -18,25 +18,24 @@
   if (trace) {
     log.tracef("Before applying the received state the data container of cache %s has %d keys",cacheName,dataContainer.size());
   }
-  Set<Integer> mySegments=wCh.getSegmentsForOwner(rpcManager.getAddress());
-  for (  StateChunk stateChunk : stateChunks) {
-    if (!mySegments.contains(stateChunk.getSegmentId())) {
-      log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.",stateChunk.getSegmentId(),cacheName);
-      continue;
-    }
-    InboundTransferTask inboundTransfer;
-synchronized (transferMapsLock) {
-      inboundTransfer=transfersBySegment.get(stateChunk.getSegmentId());
-    }
-    if (inboundTransfer != null) {
-      if (stateChunk.getCacheEntries() != null) {
-        doApplyState(sender,stateChunk.getSegmentId(),stateChunk.getCacheEntries());
+  final Set<Integer> mySegments=wCh.getSegmentsForOwner(rpcManager.getAddress());
+  final CountDownLatch countDownLatch=new CountDownLatch(stateChunks.size());
+  for (  final StateChunk stateChunk : stateChunks) {
+    executorService.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        applyChunk(sender,mySegments,stateChunk);
+        countDownLatch.countDown();
+        return null;
       }
-      inboundTransfer.onStateReceived(stateChunk.getSegmentId(),stateChunk.isLastChunk());
     }
- else {
-      log.warnf("Received unsolicited state from node %s for segment %d of cache %s",sender,stateChunk.getSegmentId(),cacheName);
-    }
+);
+  }
+  try {
+    countDownLatch.await(timeout,TimeUnit.MILLISECONDS);
+  }
+ catch (  InterruptedException e) {
+    Thread.currentThread().interrupt();
+    throw new CacheException(e);
   }
   if (trace) {
     log.tracef("After applying the received state the data container of cache %s has %d keys",cacheName,dataContainer.size());

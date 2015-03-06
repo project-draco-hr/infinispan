@@ -1,0 +1,19 @@
+{
+  if (!mySegments.contains(stateChunk.getSegmentId())) {
+    log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.",stateChunk.getSegmentId(),cacheName);
+    return;
+  }
+  InboundTransferTask inboundTransfer;
+synchronized (transferMapsLock) {
+    inboundTransfer=transfersBySegment.get(stateChunk.getSegmentId());
+  }
+  if (inboundTransfer != null) {
+    if (stateChunk.getCacheEntries() != null) {
+      doApplyState(sender,stateChunk.getSegmentId(),stateChunk.getCacheEntries());
+    }
+    inboundTransfer.onStateReceived(stateChunk.getSegmentId(),stateChunk.isLastChunk());
+  }
+ else {
+    log.warnf("Received unsolicited state from node %s for segment %d of cache %s",sender,stateChunk.getSegmentId(),cacheName);
+  }
+}
