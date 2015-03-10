@@ -1,7 +1,13 @@
 {
   checkNotClosed();
   checkNotNull(key,"key");
-  V prev=cache.withFlags(Flag.FORCE_RETURN_VALUE).remove(key);
+  V prev=cache.remove(key);
   removeFromCacheWriter(key);
+  if (prev != null) {
+    stats.incrementCacheHits();
+  }
+ else {
+    stats.incrementCacheMisses();
+  }
   return prev;
 }

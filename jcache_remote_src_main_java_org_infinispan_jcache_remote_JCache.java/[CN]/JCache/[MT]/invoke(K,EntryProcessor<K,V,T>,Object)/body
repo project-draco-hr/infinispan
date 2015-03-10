@@ -3,7 +3,7 @@
   checkNotNull(key,"key");
   checkNotNull(entryProcessor,"entryProcessor");
   if (log.isTraceEnabled())   log.tracef("Invoke entry processor %s for key=%s",entryProcessor,key);
-  V oldValue=cacheWithCacheStore.get(key);
+  V oldValue=cache.get(key);
   MutableJCacheEntry<K,V> mutable=createMutableCacheEntry(oldValue,key);
   T ret=processEntryProcessor(mutable,entryProcessor,arguments);
 switch (mutable.getOperation()) {
@@ -18,7 +18,7 @@ if (newValue == null) {
 throw new EntryProcessorException();
 }
 if (oldValue != null) {
-replace(cache,cache,key,oldValue,newValue,true);
+replace(cache,cacheWithoutStats,key,oldValue,newValue,true);
 }
  else {
 put(cache,cache,key,newValue,true);

@@ -1,6 +1,11 @@
 {
-  if (!updatedListeners.isEmpty()) {
-    List<CacheEntryEvent<? extends K,? extends V>> events=createEvent(cache,key,value,EventType.UPDATED);
-    for (    CacheEntryUpdatedListener<K,V> listener : updatedListeners)     listener.onUpdated(getEntryIterable(events,listenerCfgs.get(listener)));
+  try {
+    if (!updatedListeners.isEmpty()) {
+      List<CacheEntryEvent<? extends K,? extends V>> events=createEvent(cache,key,value,EventType.UPDATED);
+      for (      CacheEntryUpdatedListener<K,V> listener : updatedListeners)       listener.onUpdated(getEntryIterable(events,listenerCfgs.get(listener)));
+    }
+  }
+  finally {
+    notifySync(cache,key,value);
   }
 }

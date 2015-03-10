@@ -1,0 +1,28 @@
+{
+  try {
+    if (!hasListeners) {
+      return callable.call();
+    }
+    CountDownLatch latch=new CountDownLatch(1);
+    notifier.addSyncNotificationLatch(cache,key,value,latch);
+    try {
+      R ret=callable.call();
+      if ((ret == null) && !expectEventOnNull) {
+        return ret;
+      }
+      latch.await(TIMEOUT,TimeUnit.MILLISECONDS);
+      return ret;
+    }
+  finally {
+      notifier.removeSyncNotificationLatch(cache,key,value,latch);
+    }
+  }
+ catch (  Exception ex) {
+    if (!(ex instanceof CacheEntryListenerException)) {
+      throw new CacheEntryListenerException(ex);
+    }
+ else {
+      throw (CacheEntryListenerException)ex;
+    }
+  }
+}

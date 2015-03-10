@@ -1,8 +1,13 @@
 {
-  if (!removedListeners.isEmpty()) {
-    List<CacheEntryEvent<? extends K,? extends V>> events=createEvent(cache,key,value,EventType.REMOVED);
-    for (    CacheEntryRemovedListener<K,V> listener : removedListeners) {
-      listener.onRemoved(getEntryIterable(events,listenerCfgs.get(listener)));
+  try {
+    if (!removedListeners.isEmpty()) {
+      List<CacheEntryEvent<? extends K,? extends V>> events=createEvent(cache,key,value,EventType.REMOVED);
+      for (      CacheEntryRemovedListener<K,V> listener : removedListeners) {
+        listener.onRemoved(getEntryIterable(events,listenerCfgs.get(listener)));
+      }
     }
+  }
+  finally {
+    notifySync(cache,key,null);
   }
 }

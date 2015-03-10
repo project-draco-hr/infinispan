@@ -2,8 +2,17 @@
   super(configurationAdapter.getConfiguration(),cacheManager,new JCacheNotifier<K,V>());
   setCacheLoader(configuration);
   setCacheWriter(configuration);
-  this.cache=new RemoteCacheWithOldValue<>(cache);
-  this.cacheForceReturnValue=new RemoteCacheWithOldValue<>(cacheForceReturnValue);
-  this.cacheWithCacheStore=new RemoteCacheWithCacheStore<>(cache,jcacheLoader,jcacheWriter,configuration);
+  stats=new LocalStatistics();
+  this.cacheWithoutStats=new RemoteCacheWithOldValue<>(cache);
+  this.cache=new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(new RemoteCacheWithSyncListeners<>(cacheForceReturnValue,notifier,this),stats));
+  this.cacheWithoutReturnValue=new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(cache,stats));
+  this.cacheWithCacheStore=new RemoteCacheWithCacheStore<K,V>(this.cache,jcacheLoader,jcacheWriter,configuration){
+    @Override protected void onLoad(    K key,    V value){
+      JCache.this.put(JCache.this.cache,JCache.this.cache,key,value,false);
+    }
+  }
+;
   addConfigurationListeners();
+  if (configuration.isManagementEnabled())   setManagementEnabled(true);
+  if (configuration.isStatisticsEnabled())   setStatisticsEnabled(true);
 }
