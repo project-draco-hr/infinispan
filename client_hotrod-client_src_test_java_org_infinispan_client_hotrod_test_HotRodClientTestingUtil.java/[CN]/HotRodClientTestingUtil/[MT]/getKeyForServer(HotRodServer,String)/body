@@ -1,12 +1,21 @@
 {
+  GenericJBossMarshaller marshaller=new GenericJBossMarshaller();
   Cache<?,?> cache=cacheName != null ? primaryOwner.getCacheManager().getCache(cacheName) : primaryOwner.getCacheManager().getCache();
   Random r=new Random();
   byte[] dummy=new byte[8];
   int attemptsLeft=1000;
-  do {
-    r.nextBytes(dummy);
+  try {
+    do {
+      r.nextBytes(dummy);
+    }
+ while (!isFirstOwner(cache,marshaller.objectToByteBuffer(dummy)) && attemptsLeft >= 0);
   }
- while (!isFirstOwner(cache,dummy) && attemptsLeft >= 0);
+ catch (  IOException e) {
+    throw new AssertionError(e);
+  }
+catch (  InterruptedException e) {
+    throw new AssertionError(e);
+  }
   if (attemptsLeft < 0)   throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
   log.infof("Binary key %s hashes to [cluster=%s,hotrod=%s]",Util.printArray(dummy,false),primaryOwner.getCacheManager().getAddress(),primaryOwner.getAddress());
   return dummy;

@@ -1,0 +1,19 @@
+{
+  String message="Exception encountered. Retry %d out of %d";
+  if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
+    if (!triedCompleteRestart) {
+      log.debug("Cluster might have completely shut down, try resetting transport layer and topology id");
+      transportFactory.reset(cacheName);
+      triedCompleteRestart=true;
+      return -1;
+    }
+ else {
+      log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(),e);
+      throw e;
+    }
+  }
+ else {
+    log.tracef(e,message,i,transportFactory.getMaxRetries());
+    return i;
+  }
+}

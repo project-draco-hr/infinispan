@@ -1,0 +1,35 @@
+{
+  RemoteCache<byte[],String> client=client(0).getCache();
+  int initialServerPort=addr2hrServer.values().iterator().next().getPort();
+  addrs=getSocketAddressList();
+  keys=genKeys();
+  assertNoHits();
+  assertPutAndGet(client,0,"zero");
+  assertPutAndGet(client,1,"one");
+  assertPutAndGet(client,2,"two");
+  killServer();
+  killServer();
+  assertEquals(null,client.get(keys.get(0)));
+  assertEquals(null,client.get(keys.get(1)));
+  resetStats();
+  assertEquals("two",client.get(keys.get(2)));
+  assertOnlyServerHit(addrs.get(2));
+  killServer();
+  try {
+    assertEquals("two",client.get(keys.get(2)));
+    fail("Should have thrown exception");
+  }
+ catch (  TransportException e) {
+  }
+  resetStats();
+  addHotRodServer(getConfiguration(),initialServerPort);
+  addHotRodServer(getConfiguration());
+  addHotRodServer(getConfiguration());
+  addInterceptors();
+  keys=genKeys();
+  addrs=getSocketAddressList();
+  assertNoHits();
+  assertPutAndGet(client,0,"zero");
+  assertPutAndGet(client,1,"one");
+  assertPutAndGet(client,2,"two");
+}

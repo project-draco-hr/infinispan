@@ -5,16 +5,18 @@ synchronized (lock) {
     hashFactory.init(configuration);
     boolean pingOnStartup=configuration.pingOnStartup();
     servers=new ArrayList<SocketAddress>();
+    initialServers=new ArrayList<SocketAddress>();
     for (    ServerConfiguration server : configuration.servers()) {
       servers.add(new InetSocketAddress(server.host(),server.port()));
     }
+    initialServers.addAll(servers);
     servers=Collections.unmodifiableCollection(servers);
     tcpNoDelay=configuration.tcpNoDelay();
     tcpKeepAlive=configuration.tcpKeepAlive();
     soTimeout=configuration.socketTimeout();
     connectTimeout=configuration.connectionTimeout();
     maxRetries=configuration.maxRetries();
-    this.topologyId=topologyId;
+    topologyId=defaultCacheTopologyId;
     if (configuration.security().ssl().enabled()) {
       SslConfiguration ssl=configuration.security().ssl();
       if (ssl.sslContext() != null) {
