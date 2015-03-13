@@ -4,12 +4,12 @@
   for (int i=0; i < 10; i++) {
     futures.add(createDelayedFuture(i,random.nextInt(20)));
   }
-  NotifyingFuture<Void> compositeFuture=Futures.combine(futures);
+  NotifyingFuture<List<Integer>> compositeFuture=Futures.combine(futures);
   final AtomicInteger fireCount=new AtomicInteger(0);
   final CountDownLatch listenersDone=new CountDownLatch(100);
   for (int i=0; i < 100; i++) {
-    compositeFuture.attachListener(new FutureListener<Void>(){
-      @Override public void futureDone(      Future<Void> future){
+    compositeFuture.attachListener(new FutureListener<List<Integer>>(){
+      @Override public void futureDone(      Future<List<Integer>> future){
         assertTrue(future.isDone());
         fireCount.incrementAndGet();
         listenersDone.countDown();

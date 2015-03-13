@@ -5,13 +5,21 @@
   for (int i=0; i < 100; i++) {
     futures.add(createImmediate("res" + i,startLatch));
   }
-  NotifyingFuture<Void> compositeFuture=Futures.combine(futures);
+  NotifyingFuture<List<String>> compositeFuture=Futures.combine(futures);
   final AtomicInteger triggerCount=new AtomicInteger(0);
-  compositeFuture.attachListener(new FutureListener<Void>(){
-    @Override public void futureDone(    Future<Void> future){
+  compositeFuture.attachListener(new FutureListener<List<String>>(){
+    @Override public void futureDone(    Future<List<String>> future){
       assertTrue(future.isDone());
       assertFalse(future.isCancelled());
       assertNoErrors(future);
+      try {
+        List<String> result=future.get();
+        for (int i=0; i < 100; i++) {
+          assertTrue(result.contains("res" + 1));
+        }
+      }
+ catch (      InterruptedException|ExecutionException ignored) {
+      }
       triggerCount.incrementAndGet();
       endLatch.countDown();
     }
