@@ -1,8 +1,15 @@
 {
   cacheManager=cache.getCacheManager();
-  cacheNotifier=cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+  ComponentRegistry componentRegistry=cache.getAdvancedCache().getComponentRegistry();
+  cacheNotifier=componentRegistry.getComponent(CacheNotifier.class);
   cacheManagerNotifier=cache.getCacheManager().getGlobalComponentRegistry().getComponent(CacheManagerNotifier.class);
   distExecutor=SecurityActions.getDefaultExecutorService(cache);
   ourAddress=cache.getCacheManager().getAddress();
-  eventManager=cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterEventManager.class);
+  eventManager=componentRegistry.getComponent(ClusterEventManager.class);
+  if (filter != null) {
+    componentRegistry.wireDependencies(filter);
+  }
+  if (converter != null && converter != filter) {
+    componentRegistry.wireDependencies(converter);
+  }
 }
