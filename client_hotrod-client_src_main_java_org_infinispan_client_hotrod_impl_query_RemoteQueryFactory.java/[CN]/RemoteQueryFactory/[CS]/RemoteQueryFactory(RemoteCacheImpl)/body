@@ -2,7 +2,9 @@
   serializationContext=ProtoStreamMarshaller.getSerializationContext(cache.getRemoteCacheManager());
   this.cache=cache;
   try {
-    MarshallerRegistration.registerMarshallers(serializationContext);
+    if (!serializationContext.canMarshall(QueryRequest.class)) {
+      MarshallerRegistration.registerMarshallers(serializationContext);
+    }
   }
  catch (  Exception e) {
     throw new HotRodClientException("Failed to initialise the Protobuf serialization context",e);
