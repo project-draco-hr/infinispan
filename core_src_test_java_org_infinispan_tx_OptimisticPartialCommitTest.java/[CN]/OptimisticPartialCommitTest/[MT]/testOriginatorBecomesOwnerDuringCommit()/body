@@ -1,0 +1,43 @@
+{
+  final Object k1=new MagicKey("k1",cache(1),cache(2));
+  final Object k2=new MagicKey("k2",cache(2),cache(3));
+  cache(1).put(k1,"v1_0");
+  cache(1).put(k2,"v2_0");
+  StateSequencer ss=new StateSequencer();
+  ss.logicalThread("main","before_kill_3","after_state_applied_on_1","before_commit_on_2","after_commit_on_2","after_commit_on_1");
+  advanceOnInterceptor(ss,cache(1),StateTransferInterceptor.class,new CommandMatcher(){
+    @Override public boolean accept(    ReplicableCommand command){
+      if (!(command instanceof VersionedCommitCommand))       return false;
+      GlobalTransaction gtx=((VersionedCommitCommand)command).getGlobalTransaction();
+      LocalTransaction tx=transactionTable(1).getLocalTransaction(gtx);
+      return tx.getStateTransferFlag() == null;
+    }
+  }
+).after("after_commit_on_1");
+  advanceOnInterceptor(ss,cache(2),StateTransferInterceptor.class,matchCommand(VersionedCommitCommand.class).matchCount(0).build()).before("before_commit_on_2").after("after_commit_on_2");
+  InvocationMatcher stateAppliedOn0Matcher=matchMethodCall("handleRebalanceCompleted").withParam(1,address(1)).build();
+  advanceOnGlobalComponentMethod(ss,manager(0),ClusterTopologyManager.class,stateAppliedOn0Matcher).after("after_state_applied_on_1");
+  Future<Object> txFuture=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      tm(0).begin();
+      try {
+        cache(1).put(k1,"v1_1");
+        cache(1).put(k2,"v2_1");
+      }
+  finally {
+        tm(0).commit();
+      }
+      return null;
+    }
+  }
+);
+  ss.advance("before_kill_3");
+  controlledCHFactory.setOwnerIndexes(new int[]{1,2},new int[]{2,1});
+  manager(3).stop();
+  cacheManagers.remove(3);
+  txFuture.get(30,TimeUnit.SECONDS);
+  assertEquals("v1_1",cache(1).get(k1));
+  assertEquals("v2_1",cache(1).get(k2));
+  assertEquals("v1_1",cache(2).get(k1));
+  assertEquals("v2_1",cache(2).get(k2));
+}

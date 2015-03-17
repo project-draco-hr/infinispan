@@ -1,0 +1,11 @@
+{
+  controlledCHFactory=new ControlledConsistentHashFactory(new int[]{1,2},new int[]{2,3});
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC,true);
+  configuration.clustering().cacheMode(CacheMode.DIST_SYNC);
+  configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
+  configuration.transaction().lockingMode(LockingMode.OPTIMISTIC).locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+  for (int i=0; i < 4; i++) {
+    addClusterEnabledCacheManager(configuration,new TransportFlags().withFD(true));
+  }
+  waitForClusterToForm();
+}
