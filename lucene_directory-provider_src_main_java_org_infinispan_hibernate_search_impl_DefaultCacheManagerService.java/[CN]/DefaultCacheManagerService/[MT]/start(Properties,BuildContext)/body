@@ -1,0 +1,21 @@
+{
+  ServiceManager serviceManager=context.getServiceManager();
+  String name=ConfigurationParseHelper.getString(properties,CACHE_MANAGER_RESOURCE_PROP,null);
+  if (name == null) {
+    String cfgName=properties.getProperty(INFINISPAN_CONFIGURATION_RESOURCENAME,DEFAULT_INFINISPAN_CONFIGURATION_RESOURCENAME);
+    final String transportOverrideResource=properties.getProperty(INFINISPAN_TRANSPORT_OVERRIDE_RESOURCENAME);
+    try {
+      InfinispanConfigurationParser ispnConfiguration=new InfinispanConfigurationParser();
+      ConfigurationBuilderHolder configurationBuilderHolder=ispnConfiguration.parseFile(cfgName,transportOverrideResource,serviceManager);
+      cacheManager=new DefaultCacheManager(configurationBuilderHolder,true);
+      manageCacheManager=true;
+    }
+ catch (    IOException e) {
+      throw new SearchException("Could not start Infinispan CacheManager using as configuration file: " + cfgName,e);
+    }
+  }
+ else {
+    cacheManager=locateCacheManager(name,JNDIHelper.getJndiProperties(properties,JNDIHelper.HIBERNATE_JNDI_PREFIX));
+    manageCacheManager=false;
+  }
+}

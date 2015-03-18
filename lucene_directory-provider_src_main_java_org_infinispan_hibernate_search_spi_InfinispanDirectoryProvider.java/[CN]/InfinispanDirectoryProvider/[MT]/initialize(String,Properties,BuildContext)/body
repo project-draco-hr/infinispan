@@ -1,0 +1,17 @@
+{
+  this.directoryProviderName=directoryProviderName;
+  this.serviceManager=context.getServiceManager();
+  this.cacheManager=serviceManager.requestService(CacheManagerService.class).getEmbeddedCacheManager();
+  metadataCacheName=InfinispanIntegration.getMetadataCacheName(properties);
+  dataCacheName=InfinispanIntegration.getDataCacheName(properties);
+  lockingCacheName=InfinispanIntegration.getLockingCacheName(properties);
+  chunkSize=ConfigurationParseHelper.getIntValue(properties,"chunk_size");
+  writeFileListAsync=getWriteFileListAsync(properties);
+  if (configurationExplicitlySetsLockFactory(properties)) {
+    File verifiedIndexDir=null;
+    if (isNativeLockingStrategy(properties)) {
+      verifiedIndexDir=DirectoryHelper.getVerifiedIndexDir(directoryProviderName,properties,true);
+    }
+    indexWriterLockFactory=getLockFactory(verifiedIndexDir,properties);
+  }
+}

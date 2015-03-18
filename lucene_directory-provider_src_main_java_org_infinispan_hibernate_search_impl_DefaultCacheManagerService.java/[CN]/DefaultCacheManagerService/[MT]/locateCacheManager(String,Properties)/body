@@ -1,0 +1,22 @@
+{
+  Context ctx=null;
+  try {
+    ctx=new InitialContext(jndiProperties);
+    return (EmbeddedCacheManager)ctx.lookup(jndiNamespace);
+  }
+ catch (  NamingException ne) {
+    String msg="Unable to retrieve CacheManager from JNDI [" + jndiNamespace + "]";
+    log.unableToRetrieveCacheManagerFromJndi(jndiNamespace,ne);
+    throw new SearchException(msg);
+  }
+ finally {
+    if (ctx != null) {
+      try {
+        ctx.close();
+      }
+ catch (      NamingException ne) {
+        log.unableToReleaseInitialContext(ne);
+      }
+    }
+  }
+}
