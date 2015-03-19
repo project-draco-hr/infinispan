@@ -1,0 +1,11 @@
+{
+  SearchConfigurationForTest configuration=new HibernateManualConfiguration().addClass(SimpleEmail.class).addProperty("hibernate.search.default.directory_provider","org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider").addProperty("hibernate.search.infinispan.configuration_resourcename","localonly-infinispan.xml");
+  if (backendAsync != null) {
+    configuration.addProperty("hibernate.search.default.worker.execution",backendAsync ? "async" : "sync");
+  }
+  if (async != null) {
+    configuration.addProperty("hibernate.search.default.write_metadata_async",async.toString());
+  }
+  new SearchIntegratorBuilder().configuration(configuration).buildSearchIntegrator();
+  assertEquals("The directory provider was not started",1,BytemanHelper.getAndResetInvocationCount());
+}

@@ -1,0 +1,25 @@
+{
+  assertEquals(2,clusterSize(nodea,SimpleEmail.class));
+{
+    FullTextSession fullTextSession=nodea.openFullTextSession();
+    Transaction transaction=fullTextSession.beginTransaction();
+    SimpleEmail mail=new SimpleEmail();
+    mail.to=to;
+    mail.message=messageText;
+    fullTextSession.save(mail);
+    transaction.commit();
+    fullTextSession.close();
+  }
+  verifyNodeSeesUpdatedIndex(nodeb);
+  FullTextSessionBuilder nodeC=createClusterNode(entityTypes,true);
+  assertEquals(3,clusterSize(nodea,SimpleEmail.class));
+  try {
+    verifyNodeSeesUpdatedIndex(nodeC);
+  }
+  finally {
+    nodeC.close();
+  }
+  assertEquals(2,clusterSize(nodea,SimpleEmail.class));
+  verifyNodeSeesUpdatedIndex(nodea);
+  verifyNodeSeesUpdatedIndex(nodeb);
+}

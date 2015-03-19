@@ -1,0 +1,16 @@
+{
+  FullTextSession fullTextSession=node.openFullTextSession();
+  try {
+    Transaction transaction=fullTextSession.beginTransaction();
+    QueryBuilder queryBuilder=fullTextSession.getSearchFactory().buildQueryBuilder().forEntity(Toaster.class).get();
+    Query query=queryBuilder.keyword().onField("serialNumber").matching("A1").createQuery();
+    List list=fullTextSession.createFullTextQuery(query).list();
+    assertEquals(1,list.size());
+    Device device=(Device)list.get(0);
+    assertEquals("GE",device.manufacturer);
+    transaction.commit();
+  }
+  finally {
+    fullTextSession.close();
+  }
+}

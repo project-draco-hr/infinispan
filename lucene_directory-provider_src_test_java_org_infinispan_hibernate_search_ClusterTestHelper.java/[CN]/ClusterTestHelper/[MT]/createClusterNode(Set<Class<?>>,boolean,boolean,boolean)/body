@@ -1,0 +1,18 @@
+{
+  FullTextSessionBuilder node=new FullTextSessionBuilder();
+  if (setInfinispanDirectory) {
+    node.setProperty("hibernate.search.default.directory_provider","org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider");
+  }
+  if (setInfinispanIndexManager) {
+    node.setProperty("hibernate.search.default.indexmanager","infinispan");
+  }
+  node.setProperty("hibernate.search.default.indexwriter.chunk_size","13");
+  node.setProperty(DefaultCacheManagerService.INFINISPAN_TRANSPORT_OVERRIDE_RESOURCENAME,"testing-flush-loopback.xml");
+  node.setProperty(Environment.HBM2DDL_AUTO,"create");
+  node.setProperty("hibernate.search.default." + org.hibernate.search.cfg.Environment.EXCLUSIVE_INDEX_USE,String.valueOf(exclusiveIndexUse));
+  node.setProperty(Environment.CONNECTION_PROVIDER,org.infinispan.hibernate.search.ClusterSharedConnectionProvider.class.getName());
+  for (  Class<?> entityType : entityTypes) {
+    node.addAnnotatedClass(entityType);
+  }
+  return node.build();
+}
