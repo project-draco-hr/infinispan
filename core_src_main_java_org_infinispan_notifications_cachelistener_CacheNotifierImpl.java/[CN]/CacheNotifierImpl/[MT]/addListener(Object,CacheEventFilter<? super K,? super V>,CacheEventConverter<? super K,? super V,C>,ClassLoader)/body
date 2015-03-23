@@ -1,10 +1,24 @@
 {
-  Listener l=testListenerClassValidity(listener.getClass());
-  UUID generatedId=UUID.randomUUID();
-  CacheMode cacheMode=config.clustering().cacheMode();
-  CacheInvocationBuilder builder=new CacheInvocationBuilder();
-  builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
-  boolean foundMethods=validateAndAddListenerInvocation(listener,builder);
+  final Listener l=testListenerClassValidity(listener.getClass());
+  final UUID generatedId=UUID.randomUUID();
+  final CacheMode cacheMode=config.clustering().cacheMode();
+  FilterIndexingServiceProvider indexingProvider=null;
+  boolean foundMethods=false;
+  if (filter instanceof IndexedFilter) {
+    IndexedFilter indexedFilter=(IndexedFilter)filter;
+    indexingProvider=findIndexingServiceProvider(indexedFilter);
+    if (indexingProvider != null) {
+      DelegatingCacheInvocationBuilder builder=new DelegatingCacheInvocationBuilder(indexingProvider);
+      builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
+      foundMethods=validateAndAddListenerInvocations(listener,builder);
+      builder.registerListenerInvocations();
+    }
+  }
+  if (indexingProvider == null) {
+    CacheInvocationBuilder builder=new CacheInvocationBuilder();
+    builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
+    foundMethods=validateAndAddListenerInvocations(listener,builder);
+  }
   if (foundMethods && l.clustered()) {
     if (cacheMode.isInvalidation()) {
       throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
@@ -83,13 +97,13 @@ catch (          ExecutionException e) {
         if (value == BaseQueueingSegmentListener.REMOVED) {
           continue;
         }
-        raiseEventForInitialTransfer(generatedId,entry,builder.isClustered());
+        raiseEventForInitialTransfer(generatedId,entry,l.clustered());
         handler.notifiedKey(entry.getKey());
       }
     }
      Set<CacheEntry> entries=handler.findCreatedEntries();
     for (    CacheEntry entry : entries) {
-      raiseEventForInitialTransfer(generatedId,entry,builder.isClustered());
+      raiseEventForInitialTransfer(generatedId,entry,l.clustered());
     }
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s initial state for cache completed",generatedId);

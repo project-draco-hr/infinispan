@@ -2,4 +2,11 @@
   super.start();
   this.distExecutorService=SecurityActions.getDefaultExecutorService(cache);
   componentRegistry=cache.getAdvancedCache().getComponentRegistry();
+  if (filterIndexingServiceProviders == null) {
+    filterIndexingServiceProviders=ServiceFinder.load(FilterIndexingServiceProvider.class);
+    for (    FilterIndexingServiceProvider provider : filterIndexingServiceProviders) {
+      componentRegistry.wireDependencies(provider);
+      provider.start();
+    }
+  }
 }

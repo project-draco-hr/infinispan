@@ -1,0 +1,12 @@
+{
+  JPAFilterAndConverter filter=((JPACacheEventFilterConverter)indexedFilter).filterAndConverter;
+  Matcher matcher=filter.getMatcher();
+  addFilteringInvocationForMatcher(matcher);
+  Event.Type[] eventTypes=new Event.Type[listeners.keySet().size()];
+  int i=0;
+  for (  Class<? extends Annotation> annotation : listeners.keySet()) {
+    eventTypes[i++]=getEventType(annotation);
+  }
+  Callback<K,V> callback=new Callback<K,V>(matcher,isClustered,isPrimaryOnly,filterAndConvert,listeners);
+  callback.subscription=matcher.registerFilter(filter.getJPAQuery(),callback,eventTypes);
+}

@@ -1,5 +1,4 @@
 {
-  long startTs=System.nanoTime();
   QueryFactory qf=Search.getQueryFactory(cache());
   Query query=qf.from(Person.class).having("age").lte(31).toBuilder().build();
   final int numEntries=100000;
@@ -10,15 +9,16 @@
     listeners.add(listener);
     cache().addListener(listener,Search.makeFilter(query),null);
   }
+  long startTs=System.nanoTime();
   for (int i=0; i < numEntries; ++i) {
     Person value=new Person();
     value.setName("John");
     value.setAge(i + 25);
     cache.put(i,value);
   }
+  long endTs=System.nanoTime();
   for (  NoOpEntryListener listener : listeners) {
     cache().removeListener(listener);
   }
-  long endTs=System.nanoTime();
-  System.out.printf("ListenerWithDslFilterTest.testEventFilterPerformance took %d ms\n",(endTs - startTs) / 1000000);
+  log.infof("ListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d ms\n",(endTs - startTs) / 1000000);
 }

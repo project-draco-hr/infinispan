@@ -1,5 +1,4 @@
 {
-  long startTs=System.nanoTime();
   QueryFactory qf=Search.getQueryFactory(cache(0));
   Query query=qf.from(Person.class).having("age").lte(31).toBuilder().build();
   final int numEntries=100000;
@@ -10,6 +9,7 @@
     listeners.add(listener);
     cache(0).addListener(listener,Search.makeFilter(query),null);
   }
+  long startTs=System.nanoTime();
   for (int i=0; i < numEntries; ++i) {
     Person value=new Person();
     value.setName("John");
@@ -18,9 +18,9 @@
     Object key=new MagicKey(cache);
     cache.put(key,value);
   }
+  long endTs=System.nanoTime();
   for (  NoOpEntryListener listener : listeners) {
     cache(0).removeListener(listener);
   }
-  long endTs=System.nanoTime();
-  System.out.printf("ClusteredListenerWithDslFilterTest.testEventFilterPerformance took %d ms\n",(endTs - startTs) / 1000000);
+  log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d ms\n",(endTs - startTs) / 1000000);
 }
