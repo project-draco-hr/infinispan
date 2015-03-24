@@ -1,0 +1,21 @@
+{
+  RemoteCache<Integer,String> remote=client(0).getCache();
+  remote.put(1,"v1");
+  assertEquals("v1",remote.get(1));
+  PutHammer putHammer=new PutHammer();
+  Future<Void> putHammerFuture=fork(putHammer);
+  HotRodServer toKillServer=servers.get(0);
+  HotRodClientTestingUtil.killServers(toKillServer);
+  servers.remove(toKillServer);
+  EmbeddedCacheManager toKillCacheManager=cacheManagers.get(0);
+  TestingUtil.killCacheManagers(toKillCacheManager);
+  cacheManagers.remove(toKillCacheManager);
+  TestingUtil.waitForRehashToComplete(cache(0));
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
+  registerCacheManager(cm);
+  HotRodClientTestingUtil.startHotRodServer(cm);
+  waitForClusterToForm();
+  TestingUtil.waitForRehashToComplete(cm.getCache(),cache(0));
+  putHammer.stop=true;
+  putHammerFuture.get();
+}
