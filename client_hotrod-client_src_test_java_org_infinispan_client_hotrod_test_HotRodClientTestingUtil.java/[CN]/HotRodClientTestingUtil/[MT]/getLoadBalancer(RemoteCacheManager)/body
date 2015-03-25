@@ -1,4 +1,10 @@
 {
-  TcpTransportFactory transportFactory=TestingUtil.extractField(client,"transportFactory");
-  return (T)transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes());
+  TcpTransportFactory transportFactory=null;
+  if (client instanceof InternalRemoteCacheManager) {
+    transportFactory=(TcpTransportFactory)((InternalRemoteCacheManager)client).getTransportFactory();
+  }
+ else {
+    transportFactory=TestingUtil.extractField(client,"transportFactory");
+  }
+  return (T)transportFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
 }

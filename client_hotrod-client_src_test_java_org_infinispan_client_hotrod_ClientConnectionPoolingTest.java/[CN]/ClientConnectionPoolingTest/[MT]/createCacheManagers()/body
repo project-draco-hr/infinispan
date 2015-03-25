@@ -19,10 +19,10 @@
   hotrodClientConf.setProperty("minIdle","-5");
   hotrodClientConf.setProperty("lifo","true");
   hotrodClientConf.setProperty("infinispan.client.hotrod.ping_on_startup","false");
-  remoteCacheManager=new RemoteCacheManager(hotrodClientConf);
+  remoteCacheManager=new InternalRemoteCacheManager(hotrodClientConf);
   remoteCache=remoteCacheManager.getCache();
-  TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)extractField(remoteCacheManager,"transportFactory");
-  connectionPool=(GenericKeyedObjectPool<?,?>)extractField(tcpConnectionFactory,"connectionPool");
+  TcpTransportFactory tcpConnectionFactory=(TcpTransportFactory)((InternalRemoteCacheManager)remoteCacheManager).getTransportFactory();
+  connectionPool=(GenericKeyedObjectPool<?,?>)tcpConnectionFactory.getConnectionPool();
   workerThread1=new WorkerThread(remoteCache);
   workerThread2=new WorkerThread(remoteCache);
   workerThread3=new WorkerThread(remoteCache);
