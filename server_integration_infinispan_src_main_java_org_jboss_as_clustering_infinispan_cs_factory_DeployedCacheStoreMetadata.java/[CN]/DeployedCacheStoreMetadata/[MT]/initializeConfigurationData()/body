@@ -1,0 +1,23 @@
+{
+  ConfiguredBy configuredBy=loaderWriterRawInstance.getClass().getAnnotation(ConfiguredBy.class);
+  if (configuredBy != null) {
+    if (configuredBy.value() == null) {
+      throw new IllegalArgumentException("Cache Store's configuration class is incorrect");
+    }
+    this.storeConfigurationClass=(Class<? extends StoreConfiguration>)configuredBy.value();
+    BuiltBy builtBy=storeConfigurationClass.getAnnotation(BuiltBy.class);
+    if (builtBy != null) {
+      if (builtBy.value() == null) {
+        throw new IllegalArgumentException("Cache Store's configuration builder class is incorrect");
+      }
+      this.storeBuilderClass=builtBy.value().asSubclass(StoreConfigurationBuilder.class);
+    }
+ else {
+      this.storeBuilderClass=CustomStoreConfigurationBuilder.class;
+    }
+  }
+ else {
+    this.storeConfigurationClass=CustomStoreConfiguration.class;
+    this.storeBuilderClass=CustomStoreConfigurationBuilder.class;
+  }
+}

@@ -1,0 +1,9 @@
+{
+  AbstractExtensionManagerService<T> service=createService(implementationClassName,instance);
+  ServiceName extensionServiceName=ServiceName.JBOSS.append(service.getServiceTypeName(),implementationClassName.replaceAll("\\.","_"));
+  InfinispanLogger.ROOT_LOGGER.installDeployedCacheStore(implementationClassName);
+  ServiceBuilder<T> serviceBuilder=ctx.getServiceTarget().addService(extensionServiceName,service);
+  serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE);
+  serviceBuilder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME,DeployedCacheStoreFactory.class,service.getDeployedCacheStoreFactory());
+  serviceBuilder.install();
+}

@@ -1,20 +1,6 @@
 {
-  Class<?> storeImplClass=CacheLoader.class.getClassLoader().loadClass(className);
-  ConfiguredBy annotation=storeImplClass.getAnnotation(ConfiguredBy.class);
-  Class<? extends StoreConfigurationBuilder> builderClass=null;
-  if (annotation != null) {
-    Class<?> configuredBy=annotation.value();
-    if (configuredBy != null) {
-      BuiltBy builtBy=configuredBy.getAnnotation(BuiltBy.class);
-      builderClass=builtBy.value().asSubclass(StoreConfigurationBuilder.class);
-    }
+  if (isPresentInLoadClassLoader(className)) {
+    return createStoreConfigurationFromLocalClassloader(className,persistenceBuilder);
   }
-  StoreConfigurationBuilder scb;
-  if (builderClass == null) {
-    scb=persistenceBuilder.addStore(CustomStoreConfigurationBuilder.class).customStoreClass(storeImplClass);
-  }
- else {
-    scb=persistenceBuilder.addStore(builderClass);
-  }
-  return scb;
+  return createDeployedStoreConfiguration(className,persistenceBuilder);
 }

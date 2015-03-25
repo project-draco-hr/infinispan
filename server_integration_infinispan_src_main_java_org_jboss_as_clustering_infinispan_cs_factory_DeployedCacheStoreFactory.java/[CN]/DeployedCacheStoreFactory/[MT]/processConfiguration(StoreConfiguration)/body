@@ -1,0 +1,20 @@
+{
+  if (storeConfiguration instanceof DeployedStoreConfiguration) {
+    DeployedStoreConfiguration deployedConfiguration=(DeployedStoreConfiguration)storeConfiguration;
+    PersistenceConfigurationBuilder replacedBuilder=deployedConfiguration.getPersistenceConfigurationBuilder();
+    DeployedCacheStoreMetadata deployedCacheStoreMetadata=deployedCacheStores.get(deployedConfiguration.getCustomStoreClassName());
+    if (deployedCacheStoreMetadata == null) {
+      throw new IllegalStateException("Could not find Deployed Cache metadata for " + deployedConfiguration.getCustomStoreClassName());
+    }
+    StoreConfigurationBuilder replacedStoreBuilder=replacedBuilder.addStore(deployedCacheStoreMetadata.getStoreBuilderClass());
+    replacedStoreBuilder.fetchPersistentState(deployedConfiguration.fetchPersistentState());
+    replacedStoreBuilder.ignoreModifications(deployedConfiguration.ignoreModifications());
+    replacedStoreBuilder.preload(deployedConfiguration.preload());
+    replacedStoreBuilder.purgeOnStartup(deployedConfiguration.purgeOnStartup());
+    replacedStoreBuilder.shared(deployedConfiguration.shared());
+    replacedStoreBuilder.withProperties(deployedConfiguration.properties());
+    StoreConfiguration replacedConfiguration=(StoreConfiguration)replacedStoreBuilder.create();
+    return replacedConfiguration;
+  }
+  return null;
+}

@@ -1,48 +1,14 @@
 {
   for (  StoreConfiguration cfg : configuration.persistence().stores()) {
-    ConfigurationFor annotation=cfg.getClass().getAnnotation(ConfigurationFor.class);
-    Class classAnnotation=null;
-    if (annotation == null) {
-      if (cfg instanceof CustomStoreConfiguration) {
-        classAnnotation=((CustomStoreConfiguration)cfg).customStoreClass();
-      }
-    }
- else {
-      classAnnotation=annotation.value();
-    }
-    if (classAnnotation == null) {
-      throw log.loaderConfigurationDoesNotSpecifyLoaderClass(cfg.getClass().getName());
-    }
-    Object instance=Util.getInstance(classAnnotation);
-    CacheWriter writer=instance instanceof CacheWriter ? (CacheWriter)instance : null;
-    CacheLoader loader=instance instanceof CacheLoader ? (CacheLoader)instance : null;
-    if (cfg.ignoreModifications())     writer=null;
-    if (cfg.singletonStore().enabled() && writer != null) {
-      writer=(writer instanceof AdvancedCacheWriter) ? new AdvancedSingletonCacheWriter(writer,cfg.singletonStore()) : new SingletonCacheWriter(writer,cfg.singletonStore());
-    }
-    if (cfg.async().enabled() && writer != null) {
-      writer=createAsyncWriter(writer);
-      if (loader != null) {
-        AtomicReference<State> state=((AsyncCacheWriter)writer).getState();
-        loader=(loader instanceof AdvancedCacheLoader) ? new AdvancedAsyncCacheLoader(loader,state) : new AsyncCacheLoader(loader,state);
-      }
-    }
-    InitializationContextImpl ctx=new InitializationContextImpl(cfg,cache,m,timeService,byteBufferFactory,marshalledEntryFactory);
-    if (loader != null) {
-      if (loader instanceof DelegatingCacheLoader)       loader.init(ctx);
-      loaders.add(loader);
-      configMap.put(loader,cfg);
-    }
-    if (writer != null) {
-      if (writer instanceof DelegatingCacheWriter)       writer.init(ctx);
-      writers.add(writer);
-      configMap.put(writer,cfg);
-    }
-    if (instance instanceof CacheWriter) {
-      ((CacheWriter)instance).init(ctx);
-    }
- else {
-      ((CacheLoader)instance).init(ctx);
-    }
+    Object bareInstance=cacheStoreFactoryRegistry.createInstance(cfg);
+    StoreConfiguration processedConfiguration=cacheStoreFactoryRegistry.processStoreConfiguration(cfg);
+    CacheWriter writer=createCacheWriter(bareInstance);
+    CacheLoader loader=createCacheLoader(bareInstance);
+    writer=postProcessWriter(processedConfiguration,writer);
+    loader=postProcessReader(processedConfiguration,writer,loader);
+    InitializationContextImpl ctx=new InitializationContextImpl(processedConfiguration,cache,m,timeService,byteBufferFactory,marshalledEntryFactory);
+    initializeLoader(processedConfiguration,loader,ctx);
+    initializeWriter(processedConfiguration,writer,ctx);
+    initializeBareInstance(bareInstance,ctx);
   }
 }

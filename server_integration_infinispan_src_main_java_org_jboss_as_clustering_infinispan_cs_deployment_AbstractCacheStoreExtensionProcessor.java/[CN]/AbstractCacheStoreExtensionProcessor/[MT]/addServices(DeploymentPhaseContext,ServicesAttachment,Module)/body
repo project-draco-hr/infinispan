@@ -1,0 +1,16 @@
+{
+  Class<T> serviceClass=getServiceClass();
+  List<String> implementationNames=servicesAttachment.getServiceImplementations(serviceClass.getName());
+  ModuleClassLoader classLoader=module.getClassLoader();
+  for (  String serviceClassName : implementationNames) {
+    try {
+      Class<? extends T> clazz=classLoader.loadClass(serviceClassName).asSubclass(serviceClass);
+      Constructor<? extends T> ctor=clazz.getConstructor();
+      T instance=ctor.newInstance();
+      installService(ctx,serviceClassName,instance);
+    }
+ catch (    Exception e) {
+      InfinispanMessages.MESSAGES.unableToInstantiateClass(serviceClassName);
+    }
+  }
+}

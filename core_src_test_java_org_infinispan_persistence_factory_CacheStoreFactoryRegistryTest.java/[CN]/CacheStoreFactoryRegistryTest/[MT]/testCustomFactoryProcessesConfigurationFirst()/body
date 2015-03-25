@@ -1,0 +1,16 @@
+{
+  final StoreConfiguration configuration=createDummyConfiguration();
+  final StoreConfiguration enhancedConfiguration=createDummyConfiguration();
+  CacheStoreFactoryRegistry registry=new CacheStoreFactoryRegistry();
+  registry.addCacheStoreFactory(new CacheStoreFactory(){
+    @Override public <T>T createInstance(    StoreConfiguration storeConfiguration){
+      throw new AssertionError("Should not be called");
+    }
+    @Override public StoreConfiguration processConfiguration(    StoreConfiguration storeConfiguration){
+      return enhancedConfiguration;
+    }
+  }
+);
+  StoreConfiguration returnedConfiguration=registry.processStoreConfiguration(configuration);
+  assertEquals(enhancedConfiguration,returnedConfiguration);
+}

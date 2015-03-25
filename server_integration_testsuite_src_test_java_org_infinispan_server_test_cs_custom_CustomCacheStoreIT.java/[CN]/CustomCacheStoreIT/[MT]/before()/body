@@ -1,9 +1,7 @@
 {
   String serverDir=System.getProperty("server1.dist");
-  File ispnCoreJarDir=new File(serverDir + "/modules/system/layers/base/org/infinispan/main/");
-  FileFilter ispnCoreJarFilter=new WildcardFileFilter("infinispan-core*.jar");
-  File ispnCoreJar=ispnCoreJarDir.listFiles(ispnCoreJarFilter)[0];
-  String customLoaderClassesDir=System.getProperty("basedir") + "/target/test-classes/org/infinispan/persistence/cluster/";
-  File[] csClasses={new File(customLoaderClassesDir + "MyCustomCacheStore.class"),new File(customLoaderClassesDir + "MyCustomCacheStoreConfiguration.class"),new File(customLoaderClassesDir + "MyCustomCacheStoreConfigurationBuilder.class")};
-  addFilesToZip(ispnCoreJar,csClasses,"org/infinispan/persistence/cluster/");
+  JavaArchive deployedCacheStore=ShrinkWrap.create(JavaArchive.class);
+  deployedCacheStore.addPackage(MyCustomCacheStore.class.getPackage());
+  deployedCacheStore.addAsServiceProvider(ExternalStore.class,MyCustomCacheStore.class);
+  deployedCacheStore.as(ZipExporter.class).exportTo(new File(serverDir,"/standalone/deployments/custom-store.jar"),true);
 }
