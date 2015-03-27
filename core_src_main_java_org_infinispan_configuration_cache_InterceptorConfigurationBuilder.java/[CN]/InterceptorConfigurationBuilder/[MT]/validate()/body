@@ -1,25 +1,33 @@
 {
+  Attribute<Class> interceptorClassAttribute=attributes.attribute(INTERCEPTOR_CLASS);
+  Attribute<CommandInterceptor> interceptorAttribute=attributes.attribute(INTERCEPTOR);
+  if (!interceptorClassAttribute.isNull() && !interceptorAttribute.isNull()) {
+    throw log.interceptorClassAndInstanceDefined(interceptorClassAttribute.get().getName(),interceptorAttribute.get().toString());
+  }
+ else   if (interceptorClassAttribute.isNull() && interceptorAttribute.isNull()) {
+    throw log.customInterceptorMissingClass();
+  }
+  Class<? extends CommandInterceptor> interceptorClass=interceptorClassAttribute.get();
+  if (interceptorClass == null) {
+    interceptorClass=interceptorAttribute.get().getClass();
+  }
+  if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass)) {
+    final String className=interceptorClass.getName();
+    if (!className.startsWith("org.infinispan.")) {
+      log.suggestCustomInterceptorInheritance(className);
+    }
+  }
   int positions=0;
   if (!attributes.attribute(BEFORE).isNull())   positions++;
   if (!attributes.attribute(AFTER).isNull())   positions++;
   if (attributes.attribute(INDEX).get() > -1)   positions++;
   if (attributes.attribute(POSITION).isModified())   positions++;
-  CommandInterceptor interceptor=attributes.attribute(INTERCEPTOR).get();
 switch (positions) {
 case 0:
-    throw log.missingCustomInterceptorPosition(interceptor.getClass().getName());
+    throw log.missingCustomInterceptorPosition(interceptorClass.getName());
 case 1:
   break;
 default :
-throw log.multipleCustomInterceptorPositions(interceptor.getClass().getName());
-}
-if (interceptor == null) {
-throw log.customInterceptorMissingClass();
-}
- else if (!(interceptor instanceof BaseCustomInterceptor)) {
-final String className=interceptor.getClass().getName();
-if (!className.startsWith("org.infinispan.")) {
-log.suggestCustomInterceptorInheritance(className);
-}
+throw log.multipleCustomInterceptorPositions(interceptorClass.getName());
 }
 }
