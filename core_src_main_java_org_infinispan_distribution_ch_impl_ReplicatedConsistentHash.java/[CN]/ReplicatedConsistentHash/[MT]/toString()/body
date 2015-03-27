@@ -1,18 +1,21 @@
 {
-  OwnershipStatistics stats=new OwnershipStatistics(this,members);
   StringBuilder sb=new StringBuilder("ReplicatedConsistentHash{");
   sb.append("ns = ").append(segments.size());
   sb.append(", owners = (").append(members.size()).append(")[");
+  int[] primaryOwned=new int[members.size()];
+  for (int i=0; i < primaryOwners.length; i++) {
+    primaryOwned[primaryOwners[i]]++;
+  }
   boolean first=true;
-  for (  Address a : members) {
+  for (int i=0; i < members.size(); i++) {
+    Address a=members.get(i);
     if (first) {
       first=false;
     }
  else {
       sb.append(", ");
     }
-    int primaryOwned=stats.getPrimaryOwned(a);
-    sb.append(a).append(": ").append(primaryOwned);
+    sb.append(a).append(": ").append(primaryOwned[i]);
   }
   sb.append("]}");
   return sb.toString();

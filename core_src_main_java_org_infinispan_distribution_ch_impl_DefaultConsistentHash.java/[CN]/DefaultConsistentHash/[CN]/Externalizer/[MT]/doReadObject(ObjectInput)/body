@@ -2,8 +2,17 @@
   int numSegments=unmarshaller.readInt();
   int numOwners=unmarshaller.readInt();
   List<Address> members=(List<Address>)unmarshaller.readObject();
-  Map<Address,Float> capacityFactors=(Map<Address,Float>)unmarshaller.readObject();
+  float[] capacityFactors=(float[])unmarshaller.readObject();
   Hash hash=(Hash)unmarshaller.readObject();
-  List<Address>[] owners=(List<Address>[])unmarshaller.readObject();
-  return new DefaultConsistentHash(hash,numOwners,numSegments,members,capacityFactors,owners);
+  List<Address>[] segmentOwners=new List[numSegments];
+  for (int i=0; i < numSegments; i++) {
+    int size=unmarshaller.readInt();
+    Address[] owners=new Address[size];
+    for (int j=0; j < size; j++) {
+      int ownerIndex=unmarshaller.readInt();
+      owners[j]=members.get(ownerIndex);
+    }
+    segmentOwners[i]=Immutables.immutableListWrap(owners);
+  }
+  return new DefaultConsistentHash(hash,numOwners,numSegments,members,capacityFactors,segmentOwners);
 }

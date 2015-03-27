@@ -2,10 +2,17 @@
   if (numSegments < 1)   throw new IllegalArgumentException("The number of segments must be strictly positive");
   if (numOwners < 1)   throw new IllegalArgumentException("The number of owners must be strictly positive");
   this.numOwners=numOwners;
-  this.numSegments=numSegments;
   this.hashFunction=hashFunction;
   this.members=new ArrayList<Address>(members);
-  this.capacityFactors=capacityFactors != null ? new HashMap<Address,Float>(capacityFactors) : null;
+  if (capacityFactors == null) {
+    this.capacityFactors=null;
+  }
+ else {
+    this.capacityFactors=new float[members.size()];
+    for (int i=0; i < this.capacityFactors.length; i++) {
+      this.capacityFactors[i]=capacityFactors.get(members.get(i));
+    }
+  }
   this.segmentOwners=new List[numSegments];
   for (int i=0; i < numSegments; i++) {
     if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {

@@ -1,8 +1,15 @@
 {
-  output.writeInt(ch.numSegments);
+  output.writeInt(ch.segmentOwners.length);
   output.writeInt(ch.numOwners);
   output.writeObject(ch.members);
   output.writeObject(ch.capacityFactors);
   output.writeObject(ch.hashFunction);
-  output.writeObject(ch.segmentOwners);
+  HashMap<Address,Integer> memberIndexes=getMemberIndexMap(ch.members);
+  for (int i=0; i < ch.segmentOwners.length; i++) {
+    List<Address> owners=ch.segmentOwners[i];
+    output.writeInt(owners.size());
+    for (int j=0; j < owners.size(); j++) {
+      output.writeInt(memberIndexes.get(owners.get(j)));
+    }
+  }
 }
