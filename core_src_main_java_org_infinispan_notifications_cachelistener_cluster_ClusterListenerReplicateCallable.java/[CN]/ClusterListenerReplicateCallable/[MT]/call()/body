@@ -11,7 +11,28 @@ synchronized (cacheNotifier) {
         }
         if (!alreadyInstalled) {
           RemoteClusterListener listener=new RemoteClusterListener(identifier,origin,distExecutor,cacheNotifier,cacheManagerNotifier,eventManager,sync);
-          cacheNotifier.addListener(listener,filter != null ? new CompositeCacheEventFilter(new PostCacheEventFilter(),filter) : null,converter);
+          CacheEventFilter<K,V> actualFilter=null;
+          if (filter instanceof CacheEventFilterConverter) {
+            final CacheEventFilterConverter<K,V,?> filterConverter=(CacheEventFilterConverter<K,V,?>)filter;
+            actualFilter=new AbstractCacheEventFilterConverter<K,V,Object>(){
+              @Override public Object filterAndConvert(              K key,              V oldValue,              Metadata oldMetadata,              V newValue,              Metadata newMetadata,              EventType eventType){
+                if (eventType.isPreEvent()) {
+                  return null;
+                }
+                return filterConverter.filterAndConvert(key,oldValue,oldMetadata,newValue,newMetadata,eventType);
+              }
+            }
+;
+          }
+ else           if (filter != null) {
+            actualFilter=new CacheEventFilter<K,V>(){
+              @Override public boolean accept(              K key,              V oldValue,              Metadata oldMetadata,              V newValue,              Metadata newMetadata,              EventType eventType){
+                return !eventType.isPreEvent() && filter.accept(key,oldValue,oldMetadata,newValue,newMetadata,eventType);
+              }
+            }
+;
+          }
+          cacheNotifier.addListener(listener,actualFilter,converter);
           cacheManagerNotifier.addListener(listener);
           if (!cacheManager.getMembers().contains(origin)) {
             cacheNotifier.removeListener(listener);
