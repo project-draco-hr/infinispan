@@ -50,8 +50,14 @@
  else {
         Set<Integer> previousSegments=getOwnedSegments(previousWriteCh);
         Set<Integer> newSegments=getOwnedSegments(newWriteCh);
-        Set<Integer> removedSegments=new HashSet<Integer>(previousSegments);
-        removedSegments.removeAll(newSegments);
+        Set<Integer> removedSegments;
+        if (newSegments.size() == newWriteCh.getNumSegments()) {
+          removedSegments=InfinispanCollections.emptySet();
+        }
+ else {
+          removedSegments=new HashSet<Integer>(previousSegments);
+          removedSegments.removeAll(newSegments);
+        }
         addedSegments=new HashSet<Integer>(newSegments);
         addedSegments.removeAll(previousSegments);
         if (trace) {
