@@ -3,19 +3,19 @@
   final int[] matchCount=new int[2];
   String queryString1="from org.infinispan.objectfilter.test.model.Person p where p.name = 'John'";
   matcher.registerFilter(queryString1,new FilterCallback(){
-    @Override public void onFilterResult(    Object instance,    Object[] projection,    Comparable[] sortProjection){
+    @Override public void onFilterResult(    Object userContext,    Object instance,    Object eventType,    Object[] projection,    Comparable[] sortProjection){
       matchCount[0]++;
     }
   }
 );
   String queryString2="from org.infinispan.objectfilter.test.model.Person p where p.phoneNumbers.number = '004012345'";
   matcher.registerFilter(queryString2,new FilterCallback(){
-    @Override public void onFilterResult(    Object instance,    Object[] projection,    Comparable[] sortProjection){
+    @Override public void onFilterResult(    Object userContext,    Object instance,    Object eventType,    Object[] projection,    Comparable[] sortProjection){
       matchCount[1]++;
     }
   }
 );
-  matcher.match(createPerson1());
+  matcher.match(null,createPerson1(),null);
   assertEquals(1,matchCount[0]);
   assertEquals(1,matchCount[1]);
 }

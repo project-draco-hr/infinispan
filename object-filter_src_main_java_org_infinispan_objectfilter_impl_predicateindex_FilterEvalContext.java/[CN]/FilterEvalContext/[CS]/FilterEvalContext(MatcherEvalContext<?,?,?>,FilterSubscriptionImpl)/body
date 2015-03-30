@@ -1,8 +1,16 @@
 {
   this.matcherContext=matcherContext;
   this.beTree=filterSubscription.getBETree();
-  int[] childCounters=beTree.getChildCounters();
-  this.treeCounters=Arrays.copyOf(childCounters,childCounters.length);
+  if (checkEventType(matcherContext.getEventType(),filterSubscription.getEventTypes())) {
+    int[] childCounters=beTree.getChildCounters();
+    this.treeCounters=Arrays.copyOf(childCounters,childCounters.length);
+  }
+ else {
+    this.treeCounters=new int[]{BETree.EXPR_FALSE};
+    for (    BENode node : beTree.getNodes()) {
+      node.suspendSubscription(this);
+    }
+  }
   projection=filterSubscription.getProjection() != null ? new Object[filterSubscription.getProjection().length] : null;
   sortProjection=filterSubscription.getSortFields() != null ? new Comparable[filterSubscription.getSortFields().length] : null;
 }
