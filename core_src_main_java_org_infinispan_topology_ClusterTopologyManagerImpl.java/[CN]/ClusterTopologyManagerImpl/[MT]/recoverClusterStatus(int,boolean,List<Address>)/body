@@ -1,4 +1,5 @@
 {
+  log.debugf("Recovering cluster status for view %d",newViewId);
   ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.GET_STATUS,transport.getAddress(),newViewId);
   Map<Address,Object> statusResponses=executeOnClusterSync(command,getGlobalTimeout(),false,false,new CacheTopologyFilterReuser());
   log.debugf("Got %d status responses. members are %s",statusResponses.size(),clusterMembers);
@@ -19,8 +20,19 @@
     }
   }
   isRebalancingEnabled=recoveredRebalancingStatus;
-  for (  Map.Entry<String,Map<Address,CacheStatusResponse>> e : responsesByCache.entrySet()) {
-    ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(e.getKey());
-    cacheStatus.doMergePartitions(e.getValue(),clusterMembers,isMergeView);
+  int maxThreads=Runtime.getRuntime().availableProcessors() / 2 + 1;
+  CompletionService<Void> cs=new SemaphoreCompletionService<>(asyncTransportExecutor,maxThreads);
+  for (  final Map.Entry<String,Map<Address,CacheStatusResponse>> e : responsesByCache.entrySet()) {
+    final ClusterCacheStatus cacheStatus=initCacheStatusIfAbsent(e.getKey());
+    cs.submit(new Callable<Void>(){
+      @Override public Void call() throws Exception {
+        cacheStatus.doMergePartitions(e.getValue(),clusterMembers,isMergeView);
+        return null;
+      }
+    }
+);
+  }
+  for (int i=0; i < responsesByCache.size(); i++) {
+    cs.take();
   }
 }

@@ -1,0 +1,15 @@
+{
+  SemaphoreCompletionService<String> completionService=new SemaphoreCompletionService<>(executor2Threads,1);
+  CountDownLatch latch=new CountDownLatch(1);
+  Future<String> backgroundInitFuture=completionService.submit(new BackgroundInitTask(completionService));
+  assertEquals("bla",backgroundInitFuture.get(1,SECONDS));
+  Future<String> dummyFuture=completionService.submit(new DummyTask());
+  assertSame(backgroundInitFuture,completionService.poll(1,SECONDS));
+  assertFalse(dummyFuture.isDone());
+  Future<String> backgroundEndFuture=completionService.backgroundTaskFinished(new BlockingTask(latch));
+  assertNull(completionService.poll(1,SECONDS));
+  assertFalse(dummyFuture.isDone());
+  latch.countDown();
+  assertEquals("bla",backgroundEndFuture.get(10,SECONDS));
+  assertEquals("bla",dummyFuture.get(10,SECONDS));
+}

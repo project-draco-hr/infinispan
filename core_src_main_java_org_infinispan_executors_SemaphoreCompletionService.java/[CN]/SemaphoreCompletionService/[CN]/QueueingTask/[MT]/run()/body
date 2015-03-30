@@ -1,0 +1,18 @@
+{
+  try {
+    QueueingTask next=this;
+    do {
+      next.runInternal();
+      if (semaphore.availablePermits() < 0)       break;
+      next=queue.poll();
+    }
+ while (next != null);
+  }
+  finally {
+    semaphore.release();
+    if (trace)     log.tracef("All queued tasks finished, available permits %d",semaphore.availablePermits());
+    if (!queue.isEmpty()) {
+      executeFront();
+    }
+  }
+}
