@@ -1,0 +1,17 @@
+{
+  Cache<String,String> cache1=getCache1(m);
+  Cache<String,String> cache2=getCache2(m);
+  TestExpiredListener listener=new TestExpiredListener();
+  MutableCacheEntryListenerConfiguration conf1=new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener),null,false,false);
+  cache1.registerCacheEntryListener(conf1);
+  cache2.put("key1","val1");
+  sleep(5000);
+  assertNull(cache1.get("key1"));
+  assertEquals(listener.invocationCount,1);
+  listener.invocationCount=0;
+  cache1.deregisterCacheEntryListener(conf1);
+  cache2.put("key2","val2");
+  sleep(5000);
+  assertNull(cache1.get("key2"));
+  assertEquals(listener.invocationCount,0);
+}

@@ -1,0 +1,20 @@
+{
+  Cache<String,String> cache1=getCache1(m);
+  Cache<String,String> cache2=getCache2(m);
+  DiscardingCacheEntryEventFilter filter=new DiscardingCacheEntryEventFilter();
+  TestCreatedListener listener1=new TestCreatedListener();
+  TestCreatedListener listener2=new TestCreatedListener();
+  MutableCacheEntryListenerConfiguration conf1=new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener1),null,false,false);
+  MutableCacheEntryListenerConfiguration conf2=new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener2),FactoryBuilder.factoryOf(filter),false,false);
+  cache1.registerCacheEntryListener(conf1);
+  cache2.registerCacheEntryListener(conf2);
+  cache2.put("key1","val3");
+  sleep(1000);
+  assertEquals(listener1.getInvocationCount(),1);
+  assertEquals(listener2.getInvocationCount(),0);
+  listener1.reset();
+  cache1.deregisterCacheEntryListener(conf1);
+  cache2.put("key2","val2");
+  sleep(1000);
+  assertEquals(listener1.getInvocationCount(),0);
+}
