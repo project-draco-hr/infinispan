@@ -1,0 +1,62 @@
+{
+  final Map<Integer,Integer> masterValues=new HashMap<Integer,Integer>();
+  final Map<Integer,Integer>[] keys=new Map[THREAD_WORKER_COUNT];
+  for (int i=0; i < keys.length; ++i) {
+    keys[i]=new HashMap<>();
+  }
+  for (int i=0; i < CACHE_ENTRY_COUNT; ++i) {
+    masterValues.put(i,i);
+    keys[i % THREAD_WORKER_COUNT].put(i,i);
+  }
+  cache(0,CACHE_NAME).putAll(masterValues);
+  for (int i=0; i < keys.length; ++i) {
+    keys[i]=Collections.unmodifiableMap(keys[i]);
+  }
+  final AtomicBoolean complete=new AtomicBoolean(false);
+  final Exchanger<Throwable> exchanger=new Exchanger<Throwable>();
+  Future<Void>[] futures=new Future[THREAD_WORKER_COUNT + 1];
+  for (int j=0; j < THREAD_MULTIPLIER; ++j) {
+    for (int i=0; i < CACHE_COUNT - 1; ++i) {
+      final int offset=j * (CACHE_COUNT - 1) + i;
+      final Cache<Integer,Integer> cache=cache(i,CACHE_NAME);
+      futures[i + j * (CACHE_COUNT - 1)]=fork(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          Map<Integer,Integer> keysToUse=keys[offset];
+          try {
+            int iteration=0;
+            while (!complete.get()) {
+              log.tracef("Starting iteration %s",iteration);
+              cache.getAdvancedCache().putAll(keysToUse);
+              iteration++;
+            }
+            System.out.println(Thread.currentThread() + " finished " + iteration+ " iterations!");
+            return null;
+          }
+ catch (          Throwable e) {
+            complete.set(true);
+            exchanger.exchange(e);
+            throw e;
+          }
+        }
+      }
+);
+    }
+  }
+  try {
+    Throwable e=exchanger.exchange(null,5,TimeUnit.MINUTES);
+    e.printStackTrace();
+    fail("Found an throwable in at least 1 thread" + e);
+  }
+ catch (  TimeoutException e) {
+  }
+  complete.set(true);
+  for (int i=0; i < futures.length - 1; ++i) {
+    try {
+      futures[i].get(1,TimeUnit.MINUTES);
+    }
+ catch (    TimeoutException e) {
+      System.err.println("Future " + i + " did not complete in time allotted.");
+      throw e;
+    }
+  }
+}
