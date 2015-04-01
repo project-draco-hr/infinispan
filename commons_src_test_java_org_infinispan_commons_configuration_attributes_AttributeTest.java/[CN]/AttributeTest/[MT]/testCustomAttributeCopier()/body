@@ -1,0 +1,15 @@
+{
+  AttributeDefinition<List<String>> def=AttributeDefinition.builder("test",Arrays.asList("a","b")).copier(new AttributeCopier<List<String>>(){
+    @Override public List<String> copyAttribute(    List<String> attribute){
+      if (attribute == null)       return null;
+ else       return new ArrayList(attribute);
+    }
+  }
+).build();
+  AttributeSet set1=new AttributeSet("set",def);
+  set1.attribute(def).set(Arrays.asList("b","a"));
+  AttributeSet set2=new AttributeSet("set",def);
+  set2.read(set1);
+  assertEquals(set1.attribute(def).get(),set2.attribute(def).get());
+  assertFalse(set1.attribute(def).get() == set2.attribute(def).get());
+}

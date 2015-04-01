@@ -1,0 +1,17 @@
+{
+  AttributeDefinition<TypedProperties> def=AttributeDefinition.builder("properties",null,TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(new AttributeInitializer<TypedProperties>(){
+    @Override public TypedProperties initialize(){
+      return new TypedProperties();
+    }
+  }
+).build();
+  AttributeSet set1=new AttributeSet("set",def);
+  TypedProperties typedProperties=set1.attribute(def).get();
+  typedProperties.setProperty("key","value");
+  set1.attribute(def).set(typedProperties);
+  set1=set1.protect();
+  typedProperties=set1.attribute(def).get();
+  typedProperties.setProperty("key","anotherValue");
+  AttributeSet set2=new AttributeSet("set",def);
+  set2.read(set1);
+}
