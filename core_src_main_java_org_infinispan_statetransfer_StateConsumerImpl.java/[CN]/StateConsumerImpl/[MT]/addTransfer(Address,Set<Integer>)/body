@@ -1,9 +1,13 @@
 {
 synchronized (transferMapsLock) {
-    log.tracef("Adding transfer from %s for segments %s",source,segmentsFromSource);
+    if (trace)     log.tracef("Adding transfer from %s for segments %s",source,segmentsFromSource);
     segmentsFromSource.removeAll(transfersBySegment.keySet());
-    if (!segmentsFromSource.isEmpty()) {
-      InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
+    if (segmentsFromSource.isEmpty()) {
+      if (trace)       log.tracef("All segments are already in progress, skipping");
+      return null;
+    }
+ else {
+      final InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
       for (      int segmentId : segmentsFromSource) {
         transfersBySegment.put(segmentId,inboundTransfer);
       }
@@ -15,9 +19,6 @@ synchronized (transferMapsLock) {
       inboundTransfers.add(inboundTransfer);
       taskQueue.add(inboundTransfer);
       return inboundTransfer;
-    }
- else {
-      return null;
     }
   }
 }

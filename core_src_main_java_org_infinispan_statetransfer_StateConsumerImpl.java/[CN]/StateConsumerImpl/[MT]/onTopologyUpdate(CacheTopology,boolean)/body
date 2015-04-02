@@ -55,7 +55,8 @@
         addedSegments=new HashSet<Integer>(newSegments);
         addedSegments.removeAll(previousSegments);
         if (trace) {
-          log.tracef("On cache %s we have: new segments: %s; old segments: %s; removed segments: %s; added segments: %s",cacheName,newSegments,previousSegments,removedSegments,addedSegments);
+          log.tracef("On cache %s we have: new segments: %s; old segments: %s",cacheName,newSegments,previousSegments);
+          log.tracef("On cache %s we have: added segments: %s; removed segments: %s",addedSegments,removedSegments);
         }
         cancelTransfers(removedSegments);
         restartBrokenTransfers(cacheTopology,addedSegments);
@@ -65,14 +66,14 @@
       }
     }
     int rebalanceTopologyId=stateTransferTopologyId.get();
-    log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",rebalanceTopologyId,isRebalance,cacheTopology.getPendingCH());
+    if (trace)     log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",rebalanceTopologyId,isRebalance,cacheTopology.getPendingCH());
     if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
       if (!isRebalance && cacheTopology.getPendingCH() == null) {
         boolean changed=stateTransferTopologyId.compareAndSet(rebalanceTopologyId,NO_REBALANCE_IN_PROGRESS);
         if (changed) {
           stopApplyingState();
           cacheNotifier.notifyDataRehashed(previousReadCh,cacheTopology.getCurrentCH(),previousWriteCh,cacheTopology.getTopologyId(),false);
-          if (log.isTraceEnabled()) {
+          if (trace) {
             log.tracef("Unlock State Transfer in Progress for topology ID %s",cacheTopology.getTopologyId());
           }
           if (isTotalOrder) {

@@ -1,9 +1,12 @@
 {
   int length=cacheContainers.length;
-  List<List<Address>> allViews=new ArrayList<List<Address>>(length);
+  List<View> incompleteViews=new ArrayList<>(length);
   for (int i=0; i < length; i++) {
     EmbeddedCacheManager cm=(EmbeddedCacheManager)cacheContainers[i];
-    allViews.add(cm.getMembers());
+    if (cm.getMembers().size() != cacheContainers.length) {
+      incompleteViews.add(((JGroupsTransport)cm.getTransport()).getChannel().getView());
+      log.warnf("Manager %s has an incomplete view: %s",cm.getAddress(),cm.getMembers());
+    }
   }
-  throw new RuntimeException(String.format("Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",cacheContainers.length,allViews));
+  throw new RuntimeException(String.format("Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",cacheContainers.length,incompleteViews));
 }

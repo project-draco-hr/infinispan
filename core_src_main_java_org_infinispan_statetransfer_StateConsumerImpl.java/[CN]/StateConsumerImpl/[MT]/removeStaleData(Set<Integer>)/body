@@ -1,4 +1,5 @@
 {
+  log.debugf("Removing no longer owned entries for cache %s",cacheName);
   if (keyInvalidationListener != null) {
     keyInvalidationListener.beforeInvalidation(removedSegments,InfinispanCollections.<Integer>emptySet());
   }
@@ -36,14 +37,12 @@
       log.failedLoadingKeysFromCacheStore(e);
     }
   }
-  log.debugf("Removing %s no longer owned entries for segments %s of cache %s",keysToRemove.size(),removedSegments,cacheName);
   if (!keysToRemove.isEmpty()) {
     try {
       InvalidateCommand invalidateCmd=commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL,SKIP_LOCKING),keysToRemove.toArray());
       InvocationContext ctx=icf.createNonTxInvocationContext();
       interceptorChain.invoke(ctx,invalidateCmd);
-      log.debugf("Removed %d keys, data container now has %d keys",keysToRemove.size(),dataContainer.size());
-      if (trace)       log.tracef("Removed keys: %s",keysToRemove);
+      if (trace)       log.tracef("Removed %d keys, data container now has %d keys",keysToRemove.size(),dataContainer.size());
     }
  catch (    CacheException e) {
       log.failedToInvalidateKeys(e);

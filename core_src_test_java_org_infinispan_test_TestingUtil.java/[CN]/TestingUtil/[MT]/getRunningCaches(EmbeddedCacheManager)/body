@@ -3,13 +3,17 @@
   if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())   return running;
   for (  String cacheName : cacheContainer.getCacheNames()) {
     if (cacheContainer.isRunning(cacheName)) {
-      Cache c=cacheContainer.getCache(cacheName);
-      if (c.getStatus().allowInvocations())       running.add(c);
+      Cache c=cacheContainer.getCache(cacheName,false);
+      if (c != null && c.getStatus().allowInvocations()) {
+        running.add(c);
+      }
     }
   }
   if (cacheContainer.isDefaultRunning()) {
-    Cache defaultCache=cacheContainer.getCache();
-    if (defaultCache.getStatus().allowInvocations())     running.add(defaultCache);
+    Cache defaultCache=cacheContainer.getCache(EmbeddedCacheManager.DEFAULT_CACHE_NAME,false);
+    if (defaultCache != null && defaultCache.getStatus().allowInvocations()) {
+      running.add(defaultCache);
+    }
   }
   return running;
 }
