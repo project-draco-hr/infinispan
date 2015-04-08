@@ -1,0 +1,11 @@
+{
+  String containerName=parentService.getParent().getSimpleName();
+  String cacheName=parentService.getSimpleName();
+  ModelNode resolvedValue=null;
+  String jndiName=(resolvedValue=CacheResource.JNDI_NAME.resolveModelAttribute(context,parentModel)).isDefined() ? resolvedValue.asString() : null;
+  ContextNames.BindInfo bindInfo;
+  bindInfo=ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(jndiName,containerName,cacheName));
+  context.removeService(bindInfo.getBinderServiceName());
+  super.removeServices(context,parentService,parentModel);
+  context.removeService(CacheConfigurationService.getServiceName(containerName,cacheName));
+}
