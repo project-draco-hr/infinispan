@@ -44,19 +44,12 @@
   }
   try {
     Throwable e=exchanger.exchange(null,5,TimeUnit.MINUTES);
-    e.printStackTrace();
     fail("Found an throwable in at least 1 thread" + e);
   }
  catch (  TimeoutException e) {
   }
   complete.set(true);
   for (int i=0; i < futures.length - 1; ++i) {
-    try {
-      futures[i].get(1,TimeUnit.MINUTES);
-    }
- catch (    TimeoutException e) {
-      System.err.println("Future " + i + " did not complete in time allotted.");
-      throw e;
-    }
+    futures[i].get(1,TimeUnit.MINUTES);
   }
 }
