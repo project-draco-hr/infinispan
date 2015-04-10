@@ -4,84 +4,20 @@
   }
   CacheTopology beginTopology=stateTransferManager.getCacheTopology();
   command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash(),transport.getAddress());
-  Map<Object,Object> values=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
-  if (ctx.isOriginLocal()) {
-    CacheTopology afterTopology=stateTransferManager.getCacheTopology();
-    if (beginTopology.getTopologyId() != afterTopology.getTopologyId()) {
-      Map<Object,?> remotelyRetrieved=command.getRemotelyFetched();
-      Collection<?> originalKeys=command.getKeys();
-      List<Object> keysToTryAgain=new ArrayList<Object>(originalKeys.size());
-      for (      Object key : originalKeys) {
-        if (values.containsKey(key)) {
-          Object value=values.get(key);
-          if (value == null && !remotelyRetrieved.containsKey(key)) {
-            keysToTryAgain.add(key);
-          }
-        }
- else {
-          keysToTryAgain.add(key);
-        }
-      }
-      if (!keysToTryAgain.isEmpty()) {
-        try {
-          log.tracef("Retrying keys %s",keysToTryAgain);
-          command.setKeys(keysToTryAgain);
-          values.putAll((Map<Object,Object>)visitGetAllCommand(ctx,command));
-        }
-  finally {
-          command.setKeys(originalKeys);
-        }
-      }
-    }
- else {
-      Collection<?> originalKeys=command.getKeys();
-      int missingKeys;
-      if ((missingKeys=originalKeys.size() - values.size()) > 0) {
-        List<Object> keysToTryAgain=new ArrayList<Object>(missingKeys);
-        for (        Object key : originalKeys) {
-          if (!values.containsKey(key)) {
-            keysToTryAgain.add(key);
-          }
-        }
-        if (!keysToTryAgain.isEmpty()) {
-          try {
-            log.infof("Retrying keys %s from stable topology",keysToTryAgain);
-            command.setKeys(keysToTryAgain);
-            Thread.sleep(10);
-            values.putAll((Map<Object,Object>)visitGetAllCommand(ctx,command));
-          }
-  finally {
-            command.setKeys(originalKeys);
-          }
-        }
-      }
-    }
+  updateTopologyId(command);
+  try {
+    return invokeNextInterceptor(ctx,command);
   }
- else {
-    if (beginTopology.getTopologyId() != stateTransferManager.getCacheTopology().getTopologyId()) {
-      Iterator<Entry<Object,Object>> it=values.entrySet().iterator();
-      while (it.hasNext()) {
-        Entry<Object,Object> entry=it.next();
-        InternalCacheEntry ice=(InternalCacheEntry)entry.getValue();
-        if (ice == null) {
-          it.remove();
-        }
-      }
+ catch (  CacheException e) {
+    Throwable ce=e;
+    while (ce instanceof RemoteException) {
+      ce=ce.getCause();
     }
- else {
-      ConsistentHash beginHash=beginTopology.getReadConsistentHash();
-      Address localAddress=transport.getAddress();
-      Iterator<Entry<Object,Object>> it=values.entrySet().iterator();
-      while (it.hasNext()) {
-        Entry<Object,Object> entry=it.next();
-        InternalCacheEntry ice=(InternalCacheEntry)entry.getValue();
-        if (ice == null) {
-          if (!beginHash.isKeyLocalToNode(localAddress,entry.getKey()) || componentRegistry.getStatus() != ComponentStatus.RUNNING) {
-            it.remove();
-          }
-        }
-      }
-    }
+    if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
+    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",command);
+    int newTopologyId=Math.max(currentTopologyId(),command.getTopologyId() + 1);
+    command.setTopologyId(newTopologyId);
+    waitForTopology(newTopologyId);
+    return visitGetAllCommand(ctx,command);
   }
-  return values;
 }
