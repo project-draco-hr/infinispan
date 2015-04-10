@@ -2,28 +2,12 @@
   state.awaitUntilReset();
   TotalOrderLatch transactionSynchronizedBlock=new TotalOrderLatchImpl(state.getGlobalTransaction().globalId());
   state.setTransactionSynchronizedBlock(transactionSynchronizedBlock);
-  if (keysModified == null) {
-    TotalOrderLatch oldClear=clear.get();
-    if (oldClear != null) {
-      state.addSynchronizedBlock(oldClear);
-      clear.set(transactionSynchronizedBlock);
+  for (  Object key : keysModified) {
+    TotalOrderLatch prevTx=keysLocked.put(key,transactionSynchronizedBlock);
+    if (prevTx != null) {
+      state.addSynchronizedBlock(prevTx);
     }
-    state.addAllSynchronizedBlocks(keysLocked.values());
-    keysLocked.clear();
-    state.addKeysLockedForClear();
-  }
- else {
-    TotalOrderLatch clearTx=clear.get();
-    if (clearTx != null) {
-      state.addSynchronizedBlock(clearTx);
-    }
-    for (    Object key : keysModified) {
-      TotalOrderLatch prevTx=keysLocked.put(key,transactionSynchronizedBlock);
-      if (prevTx != null) {
-        state.addSynchronizedBlock(prevTx);
-      }
-      state.addLockedKey(key);
-    }
+    state.addLockedKey(key);
   }
   TotalOrderLatch stateTransfer=stateTransferInProgress.get();
   if (stateTransfer != null) {

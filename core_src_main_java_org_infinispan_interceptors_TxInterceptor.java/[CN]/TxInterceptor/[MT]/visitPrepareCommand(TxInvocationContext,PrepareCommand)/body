@@ -3,6 +3,11 @@
   if (!ctx.isOriginLocal()) {
     ((RemoteTransaction)ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
   }
+ else {
+    if (ctx.getCacheTransaction().hasModification(ClearCommand.class)) {
+      throw new IllegalStateException("No ClearCommand is allowed in Transaction.");
+    }
+  }
   Object result=invokeNextInterceptorAndVerifyTransaction(ctx,command);
   if (!ctx.isOriginLocal()) {
     if (command.isOnePhaseCommit()) {

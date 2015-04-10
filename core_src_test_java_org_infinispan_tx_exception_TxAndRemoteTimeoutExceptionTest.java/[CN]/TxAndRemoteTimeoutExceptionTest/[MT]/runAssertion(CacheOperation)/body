@@ -1,2 +1,36 @@
 {
+  tm.begin();
+  cache(1).put("k1","v1");
+  DummyTransaction k1LockOwner=(DummyTransaction)tm.suspend();
+  assertFalse(lm1.isLocked("k1"));
+  assertEquals(1,txTable1.getLocalTxCount());
+  tm.begin();
+  cache(0).put("k2","v2");
+  assertFalse(lm0.isLocked("k2"));
+  assertFalse(lm1.isLocked("k2"));
+  operation.execute();
+  assertEquals(1,txTable1.getLocalTxCount());
+  assertEquals(1,txTable0.getLocalTxCount());
+  final Transaction tx2=tm.suspend();
+  tm.resume(k1LockOwner);
+  k1LockOwner.runPrepare();
+  tm.suspend();
+  tm.resume(tx2);
+  try {
+    tm.commit();
+    fail("Rollback expected.");
+  }
+ catch (  RollbackException re) {
+  }
+  assertEquals(0,txTable0.getLocalTxCount());
+  assertEquals(1,txTable1.getLocalTxCount());
+  log.trace("Right before second commit");
+  tm.resume(k1LockOwner);
+  tm.commit();
+  assertEquals("v1",cache(0).get("k1"));
+  assertEquals("v1",cache(1).get("k1"));
+  assertEquals(0,txTable1.getLocalTxCount());
+  assertEquals(0,txTable1.getLocalTxCount());
+  assertNotLocked("k1");
+  assertNotLocked("k2");
 }

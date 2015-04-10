@@ -1,4 +1,12 @@
 {
-  InvocationContext ctx=getInvocationContextWithImplicitTransaction(false,explicitClassLoader,UNBOUNDED);
-  clearInternal(explicitFlags,ctx);
+  final Transaction tx=suspendOngoingTransactionIfExists();
+  try {
+    InvocationContext context=invocationContextFactory.createClearNonTxInvocationContext();
+    setInvocationContextClassLoader(context,explicitClassLoader);
+    ClearCommand command=commandsFactory.buildClearCommand(explicitFlags);
+    invoker.invoke(context,command);
+  }
+  finally {
+    resumePreviousOngoingTransaction(tx,true,"Had problems trying to resume a transaction after clear()");
+  }
 }

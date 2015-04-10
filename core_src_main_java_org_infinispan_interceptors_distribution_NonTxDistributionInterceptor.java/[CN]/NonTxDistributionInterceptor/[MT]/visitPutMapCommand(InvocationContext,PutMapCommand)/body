@@ -3,7 +3,7 @@
   ConsistentHash ch=dm.getConsistentHash();
   Address localAddress=rpcManager.getAddress();
   if (ctx.isOriginLocal()) {
-    List<NotifyingFuture<Object>> futures=new ArrayList<NotifyingFuture<Object>>(rpcManager.getMembers().size() - 1);
+    List<NotifyingFuture<Object>> futures=new ArrayList<>(rpcManager.getMembers().size() - 1);
     RpcOptions options=rpcManager.getDefaultRpcOptions(isSynchronous(command));
     for (    Address member : rpcManager.getMembers()) {
       if (member.equals(rpcManager.getAddress())) {
@@ -11,18 +11,18 @@
       }
       Set<Integer> segments=ch.getPrimarySegmentsForOwner(member);
       if (!segments.isEmpty()) {
-        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<Object,Object>(originalMap,ch,segments);
+        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<>(originalMap,ch,segments);
         if (!segmentEntriesMap.isEmpty()) {
           PutMapCommand copy=new PutMapCommand(command);
           copy.setMap(segmentEntriesMap);
-          NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl<Object>();
+          NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl<>();
           rpcManager.invokeRemotelyInFuture(Collections.singletonList(member),copy,options,future);
           futures.add(future);
         }
       }
     }
     if (futures.size() > 0) {
-      CompositeNotifyingFuture<Object> compFuture=new CompositeNotifyingFuture<Object>(futures);
+      CompositeNotifyingFuture<Object> compFuture=new CompositeNotifyingFuture<>(futures);
       try {
         compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
       }
@@ -49,24 +49,24 @@
     }
     int backupOwnerSize=backupOwnerSegments.size();
     if (backupOwnerSize > 0) {
-      List<NotifyingFuture<Object>> futures=new ArrayList<NotifyingFuture<Object>>(backupOwnerSize);
+      List<NotifyingFuture<Object>> futures=new ArrayList<>(backupOwnerSize);
       RpcOptions options=rpcManager.getDefaultRpcOptions(isSynchronous(command));
       command.setFlags(Flag.SKIP_LOCKING);
       command.setForwarded(true);
       for (      Entry<Address,Set<Integer>> entry : backupOwnerSegments.entrySet()) {
         Set<Integer> segments=entry.getValue();
-        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<Object,Object>(originalMap,ch,segments);
+        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<>(originalMap,ch,segments);
         if (!segmentEntriesMap.isEmpty()) {
           PutMapCommand copy=new PutMapCommand(command);
           copy.setMap(segmentEntriesMap);
-          NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl<Object>();
+          NotifyingNotifiableFuture<Object> future=new NotifyingFutureImpl<>();
           rpcManager.invokeRemotelyInFuture(Collections.singletonList(entry.getKey()),copy,options,future);
           futures.add(future);
         }
       }
       command.setForwarded(false);
       if (futures.size() > 0) {
-        CompositeNotifyingFuture<Object> compFuture=new CompositeNotifyingFuture<Object>(futures);
+        CompositeNotifyingFuture<Object> compFuture=new CompositeNotifyingFuture<>(futures);
         try {
           compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
         }
