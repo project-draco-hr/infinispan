@@ -1,0 +1,10 @@
+{
+  final Cache<Object,Object> cache=caches().get(0);
+  for (int i=0; i < NUM_ENTRIES; i++) {
+    cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(String.valueOf(i),new Transaction(i,"12345"));
+  }
+  for (  Cache c : caches()) {
+    Search.getSearchManager(c).getMassIndexer().start();
+    assertAllIndexed(c);
+  }
+}
