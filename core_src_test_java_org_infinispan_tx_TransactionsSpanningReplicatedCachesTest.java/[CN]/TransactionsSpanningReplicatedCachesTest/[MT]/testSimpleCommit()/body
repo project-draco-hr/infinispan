@@ -1,2 +1,13 @@
 {
+  startAllCaches();
+  Cache<String,String> c1=cache(0,"c1");
+  Cache<String,String> c1Replica=cache(1,"c1");
+  assertTrue(c1.isEmpty());
+  assertTrue(c1Replica.isEmpty());
+  TransactionManager tm=TestingUtil.getTransactionManager(c1);
+  tm.begin();
+  c1.put("c1key","c1value");
+  tm.commit();
+  assertEquals(c1.get("c1key"),"c1value");
+  assertEquals(c1Replica.get("c1key"),"c1value");
 }

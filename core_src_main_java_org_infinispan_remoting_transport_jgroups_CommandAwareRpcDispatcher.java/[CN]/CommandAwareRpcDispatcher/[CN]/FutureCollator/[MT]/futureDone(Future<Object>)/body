@@ -25,12 +25,20 @@
       Thread.currentThread().interrupt();
     }
 catch (    ExecutionException e) {
-      exception=e;
-      if (e.getCause() instanceof org.jgroups.TimeoutException)       exception=new TimeoutException("Timeout!",e);
- else       if (e.getCause() instanceof Exception)       exception=(Exception)e.getCause();
- else       exception=new CacheException("Caught a throwable",e.getCause());
-      if (log.isDebugEnabled())       log.debugf("Caught exception %s from sender %s.  Will skip this response.",exception.getClass().getName(),sender);
-      log.trace("Exception caught: ",exception);
+      Throwable cause=e.getCause();
+      if (cause instanceof org.jgroups.SuspectedException) {
+        return;
+      }
+ else       if (cause instanceof org.jgroups.TimeoutException) {
+        exception=new TimeoutException("Timeout!",e);
+      }
+ else       if (cause instanceof Exception) {
+        exception=(Exception)cause;
+      }
+ else {
+        exception=new CacheException("Caught a throwable",cause);
+      }
+      if (log.isDebugEnabled())       log.debugf("Caught exception from sender %s: %s",sender,exception);
     }
  finally {
       expectedResponses--;

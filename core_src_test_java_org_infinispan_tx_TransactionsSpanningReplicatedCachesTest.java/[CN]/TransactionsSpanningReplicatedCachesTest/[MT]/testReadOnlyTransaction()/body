@@ -1,2 +1,13 @@
 {
+  Cache<String,String> c1=cache(0);
+  Cache<String,String> c2=cache(1);
+  RpcManagerImpl ri=(RpcManagerImpl)c1.getAdvancedCache().getRpcManager();
+  c1.put("k","v");
+  assertEquals("v",c1.get("k"));
+  assertEquals("v",c2.get("k"));
+  long oldRC=ri.getReplicationCount();
+  c1.getAdvancedCache().getTransactionManager().begin();
+  assertEquals("v",c1.get("k"));
+  c1.getAdvancedCache().getTransactionManager().commit();
+  assertEquals(ri.getReplicationCount(),oldRC);
 }

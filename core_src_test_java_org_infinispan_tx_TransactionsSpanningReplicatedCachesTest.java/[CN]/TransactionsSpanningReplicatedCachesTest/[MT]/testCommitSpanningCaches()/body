@@ -1,2 +1,31 @@
 {
+  startAllCaches();
+  Cache<String,String> c1=cache(0,"c1");
+  Cache<String,String> c1Replica=cache(1,"c1");
+  Cache<String,String> c2=cache(0,"c2");
+  Cache<String,String> c2Replica=cache(1,"c2");
+  assertTrue(c1.isEmpty());
+  assertTrue(c2.isEmpty());
+  assertTrue(c1Replica.isEmpty());
+  assertTrue(c2Replica.isEmpty());
+  c1.put("c1key","c1value");
+  c2.put("c2key","c2value");
+  assertInitialValues(c1,c1Replica,c2,c2Replica);
+  TransactionManager tm=TestingUtil.getTransactionManager(c1);
+  tm.begin();
+  c1.put("c1key","c1value_new");
+  c2.put("c2key","c2value_new");
+  assertEquals(c1.get("c1key"),"c1value_new");
+  assertEquals(c1Replica.get("c1key"),"c1value");
+  assertEquals(c2.get("c2key"),"c2value_new");
+  assertEquals(c2Replica.get("c2key"),"c2value");
+  Transaction tx=tm.suspend();
+  assertInitialValues(c1,c1Replica,c2,c2Replica);
+  tm.resume(tx);
+  log.trace("before commit...");
+  tm.commit();
+  assertEquals(c1.get("c1key"),"c1value_new");
+  assertEquals(c1Replica.get("c1key"),"c1value_new");
+  assertEquals(c2.get("c2key"),"c2value_new");
+  assertEquals(c2Replica.get("c2key"),"c2value_new");
 }
