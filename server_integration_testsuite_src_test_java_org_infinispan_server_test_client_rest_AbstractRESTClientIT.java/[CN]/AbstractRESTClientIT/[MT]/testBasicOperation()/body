@@ -18,12 +18,8 @@
   byte[] byteData=bout.toByteArray();
   put(fullPathKey,byteData,"application/octet-stream");
   HttpResponse resp=getWithoutClose(fullPathKey);
-  int respLength=new Long(resp.getEntity().getContentLength()).intValue();
-  byte[] bytesBack=new byte[respLength];
-  resp.getEntity().getContent().read(bytesBack,0,respLength);
-  EntityUtils.consume(resp.getEntity());
-  assertEquals(byteData.length,bytesBack.length);
-  ObjectInputStream oin=new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+  ObjectInputStream oin=new ObjectInputStream(resp.getEntity().getContent());
   TestSerializable ts=(TestSerializable)oin.readObject();
+  EntityUtils.consume(resp.getEntity());
   assertEquals("CONTENT",ts.getContent());
 }

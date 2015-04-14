@@ -1,12 +1,10 @@
 {
   ModelNode config=Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
   final RestService service=new RestService(config);
-  String virtualServer=config.hasDefined(ModelKeys.VIRTUAL_SERVER) ? config.get(ModelKeys.VIRTUAL_SERVER).asString() : DEFAULT_VIRTUAL_SERVER;
-  String serverName="default-server";
-  final ServiceName virtualHostServiceName=UndertowService.virtualHostName(serverName,virtualServer);
   ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"rest"),service);
   EndpointUtils.addCacheContainerDependency(builder,service.getCacheContainerName(),service.getCacheManager());
-  builder.addDependency(PathManagerService.SERVICE_NAME,PathManager.class,service.getPathManagerInjector()).addDependency(virtualHostServiceName,Host.class,service.getHostInjector());
+  EndpointUtils.addSocketBindingDependency(builder,getSocketBindingName(operation),service.getSocketBinding());
+  builder.addDependency(PathManagerService.SERVICE_NAME,PathManager.class,service.getPathManagerInjector());
   if (service.getSecurityDomain() != null) {
     EndpointUtils.addSecurityDomainDependency(builder,service.getSecurityDomain(),service.getSecurityDomainContextInjector());
   }

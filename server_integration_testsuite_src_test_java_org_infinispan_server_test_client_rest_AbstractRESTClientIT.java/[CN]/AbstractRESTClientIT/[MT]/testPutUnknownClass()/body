@@ -7,12 +7,8 @@
   byte[] byteData=bout.toByteArray();
   put(fullPathKey,byteData,"application/x-java-serialized-object");
   HttpResponse resp=get(fullPathKey,null,HttpServletResponse.SC_OK,false,"Accept","application/x-java-serialized-object");
-  int respLength=new Long(resp.getEntity().getContentLength()).intValue();
-  byte[] bytesBack=new byte[respLength];
-  resp.getEntity().getContent().read(bytesBack,0,respLength);
-  EntityUtils.consume(resp.getEntity());
-  assertEquals(byteData.length,bytesBack.length);
-  ObjectInputStream oin=new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+  ObjectInputStream oin=new ObjectInputStream(resp.getEntity().getContent());
   TestSerializable ts=(TestSerializable)oin.readObject();
+  EntityUtils.consume(resp.getEntity());
   assertEquals("CONTENT",ts.getContent());
 }

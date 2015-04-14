@@ -1,25 +1,17 @@
 {
   ROOT_LOGGER.endpointStarting("REST");
   try {
-    deployment.setDeploymentName("REST").setContextPath(path).setClassLoader(this.getClass().getClassLoader()).addInitParameter("resteasy.resources","org.infinispan.rest.Server").addInitParameter("resteasy.use.builtin.providers","true").addListener(new ListenerInfo(ResteasyBootstrap.class)).addMimeMappings(new MimeMapping("html","text/html"),new MimeMapping("jpg","image/jpeg")).addWelcomePage("index.html").setResourceManager(new FileResourceManager(new File(pathManagerInjector.getValue().resolveRelativePathEntry("rest",HOME_DIR)),1024 * 1024));
-    callbackHandle=pathManagerInjector.getValue().registerCallback(HOME_DIR,PathManager.ReloadServerCallback.create(),PathManager.Event.UPDATED,PathManager.Event.REMOVED);
-    deployment.addServlet(new ServletInfo("default",DefaultServlet.class).addMapping("/"));
-    deployment.addServlet(new ServletInfo("Resteasy",HttpServletDispatcher.class).addMapping("/rest/*"));
-    if (securityDomain != null) {
-      configureContextSecurity();
-    }
-    deploymentManager=hostInjector.getValue().getServer().getServletContainer().getServletContainer().addDeployment(deployment);
-    deploymentManager.deploy();
-    ServletContext servletContext=deploymentManager.getDeployment().getServletContext();
-    ServerBootstrap.setCacheManager(servletContext,cacheManagerInjector.getValue());
-    ServerBootstrap.setConfiguration(servletContext,configuration);
+    SocketBinding socketBinding=getSocketBinding().getValue();
+    InetSocketAddress socketAddress=socketBinding.getSocketAddress();
+    configurationBuilder.host(socketAddress.getAddress().getHostAddress());
+    configurationBuilder.port(socketAddress.getPort());
+    restServer=NettyRestServer.apply(configurationBuilder.build(),cacheManagerInjector.getValue());
   }
  catch (  Exception e) {
     throw ROOT_LOGGER.restContextCreationFailed(e);
   }
   try {
-    HttpHandler httpHandler=deploymentManager.start();
-    hostInjector.getValue().registerDeployment(deploymentManager.getDeployment(),httpHandler);
+    restServer.start();
     ROOT_LOGGER.httpEndpointStarted("REST",path,"rest");
   }
  catch (  Exception e) {

@@ -1,0 +1,52 @@
+{
+  PathAddress address=PathAddress.pathAddress(sasl.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.SASL_POLICY,ModelKeys.SASL_POLICY_NAME));
+  ModelNode policy=Util.createAddOperation(address);
+  list.add(policy);
+  if (reader.getAttributeCount() > 0) {
+    throw ParseUtils.unexpectedAttribute(reader,0);
+  }
+  final EnumSet<Element> visited=EnumSet.noneOf(Element.class);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    final Element element=Element.forName(reader.getLocalName());
+    if (visited.contains(element)) {
+      throw ParseUtils.unexpectedElement(reader);
+    }
+    visited.add(element);
+switch (element) {
+case FORWARD_SECRECY:
+{
+        SaslPolicyResource.FORWARD_SECRECY.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+        break;
+      }
+case NO_ACTIVE:
+{
+      SaslPolicyResource.NO_ACTIVE.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+      break;
+    }
+case NO_ANONYMOUS:
+{
+    SaslPolicyResource.NO_ANONYMOUS.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+    break;
+  }
+case NO_DICTIONARY:
+{
+  SaslPolicyResource.NO_DICTIONARY.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+  break;
+}
+case NO_PLAIN_TEXT:
+{
+SaslPolicyResource.NO_PLAIN_TEXT.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+break;
+}
+case PASS_CREDENTIALS:
+{
+SaslPolicyResource.PASS_CREDENTIALS.parseAndSetParameter(ParseUtils.readStringAttributeElement(reader,"value"),policy,reader);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}
