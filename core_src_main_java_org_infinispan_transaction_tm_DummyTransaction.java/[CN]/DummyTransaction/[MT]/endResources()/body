@@ -1,0 +1,18 @@
+{
+  for (  XAResource resource : getEnlistedResources()) {
+    if (trace) {
+      log.tracef("XAResource.end() for %s",resource);
+    }
+    try {
+      resource.end(xid,XAResource.TMSUCCESS);
+    }
+ catch (    XAException e) {
+      markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.",resource),e));
+      log.xaResourceEndFailed(resource,e);
+    }
+catch (    Throwable t) {
+      markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.end() for %s. Marked as rollback",resource),t));
+      log.xaResourceEndFailed(resource,t);
+    }
+  }
+}

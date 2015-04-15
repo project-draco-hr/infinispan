@@ -1,0 +1,23 @@
+{
+  if (trace) {
+    log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s",forceRollback,xid);
+  }
+  if (forceRollback) {
+    markRollbackOnly(new RollbackException("Force rollback invoked. (debug mode)"));
+  }
+  int notifyAfterStatus=0;
+  try {
+    if (status == Status.STATUS_MARKED_ROLLBACK) {
+      notifyAfterStatus=Status.STATUS_ROLLEDBACK;
+      rollbackResources();
+    }
+ else {
+      notifyAfterStatus=Status.STATUS_COMMITTED;
+      commitResources();
+    }
+  }
+  finally {
+    notifyAfterCompletion(notifyAfterStatus);
+    DummyBaseTransactionManager.setTransaction(null);
+  }
+}

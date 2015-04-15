@@ -1,16 +1,14 @@
 {
-  boolean retval=true;
-  if (syncs == null)   return true;
-  for (  Synchronization s : syncs) {
-    if (trace)     log.tracef("processing beforeCompletion for %s",s);
+  for (  Synchronization s : getEnlistedSynchronization()) {
+    if (trace) {
+      log.tracef("Synchronization.beforeCompletion() for %s",s);
+    }
     try {
       s.beforeCompletion();
     }
  catch (    Throwable t) {
-      retval=false;
-      status=Status.STATUS_MARKED_ROLLBACK;
+      markRollbackOnly(newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.",s),t));
       log.beforeCompletionFailed(s,t);
     }
   }
-  return retval;
 }

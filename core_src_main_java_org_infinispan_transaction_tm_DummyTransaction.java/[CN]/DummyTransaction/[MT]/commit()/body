@@ -1,13 +1,11 @@
 {
-  try {
-    runPrepare();
-    if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
-      runRollback();
-      throw new RollbackException("Exception rolled back, status is: " + status);
-    }
-    runCommitTx();
+  if (trace) {
+    log.tracef("Transaction.commit() invoked in transaction with Xid=%s",xid);
   }
-  finally {
-    DummyBaseTransactionManager.setTransaction(null);
+  checkDone("Cannot commit transaction.");
+  runPrepare();
+  runCommit(false);
+  if (firstRollbackException != null) {
+    throw firstRollbackException;
   }
 }

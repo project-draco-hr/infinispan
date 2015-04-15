@@ -1,9 +1,32 @@
 {
-  this.enlistedResources.add(xaRes);
+  if (trace) {
+    log.tracef("Transaction.enlistResource(%s) invoked in transaction with Xid=%s",resource,xid);
+  }
+  checkStatusBeforeRegister("resource");
+  for (  XAResource otherResource : resources) {
+    try {
+      if (otherResource.isSameRM(resource)) {
+        log.debug("Ignoring resource. It is already there.");
+        return true;
+      }
+    }
+ catch (    XAException e) {
+    }
+  }
+  resources.add(resource);
   try {
-    xaRes.start(xid,0);
+    if (trace) {
+      log.tracef("XaResource.start() invoked in transaction with Xid=%s",xid);
+    }
+    resource.start(xid,XAResource.TMNOFLAGS);
   }
  catch (  XAException e) {
+    if (isRollbackCode(e)) {
+      RollbackException exception=newRollbackException(format("Resource %s rolled back the transaction while XaResource.start()",resource),e);
+      markRollbackOnly(exception);
+      log.errorEnlistingResource(e);
+      throw exception;
+    }
     log.errorEnlistingResource(e);
     throw new SystemException(e.getMessage());
   }

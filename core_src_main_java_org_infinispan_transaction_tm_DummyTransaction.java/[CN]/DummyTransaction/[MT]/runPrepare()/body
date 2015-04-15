@@ -1,30 +1,32 @@
 {
-  boolean successfulInit=notifyBeforeCompletion();
-  if (successfulInit) {
-    status=Status.STATUS_PREPARING;
+  if (trace) {
+    log.tracef("runPrepare() invoked in transaction with Xid=%s",xid);
   }
- else {
-    status=Status.STATUS_ROLLING_BACK;
+  notifyBeforeCompletion();
+  endResources();
+  if (status == Status.STATUS_MARKED_ROLLBACK) {
+    return false;
   }
-  DummyTransaction transaction=tm_.getTransaction();
-  Collection<XAResource> resources=transaction.getEnlistedResources();
-  for (  XAResource res : resources) {
+  status=Status.STATUS_PREPARING;
+  for (  XAResource res : getEnlistedResources()) {
     try {
-      int prepareStatus=res.prepare(xid);
-      transaction.setPrepareStatus(prepareStatus);
+      if (trace) {
+        log.tracef("XaResource.prepare() for %s",res);
+      }
+      res.prepare(xid);
     }
  catch (    XAException e) {
-      log.trace("The resource wants to rollback!",e);
-      status=Status.STATUS_ROLLING_BACK;
+      if (trace) {
+        log.trace("The resource wants to rollback!",e);
+      }
+      markRollbackOnly(newRollbackException(format("XaResource.prepare() for %s wants to rollback.",res),e));
       return false;
     }
 catch (    Throwable th) {
+      markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.",res),th));
       log.unexpectedErrorFromResourceManager(th);
-      throw new SystemException(th.getMessage());
+      return false;
     }
-  }
-  if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
-    return false;
   }
   status=Status.STATUS_PREPARED;
   return true;

@@ -1,0 +1,16 @@
+{
+  DummyTransactionManager transactionManager=DummyTransactionManager.getInstance();
+  transactionManager.begin();
+  for (  RegisterTransaction registerTransaction : registerTransactionCollection) {
+    registerTransaction.register(transactionManager);
+  }
+  try {
+    transactionManager.rollback();
+    AssertJUnit.fail("SystemException expected!");
+  }
+ catch (  SystemException e) {
+  }
+  assertEmpty();
+  assertNoTxInAllCaches();
+  assertNull(transactionManager.getTransaction());
+}

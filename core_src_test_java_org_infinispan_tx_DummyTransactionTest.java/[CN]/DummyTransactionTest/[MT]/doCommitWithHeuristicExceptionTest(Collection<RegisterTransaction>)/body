@@ -1,0 +1,16 @@
+{
+  DummyTransactionManager transactionManager=DummyTransactionManager.getInstance();
+  transactionManager.begin();
+  for (  RegisterTransaction registerTransaction : registerTransactionCollection) {
+    registerTransaction.register(transactionManager);
+  }
+  try {
+    transactionManager.commit();
+    AssertJUnit.fail("HeuristicMixedException expected!");
+  }
+ catch (  HeuristicMixedException e) {
+  }
+  assertData();
+  assertNoTxInAllCaches();
+  assertNull(transactionManager.getTransaction());
+}

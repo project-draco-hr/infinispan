@@ -1,13 +1,15 @@
 {
+  if (trace) {
+    log.tracef("Transaction.rollback() invoked in transaction with Xid=%s",xid);
+  }
+  checkDone("Cannot rollback transaction");
   try {
-    status=Status.STATUS_ROLLING_BACK;
-    runRollback();
-    status=Status.STATUS_ROLLEDBACK;
-    notifyAfterCompletion(Status.STATUS_ROLLEDBACK);
+    status=Status.STATUS_MARKED_ROLLBACK;
+    endResources();
+    runCommit(false);
   }
- catch (  Throwable t) {
-    log.errorRollingBack(t);
-    throw new IllegalStateException(t);
+ catch (  HeuristicMixedException|HeuristicRollbackException e) {
+    log.errorRollingBack(e);
+    throw new SystemException("Unable to rollback transaction");
   }
-  DummyBaseTransactionManager.setTransaction(null);
 }

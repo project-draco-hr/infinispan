@@ -1,0 +1,11 @@
+{
+  DummyTransactionManager transactionManager=DummyTransactionManager.getInstance();
+  transactionManager.begin();
+  cacheManager.<String,String>getCache(SYNC_CACHE_NAME).put(KEY,VALUE);
+  cacheManager.<String,String>getCache(XA_CACHE_NAME).put(KEY,VALUE);
+  transactionManager.getTransaction().enlistResource(new ReadOnlyXaResource());
+  transactionManager.commit();
+  assertData();
+  assertNoTxInAllCaches();
+  assertNull(transactionManager.getTransaction());
+}

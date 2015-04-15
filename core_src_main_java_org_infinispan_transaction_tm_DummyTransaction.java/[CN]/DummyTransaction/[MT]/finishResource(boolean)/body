@@ -1,0 +1,46 @@
+{
+  boolean ok=false;
+  boolean heuristic=false;
+  boolean error=false;
+  for (  XAResource res : getEnlistedResources()) {
+    try {
+      if (commit) {
+        if (trace) {
+          log.tracef("XaResource.commit() for %s",res);
+        }
+        res.commit(xid,false);
+      }
+ else {
+        if (trace) {
+          log.tracef("XaResource.rollback() for %s",res);
+        }
+        res.rollback(xid);
+      }
+      ok=true;
+    }
+ catch (    XAException e) {
+      log.errorCommittingTx(e);
+switch (e.errorCode) {
+case XAException.XA_HEURCOM:
+case XAException.XA_HEURRB:
+case XAException.XA_HEURMIX:
+        heuristic=true;
+      break;
+case XAException.XAER_NOTA:
+    ok=true;
+  break;
+default :
+error=true;
+break;
+}
+}
+}
+resources.clear();
+if (heuristic && !ok && !error) {
+throw new HeuristicRollbackException();
+}
+ else if (error || heuristic) {
+status=Status.STATUS_UNKNOWN;
+throw new HeuristicMixedException();
+}
+}
