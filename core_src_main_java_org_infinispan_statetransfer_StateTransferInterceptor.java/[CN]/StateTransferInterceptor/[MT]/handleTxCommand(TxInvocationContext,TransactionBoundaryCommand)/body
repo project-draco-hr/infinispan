@@ -1,4 +1,35 @@
 {
   Address address=ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
-  return handleTopologyAffectedCommand(ctx,command,address,true);
+  if (trace)   log.tracef("handleTxCommand for command %s, origin %s",command,address);
+  if (isLocalOnly(ctx,command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  updateTopologyId(command);
+  int retryTopologyId=-1;
+  Object localResult=null;
+  try {
+    localResult=invokeNextInterceptor(ctx,command);
+  }
+ catch (  OutdatedTopologyException e) {
+    retryTopologyId=command.getTopologyId() + 1;
+  }
+  if (currentTopologyId() > command.getTopologyId()) {
+    retryTopologyId=currentTopologyId();
+  }
+  boolean async=isTxCommandAsync(command);
+  if (async) {
+    stateTransferManager.forwardCommandIfNeeded(command,getAffectedKeys(ctx,command),address,false);
+  }
+ else   if (retryTopologyId > 0) {
+    if (ctx.isOriginLocal()) {
+      command.setTopologyId(retryTopologyId);
+      waitForTransactionData(retryTopologyId);
+      log.tracef("Retrying command %s for topology %d",command,retryTopologyId);
+      handleTxCommand(ctx,command);
+    }
+ else {
+      return UnsureResponse.INSTANCE;
+    }
+  }
+  return localResult;
 }

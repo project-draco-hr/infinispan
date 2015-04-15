@@ -1,9 +1,9 @@
 {
   final StateSequencer sequencer=new StateSequencer();
-  sequencer.logicalThread("st","st:block_get_transactions","st:resume_get_transactions","st:block_ch_update","st:resume_ch_update");
+  sequencer.logicalThread("st","st:block_get_transactions","st:resume_get_transactions","st:block_ch_update_on_0","st:block_ch_update_on_1","st:resume_ch_update_on_0","st:resume_ch_update_on_1");
   sequencer.logicalThread("tx","tx:before_lock","tx:block_remote_lock","tx:resume_remote_lock","tx:after_commit");
   sequencer.order("st:block_get_transactions","tx:before_lock","tx:block_remote_lock","st:resume_get_transactions");
-  sequencer.order("st:block_ch_update","tx:resume_remote_lock","tx:after_commit","st:resume_ch_update");
+  sequencer.order("st:block_ch_update_on_1","tx:resume_remote_lock","tx:after_commit","st:resume_ch_update_on_0");
   ConfigurationBuilder cfg=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
   cfg.clustering().cacheMode(cacheMode).stateTransfer().awaitInitialTransfer(false).transaction().lockingMode(LockingMode.PESSIMISTIC);
   manager(0).defineConfiguration(CACHE_NAME,cfg.build());
@@ -15,7 +15,8 @@
   int rebalanceTopologyId=initialTopologyId + 1;
   final int finalTopologyId=rebalanceTopologyId + 1;
   advanceOnComponentMethod(sequencer,cache0,StateProvider.class,matchMethodCall("getTransactionsForSegments").build()).before("st:block_get_transactions","st:resume_get_transactions");
-  advanceOnGlobalComponentMethod(sequencer,manager(0),LocalTopologyManager.class,matchMethodCall("handleTopologyUpdate").withMatcher(1,new CacheTopologyMatcher(finalTopologyId)).build()).before("st:block_ch_update","st:resume_ch_update");
+  advanceOnGlobalComponentMethod(sequencer,manager(0),LocalTopologyManager.class,matchMethodCall("handleTopologyUpdate").withMatcher(1,new CacheTopologyMatcher(finalTopologyId)).build()).before("st:block_ch_update_on_0","st:resume_ch_update_on_0");
+  advanceOnGlobalComponentMethod(sequencer,manager(1),LocalTopologyManager.class,matchMethodCall("handleTopologyUpdate").withMatcher(1,new CacheTopologyMatcher(finalTopologyId)).build()).before("st:block_ch_update_on_1","st:resume_ch_update_on_1");
   AdvancedCache<Object,Object> cache1=advancedCache(1,CACHE_NAME);
   advanceOnInboundRpc(sequencer,cache(1,CACHE_NAME),matchCommand(LockControlCommand.class).withCache(CACHE_NAME).build()).before("tx:block_remote_lock","tx:resume_remote_lock");
   sequencer.advance("tx:before_lock");

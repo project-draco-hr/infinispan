@@ -2,7 +2,10 @@
   if (shouldInvokeRemoteTxCommand(ctx)) {
     boolean syncRollback=cacheConfiguration.transaction().syncRollbackPhase();
     ResponseMode responseMode=syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
-    rpcManager.invokeRemotely(getCommitNodes(ctx),command,rpcManager.getRpcOptionsBuilder(responseMode,DeliverOrder.NONE).build());
+    RpcOptions rpcOptions=rpcManager.getRpcOptionsBuilder(responseMode,DeliverOrder.NONE).build();
+    Collection<Address> recipients=getCommitNodes(ctx);
+    Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,command,rpcOptions);
+    checkTxCommandResponses(responseMap);
   }
   return invokeNextInterceptor(ctx,command);
 }
