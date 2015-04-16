@@ -1,0 +1,26 @@
+{
+  Map<String,String> dataIn=new HashMap<String,String>();
+  dataIn.put("aKey","aValue");
+  dataIn.put("bKey","bValue");
+  final long startTime=System.currentTimeMillis();
+  final long lifespan=10000;
+  remoteCache.putAll(dataIn,lifespan,TimeUnit.MILLISECONDS);
+  Map<Object,Object> dataOut=new HashMap<Object,Object>();
+  while (true) {
+    dataOut=remoteCache.getAll(dataIn.keySet());
+    if (System.currentTimeMillis() >= startTime + lifespan)     break;
+    assertEquals(dataOut.size(),dataIn.size());
+    for (    Entry<Object,Object> outEntry : dataOut.entrySet()) {
+      assertEquals(dataIn.get(outEntry.getKey()),outEntry.getValue());
+    }
+    Thread.sleep(100);
+  }
+  int size=dataOut.size();
+  while (System.currentTimeMillis() < startTime + lifespan + 30000) {
+    dataOut=remoteCache.getAll(dataIn.keySet());
+    if ((size=dataOut.size()) == 0) {
+      break;
+    }
+  }
+  assertEquals("There shouldn't be any values left!",0,size);
+}

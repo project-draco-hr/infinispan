@@ -1,5 +1,13 @@
 {
   InvocationContext ctx=getInvocationContextForRead(explicitClassLoader,keys.size());
   GetAllCommand command=commandsFactory.buildGetAllCommand(keys,explicitFlags,false);
-  return (Map<K,V>)invoker.invoke(ctx,command);
+  Map<K,V> map=(Map<K,V>)invoker.invoke(ctx,command);
+  Iterator<Map.Entry<K,V>> entryIterator=map.entrySet().iterator();
+  while (entryIterator.hasNext()) {
+    Map.Entry<K,V> entry=entryIterator.next();
+    if (entry.getValue() == null) {
+      entryIterator.remove();
+    }
+  }
+  return map;
 }

@@ -1,0 +1,15 @@
+{
+  HeaderParams params=writeHeader(transport,GET_ALL_REQUEST);
+  transport.writeVInt(keys.size());
+  for (  byte[] key : keys) {
+    transport.writeArray(key);
+  }
+  transport.flush();
+  readHeaderAndValidate(transport,params);
+  int size=transport.readVInt();
+  Map<byte[],byte[]> result=new HashMap<byte[],byte[]>(size);
+  for (int i=0; i < size; ++i) {
+    result.put(transport.readArray(),transport.readArray());
+  }
+  return result;
+}
