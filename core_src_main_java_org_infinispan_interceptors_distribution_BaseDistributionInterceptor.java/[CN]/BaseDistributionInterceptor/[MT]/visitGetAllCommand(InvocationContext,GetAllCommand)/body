@@ -16,7 +16,7 @@
     Set<Object> requestedKeys=new HashSet<>();
     for (    Object key : command.getKeys()) {
       CacheEntry entry=ctx.lookupEntry(key);
-      if (entry == null || entry.isNull()) {
+      if (entry == null) {
         if (!isValueAvailableLocally(ch,key)) {
           requestedKeys.add(key);
         }
@@ -24,7 +24,7 @@
           if (trace) {
             log.tracef("Not doing a remote get for missing key %s since entry is " + "mapped to current node (%s). Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
           }
-          wrapInternalCacheEntry(null,ctx,key,true,command);
+          entryFactory.wrapEntryForPut(ctx,key,null,false,command,false);
         }
       }
     }
@@ -39,7 +39,7 @@
           missingRemoteValues=true;
         }
  else {
-          wrapInternalCacheEntry(justRetrieved.get(key),ctx,key,true,command);
+          entryFactory.wrapEntryForPut(ctx,key,justRetrieved.get(key),false,command,false);
         }
       }
     }
@@ -49,21 +49,21 @@
     return invokeNextInterceptor(ctx,command);
   }
  else {
-    Map<Object,Object> values=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
     int currentTopologyId=stateTransferManager.getCacheTopology().getTopologyId();
     boolean topologyChanged=currentTopologyId != commandTopologyId && commandTopologyId != -1;
-    if (topologyChanged) {
-      if (trace) {
-        log.tracef("Command topology id is %d, after topology id is %d",commandTopologyId,currentTopologyId);
-      }
-      Iterator<Entry<Object,Object>> valueIterator=values.entrySet().iterator();
-      while (valueIterator.hasNext()) {
-        Entry<Object,Object> entry=valueIterator.next();
-        if (entry.getValue() == null) {
-          valueIterator.remove();
+    ConsistentHash ch=command.getConsistentHash();
+    for (    Object key : command.getKeys()) {
+      CacheEntry entry=ctx.lookupEntry(key);
+      if (entry == null || entry.isNull()) {
+        if (isValueAvailableLocally(ch,key) && !topologyChanged) {
+          if (trace) {
+            log.tracef("Not doing a remote get for missing key %s since entry is " + "mapped to current node (%s). Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
+          }
+          entryFactory.wrapEntryForPut(ctx,key,null,false,command,false);
         }
       }
     }
+    Map<Object,Object> values=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
     return values;
   }
 }
