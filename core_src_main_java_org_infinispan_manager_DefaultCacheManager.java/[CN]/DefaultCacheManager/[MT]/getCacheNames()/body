@@ -2,7 +2,8 @@
   Set<String> names=new HashSet<String>(configurationOverrides.keySet());
   names.addAll(Immutables.immutableSetConvert(caches.keySet()));
   names.remove(DEFAULT_CACHE_NAME);
-  names.remove(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
+  InternalCacheRegistry internalCacheRegistry=globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+  internalCacheRegistry.filterInternalCaches(names);
   if (names.isEmpty())   return InfinispanCollections.emptySet();
  else   return Immutables.immutableSetWrap(names);
 }
