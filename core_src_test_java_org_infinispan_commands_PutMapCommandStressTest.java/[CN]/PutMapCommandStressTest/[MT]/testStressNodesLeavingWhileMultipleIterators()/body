@@ -42,6 +42,39 @@
 );
     }
   }
+  futures[futures.length - 1]=fork(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      TestResourceTracker.backgroundTestStarted(PutMapCommandStressTest.this);
+      try {
+        Cache<?,?> cacheToKill=cache(CACHE_COUNT - 1);
+        while (!complete.get()) {
+          Thread.sleep(1000);
+          if (cacheManagers.remove(cacheToKill.getCacheManager())) {
+            log.trace("Killing cache to force rehash");
+            cacheToKill.getCacheManager().stop();
+            List<Cache<Object,Object>> caches=caches(CACHE_NAME);
+            if (caches.size() > 0) {
+              TestingUtil.blockUntilViewsReceived(60000,false,caches);
+              TestingUtil.waitForRehashToComplete(caches);
+            }
+          }
+ else {
+            throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() + " wasn't found for some reason!");
+          }
+          log.trace("Adding new cache again to force rehash");
+          cacheToKill=createClusteredCaches(1,CACHE_NAME,builderUsed).get(0);
+          log.trace("Added new cache again to force rehash");
+        }
+        return null;
+      }
+ catch (      Exception e) {
+        complete.set(true);
+        exchanger.exchange(e);
+        throw e;
+      }
+    }
+  }
+);
   try {
     Throwable e=exchanger.exchange(null,5,TimeUnit.MINUTES);
     fail("Found an throwable in at least 1 thread" + e);
