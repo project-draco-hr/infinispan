@@ -1,0 +1,30 @@
+{
+  Address origin=ctx.getOrigin();
+  if (trace)   log.tracef("handleTxWriteCommand for command %s, origin %s",command,origin);
+  if (isLocalOnly(ctx,command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  updateTopologyId(command);
+  int retryTopologyId=-1;
+  Object localResult=null;
+  try {
+    localResult=invokeNextInterceptor(ctx,command);
+  }
+ catch (  OutdatedTopologyException e) {
+    retryTopologyId=Math.max(currentTopologyId(),command.getTopologyId() + 1);
+  }
+  if (ctx.isOriginLocal()) {
+    if (retryTopologyId > 0) {
+      command.setTopologyId(retryTopologyId);
+      waitForTransactionData(retryTopologyId);
+      log.tracef("Retrying command %s for topology %d",command,retryTopologyId);
+      localResult=handleTxWriteCommand(ctx,command);
+    }
+  }
+ else {
+    if (currentTopologyId() > command.getTopologyId()) {
+      return UnsureResponse.INSTANCE;
+    }
+  }
+  return localResult;
+}

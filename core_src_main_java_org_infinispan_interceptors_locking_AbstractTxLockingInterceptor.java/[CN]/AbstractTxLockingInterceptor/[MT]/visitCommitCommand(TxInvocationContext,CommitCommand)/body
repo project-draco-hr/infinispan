@@ -1,8 +1,13 @@
 {
+  boolean releaseLocks=releaseLockOnTxCompletion(ctx);
   try {
     return super.visitCommitCommand(ctx,command);
   }
-  finally {
-    if (releaseLockOnTxCompletion(ctx))     lockManager.unlockAll(ctx);
+ catch (  OutdatedTopologyException e) {
+    releaseLocks=false;
+    throw e;
+  }
+ finally {
+    if (releaseLocks)     lockManager.unlockAll(ctx);
   }
 }

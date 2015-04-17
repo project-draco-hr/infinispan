@@ -3,8 +3,9 @@
   markGtxAsRemote();
   RemoteTransaction transaction=getRemoteTransaction();
   if (transaction == null) {
-    if (trace)     log.tracef("Did not find a RemoteTransaction for %s",globalTx);
-    return invalidRemoteTxReturnValue();
+    boolean alreadyCommitted=txTable.isTransactionCompletedSuccessfully(globalTx);
+    if (trace)     log.tracef("Did not find a RemoteTransaction for %s, completed successfully? %s",globalTx,alreadyCommitted);
+    return invalidRemoteTxReturnValue(alreadyCommitted);
   }
   visitRemoteTransaction(transaction);
   RemoteTxInvocationContext ctxt=icf.createRemoteTxInvocationContext(transaction,getOrigin());

@@ -1,0 +1,19 @@
+{
+  for (  Map.Entry<Address,Response> e : responseMap.entrySet()) {
+    Address recipient=e.getKey();
+    Response response=e.getValue();
+    if (response instanceof CacheNotFoundResponse) {
+      if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId() && !rpcManager.getMembers().contains(recipient)) {
+        log.tracef("Ignoring response from node not targeted %s",recipient);
+      }
+ else {
+        log.tracef("Cache not running on node %s, or the node is missing",recipient);
+        throw new OutdatedTopologyException("Cache not running on node " + recipient);
+      }
+    }
+ else     if (response instanceof UnsureResponse) {
+      log.tracef("Node %s has a newer topology id",recipient);
+      throw new OutdatedTopologyException("Cache not running on node " + recipient);
+    }
+  }
+}

@@ -11,7 +11,10 @@
   try {
     rv=invokeNextInterceptor(ctx,command);
   }
- catch (  Throwable throwable) {
+ catch (  OutdatedTopologyException e) {
+    throw e;
+  }
+catch (  Throwable throwable) {
     if (ctx.isOriginLocal() && ctx.isInTxScope() && !command.hasFlag(Flag.FAIL_SILENTLY)) {
       TxInvocationContext txCtx=(TxInvocationContext)ctx;
       txCtx.getTransaction().setRollbackOnly();

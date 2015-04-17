@@ -1,14 +1,14 @@
 {
   try {
     RpcOptions rpcOptions;
-    if (sync && command.isOnePhaseCommit()) {
+    if (sync) {
       rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,DeliverOrder.NONE).build();
     }
  else {
-      rpcOptions=rpcManager.getDefaultRpcOptions(sync);
+      rpcOptions=rpcManager.getDefaultRpcOptions(false);
     }
     Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,command,rpcOptions);
-    checkTxCommandResponses(responseMap);
+    checkTxCommandResponses(responseMap,command);
   }
   finally {
     transactionRemotelyPrepared(ctx);

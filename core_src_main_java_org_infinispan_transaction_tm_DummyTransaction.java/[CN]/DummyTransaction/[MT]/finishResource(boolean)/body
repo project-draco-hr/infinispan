@@ -2,6 +2,7 @@
   boolean ok=false;
   boolean heuristic=false;
   boolean error=false;
+  Exception cause=null;
   for (  XAResource res : getEnlistedResources()) {
     try {
       if (commit) {
@@ -19,6 +20,7 @@
       ok=true;
     }
  catch (    XAException e) {
+      cause=e;
       log.errorCommittingTx(e);
 switch (e.errorCode) {
 case XAException.XA_HEURCOM:
@@ -37,10 +39,14 @@ break;
 }
 resources.clear();
 if (heuristic && !ok && !error) {
-throw new HeuristicRollbackException();
+HeuristicRollbackException exception=new HeuristicRollbackException();
+exception.initCause(cause);
+throw exception;
 }
  else if (error || heuristic) {
 status=Status.STATUS_UNKNOWN;
-throw new HeuristicMixedException();
+HeuristicMixedException exception=new HeuristicMixedException();
+exception.initCause(cause);
+throw exception;
 }
 }

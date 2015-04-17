@@ -1,10 +1,10 @@
 {
-  EmbeddedCacheManager cm1=addClusterEnabledCacheManager(buildConfig(false));
+  EmbeddedCacheManager cm1=addClusterEnabledCacheManager(buildConfig(null,PutKeyValueCommand.class,true));
   final Cache<Object,Object> c1=cm1.getCache();
   DelayInterceptor di1=findInterceptor(c1,DelayInterceptor.class);
   int initialTopologyId=extractComponent(c1,StateTransferManager.class).getCacheTopology().getTopologyId();
-  EmbeddedCacheManager cm2=addClusterEnabledCacheManager(buildConfig(false));
-  Cache<Object,Object> c2=cm2.getCache();
+  EmbeddedCacheManager cm2=addClusterEnabledCacheManager(buildConfig(null,PutKeyValueCommand.class,false));
+  final Cache<Object,Object> c2=cm2.getCache();
   DelayInterceptor di2=findInterceptor(c2,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 2,c1,c2);
   Future<Object> f=fork(new Callable<Object>(){
@@ -16,7 +16,7 @@
   }
 );
   di2.waitUntilBlocked(1);
-  EmbeddedCacheManager cm3=addClusterEnabledCacheManager(buildConfig(false));
+  EmbeddedCacheManager cm3=addClusterEnabledCacheManager(buildConfig(null,PutKeyValueCommand.class,false));
   Cache<Object,Object> c3=cm3.getCache();
   DelayInterceptor di3=findInterceptor(c3,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 4,c1,c2,c3);
@@ -25,7 +25,7 @@
   di2.waitUntilBlocked(2);
   di3.waitUntilBlocked(1);
   di2.unblock(2);
-  EmbeddedCacheManager cm4=addClusterEnabledCacheManager(buildConfig(false));
+  EmbeddedCacheManager cm4=addClusterEnabledCacheManager(buildConfig(null,PutKeyValueCommand.class,false));
   Cache<Object,Object> c4=cm4.getCache();
   DelayInterceptor di4=findInterceptor(c4,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 6,c1,c2,c3,c4);

@@ -1,9 +1,10 @@
 {
-  EmbeddedCacheManager cm1=addClusterEnabledCacheManager(buildConfig(true,onePhase));
+  Class<?> commandToBlock=onePhase ? PrepareCommand.class : CommitCommand.class;
+  EmbeddedCacheManager cm1=addClusterEnabledCacheManager(buildConfig(true,onePhase,commandToBlock));
   final Cache<Object,Object> c1=cm1.getCache();
   DelayInterceptor di1=findInterceptor(c1,DelayInterceptor.class);
   int initialTopologyId=extractComponent(c1,StateTransferManager.class).getCacheTopology().getTopologyId();
-  EmbeddedCacheManager cm2=addClusterEnabledCacheManager(buildConfig(true,onePhase));
+  EmbeddedCacheManager cm2=addClusterEnabledCacheManager(buildConfig(true,onePhase,commandToBlock));
   Cache c2=cm2.getCache();
   DelayInterceptor di2=findInterceptor(c2,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 2,c1,c2);
@@ -15,16 +16,16 @@
     }
   }
 );
-  di1.waitToBlock(1);
-  di2.waitToBlock(1);
-  EmbeddedCacheManager cm3=addClusterEnabledCacheManager(buildConfig(true,onePhase));
+  di1.waitUntilBlocked(1);
+  di2.waitUntilBlocked(1);
+  EmbeddedCacheManager cm3=addClusterEnabledCacheManager(buildConfig(true,onePhase,commandToBlock));
   Cache c3=cm3.getCache();
   DelayInterceptor di3=findInterceptor(c3,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 4,c1,c2,c3);
   log.tracef("Forwarding the prepare command from %s",c2);
   di2.unblock(1);
-  di3.waitToBlock(1);
-  EmbeddedCacheManager cm4=addClusterEnabledCacheManager(buildConfig(true,onePhase));
+  di3.waitUntilBlocked(1);
+  EmbeddedCacheManager cm4=addClusterEnabledCacheManager(buildConfig(true,onePhase,commandToBlock));
   Cache c4=cm4.getCache();
   DelayInterceptor di4=findInterceptor(c4,DelayInterceptor.class);
   waitForStateTransfer(initialTopologyId + 6,c1,c2,c3,c4);

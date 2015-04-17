@@ -1,0 +1,13 @@
+{
+  ConfigurationBuilder configurationBuilder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,lockingMode != null);
+  configurationBuilder.transaction().lockingMode(lockingMode);
+  configurationBuilder.clustering().sync().replTimeout(15000);
+  configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+  if (commandToBlock == LockControlCommand.class && !isOriginator) {
+    configurationBuilder.customInterceptors().addInterceptor().before(PessimisticLockingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
+  }
+ else {
+    configurationBuilder.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
+  }
+  return configurationBuilder;
+}
