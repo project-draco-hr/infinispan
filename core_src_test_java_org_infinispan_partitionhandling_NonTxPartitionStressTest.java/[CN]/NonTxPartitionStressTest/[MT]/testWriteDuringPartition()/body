@@ -20,6 +20,10 @@
           }
  catch (          AvailabilityException e) {
           }
+catch (          CacheException e) {
+            if (e.getCause() instanceof XAException && e.getCause().getCause() instanceof AvailabilityException) {
+            }
+          }
           count++;
           Thread.sleep(0);
         }
@@ -92,7 +96,7 @@
   }
   for (  String key : insertedKeys.keySet()) {
     for (int i=0; i < NUM_NODES; i++) {
-      assertEquals(insertedKeys.get(key),cache(i).get(key));
+      assertEquals("Failure for key " + key + " on "+ cache(i),insertedKeys.get(key),cache(i).get(key));
     }
   }
   long duration=TIME_SERVICE.timeDuration(startTime,TimeUnit.SECONDS);
