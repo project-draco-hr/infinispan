@@ -3,7 +3,7 @@ synchronized (this) {
     if (currentTopology == null) {
       createInitialCacheTopology();
     }
-    ConsistentHashFactory consistentHashFactory=getJoinInfo().getConsistentHashFactory();
+    ConsistentHashFactory<ConsistentHash> consistentHashFactory=getJoinInfo().getConsistentHashFactory();
     int topologyId=currentTopology.getTopologyId();
     int rebalanceId=currentTopology.getRebalanceId();
     ConsistentHash currentCH=currentTopology.getCurrentCH();
@@ -22,17 +22,26 @@ synchronized (this) {
       return;
     }
     List<Address> newCurrentMembers=pruneInvalidMembers(currentCH.getMembers());
-    if (newCurrentMembers.isEmpty()) {
-      createInitialCacheTopology();
-      return;
-    }
-    ConsistentHash newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,getCapacityFactors());
-    List<Address> actualMembers=newCurrentMembers;
+    ConsistentHash newCurrentCH;
+    List<Address> actualMembers;
     ConsistentHash newPendingCH=null;
-    if (pendingCH != null) {
-      List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());
-      newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,getCapacityFactors());
-      actualMembers=newPendingMembers;
+    if (newCurrentMembers.isEmpty()) {
+      log.tracef("All current members left, re-initializing status for cache %s",cacheName);
+      if (isRebalanceInProgress()) {
+        removeRebalanceConfirmationCollector();
+      }
+      newCurrentMembers=getExpectedMembers();
+      actualMembers=newCurrentMembers;
+      newCurrentCH=joinInfo.getConsistentHashFactory().create(joinInfo.getHashFunction(),joinInfo.getNumOwners(),joinInfo.getNumSegments(),newCurrentMembers,getCapacityFactors());
+    }
+ else {
+      newCurrentCH=consistentHashFactory.updateMembers(currentCH,newCurrentMembers,getCapacityFactors());
+      actualMembers=newCurrentMembers;
+      if (pendingCH != null) {
+        List<Address> newPendingMembers=pruneInvalidMembers(pendingCH.getMembers());
+        newPendingCH=consistentHashFactory.updateMembers(pendingCH,newPendingMembers,getCapacityFactors());
+        actualMembers=newPendingMembers;
+      }
     }
     CacheTopology newTopology=new CacheTopology(topologyId + 1,rebalanceId,newCurrentCH,newPendingCH,actualMembers);
     setCurrentTopology(newTopology);
