@@ -1,0 +1,11 @@
+{
+  ExpirationManagerImpl em=new ExpirationManagerImpl();
+  Configuration cfg=getCfg().expiration().wakeUpInterval(789L).build();
+  ScheduledExecutorService mockService=mock(ScheduledExecutorService.class);
+  em.initialize(mockService,"",cfg,null,null,null,null);
+  ScheduledFuture mockFuture=mock(ScheduledFuture.class);
+  when(mockService.scheduleWithFixedDelay(isA(ExpirationManagerImpl.ScheduledTask.class),eq(789l),eq(789l),eq(TimeUnit.MILLISECONDS))).thenReturn(mockFuture);
+  em.start();
+  assertEquals(mockFuture,em.expirationTask);
+  verify(mockService).scheduleWithFixedDelay(any(Runnable.class),anyLong(),anyLong(),any(TimeUnit.class));
+}
