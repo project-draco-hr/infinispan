@@ -1,0 +1,10 @@
+{
+  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+  metadataCache.put("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+  metadataCache.put("not_indexed.proto",NOT_INDEXED_PROTO_SCHEMA);
+  SerializationContext serCtx=ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+  MarshallerRegistration.registerMarshallers(serCtx);
+  serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto",NOT_INDEXED_PROTO_SCHEMA));
+  serCtx.registerMarshaller(new NotIndexedMarshaller());
+}

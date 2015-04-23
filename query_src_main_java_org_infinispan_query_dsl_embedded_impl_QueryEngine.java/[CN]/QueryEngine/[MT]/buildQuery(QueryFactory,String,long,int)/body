@@ -1,0 +1,18 @@
+{
+  if (searchManager != null) {
+    try {
+      return buildLuceneQuery(queryFactory,jpqlString,startOffset,maxResults,null);
+    }
+ catch (    ParsingException e) {
+      if (!e.getMessage().startsWith("HQL100002")) {
+        throw e;
+      }
+    }
+catch (    IllegalArgumentException e) {
+      if (!e.getMessage().startsWith("HQL100001")) {
+        throw e;
+      }
+    }
+  }
+  return new EmbeddedQuery(queryFactory,cache,makeFilter(cache,jpqlString,ReflectionMatcher.class),startOffset,maxResults);
+}

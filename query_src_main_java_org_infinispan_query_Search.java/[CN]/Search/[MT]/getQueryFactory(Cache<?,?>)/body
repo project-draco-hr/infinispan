@@ -4,9 +4,12 @@
   }
   AdvancedCache<?,?> advancedCache=cache.getAdvancedCache();
   ensureAccessPermissions(advancedCache);
-  Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(advancedCache);
-  if (cacheConfiguration.indexing().index().isEnabled()) {
-    return getSearchManager(advancedCache).unwrap(SearchManagerImplementor.class).getQueryFactory();
+  QueryEngine queryEngine;
+  if (SecurityActions.getCacheConfiguration(advancedCache).indexing().index().isEnabled()) {
+    queryEngine=getSearchManager(advancedCache).unwrap(QueryEngine.class);
   }
-  return new EmbeddedQueryFactory(advancedCache);
+ else {
+    queryEngine=new QueryEngine(advancedCache,null);
+  }
+  return new EmbeddedQueryFactory(queryEngine);
 }

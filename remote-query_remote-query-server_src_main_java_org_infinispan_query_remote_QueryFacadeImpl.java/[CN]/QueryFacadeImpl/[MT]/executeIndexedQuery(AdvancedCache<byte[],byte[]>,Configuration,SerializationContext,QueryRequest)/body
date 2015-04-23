@@ -8,15 +8,16 @@
     KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(request.getJpqlString(),LuceneQueryParsingResult.class);
     parsingResult=queryCache.get(queryCacheKey);
     if (parsingResult == null) {
-      parsingResult=parseQuery(cache,cacheConfiguration,serCtx,request.getJpqlString(),searchFactory);
+      parsingResult=parseQuery(cacheConfiguration,serCtx,request.getJpqlString(),searchFactory);
       queryCache.put(queryCacheKey,parsingResult);
     }
   }
  else {
-    parsingResult=parseQuery(cache,cacheConfiguration,serCtx,request.getJpqlString(),searchFactory);
+    parsingResult=parseQuery(cacheConfiguration,serCtx,request.getJpqlString(),searchFactory);
   }
   luceneQuery=parsingResult.getQuery();
-  if (!cacheConfiguration.compatibility().enabled()) {
+  boolean isCompatMode=cacheConfiguration.compatibility().enabled();
+  if (!isCompatMode) {
     QueryBuilder qb=searchFactory.buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
     luceneQuery=qb.bool().must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(parsingResult.getTargetEntityName()).createQuery()).must(luceneQuery).createQuery();
   }
@@ -36,22 +37,5 @@
     cacheQuery=cacheQuery.maxResults(request.getMaxResults());
   }
   List<?> list=cacheQuery.list();
-  List<WrappedMessage> results=new ArrayList<WrappedMessage>(projSize == 0 ? list.size() : list.size() * projSize);
-  for (  Object o : list) {
-    if (projSize == 0) {
-      results.add(new WrappedMessage(o));
-    }
- else {
-      Object[] row=(Object[])o;
-      for (int j=0; j < projSize; j++) {
-        results.add(new WrappedMessage(row[j]));
-      }
-    }
-  }
-  QueryResponse response=new QueryResponse();
-  response.setTotalResults(cacheQuery.getResultSize());
-  response.setNumResults(list.size());
-  response.setProjectionSize(projSize);
-  response.setResults(results);
-  return response;
+  return makeResponse(false,serCtx,list,projSize,cacheQuery.getResultSize(),list.size());
 }

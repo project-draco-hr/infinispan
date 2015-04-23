@@ -1,0 +1,23 @@
+{
+  List<WrappedMessage> results=new ArrayList<WrappedMessage>(projSize == 0 ? numResults : numResults * projSize);
+  for (  Object o : list) {
+    if (projSize == 0) {
+      if (isCompatMode) {
+        o=ProtobufUtil.toWrappedByteArray(serCtx,o);
+      }
+      results.add(new WrappedMessage(o));
+    }
+ else {
+      Object[] row=(Object[])o;
+      for (int j=0; j < projSize; j++) {
+        results.add(new WrappedMessage(row[j]));
+      }
+    }
+  }
+  QueryResponse response=new QueryResponse();
+  response.setTotalResults(totalResults);
+  response.setNumResults(numResults);
+  response.setProjectionSize(projSize);
+  response.setResults(results);
+  return response;
+}

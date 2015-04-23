@@ -3,17 +3,5 @@
   if (log.isTraceEnabled()) {
     log.tracef("JPQL string : %s",jpqlString);
   }
-  LuceneQueryParsingResult parsingResult;
-  if (queryCache != null) {
-    KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpqlString,LuceneQueryParsingResult.class);
-    parsingResult=queryCache.get(queryCacheKey);
-    if (parsingResult == null) {
-      parsingResult=parse(jpqlString);
-      queryCache.put(queryCacheKey,parsingResult);
-    }
-  }
- else {
-    parsingResult=parse(jpqlString);
-  }
-  return new EmbeddedLuceneQuery(queryFactory,jpqlString,searchManager,parsingResult,startOffset,maxResults);
+  return queryEngine.buildLuceneQuery(queryFactory,jpqlString,startOffset,maxResults,null);
 }

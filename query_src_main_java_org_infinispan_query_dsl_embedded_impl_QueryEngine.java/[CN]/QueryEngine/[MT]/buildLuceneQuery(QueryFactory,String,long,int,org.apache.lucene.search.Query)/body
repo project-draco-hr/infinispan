@@ -1,0 +1,39 @@
+{
+  if (searchManager == null) {
+    throw new IllegalStateException("Cannot run Lucene queries on a cache that does not have indexing enabled");
+  }
+  LuceneQueryParsingResult parsingResult;
+  if (queryCache != null) {
+    KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpqlString,LuceneQueryParsingResult.class);
+    parsingResult=queryCache.get(queryCacheKey);
+    if (parsingResult == null) {
+      parsingResult=transformJpaToLucene(jpqlString);
+      queryCache.put(queryCacheKey,parsingResult);
+    }
+  }
+ else {
+    parsingResult=transformJpaToLucene(jpqlString);
+  }
+  org.apache.lucene.search.Query luceneQuery=parsingResult.getQuery();
+  if (additionalLuceneQuery != null) {
+    BooleanQuery booleanQuery=new BooleanQuery();
+    booleanQuery.add(new BooleanClause(additionalLuceneQuery,BooleanClause.Occur.MUST));
+    booleanQuery.add(new BooleanClause(luceneQuery,BooleanClause.Occur.MUST));
+    luceneQuery=booleanQuery;
+  }
+  CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,parsingResult.getTargetEntity());
+  if (parsingResult.getSort() != null) {
+    cacheQuery=cacheQuery.sort(parsingResult.getSort());
+  }
+  if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
+    int projSize=parsingResult.getProjections().size();
+    cacheQuery=cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
+  }
+  if (startOffset >= 0) {
+    cacheQuery=cacheQuery.firstResult((int)startOffset);
+  }
+  if (maxResults >= 0) {
+    cacheQuery=cacheQuery.maxResults(maxResults);
+  }
+  return new EmbeddedLuceneQuery(queryFactory,jpqlString,cacheQuery);
+}

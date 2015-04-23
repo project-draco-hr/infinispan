@@ -5,7 +5,17 @@
     Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(cache);
     QueryResponse response;
     if (cacheConfiguration.indexing().index().isEnabled()) {
-      response=executeIndexedQuery(cache,cacheConfiguration,serCtx,request);
+      try {
+        response=executeIndexedQuery(cache,cacheConfiguration,serCtx,request);
+      }
+ catch (      IllegalArgumentException e) {
+        if (e.getMessage().contains("ISPN018002")) {
+          response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
+        }
+ else {
+          throw e;
+        }
+      }
     }
  else {
       response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
