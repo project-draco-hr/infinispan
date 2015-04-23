@@ -5,8 +5,8 @@
     if (!discardEnabled) {
       if (!discoveries.isEmpty()) {
 synchronized (discoveries) {
+          boolean traceEnabled=log.isTraceEnabled();
           for (          TEST_PING discovery : discoveries.values()) {
-            boolean traceEnabled=log.isTraceEnabled();
             if (discovery != this) {
               boolean remoteDiscardEnabled=isDiscardEnabled(discovery);
               if (!remoteDiscardEnabled && !discovery.stopped) {
@@ -36,6 +36,11 @@ synchronized (discoveries) {
   }
  else {
     log.debug("Discovery protocol already stopped, so don't look for members");
+  }
+  if (forceCoordSingleMember && pingDatas.size() == 1) {
+    PingData singlePingData=pingDatas.iterator().next();
+    if (!singlePingData.isCoord())     singlePingData.coord(true);
+    forceCoordSingleMember=false;
   }
   pingDatas.done();
 }
