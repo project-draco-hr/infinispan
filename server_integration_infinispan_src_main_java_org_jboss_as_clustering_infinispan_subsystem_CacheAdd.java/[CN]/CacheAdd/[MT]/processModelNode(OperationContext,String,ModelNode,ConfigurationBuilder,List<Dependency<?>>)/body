@@ -54,8 +54,16 @@
     final EvictionStrategy strategy=EvictionStrategy.valueOf(EvictionResource.EVICTION_STRATEGY.resolveModelAttribute(context,eviction).asString());
     builder.eviction().strategy(strategy);
     if (strategy.isEnabled()) {
-      final long maxEntries=EvictionResource.MAX_ENTRIES.resolveModelAttribute(context,eviction).asLong();
-      builder.eviction().maxEntries(maxEntries);
+      if (eviction.hasDefined(ModelKeys.MAX_ENTRIES)) {
+        final long maxEntries=EvictionResource.MAX_ENTRIES.resolveModelAttribute(context,eviction).asLong();
+        builder.eviction().maxEntries(maxEntries);
+      }
+ else {
+        final long size=EvictionResource.SIZE.resolveModelAttribute(context,eviction).asLong();
+        builder.eviction().size(size);
+      }
+      final EvictionType type=EvictionType.valueOf(EvictionResource.TYPE.resolveModelAttribute(context,eviction).asString());
+      builder.eviction().type(type);
     }
   }
   if (cache.hasDefined(ModelKeys.EXPIRATION) && cache.get(ModelKeys.EXPIRATION,ModelKeys.EXPIRATION_NAME).isDefined()) {

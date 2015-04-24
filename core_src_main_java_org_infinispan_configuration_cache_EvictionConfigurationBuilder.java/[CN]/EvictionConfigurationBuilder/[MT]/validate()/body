@@ -1,6 +1,6 @@
 {
   EvictionStrategy strategy=attributes.attribute(STRATEGY).get();
-  Long maxEntries=attributes.attribute(MAX_ENTRIES).get();
+  Long maxEntries=attributes.attribute(SIZE).get();
   if (!strategy.isEnabled() && getBuilder().persistence().passivation())   log.passivationWithoutEviction();
   if (strategy == EvictionStrategy.FIFO)   log.warnFifoStrategyIsDeprecated();
   if (strategy.isEnabled() && maxEntries <= 0)   throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
@@ -8,7 +8,16 @@
     strategy(EvictionStrategy.LIRS);
     log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s",maxEntries,strategy);
   }
+  if (strategy == EvictionStrategy.LIRS && attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
+    throw new CacheConfigurationException("Eviction cannot use memory based approximation with LIRS");
+  }
   if (maxEntries > EVICTION_MAX_SIZE) {
     throw log.evictionSizeTooLarge(maxEntries);
+  }
+  if (attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
+    String javaVM=SecurityActions.getSystemProperty("java.vm.name");
+    if (!javaVM.contains("HotSpot")) {
+      log.memoryApproximationUnsupportedVM(javaVM);
+    }
   }
 }

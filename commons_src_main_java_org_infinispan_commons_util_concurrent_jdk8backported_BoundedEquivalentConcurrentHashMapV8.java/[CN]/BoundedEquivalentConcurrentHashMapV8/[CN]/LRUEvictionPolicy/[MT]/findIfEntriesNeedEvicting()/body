@@ -18,8 +18,7 @@
   if (extra > 0) {
     evictedEntries=new ArrayList<>((int)extra & 0x7fffffff);
     long decCreate=0;
-    long decEvict=0;
-    for (long j=0; j < extra; ++j) {
+    while (decCreate < extra) {
       Node<K,V> node=deque.pollFirst();
       boolean removed=false;
       if (node != null) {
@@ -32,16 +31,17 @@ synchronized (lruNode) {
         }
       }
       if (removed) {
-        map.replaceNode(node.key,null,null,true);
-        evictedEntries.add(node);
-        decCreate--;
-        decEvict--;
+        V value=map.replaceNode(node.key,null,null,true);
+        if (value != null) {
+          evictedEntries.add(node);
+          decCreate+=sizeCalculator.calculateSize(node.key,value);
+        }
       }
  else {
-        decEvict--;
+        break;
       }
     }
-    if (decEvict != 0)     incrementSizeEviction(currentSize,decCreate,decEvict);
+    incrementSizeEviction(currentSize,-decCreate,-extra);
   }
  else {
     evictedEntries=InfinispanCollections.emptyList();

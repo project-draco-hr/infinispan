@@ -1,0 +1,26 @@
+{
+  log.debugf("Max memory: %d",MAX_MEMORY);
+  DataContainer dc=cache.getAdvancedCache().getDataContainer();
+  printMemoryUsage(dc.size());
+  Random random=new Random();
+  int matchCount=0;
+  int byteKeySize=10;
+  int byteValueSize=100;
+  long previousMemorySize=0;
+  for (int j=0; j < 200; ++j) {
+    while (matchCount < this.MATCH_COUNT) {
+      for (int i=0; i < 20000; ++i) {
+        byte[] keyBytes=new byte[byteKeySize];
+        byte[] valueBytes=new byte[byteValueSize];
+        random.nextBytes(keyBytes);
+        random.nextBytes(valueBytes);
+        cache.getAdvancedCache().put(keyBytes,valueBytes);
+      }
+      long memorySize=printMemoryUsage(dc.size());
+      if (memorySize == previousMemorySize) {
+        matchCount++;
+      }
+      previousMemorySize=memorySize;
+    }
+  }
+}

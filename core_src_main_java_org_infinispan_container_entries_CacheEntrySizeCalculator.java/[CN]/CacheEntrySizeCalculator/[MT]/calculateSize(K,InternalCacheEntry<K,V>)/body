@@ -1,0 +1,69 @@
+{
+  long objSize=calculator.calculateSize(key,ice.getValue());
+  long iceSize=0;
+  long metadataSize=0;
+  iceSize+=OBJECT_SIZE + POINTER_SIZE;
+  iceSize+=2 * POINTER_SIZE;
+  boolean mortalEntry;
+  boolean transientEntry;
+  boolean metadataAware;
+  if (ice instanceof MetadataImmortalCacheEntry) {
+    mortalEntry=false;
+    transientEntry=false;
+    metadataAware=true;
+  }
+ else   if (ice instanceof ImmortalCacheEntry) {
+    mortalEntry=false;
+    transientEntry=false;
+    metadataAware=false;
+  }
+ else   if (ice instanceof MortalCacheEntry) {
+    mortalEntry=true;
+    transientEntry=false;
+    metadataAware=false;
+  }
+ else   if (ice instanceof TransientCacheEntry) {
+    mortalEntry=false;
+    transientEntry=true;
+    metadataAware=false;
+  }
+ else   if (ice instanceof TransientMortalCacheEntry) {
+    mortalEntry=true;
+    transientEntry=true;
+    metadataAware=false;
+  }
+ else   if (ice instanceof MetadataMortalCacheEntry) {
+    mortalEntry=true;
+    transientEntry=false;
+    metadataAware=true;
+  }
+ else   if (ice instanceof MetadataTransientCacheEntry) {
+    mortalEntry=false;
+    transientEntry=true;
+    metadataAware=true;
+  }
+ else   if (ice instanceof MetadataTransientMortalCacheEntry) {
+    mortalEntry=true;
+    transientEntry=true;
+    metadataAware=true;
+  }
+ else {
+    mortalEntry=false;
+    transientEntry=false;
+    metadataAware=false;
+  }
+  if (metadataAware) {
+    iceSize+=POINTER_SIZE;
+    metadataSize+=OBJECT_SIZE + POINTER_SIZE;
+    Metadata metadata=ice.getMetadata();
+    if (metadata instanceof EmbeddedMetadata) {
+      metadataSize+=POINTER_SIZE;
+      metadataSize=roundUpToNearest8(metadataSize);
+      metadataSize+=OBJECT_SIZE + POINTER_SIZE + 8;
+      metadataSize=roundUpToNearest8(metadataSize);
+    }
+  }
+  iceSize+=mortalEntry ? 16 : 0;
+  iceSize+=transientEntry ? 16 : 0;
+  return objSize + roundUpToNearest8(iceSize) + metadataSize;
+}

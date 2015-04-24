@@ -13,12 +13,12 @@ case UNORDERED:
 case LRU:
 case FIFO:
 case LIRS:
-    long maxEntries=configuration.eviction().maxEntries();
-  if (maxEntries < 0) {
+    long thresholdSize=configuration.eviction().size();
+  if (thresholdSize < 0) {
     return (T)DefaultDataContainer.unBoundedDataContainer(level,keyEquivalence);
   }
 EvictionThreadPolicy policy=configuration.eviction().threadPolicy();
-return (T)DefaultDataContainer.boundedDataContainer(level,maxEntries,st,policy,keyEquivalence);
+return (T)DefaultDataContainer.boundedDataContainer(level,thresholdSize,st,policy,keyEquivalence,configuration.eviction().type());
 default :
 throw new CacheConfigurationException("Unknown eviction strategy " + configuration.eviction().strategy());
 }

@@ -1,0 +1,18 @@
+{
+  this.map=map;
+  this.maxSize=maxSize;
+  this.sizeCalculator=sizeCalculator;
+  this.countingMemory=countingMemory;
+  if (countingMemory) {
+    sun.misc.Unsafe unsafe=getUnsafe();
+    long evictionPolicySize=unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+    evictionPolicySize+=unsafe.ARRAY_OBJECT_INDEX_SCALE * 4;
+    evictionPolicySize+=8 + 1;
+    long mapSize=unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+    mapSize+=NODE_ARRAY_BASE_OFFSET * 2;
+    mapSize+=8 * 2 + 4 * 3;
+    mapSize+=unsafe.arrayBaseOffset(CounterCell[].class);
+    mapSize+=unsafe.ADDRESS_SIZE * 8;
+    incrementSizeEviction(currentSize,roundUpToNearest8(evictionPolicySize) + roundUpToNearest8(mapSize),0);
+  }
+}
