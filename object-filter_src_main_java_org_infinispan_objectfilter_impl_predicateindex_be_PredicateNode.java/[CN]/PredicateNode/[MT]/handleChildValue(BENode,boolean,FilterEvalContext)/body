@@ -1,2 +1,19 @@
 {
+  if (child != null) {
+    throw new IllegalArgumentException("Predicates have value but do not have children");
+  }
+  final int value=childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
+  if (isEvaluationComplete(evalContext)) {
+    if (predicate.isRepeated() && evalContext.treeCounters[startIndex] == value) {
+      return;
+    }
+    throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");
+  }
+  if (parent == null) {
+    evalContext.treeCounters[startIndex]=value;
+    suspendSubscription(evalContext);
+  }
+ else {
+    parent.handleChildValue(this,childValue,evalContext);
+  }
 }

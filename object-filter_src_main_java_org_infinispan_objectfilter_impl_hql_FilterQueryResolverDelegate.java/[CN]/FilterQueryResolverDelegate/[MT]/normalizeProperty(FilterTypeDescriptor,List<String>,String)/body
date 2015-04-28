@@ -2,10 +2,14 @@
   if (!type.hasProperty(propertyName)) {
     throw log.getNoSuchPropertyException(type.toString(),propertyName);
   }
+  List<String> newPath=new LinkedList<String>(path);
+  newPath.add(propertyName);
+  TypeDescriptor propType;
   if (type.hasEmbeddedProperty(propertyName)) {
-    List<String> newPath=new LinkedList<String>(path);
-    newPath.add(propertyName);
-    return new PathedPropertyReference(propertyName,new FilterEmbeddedEntityTypeDescriptor(type.getEntityType(),newPath,propertyHelper),false);
+    propType=new FilterEmbeddedEntityTypeDescriptor(type.getEntityType(),newPath,propertyHelper);
   }
-  return new PathedPropertyReference(propertyName,new FilterPropertyTypeDescriptor(),false);
+ else {
+    propType=new FilterPropertyTypeDescriptor();
+  }
+  return new PathedPropertyReference(propertyName,propType,false);
 }
