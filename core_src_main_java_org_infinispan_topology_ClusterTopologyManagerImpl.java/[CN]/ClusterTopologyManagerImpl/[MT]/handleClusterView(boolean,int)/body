@@ -28,17 +28,17 @@ catch (      Exception e) {
         log.failedToRecoverClusterState(e);
       }
     }
- else {
+synchronized (viewUpdateLock) {
+      viewId=newViewId;
+      viewUpdateLock.notifyAll();
+    }
+    if (!mustRecoverClusterStatus) {
       try {
         updateCacheMembers(transport.getMembers());
       }
  catch (      Exception e) {
         log.errorUpdatingMembersList(e);
       }
-    }
-synchronized (viewUpdateLock) {
-      viewId=newViewId;
-      viewUpdateLock.notifyAll();
     }
   }
 }

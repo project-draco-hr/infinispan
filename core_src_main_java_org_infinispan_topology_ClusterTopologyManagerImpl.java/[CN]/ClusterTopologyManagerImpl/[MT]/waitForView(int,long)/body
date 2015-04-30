@@ -2,8 +2,9 @@
   if (this.viewId < viewId) {
     log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s",viewId,this.viewId);
   }
+  long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
 synchronized (viewUpdateLock) {
-    while (this.viewId < viewId) {
+    while (this.viewId < viewId && !timeService.isTimeExpired(endTime)) {
       viewUpdateLock.wait(1000);
     }
   }

@@ -1,25 +1,15 @@
 {
+  viewHandlingCompletionService=new SemaphoreCompletionService<>(asyncTransportExecutor,1);
   isShuttingDown=false;
   isCoordinator=transport.isCoordinator();
   viewListener=new ClusterViewListener();
   cacheManagerNotifier.addListener(viewListener);
-  handleClusterView(false,transport.getViewId());
-  if (!isCoordinator) {
-    ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),transport.getViewId());
-    Address coordinator=transport.getCoordinator();
-    Map<Address,Response> responseMap=null;
-    try {
-      responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,getGlobalTimeout(),null,DeliverOrder.NONE,false);
-      Response response=responseMap.get(coordinator);
-      if (response instanceof SuccessfulResponse) {
-        isRebalancingEnabled=((Boolean)((SuccessfulResponse)response).getResponseValue());
-      }
- else {
-        log.errorReadingRebalancingStatus(transport.getCoordinator(),null);
-      }
-    }
- catch (    Exception e) {
-      log.errorReadingRebalancingStatus(transport.getCoordinator(),e);
+  viewHandlingCompletionService.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      handleClusterView(false,transport.getViewId());
+      return null;
     }
   }
+);
+  fetchRebalancingStatusFromCoordinator();
 }
