@@ -4,13 +4,13 @@
   remoteTransaction=modifications == null ? txFactory.newRemoteTransaction(globalTx,topologyId) : txFactory.newRemoteTransaction(modifications,globalTx,topologyId);
   RemoteTransaction existing=remoteTransactions.putIfAbsent(globalTx,remoteTransaction);
   if (existing != null) {
-    log.tracef("Remote transaction already registered: %s",existing);
+    if (trace)     log.tracef("Remote transaction already registered: %s",existing);
     return existing;
   }
  else {
-    log.tracef("Created and registered remote transaction %s",remoteTransaction);
+    if (trace)     log.tracef("Created and registered remote transaction %s",remoteTransaction);
     if (remoteTransaction.getTopologyId() < minTxTopologyId) {
-      log.tracef("Changing minimum topology ID from %d to %d",minTxTopologyId,remoteTransaction.getTopologyId());
+      if (trace)       log.tracef("Changing minimum topology ID from %d to %d",minTxTopologyId,remoteTransaction.getTopologyId());
       minTxTopologyId=remoteTransaction.getTopologyId();
     }
     return remoteTransaction;

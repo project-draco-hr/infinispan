@@ -1,0 +1,17 @@
+{
+  CompletedTransactionInfo completedTx=completedTransactions.get(gtx);
+  if (completedTx != null) {
+    return completedTx.successful ? CompletedTransactionStatus.COMMITTED : CompletedTransactionStatus.ABORTED;
+  }
+  if (gtx.getId() > globalMaxPrunedTxId)   return CompletedTransactionStatus.NOT_COMPLETED;
+  Long nodeMaxPrunedTxId=nodeMaxPrunedTxIds.get(gtx.getAddress());
+  if (nodeMaxPrunedTxId == null) {
+    return CompletedTransactionStatus.NOT_COMPLETED;
+  }
+ else   if (gtx.getId() > nodeMaxPrunedTxId) {
+    return CompletedTransactionStatus.NOT_COMPLETED;
+  }
+ else {
+    return CompletedTransactionStatus.EXPIRED;
+  }
+}

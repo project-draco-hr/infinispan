@@ -1,7 +1,7 @@
 {
   if (completedTransactions.isEmpty())   return;
   try {
-    log.tracef("About to cleanup completed transaction. Initial size is %d",completedTransactions.size());
+    if (trace)     log.tracef("About to cleanup completed transaction. Initial size is %d",completedTransactions.size());
     long beginning=timeService.time();
     long minCompleteTimestamp=timeService.time() - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
     int removedEntries=0;
@@ -30,7 +30,8 @@
       nodeMaxPrunedTxIds.remove(e);
     }
     long duration=timeService.timeDuration(beginning,TimeUnit.MILLISECONDS);
-    log.tracef("Finished cleaning up completed transactions. %d transactions were removed, total duration was %d millis, " + "current number of completed transactions is %d",removedEntries,duration,completedTransactions.size());
+    if (trace)     log.tracef("Finished cleaning up completed transactions in %d millis, %d transactions were removed, " + "current number of completed transactions is %d",removedEntries,duration,completedTransactions.size());
+    if (trace)     log.tracef("Last pruned transaction ids were updated: %d, %s",globalMaxPrunedTxId,nodeMaxPrunedTxIds);
   }
  catch (  Exception e) {
     log.errorf(e,"Failed to cleanup completed transactions: %s",e.getMessage());
