@@ -1,19 +1,19 @@
 {
   final FilterCustomEventLogListener eventListener=new FilterCustomEventLogListener();
-  withClientListener(eventListener,new Object[]{1},null,new RemoteCacheManagerCallable(remoteCacheManager){
+  withClientListener(eventListener,new Object[]{1},null,new RemoteCacheManagerCallable(client(0)){
     @Override public void call(){
-      RemoteCache<Integer,String> cache=rcm.getCache();
-      cache.put(1,"one");
+      RemoteCache<Integer,String> c3=client(2).getCache();
+      c3.put(1,"one");
       eventListener.expectCreatedEvent(new CustomEvent(1,null,1));
-      cache.put(1,"newone");
+      c3.put(1,"newone");
       eventListener.expectModifiedEvent(new CustomEvent(1,null,2));
-      cache.put(2,"two");
+      c3.put(2,"two");
       eventListener.expectCreatedEvent(new CustomEvent(2,"two",3));
-      cache.put(2,"dos");
+      c3.put(2,"dos");
       eventListener.expectModifiedEvent(new CustomEvent(2,"dos",4));
-      cache.remove(1);
+      c3.remove(1);
       eventListener.expectRemovedEvent(new CustomEvent(1,null,5));
-      cache.remove(2);
+      c3.remove(2);
       eventListener.expectRemovedEvent(new CustomEvent(2,null,6));
     }
   }
