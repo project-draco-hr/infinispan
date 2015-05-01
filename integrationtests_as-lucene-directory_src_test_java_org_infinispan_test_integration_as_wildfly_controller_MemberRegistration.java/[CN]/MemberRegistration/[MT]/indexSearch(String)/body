@@ -1,0 +1,17 @@
+{
+  ArrayList<Document> result=new ArrayList<Document>();
+  SearchFactory searchFactory=Search.getFullTextEntityManager(em).getSearchFactory();
+  IndexReader reader=searchFactory.getIndexReaderAccessor().open(Member.class);
+  try {
+    for (int i=0; i < reader.maxDoc(); i++) {
+      Document member=reader.document(i);
+      if (member != null && member.get("name").contains(name)) {
+        result.add(member);
+      }
+    }
+  }
+  finally {
+    searchFactory.getIndexReaderAccessor().close(reader);
+  }
+  return result;
+}
