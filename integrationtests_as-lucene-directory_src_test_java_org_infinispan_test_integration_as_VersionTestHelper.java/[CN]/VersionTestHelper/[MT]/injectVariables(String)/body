@@ -1,0 +1,25 @@
+{
+  Properties projectCompilationProperties=new Properties();
+  final InputStream resourceAsStream=VersionTestHelper.class.getClassLoader().getResourceAsStream("module-versions.properties");
+  try {
+    projectCompilationProperties.load(resourceAsStream);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    try {
+      resourceAsStream.close();
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  Set<Entry<Object,Object>> entrySet=projectCompilationProperties.entrySet();
+  for (  Entry<Object,Object> entry : entrySet) {
+    String key=(String)entry.getKey();
+    String value=(String)entry.getValue();
+    dependencies=dependencies.replace("${" + key + "}",value);
+  }
+  return dependencies;
+}
