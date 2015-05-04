@@ -9,18 +9,21 @@
     indexingProvider=findIndexingServiceProvider(indexedFilter);
     if (indexingProvider != null) {
       DelegatingCacheInvocationBuilder builder=new DelegatingCacheInvocationBuilder(indexingProvider);
-      builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
+      builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setObservation(l.clustered() ? Listener.Observation.POST : l.observation()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
       foundMethods=validateAndAddListenerInvocations(listener,builder);
       builder.registerListenerInvocations();
     }
   }
   if (indexingProvider == null) {
     CacheInvocationBuilder builder=new CacheInvocationBuilder();
-    builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
+    builder.setIncludeCurrentState(l.includeCurrentState()).setClustered(l.clustered()).setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly()).setObservation(l.clustered() ? Listener.Observation.POST : l.observation()).setFilter(filter).setConverter(converter).setIdentifier(generatedId).setClassLoader(classLoader);
     foundMethods=validateAndAddListenerInvocations(listener,builder);
   }
   if (foundMethods && l.clustered()) {
-    if (cacheMode.isInvalidation()) {
+    if (l.observation() == Listener.Observation.PRE) {
+      throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
+    }
+ else     if (cacheMode.isInvalidation()) {
       throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
     }
  else     if (cacheMode.isDistributed()) {
