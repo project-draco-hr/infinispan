@@ -1,0 +1,24 @@
+{
+  try {
+    waitForView(viewId);
+  }
+ catch (  InterruptedException e) {
+    return;
+  }
+synchronized (cacheStatus) {
+    CacheTopology existingTopology=cacheStatus.getCurrentTopology();
+    if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
+      log.debugf("Ignoring old rebalance for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
+      return;
+    }
+    if (!updateCacheTopology(cacheName,cacheTopology,sender,cacheStatus))     return;
+    log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
+    cacheTopology.logRoutingTableInformation();
+    cacheStatus.setCurrentTopology(cacheTopology);
+    CacheTopologyHandler handler=cacheStatus.getHandler();
+    resetLocalTopologyBeforeRebalance(cacheName,cacheTopology,existingTopology,handler);
+    ConsistentHash unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
+    CacheTopology newTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH,cacheTopology.getActualMembers());
+    handler.rebalance(newTopology);
+  }
+}

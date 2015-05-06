@@ -1,13 +1,11 @@
 {
-  viewHandlingCompletionService=new SemaphoreCompletionService<>(asyncTransportExecutor,1);
   isShuttingDown=false;
   isCoordinator=transport.isCoordinator();
   viewListener=new ClusterViewListener();
   cacheManagerNotifier.addListener(viewListener);
-  viewHandlingCompletionService.submit(new Callable<Void>(){
-    @Override public Void call() throws Exception {
+  asyncTransportExecutor.submit(new Runnable(){
+    @Override public void run(){
       handleClusterView(false,transport.getViewId());
-      return null;
     }
   }
 );

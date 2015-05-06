@@ -1,18 +1,20 @@
 {
   log.debugf("Node %s joining cache %s",transport.getAddress(),cacheName);
-  LocalCacheStatus cacheStatus=new LocalCacheStatus(joinInfo,stm,phm);
+  ExecutorService topologyUpdatesExecutor=joinInfo.isTotalOrder() ? withinThreadExecutor : asyncTransportExecutor;
+  LocalCacheStatus cacheStatus=new LocalCacheStatus(joinInfo,stm,phm,topologyUpdatesExecutor);
   runningCaches.put(cacheName,cacheStatus);
   long timeout=joinInfo.getTimeout();
   long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
-synchronized (cacheStatus) {
+  cacheStatus.getTopologyUpdatesCompletionService().continueTaskInBackground();
+  try {
     while (true) {
       int viewId=transport.getViewId();
       try {
         ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.JOIN,transport.getAddress(),joinInfo,viewId);
         CacheStatusResponse initialStatus=(CacheStatusResponse)executeOnCoordinator(command,timeout);
         if (initialStatus != null) {
-          handleTopologyUpdate(cacheName,initialStatus.getCacheTopology(),initialStatus.getAvailabilityMode(),viewId,transport.getCoordinator());
-          handleStableTopologyUpdate(cacheName,initialStatus.getStableTopology(),viewId);
+          doHandleTopologyUpdate(cacheName,initialStatus.getCacheTopology(),initialStatus.getAvailabilityMode(),viewId,transport.getCoordinator(),cacheStatus);
+          doHandleStableTopologyUpdate(cacheName,initialStatus.getStableTopology(),viewId,cacheStatus);
           return initialStatus.getCacheTopology();
         }
       }
@@ -21,8 +23,11 @@ synchronized (cacheStatus) {
         if (timeService.isTimeExpired(endTime)) {
           throw e;
         }
-        Thread.sleep(1000);
+        Thread.sleep(100);
       }
     }
+  }
+  finally {
+    cacheStatus.getTopologyUpdatesCompletionService().backgroundTaskFinished(null);
   }
 }

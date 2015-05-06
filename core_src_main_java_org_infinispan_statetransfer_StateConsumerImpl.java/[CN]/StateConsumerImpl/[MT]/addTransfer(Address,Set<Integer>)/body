@@ -1,32 +1,35 @@
 {
+  final InboundTransferTask inboundTransfer;
 synchronized (transferMapsLock) {
-    if (trace)     log.tracef("Adding transfer from %s for segments %s",source,segmentsFromSource);
+    if (trace) {
+      log.tracef("Adding transfer from %s for segments %s",source,segmentsFromSource);
+    }
     segmentsFromSource.removeAll(transfersBySegment.keySet());
     if (segmentsFromSource.isEmpty()) {
-      if (trace)       log.tracef("All segments are already in progress, skipping");
+      if (trace) {
+        log.tracef("All segments are already in progress, skipping");
+      }
       return null;
     }
- else {
-      final InboundTransferTask inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
-      for (      int segmentId : segmentsFromSource) {
-        transfersBySegment.put(segmentId,inboundTransfer);
-      }
-      List<InboundTransferTask> inboundTransfers=transfersBySource.get(inboundTransfer.getSource());
-      if (inboundTransfers == null) {
-        inboundTransfers=new ArrayList<InboundTransferTask>();
-        transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
-      }
-      inboundTransfers.add(inboundTransfer);
-      stateRequestCompletionService.submit(new Callable<Void>(){
-        @Override public Void call() throws Exception {
-          inboundTransfer.requestSegments();
-          if (trace)           log.tracef("Waiting for inbound transfer to finish: %s",inboundTransfer);
-          stateRequestCompletionService.continueTaskInBackground();
-          return null;
-        }
-      }
-);
-      return inboundTransfer;
+    inboundTransfer=new InboundTransferTask(segmentsFromSource,source,cacheTopology.getTopologyId(),this,rpcManager,commandsFactory,timeout,cacheName);
+    for (    int segmentId : segmentsFromSource) {
+      transfersBySegment.put(segmentId,inboundTransfer);
+    }
+    List<InboundTransferTask> inboundTransfers=transfersBySource.get(inboundTransfer.getSource());
+    if (inboundTransfers == null) {
+      inboundTransfers=new ArrayList<InboundTransferTask>();
+      transfersBySource.put(inboundTransfer.getSource(),inboundTransfers);
+    }
+    inboundTransfers.add(inboundTransfer);
+  }
+  stateRequestCompletionService.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      inboundTransfer.requestSegments();
+      if (trace)       log.tracef("Waiting for inbound transfer to finish: %s",inboundTransfer);
+      stateRequestCompletionService.continueTaskInBackground();
+      return null;
     }
   }
+);
+  return inboundTransfer;
 }

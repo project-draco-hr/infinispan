@@ -3,26 +3,15 @@
     log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is not running",cacheTopology.getTopologyId(),cacheName);
     return;
   }
-  waitForView(viewId);
-  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  final LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
   if (cacheStatus == null) {
     log.tracef("Ignoring rebalance %s for cache %s that doesn't exist locally",cacheTopology.getTopologyId(),cacheName);
     return;
   }
-synchronized (cacheStatus) {
-    CacheTopology existingTopology=cacheStatus.getCurrentTopology();
-    if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
-      log.debugf("Ignoring old rebalance for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
-      return;
+  cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable(){
+    @Override public void run(){
+      doHandleRebalance(viewId,cacheStatus,cacheTopology,cacheName,sender);
     }
-    if (!updateCacheTopology(cacheName,cacheTopology,sender,cacheStatus))     return;
-    log.debugf("Starting local rebalance for cache %s, topology = %s",cacheName,cacheTopology);
-    cacheTopology.logRoutingTableInformation();
-    cacheStatus.setCurrentTopology(cacheTopology);
-    CacheTopologyHandler handler=cacheStatus.getHandler();
-    resetLocalTopologyBeforeRebalance(cacheName,cacheTopology,existingTopology,handler);
-    ConsistentHash unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
-    CacheTopology newTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH,cacheTopology.getActualMembers());
-    handler.rebalance(newTopology);
   }
+,null);
 }

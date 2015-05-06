@@ -1,0 +1,97 @@
+{
+  if ((NUM_CACHES & 1) != 0)   throw new IllegalStateException("NUM_CACHES must be even");
+  final ProtocolStackConfigurator configurator=ConfiguratorFactory.getStackConfigurator("default-configs/default-jgroups-udp.xml");
+  ProtocolConfiguration udpConfiguration=configurator.getProtocolStack().get(0);
+  assertEquals("UDP",udpConfiguration.getProtocolName());
+  udpConfiguration.getProperties().put("mcast_addr","224.0.0.15");
+  udpConfiguration.getProperties().put("oob_thread_pool.min_threads","1");
+  udpConfiguration.getProperties().put("oob_thread_pool.max_threads",String.valueOf(OOB_MAX_THREADS));
+  ProtocolConfiguration gmsConfiguration=configurator.getProtocolStack().get(9);
+  assertEquals("pbcast.GMS",gmsConfiguration.getProtocolName());
+  gmsConfiguration.getProperties().put("join_timeout","5000");
+  final Configuration distConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).clustering().stateTransfer().awaitInitialTransfer(false).hash().consistentHashFactory(new SyncConsistentHashFactory()).numSegments(NUM_SEGMENTS).build();
+  final Configuration replConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).clustering().hash().numSegments(NUM_SEGMENTS).clustering().stateTransfer().awaitInitialTransfer(false).build();
+  final CountDownLatch managersLatch=new CountDownLatch(NUM_NODES);
+  ExecutorService executor=Executors.newFixedThreadPool(NUM_THREADS);
+  final ExecutorCompletionService<Void> managerCompletionService=new ExecutorCompletionService<>(executor);
+  final ExecutorCompletionService<Void> cacheCompletionService=new ExecutorCompletionService<Void>(executor);
+  try {
+    for (int nodeIndex=0; nodeIndex < NUM_NODES; nodeIndex++) {
+      final String nodeName=TestResourceTracker.getNameForIndex(nodeIndex);
+      final String machineId="m" + (nodeIndex / 2);
+      managerCompletionService.submit(new Callable<Void>(){
+        @Override public Void call() throws Exception {
+          GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+          gcb.globalJmxStatistics().allowDuplicateDomains(true);
+          gcb.transport().defaultTransport().nodeName(nodeName).addProperty(JGroupsTransport.CONFIGURATION_STRING,configurator.getProtocolStackString());
+          BlockingThreadPoolExecutorFactory transportExecutorFactory=new BlockingThreadPoolExecutorFactory(TRANSPORT_MAX_THREADS,TRANSPORT_MAX_THREADS,TRANSPORT_QUEUE_SIZE,60000);
+          gcb.transport().transportThreadPool().threadPoolFactory(transportExecutorFactory);
+          BlockingThreadPoolExecutorFactory remoteExecutorFactory=new BlockingThreadPoolExecutorFactory(REMOTE_MAX_THREADS,REMOTE_MAX_THREADS,REMOTE_QUEUE_SIZE,60000);
+          gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
+          BlockingThreadPoolExecutorFactory stateTransferExecutorFactory=new BlockingThreadPoolExecutorFactory(STATE_TRANSFER_MAX_THREADS,STATE_TRANSFER_MAX_THREADS,STATE_TRANSFER_QUEUE_SIZE,60000);
+          gcb.transport().stateTransferThreadPool().threadPoolFactory(stateTransferExecutorFactory);
+          final EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build());
+          try {
+            for (int i=0; i < NUM_CACHES / 2; i++) {
+              final int cacheIndex=i;
+              cm.defineConfiguration("repl-cache-" + cacheIndex,replConfig);
+              cm.defineConfiguration("dist-cache-" + cacheIndex,distConfig);
+              cacheCompletionService.submit(new Callable<Void>(){
+                @Override public Void call() throws Exception {
+                  String cacheName="repl-cache-" + cacheIndex;
+                  Thread.currentThread().setName(cacheName + "-start-thread," + nodeName);
+                  Cache<Object,Object> replCache=cm.getCache(cacheName);
+                  return null;
+                }
+              }
+);
+              cacheCompletionService.submit(new Callable<Void>(){
+                @Override public Void call() throws Exception {
+                  String cacheName="dist-cache-" + cacheIndex;
+                  Thread.currentThread().setName(cacheName + "-start-thread," + nodeName);
+                  Cache<Object,Object> distCache=cm.getCache(cacheName);
+                  return null;
+                }
+              }
+);
+              managersLatch.countDown();
+            }
+          }
+  finally {
+            registerCacheManager(cm);
+          }
+          log.infof("Started cache manager %s",nodeName);
+          return null;
+        }
+      }
+);
+    }
+    long endTime=System.nanoTime() + SECONDS.toNanos(TIMEOUT_SECONDS);
+    for (int i=0; i < NUM_NODES; i++) {
+      Future<Void> future=managerCompletionService.poll(TIMEOUT_SECONDS,SECONDS);
+      future.get(0,SECONDS);
+      if (System.nanoTime() - endTime > 0) {
+        throw new TimeoutException("Took too long to start the cluster");
+      }
+    }
+    int i=0;
+    while (i < NUM_NODES * NUM_CACHES) {
+      Future<Void> future=cacheCompletionService.poll(1,SECONDS);
+      if (future != null) {
+        future.get(0,SECONDS);
+        i++;
+      }
+      if (System.nanoTime() - endTime > 0) {
+        throw new TimeoutException("Took too long to start the cluster");
+      }
+    }
+  }
+  finally {
+    executor.shutdownNow();
+  }
+  log.infof("All %d cache managers started, waiting for state transfer to finish for each cache",NUM_NODES);
+  for (int j=0; j < NUM_CACHES / 2; j++) {
+    waitForClusterToForm("repl-cache-" + j);
+    waitForClusterToForm("dist-cache-" + j);
+  }
+}
