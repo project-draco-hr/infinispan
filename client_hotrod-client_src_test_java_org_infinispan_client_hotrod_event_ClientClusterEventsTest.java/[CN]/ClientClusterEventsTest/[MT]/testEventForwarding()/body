@@ -1,27 +1,23 @@
 {
+  final Integer key0=HotRodClientTestingUtil.getIntKeyForServer(server(0));
+  final Integer key1=HotRodClientTestingUtil.getIntKeyForServer(server(1));
   final EventLogListener<Integer> eventListener=new EventLogListener<>();
   withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
     @Override public void call(){
-      RemoteCache<Integer,String> c3=client(2).getCache();
+      RemoteCache<Integer,String> remote=client(0).getCache();
       eventListener.expectNoEvents();
-      c3.put(1,"one");
-      eventListener.expectOnlyCreatedEvent(1,cache(0));
-      c3.put(2,"two");
-      eventListener.expectOnlyCreatedEvent(2,cache(0));
-      c3.put(3,"three");
-      eventListener.expectOnlyCreatedEvent(3,cache(0));
-      c3.replace(1,"new-one");
-      eventListener.expectOnlyModifiedEvent(1,cache(0));
-      c3.replace(2,"new-two");
-      eventListener.expectOnlyModifiedEvent(2,cache(0));
-      c3.replace(3,"new-three");
-      eventListener.expectOnlyModifiedEvent(3,cache(0));
-      c3.remove(1);
-      eventListener.expectOnlyRemovedEvent(1,cache(0));
-      c3.remove(2);
-      eventListener.expectOnlyRemovedEvent(2,cache(0));
-      c3.remove(3);
-      eventListener.expectOnlyRemovedEvent(3,cache(0));
+      remote.put(key0,"one");
+      eventListener.expectOnlyCreatedEvent(key0,cache(0));
+      remote.put(key1,"two");
+      eventListener.expectOnlyCreatedEvent(key1,cache(0));
+      remote.replace(key0,"new-one");
+      eventListener.expectOnlyModifiedEvent(key0,cache(0));
+      remote.replace(key1,"new-two");
+      eventListener.expectOnlyModifiedEvent(key1,cache(0));
+      remote.remove(key0);
+      eventListener.expectOnlyRemovedEvent(key0,cache(0));
+      remote.remove(key1);
+      eventListener.expectOnlyRemovedEvent(key1,cache(0));
     }
   }
 );
