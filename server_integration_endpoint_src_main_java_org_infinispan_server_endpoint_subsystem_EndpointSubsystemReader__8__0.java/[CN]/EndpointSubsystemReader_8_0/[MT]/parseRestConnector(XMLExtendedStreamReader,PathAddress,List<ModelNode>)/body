@@ -1,0 +1,65 @@
+{
+  ModelNode connector=Util.getEmptyOperation(ADD,null);
+  String name=ModelKeys.REST_CONNECTOR;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case SOCKET_BINDING:
+{
+        RestConnectorResource.SOCKET_BINDING.parseAndSetParameter(value,connector,reader);
+        break;
+      }
+case AUTH_METHOD:
+{
+      RestConnectorResource.AUTH_METHOD.parseAndSetParameter(value,connector,reader);
+      break;
+    }
+case CACHE_CONTAINER:
+{
+    CommonConnectorResource.CACHE_CONTAINER.parseAndSetParameter(value,connector,reader);
+    break;
+  }
+case CONTEXT_PATH:
+{
+  RestConnectorResource.CONTEXT_PATH.parseAndSetParameter(value,connector,reader);
+  break;
+}
+case EXTENDED_HEADERS:
+{
+RestConnectorResource.EXTENDED_HEADERS.parseAndSetParameter(value,connector,reader);
+break;
+}
+case NAME:
+{
+CommonConnectorResource.NAME.parseAndSetParameter(value,connector,reader);
+name=value;
+break;
+}
+case SECURITY_DOMAIN:
+{
+RestConnectorResource.SECURITY_DOMAIN.parseAndSetParameter(value,connector,reader);
+break;
+}
+case SECURITY_MODE:
+{
+RestConnectorResource.SECURITY_MODE.parseAndSetParameter(value,connector,reader);
+break;
+}
+case VIRTUAL_HOST:
+{
+ROOT_LOGGER.virtualHostNotInUse();
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+PathAddress containerAddress=subsystemAddress.append(PathElement.pathElement(ModelKeys.REST_CONNECTOR,name));
+connector.get(OP_ADDR).set(containerAddress.toModelNode());
+ParseUtils.requireNoContent(reader);
+operations.add(connector);
+}

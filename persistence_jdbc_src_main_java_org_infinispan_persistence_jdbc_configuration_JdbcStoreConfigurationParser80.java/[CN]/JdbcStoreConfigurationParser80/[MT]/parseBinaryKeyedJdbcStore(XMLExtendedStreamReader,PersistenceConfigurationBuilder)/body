@@ -1,0 +1,31 @@
+{
+  JdbcBinaryStoreConfigurationBuilder builder=new JdbcBinaryStoreConfigurationBuilder(persistenceBuilder);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case DIALECT:
+      builder.dialect(DatabaseType.valueOf(value));
+    break;
+default :
+  Parser80.parseStoreAttribute(reader,i,builder);
+break;
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case BINARY_KEYED_TABLE:
+{
+parseTable(reader,builder.table());
+break;
+}
+default :
+{
+parseCommonJdbcStoreElements(reader,element,builder);
+break;
+}
+}
+}
+persistenceBuilder.addStore(builder);
+}

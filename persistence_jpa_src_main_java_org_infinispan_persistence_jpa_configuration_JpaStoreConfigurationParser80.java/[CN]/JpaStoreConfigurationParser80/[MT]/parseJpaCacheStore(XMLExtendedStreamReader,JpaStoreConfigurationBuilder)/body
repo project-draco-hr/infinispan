@@ -1,0 +1,43 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=StringPropertyReplacer.replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENTITY_CLASS_NAME:
+{
+        Class<?> clazz;
+        try {
+          clazz=this.getClass().getClassLoader().loadClass(value);
+        }
+ catch (        ClassNotFoundException e) {
+          throw new XMLStreamException("Class " + value + " specified in entityClassName is not found",e);
+        }
+        builder.entityClass(clazz);
+        break;
+      }
+case BATCH_SIZE:
+{
+      builder.batchSize(Long.valueOf(value));
+      break;
+    }
+case PERSISTENCE_UNIT_NAME:
+{
+    builder.persistenceUnitName(value);
+    break;
+  }
+case STORE_METADATA:
+{
+  builder.storeMetadata(Boolean.valueOf(value));
+  break;
+}
+default :
+{
+Parser80.parseStoreAttribute(reader,i,builder);
+}
+}
+}
+if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+throw ParseUtils.unexpectedElement(reader);
+}
+}
