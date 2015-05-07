@@ -1,0 +1,20 @@
+{
+  controller.start(CONTAINER1);
+  assertTrue(controller.isStarted(CONTAINER1));
+  TrackingCacheEntryListener<String,String> listener=new TrackingCacheEntryListener<>();
+  MutableConfiguration<String,String> configuration=createConfigurationWith(listener);
+  CacheManager cm=createCacheManagerWithTimeoutInMillis(3000);
+  Cache<String,String> cache=cm.createCache("namedCache",configuration);
+  cache.put("1","value1");
+  assertEquals(1,listener.getCreated());
+  controller.start(CONTAINER2);
+  assertTrue(controller.isStarted(CONTAINER2));
+  cache.put("2","value2");
+  assertEquals(2,listener.getCreated());
+  int beforeFailOver=listener.getCreated();
+  controller.kill(CONTAINER1);
+  cache.put("3","value3");
+  cache.put("4","value4");
+  cache.put("5","value5");
+  assertTrue(listener.getCreated() > beforeFailOver);
+}

@@ -10,19 +10,20 @@
       if ((ret == null) && !expectEventOnNull) {
         return ret;
       }
-      latch.await(TIMEOUT,TimeUnit.MILLISECONDS);
+      boolean wasClosed=latch.await(timeout,TimeUnit.MILLISECONDS);
+      if (!wasClosed) {
+        log.timeoutWaitingEvent();
+      }
       return ret;
     }
   finally {
       notifier.removeSyncNotificationLatch(cache,key,value,latch);
     }
   }
- catch (  Exception ex) {
-    if (!(ex instanceof CacheEntryListenerException)) {
-      throw new CacheEntryListenerException(ex);
-    }
- else {
-      throw (CacheEntryListenerException)ex;
-    }
+ catch (  CacheEntryListenerException ex) {
+    throw ex;
+  }
+catch (  Exception e) {
+    throw new CacheEntryListenerException(e);
   }
 }
