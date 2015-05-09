@@ -1,0 +1,23 @@
+{
+  rcmFactory=new RemoteCacheManagerFactory();
+  remoteCacheManagers.put(ADMIN_LOGIN,rcmFactory.createManager(getClientConfigBuilderForUser(ADMIN_LOGIN,ADMIN_PASSWD)));
+  remoteCacheManagers.put(WRITER_LOGIN,rcmFactory.createManager(getClientConfigBuilderForUser(WRITER_LOGIN,WRITER_PASSWD)));
+  remoteCacheManagers.put(READER_LOGIN,rcmFactory.createManager(getClientConfigBuilderForUser(READER_LOGIN,READER_PASSWD)));
+  remoteCacheManagers.put(SUPERVISOR_LOGIN,rcmFactory.createManager(getClientConfigBuilderForUser(SUPERVISOR_LOGIN,SUPERVISOR_PASSWD)));
+  RemoteCache<String,String> metadataCache=remoteCacheManagers.get(ADMIN_LOGIN).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+  String proto=Util.read(getClass().getResourceAsStream("/sample_bank_account/bank.proto"));
+  metadataCache.put("sample_bank_account/bank.proto",proto);
+  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManagers.get(ADMIN_LOGIN)));
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManagers.get(READER_LOGIN)));
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManagers.get(WRITER_LOGIN)));
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManagers.get(SUPERVISOR_LOGIN)));
+  User user=new User();
+  user.setId(1);
+  user.setName("Tom");
+  user.setSurname("Cat");
+  user.setGender(User.Gender.MALE);
+  user.setAccountIds(Collections.singleton(12));
+  remoteCacheManagers.get(ADMIN_LOGIN).getCache(TEST_CACHE_INDEXED).put(1,user);
+  remoteCacheManagers.get(ADMIN_LOGIN).getCache(TEST_CACHE_NOT_INDEXED).put(1,user);
+}

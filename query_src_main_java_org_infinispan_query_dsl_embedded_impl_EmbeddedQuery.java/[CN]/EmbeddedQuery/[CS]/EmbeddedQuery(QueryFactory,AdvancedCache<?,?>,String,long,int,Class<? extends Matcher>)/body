@@ -1,9 +1,16 @@
 {
   super(queryFactory,jpaQuery);
+  ensureAccessPermissions(cache);
   this.cache=cache;
   this.startOffset=startOffset < 0 ? 0 : (int)startOffset;
   this.maxResults=maxResults;
-  filter=new JPAFilterAndConverter(jpaQuery,matcherImplClass);
-  filter.injectDependencies(cache);
+  this.filter=SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>(){
+    @Override public JPAFilterAndConverter run(){
+      JPAFilterAndConverter filter=new JPAFilterAndConverter(jpaQuery,matcherImplClass);
+      filter.injectDependencies(cache);
+      return filter;
+    }
+  }
+);
   projection=filter.getObjectFilter().getProjection();
 }

@@ -2,12 +2,13 @@
   try {
     SerializationContext serCtx=ProtobufMetadataManager.getSerializationContextInternal(cache.getCacheManager());
     QueryRequest request=ProtobufUtil.fromByteArray(serCtx,query,0,query.length,QueryRequest.class);
+    Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(cache);
     QueryResponse response;
-    if (cache.getCacheConfiguration().indexing().index().isEnabled()) {
-      response=executeQuery(cache,serCtx,request);
+    if (cacheConfiguration.indexing().index().isEnabled()) {
+      response=executeIndexedQuery(cache,cacheConfiguration,serCtx,request);
     }
  else {
-      response=executeNonIndexedQuery(cache,serCtx,request);
+      response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
     }
     return ProtobufUtil.toByteArray(serCtx,response);
   }
