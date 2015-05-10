@@ -1,15 +1,13 @@
 {
   assertRemoteCacheManagerIsStarted();
-  int lifespanSecs=toSeconds(lifespan,lifespanUnit);
-  int maxIdleSecs=toSeconds(maxIdleTime,maxIdleTimeUnit);
   applyDefaultExpirationFlags(lifespan,maxIdleTime);
   if (log.isTraceEnabled()) {
-    log.tracef("About to putAll entries (%s) lifespanSecs:%d, maxIdleSecs:%d",map,lifespanSecs,maxIdleSecs);
+    log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)",map,lifespan,lifespanUnit,maxIdleTime,maxIdleTimeUnit);
   }
   Map<byte[],byte[]> byteMap=new HashMap<>();
   for (  Entry<? extends K,? extends V> entry : map.entrySet()) {
     byteMap.put(obj2bytes(entry.getKey(),true),obj2bytes(entry.getValue(),false));
   }
-  PutAllOperation op=operationsFactory.newPutAllOperation(byteMap,lifespanSecs,maxIdleSecs);
+  PutAllOperation op=operationsFactory.newPutAllOperation(byteMap,lifespan,lifespanUnit,maxIdleTime,maxIdleTimeUnit);
   op.execute();
 }

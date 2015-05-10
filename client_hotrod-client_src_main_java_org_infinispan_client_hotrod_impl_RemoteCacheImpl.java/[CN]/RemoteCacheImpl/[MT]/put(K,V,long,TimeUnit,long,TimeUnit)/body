@@ -1,12 +1,10 @@
 {
   assertRemoteCacheManagerIsStarted();
-  long lifespanNanos=toNanoseconds(lifespan,lifespanUnit);
-  long maxIdleNanos=toNanoseconds(maxIdleTime,maxIdleTimeUnit);
   applyDefaultExpirationFlags(lifespan,maxIdleTime);
   if (log.isTraceEnabled()) {
-    log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d",key,value,toSeconds(lifespan,lifespanUnit),toSeconds(maxIdleTime,maxIdleTimeUnit));
+    log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d",key,value,lifespan,maxIdleTime);
   }
-  PutOperation op=operationsFactory.newPutKeyValueOperation(obj2bytes(key,true),obj2bytes(value,false),lifespanNanos,maxIdleNanos);
+  PutOperation op=operationsFactory.newPutKeyValueOperation(obj2bytes(key,true),obj2bytes(value,false),lifespan,lifespanUnit,maxIdleTime,maxIdleTimeUnit);
   byte[] result=op.execute();
   return MarshallerUtil.bytes2obj(marshaller,result);
 }
