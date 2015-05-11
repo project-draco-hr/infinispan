@@ -1,2 +1,15 @@
 {
+  String config=InfinispanStartTag.LATEST + "<jgroups>\n" + "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n"+ "</jgroups>\n"+ "<cache-container default-cache=\"default\">"+ "   <jmx domain=\"NonExistingJGroupsConfigTest_channelLookupTest\" />\n"+ "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n"+ "   <replicated-cache name=\"default\" />\n"+ "</cache-container>"+ TestingUtil.INFINISPAN_END_TAG;
+  EmbeddedCacheManager cm=null;
+  try {
+    cm=new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));
+    cm.getCache();
+    fail("CacheManager construction should have failed");
+  }
+ catch (  Exception e) {
+    TestingUtil.expectCause(e,CacheConfigurationException.class,"ISPN000365:.*");
+  }
+ finally {
+    TestingUtil.killCacheManagers(cm);
+  }
 }
