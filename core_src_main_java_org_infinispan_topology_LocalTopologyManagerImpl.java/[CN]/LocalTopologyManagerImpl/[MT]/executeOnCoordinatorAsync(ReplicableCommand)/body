@@ -1,15 +1,14 @@
 {
   if (transport.isCoordinator()) {
-    asyncTransportExecutor.submit(new Callable<Object>(){
-      @Override public Object call() throws Exception {
+    asyncTransportExecutor.execute(new Runnable(){
+      @Override public void run(){
         if (log.isTraceEnabled())         log.tracef("Attempting to execute command on self: %s",command);
         gcr.wireDependencies(command);
         try {
-          return command.perform(null);
+          command.perform(null);
         }
  catch (        Throwable t) {
           log.errorf(t,"Failed to execute ReplicableCommand %s on coordinator async: %s",command,t.getMessage());
-          throw new Exception(t);
         }
       }
     }

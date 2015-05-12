@@ -2,9 +2,8 @@
   if (ctx.isInTxScope()) {
     throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
   }
-  RecipientGenerator recipientGenerator=new SingleKeyRecipientGenerator(command.getKey());
   if (needValuesFromPreviousOwners(ctx,command)) {
-    remoteGetBeforeWrite(ctx,command,recipientGenerator);
+    remoteGetBeforeWrite(ctx,command,command.getKey());
   }
   Object localResult=invokeNextInterceptor(ctx,command);
   if (isLocalModeForced(command)) {
@@ -28,7 +27,7 @@
         log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",command);
         return localResult;
       }
-      List<Address> recipients=recipientGenerator.generateRecipients();
+      List<Address> recipients=cdl.getOwners(command.getKey());
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       try {
         rpcManager.invokeRemotely(recipients,command,determineRpcOptionsForBackupReplication(rpcManager,isSync,recipients));
@@ -45,7 +44,7 @@
         log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).",command);
         return localResult;
       }
-      List<Address> recipients=recipientGenerator.generateRecipients();
+      List<Address> recipients=cdl.getOwners(command.getKey());
       log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",recipients);
       boolean isSingleOwnerAndLocal=cacheConfiguration.clustering().hash().numOwners() == 1;
       if (!isSingleOwnerAndLocal) {

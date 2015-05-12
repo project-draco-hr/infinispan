@@ -1,0 +1,11 @@
+{
+  try {
+    Map<Address,Response> resps=rpcManager.invokeRemotely(recipients,command,createPrepareRpcOptions());
+    checkTxCommandResponses(resps,command,(LocalTxInvocationContext)ctx,recipients);
+    CacheTransaction ct=ctx.getCacheTransaction();
+    for (    Response r : resps.values())     readVersionsFromResponse(r,ct);
+  }
+  finally {
+    transactionRemotelyPrepared(ctx);
+  }
+}

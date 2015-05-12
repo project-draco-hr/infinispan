@@ -1,0 +1,29 @@
+{
+  OutdatedTopologyException outdatedTopologyException=null;
+  for (  Map.Entry<Address,Response> e : responseMap.entrySet()) {
+    Address recipient=e.getKey();
+    Response response=e.getValue();
+    if (response == CacheNotFoundResponse.INSTANCE) {
+      if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId() && !rpcManager.getMembers().contains(recipient)) {
+        if (trace)         log.tracef("Ignoring response from node not targeted %s",recipient);
+      }
+ else {
+        if (checkCacheNotFoundResponseInPartitionHandling(command,context,recipients)) {
+          if (trace)           log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager",recipient);
+          return;
+        }
+ else {
+          if (trace)           log.tracef("Cache not running on node %s, or the node is missing",recipient);
+          outdatedTopologyException=new OutdatedTopologyException(format("Cache not running on node %s, or the node is missing",recipient));
+        }
+      }
+    }
+ else     if (response == UnsureResponse.INSTANCE) {
+      if (trace)       log.tracef("Node %s has a newer topology id",recipient);
+      outdatedTopologyException=new OutdatedTopologyException(format("Node %s has a newer topology id",recipient));
+    }
+  }
+  if (outdatedTopologyException != null) {
+    throw outdatedTopologyException;
+  }
+}

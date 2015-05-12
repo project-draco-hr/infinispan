@@ -1,7 +1,7 @@
 {
   Address origin=ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
   if (trace)   log.tracef("handleTxCommand for command %s, origin %s",command,origin);
-  if (isLocalOnly(ctx,command)) {
+  if (isLocalOnly(command)) {
     return invokeNextInterceptor(ctx,command);
   }
   updateTopologyId(command);
@@ -15,7 +15,7 @@
   }
   boolean async=isTxCommandAsync(command);
   if (async) {
-    stateTransferManager.forwardCommandIfNeeded(command,getAffectedKeys(ctx,command),origin,false);
+    stateTransferManager.forwardCommandIfNeeded(command,getAffectedKeys(ctx,command),origin);
     return null;
   }
   if (ctx.isOriginLocal()) {

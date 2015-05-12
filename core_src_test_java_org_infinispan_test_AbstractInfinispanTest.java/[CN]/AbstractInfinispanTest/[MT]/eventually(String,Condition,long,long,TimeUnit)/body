@@ -1,0 +1,17 @@
+{
+  if (pollInterval <= 0) {
+    throw new IllegalArgumentException("Check interval must be positive");
+  }
+  try {
+    long expectedEndTime=System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout,unit);
+    long sleepMillis=TimeUnit.MILLISECONDS.convert(pollInterval,unit);
+    while (expectedEndTime - System.nanoTime() > 0) {
+      if (ec.isSatisfied())       return;
+      Thread.sleep(sleepMillis);
+    }
+    assertTrue(message,ec.isSatisfied());
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected!",e);
+  }
+}

@@ -1,6 +1,6 @@
 {
   advancedCache.put("k","v");
-  assertNotLocked(advancedCache,"k");
+  assertEventuallyNotLocked(advancedCache,"k");
   tm.begin();
   advancedCache.withFlags(Flag.FORCE_WRITE_LOCK).get("k");
   TransactionTable txTable=advancedCache.getComponentRegistry().getComponent(TransactionTable.class);
@@ -8,5 +8,5 @@
   assertTrue(tx.ownsLock("k"));
   assertLocked(advancedCache,"k");
   tm.commit();
-  assertNotLocked(advancedCache,"k");
+  assertEventuallyNotLocked(advancedCache,"k");
 }

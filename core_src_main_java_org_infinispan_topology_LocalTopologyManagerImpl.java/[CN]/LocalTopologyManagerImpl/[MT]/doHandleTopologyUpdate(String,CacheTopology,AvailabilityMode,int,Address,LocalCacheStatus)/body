@@ -21,10 +21,8 @@ synchronized (cacheStatus) {
     CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH,cacheTopology.getActualMembers());
     unionTopology.logRoutingTableInformation();
     boolean updateAvailabilityModeFirst=availabilityMode != AvailabilityMode.AVAILABLE;
-    if (updateAvailabilityModeFirst) {
-      if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-        cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-      }
+    if (updateAvailabilityModeFirst && availabilityMode != null) {
+      cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
     }
     if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
       log.tracef("This topology update has a pending CH, starting the rebalance now");
@@ -34,9 +32,7 @@ synchronized (cacheStatus) {
       handler.updateConsistentHash(unionTopology);
     }
     if (!updateAvailabilityModeFirst) {
-      if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-        cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-      }
+      cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
     }
   }
 }

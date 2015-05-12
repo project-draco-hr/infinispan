@@ -1,0 +1,17 @@
+{
+  eventually("There are pending transactions!",new Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      for (      Cache<?,?> cache : caches(cacheName)) {
+        final TransactionTable transactionTable=TestingUtil.extractComponent(cache,TransactionTable.class);
+        int localTxCount=transactionTable.getLocalTxCount();
+        int remoteTxCount=transactionTable.getRemoteTxCount();
+        if (localTxCount != 0 || remoteTxCount != 0) {
+          log.tracef("Local tx=%s, remote tx=%s, for cache %s ",transactionTable.getLocalGlobalTransaction(),transactionTable.getRemoteGlobalTransaction(),address(cache));
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+);
+}

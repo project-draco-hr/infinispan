@@ -1,6 +1,8 @@
 {
   if (shouldInvokeRemoteTxCommand(ctx)) {
-    sendCommitCommand(ctx,command);
+    Collection<Address> recipients=getCommitNodes(ctx);
+    Map<Address,Response> responseMap=rpcManager.invokeRemotely(recipients,command,createCommitRpcOptions());
+    checkTxCommandResponses(responseMap,command,(LocalTxInvocationContext)ctx,recipients);
   }
   return invokeNextInterceptor(ctx,command);
 }

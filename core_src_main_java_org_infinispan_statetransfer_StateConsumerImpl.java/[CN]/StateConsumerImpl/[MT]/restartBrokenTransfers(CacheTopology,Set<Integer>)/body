@@ -1,13 +1,14 @@
 {
-  Set<Address> members=new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+  Set<Address> members=new HashSet<>(cacheTopology.getReadConsistentHash().getMembers());
 synchronized (transferMapsLock) {
-    for (Iterator<Address> it=transfersBySource.keySet().iterator(); it.hasNext(); ) {
-      Address source=it.next();
+    for (Iterator<Map.Entry<Address,List<InboundTransferTask>>> it=transfersBySource.entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<Address,List<InboundTransferTask>> entry=it.next();
+      Address source=entry.getKey();
       if (!members.contains(source)) {
         if (trace) {
           log.tracef("Removing inbound transfers from source %s for cache %s",source,cacheName);
         }
-        List<InboundTransferTask> inboundTransfers=transfersBySource.get(source);
+        List<InboundTransferTask> inboundTransfers=entry.getValue();
         it.remove();
         for (        InboundTransferTask inboundTransfer : inboundTransfers) {
           if (trace) {

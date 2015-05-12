@@ -15,7 +15,7 @@
         ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getMetadata().version());
       }
       if (!ctx.replaceValue(key,ice)) {
-        if (isWrite)         lockAndWrap(ctx,key,ice,command);
+        if (isWrite)         entryFactory.wrapEntryForPut(ctx,key,ice,false,command,false);
  else {
           ctx.putLookedUpEntry(key,ice);
           if (ctx.isInTxScope()) {
@@ -27,7 +27,9 @@
     }
   }
  else {
-    if (trace)     log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s",key,rpcManager.getAddress(),dm.locate(key));
+    if (trace) {
+      log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1. Owners are %s",key,rpcManager.getAddress(),dm.locate(key));
+    }
   }
   return null;
 }

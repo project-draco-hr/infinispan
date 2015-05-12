@@ -1,0 +1,23 @@
+{
+  Collection<AwaitAndUnblock> collection=new ArrayList<>(2);
+  if (splitMode == SplitMode.ORIGINATOR_ISOLATED) {
+    if (discard) {
+      collection.add(discardCommandOn(cache(1,cacheName),commandClass));
+      collection.add(discardCommandOn(cache(2,cacheName),commandClass));
+    }
+ else {
+      collection.add(blockCommandOn(cache(1,cacheName),commandClass));
+      collection.add(blockCommandOn(cache(2,cacheName),commandClass));
+    }
+  }
+ else {
+    collection.add(notifyCommandOn(cache(1,cacheName),commandClass));
+    if (discard) {
+      collection.add(discardCommandOn(cache(2,cacheName),commandClass));
+    }
+ else {
+      collection.add(blockCommandOn(cache(2,cacheName),commandClass));
+    }
+  }
+  return new FilterCollection(collection);
+}

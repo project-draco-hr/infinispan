@@ -1,0 +1,20 @@
+{
+  final GlobalTransaction globalTransaction=command.getGlobalTransaction();
+  final Collection<Object> lockedKeys=context.getLockedKeys();
+  if (command instanceof RollbackCommand) {
+    return partitionHandlingManager.addPartialRollbackTransaction(globalTransaction,recipients,lockedKeys);
+  }
+ else   if (command instanceof PrepareCommand) {
+    if (((PrepareCommand)command).isOnePhaseCommit()) {
+      return partitionHandlingManager.addPartialCommit1PCTransaction(globalTransaction,recipients,lockedKeys,Arrays.asList(((PrepareCommand)command).getModifications()));
+    }
+  }
+ else   if (command instanceof CommitCommand) {
+    EntryVersionsMap newVersion=null;
+    if (command instanceof VersionedCommitCommand) {
+      newVersion=((VersionedCommitCommand)command).getUpdatedVersions();
+    }
+    return partitionHandlingManager.addPartialCommit2PCTransaction(globalTransaction,recipients,lockedKeys,newVersion);
+  }
+  return false;
+}
