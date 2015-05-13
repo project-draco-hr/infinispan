@@ -2,7 +2,7 @@
   final List<MagicKey> keys=init();
   final CountDownLatch l=new CountDownLatch(1);
   final AtomicBoolean rollback=new AtomicBoolean(false);
-  Thread th=new Thread("Updater"){
+  Future<Void> future=fork(new Runnable(){
     @Override public void run(){
       try {
         TransactionManager t1=TestingUtil.getTransactionManager(c1);
@@ -12,6 +12,7 @@
         tx.enlistResource(new XAResourceAdapter(){
           public int prepare(          Xid id){
             try {
+              log.debug("Unblocking commit");
               l.await();
             }
  catch (            InterruptedException e) {
@@ -30,12 +31,11 @@
       }
     }
   }
-;
-  th.start();
+,null);
   log.info("Invoking rehash event");
   performRehashEvent(true);
   l.countDown();
-  th.join();
+  future.get(30,TimeUnit.SECONDS);
   waitForRehashCompletion();
   log.info("Rehash complete");
   if (!rollback.get()) {
