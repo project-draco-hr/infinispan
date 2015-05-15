@@ -1,0 +1,28 @@
+{
+  try {
+    IterationNextOperation iterationNextOperation=operationsFactory.newIterationNextOperation(iterationId,transport);
+    while (nextElements.isEmpty() && !endOfIteration) {
+      IterationNextResponse iterationNextResponse=iterationNextOperation.execute();
+      short status=iterationNextResponse.getStatus();
+      if (status == INVALID_ITERATION) {
+        throw log.errorRetrievingNext(iterationId);
+      }
+      Entry<byte[],byte[]>[] entries=iterationNextResponse.getEntries();
+      if (entries.length == 0) {
+        endOfIteration=true;
+        break;
+      }
+      for (      Entry<byte[],byte[]> entry : entries) {
+        if (segmentKeyTracker.track(entry.getKey())) {
+          nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey()),unmarshall(entry.getValue())));
+        }
+      }
+      segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());
+    }
+  }
+ catch (  TransportException e) {
+    log.warnf(e,"Error reaching the server during iteration");
+    restartIteration(segmentKeyTracker.missedSegments());
+    fetch();
+  }
+}

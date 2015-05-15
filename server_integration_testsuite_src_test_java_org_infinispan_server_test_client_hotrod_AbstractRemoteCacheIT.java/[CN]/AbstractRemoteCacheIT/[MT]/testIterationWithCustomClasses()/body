@@ -1,0 +1,19 @@
+{
+  remoteCache.put("1",new SampleEntity("value1,value2"));
+  remoteCache.put("2",new SampleEntity("value3,value2"));
+  remoteCache.put("ignore",new SampleEntity("whatever"));
+  remoteCache.put("3",new SampleEntity("value7,value8"));
+  final Map<Object,Object> entryMap=new HashMap<>();
+  try (CloseableIterator<Entry<Object,Object>> closeableIterator=remoteCache.retrieveEntries("csv-key-value-filter-converter-factory",null,10)){
+    closeableIterator.forEachRemaining(new Consumer<Entry<Object,Object>>(){
+      @Override public void accept(      Entry<Object,Object> e){
+        entryMap.put(e.getKey(),e.getValue());
+      }
+    }
+);
+  }
+   assertEquals(3,entryMap.size());
+  assertEquals(Arrays.asList("value1","value2"),((Summary)entryMap.get("1")).getAttributes());
+  assertEquals(Arrays.asList("value3","value2"),((Summary)entryMap.get("2")).getAttributes());
+  assertEquals(Arrays.asList("value7","value8"),((Summary)entryMap.get("3")).getAttributes());
+}

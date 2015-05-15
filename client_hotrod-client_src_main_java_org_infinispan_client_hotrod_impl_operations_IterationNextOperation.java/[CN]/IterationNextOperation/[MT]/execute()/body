@@ -1,0 +1,15 @@
+{
+  HeaderParams params=writeHeader(transport,ITERATION_NEXT_REQUEST);
+  transport.writeString(iterationId);
+  transport.flush();
+  short status=readHeaderAndValidate(transport,params);
+  byte[] finishedSegments=transport.readArray();
+  int entriesSize=transport.readVInt();
+  Map.Entry<byte[],byte[]>[] entries=new Map.Entry[entriesSize];
+  for (int i=0; i < entriesSize; i++) {
+    byte[] key=transport.readArray();
+    byte[] value=transport.readArray();
+    entries[i]=new SimpleEntry<>(key,value);
+  }
+  return new IterationNextResponse(status,finishedSegments,entries);
+}
