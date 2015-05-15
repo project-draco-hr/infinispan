@@ -1,6 +1,12 @@
 {
   log.tracef("Updating cluster members for all the caches. New list is %s",newClusterMembers);
-  confirmMembersAvailable();
+  try {
+    confirmMembersAvailable();
+  }
+ catch (  SuspectException e) {
+    log.tracef("Node %s left while updating cache members",e.getSuspect());
+    return;
+  }
   for (  ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
     cacheStatus.doHandleClusterView();
   }

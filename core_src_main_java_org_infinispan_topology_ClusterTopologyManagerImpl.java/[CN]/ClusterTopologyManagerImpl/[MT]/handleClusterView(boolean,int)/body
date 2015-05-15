@@ -25,7 +25,12 @@ catch (      SuspectException e) {
         return;
       }
 catch (      Exception e) {
-        log.failedToRecoverClusterState(e);
+        if (!isShuttingDown) {
+          log.failedToRecoverClusterState(e);
+        }
+ else {
+          log.tracef("Cluster state recovery failed because the coordinator is shutting down");
+        }
       }
     }
 synchronized (viewUpdateLock) {
