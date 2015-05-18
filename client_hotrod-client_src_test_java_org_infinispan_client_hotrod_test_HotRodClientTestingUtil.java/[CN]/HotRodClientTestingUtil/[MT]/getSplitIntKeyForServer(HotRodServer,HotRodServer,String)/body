@@ -1,0 +1,21 @@
+{
+  Cache<?,?> cache=cacheName != null ? primaryOwner.getCacheManager().getCache(cacheName) : primaryOwner.getCacheManager().getCache();
+  Cache<?,?> binaryOwnerCache=cacheName != null ? binaryOwner.getCacheManager().getCache(cacheName) : binaryOwner.getCacheManager().getCache();
+  Random r=new Random();
+  byte[] dummy;
+  Integer dummyInt;
+  int attemptsLeft=1000;
+  boolean primaryOwnerFound=false;
+  boolean binaryOwnerFound=false;
+  do {
+    dummyInt=r.nextInt();
+    dummy=toBytes(dummyInt);
+    attemptsLeft--;
+    primaryOwnerFound=isFirstOwner(cache,dummyInt);
+    binaryOwnerFound=isFirstOwner(binaryOwnerCache,dummy);
+  }
+ while (!(primaryOwnerFound && binaryOwnerFound) && attemptsLeft >= 0);
+  if (attemptsLeft < 0)   throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
+  log.infof("Integer key [pojo=%s,bytes=%s] hashes to [cluster=%s,hotrod=%s], but the binary version's owner is [cluster=%s,hotrod=%s]",Util.toHexString(dummy),dummyInt,primaryOwner.getCacheManager().getAddress(),primaryOwner.getAddress(),binaryOwner.getCacheManager().getAddress(),binaryOwner.getAddress());
+  return dummyInt;
+}
