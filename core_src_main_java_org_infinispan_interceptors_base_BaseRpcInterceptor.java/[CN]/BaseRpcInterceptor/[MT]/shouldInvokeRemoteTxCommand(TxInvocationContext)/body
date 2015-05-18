@@ -3,6 +3,9 @@
     return false;
   }
   LocalTxInvocationContext localCtx=(LocalTxInvocationContext)ctx;
+  if (localCtx.getCacheTransaction().getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
+    return false;
+  }
   boolean shouldInvokeRemotely=ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() || localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
   if (getLog().isTraceEnabled()) {
     getLog().tracef("Should invoke remotely? %b. hasModifications=%b, hasRemoteLocksAcquired=%b",shouldInvokeRemotely,ctx.hasModifications(),!localCtx.getRemoteLocksAcquired().isEmpty());
