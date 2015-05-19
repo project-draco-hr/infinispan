@@ -4,7 +4,22 @@
       log.debugf("Finished receiving of segments for cache %s for topology %d.",cacheName,topologyId);
       stopApplyingState();
       stateTransferManager.notifyEndOfRebalance(topologyId,rebalanceId);
-      stateRequestCompletionService.drainCompletionQueue();
+      List<? extends Future<Void>> futures=stateRequestCompletionService.drainCompletionQueue();
+      boolean interrupted=false;
+      for (      Future<Void> future : futures) {
+        try {
+          future.get();
+        }
+ catch (        InterruptedException e) {
+          interrupted=true;
+        }
+catch (        ExecutionException e) {
+          log.topologyUpdateError(topologyId,e.getCause());
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 }

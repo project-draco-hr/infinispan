@@ -14,5 +14,20 @@
     }
   }
 ,null);
-  cacheStatus.getTopologyUpdatesCompletionService().drainCompletionQueue();
+  List<? extends Future<Void>> futures=cacheStatus.getTopologyUpdatesCompletionService().drainCompletionQueue();
+  boolean interrupted=false;
+  for (  Future<Void> future : futures) {
+    try {
+      future.get();
+    }
+ catch (    InterruptedException e) {
+      interrupted=true;
+    }
+catch (    ExecutionException e) {
+      log.topologyUpdateError(cacheTopology.getTopologyId(),e.getCause());
+    }
+  }
+  if (interrupted) {
+    Thread.currentThread().interrupt();
+  }
 }
