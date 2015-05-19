@@ -63,7 +63,23 @@
     for (    Rsp<Object> rsp : rsps.values()) {
       noValidResponses&=parseResponseAndAddToResponseList(rsp.getValue(),rsp.getException(),retval,rsp.wasSuspected(),rsp.wasReceived(),fromJGroupsAddress(rsp.getSender()),responseFilter != null,ignoreLeavers);
     }
-    if (noValidResponses)     throw new TimeoutException("Timed out waiting for valid responses!");
+    if (noValidResponses) {
+      boolean throwRpcException=false;
+      if (responseFilter != null) {
+        for (        Rsp<Object> rsp : rsps.values()) {
+          if (rsp.wasReceived()) {
+            throwRpcException=true;
+            break;
+          }
+        }
+      }
+      if (throwRpcException) {
+        throw new RpcException(String.format("Received invalid responses from all of %s",recipients));
+      }
+ else {
+        throw new TimeoutException("Timed out waiting for valid responses!");
+      }
+    }
     responses=retval;
   }
   return responses;

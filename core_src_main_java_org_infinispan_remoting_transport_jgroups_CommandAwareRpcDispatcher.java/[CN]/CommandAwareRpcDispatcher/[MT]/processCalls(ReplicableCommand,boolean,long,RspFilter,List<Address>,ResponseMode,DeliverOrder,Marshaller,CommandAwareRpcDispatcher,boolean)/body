@@ -11,47 +11,25 @@
  else   if (broadcast || FORCE_MCAST) {
     buf=marshallCall(marshaller,command);
     RequestOptions opts=new RequestOptions(mode,timeout,false,filter);
-    opts.setExclusionList(card.getChannel().getAddress());
-    retval=card.castMessage(dests,constructMessage(buf,null,mode,rsvp,deliverOrder),opts);
+    opts.setExclusionList(card.local_addr);
+    Message message=constructMessage(buf,null,mode,rsvp,deliverOrder);
+    retval=card.castMessage(dests,message,opts);
   }
  else {
-    RequestOptions opts=new RequestOptions(mode,timeout);
-    opts.setExclusionList(card.getChannel().getAddress());
-    if (dests.isEmpty())     return new RspList<>();
+    RequestOptions opts=new RequestOptions(mode,timeout,true,filter);
+    if (dests.contains(card.local_addr)) {
+      throw new IllegalArgumentException("Local address is not allowed in the recipients list at this point");
+    }
+    if (dests.isEmpty())     return EMPTY_RESPONSES_LIST;
     buf=marshallCall(marshaller,command);
-    if (filter != null) {
-      FutureCollator futureCollator=new FutureCollator(filter,dests.size(),timeout,card.timeService);
-      for (      Address a : dests) {
-        NotifyingFuture<Object> f=card.sendMessageWithFuture(constructMessage(buf,a,mode,rsvp,deliverOrder),opts);
-        futureCollator.watchFuture(f,a);
-      }
-      retval=futureCollator.getResponseList();
+    Message msg=constructMessage(buf,null,mode,rsvp,deliverOrder);
+    if (mode != ResponseMode.GET_NONE) {
+      GroupRequest<Object> request=card.cast(dests,msg,opts,true);
+      retval=request != null ? request.get() : EMPTY_RESPONSES_LIST;
     }
- else     if (mode == ResponseMode.GET_ALL) {
-      Map<Address,Future<Object>> futures=new HashMap<>(dests.size());
-      for (      Address dest : dests)       futures.put(dest,card.sendMessageWithFuture(constructMessage(buf,dest,mode,rsvp,deliverOrder),opts));
-      retval=new RspList<>();
-      for (      Map.Entry<Address,Future<Object>> entry : futures.entrySet()) {
-        Address target=entry.getKey();
-        try {
-          retval.addRsp(target,entry.getValue().get(timeout,MILLISECONDS));
-        }
- catch (        java.util.concurrent.TimeoutException te) {
-          throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",prettyPrintTime(timeout),target));
-        }
-catch (        ExecutionException e) {
-          if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
-            log.tracef(formatString("Ignoring node %s that left during the remote call",target));
-            retval.addRsp(target,CacheNotFoundResponse.INSTANCE);
-          }
  else {
-            throw wrapThrowableInException(e.getCause());
-          }
-        }
-      }
-    }
- else     if (mode == ResponseMode.GET_NONE) {
-      for (      Address dest : dests)       card.sendMessage(constructMessage(buf,dest,mode,rsvp,deliverOrder),opts);
+      card.cast(dests,msg,opts,false);
+      retval=EMPTY_RESPONSES_LIST;
     }
   }
   if (mode != ResponseMode.GET_NONE) {
