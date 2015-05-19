@@ -1,0 +1,20 @@
+{
+  Response response;
+  if (rsp.wasReceived()) {
+    if (rsp.hasException()) {
+      log.tracef(rsp.getException(),"Unexpected exception from %s",sender);
+      throw log.remoteException(sender,rsp.getException());
+    }
+ else {
+      response=checkResponse(rsp.getValue(),sender,true);
+    }
+  }
+ else   if (rsp.wasSuspected()) {
+    response=checkResponse(CacheNotFoundResponse.INSTANCE,sender,ignoreLeavers);
+  }
+ else {
+    if (!ignoreTimeout)     throw new TimeoutException("Replication timeout for " + sender);
+    response=null;
+  }
+  return response;
+}

@@ -1,0 +1,25 @@
+{
+  Log log=getLog();
+  if (responseObject == null) {
+    return SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
+  }
+ else   if (responseObject instanceof Response) {
+    Response response=(Response)responseObject;
+    if (response instanceof ExceptionResponse) {
+      ExceptionResponse exceptionResponse=(ExceptionResponse)response;
+      Exception e=exceptionResponse.getException();
+      if (e instanceof SuspectException)       throw log.thirdPartySuspected(sender,(SuspectException)e);
+      if (e instanceof AvailabilityException || e instanceof OutdatedTopologyException)       throw (CacheException)e;
+      throw log.remoteException(sender,e);
+    }
+ else     if (!ignoreCacheNotFoundResponse && response instanceof CacheNotFoundResponse) {
+      throw new SuspectException("Cache not running on node " + sender,sender);
+    }
+    return response;
+  }
+ else {
+    Class<?> responseClass=responseObject.getClass();
+    log.tracef("Unexpected response object type from %s: %s",sender,responseClass);
+    throw new CacheException(String.format("Unexpected response object type from %s: %s",sender,responseClass));
+  }
+}

@@ -1,16 +1,18 @@
 {
   log.tracef("About to send to backups %s, command %s",backups,rpcCommand);
-  Buffer buf=CommandAwareRpcDispatcher.marshallCall(dispatcher.getMarshaller(),rpcCommand);
+  Buffer buf=dispatcher.marshallCall(dispatcher.getMarshaller(),rpcCommand);
   Map<XSiteBackup,Future<Object>> syncBackupCalls=new HashMap<>(backups.size());
   for (  XSiteBackup xsb : backups) {
     SiteMaster recipient=new SiteMaster(xsb.getSiteName());
     if (xsb.isSync()) {
       RequestOptions sync=new RequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL,xsb.getTimeout());
-      syncBackupCalls.put(xsb,dispatcher.sendMessageWithFuture(CommandAwareRpcDispatcher.constructMessage(buf,recipient,true,org.jgroups.blocks.ResponseMode.GET_ALL,false,false),sync));
+      Message msg=CommandAwareRpcDispatcher.constructMessage(buf,recipient,org.jgroups.blocks.ResponseMode.GET_ALL,false,DeliverOrder.NONE);
+      syncBackupCalls.put(xsb,dispatcher.sendMessageWithFuture(msg,sync));
     }
  else {
       RequestOptions async=new RequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE,xsb.getTimeout());
-      dispatcher.sendMessage(CommandAwareRpcDispatcher.constructMessage(buf,recipient,false,org.jgroups.blocks.ResponseMode.GET_NONE,false,false),async);
+      Message msg=CommandAwareRpcDispatcher.constructMessage(buf,recipient,org.jgroups.blocks.ResponseMode.GET_NONE,false,DeliverOrder.PER_SENDER);
+      dispatcher.sendMessage(msg,async);
     }
   }
   return new JGroupsBackupResponse(syncBackupCalls,timeService);

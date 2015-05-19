@@ -1,0 +1,38 @@
+{
+  if (rpcCommands == null || rpcCommands.isEmpty()) {
+    log.trace("Destination list is empty: no need to send message");
+    return InfinispanCollections.emptyMap();
+  }
+  if (trace)   log.tracef("commands=%s, mode=%s, timeout=%s",rpcCommands,mode,timeout);
+  boolean ignoreLeavers=mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
+  SingleResponseFuture[] futures=new SingleResponseFuture[rpcCommands.size()];
+  int i=0;
+  for (  Map.Entry<Address,ReplicableCommand> entry : rpcCommands.entrySet()) {
+    org.jgroups.Address recipient=toJGroupsAddress(entry.getKey());
+    ReplicableCommand command=entry.getValue();
+    SingleResponseFuture future=dispatcher.invokeRemoteCommand(recipient,command,toJGroupsMode(mode),timeout,deliverOrder);
+    futures[i]=future;
+    i++;
+  }
+  if (mode.isAsynchronous())   return InfinispanCollections.emptyMap();
+  CompletableFuture<Void> bigFuture=CompletableFuture.allOf(futures);
+  bigFuture.get();
+  List<Rsp<Response>> rsps=new ArrayList<>();
+  for (  SingleResponseFuture future : futures) {
+    rsps.add(future.get());
+  }
+  Map<Address,Response> retval=new HashMap<>(rsps.size());
+  boolean hasResponses=false;
+  for (  Rsp<Response> rsp : rsps) {
+    Address sender=fromJGroupsAddress(rsp.getSender());
+    Response response=checkRsp(rsp,sender,responseFilter != null,ignoreLeavers);
+    if (response != null) {
+      retval.put(sender,response);
+      hasResponses=true;
+    }
+  }
+  if (!hasResponses) {
+    throw new TimeoutException("Timed out waiting for valid responses!");
+  }
+  return retval;
+}
