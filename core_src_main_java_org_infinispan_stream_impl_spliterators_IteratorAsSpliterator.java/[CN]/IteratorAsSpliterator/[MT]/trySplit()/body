@@ -1,0 +1,21 @@
+{
+  if (estimateRemaining > 1 && iterator.hasNext()) {
+    int batch=currentBatchSize + batchIncrease;
+    if (batch > estimateRemaining) {
+      batch=(int)estimateRemaining;
+    }
+    if (batch > maxBatchSize) {
+      batch=maxBatchSize;
+    }
+    Object[] array=new Object[batch];
+    int i=0;
+    while (iterator.hasNext() && i < batch) {
+      array[i]=iterator.next();
+      i++;
+    }
+    currentBatchSize=batch;
+    estimateRemaining-=i;
+    return Spliterators.spliterator(array,0,i + 1,characteristics);
+  }
+  return null;
+}

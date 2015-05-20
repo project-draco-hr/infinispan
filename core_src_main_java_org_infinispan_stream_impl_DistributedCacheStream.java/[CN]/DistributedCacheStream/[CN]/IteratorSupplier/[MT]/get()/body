@@ -1,0 +1,36 @@
+{
+  R entry=queue.poll();
+  if (entry == null) {
+    if (completed.get()) {
+      if (exception != null) {
+        throw exception;
+      }
+      return null;
+    }
+    nextLock.lock();
+    try {
+      boolean interrupted=false;
+      while ((entry=queue.poll()) == null && !completed.get()) {
+        try {
+          nextCondition.await();
+        }
+ catch (        InterruptedException e) {
+          interrupted=true;
+        }
+      }
+      if (entry == null) {
+        if (exception != null) {
+          throw exception;
+        }
+        return null;
+      }
+ else       if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  finally {
+      nextLock.unlock();
+    }
+  }
+  return entry;
+}

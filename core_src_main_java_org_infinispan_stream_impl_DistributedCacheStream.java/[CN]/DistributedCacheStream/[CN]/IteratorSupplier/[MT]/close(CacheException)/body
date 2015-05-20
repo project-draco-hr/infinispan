@@ -1,0 +1,18 @@
+{
+  nextLock.lock();
+  try {
+    if (!completed.getAndSet(true)) {
+      if (e != null) {
+        exception=e;
+      }
+    }
+    if (pending != null) {
+      clusterStreamManager.forgetOperation(pending);
+      pending=null;
+    }
+    nextCondition.signalAll();
+  }
+  finally {
+    nextLock.unlock();
+  }
+}

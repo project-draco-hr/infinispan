@@ -1,0 +1,30 @@
+{
+  ConsistentHash startHash=event.getConsistentHashAtStart();
+  ConsistentHash endHash=event.getConsistentHashAtEnd();
+  boolean trace=log.isTraceEnabled();
+  if (startHash != null && endHash != null) {
+    log.tracef("Data rehash occurred startHash: %s and endHash: %s with new topology %s and was pre %s",startHash,endHash,event.getNewTopologyId(),event.isPre());
+    if (!changeListener.isEmpty()) {
+      if (trace) {
+        log.tracef("Previous segments %s ",startHash.getSegmentsForOwner(localAddress));
+        log.tracef("After segments %s ",endHash.getSegmentsForOwner(localAddress));
+      }
+      Set<Integer> beforeSegments=new HashSet<>(startHash.getSegmentsForOwner(localAddress));
+      beforeSegments.removeAll(endHash.getSegmentsForOwner(localAddress));
+      if (!beforeSegments.isEmpty()) {
+        for (        Map.Entry<UUID,SegmentListener> entry : changeListener.entrySet()) {
+          if (trace) {
+            log.tracef("Notifying %s through SegmentChangeListener",entry.getKey());
+          }
+          entry.getValue().lostSegments(beforeSegments);
+        }
+      }
+ else       if (trace) {
+        log.tracef("No segments have been removed from data rehash, no notification required");
+      }
+    }
+ else {
+      log.tracef("No change listeners present!");
+    }
+  }
+}

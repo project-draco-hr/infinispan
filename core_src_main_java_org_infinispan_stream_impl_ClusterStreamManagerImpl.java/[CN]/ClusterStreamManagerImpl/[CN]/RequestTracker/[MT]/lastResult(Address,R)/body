@@ -1,0 +1,16 @@
+{
+  Set<Integer> completedSegments=awaitingResponse.get(origin);
+  if (missingSegments != null) {
+    completedSegments.removeAll(missingSegments);
+  }
+  callback.onCompletion(origin,completedSegments,result);
+synchronized (this) {
+    if (earlyTerminatePredicate != null && earlyTerminatePredicate.test(result)) {
+      awaitingResponse.clear();
+    }
+ else {
+      awaitingResponse.remove(origin);
+    }
+    return awaitingResponse.isEmpty();
+  }
+}

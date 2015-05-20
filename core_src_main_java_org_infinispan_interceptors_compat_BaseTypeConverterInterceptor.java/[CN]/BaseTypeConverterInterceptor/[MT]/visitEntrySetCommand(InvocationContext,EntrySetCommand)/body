@@ -1,0 +1,13 @@
+{
+  TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
+  CacheSet<CacheEntry<K,V>> set=(CacheSet<CacheEntry<K,V>>)super.visitEntrySetCommand(ctx,command);
+  return new AbstractDelegatingEntryCacheSet<K,V>(getCacheWithFlags(cache,command),set){
+    @Override public CloseableIterator<CacheEntry<K,V>> iterator(){
+      return new TypeConverterIterator<>(super.iterator(),converter,entryFactory);
+    }
+    @Override public CloseableSpliterator<CacheEntry<K,V>> spliterator(){
+      return new IteratorAsSpliterator.Builder<>(iterator()).setEstimateRemaining(super.spliterator().estimateSize()).setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+    }
+  }
+;
+}

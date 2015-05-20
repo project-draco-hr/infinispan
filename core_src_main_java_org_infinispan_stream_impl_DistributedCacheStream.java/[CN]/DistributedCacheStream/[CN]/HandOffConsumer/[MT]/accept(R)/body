@@ -1,0 +1,23 @@
+{
+  if (!queue.offer(rs)) {
+    if (!completed.get()) {
+      nextLock.lock();
+      try {
+        nextCondition.signalAll();
+      }
+  finally {
+        nextLock.unlock();
+      }
+      while (!completed.get()) {
+        try {
+          if (queue.offer(rs,100,TimeUnit.MILLISECONDS)) {
+            break;
+          }
+        }
+ catch (        InterruptedException e) {
+          throw new CacheException(e);
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,9 @@
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   boolean invocationBatching=configuration.invocationBatching().enabled();
   boolean isTotalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
+  if (configuration.clustering().cacheMode().isDistributed()) {
+    interceptorChain.appendInterceptor(createInterceptor(new DistributionBulkInterceptor<>(),DistributionBulkInterceptor.class),false);
+  }
   if (invocationBatching) {
     interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(),BatchingInterceptor.class),false);
   }

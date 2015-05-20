@@ -1,0 +1,14 @@
+{
+  boolean keepTrying=true;
+  BaseStream<?,?> stream;
+  E value;
+  do {
+    stream=supplier.get();
+    streamRef.set(stream);
+    value=innerPerformOperation(stream);
+    log.trace("Completed an operation, trying to see if we are done.");
+  }
+ while (!streamRef.compareAndSet(stream,null) && (keepTrying=continueTrying.get()));
+  log.tracef("Operation now done, due to try denial: " + !keepTrying);
+  return keepTrying ? value : null;
+}

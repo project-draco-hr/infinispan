@@ -1,0 +1,36 @@
+{
+  log.tracef("Received response from %s with a completed response %s for id %s with %s suspected segments.",origin,complete,id,missingSegments);
+  RequestTracker tracker=currentlyRunning.get(id);
+  if (tracker != null) {
+    boolean notify=false;
+synchronized (tracker) {
+      if (tracker.awaitingResponse.containsKey(origin)) {
+        if (!missingSegments.isEmpty()) {
+          tracker.missingSegments(missingSegments);
+        }
+        if (complete) {
+          notify=tracker.lastResult(origin,response);
+        }
+ else {
+          tracker.intermediateResults(origin,response);
+        }
+      }
+    }
+    if (notify) {
+      log.tracef("Marking %s as completed!",id);
+      tracker.completionLock.lock();
+      try {
+        currentlyRunning.remove(id);
+        tracker.completionCondition.signalAll();
+      }
+  finally {
+        tracker.completionLock.unlock();
+      }
+    }
+    return !notify;
+  }
+ else {
+    log.tracef("Ignoring response as we already received a completed response for %s from %s",id,origin);
+    return false;
+  }
+}

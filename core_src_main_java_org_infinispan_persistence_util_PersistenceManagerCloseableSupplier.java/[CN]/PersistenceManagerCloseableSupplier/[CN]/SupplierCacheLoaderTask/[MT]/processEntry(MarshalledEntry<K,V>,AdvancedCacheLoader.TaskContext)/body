@@ -1,0 +1,35 @@
+{
+  if (!taskContext.isStopped()) {
+    closeLock.lock();
+    try {
+      if (closed) {
+        taskContext.stop();
+        return;
+      }
+    }
+  finally {
+      closeLock.unlock();
+    }
+    InternalCacheEntry<K,V> ice=PersistenceUtil.convert(marshalledEntry,factory);
+    boolean stop=closed;
+    while (!stop) {
+      if (queue.offer(ice,100,TimeUnit.MILLISECONDS)) {
+        closeLock.lock();
+        try {
+          closeCondition.signalAll();
+        }
+  finally {
+          closeLock.unlock();
+        }
+        break;
+      }
+      closeLock.lock();
+      try {
+        stop=closed;
+      }
+  finally {
+        closeLock.unlock();
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  if (useManagedBlocker) {
+    try {
+      ForkJoinPool.managedBlock(new ResponseBlocker(response));
+    }
+ catch (    InterruptedException e) {
+      throw new CacheException(e);
+    }
+  }
+ else {
+    rpc.invokeRemotely(Collections.singleton(origin),new StreamResponseCommand<>(cache.getName(),localAddress,requestId,false,response),rpc.getDefaultRpcOptions(true));
+  }
+}

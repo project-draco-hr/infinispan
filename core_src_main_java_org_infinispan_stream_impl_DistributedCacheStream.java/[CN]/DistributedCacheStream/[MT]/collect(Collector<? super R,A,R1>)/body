@@ -1,0 +1,12 @@
+{
+  if (sorted) {
+    sorted=!collector.characteristics().contains(Collector.Characteristics.UNORDERED);
+  }
+  if (collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
+    return performOperation(TerminalFunctions.collectorFunction(collector),true,(BinaryOperator<R1>)collector.combiner(),null,false);
+  }
+ else {
+    A intermediateResult=performOperation(TerminalFunctions.collectorFunction(new IdentifyFinishCollector<>(collector)),true,collector.combiner(),null,false);
+    return collector.finisher().apply(intermediateResult);
+  }
+}
