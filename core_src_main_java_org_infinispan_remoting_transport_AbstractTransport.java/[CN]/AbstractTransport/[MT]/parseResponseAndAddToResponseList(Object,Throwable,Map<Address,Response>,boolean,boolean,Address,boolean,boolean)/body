@@ -7,7 +7,12 @@
       log.tracef(exception,"Unexpected exception from %s",sender);
       throw new CacheException("Remote (" + sender + ") failed unexpectedly",exception);
     }
-    if (checkResponse(responseObject,sender))     responseListToAddTo.put(sender,(Response)responseObject);
+    if (checkResponse(responseObject,sender)) {
+      responseListToAddTo.put(sender,(Response)responseObject);
+    }
+ else     if (!ignoreLeavers && responseObject instanceof CacheNotFoundResponse) {
+      throw new SuspectException("Cache is stopping on node " + sender,sender);
+    }
   }
  else   if (wasSuspected) {
     if (!ignoreLeavers) {

@@ -15,6 +15,10 @@
       log.shutdownHandlingCommand(cmd);
       reply(response,new ExceptionResponse(new CacheException("Cache is shutting down")),cmd);
     }
+catch (    IllegalLifecycleStateException e) {
+      if (trace)       log.trace("Ignoring command unmarshalling error during shutdown");
+      reply(response,CacheNotFoundResponse.INSTANCE,cmd);
+    }
 catch (    Throwable x) {
       if (cmd == null)       log.errorUnMarshallingCommand(x);
  else       log.exceptionHandlingCommand(cmd,x);
