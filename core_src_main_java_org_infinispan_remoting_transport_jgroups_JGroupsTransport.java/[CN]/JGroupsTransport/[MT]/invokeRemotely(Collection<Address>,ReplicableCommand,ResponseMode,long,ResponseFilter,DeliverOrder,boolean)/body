@@ -12,7 +12,6 @@
       throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
     }
   }
-  boolean asyncMarshalling=mode == ResponseMode.ASYNCHRONOUS;
   List<org.jgroups.Address> jgAddressList=toJGroupsAddressListExcludingSelf(recipients,totalOrder);
   int membersSize=members.size();
   boolean broadcast=jgAddressList == null || recipients.size() == membersSize;
@@ -21,10 +20,10 @@
   Response singleResponse=null;
   org.jgroups.Address singleJGAddress=null;
   if (broadcast) {
-    rsps=dispatcher.broadcastRemoteCommands(rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,asyncMarshalling,ignoreLeavers);
+    rsps=dispatcher.broadcastRemoteCommands(rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,ignoreLeavers);
   }
  else   if (totalOrder) {
-    rsps=dispatcher.invokeRemoteCommands(jgAddressList,rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,asyncMarshalling,ignoreLeavers);
+    rsps=dispatcher.invokeRemoteCommands(jgAddressList,rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,ignoreLeavers);
   }
  else {
     if (jgAddressList == null || !jgAddressList.isEmpty()) {
@@ -40,10 +39,10 @@
       if (!skipRpc) {
         if (singleRecipient) {
           if (singleJGAddress == null)           singleJGAddress=jgAddressList.get(0);
-          singleResponse=dispatcher.invokeRemoteCommand(singleJGAddress,rpcCommand,toJGroupsMode(mode),timeout,deliverOrder,asyncMarshalling);
+          singleResponse=dispatcher.invokeRemoteCommand(singleJGAddress,rpcCommand,toJGroupsMode(mode),timeout,deliverOrder);
         }
  else {
-          rsps=dispatcher.invokeRemoteCommands(jgAddressList,rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,asyncMarshalling,ignoreLeavers);
+          rsps=dispatcher.invokeRemoteCommands(jgAddressList,rpcCommand,toJGroupsMode(mode),timeout,toJGroupsFilter(responseFilter),deliverOrder,ignoreLeavers);
         }
       }
     }
