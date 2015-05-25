@@ -7,31 +7,21 @@
         while (!stop) {
           for (int j=0; j < NUM_KEYS; j++) {
             Cache<Object,Object> cache=cache(writerIndex % NUM_ORIGINATORS);
-            putRetryOnSuspect(cache,"key_" + j,"value_" + j + "_"+ writerIndex);
+            doPut(cache,"key_" + j,"value_" + j + "_"+ writerIndex);
           }
         }
         return null;
       }
-      private void putRetryOnSuspect(      Cache<Object,Object> cache,      String key,      String value){
-        try {
-          Object oldValue=cache.putIfAbsent(key,value);
-          Object newValue=cache.get(key);
-          if (oldValue == null) {
-            log.tracef("Successfully inserted value %s for key %s",value,key);
-            assertEquals(value,newValue);
-            assertNull(insertedValues.putIfAbsent(key,value));
-          }
- else {
-            assertEquals(oldValue,newValue);
-          }
+      private void doPut(      Cache<Object,Object> cache,      String key,      String value){
+        Object oldValue=cache.putIfAbsent(key,value);
+        Object newValue=cache.get(key);
+        if (oldValue == null) {
+          log.tracef("Successfully inserted value %s for key %s",value,key);
+          assertEquals(value,newValue);
+          assertNull(insertedValues.putIfAbsent(key,value));
         }
- catch (        CacheException e) {
-          Throwable ce=e;
-          while (ce instanceof RemoteException) {
-            ce=ce.getCause();
-          }
-          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))           throw e;
-          putRetryOnSuspect(cache,key,value);
+ else {
+          assertEquals(oldValue,newValue);
         }
       }
     }
