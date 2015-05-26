@@ -1,0 +1,29 @@
+{
+  Class<?> objClass=object.getClass();
+  if (objClass == MarshalledValue.class) {
+    MarshalledValue marshalledValue=(MarshalledValue)object;
+    long size=OBJECT_SIZE + POINTER_SIZE;
+    size=roundUpToNearest8(size + POINTER_SIZE * 2 + 4 * 2);
+    MarshalledValueByteStream mvbs=marshalledValue.getRaw();
+    long mvbsSize;
+    if (mvbs instanceof ImmutableMarshalledValueByteStream) {
+      mvbsSize=OBJECT_SIZE + POINTER_SIZE;
+      mvbsSize+=POINTER_SIZE;
+      mvbsSize=roundUpToNearest8(mvbsSize);
+    }
+ else     if (mvbs instanceof ExpandableMarshalledValueByteStream) {
+      mvbsSize=OBJECT_SIZE + POINTER_SIZE;
+      mvbsSize+=POINTER_SIZE;
+      mvbsSize+=4;
+      mvbsSize+=4;
+      mvbsSize=roundUpToNearest8(mvbsSize);
+    }
+ else {
+      throw new IllegalArgumentException(getClass() + " doesn't support counting for " + mvbs.getClass());
+    }
+    byte[] bytes=mvbs.getRaw();
+    size+=mvbsSize + roundUpToNearest8(Unsafe.ARRAY_BYTE_BASE_OFFSET + Unsafe.ARRAY_BYTE_INDEX_SCALE * bytes.length);
+    return size;
+  }
+  return super.handleObject(object);
+}

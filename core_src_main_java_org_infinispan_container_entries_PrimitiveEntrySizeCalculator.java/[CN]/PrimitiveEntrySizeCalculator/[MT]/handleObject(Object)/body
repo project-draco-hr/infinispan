@@ -1,0 +1,63 @@
+{
+  Class<?> objClass=object.getClass();
+  if (objClass == String.class) {
+    String realString=(String)object;
+    long objectSize=roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE + 4+ POINTER_SIZE);
+    return objectSize + roundUpToNearest8(Unsafe.ARRAY_CHAR_BASE_OFFSET + realString.length() * Unsafe.ARRAY_CHAR_INDEX_SCALE);
+  }
+ else   if (objClass == Long.class) {
+    long longValue=((Long)object).longValue();
+    if (longValue >= LongCacheConstraints.MIN_CACHE_VALUE && longValue <= LongCacheConstraints.MAX_CACHE_VALUE) {
+      return 0;
+    }
+    return roundUpToNearest8(Unsafe.ARRAY_LONG_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Integer.class) {
+    int intValue=((Integer)object).intValue();
+    if (intValue >= IntegerCacheConstraints.MIN_CACHE_VALUE && intValue <= IntegerCacheConstraints.MAX_CACHE_VALUE) {
+      return 0;
+    }
+    return roundUpToNearest8(Unsafe.ARRAY_INT_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Short.class) {
+    short shortValue=((Short)object).shortValue();
+    if (shortValue >= ShortCacheConstraints.MIN_CACHE_VALUE && shortValue <= ShortCacheConstraints.MAX_CACHE_VALUE) {
+      return 0;
+    }
+    return roundUpToNearest8(Unsafe.ARRAY_SHORT_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Double.class) {
+    return roundUpToNearest8(Unsafe.ARRAY_DOUBLE_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Float.class) {
+    return roundUpToNearest8(Unsafe.ARRAY_FLOAT_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Boolean.class) {
+    return 0;
+  }
+ else   if (objClass == Character.class) {
+    char charValue=((Character)object).charValue();
+    if (charValue >= CharacterCacheConstraints.MIN_CACHE_VALUE && charValue <= CharacterCacheConstraints.MAX_CACHE_VALUE) {
+      return 0;
+    }
+    return roundUpToNearest8(Unsafe.ARRAY_CHAR_INDEX_SCALE + OBJECT_SIZE + POINTER_SIZE);
+  }
+ else   if (objClass == Byte.class) {
+    return 0;
+  }
+ else   if (objClass.isArray()) {
+    Unsafe unsafe=getUnsafe();
+    Class<?> compClass=objClass.getComponentType();
+    int arrayLength=Array.getLength(object);
+    long arraySize=roundUpToNearest8(unsafe.arrayBaseOffset(objClass) + unsafe.arrayIndexScale(objClass) * arrayLength);
+    if (!compClass.isPrimitive()) {
+      for (int i=0; i < arrayLength; ++i) {
+        arraySize+=handleObject(Array.get(object,i));
+      }
+    }
+    return arraySize;
+  }
+ else {
+    throw new IllegalArgumentException("Size of Class " + objClass + " cannot be determined using given entry size calculator :"+ getClass());
+  }
+}

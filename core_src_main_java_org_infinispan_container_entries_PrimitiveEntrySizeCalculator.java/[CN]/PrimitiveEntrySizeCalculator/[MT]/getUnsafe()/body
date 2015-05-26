@@ -1,0 +1,24 @@
+{
+  try {
+    return Unsafe.getUnsafe();
+  }
+ catch (  SecurityException tryReflectionInstead) {
+  }
+  try {
+    return java.security.AccessController.doPrivileged(new java.security.PrivilegedExceptionAction<Unsafe>(){
+      public Unsafe run() throws Exception {
+        Class<Unsafe> k=Unsafe.class;
+        for (        java.lang.reflect.Field f : k.getDeclaredFields()) {
+          f.setAccessible(true);
+          Object x=f.get(null);
+          if (k.isInstance(x))           return k.cast(x);
+        }
+        throw new NoSuchFieldError("the Unsafe");
+      }
+    }
+);
+  }
+ catch (  java.security.PrivilegedActionException e) {
+    throw new RuntimeException("Could not initialize intrinsics",e.getCause());
+  }
+}
