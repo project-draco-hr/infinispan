@@ -1,50 +1,19 @@
 {
-  if (trace)   log.tracef("%s invoking %s to recipient list %s with options %s",t.getAddress(),rpc,recipients,options);
-  if (!options.skipReplicationQueue() && useReplicationQueue(options.responseMode().isSynchronous())) {
-    if (trace) {
-      log.tracef("Using replication queue for command [%s]",rpc);
-    }
-    replicationQueue.add(rpc);
-    return InfinispanCollections.emptyMap();
-  }
-  if (!configuration.clustering().cacheMode().isClustered())   throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
-  if (rpc instanceof TopologyAffectedCommand) {
-    TopologyAffectedCommand topologyAffectedCommand=(TopologyAffectedCommand)rpc;
-    if (topologyAffectedCommand.getTopologyId() == -1) {
-      int currentTopologyId=stateTransferManager.getCacheTopology().getTopologyId();
-      if (trace)       log.tracef("Topology id missing on command %s, setting it to %d",rpc,currentTopologyId);
-      topologyAffectedCommand.setTopologyId(currentTopologyId);
-    }
-  }
-  if (!(rpc instanceof CacheRpcCommand)) {
-    rpc=cf.buildSingleRpcCommand(rpc);
-  }
-  long startTimeNanos=0;
-  if (statisticsEnabled)   startTimeNanos=timeService.time();
+  CompletableFuture<Map<Address,Response>> future=invokeRemotelyAsync(recipients,rpc,options);
   try {
-    Map<Address,Response> result=t.invokeRemotely(recipients,rpc,options.responseMode(),options.timeUnit().toMillis(options.timeout()),options.responseFilter(),options.deliverOrder(),configuration.clustering().cacheMode().isDistributed());
-    if (statisticsEnabled)     replicationCount.incrementAndGet();
-    if (trace)     log.tracef("Response(s) to %s is %s",rpc,result);
-    return result;
+    return future.get();
   }
  catch (  InterruptedException e) {
     Thread.currentThread().interrupt();
     throw new CacheException("Thread interrupted while invoking RPC",e);
   }
-catch (  CacheException e) {
-    log.trace("replication exception: ",e);
-    if (statisticsEnabled)     replicationFailures.incrementAndGet();
-    throw e;
-  }
-catch (  Throwable th) {
-    log.unexpectedErrorReplicating(th);
-    if (statisticsEnabled)     replicationFailures.incrementAndGet();
-    throw new CacheException(th);
-  }
- finally {
-    if (statisticsEnabled) {
-      long timeTaken=timeService.timeDuration(startTimeNanos,TimeUnit.MILLISECONDS);
-      totalReplicationTime.getAndAdd(timeTaken);
+catch (  ExecutionException e) {
+    Throwable cause=e.getCause();
+    if (cause instanceof CacheException) {
+      throw ((CacheException)cause);
+    }
+ else {
+      throw new CacheException("Unexpected exception replicating command",cause);
     }
   }
 }

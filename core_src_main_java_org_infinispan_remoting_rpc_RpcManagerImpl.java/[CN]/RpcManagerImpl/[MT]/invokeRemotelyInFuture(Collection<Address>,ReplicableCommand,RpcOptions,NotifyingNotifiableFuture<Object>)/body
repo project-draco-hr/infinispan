@@ -1,19 +1,4 @@
 {
-  if (trace)   log.tracef("%s invoking in future call %s to recipient list %s with options %s",t.getAddress(),rpc,recipients,options);
-  Callable<Object> c=new Callable<Object>(){
-    @Override public Object call() throws Exception {
-      Object result;
-      try {
-        result=invokeRemotely(recipients,rpc,options);
-        future.notifyDone(result);
-        return result;
-      }
- catch (      RuntimeException e) {
-        future.notifyException(e);
-        throw e;
-      }
-    }
-  }
-;
-  future.setFuture(asyncExecutor.submit(c));
+  @SuppressWarnings("unchecked") NotifyingNotifiableFuture<Map<Address,Response>> f=(NotifyingNotifiableFuture)future;
+  invokeRemotelyInFuture(f,recipients,rpc,options);
 }

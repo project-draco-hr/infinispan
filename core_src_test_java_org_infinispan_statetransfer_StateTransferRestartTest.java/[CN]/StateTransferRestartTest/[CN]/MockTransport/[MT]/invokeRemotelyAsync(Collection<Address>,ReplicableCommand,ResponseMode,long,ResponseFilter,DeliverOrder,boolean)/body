@@ -1,0 +1,13 @@
+{
+  if (callOnStateResponseCommand != null && rpcCommand.getClass() == StateResponseCommand.class) {
+    log.trace("Ignoring StateResponseCommand");
+    try {
+      callOnStateResponseCommand.call();
+    }
+ catch (    Exception e) {
+      log.error("Error in callOnStateResponseCommand",e);
+    }
+    return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+  }
+  return super.invokeRemotelyAsync(recipients,rpcCommand,mode,timeout,responseFilter,deliverOrder,anycast);
+}

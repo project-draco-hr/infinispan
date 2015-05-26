@@ -1,18 +1,5 @@
 {
   if (trace)   log.tracef("%s invoking in future call %s to recipient list %s with options %s",t.getAddress(),rpc,recipients,options);
-  Callable<Map<Address,Response>> c=new Callable<Map<Address,Response>>(){
-    @Override public Map<Address,Response> call() throws Exception {
-      try {
-        final Map<Address,Response> result=invokeRemotely(recipients,rpc,options);
-        future.notifyDone(result);
-        return result;
-      }
- catch (      RuntimeException e) {
-        future.notifyException(e);
-        throw e;
-      }
-    }
-  }
-;
-  future.setFuture(asyncExecutor.submit(c));
+  CompletableFuture<Map<Address,Response>> rpcFuture=invokeRemotelyAsync(recipients,rpc,options);
+  CompletableFutures.connect(future,rpcFuture);
 }

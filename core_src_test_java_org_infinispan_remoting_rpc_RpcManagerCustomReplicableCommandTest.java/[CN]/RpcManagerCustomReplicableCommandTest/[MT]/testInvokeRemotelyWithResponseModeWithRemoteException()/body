@@ -2,7 +2,8 @@
   RpcManager rpcManager=cache(0,"testCache").getAdvancedCache().getRpcManager();
   ReplicableCommand command=createReplicableCommandForTest(new IllegalArgumentException("exception!"));
   try {
-    rpcManager.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,5000);
+    RpcOptions rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).timeout(5000,TimeUnit.MILLISECONDS).build();
+    rpcManager.invokeRemotely(null,command,rpcOptions);
     fail("Expected RemoteException not thrown");
   }
  catch (  RemoteException e) {
