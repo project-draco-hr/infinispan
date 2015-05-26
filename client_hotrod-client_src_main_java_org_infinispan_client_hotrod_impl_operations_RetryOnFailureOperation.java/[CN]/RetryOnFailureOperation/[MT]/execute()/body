@@ -8,17 +8,18 @@
       return executeOperation(transport);
     }
  catch (    TransportException te) {
-      if (failedServers == null) {
-        failedServers=new HashSet<SocketAddress>();
-      }
-      failedServers.add(te.getServerAddress());
-      if (transport != null) {
-        if (log.isTraceEnabled())         log.tracef("Invalidating transport %s as a result of transport exception",transport);
-        transportFactory.invalidateTransport(te.getServerAddress(),transport);
-      }
+      SocketAddress address=te.getServerAddress();
+      failedServers=updateFailedServers(address,failedServers);
+      invalidateTransport(transport,address);
       retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,te);
     }
-catch (    RemoteNodeSuspectException|RemoteIllegalLifecycleStateException e) {
+catch (    RemoteIllegalLifecycleStateException e) {
+      SocketAddress address=e.getServerAddress();
+      failedServers=updateFailedServers(address,failedServers);
+      invalidateTransport(transport,address);
+      retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,e);
+    }
+catch (    RemoteNodeSuspectException e) {
       logErrorAndThrowExceptionIfNeeded(retryCount,e);
     }
  finally {
