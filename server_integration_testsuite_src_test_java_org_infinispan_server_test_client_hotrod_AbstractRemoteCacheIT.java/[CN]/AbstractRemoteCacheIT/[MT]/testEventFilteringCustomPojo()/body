@@ -1,0 +1,18 @@
+{
+  final CustomPojoFilteredEventLogListener eventListener=new CustomPojoFilteredEventLogListener();
+  remoteCache.addClientListener(eventListener,new Object[]{"two"},null);
+  try {
+    expectNoEvents(eventListener);
+    remoteCache.put(1,new Person("one"));
+    expectNoEvents(eventListener);
+    remoteCache.put(2,new Person("two"));
+    expectOnlyCreatedEvent(2,eventListener);
+    remoteCache.remove(1);
+    expectNoEvents(eventListener);
+    remoteCache.remove(2);
+    expectOnlyRemovedEvent(2,eventListener);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}

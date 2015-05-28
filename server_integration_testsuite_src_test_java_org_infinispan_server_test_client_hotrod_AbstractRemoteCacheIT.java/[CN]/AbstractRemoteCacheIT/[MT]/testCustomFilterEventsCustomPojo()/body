@@ -1,0 +1,28 @@
+{
+  final CustomPojoFilterCustomEventLogListener eventListener=new CustomPojoFilterCustomEventLogListener();
+  remoteCache.addClientListener(eventListener,new Object[]{new Id(3)},null);
+  try {
+    eventListener.expectNoEvents();
+    remoteCache.put(new Id(1),new Person("one"));
+    eventListener.expectSingleCustomEvent(new Id(1),new Person("one"));
+    remoteCache.put(new Id(1),new Person("uno"));
+    eventListener.expectSingleCustomEvent(new Id(1),new Person("uno"));
+    remoteCache.put(new Id(2),new Person("two"));
+    eventListener.expectSingleCustomEvent(new Id(2),new Person("two"));
+    remoteCache.put(new Id(2),new Person("dos"));
+    eventListener.expectSingleCustomEvent(new Id(2),new Person("dos"));
+    remoteCache.put(new Id(3),new Person("three"));
+    eventListener.expectSingleCustomEvent(new Id(3),null);
+    remoteCache.put(new Id(3),new Person("tres"));
+    eventListener.expectSingleCustomEvent(new Id(3),null);
+    remoteCache.remove(new Id(1));
+    eventListener.expectSingleCustomEvent(new Id(1),null);
+    remoteCache.remove(new Id(2));
+    eventListener.expectSingleCustomEvent(new Id(2),null);
+    remoteCache.remove(new Id(3));
+    eventListener.expectSingleCustomEvent(new Id(3),null);
+  }
+  finally {
+    remoteCache.removeClientListener(eventListener);
+  }
+}
