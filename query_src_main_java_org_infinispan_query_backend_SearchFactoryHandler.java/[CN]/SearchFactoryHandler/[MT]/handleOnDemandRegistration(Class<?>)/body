@@ -1,8 +1,13 @@
 {
-  final Class<?>[] toAdd=filterAlreadyIndexed(classes);
-  if (toAdd.length == 0) {
-    return;
+  List<Class<?>> reducedSet=new ArrayList<>(classes.length);
+  for (  Class<?> type : classes) {
+    if (!clusterRegistry.containsKey(type)) {
+      reducedSet.add(type);
+    }
   }
-  updateSearchFactory(toAdd);
-  updateClusterRegistry(toAdd);
+  if (!reducedSet.isEmpty()) {
+    Class<?>[] toAdd=reducedSet.toArray(new Class[reducedSet.size()]);
+    updateSearchFactory(toAdd);
+    updateClusterRegistry(toAdd);
+  }
 }

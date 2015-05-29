@@ -18,8 +18,10 @@
   luceneQuery=parsingResult.getQuery();
   boolean isCompatMode=cacheConfiguration.compatibility().enabled();
   if (!isCompatMode) {
-    QueryBuilder qb=searchFactory.buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
-    luceneQuery=qb.bool().must(qb.keyword().onField(TYPE_FIELD_NAME).ignoreFieldBridge().ignoreAnalyzer().matching(parsingResult.getTargetEntityName()).createQuery()).must(luceneQuery).createQuery();
+    BooleanQuery booleanQuery=new BooleanQuery();
+    booleanQuery.add(new BooleanClause(new TermQuery(new Term(TYPE_FIELD_NAME,parsingResult.getTargetEntityName())),BooleanClause.Occur.MUST));
+    booleanQuery.add(new BooleanClause(luceneQuery,BooleanClause.Occur.MUST));
+    luceneQuery=booleanQuery;
   }
   CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,parsingResult.getTargetEntity());
   if (parsingResult.getSort() != null) {
