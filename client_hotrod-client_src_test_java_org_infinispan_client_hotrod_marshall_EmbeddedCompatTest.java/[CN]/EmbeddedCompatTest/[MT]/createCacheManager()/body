@@ -9,11 +9,18 @@
   clientBuilder.marshaller(new ProtoStreamMarshaller());
   remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
   remoteCache=remoteCacheManager.getCache();
-  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
-  RemoteCache<String,String> metadataCache=remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-  metadataCache.put("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
-  assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+  SerializationContext clientSerCtx=ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+  MarshallerRegistration.registerMarshallers(clientSerCtx);
+  clientSerCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto",NOT_INDEXED_PROTO_SCHEMA));
+  clientSerCtx.registerMarshaller(new NotIndexedMarshaller());
   ProtobufMetadataManager protobufMetadataManager=cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
+  protobufMetadataManager.registerProtofile("not_indexed.proto",NOT_INDEXED_PROTO_SCHEMA);
+  assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
+  assertNull(protobufMetadataManager.getFileErrors("not_indexed.proto"));
+  assertNull(protobufMetadataManager.getFilesWithErrors());
   protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
+  protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+  protobufMetadataManager.registerMarshaller(new NotIndexedMarshaller());
   return cacheManager;
 }
