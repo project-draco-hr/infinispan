@@ -1,0 +1,14 @@
+{
+  QueryFactory qf=org.infinispan.query.Search.getQueryFactory(cache);
+  QueryBuilder<Query> qb=qf.from(UserHS.class).having("name").eq("John1").toBuilder();
+  final int loops=100000;
+  final long startTs=System.nanoTime();
+  for (int i=0; i < loops; i++) {
+    Query q=qb.build();
+    List<User> list=q.list();
+    assertEquals(1,list.size());
+    assertEquals("John1",list.get(0).getName());
+  }
+  final long duration=(System.nanoTime() - startTs) / loops;
+  System.out.printf("Embedded execution took %d us per query\n",TimeUnit.NANOSECONDS.toMicros(duration));
+}

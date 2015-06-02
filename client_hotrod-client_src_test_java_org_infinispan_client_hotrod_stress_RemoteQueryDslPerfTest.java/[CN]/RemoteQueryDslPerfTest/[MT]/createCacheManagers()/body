@@ -1,0 +1,20 @@
+{
+  ConfigurationBuilder builder=hotRodCacheConfiguration();
+  builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
+  builder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
+  builder.indexing().index(Index.ALL).addProperty("default.directory_provider","ram").addProperty("lucene_version","LUCENE_CURRENT");
+  createClusteredCaches(1,builder);
+  cache=manager(0).getCache();
+  hotRodServer=HotRodClientTestingUtil.startHotRodServer(manager(0));
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
+  clientBuilder.marshaller(new ProtoStreamMarshaller());
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+  remoteCache=remoteCacheManager.getCache();
+  ProtobufMetadataManager protobufMetadataManager=manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+  protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));
+  assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
+  assertNull(protobufMetadataManager.getFilesWithErrors());
+  protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+  MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+}
