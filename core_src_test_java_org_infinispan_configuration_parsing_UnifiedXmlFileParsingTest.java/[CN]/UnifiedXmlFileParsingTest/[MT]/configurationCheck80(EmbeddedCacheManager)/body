@@ -4,4 +4,24 @@
   assertFalse(c.eviction().type() == EvictionType.MEMORY);
   c=cm.getCache("invalid").getCacheConfiguration();
   assertTrue(c.eviction().type() == EvictionType.MEMORY);
+  DefaultThreadFactory threadFactory;
+  BlockingThreadPoolExecutorFactory threadPool;
+  threadFactory=cm.getCacheManagerConfiguration().asyncThreadPool().threadFactory();
+  assertEquals("infinispan",threadFactory.threadGroup().getName());
+  assertEquals("%G %i",threadFactory.threadNamePattern());
+  assertEquals(5,threadFactory.initialPriority());
+  threadPool=cm.getCacheManagerConfiguration().asyncThreadPool().threadPoolFactory();
+  assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS,threadPool.coreThreads());
+  assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS,threadPool.maxThreads());
+  assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE,threadPool.queueLength());
+  assertEquals(TestCacheManagerFactory.KEEP_ALIVE,threadPool.keepAlive());
+  threadFactory=cm.getCacheManagerConfiguration().stateTransferThreadPool().threadFactory();
+  assertEquals("infinispan",threadFactory.threadGroup().getName());
+  assertEquals("%G %i",threadFactory.threadNamePattern());
+  assertEquals(5,threadFactory.initialPriority());
+  threadPool=cm.getCacheManagerConfiguration().stateTransferThreadPool().threadPoolFactory();
+  assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS,threadPool.coreThreads());
+  assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS,threadPool.maxThreads());
+  assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE,threadPool.queueLength());
+  assertEquals(TestCacheManagerFactory.KEEP_ALIVE,threadPool.keepAlive());
 }
