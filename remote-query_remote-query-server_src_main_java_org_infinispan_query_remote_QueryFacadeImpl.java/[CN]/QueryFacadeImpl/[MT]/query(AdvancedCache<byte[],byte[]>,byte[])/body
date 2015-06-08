@@ -3,31 +3,10 @@
     SerializationContext serCtx=ProtobufMetadataManager.getSerializationContextInternal(cache.getCacheManager());
     QueryRequest request=ProtobufUtil.fromByteArray(serCtx,query,0,query.length,QueryRequest.class);
     Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(cache);
-    QueryResponse response;
-    if (cacheConfiguration.indexing().index().isEnabled()) {
-      try {
-        response=executeIndexedQuery(cache,cacheConfiguration,serCtx,request);
-      }
- catch (      IllegalArgumentException e) {
-        if (e.getMessage().contains("ISPN018002:") || e.getMessage().contains("HQL100001:")) {
-          response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
-        }
- else {
-          throw e;
-        }
-      }
-catch (      ParsingException e) {
-        if (e.getMessage().contains("HQL100002:")) {
-          response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
-        }
- else {
-          throw e;
-        }
-      }
-    }
- else {
-      response=executeNonIndexedQuery(cache,cacheConfiguration,serCtx,request);
-    }
+    boolean isIndexed=cacheConfiguration.indexing().index().isEnabled();
+    boolean isCompatMode=cacheConfiguration.compatibility().enabled();
+    Query q=buildQuery(cache,serCtx,request,isIndexed,isCompatMode);
+    QueryResponse response=makeResponse(isCompatMode,serCtx,q);
     return ProtobufUtil.toByteArray(serCtx,response);
   }
  catch (  IOException e) {

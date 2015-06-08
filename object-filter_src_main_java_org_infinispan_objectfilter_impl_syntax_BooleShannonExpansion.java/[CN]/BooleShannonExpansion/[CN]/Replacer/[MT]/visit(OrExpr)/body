@@ -1,0 +1,24 @@
+{
+  List<BooleanExpr> newChildren=new ArrayList<BooleanExpr>(orExpr.getChildren().size());
+  for (  BooleanExpr c : orExpr.getChildren()) {
+    BooleanExpr e=c.acceptVisitor(this);
+    if (e instanceof ConstantBooleanExpr) {
+      if (((ConstantBooleanExpr)e).getValue()) {
+        return ConstantBooleanExpr.TRUE;
+      }
+    }
+ else {
+      if (e instanceof OrExpr) {
+        newChildren.addAll(((OrExpr)e).getChildren());
+      }
+ else {
+        newChildren.add(e);
+      }
+    }
+  }
+  PredicateOptimisations.optimizePredicates(newChildren,true);
+  if (newChildren.size() == 1) {
+    return newChildren.get(0);
+  }
+  return new OrExpr(newChildren);
+}

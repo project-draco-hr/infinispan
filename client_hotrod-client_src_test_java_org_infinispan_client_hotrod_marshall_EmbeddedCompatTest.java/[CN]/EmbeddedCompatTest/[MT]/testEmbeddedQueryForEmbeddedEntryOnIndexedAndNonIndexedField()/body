@@ -1,0 +1,18 @@
+{
+  UserHS user=new UserHS();
+  user.setId(1);
+  user.setName("test name");
+  user.setSurname("test surname");
+  user.setNotes("1234567890");
+  cache.put(1,user);
+  QueryFactory qf=org.infinispan.query.Search.getQueryFactory(cache);
+  Query query=qf.from(UserHS.class).having("notes").like("%567%").and().having("surname").eq("test surname").toBuilder().build();
+  List<User> list=query.list();
+  assertNotNull(list);
+  assertEquals(1,list.size());
+  assertNotNull(list.get(0));
+  assertEquals(UserHS.class,list.get(0).getClass());
+  assertEquals(1,list.get(0).getId());
+  assertEquals("1234567890",list.get(0).getNotes());
+  assertEquals("test surname",list.get(0).getSurname());
+}

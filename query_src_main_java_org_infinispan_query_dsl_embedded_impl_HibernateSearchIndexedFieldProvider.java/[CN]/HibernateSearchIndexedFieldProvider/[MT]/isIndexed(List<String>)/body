@@ -1,0 +1,15 @@
+{
+  EntityIndexBinding entityIndexBinding=searchFactory.getIndexBinding(entityClass);
+  if (entityIndexBinding == null) {
+    return false;
+  }
+  TypeMetadata typeMetadata=entityIndexBinding.getDocumentBuilder().getMetadata();
+  for (int i=0; i < propertyPath.size() - 1; i++) {
+    typeMetadata=getEmbeddedTypeMetadata(typeMetadata,propertyPath.get(i));
+    if (typeMetadata == null) {
+      return false;
+    }
+  }
+  String last=propertyPath.get(propertyPath.size() - 1);
+  return typeMetadata.getPropertyMetadataForProperty(last) != null || getEmbeddedTypeMetadata(typeMetadata,last) != null;
+}

@@ -1,6 +1,5 @@
 {
-  FilterParsingResult<TypeMetadata> parsingResult=parse(jpaQuery);
-  BooleanExpr normalizedFilter=booleanFilterNormalizer.normalize(parsingResult.getQuery());
+  FilterParsingResult<TypeMetadata> parsingResult=parse(jpaQuery,null);
   write.lock();
   try {
     FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByTypeName.get(parsingResult.getTargetEntityName());
@@ -9,7 +8,7 @@
       filtersByTypeName.put(parsingResult.getTargetEntityName(),filterRegistry);
       filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(),filterRegistry);
     }
-    return filterRegistry.addFilter(jpaQuery,normalizedFilter,parsingResult.getProjections(),parsingResult.getSortFields(),callback,eventType);
+    return filterRegistry.addFilter(jpaQuery,parsingResult.getQuery(),parsingResult.getProjections(),parsingResult.getSortFields(),callback,eventType);
   }
   finally {
     write.unlock();

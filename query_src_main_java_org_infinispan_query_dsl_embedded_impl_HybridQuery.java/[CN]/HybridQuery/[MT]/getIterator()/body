@@ -1,0 +1,35 @@
+{
+  final Iterator<Object> it=baseQuery.list().iterator();
+  return new CloseableIterator<ObjectFilter.FilterResult>(){
+    private ObjectFilter.FilterResult nextResult=null;
+    private boolean ready=false;
+    @Override public void close(){
+    }
+    @Override public boolean hasNext(){
+      update();
+      return nextResult != null;
+    }
+    @Override public ObjectFilter.FilterResult next(){
+      if (hasNext()) {
+        ready=false;
+        return nextResult;
+      }
+ else {
+        throw new NoSuchElementException();
+      }
+    }
+    private void update(){
+      if (!ready) {
+        if (it.hasNext()) {
+          Object next=it.next();
+          nextResult=objectFilter.filter(next);
+        }
+ else {
+          nextResult=null;
+        }
+        ready=true;
+      }
+    }
+  }
+;
+}

@@ -1,0 +1,55 @@
+{
+  if (booleanExpr instanceof ConstantBooleanExpr) {
+    return booleanExpr;
+  }
+  Collector collector=new Collector(indexedFieldProvider);
+  booleanExpr.acceptVisitor(collector);
+  if (!collector.foundIndexed) {
+    return ConstantBooleanExpr.TRUE;
+  }
+  if (!collector.predicatesToRemove.isEmpty()) {
+    for (    PrimaryPredicateExpr e : collector.predicatesToRemove) {
+      Replacer replacer1=new Replacer(e,ConstantBooleanExpr.TRUE);
+      BooleanExpr e1=booleanExpr.acceptVisitor(replacer1);
+      if (!replacer1.found) {
+        continue;
+      }
+      if (e1 == ConstantBooleanExpr.TRUE) {
+        return ConstantBooleanExpr.TRUE;
+      }
+      Replacer replacer2=new Replacer(e,ConstantBooleanExpr.FALSE);
+      BooleanExpr e2=booleanExpr.acceptVisitor(replacer2);
+      if (e2 == ConstantBooleanExpr.TRUE) {
+        return ConstantBooleanExpr.TRUE;
+      }
+      if (e1 == ConstantBooleanExpr.FALSE) {
+        booleanExpr=e2;
+      }
+ else       if (e2 == ConstantBooleanExpr.FALSE) {
+        booleanExpr=e1;
+      }
+ else {
+        OrExpr disjunction;
+        if (e1 instanceof OrExpr) {
+          disjunction=(OrExpr)e1;
+          if (e2 instanceof OrExpr) {
+            disjunction.getChildren().addAll(((OrExpr)e2).getChildren());
+          }
+ else {
+            disjunction.getChildren().add(e2);
+          }
+        }
+ else         if (e2 instanceof OrExpr) {
+          disjunction=(OrExpr)e2;
+          disjunction.getChildren().add(e1);
+        }
+ else {
+          disjunction=new OrExpr(e1,e2);
+        }
+        PredicateOptimisations.optimizePredicates(disjunction.getChildren(),false);
+        booleanExpr=disjunction;
+      }
+    }
+  }
+  return booleanExpr;
+}

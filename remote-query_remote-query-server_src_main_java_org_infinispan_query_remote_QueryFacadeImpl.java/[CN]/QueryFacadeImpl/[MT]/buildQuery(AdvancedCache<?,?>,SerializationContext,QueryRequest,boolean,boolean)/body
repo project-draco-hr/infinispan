@@ -1,0 +1,30 @@
+{
+  if (isIndexed) {
+    SearchManager searchManager=Search.getSearchManager(cache);
+    SearchIntegrator searchFactory=searchManager.unwrap(SearchIntegrator.class);
+    Class<? extends Matcher> matcherImplClass=isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
+    BaseMatcher matcher=(BaseMatcher)SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
+    FilterParsingResult<?> parsingResult=matcher.parse(request.getJpqlString(),null);
+    BooleanExpr normalizedExpr=booleanFilterNormalizer.normalize(parsingResult.getQuery());
+    if (normalizedExpr == ConstantBooleanExpr.FALSE) {
+      return new EmptyResultQuery(null,cache,request.getJpqlString(),request.getStartOffset(),request.getMaxResults());
+    }
+    BooleShannonExpansion.IndexedFieldProvider indexedFieldProvider=isCompatMode ? new HibernateSearchIndexedFieldProvider(searchFactory,(Class)parsingResult.getTargetEntityMetadata()) : new ProtobufIndexedFieldProvider((Descriptor)parsingResult.getTargetEntityMetadata());
+    BooleShannonExpansion bse=new BooleShannonExpansion(indexedFieldProvider);
+    BooleanExpr expansion=bse.expand(normalizedExpr);
+    if (expansion == normalizedExpr) {
+      return buildLuceneQuery(cache,isCompatMode,serCtx,request.getJpqlString(),request.getStartOffset(),request.getMaxResults());
+    }
+    if (expansion == ConstantBooleanExpr.TRUE) {
+      return new EmbeddedQuery(null,cache,makeFilter(cache,true,isCompatMode,request.getJpqlString()),request.getStartOffset(),request.getMaxResults());
+    }
+    String expandedJpaOut=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),expansion,null);
+    Query expandedQuery=buildLuceneQuery(cache,isCompatMode,serCtx,expandedJpaOut,-1,-1);
+    ProtobufMatcher protobufMatcher=SecurityActions.getCacheComponentRegistry(cache).getComponent(ProtobufMatcher.class);
+    ObjectFilter objectFilter=protobufMatcher.getObjectFilter(request.getJpqlString());
+    return new HybridQuery(null,cache,request.getJpqlString(),objectFilter,request.getStartOffset(),request.getMaxResults(),expandedQuery);
+  }
+ else {
+    return new EmbeddedQuery(null,cache,makeFilter(cache,false,isCompatMode,request.getJpqlString()),request.getStartOffset(),request.getMaxResults());
+  }
+}
