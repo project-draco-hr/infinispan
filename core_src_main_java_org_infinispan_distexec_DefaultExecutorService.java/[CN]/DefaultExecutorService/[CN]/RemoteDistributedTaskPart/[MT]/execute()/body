@@ -1,7 +1,8 @@
 {
   if (trace)   log.tracef("Sending %s to remote execution at node %s",this,getExecutionTarget());
   try {
-    rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()),getCommand(),rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(),TimeUnit.MILLISECONDS).build(),future);
+    CompletableFuture<Map<Address,Response>> remoteFuture=rpc.invokeRemotelyAsync(Collections.singletonList(getExecutionTarget()),getCommand(),rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(),TimeUnit.MILLISECONDS).build());
+    future=remoteFuture;
   }
  catch (  Throwable e) {
     log.remoteExecutionFailed(getExecutionTarget(),e);

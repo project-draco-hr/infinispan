@@ -6,24 +6,14 @@
     final SingleRpcCommand rpcCommand=commandsFactory.buildSingleRpcCommand(ic);
     boolean multicast=isUseMulticast(nodes);
     if (trace)     log.tracef("Invalidating keys %s on nodes %s. Use multicast? %s",keys,invalidationAddresses,multicast);
-    Runnable toExecute;
+    CompletableFuture<Map<Address,Response>> future;
     if (multicast) {
-      toExecute=new Runnable(){
-        @Override public void run(){
-          rpcManager.invokeRemotely(null,rpcCommand,syncIgnoreLeaversRpcOptions);
-        }
-      }
-;
+      future=rpcManager.invokeRemotelyAsync(null,rpcCommand,syncIgnoreLeaversRpcOptions);
     }
  else {
-      toExecute=new Runnable(){
-        @Override public void run(){
-          rpcManager.invokeRemotely(invalidationAddresses,rpcCommand,syncIgnoreLeaversRpcOptions);
-        }
-      }
-;
+      future=rpcManager.invokeRemotelyAsync(invalidationAddresses,rpcCommand,syncIgnoreLeaversRpcOptions);
     }
-    return (Future<Object>)asyncTransportExecutor.submit(toExecute);
+    return future;
   }
  else {
     if (trace)     log.tracef("No L1 caches to invalidate for keys %s",keys);

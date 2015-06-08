@@ -9,8 +9,7 @@
     throw te;
   }
 catch (  Exception e) {
-    long remainingNanos=timeoutNanos > 0 ? timeService.remainingTime(endNanos,TimeUnit.NANOSECONDS) : timeoutNanos;
-    if (timeoutNanos > 0 && remainingNanos <= 0) {
+    if (e instanceof ExecutionException && e.getCause() instanceof org.infinispan.util.concurrent.TimeoutException) {
       if (trace)       log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception",e);
       throw new TimeoutException();
     }

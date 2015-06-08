@@ -3,28 +3,28 @@
   CommandsFactory factory=cache.getComponentRegistry().getComponent(CommandsFactory.class);
   final CreateCacheCommand ccc=factory.buildCreateCacheCommand(tmpCacheName,intermediateCacheConfigurationName,true,rpc.getMembers().size());
   log.debugf("Invoking %s across members %s ",ccc,cache.getRpcManager().getMembers());
-  Future<Object> future=mapReduceManager.getExecutorService().submit(new Callable<Object>(){
-    @Override public Object call() throws Exception {
-      ccc.init(cache.getCacheManager(),stateTransferManager);
-      try {
-        return ccc.perform(null);
-      }
- catch (      Throwable e) {
-        throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
-      }
-    }
-  }
-);
+  CompletableFuture<Map<Address,Response>> remoteFuture=rpc.invokeRemotelyAsync(cache.getRpcManager().getMembers(),ccc,rpcOptionsBuilder.build());
   try {
-    future.get();
+    ccc.init(cache.getCacheManager(),stateTransferManager);
+    try {
+      ccc.perform(null);
+    }
+ catch (    Throwable e) {
+      throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
+    }
   }
  catch (  Exception e) {
     throw new MapReduceException(e);
   }
-  Map<Address,Response> map=rpc.invokeRemotely(cache.getRpcManager().getMembers(),ccc,rpcOptionsBuilder.build());
-  for (  Entry<Address,Response> e : map.entrySet()) {
-    if (!e.getValue().isSuccessful()) {
-      throw new MapReduceException("Could not initialize tmp cache " + tmpCacheName + " at "+ e.getKey()+ " for  "+ this);
+  try {
+    Map<Address,Response> map=remoteFuture.get();
+    for (    Entry<Address,Response> e : map.entrySet()) {
+      if (!e.getValue().isSuccessful()) {
+        throw new MapReduceException("Could not initialize tmp cache " + tmpCacheName + " at "+ e.getKey()+ " for  "+ this);
+      }
     }
+  }
+ catch (  InterruptedException|ExecutionException e) {
+    throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
   }
 }
