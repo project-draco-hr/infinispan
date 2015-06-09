@@ -7,5 +7,15 @@
     }
   }
 ;
-  des.submit(fakeAddress,new SimpleCallable());
+  Future<?> future=des.submit(fakeAddress,new SimpleCallable());
+  try {
+    future.get();
+    fail("Test should have thrown an execution exception!");
+  }
+ catch (  ExecutionException e) {
+    Throwable t=e.getCause();
+    if (!(t instanceof SuspectException)) {
+      throw e;
+    }
+  }
 }

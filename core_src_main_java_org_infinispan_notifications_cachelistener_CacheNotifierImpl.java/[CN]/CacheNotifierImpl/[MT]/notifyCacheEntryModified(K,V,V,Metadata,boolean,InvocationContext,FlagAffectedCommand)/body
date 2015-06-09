@@ -3,9 +3,20 @@
     EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_MODIFIED);
     configureEvent(e,key,value,pre,ctx,command,previousValue,previousMetadata);
     boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-    for (    CacheEntryListenerInvocation<K,V> listener : cacheEntryModifiedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
-    if (!ctx.isInTxScope()) {
-      eventManager.sendEvents();
+    boolean sendEvents=!ctx.isInTxScope();
+    try {
+      for (      CacheEntryListenerInvocation<K,V> listener : cacheEntryModifiedListeners) {
+        listener.invoke(e,isLocalNodePrimaryOwner);
+      }
+      if (sendEvents) {
+        eventManager.sendEvents();
+        sendEvents=false;
+      }
+    }
+  finally {
+      if (sendEvents) {
+        eventManager.dropEvents();
+      }
     }
   }
 }
