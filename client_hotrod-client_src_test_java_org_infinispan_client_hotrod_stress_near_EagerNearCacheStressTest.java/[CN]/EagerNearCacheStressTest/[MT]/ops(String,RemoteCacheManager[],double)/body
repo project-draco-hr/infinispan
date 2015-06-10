@@ -1,0 +1,14 @@
+{
+  CyclicBarrier barrier=new CyclicBarrier((NUM_CLIENTS * NUM_THREADS_PER_CLIENT) + 1);
+  List<Future<Void>> futures=new ArrayList<>(NUM_CLIENTS * NUM_THREADS_PER_CLIENT);
+  for (  RemoteCacheManager remotecm : remotecms) {
+    RemoteCache<Integer,String> remote=remotecm.getCache();
+    for (int i=0; i < NUM_THREADS_PER_CLIENT; i++) {
+      Callable<Void> call=new Main(barrier,testName,remote,getRatio);
+      futures.add(EXEC.submit(call));
+    }
+  }
+  barrierAwait(barrier);
+  barrierAwait(barrier);
+  for (  Future<Void> f : futures)   futureGet(f);
+}

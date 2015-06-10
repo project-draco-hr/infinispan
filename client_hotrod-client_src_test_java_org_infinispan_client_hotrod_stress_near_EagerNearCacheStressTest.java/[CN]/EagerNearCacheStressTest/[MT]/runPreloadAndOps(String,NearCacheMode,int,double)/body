@@ -1,0 +1,14 @@
+{
+  EmbeddedCacheManager cm=createCacheManager();
+  int port=11222;
+  preloadData(port);
+  RemoteCacheManager[] remotecms=new RemoteCacheManager[NUM_CLIENTS];
+  for (int i=0; i < NUM_CLIENTS; i++)   remotecms[i]=getRemoteCacheManager(port,nearCacheMode,maxEntries);
+  try {
+    ops(name,remotecms,getRatio);
+  }
+  finally {
+    killRemoteCacheManagers(remotecms);
+    TestingUtil.killCacheManagers(cm);
+  }
+}
