@@ -19,8 +19,9 @@
       ce=ce.getCause();
     }
     if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
-    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",command);
-    int newTopologyId=Math.max(currentTopologyId(),commandTopologyId + 1);
+    int currentTopologyId=currentTopologyId();
+    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",currentTopologyId,command);
+    int newTopologyId=Math.max(currentTopologyId,commandTopologyId + 1);
     command.setTopologyId(newTopologyId);
     waitForTransactionData(newTopologyId);
     command.setFlags(Flag.COMMAND_RETRY);
