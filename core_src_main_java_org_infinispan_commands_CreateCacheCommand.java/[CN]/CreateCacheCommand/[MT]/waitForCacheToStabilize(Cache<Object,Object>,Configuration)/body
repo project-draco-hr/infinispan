@@ -1,0 +1,19 @@
+{
+  ComponentRegistry componentRegistry=cache.getAdvancedCache().getComponentRegistry();
+  StateTransferManager stateTransferManager=componentRegistry.getStateTransferManager();
+  StateTransferLock stateTransferLock=componentRegistry.getStateTransferLock();
+  TimeService timeService=componentRegistry.getTimeService();
+  long endTime=timeService.expectedEndTime(cacheConfig.clustering().stateTransfer().timeout(),TimeUnit.MILLISECONDS);
+  int expectedSize=cacheManager.getTransport().getMembers().size();
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  while (cacheTopology.getMembers().size() != expectedSize || cacheTopology.getPendingCH() != null) {
+    long remainingTime=timeService.remainingTime(endTime,TimeUnit.NANOSECONDS);
+    try {
+      stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1,remainingTime,TimeUnit.NANOSECONDS);
+    }
+ catch (    TimeoutException ignored) {
+      throw log.creatingTmpCacheTimedOut(cacheNameToCreate,cacheManager.getAddress());
+    }
+    cacheTopology=stateTransferManager.getCacheTopology();
+  }
+}

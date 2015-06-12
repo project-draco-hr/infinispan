@@ -1,29 +1,20 @@
 {
-  Configuration cacheConfig=null;
-  if (cacheConfigurationName != null) {
-    cacheConfig=cacheManager.getCacheConfiguration(cacheConfigurationName);
-    if (cacheConfig == null) {
-      if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
-        cacheConfig=new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
-        log.debugf("Using default tmp cache configuration, defined as ",cacheNameToCreate);
-      }
+  if (cacheConfigurationName == null) {
+    throw new NullPointerException("Cache configuration name is required");
+  }
+  Configuration cacheConfig=cacheManager.getCacheConfiguration(cacheConfigurationName);
+  if (cacheConfig == null) {
+    if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
+      cacheConfig=new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
+      log.debugf("Using default tmp cache configuration, defined as ",cacheNameToCreate);
+    }
  else {
-        throw new IllegalStateException("Cache configuration " + cacheConfigurationName + " is not defined on node "+ this.cacheManager.getAddress());
-      }
+      throw new IllegalStateException("Cache configuration " + cacheConfigurationName + " is not defined on node "+ this.cacheManager.getAddress());
     }
   }
   cacheManager.defineConfiguration(cacheNameToCreate,cacheConfig);
-  cacheManager.getCache(cacheNameToCreate);
-  final long startTime=System.nanoTime();
-  final long maxRunTime=TimeUnit.MILLISECONDS.toNanos(cacheConfig.clustering().stateTransfer().timeout());
-  int expectedSize=cacheManager.getTransport().getMembers().size();
-  while (stm.getCacheTopology().getMembers().size() != expectedSize && stm.getCacheTopology().getPendingCH() != null) {
-    Thread.sleep(50);
-    long estimatedRunTime=System.nanoTime() - startTime;
-    if (estimatedRunTime > maxRunTime) {
-      throw log.creatingTmpCacheTimedOut(cacheNameToCreate,cacheManager.getAddress());
-    }
-  }
+  Cache<Object,Object> cache=cacheManager.getCache(cacheNameToCreate);
+  waitForCacheToStabilize(cache,cacheConfig);
   log.debugf("Defined and started cache %s",cacheNameToCreate);
   return true;
 }
