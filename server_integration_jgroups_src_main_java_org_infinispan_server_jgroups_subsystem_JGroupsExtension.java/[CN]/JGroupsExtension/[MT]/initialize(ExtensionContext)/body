@@ -1,0 +1,11 @@
+{
+  SubsystemRegistration registration=context.registerSubsystem(SUBSYSTEM_NAME,JGroupsModel.CURRENT.getVersion());
+  registration.registerSubsystemModel(new JGroupsSubsystemResourceDefinition(context.isRuntimeOnlyRegistrationValid()));
+  registration.registerXMLElementWriter(new JGroupsSubsystemXMLWriter());
+  if (context.isRegisterTransformers()) {
+    for (    JGroupsModel model : EnumSet.complementOf(EnumSet.of(JGroupsModel.CURRENT))) {
+      ModelVersion version=model.getVersion();
+      TransformationDescription.Tools.register(JGroupsSubsystemResourceDefinition.buildTransformers(version),registration,version);
+    }
+  }
+}

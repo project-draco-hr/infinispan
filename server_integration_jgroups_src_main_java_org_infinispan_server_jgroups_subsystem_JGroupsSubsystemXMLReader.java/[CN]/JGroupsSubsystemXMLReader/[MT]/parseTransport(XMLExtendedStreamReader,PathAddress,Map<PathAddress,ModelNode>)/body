@@ -1,0 +1,70 @@
+{
+  String type=require(reader,Attribute.TYPE);
+  PathAddress address=stackAddress.append(TransportResourceDefinition.pathElement(type));
+  ModelNode operation=Util.createAddOperation(address);
+  operations.put(address,operation);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case SHARED:
+{
+        TransportResourceDefinition.SHARED.parseAndSetParameter(value,operation,reader);
+        break;
+      }
+case DIAGNOSTICS_SOCKET_BINDING:
+{
+      TransportResourceDefinition.DIAGNOSTICS_SOCKET_BINDING.parseAndSetParameter(value,operation,reader);
+      break;
+    }
+case DEFAULT_EXECUTOR:
+{
+    TransportResourceDefinition.DEFAULT_EXECUTOR.parseAndSetParameter(value,operation,reader);
+    break;
+  }
+case OOB_EXECUTOR:
+{
+  TransportResourceDefinition.OOB_EXECUTOR.parseAndSetParameter(value,operation,reader);
+  break;
+}
+case TIMER_EXECUTOR:
+{
+TransportResourceDefinition.TIMER_EXECUTOR.parseAndSetParameter(value,operation,reader);
+break;
+}
+case THREAD_FACTORY:
+{
+TransportResourceDefinition.THREAD_FACTORY.parseAndSetParameter(value,operation,reader);
+break;
+}
+case SITE:
+{
+if (this.schema.since(JGroupsSchema.VERSION_1_1,JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+TransportResourceDefinition.SITE.parseAndSetParameter(value,operation,reader);
+break;
+}
+}
+case RACK:
+{
+if (this.schema.since(JGroupsSchema.VERSION_1_1,JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+TransportResourceDefinition.RACK.parseAndSetParameter(value,operation,reader);
+break;
+}
+}
+case MACHINE:
+{
+if (this.schema.since(JGroupsSchema.VERSION_1_1,JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+TransportResourceDefinition.MACHINE.parseAndSetParameter(value,operation,reader);
+break;
+}
+}
+default :
+{
+this.parseProtocolAttribute(reader,i,operation);
+}
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+this.parseProtocolElement(reader,address,operations);
+}
+}

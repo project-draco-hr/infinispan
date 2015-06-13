@@ -1,0 +1,44 @@
+{
+  String name=require(reader,Attribute.NAME);
+  PathAddress address=subsystemAddress.append(StackResourceDefinition.pathElement(name));
+  ModelNode operation=Util.createAddOperation(address);
+  operations.put(address,operation);
+  boolean hasSasl=false;
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case TRANSPORT:
+{
+        this.parseTransport(reader,address,operations);
+        break;
+      }
+case PROTOCOL:
+{
+      this.parseProtocol(reader,address,operations);
+      break;
+    }
+case RELAY:
+{
+    if (this.schema.since(JGroupsSchema.VERSION_2_0) || this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+      this.parseRelay(reader,address,operations);
+      break;
+    }
+  }
+case SASL:
+{
+  if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0))   if (!hasSasl) {
+    this.parseSasl(reader,address,operations);
+    hasSasl=true;
+  }
+ else {
+    throw ParseUtils.unexpectedElement(reader);
+  }
+  break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}

@@ -1,0 +1,49 @@
+{
+  PathAddress address=stackAddress.append(SaslResourceDefinition.PATH);
+  ModelNode operation=Util.createAddOperation(address);
+  operations.put(address,operation);
+  EnumSet<Attribute> required=EnumSet.of(Attribute.MECH,Attribute.SECURITY_REALM);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    required.remove(attribute);
+switch (attribute) {
+case CLUSTER_ROLE:
+{
+        SaslResourceDefinition.CLUSTER_ROLE.parseAndSetParameter(value,operation,reader);
+        break;
+      }
+case MECH:
+{
+      SaslResourceDefinition.MECH.parseAndSetParameter(value,operation,reader);
+      break;
+    }
+case SECURITY_REALM:
+{
+    SaslResourceDefinition.SECURITY_REALM.parseAndSetParameter(value,operation,reader);
+    break;
+  }
+default :
+{
+  throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+if (!required.isEmpty()) {
+throw ParseUtils.missingRequired(reader,required);
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case PROPERTY:
+{
+this.parseProperty(reader,address,operations);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}
