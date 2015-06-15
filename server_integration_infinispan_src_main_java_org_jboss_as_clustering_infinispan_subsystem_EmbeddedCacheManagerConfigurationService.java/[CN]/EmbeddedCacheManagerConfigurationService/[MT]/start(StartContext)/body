@@ -18,12 +18,12 @@
   TransportConfiguration transport=this.dependencies.getTransportConfiguration();
   TransportConfigurationBuilder transportBuilder=builder.transport();
   if (transport != null) {
-    transportBuilder.transport(new ChannelTransport(context.getController().getServiceContainer(),ChannelService.getServiceName(this.name)));
+    transportBuilder.transport(new ChannelTransport(transport.getChannel(),transport.getChannelFactory()));
     Long timeout=transport.getLockTimeout();
     if (timeout != null) {
       transportBuilder.distributedSyncTimeout(timeout.longValue());
     }
-    org.jboss.as.clustering.jgroups.TransportConfiguration.Topology topology=transport.getChannelFactory().getProtocolStackConfiguration().getTransport().getTopology();
+    org.infinispan.server.jgroups.spi.TransportConfiguration.Topology topology=transport.getChannelFactory().getProtocolStackConfiguration().getTransport().getTopology();
     if (topology != null) {
       String site=topology.getSite();
       if (site != null) {
@@ -95,7 +95,7 @@
     builder.stateTransferThreadPool().threadPoolFactory(new ManagedExecutorFactory(stateTransferExecutor));
   }
   GlobalJmxStatisticsConfigurationBuilder jmxBuilder=builder.globalJmxStatistics().cacheManagerName(this.name);
-  jmxBuilder.jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName());
+  jmxBuilder.jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(null).getCanonicalName());
   MBeanServer server=this.dependencies.getMBeanServer();
   if (server != null && this.statistics) {
     jmxBuilder.enable().mBeanServerLookup(new MBeanServerProvider(server)).allowDuplicateDomains(true);

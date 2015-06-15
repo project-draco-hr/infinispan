@@ -1,0 +1,14 @@
+{
+  String name=context.getCurrentAddressValue();
+  context.removeService(InfinispanBindingFactory.createCacheContainerBinding(name).getBinderServiceName());
+  for (  CacheContainerServiceNameFactory factory : CacheContainerServiceName.values()) {
+    context.removeService(factory.getServiceName(name));
+  }
+  if (model.hasDefined(TransportResource.TRANSPORT_PATH.getKey())) {
+    context.removeService(new TransportConfigurationBuilder(name).getServiceName());
+    context.removeService(JGroupsBindingFactory.createChannelBinding(name).getBinderServiceName());
+    for (    ChannelServiceNameFactory factory : ChannelServiceName.values()) {
+      context.removeService(factory.getServiceName(name));
+    }
+  }
+}
