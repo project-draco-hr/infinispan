@@ -2,7 +2,7 @@
   LockableStore underlying=new LockableStore();
   ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
   LockableStoreConfigurationBuilder lcscsBuilder=(LockableStoreConfigurationBuilder)builder.persistence().addStore(new LockableStoreConfigurationBuilder(builder.persistence()));
-  lcscsBuilder.async().modificationQueueSize(10);
+  lcscsBuilder.async().modificationQueueSize(10).threadPoolSize(3);
   lcscsBuilder.async().shutdownTimeout(50);
   writer=new AdvancedAsyncCacheWriter(underlying);
   writer.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller));
@@ -33,4 +33,5 @@
   finally {
     writer.stop();
   }
+  assertEquals(3,underlying.threads.size());
 }
