@@ -1,0 +1,26 @@
+{
+  TestResourceTracker.backgroundTestStarted(this);
+  createStore(true);
+  final int lastValue[]={0};
+  final String key="testConcurrentWriteAndStop";
+  Thread t=new Thread(){
+    @Override public void run(){
+      try {
+        for (; ; ) {
+          int v=lastValue[0] + 1;
+          writer.write(new MarshalledEntryImpl(key,key + v,null,marshaller()));
+          lastValue[0]=v;
+        }
+      }
+ catch (      CacheException expected) {
+      }
+    }
+  }
+;
+  t.start();
+  Thread.sleep(500);
+  writer.stop();
+  MarshalledEntry me=loader.undelegate().load(key);
+  assertNotNull(me);
+  assertEquals(me.getValue(),key + lastValue[0]);
+}
