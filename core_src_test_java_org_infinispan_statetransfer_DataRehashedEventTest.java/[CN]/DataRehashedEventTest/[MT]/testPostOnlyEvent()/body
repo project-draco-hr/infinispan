@@ -1,0 +1,12 @@
+{
+  Cache<Object,Object> c1=cache(0);
+  rehashListener=new DataRehashedListenrPostOnly();
+  c1.addListener(rehashListener);
+  ConsistentHash ch1Node=advancedCache(0).getDistributionManager().getReadConsistentHash();
+  assertEquals(rehashListener.removeEvents().size(),0);
+  addClusterEnabledCacheManager(defaultConfig);
+  cache(1);
+  TestingUtil.waitForRehashToComplete(cache(0),cache(1));
+  List<DataRehashedEvent<Object,Object>> events=rehashListener.removeEvents();
+  assertEquals(1,events.size());
+}
