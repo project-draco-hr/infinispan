@@ -1,19 +1,14 @@
 {
   RpcManager rpc=cache.getRpcManager();
   CommandsFactory factory=cache.getComponentRegistry().getComponent(CommandsFactory.class);
-  final CreateCacheCommand ccc=factory.buildCreateCacheCommand(tmpCacheName,intermediateCacheConfigurationName,true,rpc.getMembers().size());
+  final CreateCacheCommand ccc=factory.buildCreateCacheCommand(tmpCacheName,intermediateCacheConfigurationName,rpc.getMembers().size());
   log.debugf("Invoking %s across members %s ",ccc,cache.getRpcManager().getMembers());
   CompletableFuture<Map<Address,Response>> remoteFuture=rpc.invokeRemotelyAsync(cache.getRpcManager().getMembers(),ccc,rpcOptionsBuilder.build());
   try {
     ccc.init(cache.getCacheManager());
-    try {
-      ccc.perform(null);
-    }
- catch (    Throwable e) {
-      throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ",e);
-    }
+    ccc.perform(null);
   }
- catch (  Exception e) {
+ catch (  Throwable e) {
     throw new MapReduceException(e);
   }
   try {
