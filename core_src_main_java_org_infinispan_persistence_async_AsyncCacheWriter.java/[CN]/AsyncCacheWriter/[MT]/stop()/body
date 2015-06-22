@@ -4,8 +4,9 @@
   state.get().stopped=true;
   stateLock.writeUnlock();
   try {
-    coordinator.join(shutdownTimeout);
-    if (coordinator.isAlive())     log.errorAsyncStoreNotStopped();
+    coordinator.join();
+    executor.shutdown();
+    if (!executor.awaitTermination(1,TimeUnit.SECONDS))     log.errorAsyncStoreNotStopped();
   }
  catch (  InterruptedException e) {
     log.interruptedWaitingAsyncStorePush(e);
