@@ -17,7 +17,9 @@
     interceptorChain.appendInterceptor(createInterceptor(new TypeConverterInterceptor(compatibilityMarshaller),TypeConverterInterceptor.class),false);
   }
   if (configuration.clustering().async().useReplQueue() || hasAsyncStore())   interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(),IsMarshallableInterceptor.class),false);
-  interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(),CacheMgmtInterceptor.class),false);
+  if (configuration.jmxStatistics().available()) {
+    interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(),CacheMgmtInterceptor.class),false);
+  }
   if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated()) {
     if (isTotalOrder) {
       interceptorChain.appendInterceptor(createInterceptor(new TotalOrderStateTransferInterceptor(),TotalOrderStateTransferInterceptor.class),false);
