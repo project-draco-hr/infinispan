@@ -1,0 +1,54 @@
+{
+  if (createLdapServer != null) {
+    LdapServer ldapServer=new LdapServer();
+    ldapServer.setServiceName(createLdapServer.name());
+    createTransports(ldapServer,createLdapServer.transports());
+    ldapServer.setDirectoryService(directoryService);
+    directoryService.setAllowAnonymousAccess(createLdapServer.allowAnonymousAccess());
+    ldapServer.setSaslHost(createLdapServer.saslHost());
+    ldapServer.setSaslPrincipal(createLdapServer.saslPrincipal());
+    if (!Strings.isEmpty(createLdapServer.keyStore())) {
+      ldapServer.setKeystoreFile(createLdapServer.keyStore());
+      ldapServer.setCertificatePassword(createLdapServer.certificatePassword());
+    }
+    for (    Class<?> extOpClass : createLdapServer.extendedOpHandlers()) {
+      try {
+        ExtendedOperationHandler extOpHandler=(ExtendedOperationHandler)extOpClass.newInstance();
+        ldapServer.addExtendedOperationHandler(extOpHandler);
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(I18n.err(I18n.ERR_690,extOpClass.getName()),e);
+      }
+    }
+    for (    SaslMechanism saslMech : createLdapServer.saslMechanisms()) {
+      try {
+        MechanismHandler handler=(MechanismHandler)saslMech.implClass().newInstance();
+        ldapServer.addSaslMechanismHandler(saslMech.name(),handler);
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(I18n.err(I18n.ERR_691,saslMech.name(),saslMech.implClass().getName()),e);
+      }
+    }
+    NtlmMechanismHandler ntlmHandler=(NtlmMechanismHandler)ldapServer.getSaslMechanismHandlers().get(SupportedSaslMechanisms.NTLM);
+    if (ntlmHandler != null) {
+      Class<?> ntlmProviderClass=createLdapServer.ntlmProvider();
+      if ((ntlmProviderClass != null) && (ntlmProviderClass != Object.class)) {
+        try {
+          ntlmHandler.setNtlmProvider((NtlmProvider)ntlmProviderClass.newInstance());
+        }
+ catch (        Exception e) {
+          throw new RuntimeException(I18n.err(I18n.ERR_692),e);
+        }
+      }
+    }
+    List<String> realms=new ArrayList<String>();
+    for (    String s : createLdapServer.saslRealms()) {
+      realms.add(s);
+    }
+    ldapServer.setSaslRealms(realms);
+    return ldapServer;
+  }
+ else {
+    return null;
+  }
+}

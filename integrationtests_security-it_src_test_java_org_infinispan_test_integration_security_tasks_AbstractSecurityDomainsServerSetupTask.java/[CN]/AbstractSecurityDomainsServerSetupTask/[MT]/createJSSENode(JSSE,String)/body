@@ -1,0 +1,17 @@
+{
+  if (jsse == null) {
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("No security configuration for JSSE module.");
+    }
+    return null;
+  }
+  final ModelNode securityComponentNode=new ModelNode();
+  securityComponentNode.get(OP).set(ADD);
+  securityComponentNode.get(OP_ADDR).add(SUBSYSTEM,SUBSYSTEM_SECURITY);
+  securityComponentNode.get(OP_ADDR).add(Constants.SECURITY_DOMAIN,domainName);
+  securityComponentNode.get(OP_ADDR).add(Constants.JSSE,Constants.CLASSIC);
+  addSecureStore(jsse.getTrustStore(),Constants.TRUSTSTORE,securityComponentNode);
+  addSecureStore(jsse.getKeyStore(),Constants.KEYSTORE,securityComponentNode);
+  securityComponentNode.get(OPERATION_HEADERS).get(ALLOW_RESOURCE_SERVICE_RESTART).set(true);
+  return securityComponentNode;
+}

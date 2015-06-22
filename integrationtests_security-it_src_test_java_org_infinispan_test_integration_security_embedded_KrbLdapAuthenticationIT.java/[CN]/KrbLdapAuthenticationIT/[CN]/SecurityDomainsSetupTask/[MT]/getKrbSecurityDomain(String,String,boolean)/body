@@ -1,0 +1,18 @@
+{
+  final SecurityModule.Builder krbModuleBuilder=new SecurityModule.Builder();
+  if (Utils.IBM_JDK) {
+    krbModuleBuilder.name("com.ibm.security.auth.module.Krb5LoginModule").putOption("useKeytab","${java.io.tmpdir}" + File.separator + "keytabs"+ File.separator+ name+ ".keytab");
+    if (isService) {
+      krbModuleBuilder.putOption("credsType","both").putOption("forwardable",TRUE).putOption("proxiable",TRUE).putOption("noAddress",TRUE);
+    }
+ else     krbModuleBuilder.putOption("credsType","acceptor");
+  }
+ else {
+    krbModuleBuilder.name("Kerberos").putOption("useKeyTab",TRUE).putOption("keyTab","${java.io.tmpdir}" + File.separator + "keytabs"+ File.separator+ name+ ".keytab");
+    if (isService) {
+      krbModuleBuilder.putOption("storeKey",TRUE).putOption("refreshKrb5Config",TRUE).putOption("doNotPrompt",TRUE);
+    }
+  }
+  krbModuleBuilder.putOption("principal",principal + "@INFINISPAN.ORG").putOption("debug",TRUE);
+  return new SecurityDomain.Builder().name("krb-" + name).cacheType("default").loginModules(krbModuleBuilder.build()).build();
+}

@@ -1,0 +1,27 @@
+{
+  if (transportBuilders.length != 0) {
+    for (    CreateTransport transportBuilder : transportBuilders) {
+      List<Transport> transports=createTransports(transportBuilder);
+      for (      Transport t : transports) {
+        ldapServer.addTransports(t);
+      }
+    }
+  }
+ else {
+    try {
+      int port=getFreePort();
+      Transport ldap=new TcpTransport(port);
+      ldapServer.addTransports(ldap);
+    }
+ catch (    IOException ioe) {
+    }
+    try {
+      int port=getFreePort();
+      Transport ldaps=new TcpTransport(port);
+      ldaps.setEnableSSL(true);
+      ldapServer.addTransports(ldaps);
+    }
+ catch (    IOException ioe) {
+    }
+  }
+}

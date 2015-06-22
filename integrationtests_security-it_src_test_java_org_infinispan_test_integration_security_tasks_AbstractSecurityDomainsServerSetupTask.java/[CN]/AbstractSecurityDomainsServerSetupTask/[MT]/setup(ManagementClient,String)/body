@@ -1,0 +1,42 @@
+{
+  this.managementClient=managementClient;
+  securityDomains=getSecurityDomains();
+  if (securityDomains == null || securityDomains.length == 0) {
+    LOGGER.warn("Empty security domain configuration.");
+    return;
+  }
+  final List<ModelNode> updates=new LinkedList<ModelNode>();
+  for (  final SecurityDomain securityDomain : securityDomains) {
+    final String securityDomainName=securityDomain.getName();
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("Adding security domain " + securityDomainName);
+    }
+    final ModelNode compositeOp=new ModelNode();
+    compositeOp.get(OP).set(COMPOSITE);
+    compositeOp.get(OP_ADDR).setEmptyList();
+    ModelNode steps=compositeOp.get(STEPS);
+    PathAddress opAddr=PathAddress.pathAddress().append(SUBSYSTEM,SUBSYSTEM_SECURITY).append(Constants.SECURITY_DOMAIN,securityDomainName);
+    ModelNode op=Util.createAddOperation(opAddr);
+    if (StringUtils.isNotEmpty(securityDomain.getCacheType())) {
+      op.get(Constants.CACHE_TYPE).set(securityDomain.getCacheType());
+    }
+    steps.add(op);
+    final boolean authNodeAdded=createSecurityModelNode(Constants.AUTHENTICATION,Constants.LOGIN_MODULE,Constants.FLAG,Constants.REQUIRED,securityDomain.getLoginModules(),securityDomainName,steps);
+    if (!authNodeAdded) {
+      final List<ModelNode> jaspiAuthnNodes=createJaspiAuthnNodes(securityDomain.getJaspiAuthn(),securityDomain.getName());
+      if (jaspiAuthnNodes != null) {
+        for (        ModelNode node : jaspiAuthnNodes) {
+          steps.add(node);
+        }
+      }
+    }
+    createSecurityModelNode(Constants.AUTHORIZATION,Constants.POLICY_MODULE,Constants.FLAG,Constants.REQUIRED,securityDomain.getAuthorizationModules(),securityDomainName,steps);
+    createSecurityModelNode(Constants.MAPPING,Constants.MAPPING_MODULE,Constants.TYPE,ROLE,securityDomain.getMappingModules(),securityDomainName,steps);
+    final ModelNode jsseNode=createJSSENode(securityDomain.getJsse(),securityDomain.getName());
+    if (jsseNode != null) {
+      steps.add(jsseNode);
+    }
+    updates.add(compositeOp);
+  }
+  CoreUtils.applyUpdates(updates,managementClient.getControllerClient());
+}

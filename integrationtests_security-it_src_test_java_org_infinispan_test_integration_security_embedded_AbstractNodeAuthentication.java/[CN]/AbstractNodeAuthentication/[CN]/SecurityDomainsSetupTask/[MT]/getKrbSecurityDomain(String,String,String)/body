@@ -1,0 +1,11 @@
+{
+  SecurityModule.Builder smBuilder=new SecurityModule.Builder();
+  if (Utils.IBM_JDK) {
+    smBuilder.name("com.ibm.security.auth.module.Krb5LoginModule").flag("required").putOption("useKeytab",path).putOption("credsType","both").putOption("forwardable",TRUE).putOption("proxiable",TRUE).putOption("noAddress",TRUE);
+  }
+ else {
+    smBuilder.name("Kerberos").flag("required").putOption("storeKey","true").putOption("useKeyTab","true").putOption("refreshKrb5Config","true").putOption("doNotPrompt","true").putOption("keyTab",path);
+  }
+  smBuilder.putOption("principal",principal + "@INFINISPAN.ORG").putOption("debug",TRUE);
+  return new SecurityDomain.Builder().name(SECURITY_DOMAIN_PREFIX + name).cacheType("default").loginModules(smBuilder.build()).build();
+}

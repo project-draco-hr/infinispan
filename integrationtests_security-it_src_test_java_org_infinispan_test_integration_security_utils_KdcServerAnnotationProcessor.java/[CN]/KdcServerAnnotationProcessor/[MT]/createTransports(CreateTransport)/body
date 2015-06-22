@@ -1,0 +1,36 @@
+{
+  String protocol=transportBuilder.protocol();
+  int port=transportBuilder.port();
+  int nbThreads=transportBuilder.nbThreads();
+  int backlog=transportBuilder.backlog();
+  String address=transportBuilder.address();
+  if (port <= 0) {
+    try {
+      port=getFreePort();
+    }
+ catch (    IOException ioe) {
+    }
+  }
+  if (protocol.equalsIgnoreCase("TCP") || protocol.equalsIgnoreCase("LDAP")) {
+    Transport tcp=new TcpTransport(address,port,nbThreads,backlog);
+    return Collections.singletonList(tcp);
+  }
+ else   if (protocol.equalsIgnoreCase("LDAPS")) {
+    Transport tcp=new TcpTransport(address,port,nbThreads,backlog);
+    tcp.setEnableSSL(true);
+    return Collections.singletonList(tcp);
+  }
+ else   if (protocol.equalsIgnoreCase("UDP")) {
+    Transport udp=new UdpTransport(address,port);
+    return Collections.singletonList(udp);
+  }
+ else   if (protocol.equalsIgnoreCase("KRB") || protocol.equalsIgnoreCase("CPW")) {
+    Transport tcp=new TcpTransport(address,port,nbThreads,backlog);
+    List<Transport> transports=new ArrayList<Transport>();
+    transports.add(tcp);
+    Transport udp=new UdpTransport(address,port);
+    transports.add(udp);
+    return transports;
+  }
+  throw new IllegalArgumentException(I18n.err(I18n.ERR_689,protocol));
+}

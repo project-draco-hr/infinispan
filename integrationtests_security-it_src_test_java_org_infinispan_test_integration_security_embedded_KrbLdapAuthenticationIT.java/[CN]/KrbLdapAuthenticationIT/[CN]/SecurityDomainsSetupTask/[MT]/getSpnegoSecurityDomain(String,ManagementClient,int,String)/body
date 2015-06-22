@@ -1,0 +1,4 @@
+{
+  final String host=Utils.getCannonicalHost(managementClient);
+  return new SecurityDomain.Builder().name("ispn-" + user).cacheType("default").loginModules(new SecurityModule.Builder().name("SPNEGO").flag("requisite").putOption("password-stacking","useFirstPass").putOption("serverSecurityDomain","krb-" + ldapServiceName).putOption("usernamePasswordDomain","krb-" + user).build(),new SecurityModule.Builder().name(AdvancedLdapLoginModule.class.getName()).putOption("password-stacking","useFirstPass").putOption("bindAuthentication","GSSAPI").putOption("jaasSecurityDomain","krb-" + ldapServiceName).putOption(Context.PROVIDER_URL,"ldap://" + host + ":"+ ldapPort).putOption("baseCtxDN","ou=People,dc=infinispan,dc=org").putOption("baseFilter","(krb5PrincipalName={0})").putOption("rolesCtxDN","ou=Roles,dc=infinispan,dc=org").putOption("roleFilter","(member={1})").putOption("roleAttributeID","cn").build()).build();
+}
