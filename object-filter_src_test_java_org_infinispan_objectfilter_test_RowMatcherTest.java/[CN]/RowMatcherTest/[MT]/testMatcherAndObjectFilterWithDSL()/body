@@ -1,0 +1,18 @@
+{
+  Matcher matcher=createMatcher();
+  Object person=createPerson1();
+  Query q=queryFactory.from(Person.class).having("name").eq("John").toBuilder().build();
+  final boolean b[]=new boolean[1];
+  FilterSubscription filterSubscription=matcher.registerFilter(q,new FilterCallback(){
+    @Override public void onFilterResult(    Object userContext,    Object instance,    Object eventType,    Object[] projection,    Comparable[] sortProjection){
+      b[0]=true;
+    }
+  }
+);
+  ObjectFilter objectFilter=matcher.getObjectFilter(filterSubscription);
+  ObjectFilter.FilterResult result=objectFilter.filter(person);
+  assertNotNull(result);
+  assertTrue(result.getInstance() == person);
+  matcher.match(null,person,null);
+  assertTrue(b[0]);
+}

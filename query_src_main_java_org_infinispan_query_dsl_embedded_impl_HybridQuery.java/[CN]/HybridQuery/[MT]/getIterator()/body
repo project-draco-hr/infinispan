@@ -1,8 +1,8 @@
 {
-  final Iterator<Object> it=baseQuery.list().iterator();
   return new CloseableIterator<ObjectFilter.FilterResult>(){
+    private final Iterator<?> it=getBaseIterator();
     private ObjectFilter.FilterResult nextResult=null;
-    private boolean ready=false;
+    private boolean isReady=false;
     @Override public void close(){
     }
     @Override public boolean hasNext(){
@@ -10,8 +10,9 @@
       return nextResult != null;
     }
     @Override public ObjectFilter.FilterResult next(){
-      if (hasNext()) {
-        ready=false;
+      update();
+      if (nextResult != null) {
+        isReady=false;
         return nextResult;
       }
  else {
@@ -19,7 +20,7 @@
       }
     }
     private void update(){
-      if (!ready) {
+      if (!isReady) {
         if (it.hasNext()) {
           Object next=it.next();
           nextResult=objectFilter.filter(next);
@@ -27,7 +28,7 @@
  else {
           nextResult=null;
         }
-        ready=true;
+        isReady=true;
       }
     }
   }

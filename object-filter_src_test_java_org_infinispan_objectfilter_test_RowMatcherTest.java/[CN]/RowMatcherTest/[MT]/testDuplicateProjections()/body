@@ -1,0 +1,24 @@
+{
+  String queryString="select p.name, p.name, p.age from Row p where p.name = 'John'";
+  Matcher matcher=createMatcher();
+  Object person=createPerson1();
+  final List<Object[]> result=new ArrayList<Object[]>();
+  FilterSubscription filterSubscription=matcher.registerFilter(queryString,new FilterCallback(){
+    @Override public void onFilterResult(    Object userContext,    Object instance,    Object eventType,    Object[] projection,    Comparable[] sortProjection){
+      result.add(projection);
+    }
+  }
+);
+  assertNotNull(filterSubscription.getProjection());
+  assertEquals(3,filterSubscription.getProjection().length);
+  assertEquals("name",filterSubscription.getProjection()[0]);
+  assertEquals("name",filterSubscription.getProjection()[1]);
+  assertEquals("age",filterSubscription.getProjection()[2]);
+  matcher.match(null,person,null);
+  matcher.unregisterFilter(filterSubscription);
+  assertEquals(1,result.size());
+  assertEquals(3,result.get(0).length);
+  assertEquals("John",result.get(0)[0]);
+  assertEquals("John",result.get(0)[1]);
+  assertEquals(40,result.get(0)[2]);
+}

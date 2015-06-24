@@ -1,0 +1,24 @@
+{
+  if (searchManager == null) {
+    throw new IllegalStateException("Cannot run Lucene queries on a cache that does not have indexing enabled");
+  }
+  LuceneQueryParsingResult parsingResult=transformJpaToLucene(jpqlString);
+  org.apache.lucene.search.Query luceneQuery=makeTypeQuery(parsingResult.getQuery(),parsingResult.getTargetEntityName());
+  CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,parsingResult.getTargetEntity());
+  if (parsingResult.getSort() != null) {
+    cacheQuery=cacheQuery.sort(parsingResult.getSort());
+  }
+  String[] projection=null;
+  if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
+    int projSize=parsingResult.getProjections().size();
+    projection=parsingResult.getProjections().toArray(new String[projSize]);
+    cacheQuery=cacheQuery.projection(projection);
+  }
+  if (startOffset >= 0) {
+    cacheQuery=cacheQuery.firstResult((int)startOffset);
+  }
+  if (maxResults > 0) {
+    cacheQuery=cacheQuery.maxResults(maxResults);
+  }
+  return new EmbeddedLuceneQuery(queryFactory,jpqlString,projection,cacheQuery);
+}

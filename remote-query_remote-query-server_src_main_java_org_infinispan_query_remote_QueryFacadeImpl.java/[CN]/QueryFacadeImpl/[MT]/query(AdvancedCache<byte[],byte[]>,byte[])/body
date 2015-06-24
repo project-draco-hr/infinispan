@@ -5,8 +5,9 @@
     Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(cache);
     boolean isIndexed=cacheConfiguration.indexing().index().isEnabled();
     boolean isCompatMode=cacheConfiguration.compatibility().enabled();
-    Query q=buildQuery(cache,serCtx,request,isIndexed,isCompatMode);
-    QueryResponse response=makeResponse(isCompatMode,serCtx,q);
+    SearchManager searchManager=isIndexed ? Search.getSearchManager(cache) : null;
+    Query q=new RemoteQueryEngine(cache,searchManager,isCompatMode,serCtx).buildQuery(null,request.getJpqlString(),request.getStartOffset(),request.getMaxResults());
+    QueryResponse response=makeResponse(q);
     return ProtobufUtil.toByteArray(serCtx,response);
   }
  catch (  IOException e) {

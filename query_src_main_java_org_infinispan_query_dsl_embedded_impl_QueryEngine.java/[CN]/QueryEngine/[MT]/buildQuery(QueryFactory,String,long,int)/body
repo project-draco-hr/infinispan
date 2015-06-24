@@ -1,26 +1,7 @@
 {
-  Class<? extends Matcher> matcherImplClass=ReflectionMatcher.class;
-  if (searchManager != null) {
-    BaseMatcher matcher=(BaseMatcher)cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
-    FilterParsingResult<Class<?>> parsingResult=matcher.parse(jpqlString,null);
-    BooleanExpr normalizedExpr=booleanFilterNormalizer.normalize(parsingResult.getQuery());
-    if (normalizedExpr == ConstantBooleanExpr.FALSE) {
-      return new EmptyResultQuery(queryFactory,cache,jpqlString,startOffset,maxResults);
-    }
-    BooleShannonExpansion bse=new BooleShannonExpansion(new HibernateSearchIndexedFieldProvider(searchFactory,parsingResult.getTargetEntityMetadata()));
-    BooleanExpr expansion=bse.expand(normalizedExpr);
-    if (expansion == normalizedExpr) {
-      return buildLuceneQuery(queryFactory,jpqlString,startOffset,maxResults,null);
-    }
-    if (expansion == ConstantBooleanExpr.TRUE) {
-      return new EmbeddedQuery(queryFactory,cache,makeFilter(cache,jpqlString,matcherImplClass),startOffset,maxResults);
-    }
-    String expandedJpaOut=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),expansion,null);
-    Query expandedQuery=buildLuceneQuery(queryFactory,expandedJpaOut,-1,-1,null);
-    ObjectFilter objectFilter=matcher.getObjectFilter(jpqlString);
-    return new HybridQuery(queryFactory,cache,jpqlString,objectFilter,startOffset,maxResults,expandedQuery);
+  FilterParsingResult<?> parsingResult=parse(jpqlString);
+  if (parsingResult.hasGroupingOrAggregations()) {
+    return buildQueryWithAggregations(queryFactory,jpqlString,startOffset,maxResults,parsingResult);
   }
- else {
-    return new EmbeddedQuery(queryFactory,cache,makeFilter(cache,jpqlString,matcherImplClass),startOffset,maxResults);
-  }
+  return buildQueryNoAggregations(queryFactory,jpqlString,startOffset,maxResults,parsingResult);
 }

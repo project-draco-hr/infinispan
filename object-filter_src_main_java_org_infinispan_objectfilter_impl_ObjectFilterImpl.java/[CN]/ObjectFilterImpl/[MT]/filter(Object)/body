@@ -6,8 +6,9 @@
   if (matcherEvalContext != null) {
     FilterEvalContext filterEvalContext=matcherEvalContext.initSingleFilterContext(filterSubscription);
     matcherEvalContext.process(root);
-    if (filterEvalContext.getMatchResult()) {
-      return new FilterResultImpl(instance,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
+    if (filterEvalContext.isMatching()) {
+      Object o=filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
+      return new FilterResultImpl(o,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
     }
   }
   return null;
