@@ -1,0 +1,12 @@
+{
+  withCacheManager(new CacheManagerCallable(new TestCacheManagerFactory().createCacheManager()){
+    @Override public void call() throws Exception {
+      AdvancedCache<Integer,String> advCache=cm.<Integer,String>getCache().getAdvancedCache();
+      JCacheDecorator<Integer,String> local=new JCacheDecorator<>(FunctionalMapImpl.create(advCache));
+      assertFalse(local.isClosed());
+      local.close();
+      assertTrue(local.isClosed());
+    }
+  }
+);
+}

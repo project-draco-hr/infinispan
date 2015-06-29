@@ -1,0 +1,12 @@
+{
+  MetaParams metas=MetaParams.empty();
+  metas.addMany(new Lifespan(1000),new MaxIdle(1000),new EntryVersionParam<>(new NumericEntryVersion(12345)));
+  assertFalse(metas.isEmpty());
+  assertEquals(3,metas.size());
+  MaxIdle maxIdle=metas.get(MaxIdle.ID);
+  EntryVersionParam<Long> entryVersion=metas.get(EntryVersionParam.ID());
+  assertEquals(new MaxIdle(1000),maxIdle);
+  assertFalse(900 == maxIdle.get().longValue());
+  assertEquals(new EntryVersionParam<>(new NumericEntryVersion(12345)),entryVersion);
+  assertFalse(new EntryVersionParam<>(new NumericEntryVersion(23456)).equals(entryVersion));
+}

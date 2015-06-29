@@ -1,0 +1,22 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+    @Override public void call() throws Exception {
+      AdvancedCache<?,?> readOnlyCache=cm.getCache("read-only").getAdvancedCache();
+      try (ReadOnlyMap<?,?> ro=ReadOnlyMapImpl.create(FunctionalMapImpl.create(readOnlyCache))){
+        assertNotNull(ro);
+      }
+       assertTrue(readOnlyCache.getStatus().isTerminated());
+      AdvancedCache<?,?> writeOnlyCache=cm.getCache("write-only").getAdvancedCache();
+      try (WriteOnlyMap<?,?> wo=WriteOnlyMapImpl.create(FunctionalMapImpl.create(writeOnlyCache))){
+        assertNotNull(wo);
+      }
+       assertTrue(writeOnlyCache.getStatus().isTerminated());
+      AdvancedCache<?,?> readWriteCache=cm.getCache("read-write").getAdvancedCache();
+      try (ReadWriteMap<?,?> rw=ReadWriteMapImpl.create(FunctionalMapImpl.create(readWriteCache))){
+        assertNotNull(rw);
+      }
+       assertTrue(readWriteCache.getStatus().isTerminated());
+    }
+  }
+);
+}
