@@ -1,0 +1,41 @@
+{
+  FileListCacheValue fileList=(FileListCacheValue)cache.get(new FileListCacheKey(indexName));
+  assertNotNull(fileList);
+  int fileListCacheKeyInstances=0;
+  for (  Object key : cache.keySet()) {
+    if (key instanceof ChunkCacheKey) {
+      ChunkCacheKey existingChunkKey=(ChunkCacheKey)key;
+      String filename=existingChunkKey.getFileName();
+      assertEquals(existingChunkKey.getIndexName(),indexName);
+      Object value=cache.get(existingChunkKey);
+      assertNotNull(value);
+      assertTrue(value instanceof byte[]);
+      byte[] buffer=(byte[])cache.get(existingChunkKey);
+      assertTrue(buffer.length != 0);
+    }
+ else     if (key instanceof FileCacheKey) {
+      FileCacheKey fileCacheKey=(FileCacheKey)key;
+      assertEquals(fileCacheKey.getIndexName(),indexName);
+      String filename=fileCacheKey.getFileName();
+      Object value=cache.get(fileCacheKey);
+      assertNotNull(value);
+      assertTrue(value instanceof FileMetadata);
+      FileMetadata metadata=(FileMetadata)value;
+      long totalFileSize=metadata.getSize();
+      long actualFileSize=deepCountFileSize(fileCacheKey,cache);
+      assertEquals(actualFileSize,totalFileSize);
+      if (!ignoreFiles.contains(fileCacheKey.getFileName())) {
+        assertTrue(fileCacheKey + " should not have existed",fileList.contains(fileCacheKey.getFileName()));
+      }
+    }
+ else     if (key instanceof FileListCacheKey) {
+      fileListCacheKeyInstances++;
+      assertEquals(1,fileListCacheKeyInstances);
+    }
+ else     if (key instanceof FileReadLockKey) {
+    }
+ else {
+      AssertJUnit.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:"+ key);
+    }
+  }
+}

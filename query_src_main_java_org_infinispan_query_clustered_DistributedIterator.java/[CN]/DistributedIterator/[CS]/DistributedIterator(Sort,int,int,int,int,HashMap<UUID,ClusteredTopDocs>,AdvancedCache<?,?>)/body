@@ -5,19 +5,22 @@
   this.firstResult=firstResult;
   this.cache=cache;
   final int parallels=topDocsResponses.size();
-  this.clusterIDs=new UUID[parallels];
   this.partialResults=new ClusteredTopDocs[parallels];
-  this.partialTopDocs=new TopDocs[parallels];
+  TopDocs[] partialTopDocs=sort != null ? new TopFieldDocs[parallels] : new TopDocs[parallels];
   this.partialPositionNext=new int[parallels];
   int i=0;
   for (  Entry<UUID,ClusteredTopDocs> entry : topDocsResponses.entrySet()) {
-    clusterIDs[i]=entry.getKey();
     partialResults[i]=entry.getValue();
-    partialTopDocs[i]=partialResults[i].getTopDocs();
+    partialTopDocs[i]=partialResults[i].getNodeTopDocs().topDocs;
     i++;
   }
   try {
-    mergedResults=TopDocs.merge(sort,firstResult,maxResults,partialTopDocs);
+    if (sort != null) {
+      mergedResults=TopDocs.merge(sort,firstResult,maxResults,(TopFieldDocs[])partialTopDocs);
+    }
+ else {
+      mergedResults=TopDocs.merge(firstResult,maxResults,partialTopDocs);
+    }
   }
  catch (  IOException e) {
     throw log.unexpectedIOException(e);

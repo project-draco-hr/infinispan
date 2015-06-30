@@ -1,0 +1,23 @@
+{
+  if (!(dir instanceof DirectoryLucene)) {
+    throw new UnsupportedOperationException("TransactionalSharedLuceneLock can only be used with DirectoryLucene, got: " + dir);
+  }
+  DirectoryLucene infinispanDirectory=(DirectoryLucene)dir;
+  Cache cache=infinispanDirectory.getDistLockCache();
+  String indexName=infinispanDirectory.getIndexName();
+  TransactionManager tm=cache.getAdvancedCache().getTransactionManager();
+  if (tm == null) {
+    ComponentStatus status=cache.getAdvancedCache().getComponentRegistry().getStatus();
+    if (status.equals(ComponentStatus.RUNNING)) {
+      throw new CacheException("Failed looking up TransactionManager. Check if any transaction manager is associated with Infinispan cache: \'" + cache.getName() + "\'");
+    }
+ else {
+      throw new CacheException("Failed looking up TransactionManager: the cache is not running");
+    }
+  }
+  TransactionalSharedLuceneLock lock=new TransactionalSharedLuceneLock(cache,indexName,lockName,tm);
+  if (log.isTraceEnabled()) {
+    log.tracef("Lock prepared, not acquired: %s for index %s",lockName,indexName);
+  }
+  return lock;
+}

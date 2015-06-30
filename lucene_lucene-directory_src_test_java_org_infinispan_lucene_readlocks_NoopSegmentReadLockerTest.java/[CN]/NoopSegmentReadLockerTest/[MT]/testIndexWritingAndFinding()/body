@@ -1,8 +1,7 @@
 {
-  verifyBoth(cache0,cache1);
+  verifyIgnoringFiles(cache0,cache1,Util.asSet("pending_segments_1"));
   IndexOutput indexOutput=dirA.createOutput(filename,IOContext.DEFAULT);
   indexOutput.writeString("no need to write, nobody ever will read this");
-  indexOutput.flush();
   indexOutput.close();
   assertFileExistsHavingRLCount(filename,0,true);
   IndexInput firstOpenOnB=dirB.openInput(filename,IOContext.DEFAULT);
@@ -26,6 +25,7 @@
   assertFileAfterDeletion(cache1);
   dirA.close();
   dirB.close();
-  verifyDirectoryStructure(cache0);
-  verifyDirectoryStructure(cache1);
+  Set<String> left_behind=Util.asSet("pending_segments_1","readme.txt");
+  verifyIgnoringFiles(cache0,left_behind);
+  verifyIgnoringFiles(cache1,left_behind);
 }
