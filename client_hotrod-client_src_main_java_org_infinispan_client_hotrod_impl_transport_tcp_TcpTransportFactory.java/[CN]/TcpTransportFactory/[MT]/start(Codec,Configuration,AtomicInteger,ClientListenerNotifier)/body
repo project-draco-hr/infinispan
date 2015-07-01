@@ -2,21 +2,19 @@
 synchronized (lock) {
     this.listenerNotifier=listenerNotifier;
     this.configuration=configuration;
-    hashFactory.init(configuration);
     boolean pingOnStartup=configuration.pingOnStartup();
-    servers=new ArrayList<SocketAddress>();
-    initialServers=new ArrayList<SocketAddress>();
+    Collection<SocketAddress> servers=new ArrayList<>();
+    initialServers=new ArrayList<>();
     for (    ServerConfiguration server : configuration.servers()) {
       servers.add(new InetSocketAddress(server.host(),server.port()));
     }
     initialServers.addAll(servers);
-    servers=Collections.unmodifiableCollection(servers);
+    topologyInfo=new TopologyInfo(defaultCacheTopologyId,Collections.unmodifiableCollection(servers),configuration);
     tcpNoDelay=configuration.tcpNoDelay();
     tcpKeepAlive=configuration.tcpKeepAlive();
     soTimeout=configuration.socketTimeout();
     connectTimeout=configuration.connectionTimeout();
     maxRetries=configuration.maxRetries();
-    topologyId=defaultCacheTopologyId;
     if (configuration.security().ssl().enabled()) {
       SslConfiguration ssl=configuration.security().ssl();
       if (ssl.sslContext() != null) {
@@ -41,7 +39,6 @@ synchronized (lock) {
     PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport> poolFactory=new PropsKeyedObjectPoolFactory<SocketAddress,TcpTransport>(connectionFactory,configuration.connectionPool());
     createAndPreparePool(poolFactory);
     balancers=CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE,AnyEquivalence.getInstance());
-    consistentHashes=CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE,AnyEquivalence.getInstance());
     addBalancer(RemoteCacheManager.cacheNameBytes());
   }
   if (configuration.pingOnStartup())   pingServers();

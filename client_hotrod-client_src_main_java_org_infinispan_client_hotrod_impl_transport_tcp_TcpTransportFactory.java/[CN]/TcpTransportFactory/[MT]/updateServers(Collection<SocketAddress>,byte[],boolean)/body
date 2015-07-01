@@ -1,8 +1,9 @@
 {
 synchronized (lock) {
-    Set<SocketAddress> addedServers=new HashSet<SocketAddress>(newServers);
+    Collection<SocketAddress> servers=topologyInfo.getServers();
+    Set<SocketAddress> addedServers=new HashSet<>(newServers);
     addedServers.removeAll(servers);
-    Set<SocketAddress> failedServers=new HashSet<SocketAddress>(servers);
+    Set<SocketAddress> failedServers=new HashSet<>(servers);
     failedServers.removeAll(newServers);
     if (log.isTraceEnabled()) {
       log.tracef("Current list: %s",servers);
@@ -28,6 +29,7 @@ synchronized (lock) {
       connectionPool.clear(server);
     }
     servers=Collections.unmodifiableList(new ArrayList(newServers));
+    topologyInfo.updateServers(servers);
     if (!failedServers.isEmpty()) {
       listenerNotifier.failoverClientListeners(failedServers);
     }
