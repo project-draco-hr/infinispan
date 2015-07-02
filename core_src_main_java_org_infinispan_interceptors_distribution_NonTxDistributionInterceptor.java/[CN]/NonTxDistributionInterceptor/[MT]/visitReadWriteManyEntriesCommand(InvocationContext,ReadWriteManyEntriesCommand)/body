@@ -1,0 +1,95 @@
+{
+  Map<Object,Object> originalMap=command.getEntries();
+  ConsistentHash ch=dm.getConsistentHash();
+  Address localAddress=rpcManager.getAddress();
+  if (ctx.isOriginLocal()) {
+    List<CompletableFuture<Map<Address,Response>>> futures=new ArrayList<>(rpcManager.getMembers().size() - 1);
+    RpcOptions options=rpcManager.getDefaultRpcOptions(isSynchronous(command));
+    for (    Address member : rpcManager.getMembers()) {
+      if (member.equals(rpcManager.getAddress())) {
+        continue;
+      }
+      Set<Integer> segments=ch.getPrimarySegmentsForOwner(member);
+      if (!segments.isEmpty()) {
+        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<>(originalMap,ch,segments);
+        if (!segmentEntriesMap.isEmpty()) {
+          ReadWriteManyEntriesCommand copy=new ReadWriteManyEntriesCommand(command);
+          copy.setEntries(segmentEntriesMap);
+          CompletableFuture<Map<Address,Response>> future=rpcManager.invokeRemotelyAsync(Collections.singletonList(member),copy,options);
+          futures.add(future);
+        }
+      }
+    }
+    if (futures.size() > 0) {
+      CompletableFuture[] futuresArray=new CompletableFuture[futures.size()];
+      CompletableFuture<Void> compFuture=CompletableFuture.allOf(futures.toArray(futuresArray));
+      try {
+        compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
+        for (        CompletableFuture<Map<Address,Response>> future : futures) {
+          Map<Address,Response> responses=future.get();
+          for (          Response response : responses.values()) {
+            if (response.isSuccessful()) {
+              SuccessfulResponse success=(SuccessfulResponse)response;
+              command.addAllRemoteReturns((List<?>)success.getResponseValue());
+            }
+          }
+        }
+      }
+ catch (      ExecutionException e) {
+        throw new RemoteException("Exception while processing put on primary owner",e.getCause());
+      }
+catch (      TimeoutException e) {
+        throw new CacheException(e);
+      }
+    }
+  }
+  if (!command.isForwarded() && ch.getNumOwners() > 1) {
+    Map<Address,Set<Integer>> backupOwnerSegments=new HashMap<>();
+    int segmentCount=ch.getNumSegments();
+    for (int i=0; i < segmentCount; ++i) {
+      Iterator<Address> iter=ch.locateOwnersForSegment(i).iterator();
+      if (iter.next().equals(localAddress)) {
+        while (iter.hasNext()) {
+          Address backupOwner=iter.next();
+          Set<Integer> segments=backupOwnerSegments.get(backupOwner);
+          if (segments == null) {
+            backupOwnerSegments.put(backupOwner,(segments=new HashSet<>()));
+          }
+          segments.add(i);
+        }
+      }
+    }
+    int backupOwnerSize=backupOwnerSegments.size();
+    if (backupOwnerSize > 0) {
+      List<CompletableFuture<Map<Address,Response>>> futures=new ArrayList<>(backupOwnerSize);
+      RpcOptions options=rpcManager.getDefaultRpcOptions(isSynchronous(command));
+      command.setFlags(Flag.SKIP_LOCKING);
+      command.setForwarded(true);
+      for (      Entry<Address,Set<Integer>> entry : backupOwnerSegments.entrySet()) {
+        Set<Integer> segments=entry.getValue();
+        Map<Object,Object> segmentEntriesMap=new ReadOnlySegmentAwareMap<>(originalMap,ch,segments);
+        if (!segmentEntriesMap.isEmpty()) {
+          ReadWriteManyEntriesCommand copy=new ReadWriteManyEntriesCommand(command);
+          copy.setEntries(segmentEntriesMap);
+          CompletableFuture<Map<Address,Response>> future=rpcManager.invokeRemotelyAsync(Collections.singletonList(entry.getKey()),copy,options);
+          futures.add(future);
+        }
+      }
+      command.setForwarded(false);
+      if (futures.size() > 0) {
+        CompletableFuture[] futuresArray=new CompletableFuture[futures.size()];
+        CompletableFuture<Void> compFuture=CompletableFuture.allOf(futures.toArray(futuresArray));
+        try {
+          compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
+        }
+ catch (        ExecutionException e) {
+          throw new RemoteException("Exception while processing put on backup owner",e.getCause());
+        }
+catch (        TimeoutException e) {
+          throw new CacheException(e);
+        }
+      }
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

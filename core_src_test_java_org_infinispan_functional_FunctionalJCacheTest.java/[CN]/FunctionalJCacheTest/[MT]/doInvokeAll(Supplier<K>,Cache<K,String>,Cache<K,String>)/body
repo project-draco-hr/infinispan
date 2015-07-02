@@ -1,0 +1,22 @@
+{
+  K key1=keySupplier.get(), key2=keySupplier.get(), key3=keySupplier.get();
+  HashSet<K> keys=new HashSet<>(Arrays.asList(key1,key2,key3));
+  Map<K,EntryProcessorResult<String>> res0=map1.invokeAll(keys,GetValueProcessor.getInstance());
+  assertEquals(null,res0.get(key1).get());
+  assertEquals(null,res0.get(key2).get());
+  assertEquals(null,res0.get(key3).get());
+  Map<K,String> data=new HashMap<>();
+  data.put(key1,"one");
+  data.put(key2,"two");
+  data.put(key3,"three");
+  map2.invokeAll(keys,SetArgsValuesProcessor.getInstance(),data);
+  Map<K,EntryProcessorResult<String>> res1=map1.invokeAll(keys,GetValueProcessor.getInstance());
+  assertEquals("one",res1.get(key1).get());
+  assertEquals("two",res1.get(key2).get());
+  assertEquals("three",res1.get(key3).get());
+  map2.invokeAll(keys,RemoveProcessor.getInstance());
+  Map<K,EntryProcessorResult<String>> res2=map1.invokeAll(keys,GetValueProcessor.getInstance());
+  assertEquals(null,res2.get(key1).get());
+  assertEquals(null,res2.get(key2).get());
+  assertEquals(null,res2.get(key3).get());
+}

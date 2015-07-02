@@ -1,0 +1,23 @@
+{
+  if (isLocalOnly(command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  CacheTopology beginTopology=stateTransferManager.getCacheTopology();
+  command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash());
+  updateTopologyId(command);
+  try {
+    return invokeNextInterceptor(ctx,command);
+  }
+ catch (  CacheException e) {
+    Throwable ce=e;
+    while (ce instanceof RemoteException) {
+      ce=ce.getCause();
+    }
+    if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
+    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",command);
+    int newTopologyId=Math.max(currentTopologyId(),command.getTopologyId() + 1);
+    command.setTopologyId(newTopologyId);
+    waitForTopology(newTopologyId);
+    return visitReadOnlyManyCommand(ctx,command);
+  }
+}
