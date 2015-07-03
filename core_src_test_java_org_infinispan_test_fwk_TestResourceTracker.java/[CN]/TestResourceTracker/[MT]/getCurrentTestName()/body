@@ -2,16 +2,14 @@
   String testName=threadTestName.get();
   if (testName == null) {
     String threadName=Thread.currentThread().getName();
-    String pattern="TestNGInvoker-";
-    if (threadName.startsWith(pattern)) {
-      throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testStarted(this) in your test method!");
+    if (threadName.equals("main") || threadName.equals("TestNG")) {
+      throw new IllegalStateException("Test name is not set! Please extend AbstractInfinispanTest!");
     }
- else     if (Thread.currentThread().getName().equals("main")) {
-      testName="main";
+ else     if (threadName.startsWith("TestNGInvoker-")) {
+      throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in your test method!");
     }
  else {
-      log.warnf("Test name not set in unknown thread %s. Consider using TestResourceTracker.backgroundTestStarted(this) in your test method.",Thread.currentThread().getName());
-      testName="unknown";
+      throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in thread " + threadName + " !");
     }
   }
   return testName;

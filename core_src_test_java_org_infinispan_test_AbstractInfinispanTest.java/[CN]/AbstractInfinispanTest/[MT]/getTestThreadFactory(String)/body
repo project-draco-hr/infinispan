@@ -1,5 +1,14 @@
 {
-  TrackingThreadFactory ttf=new TrackingThreadFactory(getRealThreadFactory(prefix));
-  requestedThreadFactories.add(ttf);
-  return ttf;
+  final String className=getClass().getSimpleName();
+  ThreadFactory threadFactory=new ThreadFactory(){
+    private final AtomicInteger counter=new AtomicInteger(0);
+    @Override public Thread newThread(    Runnable r){
+      String threadName=prefix + "-" + counter.incrementAndGet()+ ","+ className;
+      Thread thread=new Thread(r,threadName);
+      TestResourceTracker.addResource(AbstractInfinispanTest.this,new ThreadCleaner(thread));
+      return thread;
+    }
+  }
+;
+  return threadFactory;
 }

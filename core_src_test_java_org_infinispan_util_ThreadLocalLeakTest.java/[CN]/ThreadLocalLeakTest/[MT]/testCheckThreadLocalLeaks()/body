@@ -3,6 +3,7 @@
   builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(4096).locking().concurrencyLevel(2048).persistence().passivation(false).addSingleFileStore().location(tmpDirectory).shared(false).preload(true);
   Future<Map<String,Map<ThreadLocal<?>,Object>>> result=fork(new Callable<Map<String,Map<ThreadLocal<?>,Object>>>(){
     @Override public Map<String,Map<ThreadLocal<?>,Object>> call() throws Exception {
+      TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this);
       Thread forkedThread=doStuffWithCache(builder);
       beforeGC();
       System.gc();
