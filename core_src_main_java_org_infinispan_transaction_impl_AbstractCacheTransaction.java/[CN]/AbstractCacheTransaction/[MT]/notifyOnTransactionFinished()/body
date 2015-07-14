@@ -1,10 +1,7 @@
 {
   if (trace)   log.tracef("Transaction %s has completed, notifying listening threads.",tx);
-  txComplete=true;
-  if (needToNotifyWaiters) {
-synchronized (lockReleaseNotifier) {
-      txComplete=true;
-      lockReleaseNotifier.notifyAll();
-    }
+  if (!txComplete) {
+    txComplete=true;
+    notifier.fireListener();
   }
 }
