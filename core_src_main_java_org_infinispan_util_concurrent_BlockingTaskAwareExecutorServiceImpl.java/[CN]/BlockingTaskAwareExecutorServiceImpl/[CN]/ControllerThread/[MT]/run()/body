@@ -1,0 +1,30 @@
+{
+  while (!interrupted) {
+    try {
+      semaphore.acquire();
+    }
+ catch (    InterruptedException e) {
+      return;
+    }
+    semaphore.drainPermits();
+    int size=blockedTasks.size();
+    if (size == 0) {
+      continue;
+    }
+    ArrayDeque<BlockingRunnable> readyList=new ArrayDeque<>(size);
+    for (Iterator<BlockingRunnable> iterator=blockedTasks.iterator(); iterator.hasNext(); ) {
+      BlockingRunnable runnable=iterator.next();
+      if (runnable.isReady()) {
+        iterator.remove();
+        readyList.addLast(runnable);
+      }
+    }
+    if (log.isTraceEnabled()) {
+      log.tracef("Tasks to be executed=%s, still pending=~%s",readyList.size(),size);
+    }
+    BlockingRunnable runnable;
+    while ((runnable=readyList.pollFirst()) != null) {
+      doExecute(runnable);
+    }
+  }
+}

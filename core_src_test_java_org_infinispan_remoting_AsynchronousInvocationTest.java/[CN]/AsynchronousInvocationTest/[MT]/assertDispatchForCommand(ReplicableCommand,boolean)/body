@@ -7,7 +7,9 @@
     return;
   }
   executorService.reset();
-  commandAwareRpcDispatcher.handle(oobRequest,null);
+  CountDownLatchResponse response=new CountDownLatchResponse();
+  commandAwareRpcDispatcher.handle(oobRequest,response);
+  response.await(30,TimeUnit.SECONDS);
   Assert.assertEquals(executorService.hasExecutedCommand,expected,"Command " + command.getClass() + " dispatched wrongly.");
   Message nonOobRequest=serialize(command,false,address);
   if (nonOobRequest == null) {
@@ -15,6 +17,8 @@
     return;
   }
   executorService.reset();
-  commandAwareRpcDispatcher.handle(nonOobRequest,null);
+  response=new CountDownLatchResponse();
+  commandAwareRpcDispatcher.handle(nonOobRequest,response);
+  response.await(30,TimeUnit.SECONDS);
   Assert.assertFalse(executorService.hasExecutedCommand,"Command " + command.getClass() + " dispatched wrongly.");
 }

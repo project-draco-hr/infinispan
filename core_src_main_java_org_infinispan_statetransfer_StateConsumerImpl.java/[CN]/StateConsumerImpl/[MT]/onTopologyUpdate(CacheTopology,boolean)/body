@@ -25,12 +25,7 @@
   }
   stateTransferLock.releaseExclusiveTopologyLock();
   stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
-  remoteCommandsExecutor.submit(new Runnable(){
-    @Override public void run(){
-      remoteCommandsExecutor.checkForReadyTasks();
-    }
-  }
-);
+  remoteCommandsExecutor.checkForReadyTasks();
   try {
     if (isTransactional || isFetchEnabled) {
       Set<Integer> addedSegments;
@@ -96,12 +91,7 @@
   }
   finally {
     stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
-    remoteCommandsExecutor.submit(new Runnable(){
-      @Override public void run(){
-        remoteCommandsExecutor.checkForReadyTasks();
-      }
-    }
-);
+    remoteCommandsExecutor.checkForReadyTasks();
     if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS && isMember) {
       waitingForState.set(true);
     }

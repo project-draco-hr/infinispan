@@ -4,18 +4,15 @@
   }
   if (runnable.isReady()) {
     doExecute(runnable);
+    if (log.isTraceEnabled()) {
+      log.tracef("Added a new task directly: %s task(s) are waiting",blockedTasks.size());
+    }
   }
  else {
     blockedTasks.offer(runnable);
-    boolean checkPendingTasks;
-synchronized (blockedTasks) {
-      checkPendingTasks=runnable.isReady();
+    controllerThread.checkForReadyTask();
+    if (log.isTraceEnabled()) {
+      log.tracef("Added a new task to the queue: %s task(s) are waiting",blockedTasks.size());
     }
-    if (checkPendingTasks) {
-      checkForReadyTasks();
-    }
-  }
-  if (log.isTraceEnabled()) {
-    log.tracef("Added a new task: %s task(s) are waiting",blockedTasks.size());
   }
 }

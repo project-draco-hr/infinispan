@@ -1,6 +1,6 @@
 {
   executorService=new DummyTaskCountExecutorService();
-  final BlockingTaskAwareExecutorService remoteExecutorService=new BlockingTaskAwareExecutorServiceImpl(executorService,TIME_SERVICE);
+  final BlockingTaskAwareExecutorService remoteExecutorService=new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller",executorService,TIME_SERVICE);
   ConfigurationBuilder builder=getDefaultCacheConfiguration(false);
   builder.clustering().cacheMode(CacheMode.DIST_SYNC);
   cacheManager=createClusteredCacheManager(builder);
@@ -22,15 +22,15 @@
   globalRegistry.registerComponent(remoteExecutorService,KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
   globalRegistry.rewire();
   commandsFactory=extractCommandsFactory(cache);
-  GetKeyValueCommand getKeyValueCommand=new GetKeyValueCommand("key",InfinispanCollections.<Flag>emptySet());
-  PutKeyValueCommand putKeyValueCommand=new PutKeyValueCommand("key","value",false,null,new EmbeddedMetadata.Builder().build(),InfinispanCollections.<Flag>emptySet(),AnyEquivalence.getInstance(),null);
+  ReplicableCommand nonBlockingReplicableCommand=mockReplicableCommand(false);
+  ReplicableCommand blockingReplicableCommand=mockReplicableCommand(true);
   blockingCacheRpcCommand=new ReduceCommand<>("task",null,cacheName,null);
   nonBlockingCacheRpcCommand=new ClusteredGetCommand("key",cacheName,null,false,null,null);
   blockingNonCacheRpcCommand=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,null,0);
   nonBlockingNonCacheRpcCommand=new ClusteredGetCommand("key",cacheName,null,false,null,AnyEquivalence.STRING);
-  blockingSingleRpcCommand=new SingleRpcCommand(cacheName,putKeyValueCommand);
-  nonBlockingSingleRpcCommand=new SingleRpcCommand(cacheName,getKeyValueCommand);
-  blockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand,putKeyValueCommand),cacheName);
-  blockingMultipleRpcCommand2=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand,getKeyValueCommand),cacheName);
-  nonBlockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(getKeyValueCommand,getKeyValueCommand),cacheName);
+  blockingSingleRpcCommand=new SingleRpcCommand(cacheName,blockingReplicableCommand);
+  nonBlockingSingleRpcCommand=new SingleRpcCommand(cacheName,nonBlockingReplicableCommand);
+  blockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand,blockingReplicableCommand),cacheName);
+  blockingMultipleRpcCommand2=new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand,nonBlockingReplicableCommand),cacheName);
+  nonBlockingMultipleRpcCommand=new MultipleRpcCommand(Arrays.asList(nonBlockingReplicableCommand,nonBlockingReplicableCommand),cacheName);
 }

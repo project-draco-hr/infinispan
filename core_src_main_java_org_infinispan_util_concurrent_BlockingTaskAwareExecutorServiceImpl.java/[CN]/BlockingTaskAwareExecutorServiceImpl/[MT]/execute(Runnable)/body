@@ -2,5 +2,10 @@
   if (shutdown) {
     throw new RejectedExecutionException("Executor Service is already shutdown");
   }
-  executorService.execute(command);
+  if (command instanceof BlockingRunnable) {
+    execute((BlockingRunnable)command);
+  }
+ else {
+    execute(new RunnableWrapper(command));
+  }
 }
