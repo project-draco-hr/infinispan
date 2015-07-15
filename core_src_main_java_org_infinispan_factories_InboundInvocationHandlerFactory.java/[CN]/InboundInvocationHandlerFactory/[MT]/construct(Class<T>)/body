@@ -2,8 +2,8 @@
   if (!configuration.clustering().cacheMode().isClustered()) {
     return null;
   }
- else   if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().transactionProtocol().isTotalOrder()) {
-    return (T)new TotalOrderTxPerCacheInboundInvocationHandler();
+ else   if (configuration.transaction().transactionMode().isTransactional()) {
+    return configuration.transaction().transactionProtocol().isTotalOrder() ? (T)new TotalOrderTxPerCacheInboundInvocationHandler() : (T)new NonTotalOrderTxPerCacheInboundInvocationHandler();
   }
  else {
     return (T)new NonTotalOrderPerCacheInboundInvocationHandler();
