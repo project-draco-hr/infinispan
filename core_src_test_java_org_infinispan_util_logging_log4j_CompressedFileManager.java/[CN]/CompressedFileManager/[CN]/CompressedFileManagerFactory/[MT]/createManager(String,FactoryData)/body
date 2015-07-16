@@ -1,0 +1,29 @@
+{
+  final File file=new File(name);
+  final File parent=file.getParentFile();
+  if (null != parent && !parent.exists()) {
+    parent.mkdirs();
+  }
+  OutputStream os;
+  try {
+    os=new FileOutputStream(name,data.append);
+    int bufferSize=data.bufferSize;
+    if (name.endsWith(".gz")) {
+      os=new GZIPOutputStream(os,bufferSize);
+      os.flush();
+    }
+ else {
+      if (data.bufferedIO) {
+        os=new BufferedOutputStream(os,bufferSize);
+      }
+ else {
+        bufferSize=-1;
+      }
+    }
+    return new CompressedFileManager(name,os,data.append,data.locking,data.advertiseURI,data.layout,bufferSize);
+  }
+ catch (  final IOException ex) {
+    LOGGER.error("FileManager (" + name + ") "+ ex);
+  }
+  return null;
+}

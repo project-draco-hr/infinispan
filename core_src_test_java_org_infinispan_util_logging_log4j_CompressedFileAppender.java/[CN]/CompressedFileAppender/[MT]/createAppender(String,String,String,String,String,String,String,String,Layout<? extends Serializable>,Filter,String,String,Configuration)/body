@@ -1,0 +1,34 @@
+{
+  final boolean isAppend=Booleans.parseBoolean(append,true);
+  final boolean isLocking=Boolean.parseBoolean(locking);
+  boolean isBuffered=Booleans.parseBoolean(bufferedIo,true);
+  final boolean isAdvertise=Boolean.parseBoolean(advertise);
+  if (isLocking && isBuffered) {
+    if (bufferedIo != null) {
+      LOGGER.warn("Locking and buffering are mutually exclusive. No buffering will occur for " + fileName);
+    }
+    isBuffered=false;
+  }
+  final int bufferSize=Integers.parseInt(bufferSizeStr,DEFAULT_BUFFER_SIZE);
+  if (!isBuffered && bufferSize > 0) {
+    LOGGER.warn("The bufferSize is set to {} but bufferedIO is not true: {}",bufferSize,bufferedIo);
+  }
+  final boolean isFlush=Booleans.parseBoolean(immediateFlush,true);
+  final boolean ignoreExceptions=Booleans.parseBoolean(ignore,true);
+  if (name == null) {
+    LOGGER.error("No name provided for FileAppender");
+    return null;
+  }
+  if (fileName == null) {
+    LOGGER.error("No filename provided for FileAppender with name " + name);
+    return null;
+  }
+  if (layout == null) {
+    layout=PatternLayout.createDefaultLayout();
+  }
+  final CompressedFileManager manager=CompressedFileManager.getFileManager(fileName,isAppend,isLocking,isBuffered,advertiseUri,layout,bufferSize);
+  if (manager == null) {
+    return null;
+  }
+  return new CompressedFileAppender(name,layout,filter,manager,fileName,ignoreExceptions,isFlush,isAdvertise ? config.getAdvertiser() : null);
+}
