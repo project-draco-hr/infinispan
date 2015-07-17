@@ -5,12 +5,9 @@
     String value="value-" + i;
     initialValues.add(new ImmortalCacheEntry(key,value));
   }
-  when(retriever.retrieveEntries(any(KeyValueFilter.class),any(Converter.class),anySetOf(Flag.class),any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String,String>>>(){
-    @Override public CloseableIterator<CacheEntry<String,String>> answer(    InvocationOnMock invocationOnMock) throws Throwable {
-      return Closeables.iterator(initialValues.iterator());
-    }
-  }
-);
+  CacheStream mockStream=mockStream();
+  doReturn(initialValues.iterator()).when(mockStream).iterator();
+  when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
   CacheEventFilter filter=mock(CacheEventFilter.class,withSettings().serializable());
   CacheEventConverter converter=mock(CacheEventConverter.class,withSettings().serializable());
   n.addListener(listener,filter,converter);

@@ -83,19 +83,18 @@ catch (          ExecutionException e) {
     if (log.isTraceEnabled()) {
       log.tracef("Listener %s requests initial state for cache",generatedId);
     }
-    final KeyValueFilter usedFilter;
-    final Converter usedConverter;
-    if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
-      usedFilter=new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter)filter);
-      usedConverter=null;
-    }
+    try (CacheStream<CacheEntry<K,V>> entryStream=cache.getAdvancedCache().cacheEntrySet().stream()){
+      Stream<CacheEntry<K,V>> usedStream=entryStream.segmentCompletionListener(handler);
+      if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+        usedStream=CacheFilters.filterAndConvert(usedStream,new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K,V,V>)filter));
+      }
  else {
-      usedFilter=filter == null ? null : new CacheEventFilterAsKeyValueFilter(filter);
-      usedConverter=converter == null ? null : new CacheEventConverterAsConverter(converter);
-    }
-    try (CloseableIterator<CacheEntry<K,C>> iterator=entryRetriever.retrieveEntries(usedFilter,usedConverter,null,handler)){
+        usedStream=filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(new CacheEventFilterAsKeyValueFilter<>(filter)));
+        usedStream=converter == null ? usedStream : usedStream.map(CacheFilters.function(new CacheEventConverterAsConverter(converter)));
+      }
+      Iterator<CacheEntry<K,V>> iterator=usedStream.iterator();
       while (iterator.hasNext()) {
-        CacheEntry<K,C> entry=iterator.next();
+        CacheEntry<K,V> entry=iterator.next();
         Object value=handler.markKeyAsProcessing(entry.getKey());
         if (value == BaseQueueingSegmentListener.REMOVED) {
           continue;
