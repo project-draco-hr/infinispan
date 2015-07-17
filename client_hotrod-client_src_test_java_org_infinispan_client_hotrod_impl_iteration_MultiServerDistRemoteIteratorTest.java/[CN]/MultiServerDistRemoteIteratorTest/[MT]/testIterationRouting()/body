@@ -1,13 +1,8 @@
 {
-  RemoteCacheManager cacheManager=clients.get(0);
-  RemoteCache<Object,Object> remoteCache=cacheManager.getCache();
-  TransportFactory transportFactory=TestingUtil.extractField(cacheManager,"transportFactory");
-  SegmentConsistentHash consistentHash=(SegmentConsistentHash)transportFactory.getConsistentHash(cacheManager.getCache().getName().getBytes());
-  SocketAddress[][] segmentOwners=consistentHash.getSegmentOwners();
-  for (  HotRodServer server : servers) {
-    Set<Integer> segmentsOwned=getSegmentsOwned(server,segmentOwners);
-    try (CloseableIterator<Map.Entry<Object,Object>> ignored=remoteCache.retrieveEntries(null,segmentsOwned,10)){
-      assertEquals(1,server.iterationManager().activeIterations());
+  for (int i=0; i < clients.size(); i++) {
+    RemoteCacheManager client=client(i);
+    try (CloseableIterator<Map.Entry<Object,Object>> ignored=client.getCache().retrieveEntries(null,10)){
+      assertIterationActiveOnlyOnServer(i);
     }
    }
 }
