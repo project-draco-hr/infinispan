@@ -1,2 +1,15 @@
 {
+  if (trace)   log.tracef("Replication task sending %s to single recipient %s with response mode %s",command,destination,mode);
+  boolean rsvp=isRsvpCommand(command);
+  Buffer buf;
+  buf=marshallCall(marshaller,command);
+  Message msg=constructMessage(buf,destination,mode,rsvp,deliverOrder);
+  NotifyingFuture<Response> request=sendMessageWithFuture(msg,new RequestOptions(mode,timeout));
+  if (mode == ResponseMode.GET_NONE)   return null;
+  SingleResponseFuture retval=new SingleResponseFuture(request);
+  if (timeout > 0 && !retval.isDone()) {
+    ScheduledFuture<?> timeoutFuture=timeoutExecutor.schedule(retval,timeout,TimeUnit.MILLISECONDS);
+    retval.setTimeoutFuture(timeoutFuture);
+  }
+  return retval;
 }
