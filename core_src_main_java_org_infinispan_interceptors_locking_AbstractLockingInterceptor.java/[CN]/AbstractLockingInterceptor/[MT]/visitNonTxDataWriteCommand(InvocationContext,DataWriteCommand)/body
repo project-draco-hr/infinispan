@@ -1,13 +1,12 @@
 {
   try {
-    if (!shouldLock(command.getKey(),command))     return invokeNextInterceptor(ctx,command);
-    lockKey(ctx,command);
+    if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
+      return invokeNextInterceptor(ctx,command);
+    }
+    lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
     return invokeNextInterceptor(ctx,command);
   }
- catch (  Throwable te) {
-    throw cleanLocksAndRethrow(ctx,te);
-  }
- finally {
+  finally {
     lockManager.unlockAll(ctx);
   }
 }

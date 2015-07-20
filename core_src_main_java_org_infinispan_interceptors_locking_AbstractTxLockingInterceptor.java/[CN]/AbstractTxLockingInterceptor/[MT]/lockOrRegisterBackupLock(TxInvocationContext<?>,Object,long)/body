@@ -1,0 +1,19 @@
+{
+  final Log log=getLog();
+  final boolean trace=log.isTraceEnabled();
+switch (LockUtil.getLockOwnership(key,cdl)) {
+case PRIMARY:
+    if (trace) {
+      log.tracef("Acquiring locks on %s.",key);
+    }
+  checkPendingAndLockKey(ctx,key,lockTimeout);
+return true;
+case BACKUP:
+if (trace) {
+log.tracef("Acquiring backup locks on %s.",key);
+}
+ctx.getCacheTransaction().addBackupLockForKey(key);
+default :
+return false;
+}
+}

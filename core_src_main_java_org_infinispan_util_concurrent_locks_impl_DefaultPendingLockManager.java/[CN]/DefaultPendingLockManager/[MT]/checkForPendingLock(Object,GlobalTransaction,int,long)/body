@@ -1,0 +1,15 @@
+{
+  if (trace) {
+    log.tracef("Checking for pending locks and then locking key %s",toStr(key));
+  }
+  final long expectedEndTime=timeService.expectedEndTime(lockTimeout,TimeUnit.MILLISECONDS);
+  final Collection<PendingTransaction> pendingTransactions=getTransactionWithLockedKey(transactionTopologyId,key,globalTransaction);
+  final PendingTransaction lockOwner=waitForTransactionsToComplete(pendingTransactions,expectedEndTime);
+  if (trace) {
+    log.tracef("Finished waiting for other potential lockers. Timed-Out? %b",lockOwner != null);
+  }
+  if (lockOwner != null) {
+    timeout(lockOwner,globalTransaction);
+  }
+  return timeService.remainingTime(expectedEndTime,TimeUnit.MILLISECONDS);
+}

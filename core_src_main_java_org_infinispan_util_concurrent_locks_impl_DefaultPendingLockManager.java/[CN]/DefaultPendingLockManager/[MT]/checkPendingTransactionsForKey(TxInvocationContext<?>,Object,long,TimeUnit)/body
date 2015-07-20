@@ -1,0 +1,15 @@
+{
+  final GlobalTransaction globalTransaction=ctx.getGlobalTransaction();
+  PendingLockPromiseImpl existing=pendingLockPromiseMap.get(globalTransaction);
+  if (existing != null) {
+    return existing;
+  }
+  final int txTopologyId=getTopologyId(ctx);
+  if (txTopologyId != NO_PENDING_CHECK) {
+    if (trace) {
+      log.tracef("Checking for pending locks and then locking key %s",toStr(key));
+    }
+    return createAndStore(getTransactionWithLockedKey(txTopologyId,key,globalTransaction),globalTransaction,time,unit);
+  }
+  return PendingLockPromise.NO_OP;
+}

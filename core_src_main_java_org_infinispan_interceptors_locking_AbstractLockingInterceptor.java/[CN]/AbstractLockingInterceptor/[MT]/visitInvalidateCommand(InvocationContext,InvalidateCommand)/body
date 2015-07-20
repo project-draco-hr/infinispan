@@ -1,13 +1,14 @@
 {
   try {
-    boolean skipLocking=hasSkipLocking(command);
-    long lockTimeout=getLockAcquisitionTimeout(command,skipLocking);
-    for (    Object key : command.getKeys()) {
-      lockKey(ctx,key,lockTimeout,skipLocking);
+    if (hasSkipLocking(command)) {
+      return invokeNextInterceptor(ctx,command);
     }
+    lockAllAndRecord(ctx,Arrays.asList(command.getKeys()),getLockTimeoutMillis(command));
     return invokeNextInterceptor(ctx,command);
   }
   finally {
-    if (!ctx.isInTxScope())     lockManager.unlockAll(ctx);
+    if (!ctx.isInTxScope()) {
+      lockManager.unlockAll(ctx);
+    }
   }
 }

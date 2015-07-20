@@ -1,15 +1,11 @@
 {
   Object[] compositeKeys=command.getCompositeKeys();
   try {
-    boolean skipLocking=hasSkipLocking(command);
-    if (!skipLocking) {
-      HashSet<Object> keysToLock=new HashSet<>(Arrays.asList(compositeKeys));
-      acquireRemoteIfNeeded(ctx,keysToLock,command);
+    if (!hasSkipLocking(command)) {
+      Set<Object> keysToLock=new HashSet<>(Arrays.asList(compositeKeys));
+      acquireAllRemoteIfNeeded(ctx,keysToLock,command);
       if (cdl.localNodeIsOwner(command.getKey())) {
-        long lockTimeout=getLockAcquisitionTimeout(command,false);
-        for (        Object key : compositeKeys) {
-          lockKey(ctx,key,lockTimeout,false);
-        }
+        lockAllAndRecord(ctx,keysToLock,getLockTimeoutMillis(command));
       }
     }
     return invokeNextInterceptor(ctx,command);

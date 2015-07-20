@@ -1,0 +1,14 @@
+{
+  if (timedOutTransaction != null) {
+    return true;
+  }
+  for (  PendingTransaction transaction : pendingTransactions) {
+    if (!transaction.cacheTransaction.areLocksReleased()) {
+      if (timeService.remainingTime(expectedEndTime,TimeUnit.MILLISECONDS) <= 0) {
+        timedOutTransaction=transaction;
+      }
+      return timedOutTransaction != null;
+    }
+  }
+  return true;
+}

@@ -1,0 +1,14 @@
+{
+  if (transactionsToCheck.isEmpty()) {
+    return null;
+  }
+  for (  PendingTransaction tx : transactionsToCheck) {
+    long remaining;
+    if ((remaining=timeService.remainingTime(expectedEndTime,TimeUnit.MILLISECONDS)) > 0) {
+      if (!tx.cacheTransaction.waitForLockRelease(remaining)) {
+        return tx;
+      }
+    }
+  }
+  return null;
+}

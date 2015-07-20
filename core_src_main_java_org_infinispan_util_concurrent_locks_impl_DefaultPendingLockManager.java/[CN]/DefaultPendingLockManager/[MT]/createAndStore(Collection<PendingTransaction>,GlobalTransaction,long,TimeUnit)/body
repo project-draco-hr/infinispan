@@ -1,0 +1,15 @@
+{
+  if (transactions.isEmpty()) {
+    return PendingLockPromise.NO_OP;
+  }
+  PendingLockPromiseImpl pendingLockPromise=new PendingLockPromiseImpl(transactions,timeService.expectedEndTime(time,unit));
+  PendingLockPromiseImpl existing=pendingLockPromiseMap.putIfAbsent(globalTransaction,pendingLockPromise);
+  if (existing != null) {
+    return existing;
+  }
+  pendingLockPromise.registerListenerInCacheTransactions();
+  if (!pendingLockPromise.isReady()) {
+    timeoutExecutor.schedule(pendingLockPromise,time,unit);
+  }
+  return pendingLockPromise;
+}

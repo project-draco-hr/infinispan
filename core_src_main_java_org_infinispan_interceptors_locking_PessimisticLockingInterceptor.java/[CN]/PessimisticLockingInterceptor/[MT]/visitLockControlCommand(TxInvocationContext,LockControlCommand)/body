@@ -17,17 +17,14 @@
           log.tracef("Already own locks on keys: %s, skipping remote call",command.getKeys());
         }
       }
-      ctx.addAllAffectedKeys(command.getKeys());
+      ((TxInvocationContext<?>)ctx).addAllAffectedKeys(command.getKeys());
     }
     if (command.isUnlock()) {
       if (ctx.isOriginLocal())       throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
       releaseLocksOnFailureBeforePrepare(ctx);
       return Boolean.FALSE;
     }
-    long lockTimeout=getLockAcquisitionTimeout(command,false);
-    for (    Object key : command.getKeys()) {
-      lockAndRegisterBackupLock(ctx,key,lockTimeout,false);
-    }
+    lockAllOrRegisterBackupLock(ctx,command.getKeys(),getLockTimeoutMillis(command));
     return Boolean.TRUE;
   }
  catch (  Throwable te) {

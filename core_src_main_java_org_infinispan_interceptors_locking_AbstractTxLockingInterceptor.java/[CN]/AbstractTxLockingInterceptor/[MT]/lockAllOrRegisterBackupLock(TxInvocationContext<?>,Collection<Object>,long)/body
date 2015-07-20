@@ -1,0 +1,30 @@
+{
+  if (keys.isEmpty()) {
+    return Collections.emptyList();
+  }
+  final Log log=getLog();
+  final boolean trace=log.isTraceEnabled();
+  Collection<Object> keysToLock=new ArrayList<>(keys.size());
+  for (  Object key : keys) {
+switch (LockUtil.getLockOwnership(key,cdl)) {
+case PRIMARY:
+      if (trace) {
+        log.tracef("Acquiring locks on %s.",key);
+      }
+    keysToLock.add(key);
+  break;
+case BACKUP:
+if (trace) {
+  log.tracef("Acquiring backup locks on %s.",key);
+}
+ctx.getCacheTransaction().addBackupLockForKey(key);
+default :
+break;
+}
+}
+if (keysToLock.isEmpty()) {
+return Collections.emptyList();
+}
+checkPendingAndLockAllKeys(ctx,keysToLock,lockTimeout);
+return keysToLock;
+}

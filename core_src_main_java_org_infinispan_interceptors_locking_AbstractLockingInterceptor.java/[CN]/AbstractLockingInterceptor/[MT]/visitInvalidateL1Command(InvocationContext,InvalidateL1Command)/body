@@ -3,29 +3,30 @@
     getLog().trace("Skipping invalidation as the write operation originated here.");
     return null;
   }
-  Object[] keys=command.getKeys();
+  if (hasSkipLocking(command)) {
+    return invokeNextInterceptor(ctx,command);
+  }
+  final Object[] keys=command.getKeys();
   try {
     if (keys != null && keys.length >= 1) {
-      ArrayList<Object> keysCopy=new ArrayList<>(Arrays.asList(keys));
-      boolean skipLocking=hasSkipLocking(command);
-      for (      Object key : command.getKeys()) {
+      ArrayList<Object> keysToInvalidate=new ArrayList<>(keys.length);
+      for (      Object key : keys) {
         try {
-          lockKey(ctx,key,0,skipLocking);
+          lockAndRecord(ctx,key,0);
+          keysToInvalidate.add(key);
         }
  catch (        TimeoutException te) {
           getLog().unableToLockToInvalidate(key,cdl.getAddress());
-          keysCopy.remove(key);
-          if (keysCopy.isEmpty())           return null;
         }
       }
-      command.setKeys(keysCopy.toArray());
+      if (keysToInvalidate.isEmpty()) {
+        return null;
+      }
+      command.setKeys(keysToInvalidate.toArray());
     }
     return invokeNextInterceptor(ctx,command);
   }
- catch (  Throwable te) {
-    throw cleanLocksAndRethrow(ctx,te);
-  }
- finally {
+  finally {
     command.setKeys(keys);
     if (!ctx.isInTxScope())     lockManager.unlockAll(ctx);
   }

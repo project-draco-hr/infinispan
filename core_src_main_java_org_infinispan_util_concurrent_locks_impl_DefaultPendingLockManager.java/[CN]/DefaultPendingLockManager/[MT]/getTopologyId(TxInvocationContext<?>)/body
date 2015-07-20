@@ -1,0 +1,13 @@
+{
+  final CacheTransaction tx=context.getCacheTransaction();
+  boolean isFromStateTransfer=context.isOriginLocal() && ((LocalTransaction)tx).isFromStateTransfer();
+  if (!isFromStateTransfer) {
+    final int transactionTopologyId=tx.getTopologyId();
+    if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
+      if (transactionTable.getMinTopologyId() < transactionTopologyId) {
+        return transactionTopologyId;
+      }
+    }
+  }
+  return NO_PENDING_CHECK;
+}

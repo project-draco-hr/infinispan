@@ -1,18 +1,12 @@
 {
-  if (!command.hasModifications() || command.writesToASingleKey()) {
-    log.trace("Not using lock reordering as we have a single key.");
-    acquireLocksVisitingCommands(ctx,command);
-  }
- else {
-    Object[] orderedKeys=command.getAffectedKeysToLock(true);
-    boolean hasClear=orderedKeys == null;
-    if (hasClear) {
-      log.trace("Not using lock reordering as the prepare contains a clear command.");
-      acquireLocksVisitingCommands(ctx,command);
-    }
- else {
-      log.tracef("Using lock reordering, order is: %s",orderedKeys);
-      acquireAllLocks(ctx,orderedKeys);
+  final Object[] affectedKeys=command.getAffectedKeysToLock(true);
+  ((TxInvocationContext<?>)ctx).addAllAffectedKeys(command.getAffectedKeys());
+  if (affectedKeys.length != 0) {
+    Collection<Object> lockedKeys=lockAllOrRegisterBackupLock(ctx,Arrays.asList(affectedKeys),cacheConfiguration.locking().lockAcquisitionTimeout());
+    if (!lockedKeys.isEmpty()) {
+      for (      Object key : lockedKeys) {
+        performLocalWriteSkewCheck(ctx,key);
+      }
     }
   }
   return invokeNextAndCommitIf1Pc(ctx,command);

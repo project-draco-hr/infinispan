@@ -1,0 +1,18 @@
+{
+  PendingLockPromiseImpl pendingLockPromise=pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
+  if (pendingLockPromise != null) {
+    pendingLockPromise.await();
+    if (pendingLockPromise.hasTimedOut()) {
+      timeout(pendingLockPromise.getTimedOutTransaction(),ctx.getGlobalTransaction());
+    }
+    return pendingLockPromise.getRemainingTimeout();
+  }
+  final int txTopologyId=getTopologyId(ctx);
+  if (txTopologyId != NO_PENDING_CHECK) {
+    return checkForPendingLock(key,ctx.getGlobalTransaction(),txTopologyId,unit.toMillis(time));
+  }
+  if (trace) {
+    log.tracef("Locking key %s, no need to check for pending locks.",toStr(key));
+  }
+  return unit.toMillis(time);
+}
