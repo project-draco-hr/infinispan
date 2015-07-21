@@ -8,9 +8,9 @@
     K result=null;
     while (result == null && !keyGenWorker.isStopped()) {
       maxNumberInvariant.readLock().lock();
-      queue=address2key.get(address);
-      if (queue == null)       throw new IllegalStateException("Address " + address + " is no longer in the cluster");
       try {
+        queue=address2key.get(address);
+        if (queue == null)         throw new IllegalStateException("Address " + address + " is no longer in the cluster");
         result=queue.poll();
         if (result == null) {
           keyProducerStartLatch.open();
@@ -20,11 +20,13 @@
   finally {
         maxNumberInvariant.readLock().unlock();
       }
-      try {
-        Thread.currentThread().sleep(POOL_INTERVAL);
-      }
- catch (      InterruptedException e) {
-        e.printStackTrace();
+      if (result == null) {
+        try {
+          result=queue.poll(POLL_INTERVAL_MILLIS,TimeUnit.MILLISECONDS);
+        }
+ catch (        InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
     existingKeyCount.decrementAndGet();
