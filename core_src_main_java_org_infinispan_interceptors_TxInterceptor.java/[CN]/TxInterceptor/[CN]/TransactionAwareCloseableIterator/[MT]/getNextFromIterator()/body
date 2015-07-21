@@ -10,13 +10,15 @@
   if (returnedValue == null) {
     while (realIterator.hasNext()) {
       E iteratedEntry=realIterator.next();
-      CacheEntry contextEntry;
-      if ((contextEntry=lookupEntry(ctx,iteratedEntry)) != null) {
+      Object key=getKey(iteratedEntry);
+      CacheEntry<K,V> contextEntry;
+      if ((contextEntry=ctx.lookupEntry(key)) != null) {
         if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
           break;
         }
       }
  else {
+        seenContextKeys.add(key);
         return iteratedEntry;
       }
     }

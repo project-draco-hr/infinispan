@@ -4,7 +4,12 @@
       return componentType.cast(new LocalStreamManagerImpl<>());
     }
     if (componentType.equals(ClusterStreamManager.class)) {
-      return componentType.cast(new ClusterStreamManagerImpl<>());
+      if (configuration.clustering().partitionHandling().enabled()) {
+        return componentType.cast(new PartitionAwareClusterStreamManager<>());
+      }
+ else {
+        return componentType.cast(new ClusterStreamManagerImpl<>());
+      }
     }
   }
   return null;

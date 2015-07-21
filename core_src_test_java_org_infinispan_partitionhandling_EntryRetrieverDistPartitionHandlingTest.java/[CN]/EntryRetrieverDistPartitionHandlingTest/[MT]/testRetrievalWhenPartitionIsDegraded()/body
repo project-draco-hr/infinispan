@@ -1,0 +1,10 @@
+{
+  Cache<MagicKey,String> cache0=cache(0);
+  cache0.put(new MagicKey(cache(1),cache(2)),"not-local");
+  cache0.put(new MagicKey(cache(0),cache(1)),"local");
+  splitCluster(new int[]{0,1},new int[]{2,3});
+  partition(0).assertDegradedMode();
+  try (CloseableIterator iterator=Closeables.iterator(cache(0).entrySet().stream())){
+    iterator.next();
+  }
+ }

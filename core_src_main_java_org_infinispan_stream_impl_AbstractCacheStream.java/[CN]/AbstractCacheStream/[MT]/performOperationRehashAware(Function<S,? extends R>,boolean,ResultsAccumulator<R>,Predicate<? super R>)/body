@@ -12,22 +12,29 @@
     }
     UUID id=csm.remoteStreamOperationRehashAware(getParallelDistribution(),parallel,ch,segmentsToProcess,keysToFilter,Collections.emptyMap(),includeLoader,op,remoteResults,earlyTerminatePredicate);
     try {
-      R localValue=op.performOperation();
-      if (dm.getReadConsistentHash().equals(ch)) {
-        remoteResults.onCompletion(null,ch.getPrimarySegmentsForOwner(localAddress),localValue);
+      R localValue;
+      boolean localRun=ch.getMembers().contains(localAddress);
+      if (localRun) {
+        localValue=op.performOperation();
+        if (dm.getReadConsistentHash().equals(ch)) {
+          remoteResults.onCompletion(null,ch.getPrimarySegmentsForOwner(localAddress),localValue);
+        }
+ else {
+          if (segmentsToProcess != null) {
+            Set<Integer> ourSegments=ch.getPrimarySegmentsForOwner(localAddress);
+            ourSegments.retainAll(segmentsToProcess);
+            remoteResults.onSegmentsLost(ourSegments);
+          }
+ else {
+            remoteResults.onSegmentsLost(ch.getPrimarySegmentsForOwner(localAddress));
+          }
+        }
       }
  else {
-        if (segmentsToProcess != null) {
-          Set<Integer> ourSegments=ch.getPrimarySegmentsForOwner(localAddress);
-          ourSegments.retainAll(segmentsToProcess);
-          remoteResults.onSegmentsLost(ourSegments);
-        }
- else {
-          remoteResults.onSegmentsLost(ch.getPrimarySegmentsForOwner(localAddress));
-        }
+        localValue=null;
       }
       try {
-        if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,30,TimeUnit.SECONDS)) {
+        if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,30,TimeUnit.SECONDS)) {
           throw new CacheException(new TimeoutException());
         }
       }

@@ -1,0 +1,19 @@
+{
+  log.tracef("Marking tracker to have exception");
+  tracker.throwable=e;
+  if (dest == null || tracker.lastResult(dest,null)) {
+    if (uuid != null) {
+      log.tracef("Tracker %s completed with exception, waking sleepers!",uuid);
+    }
+ else {
+      log.trace("Tracker completed due to outside cause, waking sleepers! ");
+    }
+    tracker.completionLock.lock();
+    try {
+      tracker.completionCondition.signalAll();
+    }
+  finally {
+      tracker.completionLock.unlock();
+    }
+  }
+}

@@ -25,7 +25,7 @@
   assertTrue(cacheTopology.getMembers().contains(address(0)));
   assertFalse(cacheTopology.getMembers().contains(address(1)));
   assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
-  assertTrue(cache(1).keySet().isEmpty());
+  assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
   Future<Object> getFuture=fork(new Callable<Object>(){
     @Override public Object call() throws Exception {
       try {
@@ -41,7 +41,7 @@
   if (!putStartedLatch.await(15,TimeUnit.SECONDS)) {
     throw new TimeoutException();
   }
-  assertTrue(cache(1).keySet().isEmpty());
+  assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
   ctm0.setRebalancingEnabled(true);
   TestingUtil.waitForRehashToComplete(cache(0),cache(1));
   assertEquals(1,cache(1).keySet().size());
