@@ -1,0 +1,28 @@
+{
+  String cacheConfigurationType=cacheType + ModelKeys.CONFIGURATION_SUFFIX;
+  if (configurations.get(cacheConfigurationType).isDefined()) {
+    for (    Property cacheEntry : configurations.get(cacheConfigurationType).asPropertyList()) {
+      String cacheName=cacheEntry.getName();
+      ModelNode cacheConfiguration=cacheEntry.getValue();
+      Element element;
+      if (container.hasDefined(cacheType,cacheName)) {
+        element=Element.forName(cacheType);
+      }
+ else {
+        element=Element.forName(cacheConfigurationType);
+      }
+      writer.writeStartElement(element.getLocalName());
+      writer.writeAttribute(Attribute.NAME.getLocalName(),cacheName);
+switch (cacheType) {
+case ModelKeys.DISTRIBUTED_CACHE:
+        processDistributedCacheAttributes(writer,cacheConfiguration);
+case ModelKeys.REPLICATED_CACHE:
+case ModelKeys.INVALIDATION_CACHE:
+      processCommonClusteredCacheAttributes(writer,cacheConfiguration);
+default :
+    processCommonCacheConfigurationAttributesElements(writer,cacheConfiguration);
+}
+writer.writeEndElement();
+}
+}
+}

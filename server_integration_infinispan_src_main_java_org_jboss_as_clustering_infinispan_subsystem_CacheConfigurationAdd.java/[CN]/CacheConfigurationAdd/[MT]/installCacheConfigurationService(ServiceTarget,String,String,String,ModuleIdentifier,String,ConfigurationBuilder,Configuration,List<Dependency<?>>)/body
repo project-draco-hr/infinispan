@@ -1,0 +1,22 @@
+{
+  final InjectedValue<EmbeddedCacheManager> container=new InjectedValue<>();
+  final CacheConfigurationDependencies cacheConfigurationDependencies=new CacheConfigurationDependencies(container);
+  final Service<Configuration> service=new CacheConfigurationService(cacheName,builder,moduleId,cacheConfigurationDependencies);
+  final ServiceBuilder<?> configBuilder=target.addService(CacheServiceName.CONFIGURATION.getServiceName(containerName,cacheName),service).addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName),EmbeddedCacheManager.class,container).addDependency(Services.JBOSS_SERVICE_MODULE_LOADER,ModuleLoader.class,cacheConfigurationDependencies.getModuleLoaderInjector()).setInitialMode(ServiceController.Mode.PASSIVE);
+  if (templateConfiguration != null) {
+    configBuilder.addDependency(CacheServiceName.CONFIGURATION.getServiceName(containerName,templateConfiguration),Configuration.class,cacheConfigurationDependencies.getTemplateConfigurationInjector());
+  }
+  if (config.invocationBatching().enabled()) {
+    cacheConfigurationDependencies.getTransactionManagerInjector().inject(BatchModeTransactionManager.getInstance());
+  }
+ else   if (config.transaction().transactionMode() == org.infinispan.transaction.TransactionMode.TRANSACTIONAL) {
+    configBuilder.addDependency(TxnServices.JBOSS_TXN_TRANSACTION_MANAGER,TransactionManager.class,cacheConfigurationDependencies.getTransactionManagerInjector());
+    if (config.transaction().useSynchronization()) {
+      configBuilder.addDependency(TxnServices.JBOSS_TXN_SYNCHRONIZATION_REGISTRY,TransactionSynchronizationRegistry.class,cacheConfigurationDependencies.getTransactionSynchronizationRegistryInjector());
+    }
+  }
+  for (  Dependency<?> dependency : dependencies) {
+    this.addDependency(configBuilder,dependency);
+  }
+  return configBuilder.install();
+}

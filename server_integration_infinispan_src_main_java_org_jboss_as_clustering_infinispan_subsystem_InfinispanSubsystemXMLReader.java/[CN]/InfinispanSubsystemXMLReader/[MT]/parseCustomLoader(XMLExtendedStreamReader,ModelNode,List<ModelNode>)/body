@@ -1,0 +1,27 @@
+{
+  ModelNode loader=Util.getEmptyOperation(ModelDescriptionConstants.ADD,null);
+  String name=ModelKeys.LOADER_NAME;
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+{
+        StoreConfigurationResource.CLASS.parseAndSetParameter(value,loader,reader);
+        break;
+      }
+default :
+{
+      name=this.parseLoaderAttribute(name,reader,i,attribute,value,loader);
+    }
+}
+}
+if (!loader.hasDefined(ModelKeys.CLASS)) {
+throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.CLASS));
+}
+setOperationAddress(loader,PathAddress.pathAddress(cache.get(OP_ADDR)),LoaderConfigurationResource.LOADER_PATH,name);
+List<ModelNode> additionalConfigurationOperations=new ArrayList<>();
+this.parseLoaderElements(reader,loader,additionalConfigurationOperations);
+operations.add(loader);
+operations.addAll(additionalConfigurationOperations);
+}

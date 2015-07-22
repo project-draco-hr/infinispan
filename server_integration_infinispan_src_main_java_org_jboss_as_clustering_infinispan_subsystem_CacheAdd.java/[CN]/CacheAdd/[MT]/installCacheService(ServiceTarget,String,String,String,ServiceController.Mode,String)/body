@@ -1,0 +1,8 @@
+{
+  final InjectedValue<EmbeddedCacheManager> container=new InjectedValue<>();
+  final CacheDependencies cacheDependencies=new CacheDependencies(container);
+  final Service<Cache<Object,Object>> service=new CacheService<>(cacheName,cacheDependencies);
+  final ServiceBuilder<?> builder=target.addService(CacheServiceName.CACHE.getServiceName(containerName,cacheName),service).addDependency(CacheServiceName.CONFIGURATION.getServiceName(containerName,configurationName)).addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName),EmbeddedCacheManager.class,container).setInitialMode(initialMode);
+  builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME,DeployedCacheStoreFactory.class,cacheDependencies.getDeployedCacheStoreFactoryInjector());
+  return builder.install();
+}

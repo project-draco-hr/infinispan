@@ -1,0 +1,24 @@
+{
+  PathAddress securityAddress=PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME);
+  ModelNode security=Util.createAddOperation(securityAddress);
+  ParseUtils.requireNoAttributes(reader);
+  List<ModelNode> additionalConfigurationOperations=new ArrayList<>();
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case AUTHORIZATION:
+{
+        this.parseCacheAuthorization(reader,security,additionalConfigurationOperations);
+        break;
+      }
+default :
+{
+      throw ParseUtils.unexpectedElement(reader);
+    }
+}
+}
+operations.add(security);
+for (ModelNode additionalOperation : additionalConfigurationOperations) {
+operations.add(additionalOperation);
+}
+}

@@ -1,0 +1,42 @@
+{
+  ModelNode cacheConfiguration=Util.getEmptyOperation(ModelDescriptionConstants.ADD,null);
+  List<ModelNode> additionalConfigurationOperations=new ArrayList<>();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    this.parseClusteredCacheAttribute(reader,i,attribute,value,cacheConfiguration);
+  }
+  if (!cacheConfiguration.hasDefined(ModelKeys.NAME)) {
+    throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.NAME));
+  }
+  if (!cacheConfiguration.hasDefined(ModelKeys.MODE) && !cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION)) {
+    throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.MODE));
+  }
+  addNameToAddress(cacheConfiguration,containerAddress,ModelKeys.REPLICATED_CACHE);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case PARTITION_HANDLING:
+{
+        this.parsePartitionHandling(reader,cacheConfiguration,additionalConfigurationOperations);
+        break;
+      }
+case STATE_TRANSFER:
+{
+      this.parseStateTransfer(reader,cacheConfiguration,additionalConfigurationOperations);
+      break;
+    }
+default :
+{
+    this.parseCacheElement(reader,element,cacheConfiguration,additionalConfigurationOperations);
+  }
+}
+}
+operations.add(cacheConfiguration);
+for (ModelNode additionalOperation : additionalConfigurationOperations) {
+operations.add(additionalOperation);
+}
+if (!configurationOnly) {
+operations.add(addCacheForConfiguration(cacheConfiguration,containerAddress,ModelKeys.REPLICATED_CACHE));
+}
+}

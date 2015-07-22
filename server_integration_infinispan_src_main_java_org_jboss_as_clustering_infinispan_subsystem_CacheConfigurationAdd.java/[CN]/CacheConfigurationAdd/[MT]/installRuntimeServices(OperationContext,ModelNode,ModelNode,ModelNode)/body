@@ -1,0 +1,19 @@
+{
+  PathAddress configurationAddress=getCacheConfigurationAddressFromOperation(operation);
+  PathAddress containerAddress=getCacheContainerAddressFromOperation(operation);
+  String cacheName=configurationAddress.getLastElement().getValue();
+  String containerName=containerAddress.getLastElement().getValue();
+  ModelNode resolvedValue=null;
+  final String templateConfiguration=(resolvedValue=CacheConfigurationResource.CONFIGURATION.resolveModelAttribute(context,cacheModel)).isDefined() ? resolvedValue.asString() : null;
+  final ModuleIdentifier moduleId=(resolvedValue=CacheConfigurationResource.CACHE_MODULE.resolveModelAttribute(context,cacheModel)).isDefined() ? ModuleIdentifier.fromString(resolvedValue.asString()) : null;
+  List<Dependency<?>> dependencies=new LinkedList<>();
+  ConfigurationBuilder builder=new ConfigurationBuilder().read(getDefaultConfiguration(this.mode));
+  processModelNode(context,containerName,cacheModel,builder,dependencies);
+  String defaultCache=CacheContainerResource.DEFAULT_CACHE.resolveModelAttribute(context,containerModel).asString();
+  ServiceTarget target=context.getServiceTarget();
+  Configuration config=builder.build();
+  Collection<ServiceController<?>> controllers=new ArrayList<>(3);
+  controllers.add(this.installCacheConfigurationService(target,containerName,cacheName,defaultCache,moduleId,templateConfiguration,builder,config,dependencies));
+  log.debugf("Cache configuration service for %s installed for container %s",cacheName,containerName);
+  return controllers;
+}

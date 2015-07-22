@@ -1,0 +1,14 @@
+{
+  super.processModelNode(context,containerName,cache,builder,dependencies);
+  final int owners=DistributedCacheConfigurationResource.OWNERS.resolveModelAttribute(context,cache).asInt();
+  final int segments=DistributedCacheConfigurationResource.SEGMENTS.resolveModelAttribute(context,cache).asInt();
+  final float capacityFactor=(float)DistributedCacheConfigurationResource.CAPACITY_FACTOR.resolveModelAttribute(context,cache).asDouble();
+  final long lifespan=DistributedCacheConfigurationResource.L1_LIFESPAN.resolveModelAttribute(context,cache).asLong();
+  builder.clustering().hash().numOwners(owners).numSegments(segments).capacityFactor(capacityFactor);
+  if (lifespan > 0) {
+    builder.clustering().l1().enable().lifespan(lifespan);
+  }
+ else {
+    builder.clustering().l1().disable();
+  }
+}

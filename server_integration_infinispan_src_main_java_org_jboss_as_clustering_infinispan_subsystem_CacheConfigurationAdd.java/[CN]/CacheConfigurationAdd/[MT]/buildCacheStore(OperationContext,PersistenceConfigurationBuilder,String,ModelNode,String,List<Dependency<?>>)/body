@@ -1,0 +1,190 @@
+{
+  ModelNode resolvedValue=null;
+  if (storeKey.equals(ModelKeys.FILE_STORE)) {
+    final SingleFileStoreConfigurationBuilder builder=persistenceBuilder.addStore(SingleFileStoreConfigurationBuilder.class);
+    if (store.hasDefined(ModelKeys.MAX_ENTRIES)) {
+      builder.maxEntries(store.get(ModelKeys.MAX_ENTRIES).asInt());
+    }
+    final String path=((resolvedValue=FileStoreResource.PATH.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName;
+    final String relativeTo=((resolvedValue=FileStoreResource.RELATIVE_TO.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+    Injector<PathManager> injector=new SimpleInjector<PathManager>(){
+      volatile PathManager.Callback.Handle callbackHandle;
+      @Override public void inject(      PathManager value){
+        callbackHandle=value.registerCallback(relativeTo,PathManager.ReloadServerCallback.create(),PathManager.Event.UPDATED,PathManager.Event.REMOVED);
+        builder.location(value.resolveRelativePathEntry(path,relativeTo));
+      }
+      @Override public void uninject(){
+        super.uninject();
+        if (callbackHandle != null) {
+          callbackHandle.remove();
+        }
+      }
+    }
+;
+    dependencies.add(new Dependency<>(PathManagerService.SERVICE_NAME,PathManager.class,injector));
+    return builder;
+  }
+ else   if (storeKey.equals(ModelKeys.STRING_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.BINARY_KEYED_JDBC_STORE) || storeKey.equals(ModelKeys.MIXED_KEYED_JDBC_STORE)) {
+    ModelNode dialectNode=BaseJDBCStoreConfigurationResource.DIALECT.resolveModelAttribute(context,store);
+    DatabaseType databaseType=dialectNode.isDefined() ? DatabaseType.valueOf(dialectNode.asString()) : null;
+    AbstractJdbcStoreConfigurationBuilder<?,?> builder=buildJdbcStore(persistenceBuilder,context,store,databaseType);
+    final String datasource=BaseJDBCStoreConfigurationResource.DATA_SOURCE.resolveModelAttribute(context,store).asString();
+    dependencies.add(new Dependency<>(ServiceName.JBOSS.append("data-source",datasource)));
+    builder.dataSource().jndiUrl(datasource);
+    return builder;
+  }
+ else   if (storeKey.equals(ModelKeys.REMOTE_STORE)) {
+    final RemoteStoreConfigurationBuilder builder=persistenceBuilder.addStore(RemoteStoreConfigurationBuilder.class);
+    for (    ModelNode server : store.require(ModelKeys.REMOTE_SERVERS).asList()) {
+      String outboundSocketBinding=server.get(ModelKeys.OUTBOUND_SOCKET_BINDING).asString();
+      Injector<OutboundSocketBinding> injector=new SimpleInjector<OutboundSocketBinding>(){
+        @Override public void inject(        OutboundSocketBinding value){
+          try {
+            builder.addServer().host(value.getResolvedDestinationAddress().getHostAddress()).port(value.getDestinationPort());
+          }
+ catch (          UnknownHostException e) {
+            throw InfinispanMessages.MESSAGES.failedToInjectSocketBinding(e,value);
+          }
+        }
+      }
+;
+      dependencies.add(new Dependency<>(OutboundSocketBinding.OUTBOUND_SOCKET_BINDING_BASE_SERVICE_NAME.append(outboundSocketBinding),OutboundSocketBinding.class,injector));
+    }
+    if (store.hasDefined(ModelKeys.CACHE)) {
+      builder.remoteCacheName(store.get(ModelKeys.CACHE).asString());
+    }
+    if (store.hasDefined(ModelKeys.HOTROD_WRAPPING)) {
+      builder.hotRodWrapping(store.require(ModelKeys.HOTROD_WRAPPING).asBoolean());
+    }
+    if (store.hasDefined(ModelKeys.RAW_VALUES)) {
+      builder.rawValues(store.require(ModelKeys.RAW_VALUES).asBoolean());
+    }
+    if (store.hasDefined(ModelKeys.SOCKET_TIMEOUT)) {
+      builder.socketTimeout(store.require(ModelKeys.SOCKET_TIMEOUT).asLong());
+    }
+    if (store.hasDefined(ModelKeys.TCP_NO_DELAY)) {
+      builder.tcpNoDelay(store.require(ModelKeys.TCP_NO_DELAY).asBoolean());
+    }
+    return builder;
+  }
+ else   if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {
+    final LevelDBStoreConfigurationBuilder builder=persistenceBuilder.addStore(LevelDBStoreConfigurationBuilder.class);
+    final String path=((resolvedValue=LevelDBStoreConfigurationResource.PATH.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName+ File.separatorChar+ "data";
+    final String relativeTo=((resolvedValue=LevelDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+    Injector<PathManager> injector=new SimpleInjector<PathManager>(){
+      volatile PathManager.Callback.Handle callbackHandle;
+      @Override public void inject(      PathManager value){
+        callbackHandle=value.registerCallback(relativeTo,PathManager.ReloadServerCallback.create(),PathManager.Event.UPDATED,PathManager.Event.REMOVED);
+        builder.location(value.resolveRelativePathEntry(path,relativeTo));
+      }
+      @Override public void uninject(){
+        super.uninject();
+        if (callbackHandle != null) {
+          callbackHandle.remove();
+        }
+      }
+    }
+;
+    dependencies.add(new Dependency<PathManager>(PathManagerService.SERVICE_NAME,PathManager.class,injector));
+    final boolean expirationDefined=store.hasDefined(ModelKeys.EXPIRATION) && store.get(ModelKeys.EXPIRATION,ModelKeys.EXPIRATION_NAME).isDefined();
+    final String expirationPath;
+    if (expirationDefined) {
+      ModelNode expiration=store.get(ModelKeys.EXPIRATION,ModelKeys.EXPIRATION_NAME);
+      expirationPath=LevelDBExpirationConfigurationResource.PATH.resolveModelAttribute(context,expiration).asString();
+      builder.expiryQueueSize(LevelDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context,expiration).asInt());
+    }
+ else {
+      expirationPath=InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName+ File.separatorChar+ "expiration";
+    }
+    injector=new SimpleInjector<PathManager>(){
+      volatile PathManager.Callback.Handle callbackHandle;
+      @Override public void inject(      PathManager value){
+        callbackHandle=value.registerCallback(relativeTo,PathManager.ReloadServerCallback.create(),PathManager.Event.UPDATED,PathManager.Event.REMOVED);
+        builder.expiredLocation(value.resolveRelativePathEntry(expirationPath,relativeTo));
+      }
+      @Override public void uninject(){
+        super.uninject();
+        if (callbackHandle != null) {
+          callbackHandle.remove();
+        }
+      }
+    }
+;
+    dependencies.add(new Dependency<>(PathManagerService.SERVICE_NAME,PathManager.class,injector));
+    if (store.hasDefined(ModelKeys.BLOCK_SIZE))     builder.blockSize(store.get(ModelKeys.BLOCK_SIZE).asInt());
+    if (store.hasDefined(ModelKeys.CACHE_SIZE))     builder.cacheSize(store.get(ModelKeys.CACHE_SIZE).asLong());
+    if (store.hasDefined(ModelKeys.CLEAR_THRESHOLD))     builder.clearThreshold(store.get(ModelKeys.CLEAR_THRESHOLD).asInt());
+    if (store.hasDefined(ModelKeys.COMPRESSION)) {
+      ModelNode node=store.get(ModelKeys.COMPRESSION,ModelKeys.COMPRESSION_NAME);
+      final CompressionType compressionType=CompressionType.valueOf(LevelDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context,node).asString());
+      builder.compressionType(compressionType);
+    }
+    if (store.hasDefined(ModelKeys.IMPLEMENTATION)) {
+      ModelNode node=store.get(ModelKeys.IMPLEMENTATION,ModelKeys.IMPLEMENTATION_NAME);
+      final LevelDBStoreConfiguration.ImplementationType implementationType=LevelDBStoreConfiguration.ImplementationType.valueOf(LevelDBImplementationConfigurationResource.TYPE.resolveModelAttribute(context,node).asString());
+      builder.implementationType(implementationType);
+    }
+    return builder;
+  }
+ else   if (storeKey.equals(ModelKeys.REST_STORE)) {
+    final RestStoreConfigurationBuilder builder=persistenceBuilder.addStore(RestStoreConfigurationBuilder.class);
+    builder.host("localhost");
+    for (    ModelNode server : store.require(ModelKeys.REMOTE_SERVERS).asList()) {
+      String outboundSocketBinding=server.get(ModelKeys.OUTBOUND_SOCKET_BINDING).asString();
+      Injector<OutboundSocketBinding> injector=new SimpleInjector<OutboundSocketBinding>(){
+        @Override public void inject(        OutboundSocketBinding value){
+          try {
+            builder.host(value.getResolvedDestinationAddress().getHostAddress()).port(value.getDestinationPort());
+          }
+ catch (          UnknownHostException e) {
+            throw InfinispanMessages.MESSAGES.failedToInjectSocketBinding(e,value);
+          }
+        }
+      }
+;
+      dependencies.add(new Dependency<>(OutboundSocketBinding.OUTBOUND_SOCKET_BINDING_BASE_SERVICE_NAME.append(outboundSocketBinding),OutboundSocketBinding.class,injector));
+    }
+    if (store.hasDefined(ModelKeys.APPEND_CACHE_NAME_TO_PATH)) {
+      builder.appendCacheNameToPath(store.require(ModelKeys.APPEND_CACHE_NAME_TO_PATH).asBoolean());
+    }
+    if (store.hasDefined(ModelKeys.PATH)) {
+      builder.path(store.get(ModelKeys.PATH).asString());
+    }
+    builder.rawValues(true);
+    builder.metadataHelper(MimeMetadataHelper.class);
+    if (store.hasDefined(ModelKeys.CONNECTION_POOL)) {
+      ModelNode pool=store.get(ModelKeys.CONNECTION_POOL);
+      if (pool.hasDefined(ModelKeys.CONNECTION_TIMEOUT)) {
+        builder.connectionPool().connectionTimeout(pool.require(ModelKeys.CONNECTION_TIMEOUT).asInt());
+      }
+      if (pool.hasDefined(ModelKeys.MAX_CONNECTIONS_PER_HOST)) {
+        builder.connectionPool().maxConnectionsPerHost(pool.require(ModelKeys.MAX_CONNECTIONS_PER_HOST).asInt());
+      }
+      if (pool.hasDefined(ModelKeys.MAX_TOTAL_CONNECTIONS)) {
+        builder.connectionPool().maxTotalConnections(pool.require(ModelKeys.MAX_TOTAL_CONNECTIONS).asInt());
+      }
+      if (pool.hasDefined(ModelKeys.BUFFER_SIZE)) {
+        builder.connectionPool().bufferSize(pool.require(ModelKeys.BUFFER_SIZE).asInt());
+      }
+      if (pool.hasDefined(ModelKeys.SOCKET_TIMEOUT)) {
+        builder.connectionPool().socketTimeout(pool.require(ModelKeys.SOCKET_TIMEOUT).asInt());
+      }
+      if (pool.hasDefined(ModelKeys.TCP_NO_DELAY)) {
+        builder.connectionPool().tcpNoDelay(pool.require(ModelKeys.TCP_NO_DELAY).asBoolean());
+      }
+    }
+    return builder;
+  }
+ else   if (storeKey.equals(ModelKeys.STORE)) {
+    String className=store.require(ModelKeys.CLASS).asString();
+    try {
+      return handleStoreOrLoaderClass(className,persistenceBuilder);
+    }
+ catch (    Exception e) {
+      throw InfinispanMessages.MESSAGES.invalidCacheStore(e,className);
+    }
+  }
+ else {
+    throw new IllegalStateException();
+  }
+}

@@ -1,0 +1,17 @@
+{
+  super.processModelNode(context,containerName,cache,builder,dependencies);
+  final Mode mode=Mode.valueOf(ClusteredCacheConfigurationResource.MODE.resolveModelAttribute(context,cache).asString());
+  final long remoteTimeout=ClusteredCacheConfigurationResource.REMOTE_TIMEOUT.resolveModelAttribute(context,cache).asLong();
+  final int queueSize=ClusteredCacheConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context,cache).asInt();
+  final long queueFlushInterval=ClusteredCacheConfigurationResource.QUEUE_FLUSH_INTERVAL.resolveModelAttribute(context,cache).asLong();
+  CacheMode cacheMode=mode.apply(this.mode);
+  builder.clustering().cacheMode(cacheMode);
+  if (cacheMode.isSynchronous()) {
+    builder.clustering().sync().replTimeout(remoteTimeout);
+  }
+ else {
+    builder.clustering().async().useReplQueue(queueSize > 0);
+    builder.clustering().async().replQueueMaxElements(queueSize);
+    builder.clustering().async().replQueueInterval(queueFlushInterval);
+  }
+}
