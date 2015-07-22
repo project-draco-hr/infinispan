@@ -1,0 +1,16 @@
+{
+  ConfigurationBuilder builder=holder.getNamedConfigurationBuilders().get(name);
+  if (builder == null) {
+    builder=holder.newConfigurationBuilder(name).template(template);
+    if (configuration != null) {
+      ConfigurationBuilder extendBuilder=holder.getNamedConfigurationBuilders().get(configuration);
+      if (extendBuilder == null) {
+        throw log.undeclaredConfiguration(configuration,name);
+      }
+      if (!extendBuilder.build().isTemplate()) {
+        throw log.noConfiguration(configuration);
+      }
+    }
+  }
+  return builder;
+}

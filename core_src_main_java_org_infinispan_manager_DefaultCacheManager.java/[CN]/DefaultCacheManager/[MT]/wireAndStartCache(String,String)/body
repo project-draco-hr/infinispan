@@ -1,0 +1,38 @@
+{
+  CacheWrapper createdCacheWrapper=null;
+  Configuration c=null;
+  try {
+synchronized (caches) {
+      CacheWrapper existingCacheWrapper=caches.get(cacheName);
+      if (existingCacheWrapper != null) {
+        return null;
+      }
+      c=getConfiguration(configurationName);
+      if (c.security().authorization().enabled()) {
+        authzHelper.checkPermission(c.security().authorization(),AuthorizationPermission.LIFECYCLE);
+      }
+      if (c.isTemplate() && cacheName.equals(configurationName)) {
+        throw log.templateConfigurationStartAttempt(cacheName);
+      }
+      createdCacheWrapper=new CacheWrapper();
+      if (caches.put(cacheName,createdCacheWrapper) != null) {
+        throw new IllegalStateException("attempt to initialize the cache twice");
+      }
+    }
+    globalComponentRegistry.start();
+    log.tracef("About to wire and start cache %s",cacheName);
+    Cache<K,V> cache=new InternalCacheFactory<K,V>().createCache(c,globalComponentRegistry,cacheName);
+    if (cache.getAdvancedCache().getAuthorizationManager() != null) {
+      cache=new SecureCacheImpl<K,V>(cache.getAdvancedCache());
+    }
+    createdCacheWrapper.setCache(cache);
+    cache.start();
+    return cache;
+  }
+  finally {
+    if (createdCacheWrapper != null) {
+      log.tracef("Closing latch for cache %s",cacheName);
+      createdCacheWrapper.latch.countDown();
+    }
+  }
+}
