@@ -4,7 +4,6 @@
   Map dataIn=new HashMap();
   dataIn.put(1,v(m,1));
   dataIn.put(2,v(m,2));
-  final long startTime=now();
   final long lifespan=EXPIRATION_TIMEOUT;
   cache.putAll(dataIn,lifespan,TimeUnit.MILLISECONDS);
   cache.getAdvancedCache().getTransactionManager().begin();
@@ -14,19 +13,10 @@
     Map allEntriesIn=new HashMap(dataIn);
     allEntriesIn.putAll(txDataIn);
     cache.putAll(txDataIn);
-    while (true) {
-      entries=new HashSet<>(cache.entrySet());
-      if (moreThanDurationElapsed(startTime,lifespan))       break;
-      assertEquals(allEntriesIn.entrySet(),entries);
-      Thread.sleep(100);
-    }
-    while (!moreThanDurationElapsed(startTime,lifespan + EVICTION_CHECK_TIMEOUT)) {
-      entries=cache.entrySet();
-      if (entries.size() == 1)       break;
-    }
+    timeService.advance(lifespan + 100);
   }
   finally {
     cache.getAdvancedCache().getTransactionManager().commit();
   }
-  assertEquals(1,entries.size());
+  assertEquals(1,cache.entrySet().size());
 }

@@ -1,2 +1,17 @@
 {
+  Cache<String,String> cache=cm.getCache();
+  long idleTime=EXPIRATION_TIMEOUT;
+  assertNull(cache.get("k"));
+  assertNull(cache.replace("k","v",-1,MILLISECONDS,idleTime,MILLISECONDS));
+  assertNull(cache.get("k"));
+  cache.put("k","v-old");
+  assertEquals("v-old",cache.get("k"));
+  assertNotNull(cache.replace("k","v",-1,MILLISECONDS,idleTime,MILLISECONDS));
+  assertEquals("v",cache.get("k"));
+  timeService.advance(idleTime + 100);
+  assertNull(cache.get("k"));
+  cache.put("k","v");
+  assertTrue(cache.replace("k","v","v2",-1,MILLISECONDS,idleTime,MILLISECONDS));
+  timeService.advance(idleTime + 100);
+  assertNull(cache.get("k"));
 }

@@ -1,27 +1,16 @@
 {
   final FileEntry fe;
-  final boolean expired;
   resizeLock.readLock().lock();
   try {
 synchronized (entries) {
       fe=entries.get(key);
       if (fe == null)       return null;
-      expired=fe.isExpired(timeService.wallClockTime());
-      if (expired) {
-        entries.remove(key);
+      if (fe.isExpired(timeService.wallClockTime())) {
+        return null;
       }
  else {
         fe.lock();
       }
-    }
-    if (expired) {
-      try {
-        free(fe);
-      }
- catch (      IOException e) {
-        throw new PersistenceException(e);
-      }
-      return null;
     }
   }
   finally {

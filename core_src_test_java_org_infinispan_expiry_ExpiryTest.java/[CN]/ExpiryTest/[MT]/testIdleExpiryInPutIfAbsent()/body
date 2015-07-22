@@ -1,2 +1,10 @@
 {
+  Cache<String,String> cache=cm.getCache();
+  long idleTime=EXPIRATION_TIMEOUT;
+  assertNull(cache.putIfAbsent("k","v",-1,MILLISECONDS,idleTime,MILLISECONDS));
+  assertEquals("v",cache.get("k"));
+  timeService.advance(idleTime + 100);
+  assertNull(cache.get("k"));
+  cache.put("k","v");
+  assertNotNull(cache.putIfAbsent("k","v",-1,MILLISECONDS,idleTime,MILLISECONDS));
 }

@@ -1,2 +1,15 @@
 {
+  Cache<String,String> cache=cm.getCache();
+  final long lifespan=EXPIRATION_TIMEOUT;
+  Map<String,String> m=new HashMap();
+  m.put("k1","v");
+  m.put("k2","v");
+  cache.putAll(m,lifespan,MILLISECONDS);
+  String v1=cache.get("k1");
+  String v2=cache.get("k2");
+  assertEquals("v",v1);
+  assertEquals("v",v2);
+  timeService.advance(lifespan + 100);
+  assertNull(cache.get("k1"));
+  assertNull(cache.get("k2"));
 }

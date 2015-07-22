@@ -1,2 +1,13 @@
 {
+  Cache<String,String> cache=cm.getCache();
+  final long idleTime=EXPIRATION_TIMEOUT;
+  Map<String,String> m=new HashMap<String,String>();
+  m.put("k1","v");
+  m.put("k2","v");
+  cache.putAll(m,-1,MILLISECONDS,idleTime,MILLISECONDS);
+  assertEquals("v",cache.get("k1"));
+  assertEquals("v",cache.get("k2"));
+  timeService.advance(idleTime + 100);
+  assertNull(cache.get("k1"));
+  assertNull(cache.get("k2"));
 }

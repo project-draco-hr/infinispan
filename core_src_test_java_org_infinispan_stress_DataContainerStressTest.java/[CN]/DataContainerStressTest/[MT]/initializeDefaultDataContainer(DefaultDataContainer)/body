@@ -3,11 +3,6 @@
   TimeService timeService=new DefaultTimeService();
   entryFactory.injectTimeService(timeService);
   dc.initialize(new EvictionManager(){
-    @Override public void processEviction(){
-    }
-    @Override public boolean isEnabled(){
-      return false;
-    }
     @Override public void onEntryEviction(    Map evicted){
     }
   }
@@ -39,5 +34,16 @@
       return 0;
     }
   }
-,null,timeService);
+,null,timeService,null,new ExpirationManager(){
+    @Override public void processExpiration(){
+    }
+    @Override public boolean isEnabled(){
+      return false;
+    }
+    @Override public void handleInMemoryExpiration(    InternalCacheEntry entry){
+    }
+    @Override public void handleInStoreExpiration(    Object key){
+    }
+  }
+);
 }

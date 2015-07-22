@@ -9,4 +9,18 @@
     if (storeConfiguration.fetchPersistentState())     numFetchPersistentState++;
   }
   if (numFetchPersistentState > 1)   throw new CacheConfigurationException("Maximum one store can be set to 'fetchPersistentState'!");
+  if (!stores.isEmpty()) {
+    boolean reaperEnabled=builder.expiration().reaperEnabled();
+    long wakeupInterval=builder.expiration().wakeupInterval();
+    if (!reaperEnabled || wakeupInterval < 0) {
+      builder.expiration().enableReaper();
+      if (wakeupInterval < 0) {
+        log.debug("Store present and expiration reaper wakeup was less than 0 - explicitly enabling and setting " + "wakeup interval to 1 minute.");
+        builder.expiration().wakeUpInterval(1,TimeUnit.MINUTES);
+      }
+ else {
+        log.debug("Store present however expiration reaper was not enabled - explicitly enabling.");
+      }
+    }
+  }
 }

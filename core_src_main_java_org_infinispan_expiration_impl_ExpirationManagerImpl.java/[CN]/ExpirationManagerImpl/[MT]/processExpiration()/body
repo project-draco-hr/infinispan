@@ -6,7 +6,13 @@
         log.trace("Purging data container of expired entries");
         start=timeService.time();
       }
-      dataContainer.purgeExpired();
+      long currentTimeMillis=timeService.wallClockTime();
+      for (Iterator<InternalCacheEntry<K,V>> purgeCandidates=dataContainer.iteratorIncludingExpired(); purgeCandidates.hasNext(); ) {
+        InternalCacheEntry<K,V> e=purgeCandidates.next();
+        if (e.isExpired(currentTimeMillis)) {
+          handleInMemoryExpiration(e);
+        }
+      }
       if (trace) {
         log.tracef("Purging data container completed in %s",Util.prettyPrintTime(timeService.timeDuration(start,TimeUnit.MILLISECONDS)));
       }

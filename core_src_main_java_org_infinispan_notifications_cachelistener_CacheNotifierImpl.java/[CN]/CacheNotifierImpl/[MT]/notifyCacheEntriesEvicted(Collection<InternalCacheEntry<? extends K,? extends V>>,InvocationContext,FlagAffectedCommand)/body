@@ -22,14 +22,5 @@
       e.setEntries(evictedKeysAndValues);
       for (      CacheEntryListenerInvocation<K,V> listener : cacheEntriesEvictedListeners)       listener.invoke(e);
     }
-    if (isNotificationAllowed(command,cacheEntryEvictedListeners)) {
-      for (      InternalCacheEntry<? extends K,? extends V> ice : entries) {
-        EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EVICTED);
-        e.setKey(ice.getKey());
-        e.setValue(ice.getValue());
-        boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(ice.getKey());
-        for (        CacheEntryListenerInvocation<K,V> listener : cacheEntryEvictedListeners)         listener.invoke(e,isLocalNodePrimaryOwner);
-      }
-    }
   }
 }

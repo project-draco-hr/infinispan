@@ -1,2 +1,20 @@
 {
+  boolean initializedTime=false;
+  long now=0;
+  while (it.hasNext()) {
+    InternalCacheEntry<K,V> entry=it.next();
+    if (includeExpired || !entry.canExpire()) {
+      return entry;
+    }
+ else {
+      if (!initializedTime) {
+        now=timeService.wallClockTime();
+        initializedTime=true;
+      }
+      if (!entry.isExpired(now)) {
+        return entry;
+      }
+    }
+  }
+  return null;
 }

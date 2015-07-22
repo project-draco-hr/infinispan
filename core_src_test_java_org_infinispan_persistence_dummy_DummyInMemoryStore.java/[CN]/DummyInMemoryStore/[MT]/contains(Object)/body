@@ -1,3 +1,12 @@
 {
-  return store.containsKey(key);
+  record("load");
+  if (key == null)   return false;
+  MarshalledEntry me=deserialize(key,store.get(key),false,true);
+  if (me == null)   return false;
+  long now=timeService.wallClockTime();
+  if (isExpired(me,now)) {
+    log.tracef("Key %s exists, but has expired.  Entry is %s",key,me);
+    return false;
+  }
+  return true;
 }

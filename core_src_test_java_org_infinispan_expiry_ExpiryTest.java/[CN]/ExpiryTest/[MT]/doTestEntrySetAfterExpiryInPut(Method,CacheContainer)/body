@@ -1,22 +1,10 @@
 {
   Cache<Integer,String> cache=cc.getCache();
-  Set<Map.Entry<Integer,String>> entries;
   Map dataIn=new HashMap();
   dataIn.put(1,v(m,1));
   dataIn.put(2,v(m,2));
-  Set entriesIn=dataIn.entrySet();
-  final long startTime=now();
   final long lifespan=EXPIRATION_TIMEOUT;
   cache.putAll(dataIn,lifespan,TimeUnit.MILLISECONDS);
-  while (true) {
-    entries=new HashSet<>(cache.entrySet());
-    if (moreThanDurationElapsed(startTime,lifespan))     break;
-    assertEquals(entriesIn,entries);
-    Thread.sleep(100);
-  }
-  while (!moreThanDurationElapsed(startTime,lifespan + EVICTION_CHECK_TIMEOUT)) {
-    entries=cache.entrySet();
-    if (entries.size() == 0)     break;
-  }
-  assertEquals(0,entries.size());
+  timeService.advance(lifespan + 100);
+  assertEquals(0,cache.entrySet().size());
 }
