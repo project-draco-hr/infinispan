@@ -1,0 +1,11 @@
+{
+  Map<Object,String> values=putValuesInCache();
+  Iterator<Map.Entry<Object,String>> iter=values.entrySet().iterator();
+  Map.Entry<Object,String> excludedEntry=iter.next();
+  iter.remove();
+  Cache<MagicKey,String> cache=cache(0,CACHE_NAME);
+  KeyValueFilter<MagicKey,String> filter=new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey())));
+  Iterator<CacheEntry<MagicKey,String>> iterator=cache.getAdvancedCache().cacheEntrySet().stream().filter(CacheFilters.predicate(filter)).iterator();
+  Map<MagicKey,String> results=mapFromIterator(iterator);
+  assertEquals(values,results);
+}

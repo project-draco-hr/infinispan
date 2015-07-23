@@ -1,0 +1,16 @@
+{
+  Map<Object,String> values=putValueInEachCache(3);
+  Cache<Object,String> cache=cache(0,CACHE_NAME);
+  TransactionManager tm=TestingUtil.extractComponent(cache,TransactionManager.class);
+  tm.begin();
+  try {
+    Object key="filtered-key";
+    cache.put(key,"filtered-value");
+    Iterator<CacheEntry<Object,String>> iterator=cache.getAdvancedCache().cacheEntrySet().stream().filter(CacheFilters.predicate(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(key))))).iterator();
+    Map<Object,String> results=mapFromIterator(iterator);
+    assertEquals(values,results);
+  }
+  finally {
+    tm.rollback();
+  }
+}

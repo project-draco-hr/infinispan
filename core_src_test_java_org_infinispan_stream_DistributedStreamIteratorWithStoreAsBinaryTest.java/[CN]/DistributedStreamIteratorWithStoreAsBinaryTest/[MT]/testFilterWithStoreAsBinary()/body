@@ -1,0 +1,20 @@
+{
+  Cache<MagicKey,String> cache0=cache(0,CACHE_NAME);
+  Cache<MagicKey,String> cache1=cache(1,CACHE_NAME);
+  Cache<MagicKey,String> cache2=cache(2,CACHE_NAME);
+  Map<MagicKey,String> originalValues=new HashMap<>();
+  originalValues.put(new MagicKey(cache0),"cache0");
+  originalValues.put(new MagicKey(cache1),"cache1");
+  originalValues.put(new MagicKey(cache2),"cache2");
+  cache0.putAll(originalValues);
+  Iterator<CacheEntry<MagicKey,String>> iterator=cache1.getAdvancedCache().cacheEntrySet().stream().filter(CacheFilters.predicate(new MagicKeyStringFilter(originalValues))).iterator();
+  int count=0;
+  Map<MagicKey,String> results=new HashMap<MagicKey,String>();
+  while (iterator.hasNext()) {
+    Map.Entry<MagicKey,String> entry=iterator.next();
+    results.put(entry.getKey(),entry.getValue());
+    count++;
+  }
+  assertEquals(count,3);
+  assertEquals(originalValues,results);
+}

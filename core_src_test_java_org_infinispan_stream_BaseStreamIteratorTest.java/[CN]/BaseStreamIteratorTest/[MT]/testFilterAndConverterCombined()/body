@@ -1,0 +1,15 @@
+{
+  Map<Object,String> values=putValuesInCache();
+  Iterator<Map.Entry<Object,String>> iter=values.entrySet().iterator();
+  Map.Entry<Object,String> excludedEntry=iter.next();
+  iter.remove();
+  Cache<MagicKey,String> cache=cache(0,CACHE_NAME);
+  KeyValueFilterConverter<MagicKey,String,String> filterConverter=new CompositeKeyValueFilterConverter<>(new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey()))),new StringTruncator(2,5));
+  try (Stream<CacheEntry<MagicKey,String>> stream=CacheFilters.filterAndConvert(cache.getAdvancedCache().cacheEntrySet().stream(),filterConverter)){
+    Map<MagicKey,String> results=mapFromStream(stream);
+    assertEquals(values.size(),results.size());
+    for (    Map.Entry<Object,String> entry : values.entrySet()) {
+      assertEquals(entry.getValue().substring(2,7),results.get(entry.getKey()));
+    }
+  }
+ }

@@ -1,0 +1,35 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  Cache<Object,String> cache1=cache(1,CACHE_NAME);
+  Cache<Object,String> cache2=cache(2,CACHE_NAME);
+  Map<Object,String> values=new HashMap<>();
+  for (int i=0; i < 501; ++i) {
+switch (i % 3) {
+case 0:
+      MagicKey key=new MagicKey(cache0);
+    cache0.put(key,key.toString());
+  values.put(key,key.toString());
+break;
+case 1:
+key=new MagicKey(cache1,cache2);
+cache1.put(key,key.toString());
+break;
+case 2:
+key=new MagicKey(cache2,cache1);
+cache2.put(key,key.toString());
+break;
+default :
+fail("Unexpected switch case!");
+}
+}
+int count=0;
+Iterator<Map.Entry<Object,String>> iter=cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet().stream().iterator();
+while (iter.hasNext()) {
+Map.Entry<Object,String> entry=iter.next();
+String cacheValue=cache0.get(entry.getKey());
+assertNotNull(cacheValue);
+assertEquals(cacheValue,entry.getValue());
+count++;
+}
+assertEquals(values.size(),count);
+}

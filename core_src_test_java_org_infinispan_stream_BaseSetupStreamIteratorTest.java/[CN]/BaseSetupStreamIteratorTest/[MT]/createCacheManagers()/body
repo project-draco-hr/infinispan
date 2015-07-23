@@ -1,0 +1,18 @@
+{
+  builderUsed=new ConfigurationBuilder();
+  builderUsed.clustering().cacheMode(cacheMode);
+  if (tx) {
+    builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+  }
+  if (cacheMode.isClustered()) {
+    builderUsed.clustering().hash().numOwners(2);
+    builderUsed.clustering().stateTransfer().chunkSize(50);
+    enhanceConfiguration(builderUsed);
+    createClusteredCaches(3,CACHE_NAME,builderUsed);
+  }
+ else {
+    enhanceConfiguration(builderUsed);
+    EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(builderUsed);
+    cacheManagers.add(cm);
+  }
+}
