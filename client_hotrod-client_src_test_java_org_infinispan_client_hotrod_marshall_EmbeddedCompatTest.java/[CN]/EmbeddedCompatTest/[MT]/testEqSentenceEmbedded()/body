@@ -1,0 +1,12 @@
+{
+  AccountHS account=new AccountHS();
+  account.setId(1);
+  account.setDescription("John Doe's first bank account");
+  account.setCreationDate(new Date(42));
+  cache.put(1,account);
+  QueryFactory qf=org.infinispan.query.Search.getQueryFactory(cache);
+  Query q=qf.from(AccountHS.class).having("description").eq("John Doe's first bank account").toBuilder().build();
+  List<Account> list=q.list();
+  assertEquals(1,list.size());
+  assertEquals(1,list.get(0).getId());
+}
