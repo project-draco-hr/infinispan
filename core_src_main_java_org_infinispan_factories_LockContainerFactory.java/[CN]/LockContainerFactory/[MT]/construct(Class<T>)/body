@@ -1,5 +1,3 @@
 {
-  boolean notTransactional=!configuration.transaction().transactionMode().isTransactional();
-  LockContainer<?> lockContainer=configuration.locking().useLockStriping() ? notTransactional ? new ReentrantStripedLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence()) : new OwnableReentrantStripedLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence()) : notTransactional ? new ReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence()) : new OwnableReentrantPerEntryLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence());
-  return (T)lockContainer;
+  return (T)(configuration.locking().useLockStriping() ? new StripedLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence()) : new PerKeyLockContainer(configuration.locking().concurrencyLevel(),configuration.dataContainer().keyEquivalence()));
 }

@@ -1,0 +1,59 @@
+{
+  final InfinispanLock lock=new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+  final String lockOwner1="LO1";
+  final String lockOwner2="LO2";
+  final String lockOwner3="LO3";
+  ExtendedLockPromise lockPromise1=lock.acquire(lockOwner1,0,TimeUnit.MILLISECONDS);
+  ExtendedLockPromise lockPromise2=lock.acquire(lockOwner2,0,TimeUnit.MILLISECONDS);
+  ExtendedLockPromise lockPromise3=lock.acquire(lockOwner3,1,TimeUnit.DAYS);
+  assertTrue(lockPromise1.isAvailable());
+  assertTrue(lockPromise2.isAvailable());
+  assertFalse(lockPromise3.isAvailable());
+  assertEquals(lockOwner1,lock.getLockOwner());
+  lockPromise1.cancel(LockState.TIMED_OUT);
+  lockPromise1.lock();
+  try {
+    lockPromise2.lock();
+    fail("TimeoutException expected");
+  }
+ catch (  TimeoutException e) {
+  }
+  assertEquals(lockOwner1,lock.getLockOwner());
+  assertTrue(lockPromise2.isAvailable());
+  assertFalse(lockPromise3.isAvailable());
+  lockPromise2.cancel(LockState.DEADLOCKED);
+  try {
+    lockPromise2.lock();
+    fail("TimeoutException expected");
+  }
+ catch (  TimeoutException e) {
+  }
+  assertEquals(lockOwner1,lock.getLockOwner());
+  assertFalse(lockPromise3.isAvailable());
+  lockPromise3.cancel(LockState.DEADLOCKED);
+  try {
+    lockPromise3.lock();
+    fail("DeadlockDetectedException expected");
+  }
+ catch (  DeadlockDetectedException e) {
+  }
+  lock.release(lockOwner1);
+  assertNull(lock.getLockOwner());
+  assertFalse(lock.isLocked());
+  lockPromise1=lock.acquire(lockOwner1,0,TimeUnit.MILLISECONDS);
+  lockPromise2=lock.acquire(lockOwner2,1,TimeUnit.DAYS);
+  lockPromise1.lock();
+  lockPromise1.cancel(LockState.TIMED_OUT);
+  lockPromise1.lock();
+  lockPromise2.cancel(LockState.TIMED_OUT);
+  assertTrue(lockPromise2.isAvailable());
+  lock.release(lockOwner1);
+  try {
+    lockPromise2.lock();
+    fail("TimeoutException expected");
+  }
+ catch (  TimeoutException e) {
+  }
+  assertNull(lock.getLockOwner());
+  assertFalse(lock.isLocked());
+}

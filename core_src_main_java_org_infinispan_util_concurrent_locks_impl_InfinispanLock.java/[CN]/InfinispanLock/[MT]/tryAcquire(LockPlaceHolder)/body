@@ -1,0 +1,36 @@
+{
+  LockPlaceHolder toRelease=release;
+  do {
+    LockPlaceHolder toAcquire=pendingRequest.peek();
+    if (trace) {
+      log.tracef("Try acquire. Next in queue=%s. Current=%s",toAcquire,current);
+    }
+    if (toAcquire == null && toRelease == null) {
+      return;
+    }
+ else     if (toAcquire == null) {
+      casRelease(toRelease);
+      return;
+    }
+    if (cas(toRelease,toAcquire)) {
+      pendingRequest.remove(toAcquire);
+      if (toAcquire.setAcquire()) {
+        if (trace) {
+          log.tracef("%s successfully acquired the lock.",toAcquire);
+        }
+        return;
+      }
+      if (trace) {
+        log.tracef("%s failed to acquire (invalid state). Retrying.",toAcquire);
+      }
+      toRelease=toAcquire;
+    }
+ else {
+      if (trace) {
+        log.tracef("Unable to acquire. Lock is held.");
+      }
+      return;
+    }
+  }
+ while (true);
+}

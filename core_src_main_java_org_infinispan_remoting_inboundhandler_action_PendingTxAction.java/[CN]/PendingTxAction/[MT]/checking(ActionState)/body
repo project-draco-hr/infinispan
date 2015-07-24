@@ -1,0 +1,15 @@
+{
+  PendingLockPromise promise=pendingLockPromise;
+  if (promise != null && promise.isReady() && cas(InternalState.CHECKING,InternalState.MAKE_READY)) {
+    if (promise.hasTimedOut()) {
+      cas(InternalState.MAKE_READY,InternalState.CANCELED);
+      return ActionStatus.CANCELED;
+    }
+ else {
+      state.updateTimeout(promise.getRemainingTimeout());
+      cas(InternalState.MAKE_READY,InternalState.READY);
+      return ActionStatus.READY;
+    }
+  }
+  return ActionStatus.NOT_READY;
+}

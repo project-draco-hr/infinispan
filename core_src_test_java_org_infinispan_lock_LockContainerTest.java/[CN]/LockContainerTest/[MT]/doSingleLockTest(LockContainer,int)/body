@@ -1,0 +1,42 @@
+{
+  final String lockOwner1="LO1";
+  final String lockOwner2="LO2";
+  final String lockOwner3="LO3";
+  final LockPromise lockPromise1=container.acquire("key",lockOwner1,0,TimeUnit.MILLISECONDS);
+  final LockPromise lockPromise2=container.acquire("key",lockOwner2,0,TimeUnit.MILLISECONDS);
+  final LockPromise lockPromise3=container.acquire("key",lockOwner3,0,TimeUnit.MILLISECONDS);
+  AssertJUnit.assertEquals(1,container.getNumLocksHeld());
+  if (poolSize == -1) {
+    AssertJUnit.assertEquals(1,container.size());
+  }
+ else {
+    AssertJUnit.assertEquals(poolSize,container.size());
+  }
+  acquireLock(lockPromise1,false);
+  acquireLock(lockPromise2,true);
+  acquireLock(lockPromise3,true);
+  AssertJUnit.assertEquals(1,container.getNumLocksHeld());
+  if (poolSize == -1) {
+    AssertJUnit.assertEquals(1,container.size());
+  }
+ else {
+    AssertJUnit.assertEquals(poolSize,container.size());
+  }
+  container.release("key",lockOwner2);
+  container.release("key",lockOwner3);
+  AssertJUnit.assertEquals(1,container.getNumLocksHeld());
+  if (poolSize == -1) {
+    AssertJUnit.assertEquals(1,container.size());
+  }
+ else {
+    AssertJUnit.assertEquals(poolSize,container.size());
+  }
+  container.release("key",lockOwner1);
+  AssertJUnit.assertEquals(0,container.getNumLocksHeld());
+  if (poolSize == -1) {
+    AssertJUnit.assertEquals(0,container.size());
+  }
+ else {
+    AssertJUnit.assertEquals(poolSize,container.size());
+  }
+}

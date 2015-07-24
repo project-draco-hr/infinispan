@@ -1,0 +1,20 @@
+{
+  if (!(pendingOwner instanceof DldGlobalTransaction) || !(currentOwner instanceof DldGlobalTransaction)) {
+    if (trace) {
+      log.tracef("Unable to run DLD with %s and %s. One of them are not a DldGlobalTransaction.",pendingOwner,currentOwner);
+    }
+    cannotRunDld.incrementAndGet();
+    return false;
+  }
+  if (trace) {
+    log.tracef("Could not acquire lock. It is locked by %s (%s)",currentOwner,System.identityHashCode(currentOwner));
+  }
+  final DldGlobalTransaction ownerTx=(DldGlobalTransaction)currentOwner;
+  final DldGlobalTransaction pendingTx=(DldGlobalTransaction)pendingOwner;
+  if (isDeadlockAndIAmLoosing(ownerTx,pendingTx)) {
+    updateStats(pendingTx);
+    log.tracef("Deadlock found and we (%s) shall not continue. Other tx is %s",pendingOwner,currentOwner);
+    return true;
+  }
+  return false;
+}

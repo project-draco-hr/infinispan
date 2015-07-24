@@ -1,0 +1,29 @@
+{
+  Objects.requireNonNull(keys,"Keys must be non null");
+  Objects.requireNonNull(lockOwner,"Lock owner must be non null");
+  Objects.requireNonNull(unit,"Time unit must be non null");
+  if (keys.isEmpty()) {
+    if (trace) {
+      log.tracef("Lock all: no keys found for owner=%s",lockOwner);
+    }
+    return KeyAwareLockPromise.NO_OP;
+  }
+ else   if (keys.size() == 1) {
+    return lock(keys.iterator().next(),lockOwner,time,unit);
+  }
+  final Set<Object> uniqueKeys=filterDistinctKeys(keys);
+  if (uniqueKeys.size() == 1) {
+    return lock(uniqueKeys.iterator().next(),lockOwner,time,unit);
+  }
+  if (trace) {
+    log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)",uniqueKeys,lockOwner,time,unit);
+  }
+  final CompositeLockPromise compositeLockPromise=new CompositeLockPromise(uniqueKeys.size());
+synchronized (this) {
+    for (    Object key : uniqueKeys) {
+      compositeLockPromise.addLock(new KeyAwareExtendedLockPromise(lockContainer.acquire(key,lockOwner,time,unit),key,unit.toMillis(time)));
+    }
+  }
+  compositeLockPromise.markListAsFinal();
+  return compositeLockPromise.scheduleLockTimeoutTask(scheduler,time,unit);
+}

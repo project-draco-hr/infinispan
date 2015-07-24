@@ -1,0 +1,22 @@
+{
+  while (true) {
+switch (lockState) {
+case WAITING:
+      checkTimeout();
+    await(notifier,timeService.remainingTime(timeout,TimeUnit.MILLISECONDS),TimeUnit.MILLISECONDS);
+  break;
+case ACQUIRED:
+return;
+case RELEASED:
+throw new IllegalStateException("Lock already released!");
+case TIMED_OUT:
+cleanup();
+throw new TimeoutException("Timeout waiting for lock.");
+case DEADLOCKED:
+cleanup();
+throw new DeadlockDetectedException("DeadLock detected");
+default :
+throw new IllegalStateException("Unknown lock state: " + lockState);
+}
+}
+}

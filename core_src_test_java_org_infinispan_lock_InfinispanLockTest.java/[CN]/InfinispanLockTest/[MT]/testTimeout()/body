@@ -1,0 +1,23 @@
+{
+  final String lockOwner1="LO1";
+  final String lockOwner2="LO2";
+  final InfinispanLock lock=new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+  final LockPromise lockPromise1=lock.acquire(lockOwner1,0,TimeUnit.MILLISECONDS);
+  final LockPromise lockPromise2=lock.acquire(lockOwner2,0,TimeUnit.MILLISECONDS);
+  assertTrue(lockPromise1.isAvailable());
+  assertTrue(lockPromise2.isAvailable());
+  lockPromise1.lock();
+  assertEquals(lockOwner1,lock.getLockOwner());
+  try {
+    lockPromise2.lock();
+    fail();
+  }
+ catch (  TimeoutException e) {
+  }
+  lock.release(lockOwner1);
+  assertNull(lock.getLockOwner());
+  assertFalse(lock.isLocked());
+  lock.release(lockOwner2);
+  assertFalse(lock.isLocked());
+  assertNull(lock.getLockOwner());
+}

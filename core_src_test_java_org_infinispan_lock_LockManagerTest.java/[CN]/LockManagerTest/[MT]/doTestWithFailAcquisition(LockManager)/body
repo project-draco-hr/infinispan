@@ -1,0 +1,31 @@
+{
+  final String lockOwner1="LO1";
+  final String lockOwner2="LO2";
+  final String key="key";
+  final String key2="key2";
+  final String key3="key2";
+  lockManager.lock(key,lockOwner1,0,TimeUnit.MILLISECONDS).lock();
+  AssertJUnit.assertEquals(lockOwner1,lockManager.getOwner(key));
+  AssertJUnit.assertTrue(lockManager.isLocked(key));
+  AssertJUnit.assertTrue(lockManager.ownsLock(key,lockOwner1));
+  try {
+    lockManager.lockAll(Arrays.asList(key,key2,key3),lockOwner2,0,TimeUnit.MILLISECONDS).lock();
+    AssertJUnit.assertEquals(1,lockManager.getNumberOfLocksHeld());
+    AssertJUnit.fail();
+  }
+ catch (  TimeoutException t) {
+  }
+  AssertJUnit.assertEquals(lockOwner1,lockManager.getOwner(key));
+  AssertJUnit.assertTrue(lockManager.isLocked(key));
+  AssertJUnit.assertTrue(lockManager.ownsLock(key,lockOwner1));
+  LockPromise lockPromise=lockManager.lockAll(Arrays.asList(key,key2,key3),lockOwner2,1,TimeUnit.MINUTES);
+  AssertJUnit.assertFalse(lockPromise.isAvailable());
+  lockManager.unlock(key,lockOwner1);
+  AssertJUnit.assertTrue(lockPromise.isAvailable());
+  lockPromise.lock();
+  AssertJUnit.assertEquals(lockOwner2,lockManager.getOwner(key));
+  AssertJUnit.assertTrue(lockManager.isLocked(key));
+  AssertJUnit.assertTrue(lockManager.ownsLock(key,lockOwner2));
+  lockManager.unlockAll(Arrays.asList(key,key2,key3),lockOwner2);
+  AssertJUnit.assertEquals(0,lockManager.getNumberOfLocksHeld());
+}

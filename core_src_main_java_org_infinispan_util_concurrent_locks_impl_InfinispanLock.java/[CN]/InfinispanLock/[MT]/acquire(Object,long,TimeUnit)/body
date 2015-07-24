@@ -1,0 +1,28 @@
+{
+  Objects.requireNonNull(lockOwner,"Lock Owner should be non-null");
+  Objects.requireNonNull(timeUnit,"Time Unit should be non-null");
+  if (trace) {
+    log.tracef("Acquire lock for %s. Timeout=%s (%s)",lockOwner,time,timeUnit);
+  }
+  LockPlaceHolder lockPlaceHolder=lockOwners.get(lockOwner);
+  if (lockPlaceHolder != null) {
+    if (trace) {
+      log.tracef("Lock owner already exists: %s",lockPlaceHolder);
+    }
+    return lockPlaceHolder;
+  }
+  lockPlaceHolder=createLockInfo(lockOwner,time,timeUnit);
+  LockPlaceHolder other=lockOwners.putIfAbsent(lockOwner,lockPlaceHolder);
+  if (other != null) {
+    if (trace) {
+      log.tracef("Lock owner already exists: %s",other);
+    }
+    return other;
+  }
+  if (trace) {
+    log.tracef("Created a new one: %s",lockPlaceHolder);
+  }
+  pendingRequest.add(lockPlaceHolder);
+  tryAcquire(null);
+  return lockPlaceHolder;
+}

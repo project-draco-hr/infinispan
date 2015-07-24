@@ -1,15 +1,8 @@
 {
-  List<LockInfo> acquiredLockInfo=new ArrayList<LockInfo>();
+  final long timestamp=timeService.time();
+  final Object lockOwner=ctx.getLockOwner();
   for (  Object key : ctx.getLockedKeys()) {
-    LockInfo lockInfo=lockInfoMap.get(key);
-    if (lockInfo != null && lockInfo.owner.equals(ctx.getLockOwner())) {
-      acquiredLockInfo.add(lockInfo);
-      lockInfoMap.remove(key);
-    }
+    onUnlock(key,lockOwner,timestamp);
   }
   actual.unlockAll(ctx);
-  long timestamp=timeService.time();
-  for (  LockInfo lockInfo : acquiredLockInfo) {
-    lockInfo.updateStats(timestamp);
-  }
 }

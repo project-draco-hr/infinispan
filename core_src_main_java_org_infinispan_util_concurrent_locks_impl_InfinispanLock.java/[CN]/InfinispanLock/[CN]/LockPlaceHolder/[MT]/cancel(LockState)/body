@@ -1,0 +1,25 @@
+{
+  checkValidCancelState(state);
+  out:   do {
+    LockState currentState=lockState;
+switch (currentState) {
+case WAITING:
+      if (casState(LockState.WAITING,state)) {
+        notifyListeners();
+        break out;
+      }
+    break;
+case ACQUIRED:
+case TIMED_OUT:
+case DEADLOCKED:
+case RELEASED:
+  return;
+default :
+if (casState(currentState,state)) {
+  break out;
+}
+}
+}
+ while (true);
+onCanceled(this);
+}

@@ -1,0 +1,17 @@
+{
+  if (!cas(InternalState.INIT,InternalState.CHECKING)) {
+    return ActionStatus.NOT_READY;
+  }
+  final Object lockOwner=getLockOwner(state);
+  final long timeout=state.getTimeout();
+  List<Object> keysToLock=getAndUpdateFilteredKeys(state);
+  if (keysToLock.isEmpty()) {
+    return cas(InternalState.CHECKING,InternalState.READY) ? ActionStatus.READY : ActionStatus.NOT_READY;
+  }
+  LockPromise promise=keysToLock.size() == 1 ? lockManager.lock(keysToLock.get(0),lockOwner,timeout,TimeUnit.MILLISECONDS) : lockManager.lockAll(keysToLock,lockOwner,timeout,TimeUnit.MILLISECONDS);
+  lockPromise=promise;
+  if (!promise.isAvailable()) {
+    promise.addListener(this);
+  }
+  return check(state);
+}

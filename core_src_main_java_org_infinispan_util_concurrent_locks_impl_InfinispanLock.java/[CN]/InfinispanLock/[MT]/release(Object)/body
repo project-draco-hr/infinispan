@@ -1,0 +1,21 @@
+{
+  Objects.requireNonNull(lockOwner,"Lock Owner should be non-null");
+  if (trace) {
+    log.tracef("Release lock for %s.",lockOwner);
+  }
+  LockPlaceHolder wantToRelease=lockOwners.get(lockOwner);
+  if (wantToRelease == null) {
+    if (trace) {
+      log.tracef("%s not found!",lockOwner);
+    }
+    return;
+  }
+  final boolean released=wantToRelease.setReleased();
+  if (trace) {
+    log.tracef("Release lock for %s? %s",wantToRelease,released);
+  }
+  LockPlaceHolder currentLocked=current;
+  if (currentLocked == wantToRelease) {
+    tryAcquire(wantToRelease);
+  }
+}

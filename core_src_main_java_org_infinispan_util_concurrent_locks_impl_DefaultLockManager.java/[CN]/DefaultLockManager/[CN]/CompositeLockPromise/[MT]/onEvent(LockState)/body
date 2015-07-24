@@ -1,0 +1,10 @@
+{
+  if (state != LockState.ACQUIRED && UPDATER.compareAndSet(this,LockState.ACQUIRED,state)) {
+    for (    ExtendedLockPromise lockPromise : lockPromiseList) {
+      lockPromise.cancel(state);
+    }
+  }
+  if (isAvailable()) {
+    notifier.complete(null);
+  }
+}

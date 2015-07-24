@@ -1,0 +1,11 @@
+{
+  if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
+    log.tracef("The transaction %s is already prepared. Skipping prepare call.",globalTx);
+    return null;
+  }
+  RemoteTransaction remoteTransaction=getRemoteTransaction();
+  if (hasModifications()) {
+    remoteTransaction.setModifications(Arrays.asList(modifications));
+  }
+  return icf.createRemoteTxInvocationContext(remoteTransaction,getOrigin());
+}

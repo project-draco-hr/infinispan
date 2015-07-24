@@ -1,0 +1,25 @@
+{
+  do {
+    LockState state=lockState;
+switch (state) {
+case WAITING:
+case ACQUIRED:
+      if (casState(state,LockState.RELEASED)) {
+        cleanup();
+        notifyListeners();
+        return true;
+      }
+    break;
+case TIMED_OUT:
+case DEADLOCKED:
+  if (casState(state,LockState.RELEASED)) {
+    cleanup();
+    return true;
+  }
+break;
+default :
+return false;
+}
+}
+ while (true);
+}

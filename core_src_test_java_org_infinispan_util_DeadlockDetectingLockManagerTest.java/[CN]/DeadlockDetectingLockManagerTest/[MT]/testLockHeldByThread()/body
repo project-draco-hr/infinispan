@@ -1,2 +1,12 @@
 {
+  lockManager.lock("k","aThread",0,TimeUnit.MILLISECONDS).lock();
+  try {
+    LockPromise promise=lockManager.lock("k",new DldGlobalTransaction(),1000,TimeUnit.MILLISECONDS);
+    lockManager.run();
+    promise.lock();
+    fail("TimeoutException expected!");
+  }
+ catch (  TimeoutException e) {
+  }
+  AssertJUnit.assertEquals(1,lockManager.getOverlapWithNotDeadlockAwareLockOwners());
 }

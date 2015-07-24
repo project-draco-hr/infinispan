@@ -1,13 +1,8 @@
 {
   if (ignored != null)   throw new IllegalStateException("Expected null context!");
-  RemoteTransaction transaction=txTable.getRemoteTransaction(globalTx);
-  if (transaction == null) {
-    if (unlock) {
-      log.tracef("Unlock for non-existant transaction %s.  Not doing anything.",globalTx);
-      return null;
-    }
-    transaction=txTable.getOrCreateRemoteTransaction(globalTx,null);
+  RemoteTxInvocationContext ctxt=createContext();
+  if (ctxt == null) {
+    return null;
   }
-  RemoteTxInvocationContext ctxt=icf.createRemoteTxInvocationContext(transaction,getOrigin());
   return invoker.invoke(ctxt,this);
 }
