@@ -3,6 +3,15 @@
   assertTrue(controller.isStarted(COORDINATOR_NODE));
   controller.start(getJoiningNodeName());
   assertTrue(controller.isStarted(getJoiningNodeName()));
+  if (krbProvided) {
+    for (    int port : new int[]{10090,10190}) {
+      ModelControllerClient client=getModelControllerClient(port);
+      ManagementClient managementClient=new ManagementClient(client,"localhost",port,"http-remoting");
+      KerberosSystemPropertiesSetupTask.INSTANCE.setup(managementClient,null);
+      SecurityTraceLoggingServerSetupTask.INSTANCE.setup(managementClient,null);
+      SecurityDomainsSetupTask.INSTANCE.setup(managementClient,null);
+    }
+  }
   deployer.deploy(COORDINATOR_NODE);
   deployer.deploy(getJoiningNodeName());
 }
