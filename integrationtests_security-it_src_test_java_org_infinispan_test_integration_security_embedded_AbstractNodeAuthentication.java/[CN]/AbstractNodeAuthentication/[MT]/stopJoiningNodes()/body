@@ -2,9 +2,9 @@
   deployer.undeploy(getJoiningNodeName());
   deployer.undeploy(COORDINATOR_NODE);
   if (krbProvided) {
-    for (    int port : new int[]{10090,10190}) {
-      ModelControllerClient client=getModelControllerClient(port);
-      ManagementClient managementClient=new ManagementClient(client,"localhost",port,"http-remoting");
+    for (    ManagementClientParams params : getManagementClientListParams()) {
+      ModelControllerClient client=getModelControllerClient(params);
+      ManagementClient managementClient=new ManagementClient(client,params.getHostname(),params.getPort(),"http-remoting");
       KerberosSystemPropertiesSetupTask.INSTANCE.tearDown(managementClient,null);
       SecurityTraceLoggingServerSetupTask.INSTANCE.tearDown(managementClient,null);
       SecurityDomainsSetupTask.INSTANCE.tearDown(managementClient,null);
