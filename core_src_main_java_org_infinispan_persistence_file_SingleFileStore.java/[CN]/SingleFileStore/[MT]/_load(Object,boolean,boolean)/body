@@ -27,9 +27,19 @@ synchronized (entries) {
   finally {
     resizeLock.readLock().unlock();
   }
+  org.infinispan.commons.io.ByteBuffer valueBb=null;
+  org.infinispan.commons.io.ByteBuffer metadataBb=null;
+  if (!loadValue && !loadMetadata) {
+    try {
+      return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,valueBb,metadataBb);
+    }
+  finally {
+      fe.unlock();
+    }
+  }
   final byte[] data;
   try {
-    data=new byte[fe.keyLen + (loadValue || loadMetadata ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
+    data=new byte[fe.keyLen + fe.dataLen + (loadMetadata ? fe.metadataLen : 0)];
     channel.read(ByteBuffer.wrap(data),fe.offset + KEY_POS);
   }
  catch (  Exception e) {
@@ -41,8 +51,6 @@ synchronized (entries) {
   if (trace)   log.tracef("Read entry %s at %d:%d",key,fe.offset,fe.actualSize());
   ByteBufferFactory factory=ctx.getByteBufferFactory();
   org.infinispan.commons.io.ByteBuffer keyBb=factory.newByteBuffer(data,0,fe.keyLen);
-  org.infinispan.commons.io.ByteBuffer valueBb=null;
-  org.infinispan.commons.io.ByteBuffer metadataBb=null;
   if (loadValue) {
     valueBb=factory.newByteBuffer(data,fe.keyLen,fe.dataLen);
   }
