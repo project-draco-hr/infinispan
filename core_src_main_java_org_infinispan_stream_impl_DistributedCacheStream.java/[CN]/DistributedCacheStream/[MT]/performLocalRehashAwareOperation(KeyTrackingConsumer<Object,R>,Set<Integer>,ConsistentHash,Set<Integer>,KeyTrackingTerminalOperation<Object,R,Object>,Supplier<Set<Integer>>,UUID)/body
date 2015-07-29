@@ -1,0 +1,13 @@
+{
+  Collection<CacheEntry<Object,Object>> localValue=op.performOperationRehashAware(results);
+  if (dm.getReadConsistentHash().equals(ch)) {
+    log.tracef("Found local values %s for id %s",localValue.size(),id);
+    results.onCompletion(null,segments,localValue);
+  }
+ else {
+    Set<Integer> ourSegments=ownedSegmentsSupplier.get();
+    ourSegments.retainAll(segmentsToProcess);
+    log.tracef("CH changed - making %s segments suspect for identifier %s",ourSegments,id);
+    results.onSegmentsLost(ourSegments);
+  }
+}
