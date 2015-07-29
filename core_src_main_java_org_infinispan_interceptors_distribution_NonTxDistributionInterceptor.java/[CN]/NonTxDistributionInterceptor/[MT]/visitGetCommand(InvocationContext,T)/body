@@ -1,0 +1,24 @@
+{
+  if (ctx.isOriginLocal()) {
+    Object key=command.getKey();
+    CacheEntry entry=ctx.lookupEntry(key);
+    if (valueIsMissing(entry)) {
+      InternalCacheEntry remoteEntry=null;
+      if (readNeedsRemoteValue(ctx,command)) {
+        if (trace)         log.tracef("Doing a remote get for key %s",key);
+        remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
+        command.setRemotelyFetchedValue(remoteEntry);
+        if (remoteEntry != null) {
+          wrapInternalCacheEntry(remoteEntry,ctx,key,false,command);
+        }
+      }
+      if (remoteEntry == null) {
+        InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
+        if (localEntry != null) {
+          wrapInternalCacheEntry(localEntry,ctx,key,false,command);
+        }
+      }
+    }
+  }
+  return invokeNextInterceptor(ctx,command);
+}

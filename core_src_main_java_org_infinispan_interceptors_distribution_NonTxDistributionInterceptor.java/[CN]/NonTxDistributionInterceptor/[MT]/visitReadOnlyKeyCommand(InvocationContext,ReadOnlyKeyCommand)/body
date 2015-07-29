@@ -1,19 +1,23 @@
 {
-  Object returnValue=invokeNextInterceptor(ctx,command);
-  if (returnValue == null) {
+  if (ctx.isOriginLocal()) {
     Object key=command.getKey();
-    if (needsRemoteGet(ctx,command)) {
-      if (trace)       log.tracef("Doing a remote get for key %s",key);
-      InternalCacheEntry remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
-      returnValue=command.perform(remoteEntry);
-    }
-    if (returnValue == null) {
+    CacheEntry entry=ctx.lookupEntry(key);
+    if (valueIsMissing(entry)) {
+      InternalCacheEntry remoteEntry=null;
+      if (readNeedsRemoteValue(ctx,command)) {
+        if (trace)         log.tracef("Doing a remote get for key %s",key);
+        remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
+        if (remoteEntry != null) {
+          wrapInternalCacheEntry(remoteEntry,ctx,key,false,command);
+        }
+        return command.perform(remoteEntry);
+      }
       InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
       if (localEntry != null) {
         wrapInternalCacheEntry(localEntry,ctx,key,false,command);
       }
-      returnValue=computeGetReturn(localEntry,false);
+      return command.perform(localEntry);
     }
   }
-  return returnValue;
+  return invokeNextInterceptor(ctx,command);
 }

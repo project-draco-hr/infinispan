@@ -1,16 +1,12 @@
 {
-  if (isDeltaWrite(cmd)) {
-    if (trace) {
-      log.tracef("Don't skip load for command %s. Value is needed!",cmd);
+  if (cmd.readsExistingValues()) {
+    if (hasSkipLoadFlag(cmd)) {
+      log.tracef("Skipping load for command that reads existing values %s",cmd);
+      return true;
     }
-    return false;
-  }
- else   if (isConditional(cmd)) {
-    boolean skip=hasSkipLoadFlag(cmd);
-    if (trace) {
-      log.tracef("Skip load for conditional command %s? %s",cmd,skip);
+ else {
+      return false;
     }
-    return skip;
   }
-  return hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
+  return true;
 }

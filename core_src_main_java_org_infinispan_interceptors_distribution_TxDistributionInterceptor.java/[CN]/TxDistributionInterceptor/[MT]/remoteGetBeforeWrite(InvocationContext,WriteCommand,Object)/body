@@ -1,11 +1,18 @@
 {
   CacheEntry entry=ctx.lookupEntry(key);
-  boolean skipRemoteGet=entry != null && entry.skipLookup();
-  if (skipRemoteGet) {
+  if (!valueIsMissing(entry)) {
     return;
   }
-  InternalCacheEntry ice=remoteGet(ctx,key,true,command);
-  if (ice == null) {
-    localGet(ctx,key,true,command,false);
+  InternalCacheEntry remoteEntry=null;
+  if (writeNeedsRemoteValue(ctx,command,key)) {
+    if (!isValueAvailableLocally(dm.getReadConsistentHash(),key)) {
+      remoteEntry=remoteGet(ctx,key,true,command);
+    }
+    if (remoteEntry == null) {
+      InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
+      if (localEntry != null) {
+        wrapInternalCacheEntry(localEntry,ctx,key,true,command);
+      }
+    }
   }
 }

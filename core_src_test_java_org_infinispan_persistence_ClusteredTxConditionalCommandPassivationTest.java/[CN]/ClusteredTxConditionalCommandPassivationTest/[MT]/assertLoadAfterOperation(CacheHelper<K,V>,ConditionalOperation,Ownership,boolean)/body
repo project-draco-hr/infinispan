@@ -1,17 +1,19 @@
 {
-  if (operation == ConditionalOperation.PUT_IF_ABSENT && !skipLoad) {
 switch (ownership) {
 case PRIMARY_OWNER:
-      assertLoad(cacheHelper,1,0,0);
-    break;
+    assertLoad(cacheHelper,skipLoad ? 0 : 1,0,0);
+  break;
 case BACKUP_OWNER:
-  assertLoad(cacheHelper,0,1,0);
+assertLoad(cacheHelper,0,skipLoad ? 0 : 1,0);
 break;
-}
+case NON_OWNER:
+if (!skipLoad) {
+assertTrue("any owner load",cacheHelper.loads(Ownership.PRIMARY_OWNER) + cacheHelper.loads(Ownership.BACKUP_OWNER) >= 1);
+assertEquals("non owner load",0,cacheHelper.loads(Ownership.NON_OWNER));
 }
  else {
-if (ownership != Ownership.NON_OWNER) {
-assertLoad(cacheHelper,skipLoad ? 0 : 1,skipLoad ? 0 : 1,0);
+assertLoad(cacheHelper,0,0,0);
 }
+break;
 }
 }

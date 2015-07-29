@@ -1,3 +1,19 @@
 {
-  return transactional ? skipLoadForTxCommand(cmd,key,ctx) : skipLoadForNonTxCommand(cmd,key);
+  if (!cmd.alwaysReadsExistingValues()) {
+    if (transactional) {
+      if (!ctx.isOriginLocal()) {
+        if (trace)         log.tracef("Skip load for remote tx write command %s.");
+        return true;
+      }
+    }
+ else {
+      if (!cdl.localNodeIsPrimaryOwner(key) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+        if (trace) {
+          log.tracef("Skip load for command %s. This node is not the primary owner of %s",cmd,key);
+        }
+        return true;
+      }
+    }
+  }
+  return super.skipLoadForWriteCommand(cmd,key,ctx);
 }

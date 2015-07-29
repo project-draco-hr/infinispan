@@ -1,5 +1,22 @@
 {
-  if (cdl.localNodeIsPrimaryOwner(key)) {
-    localGetCacheEntry(ctx,key,true,command);
+  CacheEntry entry=ctx.lookupEntry(key);
+  if (!valueIsMissing(entry)) {
+    return;
+  }
+  InternalCacheEntry remoteEntry=null;
+  if (writeNeedsRemoteValue(ctx,command,key)) {
+    if (!isValueAvailableLocally(dm.getReadConsistentHash(),key)) {
+      if (trace)       log.tracef("Doing a remote get for key %s",key);
+      remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
+      if (remoteEntry != null) {
+        wrapInternalCacheEntry(remoteEntry,ctx,key,false,command);
+      }
+    }
+    if (remoteEntry == null) {
+      InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
+      if (localEntry != null) {
+        wrapInternalCacheEntry(localEntry,ctx,key,false,command);
+      }
+    }
   }
 }

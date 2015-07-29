@@ -2,9 +2,7 @@
   if (ctx.isInTxScope()) {
     throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
   }
-  if (needValuesFromPreviousOwners(ctx,command)) {
-    remoteGetBeforeWrite(ctx,command,command.getKey());
-  }
+  remoteGetBeforeWrite(ctx,command,command.getKey());
   Object localResult=invokeNextInterceptor(ctx,command);
   if (isLocalModeForced(command)) {
     return localResult;
@@ -60,7 +58,7 @@
     }
  else {
       log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
-      boolean isSyncForwarding=isSync || isNeedReliableReturnValues(command);
+      boolean isSyncForwarding=isSync || command.isReturnValueExpected();
       Map<Address,Response> addressResponseMap;
       try {
         addressResponseMap=rpcManager.invokeRemotely(Collections.singletonList(primaryOwner),command,rpcManager.getDefaultRpcOptions(isSyncForwarding));
