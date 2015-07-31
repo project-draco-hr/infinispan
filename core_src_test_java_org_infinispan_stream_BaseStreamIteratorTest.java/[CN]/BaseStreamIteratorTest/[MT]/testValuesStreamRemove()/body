@@ -1,0 +1,15 @@
+{
+  Map<Object,String> values=putValuesInCache();
+  final Cache<Object,Object> cache=cache(0,CACHE_NAME);
+  cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor(){
+    @Override public Object visitRemoveCommand(    InvocationContext ctx,    RemoveCommand command) throws Throwable {
+      assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+      return super.visitRemoveCommand(ctx,command);
+    }
+  }
+,0);
+  for (Iterator<Object> it=cache(0,CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).values().stream().iterator(); it.hasNext(); ) {
+    assertTrue(values.containsValue(it.next()));
+    it.remove();
+  }
+}
