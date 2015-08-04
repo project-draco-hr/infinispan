@@ -1,20 +1,3 @@
 {
-  Map<Address,Set<Integer>> targets=determineTargets(ch,segments);
-  UUID uuid=UUID.randomUUID();
-  if (!targets.isEmpty()) {
-    log.tracef("Performing remote key aware operations %s for id %s",targets,uuid);
-    RequestTracker<Collection<R>> tracker=new RequestTracker<>(callback,targets,null);
-    currentlyRunning.put(uuid,tracker);
-    if (parallelDistribution) {
-      submitAsyncTasks(uuid,targets,keysToExclude,parallelStream,keysToInclude,includeLoader,StreamRequestCommand.Type.TERMINAL_KEY,operation);
-    }
- else {
-      for (      Map.Entry<Address,Set<Integer>> targetInfo : targets.entrySet()) {
-        Set<Integer> targetSegments=targetInfo.getValue();
-        Set<K> keysExcluded=determineExcludedKeys(keysToExclude,targetSegments);
-        rpc.invokeRemotely(Collections.singleton(targetInfo.getKey()),factory.buildStreamRequestCommand(uuid,parallelStream,StreamRequestCommand.Type.TERMINAL_KEY,targetSegments,keysToInclude,keysExcluded,includeLoader,operation),rpc.getDefaultRpcOptions(true));
-      }
-    }
-  }
-  return uuid;
+  return commonRemoteStreamOperation(parallelDistribution,parallelStream,ch,segments,keysToInclude,keysToExclude,includeLoader,operation,callback,StreamRequestCommand.Type.TERMINAL_KEY,null);
 }
