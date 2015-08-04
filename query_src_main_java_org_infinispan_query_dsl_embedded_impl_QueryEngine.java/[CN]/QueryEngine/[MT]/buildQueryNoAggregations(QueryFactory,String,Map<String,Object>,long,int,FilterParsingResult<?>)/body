@@ -1,0 +1,27 @@
+{
+  if (parsingResult.hasGroupingOrAggregations()) {
+    throw new IllegalArgumentException("The query must not use grouping or aggregation");
+  }
+  BooleanExpr normalizedWhereClause=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
+  if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
+    return new EmptyResultQuery(queryFactory,cache,jpqlString,namedParameters,startOffset,maxResults);
+  }
+  if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || searchManager == null) {
+    return new EmbeddedQuery(this,queryFactory,cache,jpqlString,namedParameters,parsingResult.getProjections(),startOffset,maxResults);
+  }
+  BooleShannonExpansion bse=new BooleShannonExpansion(getIndexedFieldProvider(parsingResult));
+  BooleanExpr expansion=bse.expand(normalizedWhereClause);
+  if (expansion == normalizedWhereClause) {
+    return new EmbeddedLuceneQuery(this,queryFactory,jpqlString,namedParameters,parsingResult.getProjections(),startOffset,maxResults);
+  }
+  if (expansion == ConstantBooleanExpr.TRUE) {
+    return new EmbeddedQuery(this,queryFactory,cache,jpqlString,namedParameters,parsingResult.getProjections(),startOffset,maxResults);
+  }
+  String expandedJpaOut=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),expansion,null);
+  Query expandedQuery=new EmbeddedLuceneQuery(this,queryFactory,expandedJpaOut,namedParameters,parsingResult.getProjections(),-1,-1);
+  HybridQuery hybridQuery=new HybridQuery(queryFactory,cache,jpqlString,namedParameters,getObjectFilter(getSecondPhaseMatcher(),jpqlString,namedParameters),startOffset,maxResults,expandedQuery);
+  if (namedParameters != null) {
+    hybridQuery.setParameters(namedParameters);
+  }
+  return hybridQuery;
+}

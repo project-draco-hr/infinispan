@@ -1,0 +1,37 @@
+{
+  if (eventTypes != null) {
+    if (eventTypes.length == 0) {
+      eventTypes=null;
+    }
+ else {
+      for (      Object et : eventTypes) {
+        if (et == null) {
+          eventTypes=null;
+          break;
+        }
+      }
+    }
+  }
+  List<List<AttributeId>> translatedProjections=null;
+  if (projection != null && projection.length != 0) {
+    translatedProjections=new ArrayList<List<AttributeId>>(projection.length);
+    for (    String projectionPath : projection) {
+      translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
+    }
+  }
+  List<List<AttributeId>> translatedSortFields=null;
+  if (sortFields != null) {
+    translatedSortFields=new ArrayList<List<AttributeId>>(sortFields.length);
+    for (    SortField sortField : sortFields) {
+      translatedSortFields.add(metadataAdapter.translatePropertyPath(sortField.getPath().getPath()));
+    }
+  }
+  query=booleanFilterNormalizer.normalize(query);
+  BETree beTree=treeMaker.make(query);
+  FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId> filterSubscription=new FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId>(queryString,namedParameters,useIntervals,metadataAdapter,beTree,callback,projection,translatedProjections,sortFields,translatedSortFields,eventTypes);
+  filterSubscription.registerProjection(predicateIndex);
+  filterSubscription.subscribe(predicateIndex);
+  filterSubscription.index=filterSubscriptions.size();
+  filterSubscriptions.add(filterSubscription);
+  return filterSubscription;
+}

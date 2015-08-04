@@ -1,3 +1,14 @@
 {
-  return new JPAProtobufFilterAndConverter(input.readUTF());
+  String jpaQuery=input.readUTF();
+  int paramsSize=UnsignedNumeric.readUnsignedInt(input);
+  Map<String,Object> namedParameters=null;
+  if (paramsSize != 0) {
+    namedParameters=new HashMap<String,Object>(paramsSize);
+    for (int i=0; i < paramsSize; i++) {
+      String paramName=input.readUTF();
+      Object paramValue=input.readObject();
+      namedParameters.put(paramName,paramValue);
+    }
+  }
+  return new JPAProtobufFilterAndConverter(jpaQuery,namedParameters);
 }

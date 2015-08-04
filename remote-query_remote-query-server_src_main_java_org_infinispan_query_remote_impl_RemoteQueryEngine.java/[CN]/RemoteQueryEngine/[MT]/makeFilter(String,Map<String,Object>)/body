@@ -1,0 +1,11 @@
+{
+  return SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>(){
+    @Override public JPAFilterAndConverter run(){
+      JPAFilterAndConverter filter=searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery,namedParameters) : new JPAFilterAndConverter(jpaQuery,namedParameters,isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
+      filter.injectDependencies(cache);
+      filter.getObjectFilter();
+      return filter;
+    }
+  }
+);
+}

@@ -1,0 +1,22 @@
+{
+  Map<String,Object> namedParameters=remoteQuery.getNamedParameters();
+  if (namedParameters == null || namedParameters.isEmpty()) {
+    return null;
+  }
+  List<QueryRequest.NamedParameter> params=new ArrayList<QueryRequest.NamedParameter>(namedParameters.size());
+  for (  Map.Entry<String,Object> e : namedParameters.entrySet()) {
+    Object value=e.getValue();
+    if (value instanceof Enum) {
+      EnumMarshaller encoder=(EnumMarshaller)remoteQuery.getSerializationContext().getMarshaller(value.getClass());
+      value=encoder.encode((Enum)value);
+    }
+ else     if (value instanceof Boolean) {
+      value=(Boolean)value ? 1 : 0;
+    }
+ else     if (value instanceof Date) {
+      value=((Date)value).getTime();
+    }
+    params.add(new QueryRequest.NamedParameter(e.getKey(),value));
+  }
+  return params;
+}

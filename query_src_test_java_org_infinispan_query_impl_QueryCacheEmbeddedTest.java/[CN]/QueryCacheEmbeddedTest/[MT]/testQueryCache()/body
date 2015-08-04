@@ -13,7 +13,7 @@
   KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpaQuery,LuceneQueryParsingResult.class);
   LuceneQueryParsingResult cachedParsingResult=queryCache.get(queryCacheKey);
   assertNull(cachedParsingResult);
-  queryQueryBuilder.build();
+  queryQueryBuilder.build().list();
   cachedParsingResult=queryCache.get(queryCacheKey);
   assertNotNull(cachedParsingResult);
   InOrder inOrder=inOrder(queryCacheSpy);
@@ -25,7 +25,7 @@
   assertTrue(captor.getValue() == cachedParsingResult);
   reset(queryCacheSpy);
   lastGetResult=captureLastGetResult(queryCacheSpy);
-  queryQueryBuilder.build();
+  queryQueryBuilder.build().list();
   inOrder=inOrder(queryCacheSpy);
   inOrder.verify(queryCacheSpy,calls(1)).get(queryCacheKey);
   inOrder.verify(queryCacheSpy,never()).put(any(KeyValuePair.class),any(LuceneQueryParsingResult.class));

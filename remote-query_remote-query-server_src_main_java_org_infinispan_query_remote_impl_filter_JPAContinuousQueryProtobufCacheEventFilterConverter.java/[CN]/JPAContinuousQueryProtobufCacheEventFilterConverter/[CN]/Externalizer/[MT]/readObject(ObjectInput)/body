@@ -1,5 +1,15 @@
 {
   String jpaQuery=input.readUTF();
+  int paramsSize=UnsignedNumeric.readUnsignedInt(input);
+  Map<String,Object> namedParameters=null;
+  if (paramsSize != 0) {
+    namedParameters=new HashMap<String,Object>(paramsSize);
+    for (int i=0; i < paramsSize; i++) {
+      String paramName=input.readUTF();
+      Object paramValue=input.readObject();
+      namedParameters.put(paramName,paramValue);
+    }
+  }
   Class<? extends Matcher> matcherImplClass=(Class<? extends Matcher>)input.readObject();
-  return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery,matcherImplClass);
+  return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery,namedParameters,matcherImplClass);
 }

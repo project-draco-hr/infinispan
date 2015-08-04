@@ -1,0 +1,15 @@
+{
+  LuceneQueryParsingResult parsingResult;
+  if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
+    KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpqlString,LuceneQueryParsingResult.class);
+    parsingResult=queryCache.get(queryCacheKey);
+    if (parsingResult == null) {
+      parsingResult=queryParser.parseQuery(jpqlString,makeProcessingChain(namedParameters));
+      queryCache.put(queryCacheKey,parsingResult);
+    }
+  }
+ else {
+    parsingResult=queryParser.parseQuery(jpqlString,makeProcessingChain(namedParameters));
+  }
+  return parsingResult;
+}

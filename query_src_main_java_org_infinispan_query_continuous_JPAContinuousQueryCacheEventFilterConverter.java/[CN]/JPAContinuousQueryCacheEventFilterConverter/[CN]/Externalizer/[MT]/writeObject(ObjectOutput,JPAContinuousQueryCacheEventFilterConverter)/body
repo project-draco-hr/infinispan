@@ -1,4 +1,15 @@
 {
   output.writeUTF(filterAndConverter.jpaQuery);
+  Map<String,Object> namedParameters=filterAndConverter.namedParameters;
+  if (namedParameters != null) {
+    UnsignedNumeric.writeUnsignedInt(output,namedParameters.size());
+    for (    Map.Entry<String,Object> e : namedParameters.entrySet()) {
+      output.writeUTF(e.getKey());
+      output.writeObject(e.getValue());
+    }
+  }
+ else {
+    UnsignedNumeric.writeUnsignedInt(output,0);
+  }
   output.writeObject(filterAndConverter.matcherImplClass);
 }

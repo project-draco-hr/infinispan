@@ -1,17 +1,3 @@
 {
-  FilterParsingResult<TypeMetadata> parsingResult=parse(jpaQuery,null);
-  disallowGroupingAndAggregations(parsingResult);
-  write.lock();
-  try {
-    FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByTypeName.get(parsingResult.getTargetEntityName());
-    if (filterRegistry == null) {
-      filterRegistry=new FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()),true);
-      filtersByTypeName.put(parsingResult.getTargetEntityName(),filterRegistry);
-      filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(),filterRegistry);
-    }
-    return filterRegistry.addFilter(jpaQuery,parsingResult.getWhereClause(),parsingResult.getProjections(),parsingResult.getSortFields(),callback,eventType);
-  }
-  finally {
-    write.unlock();
-  }
+  return registerFilter(jpaQuery,null,callback,eventType);
 }
