@@ -1,0 +1,14 @@
+{
+  RemoteCacheManager client0=client(0);
+  RemoteCache<String,String> cache0=client0.getCache();
+  String key="someKey";
+  assertNull(cache0.put(key,"value1",1000,TimeUnit.SECONDS,1000,TimeUnit.SECONDS));
+  assertEquals("value1",cache0.get(key));
+  assertMetadataAndValue(cache0.getWithMetadata(key),"value1",1000,1000);
+  assertEquals("value1",cache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key,"value2",1000,TimeUnit.SECONDS,-1,TimeUnit.SECONDS));
+  assertEquals("value2",cache0.get(key));
+  assertMetadataAndValue(cache0.getWithMetadata(key),"value2",1000,-1);
+  assertEquals("value2",cache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key,"value3",1000,TimeUnit.SECONDS,-1,TimeUnit.SECONDS));
+  assertEquals("value3",cache0.get(key));
+  assertMetadataAndValue(cache0.getWithMetadata(key),"value3",1000,-1);
+}
