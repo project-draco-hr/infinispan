@@ -46,17 +46,9 @@ clone.setValue((V)makeFilterResult(projection == null ? instance : null,projecti
 event=clone;
 }
 for (DelegatingCacheEntryListenerInvocation<K,V> invocation : invocations) {
-if (event.isPre()) {
-if (invocation.getObservation() == Listener.Observation.POST) {
-continue;
-}
-}
- else {
-if (invocation.getObservation() == Listener.Observation.PRE) {
-continue;
-}
-}
+if (invocation.getObservation().shouldInvoke(event.isPre())) {
 invocation.invokeNoChecks(event,false,filterAndConvert);
+}
 }
 }
 }
