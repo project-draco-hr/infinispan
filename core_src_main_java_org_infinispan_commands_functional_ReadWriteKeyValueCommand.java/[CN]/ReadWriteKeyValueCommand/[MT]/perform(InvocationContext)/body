@@ -3,7 +3,15 @@
     successful=false;
     return null;
   }
-  CacheEntry<K,V> e=ctx.lookupEntry(key);
+  MVCCEntry<K,V> e=(MVCCEntry<K,V>)ctx.lookupEntry(key);
   if (e == null)   return null;
-  return f.apply(value,EntryViews.readWrite(e,notifier));
+  if (prevValue == null && (flags == null || !flags.contains(Flag.COMMAND_RETRY))) {
+    prevValue=e.getValue();
+    prevMetadata=e.getMetadata();
+  }
+  if (valueUnchanged(e,prevValue,value) || valueRemoved(e,prevValue)) {
+    log.tracef("Execute read-write function on previous value %s and previous metadata %s",prevValue,prevMetadata);
+    return f.apply(value,EntryViews.readWrite(e,prevValue,prevMetadata,notifier));
+  }
+  return f.apply(value,EntryViews.readWrite(e,e.getValue(),e.getMetadata(),notifier));
 }
