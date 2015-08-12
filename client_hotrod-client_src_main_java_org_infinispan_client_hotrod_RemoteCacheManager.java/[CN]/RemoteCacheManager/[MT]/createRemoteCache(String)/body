@@ -1,9 +1,12 @@
 {
-  if (configuration.nearCache().mode().enabled()) {
-    NearCacheService<K,V> srv=createNearCacheService(configuration.nearCache());
-    return new NearRemoteCache<K,V>(this,cacheName,srv);
-  }
- else {
-    return new RemoteCacheImpl<K,V>(this,cacheName);
-  }
+switch (configuration.nearCache().mode()) {
+case INVALIDATED:
+case LAZY:
+    return new InvalidatedNearRemoteCache<>(this,cacheName,createNearCacheService(configuration.nearCache()));
+case EAGER:
+  return new EagerNearRemoteCache<>(this,cacheName,createNearCacheService(configuration.nearCache()));
+case DISABLED:
+default :
+return new RemoteCacheImpl<>(this,cacheName);
+}
 }
