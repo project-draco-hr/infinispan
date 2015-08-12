@@ -1,24 +1,37 @@
 {
+  for (int i=0; i < 10; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(99);
+    cache().put(i,value);
+  }
+  assertEquals(10,cache.size());
   QueryFactory qf=Search.getQueryFactory(cache());
   Query query=qf.from(Person.class).having("age").lte(31).toBuilder().build();
   EntryListener listener=new EntryListener();
   cache().addListener(listener,Search.makeFilter(query),null);
+  assertTrue(listener.createEvents.isEmpty());
+  assertTrue(listener.modifyEvents.isEmpty());
   for (int i=0; i < 10; ++i) {
     Person value=new Person();
     value.setName("John");
     value.setAge(i + 25);
     cache().put(i,value);
   }
-  assertEquals(7,listener.results.size());
-  for (  ObjectFilter.FilterResult r : listener.results) {
+  assertEquals(10,cache.size());
+  assertTrue(listener.createEvents.isEmpty());
+  assertEquals(7,listener.modifyEvents.size());
+  for (  ObjectFilter.FilterResult r : listener.modifyEvents) {
     Person p=(Person)r.getInstance();
     assertTrue(p.getAge() <= 31);
   }
   cache().removeListener(listener);
-  listener.results.clear();
+  listener.createEvents.clear();
+  listener.modifyEvents.clear();
   Person value=new Person();
   value.setName("George");
   value.setAge(30);
   cache().put(-1,value);
-  assertEquals(0,listener.results.size());
+  assertTrue(listener.createEvents.isEmpty());
+  assertTrue(listener.modifyEvents.isEmpty());
 }
