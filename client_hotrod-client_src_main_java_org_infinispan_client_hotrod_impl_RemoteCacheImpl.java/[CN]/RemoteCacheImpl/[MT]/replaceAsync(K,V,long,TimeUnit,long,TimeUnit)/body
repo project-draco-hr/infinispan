@@ -1,9 +1,10 @@
 {
   assertRemoteCacheManagerIsStarted();
   final NotifyingFutureImpl<V> result=new NotifyingFutureImpl<V>();
-  Future<V> future=executorService.submit(new Callable<V>(){
+  Future<V> future=executorService.submit(new WithFlagsCallable(operationsFactory.flags()){
     @Override public V call() throws Exception {
       try {
+        setFlagsIfPresent();
         V old=replace(key,value,lifespan,lifespanUnit,maxIdle,maxIdleUnit);
         try {
           result.notifyDone(old);
