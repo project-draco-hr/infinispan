@@ -1,5 +1,5 @@
 {
-  boolean pruneLIR=false;
+  long pruneLIR=0;
   boolean evictHIR=false;
   boolean skipIncrement;
   LIRSNode<K,V> lirsNode=(LIRSNode<K,V>)e.eviction;
@@ -11,8 +11,12 @@ synchronized (lirsNode) {
       if (skipIncrement) {
         throw new IllegalStateException("Created should always be false for a" + "newly created evictio node!");
       }
+      long hotDifference;
       if (addToLIRIfNotFullHot(lirsNode,true)) {
         return;
+      }
+ else       if ((hotDifference=hotSize.get() - maximumHotSize) > 0) {
+        pruneLIR=hotDifference;
       }
       lirsNode.setState(Recency.HIR_RESIDENT);
       DequeNode<LIRSNode<K,V>> stackNode=new DequeNode<>(lirsNode);
@@ -31,7 +35,7 @@ case HIR_NONRESIDENT:
           return;
         }
       promoteHIRToLIR(lirsNode);
-    pruneLIR=true;
+    pruneLIR=1;
   skipIncrement=false;
 break;
 case EVICTING:
@@ -55,8 +59,8 @@ break;
 }
 }
 }
-if (pruneLIR) {
-hotDemotion.incrementAndGet();
+if (pruneLIR > 0) {
+hotDemotion.addAndGet(pruneLIR);
 }
 if (!skipIncrement || evictHIR) {
 incrementSizeEviction(currentSize,1,0);
