@@ -2,19 +2,23 @@
   if (storeConfiguration instanceof DeployedStoreConfiguration) {
     DeployedStoreConfiguration deployedConfiguration=(DeployedStoreConfiguration)storeConfiguration;
     PersistenceConfigurationBuilder replacedBuilder=deployedConfiguration.getPersistenceConfigurationBuilder();
-    DeployedCacheStoreMetadata deployedCacheStoreMetadata=deployedCacheStores.get(deployedConfiguration.getCustomStoreClassName());
-    if (deployedCacheStoreMetadata == null) {
-      throw new IllegalStateException("Could not find Deployed Cache metadata for " + deployedConfiguration.getCustomStoreClassName());
+    try {
+      DeployedCacheStoreMetadata deployedCacheStoreMetadata=getPromise(deployedConfiguration.getCustomStoreClassName()).get(TIMEOUT_SECONDS,TimeUnit.SECONDS);
+      StoreConfigurationBuilder replacedStoreBuilder=replacedBuilder.addStore(deployedCacheStoreMetadata.getStoreBuilderClass());
+      replacedStoreBuilder.fetchPersistentState(deployedConfiguration.fetchPersistentState());
+      replacedStoreBuilder.ignoreModifications(deployedConfiguration.ignoreModifications());
+      replacedStoreBuilder.preload(deployedConfiguration.preload());
+      replacedStoreBuilder.purgeOnStartup(deployedConfiguration.purgeOnStartup());
+      replacedStoreBuilder.shared(deployedConfiguration.shared());
+      replacedStoreBuilder.withProperties(deployedConfiguration.properties());
+      return (StoreConfiguration)replacedStoreBuilder.create();
     }
-    StoreConfigurationBuilder replacedStoreBuilder=replacedBuilder.addStore(deployedCacheStoreMetadata.getStoreBuilderClass());
-    replacedStoreBuilder.fetchPersistentState(deployedConfiguration.fetchPersistentState());
-    replacedStoreBuilder.ignoreModifications(deployedConfiguration.ignoreModifications());
-    replacedStoreBuilder.preload(deployedConfiguration.preload());
-    replacedStoreBuilder.purgeOnStartup(deployedConfiguration.purgeOnStartup());
-    replacedStoreBuilder.shared(deployedConfiguration.shared());
-    replacedStoreBuilder.withProperties(deployedConfiguration.properties());
-    StoreConfiguration replacedConfiguration=(StoreConfiguration)replacedStoreBuilder.create();
-    return replacedConfiguration;
+ catch (    InterruptedException|ExecutionException e) {
+      throw new IllegalStateException("An error occurred while processing the deployment",e);
+    }
+catch (    TimeoutException e) {
+      InfinispanLogger.ROOT_LOGGER.error("Could not get Custom Cache Store metadata (" + deployedConfiguration.getCustomStoreClassName() + ") within given time.",e);
+    }
   }
   return null;
 }

@@ -1,8 +1,17 @@
 {
   if (cfg instanceof DeployedStoreConfiguration) {
     DeployedStoreConfiguration deployedConfiguration=(DeployedStoreConfiguration)cfg;
-    DeployedCacheStoreMetadata deployedCacheStoreMetadata=deployedCacheStores.get(deployedConfiguration.getCustomStoreClassName());
-    return (T)deployedCacheStoreMetadata.getLoaderWriterRawInstance();
+    DeployedCacheStoreMetadata deployedCacheStoreMetadata=null;
+    try {
+      deployedCacheStoreMetadata=getPromise(deployedConfiguration.getCustomStoreClassName()).get(TIMEOUT_SECONDS,TimeUnit.SECONDS);
+      return (T)deployedCacheStoreMetadata.getLoaderWriterRawInstance();
+    }
+ catch (    InterruptedException|ExecutionException e) {
+      throw new IllegalStateException("An error occurred while processing the deployment",e);
+    }
+catch (    TimeoutException e) {
+      InfinispanLogger.ROOT_LOGGER.error("Could not get Custom Cache Store metadata (" + deployedConfiguration.getCustomStoreClassName() + ") within given time.",e);
+    }
   }
   return null;
 }
