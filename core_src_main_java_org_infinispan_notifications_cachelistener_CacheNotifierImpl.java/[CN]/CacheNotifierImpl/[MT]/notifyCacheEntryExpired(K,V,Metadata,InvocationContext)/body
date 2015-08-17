@@ -1,0 +1,26 @@
+{
+  if (isNotificationAllowed(null,cacheEntryExpiredListeners)) {
+    EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_EXPIRED);
+    e.setKey(key);
+    e.setValue(value);
+    e.setMetadata(metadata);
+    e.setOriginLocal(true);
+    e.setPre(false);
+    boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+    boolean sendEvents=ctx == null || !ctx.isInTxScope();
+    try {
+      for (      CacheEntryListenerInvocation<K,V> listener : cacheEntryExpiredListeners) {
+        listener.invoke(e,isLocalNodePrimaryOwner);
+      }
+      if (sendEvents) {
+        eventManager.sendEvents();
+        sendEvents=false;
+      }
+    }
+  finally {
+      if (sendEvents) {
+        eventManager.dropEvents();
+      }
+    }
+  }
+}

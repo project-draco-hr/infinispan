@@ -1,0 +1,32 @@
+{
+  MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
+  if (e != null && !e.isRemoved()) {
+    Object value=e.getValue();
+    if (lifespan == null) {
+      if (valueMatcher.matches(e,value,e.getValue(),valueEquivalence)) {
+        e.setExpired(true);
+        return performRemove(e,ctx);
+      }
+    }
+ else     if (e.getMetadata() == null) {
+      if (value == null || valueMatcher.matches(e,value,e.getValue(),valueEquivalence)) {
+        e.setExpired(true);
+        return performRemove(e,ctx);
+      }
+    }
+ else     if (e.getLifespan() > 0 && e.getLifespan() == lifespan) {
+      if (valueMatcher.matches(e,value,e.getValue(),valueEquivalence)) {
+        e.setExpired(true);
+        return performRemove(e,ctx);
+      }
+    }
+ else {
+      log.trace("Cannot remove entry as its lifespan or value do not match");
+    }
+  }
+ else {
+    log.trace("Nothing to remove since the entry doesn't exist in the context or it is already removed");
+  }
+  successful=false;
+  return false;
+}

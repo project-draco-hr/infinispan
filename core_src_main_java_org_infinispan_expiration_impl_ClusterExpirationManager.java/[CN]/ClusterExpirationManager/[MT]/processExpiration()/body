@@ -1,0 +1,32 @@
+{
+  long start=0;
+  if (!Thread.currentThread().isInterrupted()) {
+    try {
+      if (trace) {
+        log.trace("Purging data container of expired entries");
+        start=timeService.time();
+      }
+      long currentTimeMillis=timeService.wallClockTime();
+      for (Iterator<InternalCacheEntry<K,V>> purgeCandidates=dataContainer.iteratorIncludingExpired(); purgeCandidates.hasNext(); ) {
+        InternalCacheEntry<K,V> e=purgeCandidates.next();
+        if (e.canExpire()) {
+          if (ExpiryHelper.isExpiredMortal(e.getLifespan(),e.getCreated(),currentTimeMillis)) {
+            handleLifespanExpireEntry(e);
+          }
+ else           if (ExpiryHelper.isExpiredTransient(e.getMaxIdle(),e.getLastUsed(),currentTimeMillis)) {
+            super.handleInMemoryExpiration(e,currentTimeMillis);
+          }
+        }
+      }
+      if (trace) {
+        log.tracef("Purging data container completed in %s",Util.prettyPrintTime(timeService.timeDuration(start,TimeUnit.MILLISECONDS)));
+      }
+    }
+ catch (    Exception e) {
+      log.exceptionPurgingDataContainer(e);
+    }
+  }
+  if (!Thread.currentThread().isInterrupted()) {
+    persistenceManager.purgeExpired();
+  }
+}
