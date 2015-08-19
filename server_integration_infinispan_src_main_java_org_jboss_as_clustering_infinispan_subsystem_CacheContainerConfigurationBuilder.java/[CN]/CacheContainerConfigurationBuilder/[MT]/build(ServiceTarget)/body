@@ -1,19 +1,7 @@
 {
-  ServiceBuilder<GlobalConfiguration> builder=target.addService(this.getServiceName(),new ValueService<>(this)).addDependency(Services.JBOSS_SERVICE_MODULE_LOADER,ModuleLoader.class,this.loader).addDependency(MBeanServerService.SERVICE_NAME,MBeanServer.class,this.server);
+  ServiceBuilder<GlobalConfiguration> builder=target.addService(this.getServiceName(),new ValueService<>(this)).addDependency(Services.JBOSS_SERVICE_MODULE_LOADER,ModuleLoader.class,this.loader).addDependency(MBeanServerService.SERVICE_NAME,MBeanServer.class,this.server).addDependency(ThreadPoolResource.ASYNC_OPERATIONS.getServiceName(this.name),ThreadPoolConfiguration.class,this.asyncOperationsThreadPool).addDependency(ThreadPoolResource.LISTENER.getServiceName(this.name),ThreadPoolConfiguration.class,this.listenerThreadPool).addDependency(ThreadPoolResource.REMOTE_COMMAND.getServiceName(this.name),ThreadPoolConfiguration.class,this.remoteCommandThreadPool).addDependency(ThreadPoolResource.STATE_TRANSFER.getServiceName(this.name),ThreadPoolConfiguration.class,this.stateTransferThreadPool).addDependency(ThreadPoolResource.PERSISTENCE.getServiceName(this.name),ThreadPoolConfiguration.class,this.persistenceThreadPool).addDependency(ThreadPoolResource.TRANSPORT.getServiceName(this.name),ThreadPoolConfiguration.class,this.transportThreadPool).addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name),ThreadPoolConfiguration.class,this.expirationThreadPool).addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name),ThreadPoolConfiguration.class,this.replicationQueueThreadPool);
   if (this.transport != null) {
     this.transport.register(builder);
-  }
-  if (this.asyncExecutor != null) {
-    this.asyncExecutor.register(builder);
-  }
-  if (this.listenerExecutor != null) {
-    this.listenerExecutor.register(builder);
-  }
-  if (this.expirationExecutor != null) {
-    this.expirationExecutor.register(builder);
-  }
-  if (this.replicationQueueExecutor != null) {
-    this.replicationQueueExecutor.register(builder);
   }
   return builder.setInitialMode(ServiceController.Mode.ON_DEMAND);
 }

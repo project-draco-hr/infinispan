@@ -46,31 +46,19 @@
     if (topology != null) {
       transportBuilder.siteId(topology.getSite()).rackId(topology.getRack()).machineId(topology.getMachine());
     }
-    Executor executor=transport.getExecutor();
-    if (executor != null) {
-      transportBuilder.transportThreadPool().threadPoolFactory(new ManagedExecutorFactory(executor));
-    }
+    transportBuilder.transportThreadPool().read(this.transportThreadPool.getValue());
+    transportBuilder.remoteCommandThreadPool().read(this.remoteCommandThreadPool.getValue());
     RelayConfiguration relay=stack.getRelay();
     if (relay != null) {
       builder.site().localSite(relay.getSiteName());
     }
   }
-  Executor asyncExecutor=(this.asyncExecutor != null) ? this.asyncExecutor.getValue() : null;
-  if (asyncExecutor != null) {
-    builder.asyncThreadPool().threadPoolFactory(new ManagedExecutorFactory(asyncExecutor));
-  }
-  Executor listenerExecutor=(this.listenerExecutor != null) ? this.listenerExecutor.getValue() : null;
-  if (listenerExecutor != null) {
-    builder.listenerThreadPool().threadPoolFactory(new ManagedExecutorFactory(listenerExecutor));
-  }
-  ScheduledExecutorService expirationExecutor=(this.expirationExecutor != null) ? this.expirationExecutor.getValue() : null;
-  if (expirationExecutor != null) {
-    builder.expirationThreadPool().threadPoolFactory(new ManagedScheduledExecutorFactory(expirationExecutor));
-  }
-  ScheduledExecutorService replicationQueueExecutor=(this.replicationQueueExecutor != null) ? this.replicationQueueExecutor.getValue() : null;
-  if (replicationQueueExecutor != null) {
-    builder.replicationQueueThreadPool().threadPoolFactory(new ManagedExecutorFactory(replicationQueueExecutor));
-  }
+  builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
+  builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
+  builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
+  builder.stateTransferThreadPool().read(this.stateTransferThreadPool.getValue());
+  builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
+  builder.replicationQueueThreadPool().read(this.replicationQueueThreadPool.getValue());
   builder.globalJmxStatistics().enabled(this.statisticsEnabled).cacheManagerName(this.name).mBeanServerLookup(new MBeanServerProvider(this.server.getValue())).jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName()).allowDuplicateDomains(true);
   return builder.build();
 }

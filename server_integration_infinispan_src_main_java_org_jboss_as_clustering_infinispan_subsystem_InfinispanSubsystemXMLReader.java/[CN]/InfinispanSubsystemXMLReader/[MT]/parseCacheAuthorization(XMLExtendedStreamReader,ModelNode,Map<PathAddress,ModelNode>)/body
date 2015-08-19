@@ -1,0 +1,28 @@
+{
+  PathAddress authorizationAddress=PathAddress.pathAddress(security.get(OP_ADDR)).append(ModelKeys.AUTHORIZATION,ModelKeys.AUTHORIZATION_NAME);
+  ModelNode authorization=Util.createAddOperation(authorizationAddress);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+{
+        CacheAuthorizationConfigurationResource.ENABLED.parseAndSetParameter(value,authorization,reader);
+        break;
+      }
+case ROLES:
+{
+      for (      String role : reader.getListAttributeValue(i)) {
+        CacheAuthorizationConfigurationResource.ROLES.parseAndAddParameterElement(role,authorization,reader);
+      }
+      break;
+    }
+default :
+{
+    throw ParseUtils.unexpectedAttribute(reader,i);
+  }
+}
+}
+ParseUtils.requireNoContent(reader);
+operations.put(authorizationAddress,authorization);
+}

@@ -1,0 +1,22 @@
+{
+  PathAddress securityAddress=containerAddress.append(ModelKeys.SECURITY,ModelKeys.SECURITY_NAME);
+  ModelNode security=Util.createAddOperation(securityAddress);
+  ParseUtils.requireNoAttributes(reader);
+  Map<PathAddress,ModelNode> additionalConfigurationOperations=new LinkedHashMap<>();
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case AUTHORIZATION:
+{
+        this.parseGlobalAuthorization(reader,securityAddress,additionalConfigurationOperations);
+        break;
+      }
+default :
+{
+      throw ParseUtils.unexpectedElement(reader);
+    }
+}
+}
+operations.put(securityAddress,security);
+operations.putAll(additionalConfigurationOperations);
+}

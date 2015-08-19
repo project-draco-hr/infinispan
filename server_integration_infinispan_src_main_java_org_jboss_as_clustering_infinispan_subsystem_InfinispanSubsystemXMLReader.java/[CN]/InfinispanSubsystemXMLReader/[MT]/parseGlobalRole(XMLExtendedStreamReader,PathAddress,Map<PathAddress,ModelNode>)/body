@@ -1,0 +1,12 @@
+{
+  String[] attributes=ParseUtils.requireAttributes(reader,Attribute.NAME.getLocalName(),Attribute.PERMISSIONS.getLocalName());
+  String name=attributes[0];
+  PathAddress roleAddress=authorizationAddress.append(ModelKeys.ROLE,name);
+  ModelNode role=Util.createAddOperation(roleAddress);
+  AuthorizationRoleResource.NAME.parseAndSetParameter(name,role,reader);
+  for (  String perm : attributes[1].split("\\s+")) {
+    AuthorizationRoleResource.PERMISSIONS.parseAndAddParameterElement(perm,role,reader);
+  }
+  ParseUtils.requireNoContent(reader);
+  operations.put(roleAddress,role);
+}

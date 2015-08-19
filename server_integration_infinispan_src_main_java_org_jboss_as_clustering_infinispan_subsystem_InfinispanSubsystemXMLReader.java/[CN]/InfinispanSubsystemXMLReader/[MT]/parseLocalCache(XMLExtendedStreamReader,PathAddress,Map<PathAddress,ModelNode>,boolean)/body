@@ -1,0 +1,22 @@
+{
+  ModelNode cacheConfiguration=Util.getEmptyOperation(ADD,null);
+  Map<PathAddress,ModelNode> additionalConfigurationOperations=new LinkedHashMap<>();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    this.parseCacheAttribute(reader,i,attribute,value,cacheConfiguration);
+  }
+  if (!cacheConfiguration.hasDefined(ModelKeys.NAME)) {
+    throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.NAME));
+  }
+  PathAddress cacheConfigurationAddress=addNameToAddress(cacheConfiguration,containerAddress,ModelKeys.LOCAL_CACHE);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+    this.parseCacheElement(reader,element,cacheConfiguration,additionalConfigurationOperations);
+  }
+  operations.put(cacheConfigurationAddress,cacheConfiguration);
+  operations.putAll(additionalConfigurationOperations);
+  if (!configurationOnly) {
+    addCacheForConfiguration(cacheConfiguration,containerAddress,ModelKeys.LOCAL_CACHE,operations);
+  }
+}

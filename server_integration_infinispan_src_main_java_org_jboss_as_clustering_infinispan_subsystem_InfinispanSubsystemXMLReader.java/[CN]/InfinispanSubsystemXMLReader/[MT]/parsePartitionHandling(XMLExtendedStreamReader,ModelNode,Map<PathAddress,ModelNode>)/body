@@ -1,0 +1,21 @@
+{
+  PathAddress partitionHandlingAddress=PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.PARTITION_HANDLING,ModelKeys.PARTITION_HANDLING_NAME);
+  ModelNode partitionHandling=Util.createAddOperation(partitionHandlingAddress);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+{
+        PartitionHandlingConfigurationResource.ENABLED.parseAndSetParameter(value,partitionHandling,reader);
+        break;
+      }
+default :
+{
+      throw ParseUtils.unexpectedAttribute(reader,i);
+    }
+}
+}
+ParseUtils.requireNoContent(reader);
+operations.put(partitionHandlingAddress,partitionHandling);
+}
