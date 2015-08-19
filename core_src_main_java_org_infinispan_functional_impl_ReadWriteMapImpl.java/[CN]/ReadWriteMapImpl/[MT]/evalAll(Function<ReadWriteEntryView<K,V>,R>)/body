@@ -1,2 +1,8 @@
 {
+  log.tracef("Invoked evalAll(%s)",params);
+  Param<FutureMode> futureMode=params.get(FutureMode.ID);
+  CloseableIteratorSet<K> keys=fmap.cache.keySet();
+  ReadWriteManyCommand cmd=fmap.cmdFactory().buildReadWriteManyCommand(keys,f);
+  InvocationContext ctx=fmap.invCtxFactory().createInvocationContext(true,keys.size());
+  return Traversables.of(((List<R>)fmap.chain().invoke(ctx,cmd)).stream());
 }
