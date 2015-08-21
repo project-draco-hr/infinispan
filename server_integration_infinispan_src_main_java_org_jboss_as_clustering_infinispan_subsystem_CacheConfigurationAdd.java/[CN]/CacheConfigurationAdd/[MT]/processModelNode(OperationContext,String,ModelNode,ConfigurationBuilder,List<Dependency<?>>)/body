@@ -20,12 +20,10 @@
   if (cache.hasDefined(ModelKeys.REMOTE_SITE)) {
     builder.sites().backupFor().remoteSite(CacheConfigurationResource.REMOTE_SITE.resolveModelAttribute(context,cache).asString());
   }
+  IsolationLevel isolationLevel=IsolationLevel.READ_COMMITTED;
   if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING,ModelKeys.LOCKING_NAME).isDefined()) {
     ModelNode locking=cache.get(ModelKeys.LOCKING,ModelKeys.LOCKING_NAME);
-    final IsolationLevel isolationLevel=IsolationLevel.READ_COMMITTED;
-    if (locking.hasDefined(ModelKeys.ISOLATION)) {
-      log.warn("Ignoring XML attribute " + ModelKeys.ISOLATION + ", please remove from configuration file");
-    }
+    isolationLevel=IsolationLevel.valueOf(LockingConfigurationResource.ISOLATION.resolveModelAttribute(context,locking).asString());
     final boolean striping=LockingConfigurationResource.STRIPING.resolveModelAttribute(context,locking).asBoolean();
     final long acquireTimeout=LockingConfigurationResource.ACQUIRE_TIMEOUT.resolveModelAttribute(context,locking).asLong();
     final int concurrencyLevel=LockingConfigurationResource.CONCURRENCY_LEVEL.resolveModelAttribute(context,locking).asInt();
@@ -44,6 +42,10 @@
   builder.transaction().transactionMode(txMode.getMode()).lockingMode(lockingMode).useSynchronization(!txMode.isXAEnabled()).recovery().enabled(txMode.isRecoveryEnabled());
   if (txMode.isRecoveryEnabled()) {
     builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
+  }
+  if (mode.isSynchronous() && lockingMode == LockingMode.OPTIMISTIC && isolationLevel == IsolationLevel.REPEATABLE_READ) {
+    builder.locking().writeSkewCheck(true);
+    builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
   }
   if (batching) {
     builder.transaction().transactionMode(org.infinispan.transaction.TransactionMode.TRANSACTIONAL).invocationBatching().enable();
