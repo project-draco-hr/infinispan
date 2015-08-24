@@ -1,0 +1,8 @@
+{
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getTransactionImplClass()).select(Expression.property("accountId"),Expression.max("amount")).groupBy("accountId").having(Expression.avg("amount")).lt(150).toBuilder().orderBy("accountId").build();
+  List<Object[]> list=q.list();
+  assertEquals(1,list.size());
+  assertEquals(2,list.get(0)[0]);
+  assertEquals(149.0d,(Double)list.get(0)[1],0.0001d);
+}
