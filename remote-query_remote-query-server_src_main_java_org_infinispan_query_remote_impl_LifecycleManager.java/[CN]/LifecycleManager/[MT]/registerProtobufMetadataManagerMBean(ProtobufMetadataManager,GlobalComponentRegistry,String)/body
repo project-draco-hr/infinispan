@@ -1,0 +1,17 @@
+{
+  GlobalConfiguration globalCfg=gcr.getGlobalConfiguration();
+  MBeanServer mBeanServer=JmxUtil.lookupMBeanServer(globalCfg);
+  String groupName="type=RemoteQuery,name=" + ObjectName.quote(cacheManagerName);
+  String jmxDomain=JmxUtil.buildJmxDomain(globalCfg,mBeanServer,groupName);
+  ComponentMetadataRepo metadataRepo=gcr.getComponentMetadataRepo();
+  ManageableComponentMetadata metadata=metadataRepo.findComponentMetadata(ProtobufMetadataManagerImpl.class).toManageableComponentMetadata();
+  try {
+    ResourceDMBean mBean=new ResourceDMBean(protobufMetadataManager,metadata);
+    ObjectName objName=new ObjectName(jmxDomain + ":" + groupName+ ",component="+ metadata.getJmxObjectName());
+    protobufMetadataManager.setObjectName(objName);
+    JmxUtil.registerMBean(mBean,objName,mBeanServer);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to register ProtobufMetadataManager MBean",e);
+  }
+}
