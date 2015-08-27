@@ -1,0 +1,23 @@
+{
+  Object retval=invokeNextInterceptor(ctx,command);
+  if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())   return retval;
+  if (!isProperWriter(ctx,command,command.getKey()))   return retval;
+  Param<PersistenceMode> persistMode=command.getParams().get(PersistenceMode.ID);
+switch (persistMode.get()) {
+case PERSIST:
+    Object key=command.getKey();
+  CacheEntry entry=ctx.lookupEntry(key);
+if (entry != null) {
+  if (entry.isRemoved()) {
+    boolean resp=persistenceManager.deleteFromAllStores(key,BOTH);
+    if (getLog().isTraceEnabled())     getLog().tracef("Removed entry under key %s and got response %s from CacheStore",key,resp);
+  }
+ else   if (entry.isChanged()) {
+    storeEntry(ctx,key,command);
+  }
+}
+case SKIP:
+log.trace("Skipping cache store since persistence mode parameter is SKIP");
+}
+return retval;
+}
