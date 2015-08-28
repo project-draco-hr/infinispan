@@ -1,3 +1,10 @@
 {
-  onlyModifications(cache,new SkipListenerFlagMatcher(false));
+  Matcher<FlagAffectedCommand> matcher=getFlagMatcher();
+  initCacheData(cache,Collections.singletonMap("key","value"));
+  cache.put("key","value2");
+  verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"),eq("value2"),any(Metadata.class),eq("value"),any(Metadata.class),eq(true),isA(InvocationContext.class),argThat(matcher));
+  verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"),eq("value2"),any(Metadata.class),eq("value"),any(Metadata.class),eq(false),isA(InvocationContext.class),argThat(matcher));
+  cache.put("key","value2");
+  verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"),eq("value2"),any(Metadata.class),eq("value2"),any(Metadata.class),eq(true),isA(InvocationContext.class),argThat(matcher));
+  verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"),eq("value2"),any(Metadata.class),eq("value2"),any(Metadata.class),eq(false),isA(InvocationContext.class),argThat(matcher));
 }

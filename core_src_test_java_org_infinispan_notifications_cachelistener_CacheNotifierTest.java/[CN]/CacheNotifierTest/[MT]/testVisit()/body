@@ -1,3 +1,7 @@
 {
-  visit(cache,new SkipListenerFlagMatcher(false));
+  Matcher<FlagAffectedCommand> matcher=getFlagMatcher();
+  initCacheData(cache,Collections.singletonMap("key","value"));
+  cache.get("key");
+  verify(getMockNotifier(cache)).notifyCacheEntryVisited(eq("key"),eq("value"),eq(true),isA(InvocationContext.class),argThat(matcher));
+  verify(getMockNotifier(cache)).notifyCacheEntryVisited(eq("key"),eq("value"),eq(false),isA(InvocationContext.class),argThat(matcher));
 }

@@ -1,0 +1,16 @@
+{
+  Map<K,CacheEntry<K,V>> map=CollectionFactory.makeMap(keys.size(),keyEquivalence,AnyEquivalence.getInstance());
+  for (  Object key : keys) {
+    Objects.requireNonNull(key,NULL_KEYS_NOT_SUPPORTED);
+    InternalCacheEntry<K,V> entry=getDataContainer().get(key);
+    if (entry != null) {
+      V value=entry.getValue();
+      if (hasListeners) {
+        cacheNotifier.notifyCacheEntryVisited((K)key,value,true,ImmutableContext.INSTANCE,null);
+        cacheNotifier.notifyCacheEntryVisited((K)key,value,false,ImmutableContext.INSTANCE,null);
+      }
+      map.put(entry.getKey(),entry);
+    }
+  }
+  return map;
+}

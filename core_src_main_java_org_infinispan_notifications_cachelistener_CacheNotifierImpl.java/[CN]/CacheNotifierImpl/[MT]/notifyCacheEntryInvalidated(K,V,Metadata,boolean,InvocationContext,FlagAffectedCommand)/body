@@ -1,0 +1,9 @@
+{
+  if (isNotificationAllowed(command,cacheEntryInvalidatedListeners)) {
+    EventImpl<K,V> e=EventImpl.createEvent(cache,CACHE_ENTRY_INVALIDATED);
+    configureEvent(e,key,value,metadata,pre,ctx,command,value,metadata);
+    setTx(ctx,e);
+    boolean isLocalNodePrimaryOwner=clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+    for (    CacheEntryListenerInvocation<K,V> listener : cacheEntryInvalidatedListeners)     listener.invoke(e,isLocalNodePrimaryOwner);
+  }
+}

@@ -1,0 +1,30 @@
+{
+  AdvancedCache<K,V> cache;
+  JMXStatisticsConfiguration jmxStatistics=configuration.jmxStatistics();
+  boolean statisticsAvailable=jmxStatistics != null && jmxStatistics.available();
+  if (statisticsAvailable) {
+    cache=new StatsCollectingCache<>(cacheName);
+  }
+ else {
+    cache=new SimpleCacheImpl<>(cacheName);
+  }
+  this.configuration=configuration;
+  componentRegistry=new ComponentRegistry(cacheName,configuration,cache,globalComponentRegistry,globalComponentRegistry.getClassLoader()){
+    @Override public void cacheComponents(){
+      cacheMarshaler=getOrCreateComponent(StreamingMarshaller.class,KnownComponentNames.CACHE_MARSHALLER);
+      getOrCreateComponent(ExpirationManager.class);
+    }
+  }
+;
+  if (statisticsAvailable) {
+    componentRegistry.registerComponent(new StatsCollector.Factory(),StatsCollector.Factory.class);
+  }
+  componentRegistry.registerComponent(new CacheJmxRegistration(),CacheJmxRegistration.class.getName(),true);
+  componentRegistry.registerComponent(new ClusterEventManagerStub<K,V>(),ClusterEventManager.class);
+  componentRegistry.registerComponent(new PassivationManagerStub(),PassivationManager.class);
+  componentRegistry.registerComponent(new ActivationManagerStub(),ActivationManager.class);
+  componentRegistry.registerComponent(new PersistenceManagerStub(),PersistenceManager.class);
+  componentRegistry.registerComponent(new RollingUpgradeManager(),RollingUpgradeManager.class.getName(),true);
+  componentRegistry.registerComponent(cache,Cache.class.getName(),true);
+  return cache;
+}

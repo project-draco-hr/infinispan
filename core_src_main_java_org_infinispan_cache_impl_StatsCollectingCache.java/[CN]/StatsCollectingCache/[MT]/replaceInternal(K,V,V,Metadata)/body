@@ -1,0 +1,13 @@
+{
+  boolean statisticsEnabled=statsCollector.getStatisticsEnabled();
+  long start=0;
+  if (statisticsEnabled) {
+    start=timeService.time();
+  }
+  boolean replaced=super.replaceInternal(key,oldValue,value,metadata);
+  if (statisticsEnabled && replaced) {
+    long end=timeService.time();
+    statsCollector.recordStores(1,end - start);
+  }
+  return replaced;
+}

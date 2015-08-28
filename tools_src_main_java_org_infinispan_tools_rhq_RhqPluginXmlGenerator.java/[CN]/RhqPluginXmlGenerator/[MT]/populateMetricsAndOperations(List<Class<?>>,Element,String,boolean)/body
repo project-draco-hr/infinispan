@@ -1,5 +1,5 @@
 {
-  Set<String> uniqueOperations=new HashSet<String>();
+  Map<String,List<Class<?>>> managedOperations=new HashMap<>();
   Document doc=root.getOwnerDocument();
   Element parent=doc.createElement(parentName);
   for (  Class<?> clazz : classes) {
@@ -55,10 +55,18 @@
             throw new RuntimeException("Duplicate operation name: " + name);
           }
         }
-        if (uniqueOperations.contains(name)) {
-          throw new RuntimeException("Duplicate operation name: " + name);
+        List<Class<?>> managedClasses=managedOperations.get(name);
+        if (managedClasses != null) {
+          for (          Class<?> managedClazz : managedClasses) {
+            if (managedClazz.isAssignableFrom(clazz) || clazz.isAssignableFrom(managedClazz)) {
+              throw new RuntimeException("Duplicate operation name: " + name + ", defined both in "+ clazz+ " and "+ managedClazz);
+            }
+          }
         }
-        uniqueOperations.add(name);
+        if (managedClasses == null) {
+          managedOperations.put(name,managedClasses=new ArrayList<>());
+        }
+        managedClasses.add(clazz);
         String opDisplayName=managedOp.displayName();
         if (opDisplayName.length() == 0) {
           throw new RuntimeException("Missing displayName on: " + name);

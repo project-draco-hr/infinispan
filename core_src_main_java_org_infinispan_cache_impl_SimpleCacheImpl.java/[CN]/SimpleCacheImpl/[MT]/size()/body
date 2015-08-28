@@ -1,0 +1,23 @@
+{
+  long now=Long.MIN_VALUE;
+  int size=0;
+  DataContainer<K,V> dataContainer=getDataContainer();
+  for (  InternalCacheEntry<K,V> entry : dataContainer) {
+    if (entry.canExpire()) {
+      if (now == Long.MIN_VALUE)       now=timeService.wallClockTime();
+      if (!checkExpiration(entry,now)) {
+        ++size;
+        if (size < 0) {
+          return Integer.MAX_VALUE;
+        }
+      }
+    }
+ else {
+      ++size;
+      if (size < 0) {
+        return Integer.MAX_VALUE;
+      }
+    }
+  }
+  return size;
+}

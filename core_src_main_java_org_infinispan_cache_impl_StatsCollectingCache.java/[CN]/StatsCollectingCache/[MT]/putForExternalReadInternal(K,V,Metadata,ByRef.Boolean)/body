@@ -1,0 +1,12 @@
+{
+  boolean statisticsEnabled=statsCollector.getStatisticsEnabled();
+  long start=0;
+  if (statisticsEnabled) {
+    start=timeService.time();
+  }
+  super.putForExternalReadInternal(key,value,metadata,isCreatedRef);
+  if (statisticsEnabled && isCreatedRef.get()) {
+    long end=timeService.time();
+    statsCollector.recordStores(1,end - start);
+  }
+}

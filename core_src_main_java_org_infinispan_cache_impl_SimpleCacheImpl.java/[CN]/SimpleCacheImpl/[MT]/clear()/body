@@ -1,0 +1,18 @@
+{
+  DataContainer<K,V> dataContainer=getDataContainer();
+  boolean hasListeners=this.hasListeners;
+  ArrayList<InternalCacheEntry<K,V>> copyEntries=null;
+  if (hasListeners) {
+    copyEntries=new ArrayList<>(dataContainer.size());
+    for (    InternalCacheEntry<K,V> entry : dataContainer.entrySet()) {
+      copyEntries.add(entry);
+      cacheNotifier.notifyCacheEntryRemoved(entry.getKey(),entry.getValue(),entry.getMetadata(),true,ImmutableContext.INSTANCE,null);
+    }
+  }
+  dataContainer.clear();
+  if (hasListeners) {
+    for (    InternalCacheEntry<K,V> entry : copyEntries) {
+      cacheNotifier.notifyCacheEntryRemoved(entry.getKey(),entry.getValue(),entry.getMetadata(),false,ImmutableContext.INSTANCE,null);
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  boolean statisticsEnabled=statsCollector.getStatisticsEnabled();
+  long start=0;
+  if (statisticsEnabled) {
+    start=timeService.time();
+  }
+  Map<K,V> map=super.getAll(keys);
+  if (statisticsEnabled) {
+    long end=timeService.time();
+    int requests=keys.size();
+    int hits=0;
+    for (    V value : map.values()) {
+      if (value != null)       hits++;
+    }
+    int misses=requests - hits;
+    if (hits > 0) {
+      statsCollector.recordHits(hits,hits * (end - start) / requests);
+    }
+    if (misses > 0) {
+      statsCollector.recordMisses(misses,misses * (end - start) / requests);
+    }
+  }
+  return map;
+}

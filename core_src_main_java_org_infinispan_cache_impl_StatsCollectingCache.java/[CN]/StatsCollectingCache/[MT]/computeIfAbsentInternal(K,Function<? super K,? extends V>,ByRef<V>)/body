@@ -1,0 +1,15 @@
+{
+  boolean statisticsEnabled=statsCollector.getStatisticsEnabled();
+  long start=0;
+  if (statisticsEnabled) {
+    start=timeService.time();
+  }
+  V ret=super.computeIfAbsentInternal(key,mappingFunction,newValueRef);
+  if (statisticsEnabled) {
+    long end=timeService.time();
+    if (newValueRef.get() != null) {
+      statsCollector.recordStores(1,end - start);
+    }
+  }
+  return ret;
+}

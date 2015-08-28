@@ -1,0 +1,28 @@
+{
+  if (newValue == null) {
+    if (oldValue != null) {
+      if (hasListeners) {
+        cacheNotifier.notifyCacheEntryRemoved(k,oldValue,oldEntry.getMetadata(),true,ImmutableContext.INSTANCE,null);
+      }
+      ref.set(k,null,oldValue,oldEntry.getMetadata());
+    }
+    return null;
+  }
+ else   if (oldValue == null) {
+    if (hasListeners) {
+      cacheNotifier.notifyCacheEntryCreated(k,newValue,defaultMetadata,true,ImmutableContext.INSTANCE,null);
+    }
+    ref.set(k,newValue,null,null);
+    return factory.create(k,newValue,defaultMetadata);
+  }
+ else   if (valueEquivalence.equals(oldValue,newValue)) {
+    return oldEntry;
+  }
+ else {
+    if (hasListeners) {
+      cacheNotifier.notifyCacheEntryModified(k,newValue,defaultMetadata,oldValue,oldEntry.getMetadata(),true,ImmutableContext.INSTANCE,null);
+    }
+    ref.set(k,newValue,oldValue,oldEntry.getMetadata());
+    return factory.update(oldEntry,newValue,defaultMetadata);
+  }
+}
