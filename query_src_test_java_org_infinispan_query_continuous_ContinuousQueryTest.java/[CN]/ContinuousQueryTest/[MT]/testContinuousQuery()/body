@@ -52,6 +52,21 @@
   assertEquals(0,joined.size());
   assertEquals(2,left.size());
   left.clear();
+  for (int i=0; i < 2; i++) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 20);
+    cache().put(i,value,5,TimeUnit.MILLISECONDS);
+  }
+  assertEquals(2,joined.size());
+  assertEquals(0,left.size());
+  joined.clear();
+  timeService.advance(6);
+  cache.getAdvancedCache().getExpirationManager().processExpiration();
+  assertEquals(0,cache().size());
+  assertEquals(0,joined.size());
+  assertEquals(2,left.size());
+  left.clear();
   cq.removeContinuousQueryListener(listener);
   for (int i=0; i < 3; i++) {
     Person value=new Person();
