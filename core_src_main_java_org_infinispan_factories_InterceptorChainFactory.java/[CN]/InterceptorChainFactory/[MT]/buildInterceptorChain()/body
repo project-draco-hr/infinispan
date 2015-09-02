@@ -1,5 +1,6 @@
 {
-  boolean needsVersionAwareComponents=configuration.transaction().transactionMode().isTransactional() && Configurations.isVersioningEnabled(configuration);
+  TransactionMode transactionMode=configuration.transaction().transactionMode();
+  boolean needsVersionAwareComponents=transactionMode.isTransactional() && Configurations.isVersioningEnabled(configuration);
   InterceptorChain interceptorChain=new InterceptorChain(componentRegistry.getComponentMetadataRepo());
   componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
   boolean invocationBatching=configuration.invocationBatching().enabled();
@@ -31,7 +32,7 @@
  else {
       interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(),StateTransferInterceptor.class),false);
     }
-    if (configuration.transaction().transactionMode().isTransactional()) {
+    if (transactionMode.isTransactional()) {
       interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(),TransactionSynchronizerInterceptor.class),false);
     }
   }
@@ -41,20 +42,20 @@
   if (isTotalOrder) {
     interceptorChain.appendInterceptor(createInterceptor(new TotalOrderInterceptor(),TotalOrderInterceptor.class),false);
   }
-  if (configuration.transaction().transactionMode().isTransactional())   interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(),TxInterceptor.class),false);
+  if (transactionMode.isTransactional())   interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(),TxInterceptor.class),false);
   if (isUsingMarshalledValues(configuration)) {
     CommandInterceptor interceptor;
     interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
     interceptorChain.appendInterceptor(interceptor,false);
   }
-  if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().notifications()) {
+  if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
     interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(),NotificationInterceptor.class),false);
   }
   if (configuration.transaction().useEagerLocking()) {
     configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
   }
   if (!isTotalOrder) {
-    if (configuration.transaction().transactionMode().isTransactional()) {
+    if (transactionMode.isTransactional()) {
       if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {
         interceptorChain.appendInterceptor(createInterceptor(new PessimisticLockingInterceptor(),PessimisticLockingInterceptor.class),false);
       }
@@ -67,7 +68,7 @@
     }
   }
   if (configuration.sites().hasEnabledBackups() && !configuration.sites().disableBackups()) {
-    if ((configuration.transaction().transactionMode() == TransactionMode.TRANSACTIONAL)) {
+    if (transactionMode == TransactionMode.TRANSACTIONAL) {
       if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
         interceptorChain.appendInterceptor(createInterceptor(new OptimisticBackupInterceptor(),OptimisticBackupInterceptor.class),false);
       }
@@ -85,7 +86,12 @@
   if (configuration.clustering().hash().groups().enabled()) {
     interceptorChain.appendInterceptor(createInterceptor(new GroupingInterceptor(),GroupingInterceptor.class),false);
   }
-  interceptorChain.appendInterceptor(createInterceptor(new ExpirationInterceptor(),ExpirationInterceptor.class),false);
+  if (transactionMode.isTransactional() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+    interceptorChain.appendInterceptor(createInterceptor(new OptimisticTxExpirationInterceptor<>(),ExpirationInterceptor.class),false);
+  }
+ else {
+    interceptorChain.appendInterceptor(createInterceptor(new ExpirationInterceptor<>(),ExpirationInterceptor.class),false);
+  }
   if (needsVersionAwareComponents && cacheMode.isClustered()) {
     if (isTotalOrder) {
       interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedEntryWrappingInterceptor(),TotalOrderVersionedEntryWrappingInterceptor.class),false);
@@ -120,7 +126,7 @@ if (configuration.deadlockDetection().enabled() && !isTotalOrder) {
 interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(),DeadlockDetectingInterceptor.class),false);
 }
 if (configuration.clustering().l1().enabled()) {
-if (configuration.transaction().transactionMode().isTransactional()) {
+if (transactionMode.isTransactional()) {
 interceptorChain.appendInterceptor(createInterceptor(new L1TxInterceptor(),L1TxInterceptor.class),false);
 }
  else {
@@ -145,7 +151,7 @@ break;
 }
 case DIST_ASYNC:
 case REPL_ASYNC:
-if (configuration.transaction().transactionMode().isTransactional()) {
+if (transactionMode.isTransactional()) {
 if (isTotalOrder) {
 interceptorChain.appendInterceptor(createInterceptor(new TotalOrderDistributionInterceptor(),TotalOrderDistributionInterceptor.class),false);
 }
