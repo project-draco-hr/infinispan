@@ -1,0 +1,34 @@
+{
+  CallCountingCQResultListener<Object,Object> listener=createContinuousQuery();
+  final Map<Object,Integer> joined=listener.getJoined();
+  final Map<Object,Integer> left=listener.getLeft();
+  assertEquals(0,joined.size());
+  assertEquals(0,left.size());
+  for (int i=0; i < 2; i++) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(40);
+    cache(i).put(i,value);
+  }
+  assertEquals(0,joined.size());
+  assertEquals(0,left.size());
+  for (int i=0; i < 10; i++) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    cache(0).put(i,value);
+  }
+  assertEquals(6,joined.size());
+  assertEquals(0,left.size());
+  for (int i=0; i < 6; i++) {
+    assertEquals(1,joined.get(i).intValue());
+  }
+  joined.clear();
+  cache(0).clear();
+  assertEquals(0,joined.size());
+  assertEquals(6,left.size());
+  for (int i=0; i < 6; i++) {
+    assertEquals(1,left.get(i).intValue());
+  }
+  left.clear();
+}

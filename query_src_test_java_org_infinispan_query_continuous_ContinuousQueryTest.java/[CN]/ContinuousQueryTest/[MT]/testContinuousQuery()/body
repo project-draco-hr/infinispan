@@ -1,19 +1,11 @@
 {
-  QueryFactory qf=Search.getQueryFactory(cache());
+  QueryFactory<?> qf=Search.getQueryFactory(cache());
   ContinuousQuery<Object,Object> cq=new ContinuousQuery<Object,Object>(cache());
   Query query=qf.from(Person.class).having("age").lte(30).toBuilder().build();
-  final Set<Object> joined=new HashSet<Object>();
-  final Set<Object> left=new HashSet<Object>();
-  ContinuousQueryResultListener<Object,Object> listener=new ContinuousQueryResultListener<Object,Object>(){
-    @Override public void resultJoining(    Object key,    Object value){
-      joined.add(key);
-    }
-    @Override public void resultLeaving(    Object key){
-      left.add(key);
-    }
-  }
-;
+  CallCountingCQResultListener<Object,Object> listener=new CallCountingCQResultListener<>();
   cq.addContinuousQueryListener(query,listener);
+  final Map<Object,Integer> joined=listener.getJoined();
+  final Map<Object,Integer> left=listener.getLeft();
   assertEquals(0,joined.size());
   assertEquals(0,left.size());
   for (int i=0; i < 2; i++) {
