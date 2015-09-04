@@ -1,0 +1,14 @@
+{
+  withRemoteCacheManager(new RemoteCacheManagerCallable(getRemoteCacheManager()){
+    @Override public void call(){
+      RemoteCache<Integer,String> remote=rcm.getCache(cacheName);
+      EventLogListener<Integer> eventListener=new EventLogListener<>();
+      remote.addClientListener(eventListener);
+      eventListener.expectNoEvents();
+      remote.put(1,"one");
+      eventListener.expectOnlyCreatedEvent(1,cache(cacheName));
+    }
+  }
+);
+  detectThreadLeaks(".*Client-Listener-ClientListenerLeakTest-.*");
+}
