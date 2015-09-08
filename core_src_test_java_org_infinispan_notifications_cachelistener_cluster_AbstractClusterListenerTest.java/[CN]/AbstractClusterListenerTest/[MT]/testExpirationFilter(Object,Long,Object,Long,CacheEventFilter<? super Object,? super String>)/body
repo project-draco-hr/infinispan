@@ -1,0 +1,18 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  cache0.put(keyToFilterOut,FIRST_VALUE,keyToFilterOutLifespan,TimeUnit.MILLISECONDS);
+  ClusterListener clusterListener=listener();
+  cache0.addListener(clusterListener,filter,null);
+  ts0.advance(keyToFilterOutLifespan + 1);
+  ts1.advance(keyToFilterOutLifespan + 1);
+  ts2.advance(keyToFilterOutLifespan + 1);
+  assertNull(cache0.get(keyToFilterOut));
+  assertEquals(clusterListener.events.size(),0);
+  String expectedValue=keyToUse + "-expiring";
+  cache0.put(keyToUse,keyToUse + "-expiring",keyToUselifespan,TimeUnit.MILLISECONDS);
+  ts0.advance(keyToUselifespan + 1);
+  ts1.advance(keyToUselifespan + 1);
+  ts2.advance(keyToUselifespan + 1);
+  assertNull(cache0.get(keyToUse));
+  verifySimpleExpirationEvents(clusterListener,2,keyToUse,expectedValue);
+}

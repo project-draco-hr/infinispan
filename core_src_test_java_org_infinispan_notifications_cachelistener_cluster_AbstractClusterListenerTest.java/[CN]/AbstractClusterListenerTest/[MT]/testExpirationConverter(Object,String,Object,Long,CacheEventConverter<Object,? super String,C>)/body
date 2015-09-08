@@ -1,0 +1,11 @@
+{
+  Cache<Object,String> cache0=cache(0,CACHE_NAME);
+  cache0.put(key,value,lifespan,TimeUnit.MILLISECONDS);
+  ClusterListener clusterListener=listener();
+  cache0.addListener(clusterListener,null,converter);
+  ts0.advance(lifespan + 1);
+  ts1.advance(lifespan + 1);
+  ts2.advance(lifespan + 1);
+  assertNull(cache0.get(key));
+  verifySimpleExpirationEvents(clusterListener,clusterListener.hasIncludeState() ? 2 : 1,key,expectedValue);
+}
