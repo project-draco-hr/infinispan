@@ -8,8 +8,8 @@
   if (parsingResult.getGroupBy() != null) {
     for (    PropertyPath p : parsingResult.getGroupBy()) {
       if (!columns.containsKey(p)) {
-        int idx=columns.size();
         Class<?> propertyType=propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(),p.getPath());
+        int idx=columns.size();
         columns.put(p,new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType));
         groupFieldPositions.add(idx);
       }
@@ -23,8 +23,8 @@
       }
     }
     if (c == null) {
-      int idx=columns.size();
       Class<?> propertyType=propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(),p.getPath());
+      int idx=columns.size();
       columns.put(p,new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType));
     }
   }
@@ -38,8 +38,8 @@
         }
       }
       if (c == null) {
-        int idx=columns.size();
         Class<?> propertyType=propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(),p.getPath());
+        int idx=columns.size();
         columns.put(p,new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType));
       }
     }
@@ -51,7 +51,7 @@
       return new EmptyResultQuery(queryFactory,cache,jpqlString,namedParameters,startOffset,maxResults);
     }
     if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
-      havingClause=JPATreePrinter.printTree(swapVariables(normalizedHavingClause,parsingResult,columns));
+      havingClause=JPATreePrinter.printTree(swapVariables(normalizedHavingClause,parsingResult.getTargetEntityName(),columns));
     }
   }
   StringBuilder firstPhaseQuery=new StringBuilder();
@@ -65,10 +65,10 @@
  else {
         firstPhaseQuery.append(", ");
       }
-      firstPhaseQuery.append(DEFAULT_ALIAS).append('.').append(c.asStringPath());
+      firstPhaseQuery.append(JPAQueryGenerator.DEFAULT_ALIAS).append('.').append(c.asStringPath());
     }
   }
-  firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(DEFAULT_ALIAS);
+  firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
   if (parsingResult.getWhereClause() != null) {
     BooleanExpr normalizedWhereClause=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
     if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {

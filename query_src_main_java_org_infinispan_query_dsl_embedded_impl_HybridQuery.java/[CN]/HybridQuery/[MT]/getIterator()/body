@@ -3,14 +3,17 @@
     private final Iterator<?> it=getBaseIterator();
     private ObjectFilter.FilterResult nextResult=null;
     private boolean isReady=false;
+    @Override public void remove(){
+      throw new UnsupportedOperationException("remove");
+    }
     @Override public void close(){
     }
     @Override public boolean hasNext(){
-      update();
+      updateNext();
       return nextResult != null;
     }
     @Override public ObjectFilter.FilterResult next(){
-      update();
+      updateNext();
       if (nextResult != null) {
         ObjectFilter.FilterResult next=nextResult;
         isReady=false;
@@ -21,7 +24,7 @@
         throw new NoSuchElementException();
       }
     }
-    private void update(){
+    private void updateNext(){
       if (!isReady) {
         while (it.hasNext()) {
           Object next=it.next();
