@@ -1,0 +1,34 @@
+{
+  HotRodServer server=null;
+  int maxTries=10;
+  int currentTries=0;
+  Throwable lastError=null;
+  int port=startPort;
+  while (server == null && currentTries < maxTries) {
+    try {
+      server=HotRodTestingUtil.startHotRodServer(cacheManager,port++,builder);
+    }
+ catch (    ChannelException e) {
+      if (!(e.getCause() instanceof BindException)) {
+        throw e;
+      }
+ else {
+        log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
+        currentTries++;
+        lastError=e;
+      }
+    }
+catch (    Throwable t) {
+      if (!(t instanceof BindException)) {
+        throw t;
+      }
+ else {
+        log.debug("Address already in use: [" + t.getMessage() + "], so let's try next port");
+        currentTries++;
+        lastError=t;
+      }
+    }
+  }
+  if (server == null && lastError != null)   throw new AssertionError(lastError);
+  return server;
+}

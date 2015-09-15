@@ -1,0 +1,18 @@
+{
+  if (clusters.isEmpty()) {
+    log.debugf("No alternative clusters configured, so can't switch cluster");
+    return false;
+  }
+  if (clustersViewed >= clusters.size()) {
+    log.debugf("All cluster addresses viewed (number=%d) and none worked: %s",clustersViewed,clusters);
+    return false;
+  }
+  ClusterInfo cluster=clusters.get(clustersViewed++);
+  updateServers(cluster.clusterAddresses,cacheName,true);
+  topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+  if (log.isInfoEnabled()) {
+    if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))     log.switchedToCluster(cluster.clusterName);
+ else     log.switchedBackToMainCluster();
+  }
+  return true;
+}
