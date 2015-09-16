@@ -1,0 +1,14 @@
+{
+  Object value=null;
+  Metadata metadata=null;
+  if (cacheEntry != null) {
+    value=cacheEntry.getValue();
+    metadata=cacheEntry.getMetadata();
+  }
+  if (trace)   log.tracef("Creating new entry for key %s",key);
+  MVCCEntry mvccEntry=useRepeatableRead ? new RepeatableReadEntry(key,value,metadata) : new ReadCommittedEntry(key,value,metadata);
+  if (cacheEntry instanceof StateChangingEntry) {
+    mvccEntry.copyStateFlagsFrom((StateChangingEntry)cacheEntry);
+  }
+  return mvccEntry;
+}

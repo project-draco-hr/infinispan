@@ -1,0 +1,36 @@
+{
+  if (wrap == Wrap.STORE) {
+    throw new IllegalStateException("wrapEntryForWriting must create a MVCCEntry");
+  }
+  if (useRepeatableRead) {
+    wrap=Wrap.WRAP_ALL;
+  }
+  CacheEntry contextEntry=getFromContext(ctx,key);
+  MVCCEntry mvccEntry;
+  if (contextEntry instanceof MVCCEntry) {
+    mvccEntry=assertRepeatableReadEntry(contextEntry);
+  }
+ else   if (contextEntry != null) {
+    mvccEntry=createWrappedEntry(key,contextEntry,ctx,skipRead);
+    ctx.putLookedUpEntry(key,mvccEntry);
+    if (trace)     log.tracef("Updated context entry %s",contextEntry);
+  }
+ else {
+    InternalCacheEntry ice=getFromContainer(key,ignoreOwnership);
+    if (ice == null && wrap == Wrap.WRAP_NON_NULL) {
+      mvccEntry=null;
+    }
+ else {
+      mvccEntry=createWrappedEntry(key,ice,ctx,skipRead);
+      if (ice == null) {
+        mvccEntry.setCreated(true);
+      }
+      ctx.putLookedUpEntry(key,mvccEntry);
+      if (trace)       log.tracef("Updated context entry %s",mvccEntry);
+    }
+  }
+  if (mvccEntry != null) {
+    mvccEntry.copyForUpdate();
+  }
+  return mvccEntry;
+}

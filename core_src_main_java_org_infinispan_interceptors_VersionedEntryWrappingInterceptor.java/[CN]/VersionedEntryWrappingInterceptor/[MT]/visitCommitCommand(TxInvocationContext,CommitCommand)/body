@@ -1,10 +1,15 @@
 {
+  VersionedCommitCommand versionedCommitCommand=(VersionedCommitCommand)command;
   try {
-    if (ctx.isOriginLocal())     ((VersionedCommitCommand)command).setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+    if (ctx.isOriginLocal()) {
+      versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+    }
     return invokeNextInterceptor(ctx,command);
   }
   finally {
-    if (!ctx.isOriginLocal())     ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand)command).getUpdatedVersions());
+    if (!ctx.isOriginLocal()) {
+      ctx.getCacheTransaction().setUpdatedEntryVersions(versionedCommitCommand.getUpdatedVersions());
+    }
     commitContextEntries(ctx,null,null);
   }
 }

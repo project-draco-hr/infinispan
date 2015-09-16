@@ -1,7 +1,10 @@
 {
   Object entryValue=e.getValue();
   Object o;
-  if (!e.isCreated()) {
+  if (e.isCreated()) {
+    notifier.notifyCacheEntryCreated(key,value,metadata,true,ctx,this);
+  }
+ else {
     notifier.notifyCacheEntryModified(key,value,metadata,entryValue,e.getMetadata(),true,ctx,this);
   }
   if (value instanceof Delta) {
@@ -12,6 +15,7 @@
       e.setCreated(true);
       e.setValid(true);
       e.setValue(dv.merge(null));
+      Metadatas.updateMetadata(e,metadata);
     }
  else {
       DeltaAware toMergeWith=null;
@@ -22,11 +26,13 @@
         toMergeWith=(DeltaAware)entryValue;
       }
       e.setValue(dv.merge(toMergeWith));
+      Metadatas.updateMetadata(e,metadata);
     }
     o=entryValue;
   }
  else {
     o=e.setValue(value);
+    Metadatas.updateMetadata(e,metadata);
     if (e.isRemoved()) {
       e.setCreated(true);
       e.setExpired(false);

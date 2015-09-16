@@ -8,13 +8,13 @@
         if (trace)         log.tracef("Doing a remote get for key %s",key);
         remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
         if (remoteEntry != null) {
-          wrapInternalCacheEntry(remoteEntry,ctx,key,false,command);
+          entryFactory.wrapExternalEntry(ctx,key,remoteEntry,EntryFactory.Wrap.STORE,false);
         }
         return command.perform(remoteEntry);
       }
       InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
       if (localEntry != null) {
-        wrapInternalCacheEntry(localEntry,ctx,key,false,command);
+        entryFactory.wrapExternalEntry(ctx,key,localEntry,EntryFactory.Wrap.STORE,false);
       }
       return command.perform(localEntry);
     }

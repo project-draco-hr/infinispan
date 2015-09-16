@@ -1,18 +1,19 @@
 {
   CacheEntry cacheEntry=getFromContext(ctx,deltaKey);
-  DeltaAwareCacheEntry deltaAwareEntry=null;
-  if (cacheEntry != null) {
-    deltaAwareEntry=wrapEntryForDelta(ctx,deltaKey,cacheEntry);
+  DeltaAwareCacheEntry deltaAwareEntry;
+  if (cacheEntry instanceof DeltaAwareCacheEntry) {
+    deltaAwareEntry=(DeltaAwareCacheEntry)cacheEntry;
+  }
+ else   if (cacheEntry != null) {
+    deltaAwareEntry=createWrappedDeltaEntry(deltaKey,(DeltaAware)cacheEntry.getValue(),cacheEntry);
+    ctx.putLookedUpEntry(deltaKey,deltaAwareEntry);
   }
  else {
     InternalCacheEntry ice=getFromContainer(deltaKey,false);
-    if (ice != null) {
-      deltaAwareEntry=newDeltaAwareCacheEntry(ctx,deltaKey,(DeltaAware)ice.getValue());
-    }
+    DeltaAwareCacheEntry deltaEntry=createWrappedDeltaEntry(deltaKey,ice != null ? (DeltaAware)ice.getValue() : null,null);
+    ctx.putLookedUpEntry(deltaKey,deltaEntry);
+    deltaAwareEntry=deltaEntry;
   }
-  if (deltaAwareEntry != null)   deltaAwareEntry.appendDelta(delta);
-  if (trace) {
-    log.tracef("Wrap %s for delta. Entry=%s",deltaKey,deltaAwareEntry);
-  }
+  if (trace)   log.tracef("Wrap %s for delta. Entry=%s",deltaKey,deltaAwareEntry);
   return deltaAwareEntry;
 }

@@ -1,0 +1,45 @@
+{
+  CacheEntry contextEntry=getFromContext(ctx,key);
+  if (contextEntry instanceof MVCCEntry) {
+    if (!contextEntry.isNull() || contextEntry.skipLookup()) {
+      if (trace)       log.tracef("Ignored update for context entry %s",contextEntry);
+      return false;
+    }
+    contextEntry.setValue(externalEntry.getValue());
+    contextEntry.setMetadata(externalEntry.getMetadata());
+    if (trace)     log.tracef("Updated context entry %s",contextEntry);
+    return true;
+  }
+ else   if (contextEntry instanceof DeltaAwareCacheEntry) {
+    if (contextEntry.getValue() != null) {
+      if (trace)       log.tracef("Ignored update for context entry %s",contextEntry);
+      return false;
+    }
+    contextEntry.setValue(externalEntry.getValue());
+    contextEntry.setMetadata(externalEntry.getMetadata());
+    if (trace)     log.tracef("Updated context entry %s",contextEntry);
+    return true;
+  }
+ else   if (contextEntry == null || contextEntry.isNull()) {
+    if (useRepeatableRead) {
+      wrap=Wrap.WRAP_ALL;
+    }
+    if (externalEntry == null && wrap != Wrap.WRAP_ALL) {
+      if (trace)       log.tracef("Skipping update with null value for key %s",key);
+      return false;
+    }
+    if (wrap == Wrap.STORE) {
+      ctx.putLookedUpEntry(key,externalEntry);
+    }
+ else {
+      MVCCEntry mvccEntry=createWrappedEntry(key,externalEntry,ctx,skipRead);
+      ctx.putLookedUpEntry(key,mvccEntry);
+    }
+    if (trace)     log.tracef("Updated context entry %s",externalEntry);
+    return true;
+  }
+ else {
+    if (trace)     log.tracef("Skipping update with null value for key %s",key);
+    return false;
+  }
+}

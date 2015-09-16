@@ -16,9 +16,12 @@
     }
   }
   if (entry != null) {
-    CacheEntry wrappedEntry=wrapInternalCacheEntry(ctx,key,cmd,entry);
-    if (isLoadedValue != null && isLoadedValue.booleanValue() && wrappedEntry != null) {
-      recordLoadedEntry(ctx,key,wrappedEntry,entry,cmd);
+    EntryFactory.Wrap wrap=cmd instanceof WriteCommand ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+    entryFactory.wrapExternalEntry(ctx,key,entry,wrap,!cmd.readsExistingValues());
+    if (isLoadedValue != null && isLoadedValue.booleanValue()) {
+      Object value=entry.getValue();
+      sendNotification(key,value,true,ctx,cmd);
+      sendNotification(key,value,false,ctx,cmd);
     }
   }
   return isLoadedValue;

@@ -1,0 +1,12 @@
+{
+  boolean added=super.wrapExternalEntry(ctx,key,externalEntry,wrap,skipRead);
+  if (added) {
+    if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+      if (externalEntry != null) {
+        EntryVersion version=externalEntry.getMetadata().version();
+        ((TxInvocationContext)ctx).getCacheTransaction().replaceVersionRead(key,version);
+      }
+    }
+  }
+  return added;
+}

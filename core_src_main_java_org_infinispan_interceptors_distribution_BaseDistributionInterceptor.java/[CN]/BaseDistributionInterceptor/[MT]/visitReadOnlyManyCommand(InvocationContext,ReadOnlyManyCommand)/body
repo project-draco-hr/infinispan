@@ -1,5 +1,5 @@
 {
-  if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+  if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
     return invokeNextInterceptor(ctx,command);
   }
   int commandTopologyId=command.getTopologyId();
@@ -24,7 +24,7 @@
           if (trace) {
             log.tracef("Not doing a remote get for missing key %s since entry is " + "mapped to current node (%s). Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
           }
-          entryFactory.wrapEntryForPut(ctx,key,null,false,command,false);
+          entryFactory.wrapExternalEntry(ctx,key,null,EntryFactory.Wrap.WRAP_ALL,false);
         }
       }
     }
@@ -46,7 +46,8 @@
           missingRemoteValues=true;
         }
  else {
-          entryFactory.wrapEntryForPut(ctx,key,justRetrieved.get(key),false,command,false);
+          InternalCacheEntry remoteEntry=justRetrieved.get(key);
+          entryFactory.wrapExternalEntry(ctx,key,remoteEntry,EntryFactory.Wrap.WRAP_NON_NULL,false);
         }
       }
     }
@@ -66,7 +67,7 @@
           if (trace) {
             log.tracef("Not doing a remote get for missing key %s since entry is " + "mapped to current node (%s). Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
           }
-          entryFactory.wrapEntryForPut(ctx,key,null,false,command,false);
+          entryFactory.wrapExternalEntry(ctx,key,null,EntryFactory.Wrap.WRAP_ALL,false);
         }
       }
     }

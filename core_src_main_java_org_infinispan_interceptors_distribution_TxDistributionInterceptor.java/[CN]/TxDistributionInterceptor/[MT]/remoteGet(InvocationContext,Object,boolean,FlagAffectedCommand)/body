@@ -13,15 +13,8 @@
     if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
       ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key,ice.getMetadata().version());
     }
-    if (!ctx.replaceValue(key,ice)) {
-      if (isWrite)       entryFactory.wrapEntryForPut(ctx,key,ice,false,command,false);
- else {
-        ctx.putLookedUpEntry(key,ice);
-        if (ctx.isInTxScope()) {
-          ((TxInvocationContext)ctx).getCacheTransaction().replaceVersionRead(key,ice.getMetadata().version());
-        }
-      }
-    }
+    EntryFactory.Wrap wrap=isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+    entryFactory.wrapExternalEntry(ctx,key,ice,wrap,false);
     return ice;
   }
   return null;

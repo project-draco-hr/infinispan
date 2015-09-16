@@ -1,44 +1,6 @@
 {
-  CacheEntry cacheEntry=getFromContext(ctx,key);
-  MVCCEntry mvccEntry;
-  if (cacheEntry != null && cacheEntry.isNull() && !useRepeatableRead)   cacheEntry=null;
-  Metadata providedMetadata=cmd.getMetadata();
-  if (cacheEntry != null) {
-    if (useRepeatableRead) {
-      if (cacheEntry instanceof RepeatableReadEntry) {
-        mvccEntry=(MVCCEntry)cacheEntry;
-      }
- else {
-        throw new IllegalStateException("Cache entry stored in context should be a RepeatableReadEntry instance " + "but it is " + cacheEntry.getClass().getCanonicalName());
-      }
-      if (!mvccEntry.isRemoved() && !mvccEntry.skipLookup() && icEntry != null) {
-        mvccEntry.setValue(icEntry.getValue());
-        updateVersion(mvccEntry,icEntry.getMetadata());
-      }
-      if (!mvccEntry.isRemoved() && mvccEntry.isNull()) {
-        mvccEntry.setCreated(true);
-      }
-      updateMetadata(mvccEntry,providedMetadata);
-    }
- else {
-      mvccEntry=wrapMvccEntryForPut(ctx,key,cacheEntry,providedMetadata,true);
-    }
-    mvccEntry.undelete(undeleteIfNeeded);
+  if (icEntry != null) {
+    throw new IllegalArgumentException("Only addMissingValue can handle external entries");
   }
- else {
-    InternalCacheEntry ice=(icEntry == null ? getFromContainer(key,false) : icEntry);
-    if (ice != null && cmd.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-      ctx.putLookedUpEntry(key,null);
-      if (trace) {
-        log.tracef("Wrap %s for put. Entry=null",key);
-      }
-      return null;
-    }
-    mvccEntry=ice != null ? wrapInternalCacheEntryForPut(ctx,key,ice,providedMetadata,skipRead) : newMvccEntryForPut(ctx,key,cmd,providedMetadata,skipRead);
-  }
-  mvccEntry.copyForUpdate(container);
-  if (trace) {
-    log.tracef("Wrap %s for put. Entry=%s",key,mvccEntry);
-  }
-  return mvccEntry;
+  return wrapEntryForWriting(ctx,key,Wrap.WRAP_ALL,skipRead,false);
 }
