@@ -1,4 +1,8 @@
 {
+  if (started) {
+    throw new IllegalStateException("This store is already started!");
+  }
+  started=true;
   log.info("Starting using configuration " + configuration);
   temporaryTable=new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(),keyEquivalence);
   storeQueue=new SyncProcessingQueue<LogRequest>();
@@ -13,6 +17,7 @@
     throw new PersistenceException("Cannot open index file in " + configuration.indexLocation(),e);
   }
   compactor.setIndex(index);
+  startIndex();
   final AtomicLong maxSeqId=new AtomicLong(0);
   if (configuration.purgeOnStartup()) {
     log.debug("Not building the index - purge will be executed");
@@ -30,7 +35,7 @@
           if (entry == null) {
             entry=index.getPosition(key,serializedKey);
           }
-          if (entry != null) {
+          if (entry != null && entry.offset >= 0) {
             FileProvider.Handle handle=fileProvider.getFile(entry.file);
             try {
               EntryHeader header=EntryRecord.readEntryHeader(handle,entry.offset);

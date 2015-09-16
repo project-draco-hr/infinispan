@@ -1,0 +1,19 @@
+{
+  String KEY="k1";
+  MarshalledEntry<Object,Object> entry1=marshalledEntry(internalCacheEntry(KEY,"v1",-1));
+  MarshalledEntry<Object,Object> entry2=marshalledEntry(internalCacheEntry(KEY,"v2",-1));
+  store.write(entry1);
+  store.delete(KEY);
+  store.stop();
+  store.start();
+  assertNull(store.load(KEY));
+  store.write(entry2);
+  store.delete(KEY);
+  store.write(entry1);
+  store.stop();
+  startIndex=false;
+  store.start();
+  assertEquals(entry1.getValue(),store.load(KEY).getValue());
+  startIndex=true;
+  store.startIndex();
+}
