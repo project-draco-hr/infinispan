@@ -4,14 +4,12 @@
   if (cacheName == null || configOverride == null)   throw new NullPointerException("Null arguments not allowed");
   if (cacheName.equals(DEFAULT_CACHE_NAME))   throw log.illegalCacheName(DEFAULT_CACHE_NAME);
   if (checkExisting) {
-    Configuration existing=configurationOverrides.get(cacheName);
+    Configuration existing=configurationManager.getConfiguration(cacheName);
     if (existing != null) {
       ConfigurationBuilder builder=new ConfigurationBuilder();
       builder.read(existing);
       builder.read(configOverride);
-      Configuration configuration=builder.build(globalConfiguration);
-      configurationOverrides.put(cacheName,configuration);
-      return configuration;
+      return configurationManager.putConfiguration(cacheName,builder);
     }
   }
   ConfigurationBuilder builder=new ConfigurationBuilder();
@@ -19,7 +17,5 @@
     builder.read(defaultConfigIfNotPresent);
   }
   builder.read(configOverride);
-  Configuration configuration=builder.build(globalConfiguration);
-  configurationOverrides.put(cacheName,configuration);
-  return configuration;
+  return configurationManager.putConfiguration(cacheName,builder);
 }

@@ -2,16 +2,18 @@
   authzHelper.checkPermission(AuthorizationPermission.ADMIN);
   ComponentRegistry cacheComponentRegistry=globalComponentRegistry.getNamedComponentRegistry(cacheName);
   if (cacheComponentRegistry != null) {
-    RemoveCacheCommand cmd=new RemoveCacheCommand(cacheName,this,globalComponentRegistry,cacheComponentRegistry.getComponent(PersistenceManager.class),cacheComponentRegistry.getComponent(CacheJmxRegistration.class));
+    RemoveCacheCommand cmd=new RemoveCacheCommand(cacheName,this);
     Transport transport=getTransport();
     try {
+      CompletableFuture<?> future=null;
       if (transport != null) {
-        Configuration c=getConfiguration(cacheName);
-        transport.invokeRemotely(null,cmd,ResponseMode.SYNCHRONOUS,c.clustering().sync().replTimeout(),null,DeliverOrder.NONE,false);
+        Configuration c=configurationManager.getConfigurationOrDefault(cacheName);
+        future=transport.invokeRemotelyAsync(null,cmd,ResponseMode.SYNCHRONOUS,c.clustering().sync().replTimeout(),null,DeliverOrder.NONE,false);
       }
       cmd.perform(null);
-      configurationOverrides.remove(cacheName);
-      cacheDependencyGraph.remove(cacheName);
+      if (future != null) {
+        future.get();
+      }
     }
  catch (    Throwable t) {
       throw new CacheException("Error removing cache",t);

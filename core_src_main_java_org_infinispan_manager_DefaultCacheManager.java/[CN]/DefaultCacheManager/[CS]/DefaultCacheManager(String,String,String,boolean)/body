@@ -2,15 +2,15 @@
   ParserRegistry parserRegistry=new ParserRegistry();
   ConfigurationBuilderHolder globalConfigurationBuilderHolder=parserRegistry.parseFile(globalConfigurationFile);
   ConfigurationBuilderHolder defaultConfigurationBuilderHolder=parserRegistry.parseFile(defaultConfigurationFile);
-  globalConfiguration=globalConfigurationBuilderHolder.getGlobalConfigurationBuilder().build();
-  defaultConfiguration=defaultConfigurationBuilderHolder.getDefaultConfigurationBuilder().build(globalConfiguration);
+  Optional<ConfigurationBuilderHolder> namedConfigurationBuilderHolder=Optional.empty();
   if (namedCacheFile != null) {
-    ConfigurationBuilderHolder namedConfigurationBuilderHolder=parserRegistry.parseFile(namedCacheFile);
-    Entry<String,ConfigurationBuilder> entry=namedConfigurationBuilderHolder.getNamedConfigurationBuilders().entrySet().iterator().next();
-    ConfigurationBuilder builder=entry.getValue();
-    configurationOverrides.put(entry.getKey(),builder.build(globalConfiguration));
+    namedConfigurationBuilderHolder=Optional.of(parserRegistry.parseFile(namedCacheFile));
   }
-  globalComponentRegistry=new GlobalComponentRegistry(this.globalConfiguration,this,caches.keySet());
+  configurationManager=new ConfigurationManager(globalConfigurationBuilderHolder,defaultConfigurationBuilderHolder,namedConfigurationBuilderHolder);
+  GlobalConfiguration globalConfiguration=configurationManager.getGlobalConfiguration();
+  globalComponentRegistry=new GlobalComponentRegistry(globalConfiguration,this,caches.keySet());
+  globalComponentRegistry.registerComponent(configurationManager,ConfigurationManager.class);
+  globalComponentRegistry.registerComponent(cacheDependencyGraph,CACHE_DEPENDENCY_GRAPH,false);
   authzHelper=new AuthorizationHelper(globalConfiguration.security(),AuditContext.CACHEMANAGER,globalConfiguration.globalJmxStatistics().cacheManagerName());
   stats=new CacheContainerStatsImpl(this);
   if (start)   start();
