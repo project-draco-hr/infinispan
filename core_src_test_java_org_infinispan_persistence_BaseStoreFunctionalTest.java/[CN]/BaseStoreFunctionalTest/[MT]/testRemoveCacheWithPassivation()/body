@@ -1,0 +1,32 @@
+{
+  ConfigurationBuilder cb=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  createCacheStoreConfig(cb.persistence().passivation(true),true);
+  EmbeddedCacheManager local=TestCacheManagerFactory.createCacheManager(cb);
+  try {
+    final String cacheName="to-be-removed";
+    Cache<String,Object> cache=local.getCache(cacheName);
+    assertTrue(local.isRunning(cacheName));
+    cache.put("1",wrap("1","v1"));
+    assertCacheEntry(cache,"1","v1",-1,-1);
+    ByRef<Boolean> passivate=new ByRef<>(false);
+    PersistenceManager actual=cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
+    PersistenceManager stub=new PersistenceManagerStub(){
+      @Override public void stop(){
+        actual.stop();
+      }
+      @Override public void writeToAllStores(      MarshalledEntry marshalledEntry,      AccessMode modes){
+        passivate.set(true);
+      }
+    }
+;
+    cache.getAdvancedCache().getComponentRegistry().registerComponent(stub,PersistenceManager.class);
+    cache.getAdvancedCache().getComponentRegistry().rewire();
+    local.removeCache(cacheName);
+    assertFalse(local.isRunning(cacheName));
+    assertFalse(passivate.get());
+    assertEquals(0,actual.size());
+  }
+  finally {
+    TestingUtil.killCacheManagers(local);
+  }
+}
