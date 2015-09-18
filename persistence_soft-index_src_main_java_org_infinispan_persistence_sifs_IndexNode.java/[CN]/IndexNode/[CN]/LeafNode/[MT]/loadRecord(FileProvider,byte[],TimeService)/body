@@ -1,15 +1,27 @@
 {
-  if (offset < 0)   return null;
   FileProvider.Handle handle=fileProvider.getFile(file);
+  int readOffset=offset < 0 ? ~offset : offset;
   if (handle == null) {
-    throw new IndexNodeOutdatedException(file + ":" + offset);
+    throw new IndexNodeOutdatedException(file + ":" + readOffset);
   }
   try {
-    EntryRecord headerAndKey=getHeaderAndKey(fileProvider,handle,timeService);
+    EntryRecord headerAndKey=getHeaderAndKey(fileProvider,handle);
     if (!Arrays.equals(key,headerAndKey.getKey())) {
+      if (trace) {
+        log.trace("Key on " + file + ":"+ readOffset+ " not matched.");
+      }
       return null;
     }
-    return headerAndKey.loadMetadataAndValue(handle,offset);
+    if (headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
+      if (trace) {
+        log.trace("Key on " + file + ":"+ readOffset+ " matched but expired.");
+      }
+      return null;
+    }
+    if (trace) {
+      log.trace("Loaded from " + file + ":"+ readOffset);
+    }
+    return headerAndKey.loadMetadataAndValue(handle,readOffset);
   }
   finally {
     handle.close();

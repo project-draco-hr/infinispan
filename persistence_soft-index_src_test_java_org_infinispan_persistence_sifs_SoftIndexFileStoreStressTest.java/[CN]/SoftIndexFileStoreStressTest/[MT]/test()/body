@@ -1,0 +1,19 @@
+{
+  terminate=false;
+  ArrayList<Future<?>> futures=new ArrayList<>();
+  for (int i=0; i < THREADS; ++i) {
+    Future<?> future=executorService.submit(new TestThread());
+    futures.add(future);
+  }
+  executorService.submit(new Callable<Void>(){
+    @Override public Void call() throws Exception {
+      Thread.sleep(TEST_DURATION);
+      terminate=true;
+      return null;
+    }
+  }
+);
+  for (  Future<?> future : futures) {
+    future.get();
+  }
+}

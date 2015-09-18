@@ -33,26 +33,13 @@
         try {
           EntryPosition entry=temporaryTable.get(key);
           if (entry == null) {
-            entry=index.getPosition(key,serializedKey);
+            entry=index.getInfo(key,serializedKey);
           }
-          if (entry != null && entry.offset >= 0) {
-            FileProvider.Handle handle=fileProvider.getFile(entry.file);
-            try {
-              EntryHeader header=EntryRecord.readEntryHeader(handle,entry.offset);
-              if (header == null) {
-                throw new IllegalStateException("Cannot read " + entry.file + ":"+ entry.offset);
-              }
-              if (seqId < header.seqId()) {
-                if (trace)                 log.tracef("Record on %d:%d has seqId %d > %d",entry.file,entry.offset,header.seqId(),seqId);
-                return true;
-              }
-            }
-  finally {
-              handle.close();
-            }
+          if (entry != null && seqId < getSeqId(entry)) {
+            return true;
           }
           temporaryTable.set(key,file,offset);
-          indexQueue.put(new IndexRequest(key,serializedKey,file,offset,size));
+          indexQueue.put(IndexRequest.update(key,serializedKey,file,offset,size));
         }
  catch (        InterruptedException e) {
           log.error("Interrupted building of index, the index won't be built properly!",e);

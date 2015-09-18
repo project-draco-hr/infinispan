@@ -7,6 +7,8 @@
       }
       final IndexRequest request=indexQueue.take();
       if (trace)       log.trace("Indexing " + request);
+      IndexNode.OverwriteHook overwriteHook;
+      IndexNode.RecordChange recordChange;
 switch (request.getType()) {
 case CLEAR:
         IndexRequest cleared;
@@ -29,9 +31,8 @@ return;
 case GET_SIZE:
 request.setResult(size.get());
 continue;
-}
-IndexNode.OverwriteHook overwriteHook;
-if (request.isCompareAndSet()) {
+case MOVED:
+recordChange=IndexNode.RecordChange.MOVE;
 overwriteHook=new IndexNode.OverwriteHook(){
 @Override public boolean check(int oldFile,int oldOffset){
 return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
@@ -43,8 +44,9 @@ size.decrementAndGet();
 }
 }
 ;
-}
- else {
+break;
+case UPDATE:
+recordChange=IndexNode.RecordChange.INCREASE;
 overwriteHook=new IndexNode.OverwriteHook(){
 @Override public void setOverwritten(boolean overwritten,int prevFile,int prevOffset){
 request.setResult(overwritten);
@@ -57,14 +59,27 @@ size.decrementAndGet();
 }
 }
 ;
+break;
+case DROPPED:
+recordChange=IndexNode.RecordChange.DECREASE;
+overwriteHook=new IndexNode.OverwriteHook(){
+@Override public void setOverwritten(boolean overwritten,int prevFile,int prevOffset){
+if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+size.decrementAndGet();
+}
+}
+}
+;
+break;
+default :
+throw new IllegalArgumentException(request.toString());
 }
 try {
-IndexNode.setPosition(root,request.getSerializedKey(),request.getFile(),request.getOffset(),request.getSize(),overwriteHook);
+IndexNode.setPosition(root,request.getSerializedKey(),request.getFile(),request.getOffset(),request.getSize(),overwriteHook,recordChange);
 }
  catch (IllegalStateException e) {
 throw new IllegalStateException(request.toString(),e);
 }
-request.setResult(false);
 temporaryTable.removeConditionally(request.getKey(),request.getFile(),request.getOffset());
 }
 }
@@ -74,7 +89,7 @@ throw new RuntimeException(e);
 catch (InterruptedException e) {
 throw new RuntimeException(e);
 }
-catch (Exception e) {
+catch (Throwable e) {
 log.error("Error in indexer thread",e);
 }
  finally {

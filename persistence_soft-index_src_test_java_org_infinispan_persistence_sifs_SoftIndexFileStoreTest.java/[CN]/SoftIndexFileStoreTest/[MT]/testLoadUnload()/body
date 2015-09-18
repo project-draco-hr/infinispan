@@ -4,11 +4,9 @@
     InternalCacheEntry ice=TestInternalCacheEntryFactory.create(key(i),"value" + i);
     store.write(new MarshalledEntryImpl(ice.getKey(),ice.getValue(),internalMetadata(ice),getMarshaller()));
   }
-  System.out.println("Loaded all entries");
   for (int i=0; i < numEntries; ++i) {
-    if (!store.delete(key(i))) {
-      AssertJUnit.fail("Key " + key(i) + " not found");
-    }
+    assertNotNull(key(i),store.load(key(i)));
+    assertTrue(key(i),store.delete(key(i)));
   }
   store.clear();
   for (int i=0; i < numEntries; ++i) {
@@ -16,8 +14,7 @@
     store.write(new MarshalledEntryImpl(ice.getKey(),ice.getValue(),internalMetadata(ice),getMarshaller()));
   }
   for (int i=numEntries - 1; i >= 0; --i) {
-    if (!store.delete(key(i))) {
-      AssertJUnit.fail("Key " + key(i) + " not found");
-    }
+    assertNotNull(key(i),store.load(key(i)));
+    assertTrue(key(i),store.delete(key(i)));
   }
 }
