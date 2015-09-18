@@ -1,12 +1,12 @@
 {
-  byte[] result=null;
+  V result=null;
   short status=sendKeyOperation(key,transport,GET_REQUEST,GET_RESPONSE);
-  if (status == KEY_DOES_NOT_EXIST_STATUS) {
+  if (HotRodConstants.isNotExist(status)) {
     result=null;
   }
  else {
-    if (status == NO_ERROR_STATUS) {
-      result=transport.readArray();
+    if (HotRodConstants.isSuccess(status)) {
+      result=codec.readUnmarshallByteArray(transport,status);
     }
   }
   return result;

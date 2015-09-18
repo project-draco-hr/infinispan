@@ -1,8 +1,9 @@
 {
-  if (status == SUCCESS_WITH_PREVIOUS || status == NOT_EXECUTED_WITH_PREVIOUS) {
+  Marshaller marshaller=transport.getTransportFactory().getMarshaller();
+  if (HotRodConstants.hasPrevious(status)) {
     byte[] bytes=transport.readArray();
     if (log.isTraceEnabled())     log.tracef("Previous value bytes is: %s",Util.printArray(bytes,false));
-    return bytes.length == 0 ? null : bytes;
+    return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller,bytes,status);
   }
  else {
     return null;

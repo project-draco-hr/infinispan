@@ -1,18 +1,18 @@
 {
   short respStatus=readHeaderAndValidate(transport,params);
   VersionedOperationResponse.RspCode code;
-  if (respStatus == NO_ERROR_STATUS || respStatus == SUCCESS_WITH_PREVIOUS) {
+  if (HotRodConstants.isSuccess(respStatus)) {
     code=VersionedOperationResponse.RspCode.SUCCESS;
   }
- else   if (respStatus == NOT_PUT_REMOVED_REPLACED_STATUS || respStatus == NOT_EXECUTED_WITH_PREVIOUS) {
+ else   if (HotRodConstants.isNotExecuted(respStatus)) {
     code=VersionedOperationResponse.RspCode.MODIFIED_KEY;
   }
- else   if (respStatus == KEY_DOES_NOT_EXIST_STATUS) {
+ else   if (HotRodConstants.isNotExist(respStatus)) {
     code=VersionedOperationResponse.RspCode.NO_SUCH_KEY;
   }
  else {
     throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
   }
-  byte[] prevValue=returnPossiblePrevValue(transport,respStatus);
+  Object prevValue=returnPossiblePrevValue(transport,respStatus);
   return new VersionedOperationResponse(prevValue,code);
 }

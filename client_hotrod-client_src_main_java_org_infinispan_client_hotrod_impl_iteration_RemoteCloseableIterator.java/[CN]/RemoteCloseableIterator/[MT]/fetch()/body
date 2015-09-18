@@ -4,7 +4,7 @@
     while (nextElements.isEmpty() && !endOfIteration) {
       IterationNextResponse iterationNextResponse=iterationNextOperation.execute();
       short status=iterationNextResponse.getStatus();
-      if (status == INVALID_ITERATION) {
+      if (HotRodConstants.isInvalidIteration(status)) {
         throw log.errorRetrievingNext(iterationId);
       }
       Entry<byte[],byte[]>[] entries=iterationNextResponse.getEntries();
@@ -14,7 +14,7 @@
       }
       for (      Entry<byte[],byte[]> entry : entries) {
         if (segmentKeyTracker.track(entry.getKey())) {
-          nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey()),unmarshall(entry.getValue())));
+          nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(),status),unmarshall(entry.getValue(),status)));
         }
       }
       segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());

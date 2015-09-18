@@ -1,10 +1,10 @@
 {
   short status=sendKeyOperation(key,transport,GET_WITH_METADATA,GET_WITH_METADATA_RESPONSE);
-  MetadataValue<byte[]> result=null;
-  if (status == KEY_DOES_NOT_EXIST_STATUS) {
+  MetadataValue<V> result=null;
+  if (HotRodConstants.isNotExist(status)) {
     result=null;
   }
- else   if (status == NO_ERROR_STATUS) {
+ else   if (HotRodConstants.isSuccess(status)) {
     short flags=transport.readByte();
     long creation=-1;
     int lifespan=-1;
@@ -22,8 +22,8 @@
     if (log.isTraceEnabled()) {
       log.tracef("Received version: %d",version);
     }
-    byte[] value=transport.readArray();
-    result=new MetadataValueImpl<byte[]>(creation,lifespan,lastUsed,maxIdle,version,value);
+    V value=codec.readUnmarshallByteArray(transport,status);
+    result=new MetadataValueImpl<V>(creation,lifespan,lastUsed,maxIdle,version,value);
   }
   return result;
 }

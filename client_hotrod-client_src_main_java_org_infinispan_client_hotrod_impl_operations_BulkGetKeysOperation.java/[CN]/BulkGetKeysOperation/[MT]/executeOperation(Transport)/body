@@ -2,10 +2,10 @@
   HeaderParams params=writeHeader(transport,BULK_GET_KEYS_REQUEST);
   transport.writeVInt(scope);
   transport.flush();
-  readHeaderAndValidate(transport,params);
-  Set<byte[]> result=new HashSet<byte[]>();
+  short status=readHeaderAndValidate(transport,params);
+  Set<K> result=new HashSet<K>();
   while (transport.readByte() == 1) {
-    result.add(transport.readArray());
+    result.add(codec.readUnmarshallByteArray(transport,status));
   }
   return result;
 }

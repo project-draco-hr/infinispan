@@ -1,16 +1,16 @@
 {
   short status=sendKeyOperation(key,transport,GET_WITH_VERSION,GET_WITH_VERSION_RESPONSE);
-  VersionedValue<byte[]> result=null;
-  if (status == KEY_DOES_NOT_EXIST_STATUS) {
+  VersionedValue<V> result=null;
+  if (HotRodConstants.isNotExist(status)) {
     result=null;
   }
- else   if (status == NO_ERROR_STATUS) {
+ else   if (HotRodConstants.isSuccess(status)) {
     long version=transport.readLong();
     if (log.isTraceEnabled()) {
       log.tracef("Received version: %d",version);
     }
-    byte[] value=transport.readArray();
-    result=new VersionedValueImpl<byte[]>(version,value);
+    V value=codec.readUnmarshallByteArray(transport,status);
+    result=new VersionedValueImpl<V>(version,value);
   }
   return result;
 }

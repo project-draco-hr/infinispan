@@ -2,10 +2,12 @@
   HeaderParams params=writeHeader(transport,BULK_GET_REQUEST);
   transport.writeVInt(entryCount);
   transport.flush();
-  readHeaderAndValidate(transport,params);
-  Map<byte[],byte[]> result=new HashMap<byte[],byte[]>();
+  short status=readHeaderAndValidate(transport,params);
+  Map<K,V> result=new HashMap<K,V>();
   while (transport.readByte() == 1) {
-    result.put(transport.readArray(),transport.readArray());
+    K key=codec.readUnmarshallByteArray(transport,status);
+    V value=codec.readUnmarshallByteArray(transport,status);
+    result.put(key,value);
   }
   return result;
 }

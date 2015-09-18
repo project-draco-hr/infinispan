@@ -1,0 +1,20 @@
+{
+  if (bytes == null)   return null;
+  try {
+    Object ret=marshaller.objectFromByteBuffer(bytes);
+    if (HotRodConstants.hasCompatibility(status)) {
+      if (ret instanceof byte[] && isJavaSerialized((byte[])ret)) {
+        try (ObjectInputStream ois=new ObjectInputStream(new ByteArrayInputStream((byte[])ret))){
+          return (T)ois.readObject();
+        }
+ catch (        Exception ee) {
+          if (log.isDebugEnabled())           log.debugf("Standard deserialization not in use for %s",Util.printArray(bytes));
+        }
+      }
+    }
+    return (T)ret;
+  }
+ catch (  Exception e) {
+    throw log.unableToUnmarshallBytes(Util.toHexString(bytes),e);
+  }
+}
