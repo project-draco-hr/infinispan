@@ -5,5 +5,27 @@
   this.temporaryTable=temporaryTable;
   this.indexFileFile=new File(indexDir,"index." + id);
   this.indexFile=new RandomAccessFile(indexFileFile,"rw").getChannel();
-  this.indexFile.truncate(0);
+  indexFile.position(0);
+  ByteBuffer buffer=ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
+  if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile,buffer) && buffer.getInt(0) == GRACEFULLY) {
+    long rootOffset=buffer.getLong(4);
+    short rootOccupied=buffer.getShort(12);
+    long freeBlocksOffset=buffer.getLong(14);
+    size.set(buffer.getLong(22));
+    root=new IndexNode(this,rootOffset,rootOccupied);
+    loadFreeBlocks(freeBlocksOffset);
+    indexFileSize=freeBlocksOffset;
+    loaded=true;
+  }
+ else {
+    this.indexFile.truncate(0);
+    root=IndexNode.emptyWithLeaves(this);
+    loaded=false;
+    indexFileSize=INDEX_FILE_HEADER_SIZE;
+  }
+  buffer.putInt(0,DIRTY);
+  buffer.position(0);
+  buffer.limit(4);
+  indexFile.position(0);
+  write(indexFile,buffer);
 }

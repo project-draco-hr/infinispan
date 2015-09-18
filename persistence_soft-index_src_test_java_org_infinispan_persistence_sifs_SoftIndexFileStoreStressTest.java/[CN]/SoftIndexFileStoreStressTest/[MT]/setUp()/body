@@ -1,2 +1,15 @@
 {
+  tmpDirectory=TestingUtil.tmpDirectory(this.getClass());
+  recursiveFileRemove(tmpDirectory);
+  marshaller=new TestObjectStreamMarshaller();
+  factory=new InternalEntryFactoryImpl();
+  store=new SoftIndexFileStore();
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  log.info("Using directory " + tmpDirectory);
+  builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class).indexLocation(tmpDirectory).dataLocation(tmpDirectory + "/data").purgeOnStartup(false).maxFileSize(1000);
+  timeService=new DefaultTimeService();
+  store.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller,timeService));
+  ((InternalEntryFactoryImpl)factory).injectTimeService(timeService);
+  store.start();
+  executorService=Executors.newFixedThreadPool(THREADS + 1);
 }

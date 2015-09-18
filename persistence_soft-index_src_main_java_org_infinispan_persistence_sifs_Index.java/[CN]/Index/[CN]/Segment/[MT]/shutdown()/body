@@ -1,0 +1,38 @@
+{
+  IndexSpace rootSpace=allocateIndexSpace(root.length());
+  root.store(rootSpace);
+  indexFile.position(indexFileSize);
+  ByteBuffer buffer=ByteBuffer.allocate(4);
+  buffer.putInt(0,freeBlocks.size());
+  write(indexFile,buffer);
+  for (  Map.Entry<Integer,List<IndexSpace>> entry : freeBlocks.entrySet()) {
+    List<IndexSpace> list=entry.getValue();
+    int requiredSize=8 + list.size() * 10;
+    buffer=buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+    buffer.position(0);
+    buffer.limit(requiredSize);
+    buffer.putInt(entry.getKey());
+    buffer.putInt(list.size());
+    for (    IndexSpace space : list) {
+      buffer.putLong(space.offset);
+      buffer.putShort((short)space.length);
+    }
+    buffer.flip();
+    write(indexFile,buffer);
+  }
+  int headerWithoutMagic=INDEX_FILE_HEADER_SIZE - 4;
+  buffer=buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
+  buffer.putLong(0,rootSpace.offset);
+  buffer.putShort(8,(short)rootSpace.length);
+  buffer.putLong(10,indexFileSize);
+  buffer.putLong(18,size.get());
+  buffer.position(0);
+  buffer.limit(headerWithoutMagic);
+  indexFile.position(4);
+  write(indexFile,buffer);
+  buffer.putInt(0,GRACEFULLY);
+  buffer.position(0);
+  buffer.limit(4);
+  indexFile.position(0);
+  write(indexFile,buffer);
+}

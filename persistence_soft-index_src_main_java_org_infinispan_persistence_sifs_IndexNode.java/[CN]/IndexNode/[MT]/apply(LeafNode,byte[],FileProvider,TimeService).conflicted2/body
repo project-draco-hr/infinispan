@@ -1,3 +1,18 @@
 {
-  return leafNode.loadRecord(fileProvider,key,timeService);
+  EntryRecord hak=leafNode.loadHeaderAndKey(fileProvider);
+  if (Arrays.equals(hak.getKey(),key)) {
+    if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
+      if (trace) {
+        log.tracef("Found node on %d:%d but it is expired",leafNode.file,leafNode.offset);
+      }
+      return null;
+    }
+    return leafNode;
+  }
+ else {
+    if (trace) {
+      log.tracef("Found node on %d:%d but key does not match",leafNode.file,leafNode.offset);
+    }
+  }
+  return null;
 }

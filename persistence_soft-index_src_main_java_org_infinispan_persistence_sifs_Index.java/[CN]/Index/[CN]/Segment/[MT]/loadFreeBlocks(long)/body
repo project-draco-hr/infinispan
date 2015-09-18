@@ -1,0 +1,31 @@
+{
+  indexFile.position(freeBlocksOffset);
+  ByteBuffer buffer=ByteBuffer.allocate(8);
+  buffer.limit(4);
+  if (!read(indexFile,buffer)) {
+    throw new IOException("Cannot read free blocks lists!");
+  }
+  int numLists=buffer.getInt(0);
+  for (int i=0; i < numLists; ++i) {
+    buffer.position(0);
+    buffer.limit(8);
+    if (!read(indexFile,buffer)) {
+      throw new IOException("Cannot read free blocks lists!");
+    }
+    int blockLength=buffer.getInt(0);
+    int listSize=buffer.getInt(4);
+    int requiredSize=10 * listSize;
+    buffer=buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+    buffer.position(0);
+    buffer.limit(requiredSize);
+    if (!read(indexFile,buffer)) {
+      throw new IOException("Cannot read free blocks lists!");
+    }
+    buffer.flip();
+    ArrayList<IndexSpace> list=new ArrayList<>(listSize);
+    for (int j=0; j < listSize; ++j) {
+      list.add(new IndexSpace(buffer.getLong(),buffer.getShort()));
+    }
+    freeBlocks.put(blockLength,list);
+  }
+}

@@ -18,11 +18,14 @@
       leafNodes[i]=new LeafNode(buffer.getInt(),buffer.getInt(),buffer.getShort());
     }
   }
- else {
+ else   if ((flags & HAS_NODES) != 0) {
     innerNodes=new InnerNode[numKeyParts + 1];
     for (int i=0; i < numKeyParts + 1; ++i) {
       innerNodes[i]=new InnerNode(buffer.getLong(),buffer.getShort());
     }
+  }
+ else {
+    leafNodes=LeafNode.EMPTY_ARRAY;
   }
   if (trace) {
     log.tracef("Loaded %08x from %d:%d (length %d)",System.identityHashCode(this),offset,occupiedSpace,length());
