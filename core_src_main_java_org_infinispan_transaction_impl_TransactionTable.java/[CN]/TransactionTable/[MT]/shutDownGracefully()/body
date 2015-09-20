@@ -1,27 +1,2 @@
 {
-  if (log.isDebugEnabled())   log.debugf("Wait for on-going transactions to finish for %s.",Util.prettyPrintTime(configuration.transaction().cacheStopTimeout(),TimeUnit.MILLISECONDS));
-  long now=System.nanoTime();
-  long failTime=now + TimeUnit.MILLISECONDS.toNanos(configuration.transaction().cacheStopTimeout());
-  boolean txsOnGoing=areTxsOnGoing();
-  while (txsOnGoing && System.nanoTime() - failTime < 0) {
-    try {
-      Thread.sleep(30);
-      txsOnGoing=areTxsOnGoing();
-    }
- catch (    InterruptedException e) {
-      Thread.currentThread().interrupt();
-      if (clustered) {
-        log.debugf("Interrupted waiting for on-going transactions to finish. %s local transactions and %s remote transactions",localTransactions.size(),remoteTransactions.size());
-      }
- else {
-        log.debugf("Interrupted waiting for %s on-going transactions to finish.",localTransactions.size());
-      }
-    }
-  }
-  if (txsOnGoing) {
-    log.unfinishedTransactionsRemain(localTransactions == null ? 0 : localTransactions.size(),remoteTransactions == null ? 0 : remoteTransactions.size());
-  }
- else {
-    log.debug("All transactions terminated");
-  }
 }
