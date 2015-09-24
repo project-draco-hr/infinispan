@@ -1,0 +1,26 @@
+{
+  if (groups != null) {
+    return new Iterator<Object[]>(){
+      private final Iterator<Object[]> iterator=groups.values().iterator();
+      @Override public boolean hasNext(){
+        return iterator.hasNext();
+      }
+      @Override public Object[] next(){
+        Object[] row=iterator.next();
+        if (accumulators != null) {
+          for (          FieldAccumulator acc : accumulators) {
+            acc.finish(row);
+          }
+        }
+        return row;
+      }
+    }
+;
+  }
+ else {
+    for (    FieldAccumulator acc : accumulators) {
+      acc.finish(globalGroup);
+    }
+    return Collections.singleton(globalGroup).iterator();
+  }
+}

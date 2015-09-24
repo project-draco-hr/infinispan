@@ -2,20 +2,35 @@
   if (row.length != rowLength) {
     throw new IllegalArgumentException("Row length mismatch");
   }
-  GroupRowKey groupRowKey=new GroupRowKey(row);
-  Object[] existingGroup=groups.get(groupRowKey);
-  if (existingGroup == null) {
-    if (accumulators != null && accumulators.length != 0) {
+  if (groupFieldPositions != null) {
+    GroupRowKey groupRowKey=new GroupRowKey(row,groupFieldPositions);
+    Object[] existingGroup=groups.get(groupRowKey);
+    if (existingGroup == null) {
+      if (accumulators != null) {
+        for (        FieldAccumulator acc : accumulators) {
+          acc.init(row);
+        }
+      }
+      groups.put(groupRowKey,row);
+    }
+ else {
+      if (accumulators != null) {
+        for (        FieldAccumulator acc : accumulators) {
+          acc.update(row,existingGroup);
+        }
+      }
+    }
+  }
+ else {
+    if (globalGroup == null) {
+      globalGroup=row;
       for (      FieldAccumulator acc : accumulators) {
         acc.init(row);
       }
     }
-    groups.put(groupRowKey,row);
-  }
  else {
-    if (accumulators != null && accumulators.length != 0) {
       for (      FieldAccumulator acc : accumulators) {
-        acc.update(row,existingGroup);
+        acc.update(row,globalGroup);
       }
     }
   }
