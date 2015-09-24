@@ -1,0 +1,27 @@
+{
+  if (globalConfiguration.authorization().enabled()) {
+    if (Security.isPrivileged()) {
+      Security.checkPermission(perm.getSecurityPermission());
+    }
+ else {
+      Subject subject=Security.getSubject();
+      try {
+        if (subject != null) {
+          if (checkSubjectPermissionAndRole(subject,configuration,perm,role)) {
+            audit.audit(subject,context,name,perm,AuditResponse.ALLOW);
+          }
+ else {
+            checkSecurityManagerPermission(perm);
+          }
+        }
+ else {
+          checkSecurityManagerPermission(perm);
+        }
+      }
+ catch (      SecurityException e) {
+        audit.audit(subject,context,name,perm,AuditResponse.DENY);
+        throw log.unauthorizedAccess(Util.prettyPrintSubject(subject),perm.toString());
+      }
+    }
+  }
+}

@@ -1,28 +1,3 @@
 {
-  if (globalConfiguration.authorization().enabled()) {
-    if (Security.isPrivileged()) {
-      Security.checkPermission(perm.getSecurityPermission());
-    }
- else {
-      Subject subject=Security.getSubject();
-      try {
-        if (subject != null) {
-          int subjectMask=computeSubjectRoleMask(subject,configuration);
-          if ((subjectMask & perm.getMask()) != perm.getMask()) {
-            checkSecurityManagerPermission(perm);
-          }
- else {
-            audit.audit(subject,context,name,perm,AuditResponse.ALLOW);
-          }
-        }
- else {
-          checkSecurityManagerPermission(perm);
-        }
-      }
- catch (      SecurityException e) {
-        audit.audit(subject,context,name,perm,AuditResponse.DENY);
-        throw log.unauthorizedAccess(Util.prettyPrintSubject(subject),perm.toString());
-      }
-    }
-  }
+  checkPermission(configuration,perm,null);
 }
