@@ -1,17 +1,21 @@
 {
+  if (isSingleFilter()) {
+    return;
+  }
   for (int i=0; i < filterContexts.length; i++) {
-    FilterEvalContext filterEvalContext=filterContexts[i];
     FilterSubscriptionImpl s=filterSubscriptions.get(i);
+    FilterEvalContext filterEvalContext=filterContexts[i];
     if (filterEvalContext == null) {
       if (s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
         filterEvalContext=new FilterEvalContext(this,s);
+        filterContexts[i]=filterEvalContext;
       }
  else {
         continue;
       }
     }
     if (filterEvalContext.isMatching()) {
-      s.getCallback().onFilterResult(userContext,instance,eventType,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
+      s.getCallback().onFilterResult(false,userContext,eventType,instance,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
     }
   }
 }

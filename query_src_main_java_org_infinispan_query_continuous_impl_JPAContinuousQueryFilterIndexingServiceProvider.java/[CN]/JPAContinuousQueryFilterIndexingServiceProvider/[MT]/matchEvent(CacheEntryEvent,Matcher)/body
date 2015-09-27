@@ -1,0 +1,14 @@
+{
+  Object oldValue=event.getType() == Event.Type.CACHE_ENTRY_REMOVED ? ((CacheEntryRemovedEvent)event).getOldValue() : null;
+  if (event.getType() == Event.Type.CACHE_ENTRY_MODIFIED) {
+    oldValue=((EventImpl)event).getOldValue();
+  }
+  Object newValue=event.getValue();
+  if (event.getType() == Event.Type.CACHE_ENTRY_EXPIRED) {
+    oldValue=newValue;
+    newValue=null;
+  }
+  if (oldValue != null || newValue != null) {
+    matcher.matchDelta(event,event.getType(),oldValue,newValue,true,false);
+  }
+}

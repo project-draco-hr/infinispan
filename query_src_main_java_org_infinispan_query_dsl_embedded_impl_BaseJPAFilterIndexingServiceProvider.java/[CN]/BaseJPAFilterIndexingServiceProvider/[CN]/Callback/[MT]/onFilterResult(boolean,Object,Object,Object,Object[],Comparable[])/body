@@ -1,0 +1,59 @@
+{
+  if (this.isDelta != isDelta) {
+    return;
+  }
+  CacheEntryEvent<K,V> event=(CacheEntryEvent<K,V>)userContext;
+  if (event.isPre() && isClustered || isPrimaryOnly && !clusteringDependentLogic.localNodeIsPrimaryOwner(event.getKey())) {
+    return;
+  }
+  DelegatingCacheEntryListenerInvocation<K,V>[] invocations;
+switch (event.getType()) {
+case CACHE_ENTRY_ACTIVATED:
+    invocations=activated_invocations;
+  break;
+case CACHE_ENTRY_CREATED:
+invocations=created_invocations;
+break;
+case CACHE_ENTRY_INVALIDATED:
+invocations=invalidated_invocations;
+break;
+case CACHE_ENTRY_LOADED:
+invocations=loaded_invocations;
+break;
+case CACHE_ENTRY_MODIFIED:
+invocations=modified_invocations;
+break;
+case CACHE_ENTRY_PASSIVATED:
+invocations=passivated_invocations;
+break;
+case CACHE_ENTRY_REMOVED:
+invocations=removed_invocations;
+break;
+case CACHE_ENTRY_VISITED:
+invocations=visited_invocations;
+break;
+case CACHE_ENTRY_EVICTED:
+invocations=evicted_invocations;
+break;
+case CACHE_ENTRY_EXPIRED:
+invocations=expired_invocations;
+break;
+default :
+return;
+}
+boolean conversionDone=false;
+for (DelegatingCacheEntryListenerInvocation<K,V> invocation : invocations) {
+if (invocation.getObservation().shouldInvoke(event.isPre())) {
+if (!conversionDone) {
+if (filterAndConvert && event instanceof EventImpl) {
+EventImpl<K,V> eventImpl=(EventImpl<K,V>)event;
+EventImpl<K,V> clone=eventImpl.clone();
+clone.setValue((V)makeFilterResult(userContext,eventType,event.getKey(),projection == null ? instance : null,projection,sortProjection));
+event=clone;
+}
+conversionDone=true;
+}
+invocation.invokeNoChecks(event,false,filterAndConvert);
+}
+}
+}

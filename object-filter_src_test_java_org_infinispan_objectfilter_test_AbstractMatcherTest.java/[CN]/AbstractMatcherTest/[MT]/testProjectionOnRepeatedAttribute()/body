@@ -4,7 +4,7 @@
   Object person=createPerson1();
   final List<Object[]> result=new ArrayList<Object[]>();
   FilterSubscription filterSubscription=matcher.registerFilter(queryString,new FilterCallback(){
-    @Override public void onFilterResult(    Object userContext,    Object instance,    Object eventType,    Object[] projection,    Comparable[] sortProjection){
+    @Override public void onFilterResult(    boolean isDelta,    Object userContext,    Object eventType,    Object instance,    Object[] projection,    Comparable[] sortProjection){
       result.add(projection);
     }
   }
@@ -13,7 +13,7 @@
   assertEquals(2,filterSubscription.getProjection().length);
   assertEquals("address.postCode",filterSubscription.getProjection()[0]);
   assertEquals("phoneNumbers.number",filterSubscription.getProjection()[1]);
-  matcher.match(null,person,null);
+  matcher.match(null,null,person);
   matcher.unregisterFilter(filterSubscription);
   assertEquals(1,result.size());
   assertEquals(2,result.get(0).length);

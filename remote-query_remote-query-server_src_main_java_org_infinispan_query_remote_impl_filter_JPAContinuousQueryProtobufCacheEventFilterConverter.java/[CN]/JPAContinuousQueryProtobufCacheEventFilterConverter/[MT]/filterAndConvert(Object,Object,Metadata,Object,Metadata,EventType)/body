@@ -1,18 +1,15 @@
 {
   if (usesValueWrapper) {
-    if (oldValue instanceof ProtobufValueWrapper) {
-      oldValue=((ProtobufValueWrapper)oldValue).getBinary();
-    }
-    if (newValue instanceof ProtobufValueWrapper) {
-      newValue=((ProtobufValueWrapper)newValue).getBinary();
-    }
+    oldValue=oldValue != null ? ((ProtobufValueWrapper)oldValue).getBinary() : null;
+    newValue=newValue != null ? ((ProtobufValueWrapper)newValue).getBinary() : null;
   }
   if (eventType.isExpired()) {
     oldValue=newValue;
     newValue=null;
   }
-  ObjectFilter.FilterResult f1=filterAndConvert(oldValue);
-  ObjectFilter.FilterResult f2=filterAndConvert(newValue);
+  ObjectFilter objectFilter=getObjectFilter();
+  ObjectFilter.FilterResult f1=oldValue == null ? null : objectFilter.filter(oldValue);
+  ObjectFilter.FilterResult f2=newValue == null ? null : objectFilter.filter(newValue);
   ContinuousQueryResult result;
   if (f1 == null && f2 != null) {
     result=new ContinuousQueryResult(true,(byte[])key,(byte[])newValue);

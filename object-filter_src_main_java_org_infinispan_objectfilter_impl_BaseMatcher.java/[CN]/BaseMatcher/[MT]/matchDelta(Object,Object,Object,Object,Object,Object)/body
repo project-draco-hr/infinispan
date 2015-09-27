@@ -1,0 +1,31 @@
+{
+  if (instanceOld == null && instanceNew == null) {
+    throw new IllegalArgumentException("instances cannot be both null");
+  }
+  read.lock();
+  try {
+    MatcherEvalContext<TypeMetadata,AttributeMetadata,AttributeId> ctx1=null;
+    MatcherEvalContext<TypeMetadata,AttributeMetadata,AttributeId> ctx2=null;
+    if (instanceOld != null) {
+      ctx1=startMultiTypeContext(userContext,eventType,instanceOld);
+      if (ctx1 != null) {
+        ctx1.process(ctx1.getRootNode());
+      }
+    }
+    if (instanceNew != null) {
+      ctx2=startMultiTypeContext(userContext,eventType,instanceNew);
+      if (ctx2 != null) {
+        ctx2.process(ctx2.getRootNode());
+      }
+    }
+    if (ctx1 != null) {
+      ctx1.notifyDeltaSubscribers(ctx2,joiningEvent,leavingEvent);
+    }
+ else     if (ctx2 != null) {
+      ctx2.notifyDeltaSubscribers(null,leavingEvent,joiningEvent);
+    }
+  }
+  finally {
+    read.unlock();
+  }
+}

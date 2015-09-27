@@ -1,14 +1,19 @@
 {
-  ObjectFilter.FilterResult f1=filterAndConvert(oldValue);
-  ObjectFilter.FilterResult f2=filterAndConvert(newValue);
+  if (eventType.isExpired()) {
+    oldValue=newValue;
+    newValue=null;
+  }
+  ObjectFilter objectFilter=getObjectFilter();
+  ObjectFilter.FilterResult f1=oldValue == null ? null : objectFilter.filter(oldValue);
+  ObjectFilter.FilterResult f2=newValue == null ? null : objectFilter.filter(newValue);
   if (f2 != null && eventType.isExpired()) {
-    return new ContinuousQueryResult<V>(false,null);
+    return (C)new ContinuousQueryResult<V>(false,null);
   }
   if (f1 == null && f2 != null) {
-    return new ContinuousQueryResult<V>(true,newValue);
+    return (C)new ContinuousQueryResult<V>(true,newValue);
   }
   if (f1 != null && f2 == null) {
-    return new ContinuousQueryResult<V>(false,null);
+    return (C)new ContinuousQueryResult<V>(false,null);
   }
   return null;
 }

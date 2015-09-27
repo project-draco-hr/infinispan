@@ -1,0 +1,14 @@
+{
+  final Matcher matcher=getMatcher(indexedFilter);
+  final String jpaQuery=getJPAQuery(indexedFilter);
+  final Map<String,Object> namedParameters=getNamedParameters(indexedFilter);
+  final boolean isDelta=isDelta(indexedFilter);
+  addFilteringInvocationForMatcher(matcher);
+  Event.Type[] eventTypes=new Event.Type[listeners.keySet().size()];
+  int i=0;
+  for (  Class<? extends Annotation> annotation : listeners.keySet()) {
+    eventTypes[i++]=getEventTypeFromAnnotation(annotation);
+  }
+  Callback<K,V> callback=new Callback<K,V>(isDelta,matcher,isClustered,isPrimaryOnly,filterAndConvert,listeners);
+  callback.subscription=matcher.registerFilter(jpaQuery,namedParameters,callback,eventTypes);
+}
