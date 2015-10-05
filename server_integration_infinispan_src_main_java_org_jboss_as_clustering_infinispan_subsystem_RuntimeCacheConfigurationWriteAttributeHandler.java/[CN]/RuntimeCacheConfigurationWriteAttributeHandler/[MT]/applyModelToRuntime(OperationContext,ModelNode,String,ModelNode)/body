@@ -1,0 +1,12 @@
+{
+  final PathAddress address=PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR));
+  final ServiceName serviceName=getParentServiceName(address);
+  final ServiceRegistry registry=context.getServiceRegistry(true);
+  ServiceController<?> sc=registry.getService(serviceName);
+  if (sc != null) {
+    CacheConfigurationService ccs=(CacheConfigurationService)sc.getService();
+    Configuration configuration=ccs.getValue();
+    ModelNode value=attributeDef.resolveModelAttribute(context,model);
+    applier.applyConfiguration(configuration,value);
+  }
+}
