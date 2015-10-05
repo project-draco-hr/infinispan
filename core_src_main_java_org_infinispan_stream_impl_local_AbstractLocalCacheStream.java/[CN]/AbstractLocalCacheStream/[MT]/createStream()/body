@@ -1,7 +1,10 @@
 {
-  Stream<R> stream=getStream();
-  for (  Runnable runnable : onCloseRunnables) {
-    stream=stream.onClose(runnable);
+  BaseStream<?,?> stream=streamSupplier.buildStream(segmentsToFilter,keysToFilter);
+  if (parallel) {
+    stream=stream.parallel();
   }
-  return stream;
+  for (  IntermediateOperation intOp : intermediateOperations) {
+    stream=intOp.perform(stream);
+  }
+  return (S)stream;
 }
