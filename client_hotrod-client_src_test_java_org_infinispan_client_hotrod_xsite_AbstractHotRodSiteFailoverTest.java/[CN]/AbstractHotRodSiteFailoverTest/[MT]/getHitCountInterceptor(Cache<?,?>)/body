@@ -1,0 +1,14 @@
+{
+  HitCountInterceptor hitCountInterceptor=null;
+  List<CommandInterceptor> interceptorChain=cache.getAdvancedCache().getInterceptorChain();
+  for (  CommandInterceptor interceptor : interceptorChain) {
+    boolean isHitCountInterceptor=interceptor instanceof HitCountInterceptor;
+    if (hitCountInterceptor != null && isHitCountInterceptor) {
+      throw new IllegalStateException("Two HitCountInterceptors! " + interceptorChain);
+    }
+    if (isHitCountInterceptor) {
+      hitCountInterceptor=(HitCountInterceptor)interceptor;
+    }
+  }
+  return hitCountInterceptor;
+}

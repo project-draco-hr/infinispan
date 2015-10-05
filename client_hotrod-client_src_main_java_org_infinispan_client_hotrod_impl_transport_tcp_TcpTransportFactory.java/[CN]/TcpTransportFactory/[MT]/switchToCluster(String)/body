@@ -1,0 +1,17 @@
+{
+  if (clusters.isEmpty()) {
+    log.debugf("No alternative clusters configured, so can't switch cluster");
+    return false;
+  }
+  Collection<SocketAddress> addresses=findClusterInfo(clusterName);
+  if (!addresses.isEmpty()) {
+    updateServers(addresses,true);
+    topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+    if (log.isInfoEnabled()) {
+      if (!clusterName.equals(DEFAULT_CLUSTER_NAME))       log.manuallySwitchedToCluster(clusterName);
+ else       log.manuallySwitchedBackToMainCluster();
+    }
+    return true;
+  }
+  return false;
+}
