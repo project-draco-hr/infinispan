@@ -1,0 +1,41 @@
+{
+  final String cacheName=m.getName();
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(false)){
+    @Override public void call(){
+      ControlledTimeService timeService=new ControlledTimeService(0);
+      TestingUtil.replaceComponent(cm,TimeService.class,timeService,true);
+      JCacheManager jCacheManager=createJCacheManager(cm,this);
+      InMemoryJCacheLoader<Integer,String> cacheLoader=new InMemoryJCacheLoader<Integer,String>();
+      cacheLoader.store(1,"v1").store(2,"v2");
+      MutableConfiguration<Integer,String> cfg=new MutableConfiguration<Integer,String>();
+      final long lifespan=3000;
+      cfg.setReadThrough(true);
+      cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy>(){
+        @Override public ExpiryPolicy create(){
+          return new ExpiryPolicy(){
+            @Override public Duration getExpiryForCreation(){
+              return new Duration(TimeUnit.MILLISECONDS,lifespan);
+            }
+            @Override public Duration getExpiryForAccess(){
+              return null;
+            }
+            @Override public Duration getExpiryForUpdate(){
+              return Duration.ZERO;
+            }
+          }
+;
+        }
+      }
+);
+      cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+      Cache<Integer,String> cache=jCacheManager.createCache(cacheName,cfg);
+      assertEquals("v2",cache.get(2));
+      assertEquals("v1",cache.get(1));
+      timeService.advance(lifespan + 100);
+      DataContainer<Integer,String> dc=cache.unwrap(AdvancedCache.class).getDataContainer();
+      assertEquals(null,dc.get(2));
+      assertEquals(null,dc.get(1));
+    }
+  }
+);
+}
