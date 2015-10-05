@@ -8,6 +8,7 @@
     return ConstantBooleanExpr.TRUE;
   }
   if (!collector.predicatesToRemove.isEmpty()) {
+    int numCofactors=1;
     for (    PrimaryPredicateExpr e : collector.predicatesToRemove) {
       Replacer replacer1=new Replacer(e,ConstantBooleanExpr.TRUE);
       BooleanExpr e1=booleanExpr.acceptVisitor(replacer1);
@@ -29,6 +30,7 @@
         booleanExpr=e1;
       }
  else {
+        numCofactors*=2;
         OrExpr disjunction;
         if (e1 instanceof OrExpr) {
           disjunction=(OrExpr)e1;
@@ -48,6 +50,9 @@
         }
         PredicateOptimisations.optimizePredicates(disjunction.getChildren(),false);
         booleanExpr=disjunction;
+      }
+      if (numCofactors > maxExpansionCofactors) {
+        return ConstantBooleanExpr.TRUE;
       }
     }
   }
