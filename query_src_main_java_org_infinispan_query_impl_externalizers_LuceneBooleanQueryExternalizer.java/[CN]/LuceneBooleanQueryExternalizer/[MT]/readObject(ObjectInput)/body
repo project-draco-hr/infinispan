@@ -1,14 +1,14 @@
 {
   final boolean disableCoord=input.readBoolean();
-  final BooleanQuery unserialized=new BooleanQuery(disableCoord);
-  unserialized.setBoost(input.readFloat());
-  unserialized.setMinimumNumberShouldMatch(UnsignedNumeric.readUnsignedInt(input));
+  final float boost=input.readFloat();
+  final int minimumNumberShouldMatch=UnsignedNumeric.readUnsignedInt(input);
   final int numberOfClauses=UnsignedNumeric.readUnsignedInt(input);
+  BooleanQuery.Builder unserialized=new BooleanQuery.Builder().setDisableCoord(disableCoord).setMinimumNumberShouldMatch(minimumNumberShouldMatch);
   assureNumberOfClausesLimit(numberOfClauses);
-  final BooleanClause[] booleanClauses=new BooleanClause[numberOfClauses];
-  final List<BooleanClause> clauses=unserialized.clauses();
   for (int i=0; i < numberOfClauses; i++) {
-    appendReadClause(input,clauses);
+    appendReadClause(input,unserialized);
   }
-  return unserialized;
+  BooleanQuery booleanQuery=unserialized.build();
+  booleanQuery.setBoost(boost);
+  return booleanQuery;
 }
