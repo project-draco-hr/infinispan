@@ -1,0 +1,14 @@
+{
+  final Integer key=HotRodClientTestingUtil.getIntKeyForServer(server(0));
+  final EventLogListener<Integer> eventListener=new EventLogListener<>();
+  withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
+    @Override public void call(){
+      Cache<Integer,String> cache0=cache(0);
+      CacheNotifier notifier=cache0.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+      byte[] keyBytes=HotRodClientTestingUtil.toBytes(key);
+      notifier.notifyCacheEntryExpired(keyBytes,null,null,null);
+      eventListener.expectOnlyExpiredEvent(key,cache(0));
+    }
+  }
+);
+}
