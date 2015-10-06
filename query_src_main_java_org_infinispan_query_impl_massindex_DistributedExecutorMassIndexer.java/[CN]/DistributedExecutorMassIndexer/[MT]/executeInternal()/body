@@ -16,12 +16,12 @@
  else {
       indexWork=new IndexWorker(indexedType,true);
     }
-    DistributedTask task=executor.createDistributedTaskBuilder(indexWork).timeout(0,TimeUnit.NANOSECONDS).build();
+    DistributedTask<Void> task=executor.createDistributedTaskBuilder(indexWork).timeout(0,TimeUnit.NANOSECONDS).build();
     if (replicated && shared && !sharded) {
       futures.add(executor.submit(task));
     }
  else {
-      futures.addAll(executor.submitEverywhere(task));
+      futures.addAll((List)executor.submitEverywhere(task));
     }
   }
   return new ExecutionResult<>(futures,toFlush);
