@@ -1,0 +1,34 @@
+{
+  for (; ; ) {
+    EntryPosition entry=temporaryTable.get(key);
+    if (entry == null) {
+      entry=index.getInfo(key,serializedKey);
+    }
+    if (entry == null) {
+      if (trace) {
+        log.trace("Did not found position for " + key);
+      }
+      return false;
+    }
+ else {
+      FileProvider.Handle handle=fileProvider.getFile(entry.file);
+      if (handle == null) {
+        continue;
+      }
+      try {
+        int entryOffset=entry.offset < 0 ? ~entry.offset : entry.offset;
+        EntryHeader header=EntryRecord.readEntryHeader(handle,entryOffset);
+        if (header == null) {
+          throw new IOException("Cannot read " + entry.file + ":"+ entryOffset);
+        }
+        if (trace) {
+          log.tracef("SeqId on %d:%d is %d",entry.file,entry.offset,header.seqId());
+        }
+        return seqId < header.seqId();
+      }
+  finally {
+        handle.close();
+      }
+    }
+  }
+}

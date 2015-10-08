@@ -1,19 +1,23 @@
 {
   for (; ; ) {
-    Entry entry=table.putIfAbsent(key,new Entry(file,offset));
+    Entry lockedEntry=new Entry(-1,-1,true);
+    Entry entry=table.putIfAbsent(key,lockedEntry);
     if (entry != null) {
 synchronized (entry) {
         if (entry.isRemoved()) {
           continue;
         }
+        if (entry.isLocked()) {
+          throw new IllegalStateException("Unexpected double locking");
+        }
         if (entry.getFile() == prevFile && entry.getOffset() == prevOffset) {
           entry.update(file,offset);
         }
-        return;
+        return null;
       }
     }
  else {
-      return;
+      return lockedEntry;
     }
   }
 }

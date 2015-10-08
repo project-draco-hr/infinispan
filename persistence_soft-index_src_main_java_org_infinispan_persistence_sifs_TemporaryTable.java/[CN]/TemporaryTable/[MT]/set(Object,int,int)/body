@@ -1,10 +1,23 @@
 {
   for (; ; ) {
-    Entry entry=table.putIfAbsent(key,new Entry(file,offset));
+    Entry entry=table.putIfAbsent(key,new Entry(file,offset,false));
     if (entry != null) {
 synchronized (entry) {
         if (entry.isRemoved()) {
           continue;
+        }
+ else         if (entry.isLocked()) {
+          try {
+            if (trace) {
+              log.tracef("Waiting for lock on %s",key);
+            }
+            entry.wait();
+            continue;
+          }
+ catch (          InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Unexpected interruption!",e);
+          }
         }
         entry.update(file,offset);
         return;

@@ -3,7 +3,6 @@
     throw new IllegalStateException("This store is already started!");
   }
   started=true;
-  log.info("Starting using configuration " + configuration);
   temporaryTable=new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(),keyEquivalence);
   storeQueue=new SyncProcessingQueue<LogRequest>();
   indexQueue=new IndexQueue(configuration.indexSegments(),configuration.indexQueueLength(),keyEquivalence);
@@ -29,13 +28,12 @@
         long prevSeqId;
         while (seqId > (prevSeqId=maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId,seqId))         ;
         Object key=marshaller.objectFromByteBuffer(serializedKey);
-        if (trace)         log.tracef("Loaded %d:%d (seqId %d, expiration %d)",file,offset,seqId,expiration);
+        if (trace) {
+          log.tracef("Loaded %d:%d (seqId %d, expiration %d)",file,offset,seqId,expiration);
+        }
         try {
-          EntryPosition entry=temporaryTable.get(key);
-          if (entry == null) {
-            entry=index.getInfo(key,serializedKey);
-          }
-          if (entry != null && seqId < getSeqId(entry)) {
+          if (isSeqIdOld(seqId,key,serializedKey)) {
+            indexQueue.put(IndexRequest.foundOld(key,serializedKey,file,offset));
             return true;
           }
           temporaryTable.set(key,file,offset);

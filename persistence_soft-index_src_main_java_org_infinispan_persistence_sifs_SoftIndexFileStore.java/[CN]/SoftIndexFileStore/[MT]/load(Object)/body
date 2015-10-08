@@ -7,6 +7,7 @@
       EntryPosition entry=temporaryTable.get(key);
       if (entry != null) {
         if (entry.offset < 0) {
+          log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone",key,entry.file,entry.offset);
           return null;
         }
         FileProvider.Handle handle=fileProvider.getFile(entry.file);
@@ -17,6 +18,9 @@
               throw new IllegalStateException("Error reading from " + entry.file + ":"+ entry.offset+ " | "+ handle.getFileSize());
             }
             if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+              if (trace) {
+                log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired",key,entry.file,entry.offset);
+              }
               return null;
             }
             serializedKey=EntryRecord.readKey(handle,header,entry.offset);
@@ -28,8 +32,14 @@
             }
             if (header.valueLength() > 0) {
               serializedValue=EntryRecord.readValue(handle,header,entry.offset);
+              if (trace) {
+                log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded",key,entry.file,entry.offset);
+              }
             }
  else {
+              if (trace) {
+                log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log",key,entry.file,entry.offset);
+              }
               return null;
             }
             return marshalledEntryFactory.newMarshalledEntry(toBuffer(serializedKey),toBuffer(serializedValue),toBuffer(serializedMetadata));

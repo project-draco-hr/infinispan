@@ -4,7 +4,9 @@
   while (node.innerNodes != null) {
     int insertionPoint=node.getInsertionPoint(key);
     stack.push(new Path(node,insertionPoint));
-    if (trace)     log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)",System.identityHashCode(node),node.length(),node.innerNodes.length,insertionPoint);
+    if (trace) {
+      log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)",System.identityHashCode(node),node.length(),node.innerNodes.length,insertionPoint);
+    }
     node=node.innerNodes[insertionPoint].getIndexNode(root.segment);
   }
   IndexNode copy=node.copyWith(key,file,offset,size,overwriteHook,recordChange);
@@ -20,18 +22,24 @@
     if (result == null) {
       return;
     }
-    if (trace)     log.tracef("Created (1) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(node));
+    if (trace) {
+      log.tracef("Created (1) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(node));
+    }
     garbage.push(node);
     for (; ; ) {
       if (stack.isEmpty()) {
         IndexNode newRoot;
         if (result.newNodes.size() == 1) {
           newRoot=result.newNodes.get(0);
-          if (trace)           log.tracef("Setting new root %08x (index has shrunk)",System.identityHashCode(newRoot));
+          if (trace) {
+            log.tracef("Setting new root %08x (index has shrunk)",System.identityHashCode(newRoot));
+          }
         }
  else {
           newRoot=IndexNode.emptyWithInnerNodes(root.segment).copyWith(0,0,result.newNodes);
-          if (trace)           log.tracef("Setting new root %08x (index has grown)",System.identityHashCode(newRoot));
+          if (trace) {
+            log.tracef("Setting new root %08x (index has grown)",System.identityHashCode(newRoot));
+          }
         }
         newRoot.segment.setRoot(newRoot);
         return;
@@ -43,10 +51,14 @@
       }
       result=manageLength(path.node.segment,stack,path.node,copy,garbage);
       if (result == null) {
-        if (trace)         log.tracef("No more index updates required");
+        if (trace) {
+          log.tracef("No more index updates required");
+        }
         return;
       }
-      if (trace)       log.tracef("Created (2) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(path.node));
+      if (trace) {
+        log.tracef("Created (2) %d new nodes, GC %08x",result.newNodes.size(),System.identityHashCode(path.node));
+      }
       garbage.push(path.node);
     }
   }
