@@ -1,0 +1,15 @@
+{
+  resetStats();
+  assertNoHits();
+  for (  Cache c : caches()) {
+    ((RpcManagerImpl)c.getAdvancedCache().getRpcManager()).setStatisticsEnabled(true);
+  }
+  for (int i=0; i < NUM_WRITES; i++) {
+    remoteCache.put("k" + i,"v1");
+  }
+  int totalReplications=0;
+  for (  Cache c : caches()) {
+    totalReplications+=((RpcManagerImpl)c.getAdvancedCache().getRpcManager()).getReplicationCount();
+  }
+  assertEquals(NUM_WRITES,totalReplications);
+}
