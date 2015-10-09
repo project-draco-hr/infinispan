@@ -13,33 +13,30 @@
         ctx=icf.createSingleKeyNonTxInvocationContext();
       }
       PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getMetadata(),flags);
-      boolean success=false;
-      try {
-        ctx.setLockOwner(put.getKeyLockOwner());
-        interceptorChain.invoke(ctx,put);
-        success=true;
-      }
-  finally {
-        if (ctx.isInTxScope()) {
-          if (success) {
-            try {
-              transactionManager.commit();
-            }
- catch (            Throwable ex) {
-              log.errorf(ex,"Could not commit transaction created by state transfer of key %s",e.getKey());
-              if (transactionManager.getTransaction() != null) {
-                transactionManager.rollback();
-              }
-            }
-          }
- else {
-            transactionManager.rollback();
-          }
-        }
+      ctx.setLockOwner(put.getKeyLockOwner());
+      interceptorChain.invoke(ctx,put);
+      if (transactionManager != null) {
+        transactionManager.commit();
       }
     }
  catch (    Exception ex) {
-      log.problemApplyingStateForKey(ex.getMessage(),e.getKey(),ex);
+      if (!cache.getStatus().allowInvocations()) {
+        log.debugf("Cache %s is shutting down, stopping state transfer",cacheName);
+        break;
+      }
+ else {
+        log.problemApplyingStateForKey(ex.getMessage(),e.getKey(),ex);
+      }
+    }
+ finally {
+      try {
+        if (transactionManager != null && transactionManager.getTransaction() != null) {
+          transactionManager.rollback();
+        }
+      }
+ catch (      SystemException e1) {
+        log.errorRollingBack(e1);
+      }
     }
   }
   if (trace)   log.tracef("Finished applying chunk of segment %d of cache %s",segmentId,cacheName);
