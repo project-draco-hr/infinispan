@@ -1,0 +1,20 @@
+{
+  assertRemoteCacheManagerIsStarted();
+  if (segments != null && segments.isEmpty()) {
+    return new CloseableIterator<Entry<Object,Object>>(){
+      @Override public void close(){
+      }
+      @Override public boolean hasNext(){
+        return false;
+      }
+      @Override public Entry<Object,Object> next(){
+        throw new NoSuchElementException();
+      }
+    }
+;
+  }
+  byte[][] params=marshallParams(filterConverterParams);
+  RemoteCloseableIterator remoteCloseableIterator=new RemoteCloseableIterator(operationsFactory,filterConverterFactory,params,segments,batchSize,marshaller);
+  remoteCloseableIterator.start();
+  return remoteCloseableIterator;
+}
