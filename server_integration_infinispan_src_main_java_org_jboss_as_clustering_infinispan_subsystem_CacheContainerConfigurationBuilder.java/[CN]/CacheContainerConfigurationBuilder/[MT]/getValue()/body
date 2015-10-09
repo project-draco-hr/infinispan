@@ -53,11 +53,13 @@
       builder.site().localSite(relay.getSiteName());
     }
   }
-  StatePersistenceConfiguration statePersistence=(this.statePersistence != null) ? this.statePersistence.getValue() : null;
+  GlobalStateLocationConfiguration statePersistence=(this.globalStateLocation != null) ? this.globalStateLocation.getValue() : null;
   if (statePersistence != null) {
-    GlobalStatePersistenceConfigurationBuilder statePersistenceBuilder=builder.statePersistence().enable();
-    String location=pathManager.getValue().resolveRelativePathEntry(statePersistence.getPath(),statePersistence.getRelativeTo());
-    statePersistenceBuilder.location(location);
+    GlobalStateConfigurationBuilder statePersistenceBuilder=builder.globalState().enable();
+    String persistentLocation=pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(),statePersistence.getPersistenceRelativeTo());
+    statePersistenceBuilder.persistentLocation(persistentLocation);
+    String temporaryLocation=pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(),statePersistence.getPersistenceRelativeTo());
+    statePersistenceBuilder.temporaryLocation(temporaryLocation);
   }
   builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
   builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
