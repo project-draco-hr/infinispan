@@ -1,0 +1,13 @@
+{
+  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),transport.getViewId());
+  while (true) {
+    int nextViewId=transport.getViewId() + 1;
+    try {
+      return (Boolean)executeOnCoordinator(command,getGlobalTimeout());
+    }
+ catch (    SuspectException e) {
+      if (trace)       log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
+      transport.waitForView(nextViewId);
+    }
+  }
+}
