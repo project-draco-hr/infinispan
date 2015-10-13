@@ -5,8 +5,11 @@
   lcscsBuilder.async().modificationQueueSize(10).threadPoolSize(3);
   lcscsBuilder.async().shutdownTimeout(50);
   writer=new AdvancedAsyncCacheWriter(underlying);
-  writer.init(PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller));
+  InitializationContext ctx=PersistenceMockUtil.createContext(getClass().getSimpleName(),builder.build(),marshaller);
+  writer.init(ctx);
   writer.start();
+  underlying.init(ctx);
+  underlying.start();
   try {
     final CountDownLatch done=new CountDownLatch(1);
     underlying.lock.lock();
