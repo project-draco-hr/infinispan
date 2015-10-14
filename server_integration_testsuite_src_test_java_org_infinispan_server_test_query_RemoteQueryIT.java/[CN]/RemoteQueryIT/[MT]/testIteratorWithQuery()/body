@@ -1,0 +1,14 @@
+{
+  remoteCache.put(1,createUser1());
+  remoteCache.put(2,createUser2());
+  QueryFactory qf=Search.getQueryFactory(remoteCache);
+  Query simpleQuery=qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+  List<Map.Entry<Object,Object>> entries=new ArrayList<>(1);
+  try (CloseableIterator<Map.Entry<Object,Object>> iter=remoteCache.retrieveEntriesByQuery(simpleQuery,null,3)){
+    while (iter.hasNext()) {
+      entries.add(iter.next());
+    }
+  }
+   assertEquals(1,entries.size());
+  assertEquals("Cat",((User)entries.get(0).getValue()).getSurname());
+}
