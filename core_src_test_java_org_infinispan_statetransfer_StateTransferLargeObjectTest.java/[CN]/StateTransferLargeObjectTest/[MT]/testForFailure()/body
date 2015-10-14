@@ -1,26 +1,14 @@
 {
-  final int num=1000;
+  final int num=500;
   for (int i=0; i < num; i++) {
     BigObject bigObject=createBigObject(i,"prefix");
-    cache.put(i,bigObject);
+    expected.put(i,bigObject);
     c0.put(i,bigObject);
   }
-  for (int i=0; i < num; i++) {
-    assertTrue(c0.get(i) instanceof BigObject);
-    assertTrue(c1.get(i) instanceof BigObject);
-    assertTrue(c2.get(i) instanceof BigObject);
-    assertTrue(c3.get(i) instanceof BigObject);
-  }
-  log.info("Before stopping a cache!");
-  fork(new Runnable(){
-    @Override public void run(){
-      log.debug("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
-      c3.stop();
-      c3.getCacheManager().stop();
-      log.debug("Cache stopped async!");
-    }
-  }
-);
+  log.debug("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
+  c3.stop();
+  c3.getCacheManager().stop();
+  log.debug("Cache stopped async!");
   for (int i=0; i < num; i++) {
     log.debug("----Running a get on " + i);
     assertValue(i,c0.get(i));
