@@ -1,9 +1,10 @@
 {
   ComponentRegistry registry=cache.getAdvancedCache().getComponentRegistry();
-  VersionGenerator versionGenerator=registry.getComponent(VersionGenerator.class);
+  VersionGenerator versionGenerator=registry.getVersionGenerator();
   if (versionGenerator == null) {
     VersionGenerator newVersionGenerator=new NumericVersionGenerator().clustered(registry.getComponent(RpcManager.class) != null);
     registry.registerComponent(newVersionGenerator,VersionGenerator.class);
+    registry.cacheComponents();
     return newVersionGenerator.generateNew();
   }
  else {
