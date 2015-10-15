@@ -1,17 +1,8 @@
 {
-  GlobalComponentRegistry globalComponentRegistry=cacheManager.getGlobalComponentRegistry();
-  ComponentRegistry cacheComponentRegistry=globalComponentRegistry.getNamedComponentRegistry(cacheName);
-  if (cacheComponentRegistry != null) {
-    cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
-    cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
-    cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-    Cache<?,?> cache=cacheManager.getCache(cacheName,false);
-    if (cache != null) {
-      cache.stop();
-    }
-  }
-  globalComponentRegistry.removeCache(cacheName);
-  globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(cacheName);
-  globalComponentRegistry.getComponent(DependencyGraph.class,CACHE_DEPENDENCY_GRAPH).remove(cacheName);
+  persistenceManager.setClearOnStop(true);
+  cacheJmxRegistration.setUnregisterCacheMBean(true);
+  Cache<Object,Object> cache=cacheManager.getCache(cacheName);
+  cache.stop();
+  registry.removeCache(cacheName);
   return null;
 }
