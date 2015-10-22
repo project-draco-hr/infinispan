@@ -1,13 +1,10 @@
 {
-  HttpDelete del=new HttpDelete(path);
+  DefaultHttpRequest delete=new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.DELETE,path);
   try {
-    HttpResponse response=httpClient.execute(httpHost,del);
-    EntityUtils.consume(response.getEntity());
+    Channel ch=bootstrap.connect(configuration.host(),configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpResponseHandler()).channel();
+    ch.writeAndFlush(delete).sync().channel().closeFuture().sync();
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
-  }
- finally {
-    del.reset();
   }
 }

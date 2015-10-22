@@ -1,18 +1,28 @@
 {
-  HttpGet get=new HttpGet(path + "?global");
-  get.addHeader(HttpHeaders.ACCEPT,"text/plain");
+  Channel ch=null;
+  DefaultHttpRequest get=new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET,path + "?global");
+  get.headers().add(HttpHeaders.Names.ACCEPT,"text/plain");
   try {
-    HttpResponse response=httpClient.execute(httpHost,get);
-    HttpEntity entity=response.getEntity();
-    BufferedReader reader=new BufferedReader(new InputStreamReader(entity.getContent()));
-    int count=0;
-    while (reader.readLine() != null)     count++;
-    return count;
+    HttpResponseHandler handler=new HttpResponseHandler(true);
+    ch=bootstrap.connect(configuration.host(),configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength),handler).channel();
+    ch.writeAndFlush(get).sync().channel().closeFuture().sync();
+    try {
+      BufferedReader reader=null;
+      try {
+        reader=new BufferedReader(new InputStreamReader(new ByteBufInputStream(((FullHttpResponse)handler.getResponse()).content())));
+        int count=0;
+        while (reader.readLine() != null)         count++;
+        return count;
+      }
+  finally {
+        reader.close();
+      }
+    }
+  finally {
+      handler.getResponse().release();
+    }
   }
  catch (  Exception e) {
     throw log.errorLoadingRemoteEntries(e);
-  }
- finally {
-    get.releaseConnection();
   }
 }

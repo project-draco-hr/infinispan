@@ -1,36 +1,44 @@
 {
-  HttpGet get=new HttpGet(path + "?global");
-  get.addHeader(HttpHeaders.ACCEPT,"text/plain");
-  get.addHeader(HttpHeaders.ACCEPT_CHARSET,"UTF-8");
+  DefaultHttpRequest get=new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.GET,path + "?global");
+  get.headers().add(HttpHeaders.Names.ACCEPT,"text/plain");
+  get.headers().add(HttpHeaders.Names.ACCEPT_CHARSET,"UTF-8");
   try {
-    HttpResponse response=httpClient.execute(httpHost,get);
-    HttpEntity entity=response.getEntity();
+    HttpResponseHandler handler=new HttpResponseHandler(true);
+    Channel ch=bootstrap.connect(configuration.host(),configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength),handler).channel();
+    ch.writeAndFlush(get).sync().channel().closeFuture().sync();
     int batchSize=1000;
     ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
     final TaskContext taskContext=new TaskContextImpl();
-    BufferedReader reader=new BufferedReader(new InputStreamReader(entity.getContent(),"UTF-8"));
-    Set<Object> entries=new HashSet<Object>(batchSize);
-    for (String stringKey=reader.readLine(); stringKey != null; stringKey=reader.readLine()) {
-      Object key=key2StringMapper.getKeyMapping(stringKey);
-      if (keyFilter == null || keyFilter.accept(key))       entries.add(key);
-      if (entries.size() == batchSize) {
-        final Set<Object> batch=entries;
-        entries=new HashSet<Object>(batchSize);
-        submitProcessTask(cacheLoaderTask,eacs,taskContext,batch,loadValue,loadMetadata);
+    try {
+      BufferedReader reader=new BufferedReader(new InputStreamReader(new ByteBufInputStream(((FullHttpResponse)handler.getResponse()).content()),"UTF-8"));
+      try {
+        Set<Object> entries=new HashSet<Object>(batchSize);
+        for (String stringKey=reader.readLine(); stringKey != null; stringKey=reader.readLine()) {
+          Object key=key2StringMapper.getKeyMapping(stringKey);
+          if (keyFilter == null || keyFilter.accept(key))           entries.add(key);
+          if (entries.size() == batchSize) {
+            final Set<Object> batch=entries;
+            entries=new HashSet<Object>(batchSize);
+            submitProcessTask(cacheLoaderTask,eacs,taskContext,batch,loadValue,loadMetadata);
+          }
+        }
+        if (!entries.isEmpty()) {
+          submitProcessTask(cacheLoaderTask,eacs,taskContext,entries,loadValue,loadMetadata);
+        }
+      }
+  finally {
+        reader.close();
+      }
+      eacs.waitUntilAllCompleted();
+      if (eacs.isExceptionThrown()) {
+        throw new PersistenceException("Execution exception!",eacs.getFirstException());
       }
     }
-    if (!entries.isEmpty()) {
-      submitProcessTask(cacheLoaderTask,eacs,taskContext,entries,loadValue,loadMetadata);
-    }
-    eacs.waitUntilAllCompleted();
-    if (eacs.isExceptionThrown()) {
-      throw new PersistenceException("Execution exception!",eacs.getFirstException());
+  finally {
+      handler.getResponse().release();
     }
   }
  catch (  Exception e) {
     throw log.errorLoadingRemoteEntries(e);
-  }
- finally {
-    get.reset();
   }
 }

@@ -1,14 +1,17 @@
 {
-  HttpDelete del=new HttpDelete(keyToUri(key));
+  DefaultHttpRequest delete=new DefaultHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.DELETE,keyToUri(key));
   try {
-    HttpResponse response=httpClient.execute(httpHost,del);
-    EntityUtils.consume(response.getEntity());
-    return isSuccessful(response.getStatusLine().getStatusCode());
+    HttpResponseHandler handler=new HttpResponseHandler(true);
+    Channel ch=bootstrap.connect(configuration.host(),configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength),handler).channel();
+    ch.writeAndFlush(delete).sync().channel().closeFuture().sync();
+    try {
+      return isSuccessful(handler.getResponse().getStatus().code());
+    }
+  finally {
+      handler.getResponse().release();
+    }
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
-  }
- finally {
-    del.reset();
   }
 }

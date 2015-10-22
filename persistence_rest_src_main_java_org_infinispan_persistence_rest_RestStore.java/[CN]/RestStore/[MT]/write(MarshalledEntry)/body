@@ -1,20 +1,19 @@
 {
-  HttpPut put=new HttpPut(keyToUri(entry.getKey()));
-  InternalMetadata metadata=entry.getMetadata();
-  if (metadata != null && metadata.expiryTime() > -1) {
-    put.addHeader(TIME_TO_LIVE_SECONDS,Long.toString(timeoutToSeconds(metadata.lifespan())));
-    put.addHeader(MAX_IDLE_TIME_SECONDS,Long.toString(timeoutToSeconds(metadata.maxIdle())));
-  }
   try {
     String contentType=metadataHelper.getContentType(entry);
-    put.setEntity(new ByteArrayEntity(marshall(contentType,entry),ContentType.create(contentType)));
-    HttpResponse response=httpClient.execute(httpHost,put);
-    EntityUtils.consume(response.getEntity());
+    ByteBuf content=Unpooled.wrappedBuffer(marshall(contentType,entry));
+    DefaultFullHttpRequest put=new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,HttpMethod.PUT,keyToUri(entry.getKey()),content);
+    put.headers().add("Content-Type",contentType);
+    put.headers().add("Content-Length",content.readableBytes());
+    InternalMetadata metadata=entry.getMetadata();
+    if (metadata != null && metadata.expiryTime() > -1) {
+      put.headers().add(TIME_TO_LIVE_SECONDS,Long.toString(timeoutToSeconds(metadata.lifespan())));
+      put.headers().add(MAX_IDLE_TIME_SECONDS,Long.toString(timeoutToSeconds(metadata.maxIdle())));
+    }
+    Channel ch=bootstrap.connect(configuration.host(),configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpResponseHandler()).channel();
+    ch.writeAndFlush(put).sync().channel().closeFuture().sync();
   }
  catch (  Exception e) {
     throw new PersistenceException(e);
-  }
- finally {
-    put.reset();
   }
 }
