@@ -1,0 +1,33 @@
+{
+  final String key=k(m);
+  final String value=v(m);
+  assertAllCachesEmpty();
+  setSitesStatus(false);
+  assertSiteStatusInAllCaches(XSiteAdminOperations.OFFLINE);
+  putInAllCache(key,value);
+  assertValueInAllCachesInPrimarySite(key,value);
+  assertCacheEmpty(1,0,null);
+  assertCacheEmpty(1,0,CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  assertCacheEmpty(2,0,CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  assertCacheEmpty(2,0,CacheType.BACKUP_TO_SITE_2.name());
+  extractGlobalComponent(site(0).cacheManagers().get(0),GlobalXSiteAdminOperations.class).pushState(siteName(1));
+  awaitXSiteStateTransfer();
+  assertSiteStatus(0,0,null,1,XSiteAdminOperations.ONLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_1_AND_2.name(),1,XSiteAdminOperations.ONLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_1_AND_2.name(),2,XSiteAdminOperations.OFFLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_2.name(),2,XSiteAdminOperations.OFFLINE);
+  assertValueInCache(1,null,key,value);
+  assertValueInCache(1,CacheType.BACKUP_TO_SITE_1_AND_2.name(),key,value);
+  assertCacheEmpty(2,0,CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  assertCacheEmpty(2,0,CacheType.BACKUP_TO_SITE_2.name());
+  extractGlobalComponent(site(0).cacheManagers().get(0),GlobalXSiteAdminOperations.class).pushState(siteName(2));
+  awaitXSiteStateTransfer();
+  assertSiteStatus(0,0,null,1,XSiteAdminOperations.ONLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_1_AND_2.name(),1,XSiteAdminOperations.ONLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_1_AND_2.name(),2,XSiteAdminOperations.ONLINE);
+  assertSiteStatus(0,0,CacheType.BACKUP_TO_SITE_2.name(),2,XSiteAdminOperations.ONLINE);
+  assertValueInCache(1,null,key,value);
+  assertValueInCache(1,CacheType.BACKUP_TO_SITE_1_AND_2.name(),key,value);
+  assertValueInCache(2,CacheType.BACKUP_TO_SITE_1_AND_2.name(),key,value);
+  assertValueInCache(2,CacheType.BACKUP_TO_SITE_2.name(),key,value);
+}

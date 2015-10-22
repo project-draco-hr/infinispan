@@ -1,0 +1,22 @@
+{
+  super.afterSitesCreated();
+  ConfigurationBuilder builder=newConfiguration();
+  builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+  defineInSite(site(0),CacheType.BACKUP_TO_SITE_2.name(),builder.build());
+  defineInSite(site(2),CacheType.BACKUP_TO_SITE_2.name(),newConfiguration().build());
+  builder=newConfiguration();
+  builder.sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+  builder.sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+  defineInSite(site(0),CacheType.BACKUP_TO_SITE_1_AND_2.name(),builder.build());
+  defineInSite(site(1),CacheType.BACKUP_TO_SITE_1_AND_2.name(),newConfiguration().build());
+  defineInSite(site(2),CacheType.BACKUP_TO_SITE_1_AND_2.name(),newConfiguration().build());
+  defineInSite(site(0),CacheType.NO_BACKUP.name(),newConfiguration().build());
+  site(0).waitForClusterToForm(null);
+  site(0).waitForClusterToForm(CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  site(0).waitForClusterToForm(CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  site(0).waitForClusterToForm(CacheType.BACKUP_TO_SITE_2.name());
+  site(1).waitForClusterToForm(null);
+  site(1).waitForClusterToForm(CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  site(2).waitForClusterToForm(CacheType.BACKUP_TO_SITE_1_AND_2.name());
+  site(2).waitForClusterToForm(CacheType.BACKUP_TO_SITE_2.name());
+}

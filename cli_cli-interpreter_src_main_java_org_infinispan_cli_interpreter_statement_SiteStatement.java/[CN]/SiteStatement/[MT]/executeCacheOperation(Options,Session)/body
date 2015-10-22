@@ -1,0 +1,51 @@
+{
+  Cache<Object,Object> cache=session.getCache(siteData != null ? siteData.getCacheName() : null);
+  String siteName=siteData != null ? siteData.getSiteName() : null;
+  XSiteAdminOperations xsiteAdmin=cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+  requireXSiteAdmin(xsiteAdmin,cache.getName());
+switch (option) {
+case STATUS:
+{
+      return new StringResult(siteName == null ? xsiteAdmin.status() : xsiteAdmin.siteStatus(siteName));
+    }
+case ONLINE:
+{
+    requireSiteName(siteName);
+    return new StringResult(xsiteAdmin.bringSiteOnline(siteName));
+  }
+case OFFLINE:
+{
+  requireSiteName(siteName);
+  return new StringResult(xsiteAdmin.takeSiteOffline(siteName));
+}
+case PUSH:
+{
+requireSiteName(siteName);
+return new StringResult(xsiteAdmin.pushState(siteName));
+}
+case CANCELPUSH:
+{
+requireSiteName(siteName);
+return new StringResult(xsiteAdmin.cancelPushState(siteName));
+}
+case CANCELRECEIVE:
+{
+requireSiteName(siteName);
+return new StringResult(xsiteAdmin.cancelReceiveState(siteName));
+}
+case PUSHSTATUS:
+{
+return new StringResult(prettyPrintMap(xsiteAdmin.getPushStateStatus()));
+}
+case CLEARPUSHSTATUS:
+{
+return new StringResult(xsiteAdmin.clearPushStateStatus());
+}
+case SENDINGSITE:
+{
+return new StringResult(xsiteAdmin.getSendingSiteName());
+}
+default :
+return EmptyResult.RESULT;
+}
+}

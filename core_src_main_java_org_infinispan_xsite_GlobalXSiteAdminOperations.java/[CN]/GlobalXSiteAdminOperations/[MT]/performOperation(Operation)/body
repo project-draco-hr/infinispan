@@ -1,0 +1,21 @@
+{
+  final Iterator<CacheXSiteAdminOperation> iterator=collectXSiteAdminOperation().iterator();
+  if (!iterator.hasNext()) {
+    return XSiteAdminOperations.SUCCESS;
+  }
+  StringBuilder builder=new StringBuilder();
+  while (iterator.hasNext()) {
+    CacheXSiteAdminOperation xsiteAdminOperation=iterator.next();
+    try {
+      String result=operation.execute(xsiteAdminOperation.xSiteAdminOperations);
+      builder.append(xsiteAdminOperation.cacheName).append(": ").append(result);
+      if (iterator.hasNext()) {
+        builder.append(CACHE_DELIMITER);
+      }
+    }
+ catch (    Exception e) {
+      builder.append("Exception on ").append(xsiteAdminOperation.cacheName).append(": ").append(e.getMessage());
+    }
+  }
+  return builder.length() == 0 ? XSiteAdminOperations.SUCCESS : builder.toString();
+}

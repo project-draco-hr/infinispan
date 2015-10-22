@@ -1,63 +1,12 @@
 {
-  Cache<Object,Object> cache=session.getCache(siteData != null ? siteData.getCacheName() : null);
-  String siteName=siteData != null ? siteData.getSiteName() : null;
-  XSiteAdminOperations xsiteAdmin=cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
-  if (xsiteAdmin == null) {
-    throw log.noBackupsForCache(cache.getName());
+  if (options.isEmpty()) {
+    return EmptyResult.RESULT;
   }
-  for (  Option opt : options) {
-switch (opt.toEnum(Options.class)) {
-case STATUS:
-{
-        String status=siteName == null ? xsiteAdmin.status() : xsiteAdmin.siteStatus(siteName);
-        return new StringResult(status);
-      }
-case ONLINE:
-{
-      if (siteName != null) {
-        return new StringResult(xsiteAdmin.bringSiteOnline(siteName));
-      }
- else {
-        throw log.siteNameNotSpecified();
-      }
-    }
-case OFFLINE:
-{
-    if (siteName != null) {
-      return new StringResult(xsiteAdmin.takeSiteOffline(siteName));
-    }
- else {
-      throw log.siteNameNotSpecified();
-    }
+  Options option=options.get(0).toEnum(Options.class);
+  if (isGlobalOption(option)) {
+    return executeContainerOperation(option,session);
   }
-case PUSH:
-{
-  requireSiteName(siteName);
-  return new StringResult(xsiteAdmin.pushState(siteName));
-}
-case CANCELPUSH:
-{
-requireSiteName(siteName);
-return new StringResult(xsiteAdmin.cancelPushState(siteName));
-}
-case CANCELRECEIVE:
-{
-requireSiteName(siteName);
-return new StringResult(xsiteAdmin.cancelReceiveState(siteName));
-}
-case PUSHSTATUS:
-{
-return new StringResult(prettyPrintMap(xsiteAdmin.getPushStateStatus()));
-}
-case CLEARPUSHSTATUS:
-{
-return new StringResult(xsiteAdmin.clearPushStateStatus());
-}
-case SENDINGSITE:
-{
-return new StringResult(xsiteAdmin.getSendingSiteName());
-}
-}
-}
-return EmptyResult.RESULT;
+ else {
+    return executeCacheOperation(option,session);
+  }
 }
