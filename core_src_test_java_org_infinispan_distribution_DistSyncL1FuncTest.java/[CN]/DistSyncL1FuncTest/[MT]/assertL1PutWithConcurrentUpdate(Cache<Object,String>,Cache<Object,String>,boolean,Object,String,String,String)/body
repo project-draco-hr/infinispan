@@ -1,6 +1,6 @@
 {
   CyclicBarrier barrier=new CyclicBarrier(2);
-  addBlockingInterceptorBeforeTx(nonOwnerCache,barrier,replace ? ReplaceCommand.class : PutKeyValueCommand.class);
+  BlockingInterceptor blockingInterceptor=addBlockingInterceptorBeforeTx(nonOwnerCache,barrier,replace ? ReplaceCommand.class : PutKeyValueCommand.class);
   try {
     Future<String> future=fork(new Callable<String>(){
       @Override public String call() throws Exception {
@@ -17,6 +17,7 @@
     }
 );
     barrier.await(5,TimeUnit.SECONDS);
+    blockingInterceptor.suspend(true);
     assertEquals(nonOwnerValue,ownerCache.put(key,updateValue));
     barrier.await(5,TimeUnit.SECONDS);
     assertEquals(originalValue,future.get(5,TimeUnit.SECONDS));
