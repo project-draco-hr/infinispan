@@ -1,15 +1,19 @@
 {
+  if (segments == null) {
+    segments=new ReplicatedConsistentHash.RangeSet(ch.getNumSegments());
+  }
   Map<Address,Set<Integer>> targets=new ConcurrentHashMap<>();
-  List<Address> addresses=ch.getMembers();
-  for (  Address address : addresses) {
-    if (address.equals(localAddress)) {
+  for (  Integer segment : segments) {
+    Address owner=ch.locatePrimaryOwnerForSegment(segment);
+    if (owner.equals(localAddress)) {
       continue;
     }
-    Set<Integer> theirSegments=ch.getPrimarySegmentsForOwner(address);
-    if (segments != null && theirSegments.retainAll(segments) && theirSegments.isEmpty()) {
-      continue;
+    Set<Integer> targetSegments=targets.get(owner);
+    if (targetSegments == null) {
+      targetSegments=new HashSet<>();
+      targets.put(owner,targetSegments);
     }
-    targets.put(address,theirSegments);
+    targetSegments.add(segment);
   }
   return targets;
 }
