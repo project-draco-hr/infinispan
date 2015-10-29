@@ -1,0 +1,20 @@
+{
+  this.noOfGroupingColumns=noOfGroupingColumns;
+  this.accumulators=accumulators != null && accumulators.length != 0 ? accumulators : null;
+  inRowLength=findInRowLength(noOfGroupingColumns,accumulators);
+  if (inRowLength == 0) {
+    throw new IllegalArgumentException("Must have at least one grouping or aggregated column");
+  }
+  outRowLength=noOfGroupingColumns + (accumulators != null ? accumulators.length : 0);
+  if (noOfGroupingColumns > 0) {
+    groups=new LinkedHashMap<GroupRowKey,Object[]>();
+    globalGroup=null;
+  }
+ else {
+    groups=null;
+    globalGroup=new Object[outRowLength];
+    for (    FieldAccumulator acc : accumulators) {
+      acc.init(globalGroup);
+    }
+  }
+}

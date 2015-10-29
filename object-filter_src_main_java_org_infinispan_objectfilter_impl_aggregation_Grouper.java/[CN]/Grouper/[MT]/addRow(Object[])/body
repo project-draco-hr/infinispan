@@ -1,37 +1,29 @@
 {
-  if (row.length != rowLength) {
+  if (row.length != inRowLength) {
     throw new IllegalArgumentException("Row length mismatch");
   }
-  if (groupFieldPositions != null) {
-    GroupRowKey groupRowKey=new GroupRowKey(row,groupFieldPositions);
+  if (noOfGroupingColumns > 0) {
+    GroupRowKey groupRowKey=new GroupRowKey(row);
     Object[] existingGroup=groups.get(groupRowKey);
     if (existingGroup == null) {
+      existingGroup=new Object[outRowLength];
+      System.arraycopy(row,0,existingGroup,0,noOfGroupingColumns);
       if (accumulators != null) {
         for (        FieldAccumulator acc : accumulators) {
-          acc.init(row);
+          acc.init(existingGroup);
         }
       }
-      groups.put(groupRowKey,row);
+      groups.put(groupRowKey,existingGroup);
     }
- else {
-      if (accumulators != null) {
-        for (        FieldAccumulator acc : accumulators) {
-          acc.update(row,existingGroup);
-        }
+    if (accumulators != null) {
+      for (      FieldAccumulator acc : accumulators) {
+        acc.update(row,existingGroup);
       }
     }
   }
  else {
-    if (globalGroup == null) {
-      globalGroup=row;
-      for (      FieldAccumulator acc : accumulators) {
-        acc.init(row);
-      }
-    }
- else {
-      for (      FieldAccumulator acc : accumulators) {
-        acc.update(row,globalGroup);
-      }
+    for (    FieldAccumulator acc : accumulators) {
+      acc.update(row,globalGroup);
     }
   }
 }

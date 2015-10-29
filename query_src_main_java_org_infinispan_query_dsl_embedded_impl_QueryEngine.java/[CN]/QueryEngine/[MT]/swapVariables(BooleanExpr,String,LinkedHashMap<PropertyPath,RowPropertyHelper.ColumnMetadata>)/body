@@ -46,12 +46,7 @@ class PropertyReplacer implements Visitor {
       RowPropertyHelper.ColumnMetadata c=columns.get(p);
       if (c == null) {
         Class<?> propertyType=propertyHelper.getPrimitivePropertyType(targetEntityName,aggregationExpr.getPropertyPath());
-        if (aggregationExpr.getAggregationType() == PropertyPath.AggregationType.AVG) {
-          propertyType=Double.class;
-        }
- else         if (aggregationExpr.getAggregationType() == PropertyPath.AggregationType.COUNT) {
-          propertyType=Long.class;
-        }
+        propertyType=FieldAccumulator.getOutputType(aggregationExpr.getAggregationType(),propertyType);
         int idx=columns.size();
         c=new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType);
         columns.put(p,c);
