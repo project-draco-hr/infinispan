@@ -1,0 +1,28 @@
+{
+  List<Object> unwrappedResults;
+  if (projectionSize > 0) {
+    unwrappedResults=new ArrayList<Object>(results.size() / projectionSize);
+    Iterator<WrappedMessage> it=results.iterator();
+    while (it.hasNext()) {
+      Object[] row=new Object[projectionSize];
+      for (int i=0; i < row.length; i++) {
+        row[i]=it.next().getValue();
+      }
+      unwrappedResults.add(row);
+    }
+  }
+ else {
+    unwrappedResults=new ArrayList<Object>(results.size());
+    for (    WrappedMessage r : results) {
+      try {
+        byte[] bytes=(byte[])r.getValue();
+        Object o=ProtobufUtil.fromWrappedByteArray(serializationContext,bytes);
+        unwrappedResults.add(o);
+      }
+ catch (      IOException e) {
+        throw new HotRodClientException(e);
+      }
+    }
+  }
+  return unwrappedResults;
+}

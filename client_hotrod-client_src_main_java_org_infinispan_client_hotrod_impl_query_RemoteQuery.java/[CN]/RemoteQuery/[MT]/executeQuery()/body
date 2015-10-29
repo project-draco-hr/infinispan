@@ -1,32 +1,7 @@
 {
   checkParameters();
-  List<Object> results;
   QueryOperation op=cache.getOperationsFactory().newQueryOperation(this);
   QueryResponse response=op.execute();
   totalResults=(int)response.getTotalResults();
-  if (response.getProjectionSize() > 0) {
-    results=new ArrayList<Object>(response.getResults().size() / response.getProjectionSize());
-    Iterator<WrappedMessage> it=response.getResults().iterator();
-    while (it.hasNext()) {
-      Object[] row=new Object[response.getProjectionSize()];
-      for (int i=0; i < response.getProjectionSize(); i++) {
-        row[i]=it.next().getValue();
-      }
-      results.add(row);
-    }
-  }
- else {
-    results=new ArrayList<Object>(response.getResults().size());
-    for (    WrappedMessage r : response.getResults()) {
-      try {
-        byte[] bytes=(byte[])r.getValue();
-        Object o=ProtobufUtil.fromWrappedByteArray(serializationContext,bytes);
-        results.add(o);
-      }
- catch (      IOException e) {
-        throw new HotRodClientException(e);
-      }
-    }
-  }
-  return results;
+  return unwrapResults(response.getProjectionSize(),response.getResults());
 }
