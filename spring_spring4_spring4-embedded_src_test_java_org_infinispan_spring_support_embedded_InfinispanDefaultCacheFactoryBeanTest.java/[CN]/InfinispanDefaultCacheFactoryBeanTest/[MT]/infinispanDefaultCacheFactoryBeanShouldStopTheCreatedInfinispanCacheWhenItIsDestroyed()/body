@@ -1,0 +1,18 @@
+{
+  final InfinispanDefaultCacheFactoryBean<Object,Object> objectUnderTest=new InfinispanDefaultCacheFactoryBean<Object,Object>();
+  TestingUtil.withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+    @Override public void call(){
+      try {
+        objectUnderTest.setInfinispanCacheContainer(cm);
+        objectUnderTest.afterPropertiesSet();
+        final Cache<Object,Object> cache=objectUnderTest.getObject();
+        objectUnderTest.destroy();
+        AssertJUnit.assertEquals("InfinispanDefaultCacheFactoryBean should have stopped the created Infinispan cache when being destroyed. " + "However, the created Infinispan is not yet terminated.",ComponentStatus.TERMINATED,cache.getStatus());
+      }
+ catch (      Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+);
+}
