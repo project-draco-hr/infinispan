@@ -1,0 +1,17 @@
+{
+  byte[] keyBytes="my-key".getBytes();
+  Cache<byte[],String> cache=getCache(mode,keyBytes);
+  cache.put(keyBytes,"my-value");
+  TransactionManager tm=TestingUtil.extractComponent(cache,TransactionManager.class);
+  tm.begin();
+  try {
+    byte[] keyBytes2="my-key".getBytes();
+    cache.put(keyBytes2,"filtered-value");
+    Iterator<CacheEntry<byte[],String>> iterator=cache.getAdvancedCache().cacheEntrySet().stream().iterator();
+    Map<byte[],String> results=mapFromIterator(iterator);
+    assertEquals(1,results.size());
+  }
+  finally {
+    tm.rollback();
+  }
+}
