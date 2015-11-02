@@ -1,0 +1,17 @@
+{
+  for (int i=0; i < filterContexts.length; i++) {
+    FilterEvalContext filterEvalContext=filterContexts[i];
+    FilterSubscriptionImpl s=filterSubscriptions.get(i);
+    if (filterEvalContext == null) {
+      if (s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
+        filterEvalContext=new FilterEvalContext(this,s);
+      }
+ else {
+        continue;
+      }
+    }
+    if (filterEvalContext.isMatching()) {
+      s.getCallback().onFilterResult(userContext,instance,eventType,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
+    }
+  }
+}
