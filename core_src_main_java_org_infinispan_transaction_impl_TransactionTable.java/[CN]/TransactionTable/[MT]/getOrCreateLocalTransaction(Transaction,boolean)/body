@@ -1,6 +1,9 @@
 {
   LocalTransaction current=localTransactions.get(transaction);
   if (current == null) {
+    if (!running) {
+      throw log.cacheIsStopping(cacheName);
+    }
     Address localAddress=rpcManager != null ? rpcManager.getTransport().getAddress() : null;
     GlobalTransaction tx=txFactory.newGlobalTransaction(localAddress,false);
     current=txFactory.newLocalTransaction(transaction,tx,implicitTransaction,currentTopologyId);

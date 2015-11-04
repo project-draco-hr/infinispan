@@ -1,6 +1,9 @@
 {
   RemoteTransaction remoteTransaction=remoteTransactions.get(globalTx);
   if (remoteTransaction != null)   return remoteTransaction;
+  if (!running) {
+    throw log.cacheIsStopping(cacheName);
+  }
   remoteTransaction=modifications == null ? txFactory.newRemoteTransaction(globalTx,topologyId) : txFactory.newRemoteTransaction(modifications,globalTx,topologyId);
   RemoteTransaction existing=remoteTransactions.putIfAbsent(globalTx,remoteTransaction);
   if (existing != null) {
