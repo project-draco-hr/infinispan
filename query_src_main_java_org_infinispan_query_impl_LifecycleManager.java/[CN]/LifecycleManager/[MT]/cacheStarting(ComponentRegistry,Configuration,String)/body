@@ -1,10 +1,13 @@
 {
-  cr.registerComponent(new ReflectionMatcher(null),ReflectionMatcher.class);
-  if (cfg.indexing().index().isEnabled()) {
-    log.registeringQueryInterceptor();
-    SearchIntegrator searchFactory=getSearchFactory(cfg.indexing().properties(),cr);
-    createQueryInterceptorIfNeeded(cr,cfg,searchFactory);
-    EmbeddedCacheManager cacheManager=cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-    addCacheDependencyIfNeeded(cacheName,cacheManager,cfg.indexing().properties());
+  InternalCacheRegistry icr=cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+  if (!icr.isInternalCache(cacheName)) {
+    cr.registerComponent(new ReflectionMatcher(null),ReflectionMatcher.class);
+    if (cfg.indexing().index().isEnabled()) {
+      log.registeringQueryInterceptor();
+      SearchIntegrator searchFactory=getSearchFactory(cfg.indexing().properties(),cr);
+      createQueryInterceptorIfNeeded(cr,cfg,searchFactory);
+      EmbeddedCacheManager cacheManager=cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
+      addCacheDependencyIfNeeded(cacheName,cacheManager,cfg.indexing().properties());
+    }
   }
 }

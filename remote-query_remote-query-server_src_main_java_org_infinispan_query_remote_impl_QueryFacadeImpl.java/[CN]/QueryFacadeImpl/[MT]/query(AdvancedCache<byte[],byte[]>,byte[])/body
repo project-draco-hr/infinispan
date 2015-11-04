@@ -1,12 +1,11 @@
 {
+  RemoteQueryEngine queryEngine=SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryEngine.class);
+  if (queryEngine == null) {
+    throw log.queryingNotEnabled(cache.getName());
+  }
+  SerializationContext serCtx=ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
   try {
-    SerializationContext serCtx=ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
     QueryRequest request=ProtobufUtil.fromByteArray(serCtx,query,0,query.length,QueryRequest.class);
-    Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(cache);
-    boolean isIndexed=cacheConfiguration.indexing().index().isEnabled();
-    boolean isCompatMode=cacheConfiguration.compatibility().enabled();
-    SearchManager searchManager=isIndexed ? Search.getSearchManager(cache) : null;
-    RemoteQueryEngine queryEngine=new RemoteQueryEngine(cache,searchManager,isCompatMode,serCtx);
     long startOffset=request.getStartOffset() == null ? -1 : request.getStartOffset();
     int maxResults=request.getMaxResults() == null ? -1 : request.getMaxResults();
     Map<String,Object> namedParameters=getNamedParameters(request);
