@@ -1,0 +1,38 @@
+{
+  int len=s.length();
+  StringBuilder out=new StringBuilder(len);
+  for (int x=0; x < len; x++) {
+    char ch=s.charAt(x);
+    if (ch == '\\') {
+      ch=s.charAt(++x);
+      if (ch == 'u') {
+        int value=0;
+        for (int i=0; i < 4; i++) {
+          ch=s.charAt(++x);
+          if (ch >= '0' && ch <= '9') {
+            value=(value << 4) + ch - '0';
+          }
+ else           if (ch >= 'a' && ch <= 'f') {
+            value=(value << 4) + 10 + ch - 'a';
+          }
+ else           if (ch >= 'A' && ch <= 'F') {
+            value=(value << 4) + 10 + ch - 'A';
+          }
+ else           throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
+        }
+        out.append((char)value);
+      }
+ else {
+        if (ch == 't')         ch='\t';
+ else         if (ch == 'r')         ch='\r';
+ else         if (ch == 'n')         ch='\n';
+ else         if (ch == 'f')         ch='\f';
+        out.append(ch);
+      }
+    }
+ else {
+      out.append(ch);
+    }
+  }
+  return out.toString();
+}

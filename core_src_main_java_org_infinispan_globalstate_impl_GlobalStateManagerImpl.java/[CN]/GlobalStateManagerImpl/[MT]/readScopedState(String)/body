@@ -1,0 +1,22 @@
+{
+  File stateFile=getStateFile(scope);
+  if (!stateFile.exists())   return Optional.empty();
+  try (BufferedReader r=new BufferedReader(new FileReader(stateFile))){
+    ScopedPersistentState state=new ScopedPersistentStateImpl(scope);
+    for (String line=r.readLine(); line != null; line=r.readLine()) {
+      if (!line.startsWith("#")) {
+        int eq=line.indexOf('=');
+        while (eq > 0 && line.charAt(eq - 1) == '\\') {
+          eq=line.indexOf('=',eq + 1);
+        }
+        if (eq > 0) {
+          state.setProperty(Util.unicodeUnescapeString(line.substring(0,eq).trim()),Util.unicodeUnescapeString(line.substring(eq + 1).trim()));
+        }
+      }
+    }
+    return Optional.of(state);
+  }
+ catch (  IOException e) {
+    throw log.failedReadingPersistentState(e,stateFile);
+  }
+}
