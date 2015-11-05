@@ -1,0 +1,10 @@
+{
+  String stateDirectory=TestingUtil.tmpDirectory(GlobalStateRestartTest.class.getSimpleName() + "_" + id);
+  if (clear)   TestingUtil.recursiveFileRemove(stateDirectory);
+  GlobalConfigurationBuilder global=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  global.globalState().enable().persistentLocation(stateDirectory);
+  ConfigurationBuilder config=new ConfigurationBuilder();
+  config.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
+  config.persistence().addSingleFileStore().location(stateDirectory);
+  addClusterEnabledCacheManager(global,config);
+}

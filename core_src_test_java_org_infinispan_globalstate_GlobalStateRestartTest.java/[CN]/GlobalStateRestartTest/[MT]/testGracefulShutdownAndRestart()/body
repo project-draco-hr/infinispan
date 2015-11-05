@@ -1,0 +1,22 @@
+{
+  waitForClusterToForm();
+  LocalTopologyManager ltm1=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
+  LocalTopologyManager ltm2=TestingUtil.extractGlobalComponent(manager(1),LocalTopologyManager.class);
+  PersistentUUID uuid1=ltm1.getPersistentUUID();
+  assertNotNull(uuid1);
+  PersistentUUID uuid2=ltm2.getPersistentUUID();
+  assertNotNull(uuid2);
+  String gsp0_location=manager(0).getCacheManagerConfiguration().globalState().persistentLocation();
+  String gsp1_location=manager(1).getCacheManagerConfiguration().globalState().persistentLocation();
+  TestingUtil.killCacheManagers(this.cacheManagers);
+  checkStateDirNotEmpty(gsp0_location);
+  checkStateDirNotEmpty(gsp1_location);
+  this.cacheManagers.clear();
+  createStatefulCacheManager("A",false);
+  createStatefulCacheManager("B",false);
+  waitForClusterToForm();
+  ltm1=TestingUtil.extractGlobalComponent(manager(0),LocalTopologyManager.class);
+  ltm2=TestingUtil.extractGlobalComponent(manager(1),LocalTopologyManager.class);
+  assertEquals(uuid1,ltm1.getPersistentUUID());
+  assertEquals(uuid2,ltm2.getPersistentUUID());
+}
