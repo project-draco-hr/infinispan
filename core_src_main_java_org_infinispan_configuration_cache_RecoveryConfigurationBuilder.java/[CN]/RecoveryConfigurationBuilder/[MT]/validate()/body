@@ -1,11 +1,20 @@
 {
-  if (!attributes.attribute(ENABLED).get() || transaction().useSynchronization()) {
+  if (!attributes.attribute(ENABLED).get()) {
     return;
   }
+  if (transaction().transactionMode() == TransactionMode.NON_TRANSACTIONAL) {
+    throw log.recoveryNotSupportedWithNonTxCache();
+  }
+  if (transaction().useSynchronization()) {
+    throw log.recoveryNotSupportedWithSynchronization();
+  }
+  if (transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
+    throw log.unavailableTotalOrderWithTxRecovery();
+  }
   if (!clustering().cacheMode().isSynchronous()) {
-    throw new CacheConfigurationException("Recovery not supported with Asynchronous " + clustering().cacheMode().friendlyCacheModeString() + " cache mode.");
+    throw log.recoveryNotSupportedWithAsync(clustering().cacheMode().friendlyCacheModeString());
   }
   if (!transaction().syncCommitPhase()) {
-    throw new CacheConfigurationException("Recovery not supported with asynchronous commit phase.");
+    throw log.recoveryNotSupportedWithAsyncCommit();
   }
 }
