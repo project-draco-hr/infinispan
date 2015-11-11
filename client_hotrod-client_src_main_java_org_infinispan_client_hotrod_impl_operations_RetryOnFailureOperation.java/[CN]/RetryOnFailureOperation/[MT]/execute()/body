@@ -3,6 +3,7 @@
   Set<SocketAddress> failedServers=null;
   while (shouldRetry(retryCount)) {
     Transport transport=null;
+    String currentClusterName=transportFactory.getCurrentClusterName();
     try {
       transport=getTransport(retryCount,failedServers);
       return executeOperation(transport);
@@ -11,13 +12,13 @@
       SocketAddress address=te.getServerAddress();
       failedServers=updateFailedServers(address,failedServers);
       invalidateTransport(transport,address);
-      retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,te);
+      retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,currentClusterName,te);
     }
 catch (    RemoteIllegalLifecycleStateException e) {
       SocketAddress address=e.getServerAddress();
       failedServers=updateFailedServers(address,failedServers);
       invalidateTransport(transport,address);
-      retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,e);
+      retryCount=logTransportErrorAndThrowExceptionIfNeeded(retryCount,currentClusterName,e);
     }
 catch (    RemoteNodeSuspectException e) {
       logErrorAndThrowExceptionIfNeeded(retryCount,e);

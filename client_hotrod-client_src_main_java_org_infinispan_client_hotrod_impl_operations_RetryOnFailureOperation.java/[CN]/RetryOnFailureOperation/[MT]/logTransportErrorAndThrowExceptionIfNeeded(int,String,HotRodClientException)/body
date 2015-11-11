@@ -1,0 +1,31 @@
+{
+  String message="Exception encountered. Retry %d out of %d";
+  if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
+    ClusterSwitchStatus status=transportFactory.trySwitchCluster(failedClusterName,cacheName);
+switch (status) {
+case SWITCHED:
+      triedCompleteRestart=true;
+    return -1;
+case NOT_SWITCHED:
+  if (!triedCompleteRestart) {
+    log.debug("Cluster might have completely shut down, try resetting transport layer and topology id",e);
+    transportFactory.reset(cacheName);
+    triedCompleteRestart=true;
+    return -1;
+  }
+ else {
+    log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(),e);
+    throw e;
+  }
+case IN_PROGRESS:
+log.trace("Cluster switch in progress, retry operation without increasing retry count");
+return i - 1;
+default :
+throw new IllegalStateException("Unknown cluster switch status: " + status);
+}
+}
+ else {
+log.tracef(e,message,i,transportFactory.getMaxRetries());
+return i;
+}
+}

@@ -1,14 +1,15 @@
 {
-  final AtomicInteger clientTopologyId=TestingUtil.extractField(remoteCacheManager,"defaultCacheTopologyId");
-  final int topologyIdBeforeJoin=clientTopologyId.get();
+  TcpTransportFactory transportFactory=TestingUtil.extractField(remoteCacheManager,"transportFactory");
+  final int topologyIdBeforeJoin=transportFactory.getTopologyId(new byte[]{});
   log.tracef("Starting test with client topology id %d",topologyIdBeforeJoin);
   EmbeddedCacheManager cm5=addClusterEnabledCacheManager(buildConfiguration());
   HotRodServer hotRodServer5=HotRodClientTestingUtil.startHotRodServer(cm5);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      log.tracef("Client topology id is %d, waiting for it to become %d",clientTopologyId.get(),topologyIdBeforeJoin + 2);
+      int topologyId=transportFactory.getTopologyId(new byte[]{});
+      log.tracef("Client topology id is %d, waiting for it to become %d",topologyId,topologyIdBeforeJoin + 2);
       remoteCache.put("k","v");
-      return clientTopologyId.get() >= topologyIdBeforeJoin + 2;
+      return topologyId >= topologyIdBeforeJoin + 2;
     }
   }
 );
@@ -21,9 +22,10 @@
   TestingUtil.killCacheManagers(cm5);
   eventually(new Condition(){
     @Override public boolean isSatisfied() throws Exception {
-      log.tracef("Client topology id is %d, waiting for it to become %d",clientTopologyId.get(),topologyIdBeforeJoin + 4);
+      int topologyId=transportFactory.getTopologyId(new byte[]{});
+      log.tracef("Client topology id is %d, waiting for it to become %d",topologyId,topologyIdBeforeJoin + 4);
       remoteCache.put("k","v");
-      return clientTopologyId.get() >= topologyIdBeforeJoin + 4;
+      return topologyId >= topologyIdBeforeJoin + 4;
     }
   }
 );
