@@ -41,12 +41,12 @@
   Query query=qf.from(UserPB.class).having("age").lte(Expression.param("ageParam")).toBuilder().select("age").build().setParameter("ageParam",32);
   ClientEntryListener listener=new ClientEntryListener(serCtx);
   ClientEvents.addClientQueryListener(remoteCache,listener,query);
-  assertEquals(3,listener.createEvents.size());
+  expectElementsInQueue(listener.createEvents,3);
   user3.setAge(40);
   remoteCache.put("user_" + user1.getId(),user1);
   remoteCache.put("user_" + user2.getId(),user2);
   remoteCache.put("user_" + user3.getId(),user3);
   assertEquals(3,remoteCache.size());
-  assertEquals(2,listener.modifyEvents.size());
+  expectElementsInQueue(listener.modifyEvents,2);
   remoteCache.removeClientListener(listener);
 }
