@@ -1,10 +1,11 @@
 {
   if (trace)   log.tracef("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",segmentId,cacheName,sender,cacheEntries.size());
   EnumSet<Flag> flags=EnumSet.of(PUT_FOR_STATE_TRANSFER,CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_OWNERSHIP_CHECK,SKIP_XSITE_BACKUP);
+  boolean transactional=transactionManager != null;
   for (  InternalCacheEntry e : cacheEntries) {
     try {
       InvocationContext ctx;
-      if (transactionManager != null) {
+      if (transactional) {
         transactionManager.begin();
         ctx=icf.createInvocationContext(transactionManager.getTransaction(),true);
         ((TxInvocationContext)ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
@@ -30,12 +31,11 @@
     }
  finally {
       try {
-        if (transactionManager != null && transactionManager.getTransaction() != null) {
+        if (transactional && transactionManager.getTransaction() != null) {
           transactionManager.rollback();
         }
       }
  catch (      SystemException e1) {
-        log.errorRollingBack(e1);
       }
     }
   }
