@@ -1,13 +1,16 @@
 {
-  ClientListener l=listener.getClass().getAnnotation(ClientListener.class);
+  ClientListener l=ReflectionUtil.getAnnotation(listener.getClass(),ClientListener.class);
+  if (l == null) {
+    throw log.missingClientListenerAnnotation(listener.getClass().getName());
+  }
   if (!l.useRawData()) {
-    throw new IllegalArgumentException("The client listener must use raw data");
+    throw log.clientListenerMustUseRawData(listener.getClass().getName());
   }
   if (!l.filterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
-    throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' filter factory");
+    throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
   }
   if (!l.converterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
-    throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
+    throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
   }
   Object[] factoryParams=makeFactoryParams(query);
   remoteCache.addClientListener(listener,factoryParams,null);
