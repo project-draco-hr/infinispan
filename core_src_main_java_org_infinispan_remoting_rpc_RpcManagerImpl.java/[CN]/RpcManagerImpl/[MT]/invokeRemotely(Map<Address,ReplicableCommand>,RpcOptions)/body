@@ -4,14 +4,7 @@
   Map<Address,ReplicableCommand> replacedCommands=null;
   for (  Map.Entry<Address,ReplicableCommand> entry : rpcs.entrySet()) {
     ReplicableCommand rpc=entry.getValue();
-    if (rpc instanceof TopologyAffectedCommand) {
-      TopologyAffectedCommand topologyAffectedCommand=(TopologyAffectedCommand)rpc;
-      if (topologyAffectedCommand.getTopologyId() == -1) {
-        int currentTopologyId=stateTransferManager.getCacheTopology().getTopologyId();
-        if (trace)         log.tracef("Topology id missing on command %s, setting it to %d",rpc,currentTopologyId);
-        topologyAffectedCommand.setTopologyId(currentTopologyId);
-      }
-    }
+    setTopologyId(rpc);
     if (!(rpc instanceof CacheRpcCommand)) {
       rpc=cf.buildSingleRpcCommand(rpc);
       if (replacedCommands == null) {
