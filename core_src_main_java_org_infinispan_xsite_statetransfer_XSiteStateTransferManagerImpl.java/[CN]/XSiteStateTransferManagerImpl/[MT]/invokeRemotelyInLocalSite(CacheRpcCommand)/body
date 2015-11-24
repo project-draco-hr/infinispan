@@ -4,6 +4,6 @@
   final Future<Response> localFuture=asyncExecutor.submit(LocalInvocation.newInstance(responseGenerator,command,commandsFactory,rpcManager.getAddress()));
   final Map<Address,Response> responseMap=new HashMap<>();
   responseMap.put(rpcManager.getAddress(),localFuture.get());
-  responseMap.putAll(remoteFuture.get());
+  responseMap.putAll(CompletableFutures.await(remoteFuture));
   return responseMap;
 }
