@@ -1,19 +1,25 @@
 {
   if (flags == null || flags.length == 0)   return this;
  else {
-    final List<Flag> flagsToAdd=Arrays.asList(flags);
-    if (this.flags != null && this.flags.containsAll(flagsToAdd)) {
+    boolean containsAll;
+    if (this.flags != null) {
+      containsAll=true;
+      for (      Flag flag : flags) {
+        if (!this.flags.contains(flag)) {
+          containsAll=false;
+        }
+      }
+    }
+ else {
+      containsAll=false;
+    }
+    if (containsAll) {
       return this;
     }
  else {
-      if (this.flags == null) {
-        return new DecoratedCache<K,V>(this.cacheImplementation,this.classLoader.get(),EnumSet.copyOf(flagsToAdd));
-      }
- else {
-        EnumSet<Flag> newFlags=EnumSet.copyOf(this.flags);
-        newFlags.addAll(flagsToAdd);
-        return new DecoratedCache<K,V>(this.cacheImplementation,this.classLoader.get(),newFlags);
-      }
+      EnumSet<Flag> newFlags=this.flags != null ? EnumSet.copyOf(this.flags) : EnumSet.noneOf(Flag.class);
+      Collections.addAll(newFlags,flags);
+      return new DecoratedCache<K,V>(this.cacheImplementation,this.classLoader.get(),newFlags);
     }
   }
 }
