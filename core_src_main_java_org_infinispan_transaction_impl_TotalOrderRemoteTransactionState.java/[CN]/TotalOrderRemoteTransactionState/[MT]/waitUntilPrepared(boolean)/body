@@ -1,25 +1,25 @@
 {
   boolean result;
   State state=commit ? State.COMMIT_ONLY : State.ROLLBACK_ONLY;
-  if (log.isTraceEnabled()) {
+  if (trace) {
     log.tracef("[%s] Current status is %s, setting status to: %s",globalTransaction.globalId(),transactionState,state);
   }
   transactionState.add(state);
   if (transactionState.contains(State.PREPARED)) {
     result=true;
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("[%s] Transaction is PREPARED",globalTransaction.globalId());
     }
   }
  else   if (transactionState.contains(State.PREPARING)) {
     wait();
     result=true;
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("[%s] Transaction was in PREPARING state but now it is prepared",globalTransaction.globalId());
     }
   }
  else {
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("[%s] Transaction is not delivered yet",globalTransaction.globalId());
     }
     result=false;

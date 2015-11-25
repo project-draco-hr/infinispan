@@ -10,7 +10,7 @@
     final boolean sharedTmpCacheUsed=reduceCommand.isUseIntermediateSharedCache();
     MapReduceTaskLifecycleService taskLifecycleService=MapReduceTaskLifecycleService.getInstance();
     log.tracef("For m/r task %s invoking %s at %s",taskId,reduceCommand,cdl.getAddress());
-    long start=log.isTraceEnabled() ? timeService.time() : 0;
+    long start=trace ? timeService.time() : 0;
     try {
       Cache<IntermediateKey<KOut>,List<VOut>> cache=cacheManager.getCache(reduceCommand.getCacheName());
       taskLifecycleService.onPreExecute(reducer,cache);
@@ -31,7 +31,7 @@
 );
     }
   finally {
-      if (log.isTraceEnabled()) {
+      if (trace) {
         log.tracef("Reduce for task %s took %s milliseconds",reduceCommand.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
       }
       taskLifecycleService.onPostExecute(reducer);

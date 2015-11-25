@@ -8,7 +8,7 @@
   final CollectableCollector<KOut,VOut> collector=new SynchronizedCollector<KOut,VOut>(new DefaultCollector<KIn,VIn,KOut,VOut>(mcc,maxCSize));
   DataContainer<KIn,VIn> dc=cache.getAdvancedCache().getDataContainer();
   log.tracef("For m/r task %s invoking %s with input keys %s",mcc.getTaskId(),mcc,keys);
-  long start=log.isTraceEnabled() ? timeService.time() : 0;
+  long start=trace ? timeService.time() : 0;
   try {
     taskLifecycleService.onPreExecute(mapper,cache);
     if (inputKeysSpecified) {
@@ -36,7 +36,7 @@
     }
   }
   finally {
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("Map phase for task %s took %s milliseconds",mcc.getTaskId(),timeService.timeDuration(start,TimeUnit.MILLISECONDS));
     }
     taskLifecycleService.onPostExecute(mapper);

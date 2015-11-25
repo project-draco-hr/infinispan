@@ -33,7 +33,7 @@
       List<Address> members=manager.getMembers();
       if (members != null && members.size() > 1) {
         DistributedExecutionCompletionService decs=new DistributedExecutionCompletionService(distExecutorService);
-        if (log.isTraceEnabled()) {
+        if (trace) {
           log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",members,generatedId);
         }
         Callable callable=new ClusterListenerReplicateCallable(generatedId,ourAddress,filter,converter,l.sync());
@@ -57,7 +57,7 @@ catch (          ExecutionException e) {
         List<Address> membersAfter=manager.getMembers();
         for (        Address member : membersAfter) {
           if (!members.contains(member) && !member.equals(ourAddress)) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
               log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",member,generatedId);
             }
             extraCount++;
@@ -80,7 +80,7 @@ catch (          ExecutionException e) {
   }
   QueueingSegmentListener handler=segmentHandler.remove(generatedId);
   if (handler != null) {
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("Listener %s requests initial state for cache",generatedId);
     }
     try (CacheStream<CacheEntry<K,V>> entryStream=cache.getAdvancedCache().cacheEntrySet().stream()){
@@ -107,7 +107,7 @@ catch (          ExecutionException e) {
     for (    CacheEntry entry : entries) {
       raiseEventForInitialTransfer(generatedId,entry,l.clustered());
     }
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("Listener %s initial state for cache completed",generatedId);
     }
     handler.transferComplete();

@@ -1,17 +1,17 @@
 {
-  if (log.isTraceEnabled()) {
+  if (trace) {
     log.tracef("Received entry request for %s from node %s for segments %s",identifier,origin,segments);
   }
   startRetrievingValues(identifier,segments,keysToFilter,filter,converter,flags,new SegmentBatchHandler<K,C>(){
     @Override public void handleBatch(    UUID identifier,    boolean complete,    Set<Integer> completedSegments,    Set<Integer> inDoubtSegments,    Collection<CacheEntry<K,C>> entries){
       if (cache.getStatus() != ComponentStatus.RUNNING) {
-        if (log.isTraceEnabled()) {
+        if (trace) {
           log.tracef("Cache status is no longer running, all segments are now suspect");
         }
         inDoubtSegments.addAll(completedSegments);
         completedSegments.clear();
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
         log.tracef("Sending batch response for %s to origin %s with %s completed segments, %s in doubt segments and %s values",identifier,origin,completedSegments,inDoubtSegments,entries.size());
       }
       EntryResponseCommand<K,C> command=commandsFactory.buildEntryResponseCommand(identifier,completedSegments,inDoubtSegments,entries,null);

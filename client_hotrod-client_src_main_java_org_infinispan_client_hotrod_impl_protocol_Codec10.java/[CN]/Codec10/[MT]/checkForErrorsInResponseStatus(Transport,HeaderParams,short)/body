@@ -1,7 +1,6 @@
 {
   final Log localLog=getLog();
-  boolean isTrace=localLog.isTraceEnabled();
-  if (isTrace)   localLog.tracef("Received operation status: %#x",status);
+  if (trace)   localLog.tracef("Received operation status: %#x",status);
   try {
 switch (status) {
 case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
@@ -12,11 +11,11 @@ case HotRodConstants.COMMAND_TIMEOUT_STATUS:
 case HotRodConstants.UNKNOWN_VERSION_STATUS:
 {
         String msgFromServer=transport.readString();
-        if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+        if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
           localLog.tracef("Server-side timeout performing operation: %s",msgFromServer);
         }
         if (msgFromServer.contains("SuspectException") || msgFromServer.contains("SuspectedException")) {
-          if (isTrace)           localLog.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",params.messageId,msgFromServer);
+          if (trace)           localLog.tracef("A remote node was suspected while executing messageId=%d. " + "Check if retry possible. Message from server: %s",params.messageId,msgFromServer);
           throw new RemoteNodeSuspectException(msgFromServer,params.messageId,status);
         }
  else {

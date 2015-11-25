@@ -1,5 +1,5 @@
 {
-  if (log.isTraceEnabled()) {
+  if (trace) {
     log.tracef("Sending request to %s for identifier %s",route,identifier);
   }
   Address address=route.getKey();
@@ -13,7 +13,7 @@
       keysToFilter.addAll(valuesSeen);
     }
   }
-  if (log.isTraceEnabled()) {
+  if (trace) {
     if (keysToFilter.isEmpty()) {
       log.tracef("Using provided filter %s",status.filter);
     }
@@ -32,7 +32,7 @@
       Response response=responseMap.values().iterator().next();
       if (!response.isSuccessful()) {
         Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
-        if (log.isTraceEnabled()) {
+        if (trace) {
           log.tracef(cause,"Unsuccessful response received from node %s for %s, must resend to a new node!",route.getKey(),identifier);
         }
         atomicRemove(status.awaitingResponseFrom,address);
@@ -42,7 +42,7 @@
     return true;
   }
  catch (  SuspectException e) {
-    if (log.isTraceEnabled()) {
+    if (trace) {
       log.tracef("Request to %s for %s was suspect, must resend to a new node!",route,identifier);
     }
     atomicRemove(status.awaitingResponseFrom,address);
