@@ -20,6 +20,17 @@
   GlobalAuthorizationConfigurationBuilder authorizationBuilder=builder.security().authorization();
   if (authorization != null) {
     authorizationBuilder.enable();
+    if (authorization.getAuditLogger() != null) {
+      try {
+        authorizationBuilder.auditLogger(Class.forName(authorization.getAuditLogger(),true,loader).asSubclass(AuditLogger.class).newInstance());
+      }
+ catch (      Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+ else {
+      authorizationBuilder.auditLogger(new NullAuditLogger());
+    }
     if (authorization.getPrincipalMapper() != null) {
       try {
         authorizationBuilder.principalRoleMapper(Class.forName(authorization.getPrincipalMapper(),true,loader).asSubclass(PrincipalRoleMapper.class).newInstance());
