@@ -48,9 +48,6 @@
     interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
     interceptorChain.appendInterceptor(interceptor,false);
   }
-  if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
-    interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(),NotificationInterceptor.class),false);
-  }
   if (configuration.transaction().useEagerLocking()) {
     configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
   }
@@ -66,6 +63,9 @@
  else {
       interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(),NonTransactionalLockingInterceptor.class),false);
     }
+  }
+  if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
+    interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(),NotificationInterceptor.class),false);
   }
   if (configuration.sites().hasEnabledBackups() && !configuration.sites().disableBackups()) {
     if (transactionMode == TransactionMode.TRANSACTIONAL) {
