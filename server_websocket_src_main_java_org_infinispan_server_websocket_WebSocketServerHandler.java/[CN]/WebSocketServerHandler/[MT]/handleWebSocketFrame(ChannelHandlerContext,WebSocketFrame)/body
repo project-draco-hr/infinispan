@@ -14,13 +14,16 @@
       JsonObject payload=JsonObject.fromString(binaryData.toString(CharsetUtil.UTF_8));
       String opCode=(String)payload.get(OpHandler.OP_CODE);
       String cacheName=(String)payload.get(OpHandler.CACHE_NAME);
-      Cache<Object,Object> cache=getCache(cacheName);
-      OpHandler handler=operationHandlers.get(opCode);
-      if (handler != null) {
-        handler.handleOp(payload,cache,ctx);
+      Cache<Object,Object> cache=getCache(cacheName,ctx);
+      if (cache != null) {
+        OpHandler handler=operationHandlers.get(opCode);
+        if (handler != null) {
+          handler.handleOp(payload,cache,ctx);
+        }
       }
     }
  catch (    JsonConversionException e) {
+      ChannelUtils.pushErrorMessage("Could not handle Web Socket Frame, error while converting to JSON",ctx);
       log.error("Could not handle Web Socket Frame, error while converting to JSON",e);
     }
   }

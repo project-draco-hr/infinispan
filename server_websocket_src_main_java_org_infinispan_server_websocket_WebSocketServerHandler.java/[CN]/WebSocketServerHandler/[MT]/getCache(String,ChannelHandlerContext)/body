@@ -1,0 +1,29 @@
+{
+  if (cacheIgnoreAware.isCacheIgnored(cacheName)) {
+    log.info("Cache temporarily unavailable");
+    ChannelUtils.pushErrorMessage("Cache temporarily unavailable",ctx);
+    return null;
+  }
+  String key=cacheName;
+  Cache<Object,Object> cache;
+  if (key == null) {
+    key="";
+  }
+  cache=startedCaches.get(key);
+  if (cache == null) {
+synchronized (startedCaches) {
+      cache=startedCaches.get(key);
+      if (cache == null) {
+        if (cacheName != null) {
+          cache=cacheContainer.getCache(key);
+        }
+ else {
+          cache=cacheContainer.getCache();
+        }
+        startedCaches.put(key,cache);
+        cache.start();
+      }
+    }
+  }
+  return cache;
+}
