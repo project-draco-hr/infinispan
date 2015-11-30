@@ -1,2 +1,31 @@
 {
+  if (!cas(InternalState.INIT,InternalState.CHECKING)) {
+    return ActionStatus.NOT_READY;
+  }
+  final TxInvocationContext<?> context=createContext(state);
+  if (context == null) {
+    cas(InternalState.CHECKING,InternalState.CANCELED);
+    return ActionStatus.CANCELED;
+  }
+  final long timeout=state.getTimeout();
+  final List<Object> keysToLock=getAndUpdateFilteredKeys(state);
+  RemoteLockCommand command=state.getCommand();
+  if (command instanceof PrepareCommand && ((PrepareCommand)command).isRetriedCommand()) {
+    context.getCacheTransaction().cleanupBackupLocks();
+    keysToLock.removeAll(context.getLockedKeys());
+  }
+  if (keysToLock.isEmpty()) {
+    cas(InternalState.CHECKING,InternalState.READY);
+    return ActionStatus.READY;
+  }
+  PendingLockPromise promise=keysToLock.size() == 1 ? pendingLockManager.checkPendingTransactionsForKey(context,keysToLock.get(0),timeout,TimeUnit.MILLISECONDS) : pendingLockManager.checkPendingTransactionsForKeys(context,keysToLock,timeout,TimeUnit.MILLISECONDS);
+  if (promise == PendingLockPromise.NO_OP) {
+    cas(InternalState.CHECKING,InternalState.READY);
+    return ActionStatus.READY;
+  }
+  pendingLockPromise=promise;
+  if (!promise.isReady()) {
+    promise.addListener(this);
+  }
+  return check(state);
 }

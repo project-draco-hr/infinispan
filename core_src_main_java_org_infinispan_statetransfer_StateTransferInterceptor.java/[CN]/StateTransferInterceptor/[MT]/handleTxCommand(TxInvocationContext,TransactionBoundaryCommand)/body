@@ -22,6 +22,9 @@
     if (retryTopologyId > 0) {
       command.setTopologyId(retryTopologyId);
       waitForTransactionData(retryTopologyId);
+      if (command instanceof PrepareCommand) {
+        ((PrepareCommand)command).setRetriedCommand(true);
+      }
       log.tracef("Retrying command %s for topology %d",command,retryTopologyId);
       localResult=handleTxCommand(ctx,command);
     }

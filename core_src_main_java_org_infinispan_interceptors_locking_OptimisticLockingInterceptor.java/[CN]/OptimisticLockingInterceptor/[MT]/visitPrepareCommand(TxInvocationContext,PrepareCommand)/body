@@ -2,6 +2,10 @@
   final Collection<Object> keysToLock=command.getKeysToLock();
   ((TxInvocationContext<?>)ctx).addAllAffectedKeys(command.getAffectedKeys());
   if (!keysToLock.isEmpty()) {
+    if (command.isRetriedCommand() && ctx.isOriginLocal()) {
+      ctx.getCacheTransaction().cleanupBackupLocks();
+      keysToLock.removeAll(ctx.getLockedKeys());
+    }
     Collection<Object> lockedKeys=lockAllOrRegisterBackupLock(ctx,keysToLock,cacheConfiguration.locking().lockAcquisitionTimeout());
     if (!lockedKeys.isEmpty()) {
       for (      Object key : lockedKeys) {

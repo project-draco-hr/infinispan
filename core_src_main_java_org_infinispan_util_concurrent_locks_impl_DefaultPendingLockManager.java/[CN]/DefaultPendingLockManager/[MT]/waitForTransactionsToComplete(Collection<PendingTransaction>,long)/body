@@ -5,7 +5,7 @@
   for (  PendingTransaction tx : transactionsToCheck) {
     long remaining;
     if ((remaining=timeService.remainingTime(expectedEndTime,TimeUnit.MILLISECONDS)) > 0) {
-      if (!tx.cacheTransaction.waitForLockRelease(remaining)) {
+      if (!CompletableFutures.await(tx.keyReleased,remaining,TimeUnit.MILLISECONDS)) {
         return tx;
       }
     }

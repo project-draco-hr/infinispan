@@ -1,11 +1,7 @@
 {
   PendingLockPromiseImpl pendingLockPromise=pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
   if (pendingLockPromise != null) {
-    pendingLockPromise.await();
-    if (pendingLockPromise.hasTimedOut()) {
-      timeout(pendingLockPromise.getTimedOutTransaction(),ctx.getGlobalTransaction());
-    }
-    return pendingLockPromise.getRemainingTimeout();
+    awaitOn(pendingLockPromise,ctx.getGlobalTransaction());
   }
   final int txTopologyId=getTopologyId(ctx);
   if (txTopologyId != NO_PENDING_CHECK) {

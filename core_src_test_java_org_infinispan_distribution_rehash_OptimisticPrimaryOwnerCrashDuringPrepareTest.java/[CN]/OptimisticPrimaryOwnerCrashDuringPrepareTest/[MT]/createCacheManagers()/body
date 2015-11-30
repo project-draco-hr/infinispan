@@ -1,0 +1,9 @@
+{
+  ConfigurationBuilder config=new ConfigurationBuilder();
+  config.clustering().cacheMode(CacheMode.DIST_SYNC);
+  config.transaction().lockingMode(LockingMode.OPTIMISTIC);
+  config.clustering().hash().numSegments(1).consistentHashFactory(new ControlledConsistentHashFactory(1,0));
+  config.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).cacheStopTimeout(1,SECONDS);
+  createCluster(config,2);
+  waitForClusterToForm();
+}
