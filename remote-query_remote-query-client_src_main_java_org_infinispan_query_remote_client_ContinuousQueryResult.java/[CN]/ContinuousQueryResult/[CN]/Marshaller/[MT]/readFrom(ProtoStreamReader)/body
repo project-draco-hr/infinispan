@@ -1,6 +1,15 @@
 {
-  boolean joining=reader.readBoolean("joining");
+  boolean isJoining=reader.readBoolean("isJoining");
   byte[] key=reader.readBytes("key");
   byte[] value=reader.readBytes("value");
-  return new ContinuousQueryResult(joining,key,value);
+  List<WrappedMessage> projection=reader.readCollection("projection",new ArrayList<WrappedMessage>(),WrappedMessage.class);
+  Object[] p=null;
+  if (!projection.isEmpty()) {
+    p=new Object[projection.size()];
+    int j=0;
+    for (    WrappedMessage m : projection) {
+      p[j++]=m.getValue();
+    }
+  }
+  return new ContinuousQueryResult(isJoining,key,value,p);
 }

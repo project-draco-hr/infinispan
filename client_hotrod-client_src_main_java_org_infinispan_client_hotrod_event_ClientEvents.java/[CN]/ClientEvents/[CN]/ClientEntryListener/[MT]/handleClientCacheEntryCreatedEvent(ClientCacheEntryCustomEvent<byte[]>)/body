@@ -1,0 +1,11 @@
+{
+  ContinuousQueryResult cqr=ProtobufUtil.fromByteArray(serializationContext,event.getEventData(),ContinuousQueryResult.class);
+  Object key=ProtobufUtil.fromWrappedByteArray(serializationContext,cqr.getKey());
+  Object value=cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext,cqr.getValue()) : cqr.getProjection();
+  if (cqr.isJoining()) {
+    queryListener.resultJoining(key,value);
+  }
+ else {
+    queryListener.resultLeaving(key);
+  }
+}
