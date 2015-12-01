@@ -1,0 +1,19 @@
+{
+  InternalCacheEntry ice;
+  if (writeOperation) {
+    ice=container.peek(key);
+    if (ice != null && ice.canExpire()) {
+      long wallClockTime=timeService.wallClockTime();
+      if (ice.isExpired(wallClockTime)) {
+        ice=null;
+      }
+ else {
+        ice.touch(wallClockTime);
+      }
+    }
+  }
+ else {
+    ice=container.get(key);
+  }
+  return ice;
+}

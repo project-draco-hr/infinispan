@@ -1,12 +1,12 @@
 {
   final boolean isLocal=distributionManager == null || distributionManager.getLocality(key).isLocal();
   if (isLocal || ignoreOwnership) {
-    final InternalCacheEntry ice=container.get(key);
+    final InternalCacheEntry ice=innerGetFromContainer(key,writeOperation);
     if (trace)     log.tracef("Retrieved from container %s (ignoreOwnership=%s, isLocal=%s)",ice,ignoreOwnership,isLocal);
     return ice;
   }
  else   if (isL1Enabled) {
-    final InternalCacheEntry ice=container.get(key);
+    final InternalCacheEntry ice=innerGetFromContainer(key,writeOperation);
     final boolean isL1Entry=ice != null && ice.isL1Entry();
     if (trace)     log.tracef("Retrieved from container %s (L1 is enabled, isL1Entry=%s)",ice,isL1Entry);
     return isL1Entry ? ice : null;
