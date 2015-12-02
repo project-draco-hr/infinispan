@@ -10,6 +10,9 @@
         throw new IllegalStateException("Cannot have aggregate functions in GROUP BY clause");
       }
       if (!columns.containsKey(p)) {
+        if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
+          throw new ParsingException("The property path '" + p + "' cannot be used in the GROUP BY clause because it is multi-valued");
+        }
         Class<?> propertyType=propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(),p.getPath());
         int idx=columns.size();
         columns.put(p,new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType));

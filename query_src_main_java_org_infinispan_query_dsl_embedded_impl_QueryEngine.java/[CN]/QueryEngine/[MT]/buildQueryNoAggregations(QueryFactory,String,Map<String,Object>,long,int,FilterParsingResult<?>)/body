@@ -2,6 +2,15 @@
   if (parsingResult.hasGroupingOrAggregations()) {
     throw new IllegalArgumentException("The query must not use grouping or aggregation");
   }
+  if (parsingResult.getSortFields() != null) {
+    ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
+    for (    SortField sortField : parsingResult.getSortFields()) {
+      PropertyPath p=sortField.getPath();
+      if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
+        throw new ParsingException("The property path '" + p + "' cannot be used in the ORDER BY clause because it is multi-valued");
+      }
+    }
+  }
   BooleanExpr normalizedWhereClause=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
   if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
     return new EmptyResultQuery(queryFactory,cache,jpqlString,namedParameters,startOffset,maxResults);
