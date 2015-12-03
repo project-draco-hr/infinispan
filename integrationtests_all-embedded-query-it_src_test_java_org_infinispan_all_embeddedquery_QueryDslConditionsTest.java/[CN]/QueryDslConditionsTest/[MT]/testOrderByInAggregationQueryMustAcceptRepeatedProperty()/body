@@ -1,0 +1,11 @@
+{
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getUserImplClass()).select(Expression.avg("age"),Expression.property("name")).having("name").gt("A").toBuilder().groupBy("name").having(Expression.max("addresses.street")).gt("A").toBuilder().orderBy(Expression.min("addresses.street")).build();
+  List<Object[]> list=q.list();
+  assertEquals(2,list.size());
+  assertEquals(2,list.get(0).length);
+  assertNull(list.get(0)[0]);
+  assertEquals("Spider",list.get(0)[1]);
+  assertEquals(22.0,list.get(1)[0]);
+  assertEquals("John",list.get(1)[1]);
+}

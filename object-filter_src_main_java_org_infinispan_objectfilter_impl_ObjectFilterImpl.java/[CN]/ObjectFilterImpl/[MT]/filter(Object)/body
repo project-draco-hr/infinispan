@@ -5,8 +5,23 @@
   MatcherEvalContext<TypeMetadata,AttributeMetadata,AttributeId> matcherEvalContext=matcher.startSingleTypeContext(null,null,instance,filterSubscription.getMetadataAdapter());
   if (matcherEvalContext != null) {
     FilterEvalContext filterEvalContext=matcherEvalContext.initSingleFilterContext(filterSubscription);
+    if (acc != null) {
+      filterEvalContext.acc=acc;
+      for (      FieldAccumulator a : acc) {
+        if (a != null) {
+          a.init(filterEvalContext.getProjection());
+        }
+      }
+    }
     matcherEvalContext.process(root);
     if (filterEvalContext.isMatching()) {
+      if (acc != null) {
+        for (        FieldAccumulator a : acc) {
+          if (a != null) {
+            a.finish(filterEvalContext.getProjection());
+          }
+        }
+      }
       Object o=filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
       return new FilterResultImpl(o,filterEvalContext.getProjection(),filterEvalContext.getSortProjection());
     }

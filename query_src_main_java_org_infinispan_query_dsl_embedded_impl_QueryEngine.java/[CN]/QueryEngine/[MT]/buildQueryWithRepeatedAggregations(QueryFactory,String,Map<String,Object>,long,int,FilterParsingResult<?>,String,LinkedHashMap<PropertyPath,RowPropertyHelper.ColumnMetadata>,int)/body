@@ -1,0 +1,83 @@
+{
+  final ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
+  StringBuilder firstPhaseQuery=new StringBuilder();
+  firstPhaseQuery.append("FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
+  if (parsingResult.getWhereClause() != null) {
+    BooleanExpr normalizedWhereClause=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
+    if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
+      return new EmptyResultQuery(queryFactory,cache,jpqlString,namedParameters,startOffset,maxResults);
+    }
+    if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
+      firstPhaseQuery.append(' ').append(JPATreePrinter.printTree(normalizedWhereClause));
+    }
+  }
+  String firstPhaseQueryStr=firstPhaseQuery.toString();
+  BaseQuery baseQuery=buildQueryNoAggregations(queryFactory,firstPhaseQueryStr,namedParameters,-1,-1,parse(firstPhaseQueryStr,namedParameters));
+  List<FieldAccumulator> accumulators=new LinkedList<FieldAccumulator>();
+  RowPropertyHelper.ColumnMetadata[] _columns=new RowPropertyHelper.ColumnMetadata[columns.size()];
+  StringBuilder secondPhaseQuery=new StringBuilder();
+  secondPhaseQuery.append("SELECT ");
+  for (  PropertyPath p : columns.keySet()) {
+    RowPropertyHelper.ColumnMetadata c=columns.get(p);
+    _columns[c.getColumnIndex()]=c;
+    if (c.getColumnIndex() > 0) {
+      secondPhaseQuery.append(", ");
+    }
+    if (p.getAggregationType() != null) {
+      if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
+        FieldAccumulator acc=FieldAccumulator.makeAccumulator(p.getAggregationType(),c.getColumnIndex(),c.getColumnIndex(),c.getPropertyType());
+        accumulators.add(acc);
+      }
+ else {
+        accumulators.add(null);
+      }
+    }
+ else {
+      accumulators.add(null);
+    }
+    secondPhaseQuery.append(JPAQueryGenerator.DEFAULT_ALIAS).append('.').append(p.asStringPath());
+  }
+  secondPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
+  String secondPhaseQueryStr=secondPhaseQuery.toString();
+  FieldAccumulator[] _accumulators=accumulators.toArray(new FieldAccumulator[accumulators.size()]);
+  HybridQuery projectingAggregatingQuery=new HybridQuery(queryFactory,cache,secondPhaseQueryStr,namedParameters,getObjectFilter(getSecondPhaseMatcher(),secondPhaseQueryStr,namedParameters,_accumulators),-1,-1,baseQuery);
+  StringBuilder thirdPhaseQuery=new StringBuilder();
+  thirdPhaseQuery.append("SELECT ");
+  for (int i=0; i < parsingResult.getProjectedPaths().length; i++) {
+    PropertyPath p=parsingResult.getProjectedPaths()[i];
+    RowPropertyHelper.ColumnMetadata c=columns.get(p);
+    if (i != 0) {
+      thirdPhaseQuery.append(", ");
+    }
+    thirdPhaseQuery.append(c.getColumnName());
+  }
+  thirdPhaseQuery.append(" FROM Row ");
+  if (havingClause != null) {
+    thirdPhaseQuery.append(' ').append(havingClause);
+  }
+  if (parsingResult.getSortFields() != null) {
+    thirdPhaseQuery.append(" ORDER BY ");
+    boolean isFirst=true;
+    for (    SortField sortField : parsingResult.getSortFields()) {
+      if (isFirst) {
+        isFirst=false;
+      }
+ else {
+        thirdPhaseQuery.append(", ");
+      }
+      RowPropertyHelper.ColumnMetadata c=columns.get(sortField.getPath());
+      thirdPhaseQuery.append(c.getColumnName()).append(' ').append(sortField.isAscending() ? "ASC" : "DESC");
+    }
+  }
+  accumulators.clear();
+  for (  PropertyPath p : columns.keySet()) {
+    RowPropertyHelper.ColumnMetadata c=columns.get(p);
+    if (p.getAggregationType() != null) {
+      FieldAccumulator acc=FieldAccumulator.makeAccumulator(p.getAggregationType(),c.getColumnIndex(),c.getColumnIndex(),c.getPropertyType());
+      accumulators.add(acc);
+    }
+  }
+  _accumulators=accumulators.toArray(new FieldAccumulator[accumulators.size()]);
+  String thirdPhaseQueryStr=thirdPhaseQuery.toString();
+  return new AggregatingQuery(queryFactory,cache,thirdPhaseQueryStr,namedParameters,noOfGroupingColumns,_accumulators,getObjectFilter(new RowMatcher(_columns),thirdPhaseQueryStr,namedParameters,null),startOffset,maxResults,projectingAggregatingQuery);
+}

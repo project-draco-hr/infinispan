@@ -3,7 +3,7 @@
     throw log.groupingAndAggregationQueriesMustUseProjections();
   }
   LinkedHashMap<PropertyPath,RowPropertyHelper.ColumnMetadata> columns=new LinkedHashMap<PropertyPath,RowPropertyHelper.ColumnMetadata>();
-  ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
+  final ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
   if (parsingResult.getGroupBy() != null) {
     for (    PropertyPath p : parsingResult.getGroupBy()) {
       if (p.getAggregationType() != null) {
@@ -58,6 +58,11 @@
     }
     if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
       havingClause=JPATreePrinter.printTree(swapVariables(normalizedHavingClause,parsingResult.getTargetEntityName(),columns));
+    }
+  }
+  for (  PropertyPath p : columns.keySet()) {
+    if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
+      return buildQueryWithRepeatedAggregations(queryFactory,jpqlString,namedParameters,startOffset,maxResults,parsingResult,havingClause,columns,noOfGroupingColumns);
     }
   }
   LinkedHashMap<String,Integer> inColumns=new LinkedHashMap<String,Integer>();
@@ -133,7 +138,7 @@
     }
   }
   String firstPhaseQueryStr=firstPhaseQuery.toString();
-  Query baseQuery=buildQueryNoAggregations(queryFactory,firstPhaseQueryStr,namedParameters,-1,-1,parse(firstPhaseQueryStr,namedParameters));
+  BaseQuery baseQuery=buildQueryNoAggregations(queryFactory,firstPhaseQueryStr,namedParameters,-1,-1,parse(firstPhaseQueryStr,namedParameters));
   String secondPhaseQueryStr=secondPhaseQuery.toString();
-  return new AggregatingQuery(queryFactory,cache,secondPhaseQueryStr,namedParameters,noOfGroupingColumns,_accumulators,getObjectFilter(new RowMatcher(_columns),secondPhaseQueryStr,namedParameters),startOffset,maxResults,baseQuery);
+  return new AggregatingQuery(queryFactory,cache,secondPhaseQueryStr,namedParameters,noOfGroupingColumns,_accumulators,getObjectFilter(new RowMatcher(_columns),secondPhaseQueryStr,namedParameters,null),startOffset,maxResults,baseQuery);
 }
