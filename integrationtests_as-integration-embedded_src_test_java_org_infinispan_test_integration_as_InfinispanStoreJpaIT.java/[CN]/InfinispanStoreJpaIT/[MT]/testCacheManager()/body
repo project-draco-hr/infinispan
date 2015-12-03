@@ -3,10 +3,15 @@
   gcb.globalJmxStatistics().allowDuplicateDomains(true);
   ConfigurationBuilder builder=new ConfigurationBuilder();
   builder.persistence().addStore(JpaStoreConfigurationBuilder.class).persistenceUnitName("org.infinispan.persistence.jpa").entityClass(KeyValueEntity.class);
-  EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build(),builder.build());
-  Cache<String,KeyValueEntity> cache=cm.getCache();
-  KeyValueEntity entity=new KeyValueEntity("a","a");
-  cache.put(entity.getK(),entity);
-  assertEquals("a",cache.get(entity.getK()).getValue());
-  cm.stop();
+  EmbeddedCacheManager cm=null;
+  try {
+    cm=new DefaultCacheManager(gcb.build(),builder.build());
+    Cache<String,KeyValueEntity> cache=cm.getCache();
+    KeyValueEntity entity=new KeyValueEntity("a","a");
+    cache.put(entity.getK(),entity);
+    assertEquals("a",cache.get(entity.getK()).getValue());
+  }
+  finally {
+    if (cm != null)     cm.stop();
+  }
 }
