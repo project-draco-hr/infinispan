@@ -1,13 +1,13 @@
 {
   if (parsingResult.hasGroupingOrAggregations()) {
-    throw new IllegalArgumentException("The query must not use grouping or aggregation");
+    throw log.queryMustNotUseGroupingOrAggregation();
   }
   if (parsingResult.getSortFields() != null) {
     ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
     for (    SortField sortField : parsingResult.getSortFields()) {
       PropertyPath p=sortField.getPath();
       if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
-        throw new ParsingException("The property path '" + p + "' cannot be used in the ORDER BY clause because it is multi-valued");
+        throw log.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
       }
     }
   }
