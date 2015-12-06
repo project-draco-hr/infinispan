@@ -2,12 +2,19 @@
   if (parsingResult.hasGroupingOrAggregations()) {
     throw log.queryMustNotUseGroupingOrAggregation();
   }
+  final ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
   if (parsingResult.getSortFields() != null) {
-    ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
     for (    SortField sortField : parsingResult.getSortFields()) {
       PropertyPath p=sortField.getPath();
       if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
         throw log.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
+      }
+    }
+  }
+  if (parsingResult.getProjectedPaths() != null) {
+    for (    PropertyPath p : parsingResult.getProjectedPaths()) {
+      if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(),p.getPath())) {
+        throw log.multivaluedPropertyCannotBeProjected(p.asStringPath());
       }
     }
   }
