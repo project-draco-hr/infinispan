@@ -1,44 +1,53 @@
 {
-synchronized (viewHandlingLock) {
-    if (newViewId <= viewId) {
+synchronized (clusterManagerLock) {
+    if (newViewId < transport.getViewId()) {
       log.tracef("Ignoring old cluster view notification: %s",newViewId);
       return;
     }
-    boolean becameCoordinator=!isCoordinator && transport.isCoordinator();
-    isCoordinator=transport.isCoordinator();
+    boolean isCoordinator=transport.isCoordinator();
+    boolean becameCoordinator=isCoordinator && !clusterManagerStatus.isCoordinator();
     if (trace) {
-      log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s",(Object)newViewId,isCoordinator,becameCoordinator);
+      log.tracef("Received new cluster view: %d, isCoordinator = %s, old status = %s",(Object)newViewId,isCoordinator,clusterManagerStatus);
     }
-    mustRecoverClusterStatus|=mergeView || becameCoordinator;
-    if (!isCoordinator)     return;
-    if (mustRecoverClusterStatus) {
-      cacheStatusMap.clear();
-      try {
-        recoverClusterStatus(newViewId,mergeView,transport.getMembers());
-        mustRecoverClusterStatus=false;
-      }
- catch (      InterruptedException e) {
-        log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
-        return;
-      }
-catch (      SuspectException e) {
-        return;
-      }
-catch (      Exception e) {
-        if (!isShuttingDown) {
-          log.failedToRecoverClusterState(e);
+    if (!isCoordinator) {
+      clusterManagerStatus=ClusterManagerStatus.REGULAR_MEMBER;
+      return;
+    }
+    if (becameCoordinator || mergeView) {
+      clusterManagerStatus=ClusterManagerStatus.RECOVERING_CLUSTER;
+    }
+    viewId=newViewId;
+    clusterManagerLock.notifyAll();
+  }
+  if (clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
+    cacheStatusMap.clear();
+    try {
+      recoverClusterStatus(newViewId,mergeView,transport.getMembers());
+synchronized (clusterManagerLock) {
+        if (viewId != newViewId) {
+          log.debugf("View updated while we were recovering the cluster for view %d",newViewId);
+          return;
         }
+        clusterManagerStatus=ClusterManagerStatus.COORDINATOR;
+        clusterManagerLock.notifyAll();
+      }
+    }
+ catch (    InterruptedException e) {
+      if (trace)       log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+    }
+catch (    SuspectException e) {
+      if (trace)       log.tracef("Cluster state recovery interrupted because a member was lost. Will retry.");
+    }
+catch (    Exception e) {
+      if (clusterManagerStatus.isRunning()) {
+        log.failedToRecoverClusterState(e);
+      }
  else {
-          log.tracef("Cluster state recovery failed because the coordinator is shutting down");
-        }
+        log.tracef("Cluster state recovery failed because the coordinator is shutting down");
       }
-    }
-synchronized (viewUpdateLock) {
-      viewId=newViewId;
-      viewUpdateLock.notifyAll();
     }
   }
-  if (!mustRecoverClusterStatus) {
+  if (clusterManagerStatus == ClusterManagerStatus.COORDINATOR) {
     try {
       updateCacheMembers(transport.getMembers());
     }

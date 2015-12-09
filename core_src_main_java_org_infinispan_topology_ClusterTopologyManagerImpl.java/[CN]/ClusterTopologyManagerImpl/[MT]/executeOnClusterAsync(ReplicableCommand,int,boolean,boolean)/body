@@ -2,9 +2,9 @@
   if (!totalOrder) {
     asyncTransportExecutor.submit(new Runnable(){
       @Override public void run(){
-        gcr.wireDependencies(command);
         try {
           if (trace)           log.tracef("Attempting to execute command on self: %s",command);
+          gcr.wireDependencies(command);
           command.perform(null);
         }
  catch (        Throwable throwable) {
@@ -18,6 +18,6 @@
     transport.invokeRemotely(null,command,ResponseMode.ASYNCHRONOUS,timeout,null,deliverOrder,distributed);
   }
  catch (  Exception e) {
-    throw new CacheException("Failed to broadcast asynchronous command: " + command);
+    throw new CacheException("Failed to broadcast asynchronous command: " + command,e);
   }
 }

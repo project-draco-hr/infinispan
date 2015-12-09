@@ -1,13 +1,14 @@
 {
-  ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),transport.getViewId());
+  int viewId=transport.getViewId();
   while (true) {
-    int nextViewId=transport.getViewId() + 1;
+    ReplicableCommand command=new CacheTopologyControlCommand(cacheName,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),viewId);
     try {
       return (Boolean)executeOnCoordinator(command,getGlobalTimeout());
     }
  catch (    SuspectException e) {
       if (trace)       log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
-      transport.waitForView(nextViewId);
+      viewId=Math.max(viewId + 1,transport.getViewId());
+      transport.waitForView(viewId);
     }
   }
 }
