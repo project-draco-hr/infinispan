@@ -9,6 +9,7 @@
       existingGroup=new Object[outRowLength];
       System.arraycopy(row,0,existingGroup,0,noOfGroupingColumns);
       if (accumulators != null) {
+        FieldAccumulator.init(existingGroup,accumulators);
         for (        FieldAccumulator acc : accumulators) {
           acc.init(existingGroup);
         }
@@ -16,14 +17,20 @@
       groups.put(groupRowKey,existingGroup);
     }
     if (accumulators != null) {
-      for (      FieldAccumulator acc : accumulators) {
-        acc.update(row,existingGroup);
+      if (twoPhaseAcc) {
+        FieldAccumulator.merge(row,existingGroup,accumulators);
+      }
+ else {
+        FieldAccumulator.update(row,existingGroup,accumulators);
       }
     }
   }
  else {
-    for (    FieldAccumulator acc : accumulators) {
-      acc.update(row,globalGroup);
+    if (twoPhaseAcc) {
+      FieldAccumulator.merge(row,globalGroup,accumulators);
+    }
+ else {
+      FieldAccumulator.update(row,globalGroup,accumulators);
     }
   }
 }
