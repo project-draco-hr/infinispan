@@ -1,0 +1,33 @@
+{
+  final int numEntries=100000;
+  final int numListeners=1000;
+  List<NoOpEntryListener> listeners=new ArrayList<NoOpEntryListener>(numListeners);
+  if (doRegisterListener) {
+    Query query=makeQuery(cache(0));
+    for (int i=0; i < numListeners; i++) {
+      NoOpEntryListener listener=new NoOpEntryListener();
+      listeners.add(listener);
+      cache(0).addListener(listener,Search.makeFilter(query),null);
+    }
+  }
+  long startTs=System.nanoTime();
+  for (int i=0; i < numEntries; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    Cache<Object,Person> cache=cache(i % NUM_NODES);
+    cache.put(value.getName(),value);
+  }
+  for (int i=0; i < numEntries; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    Cache<Object,Person> cache=cache(i % NUM_NODES);
+    cache.put(value.getName(),value);
+  }
+  long endTs=System.nanoTime();
+  for (  NoOpEntryListener listener : listeners) {
+    cache(0).removeListener(listener);
+  }
+  return endTs - startTs;
+}

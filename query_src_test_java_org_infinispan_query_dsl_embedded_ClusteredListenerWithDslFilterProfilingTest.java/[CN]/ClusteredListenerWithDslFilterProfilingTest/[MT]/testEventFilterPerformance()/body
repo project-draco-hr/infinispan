@@ -1,26 +1,6 @@
 {
-  QueryFactory qf=Search.getQueryFactory(cache(0));
-  Query query=qf.from(Person.class).having("age").lte(31).toBuilder().build();
-  final int numEntries=100000;
-  final int numListeners=1000;
-  List<NoOpEntryListener> listeners=new ArrayList<>(numListeners);
-  for (int i=0; i < numListeners; i++) {
-    NoOpEntryListener listener=new NoOpEntryListener();
-    listeners.add(listener);
-    cache(0).addListener(listener,Search.makeFilter(query),null);
-  }
-  long startTs=System.nanoTime();
-  for (int i=0; i < numEntries; ++i) {
-    Person value=new Person();
-    value.setName("John");
-    value.setAge(i + 25);
-    Cache<Object,Person> cache=cache(i % NUM_NODES);
-    Object key=new MagicKey(cache);
-    cache.put(key,value);
-  }
-  long endTs=System.nanoTime();
-  for (  NoOpEntryListener listener : listeners) {
-    cache(0).removeListener(listener);
-  }
-  log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d ms\n",(endTs - startTs) / 1000000);
+  long t1=testEventFilterPerformance(false);
+  long t2=testEventFilterPerformance(true);
+  log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=false took %d ms\n",t1 / 1000000);
+  log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance doRegisterListener=true  took %d ms\n",t2 / 1000000);
 }
