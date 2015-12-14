@@ -1,13 +1,14 @@
 {
-  ModelNode operationResult;
-  try {
-    operationResult=invokeCommand(getEmbeddedCacheManager(context,operation),operation);
+  if (context.isNormalServer()) {
+    ModelNode operationResult;
+    try {
+      operationResult=invokeCommand(getEmbeddedCacheManager(context,operation),context,operation);
+    }
+ catch (    Exception e) {
+      throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+    }
+    if (operationResult != null) {
+      context.getResult().set(operationResult);
+    }
   }
- catch (  Exception e) {
-    throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
-  }
-  if (operationResult != null) {
-    context.getResult().set(operationResult);
-  }
-  context.stepCompleted();
 }

@@ -1,0 +1,8 @@
+{
+  Map<Integer,AdvancedExternalizer<?>> externalizerMap=gc.serialization().advancedExternalizers();
+  externalizerMap.put(ExternalizerIds.SERVER_EVENT,new ServerEventImpl.Externalizer());
+  EmbeddedCacheManager cacheManager=gcr.getComponent(EmbeddedCacheManager.class);
+  InternalCacheRegistry internalCacheRegistry=gcr.getComponent(InternalCacheRegistry.class);
+  internalCacheRegistry.registerInternalCache(ServerEventLogger.EVENT_LOG_CACHE,getTaskHistoryCacheConfiguration(cacheManager).build(),EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT,InternalCacheRegistry.Flag.QUERYABLE));
+  oldEventLogger=gcr.getComponent(EventLogManager.class).replaceEventLogger(new ServerEventLogger(cacheManager,gcr.getTimeService()));
+}
