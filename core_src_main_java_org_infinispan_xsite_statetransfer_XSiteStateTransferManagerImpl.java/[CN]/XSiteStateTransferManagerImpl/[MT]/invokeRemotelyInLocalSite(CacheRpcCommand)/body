@@ -1,6 +1,6 @@
 {
   commandsFactory.initializeReplicableCommand(command,false);
-  CompletableFuture<Map<Address,Response>> remoteFuture=rpcManager.invokeRemotelyAsync(null,command,rpcManager.getDefaultRpcOptions(true,DeliverOrder.NONE));
+  CompletableFuture<Map<Address,Response>> remoteFuture=rpcManager.invokeRemotelyAsync(null,command,rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,DeliverOrder.NONE).build());
   final Future<Response> localFuture=asyncExecutor.submit(LocalInvocation.newInstance(responseGenerator,command,commandsFactory,rpcManager.getAddress()));
   final Map<Address,Response> responseMap=new HashMap<>();
   responseMap.put(rpcManager.getAddress(),localFuture.get());
