@@ -1,5 +1,5 @@
 {
-  if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.contains(name)) && cacheManager.getCacheConfiguration(name) != null) {
+  if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && cacheManager.getCacheConfiguration(name) != null) {
     throw log.existingConfigForInternalCache(name);
   }
   ConfigurationBuilder builder=new ConfigurationBuilder().read(configuration);
@@ -9,7 +9,7 @@
     builder.persistence().addSingleFileStore().location(globalConfiguration.globalState().persistentLocation()).purgeOnStartup(false).preload(true);
   }
   SecurityActions.defineConfiguration(cacheManager,name,builder.build());
-  internalCaches.add(name);
+  internalCaches.put(name,flags);
   if (!flags.contains(Flag.USER)) {
     privateCaches.add(name);
   }
