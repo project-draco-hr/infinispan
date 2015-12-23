@@ -37,7 +37,17 @@ break;
 }
 case CONSISTENT_HASH_FACTORY:
 {
-builder.clustering().hash().consistentHashFactory(Util.<ConsistentHashFactory>getInstance(value,holder.getClassLoader()));
+builder.clustering().hash().consistentHashFactory(Util.getInstance(value,holder.getClassLoader()));
+break;
+}
+case KEY_PARTITIONER:
+{
+if (reader.getSchema().since(8,2)) {
+builder.clustering().hash().keyPartitioner(Util.getInstance(value,holder.getClassLoader()));
+}
+ else {
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
 break;
 }
 default :
