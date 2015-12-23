@@ -1,0 +1,26 @@
+{
+  try {
+    log.debugf("Max direct memory is: %s%n",humanReadableByteCount(maxDirectMemory0(),false));
+    logDirectMemory(log);
+    byte[] babyGodzilla=new byte[]{13};
+    for (int i=0; i < NUM_ENTRIES; i++) {
+      remoteCache.put(i,babyGodzilla);
+    }
+    log.debugf("ADDED %d BABY GODZILLAS\n",NUM_ENTRIES);
+    log.debugf("ADDING LISTENER!");
+    CountDownLatch latch=new CountDownLatch(1);
+    ClientEntryListener listener=new ClientEntryListener(latch);
+    logDirectMemory(log);
+    remoteCache.addClientListener(listener);
+    log.debugf("ADDED LISTENER");
+    logDirectMemory(log);
+    latch.await();
+    remoteCache.removeClientListener(listener);
+    assertEquals(NUM_ENTRIES,listener.eventCount);
+  }
+ catch (  Throwable t) {
+    log.debug("Exception reported, direct memory usage is:",t);
+    logDirectMemory(log);
+    throw t;
+  }
+}
