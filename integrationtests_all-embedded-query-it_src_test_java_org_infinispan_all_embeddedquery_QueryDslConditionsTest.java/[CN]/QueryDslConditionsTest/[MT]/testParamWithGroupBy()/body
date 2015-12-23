@@ -1,0 +1,9 @@
+{
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getTransactionImplClass()).select(Expression.property("accountId"),Expression.property("date"),Expression.sum("amount")).groupBy("accountId","date").having(Expression.sum("amount")).gt(Expression.param("param")).toBuilder().build();
+  q.setParameter("param",1801);
+  List<Object[]> list=q.list();
+  assertEquals(1,list.size());
+  assertEquals(3,list.get(0).length);
+  assertEquals(6225d,list.get(0)[2]);
+}

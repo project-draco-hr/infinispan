@@ -1,0 +1,14 @@
+{
+  QueryFactory qf=getQueryFactory();
+  Query q=qf.from(getModelFactory().getTransactionImplClass()).select(Expression.avg("amount"),Expression.sum("amount"),Expression.count("date"),Expression.min("date"),Expression.max("accountId")).having("isDebit").eq(Expression.param("param")).toBuilder().orderBy(Expression.avg("amount"),SortOrder.DESC).orderBy(Expression.count("date"),SortOrder.DESC).orderBy(Expression.max("amount"),SortOrder.ASC).build();
+  q.setParameter("param",true);
+  List<Object[]> list=q.list();
+  assertEquals(1,list.size());
+  assertEquals(5,list.get(0).length);
+  assertEquals(143.50909d,(Double)list.get(0)[0],0.0001d);
+  assertEquals(7893d,(Double)list.get(0)[1],0.0001d);
+  assertEquals(55L,list.get(0)[2]);
+  assertEquals(Long.class,list.get(0)[3].getClass());
+  assertEquals(makeDate("2013-01-01").getTime(),list.get(0)[3]);
+  assertEquals(2,list.get(0)[4]);
+}
