@@ -1,14 +1,23 @@
 {
-  int numVirtualNodes=numSegments;
-  for (int virtualNode=0; virtualNode < numVirtualNodes; virtualNode++) {
+  int virtualNode=0;
+  do {
     for (    Address member : sortedMembers) {
-      int virtualNodeHash=normalizedHash(hashFunction,member.hashCode());
-      if (virtualNode != 0) {
-        virtualNodeHash=normalizedHash(hashFunction,virtualNodeHash + virtualNode);
-      }
-      int segment=virtualNodeHash / segmentSize;
-      addOwner(segment,member);
+      int segment=computeSegment(member,virtualNode);
+      addPrimaryOwner(segment,member);
     }
-    if (stats.sumOwned() >= numSegments * actualNumOwners)     break;
+    virtualNode++;
   }
+ while (stats.sumPrimaryOwned() < numSegments);
+  virtualNode=0;
+  boolean membersWithZeroSegments=false;
+  do {
+    for (    Address member : sortedMembers) {
+      if (stats.getOwned(member) > 0)       continue;
+      membersWithZeroSegments=true;
+      int segment=computeSegment(member,virtualNode);
+      addBackupOwner(segment,member);
+    }
+    virtualNode++;
+  }
+ while (membersWithZeroSegments && stats.sumOwned() < numSegments);
 }

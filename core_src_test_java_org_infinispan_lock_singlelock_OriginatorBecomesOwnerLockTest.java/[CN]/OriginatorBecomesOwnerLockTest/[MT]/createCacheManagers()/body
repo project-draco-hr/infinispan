@@ -4,9 +4,12 @@
   configurationBuilder.clustering().sync().replTimeout(30000,TimeUnit.MILLISECONDS);
   configurationBuilder.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000);
   configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+  ControlledConsistentHashFactory consistentHashFactory=new ControlledConsistentHashFactory(new int[]{KILLED_INDEX,ORIGINATOR_INDEX},new int[]{KILLED_INDEX,OTHER_INDEX});
+  configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
   createCluster(configurationBuilder,3);
   waitForClusterToForm();
   originatorCache=cache(ORIGINATOR_INDEX);
   killedCache=cache(KILLED_INDEX);
   otherCache=cache(OTHER_INDEX);
+  consistentHashFactory.setOwnerIndexes(new int[]{ORIGINATOR_INDEX,OTHER_INDEX},new int[]{OTHER_INDEX,ORIGINATOR_INDEX});
 }

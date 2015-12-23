@@ -2,7 +2,8 @@
   DldGlobalTransaction globalTransaction=(DldGlobalTransaction)ctx.getGlobalTransaction();
   if (ctx.isOriginLocal()) {
     globalTransaction.setRemoteLockIntention(command.getKeys());
-    if (cacheConfiguration.clustering().cacheMode().isDistributed()) {
+    CacheMode cacheMode=cacheConfiguration.clustering().cacheMode();
+    if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
       if (trace)       log.tracef("Locks as seen at origin are: %s",ctx.getLockedKeys());
       ((DldGlobalTransaction)ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
     }

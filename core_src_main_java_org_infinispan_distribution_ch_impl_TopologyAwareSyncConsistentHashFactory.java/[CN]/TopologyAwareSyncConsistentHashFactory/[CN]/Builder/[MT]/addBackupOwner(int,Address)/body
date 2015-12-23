@@ -1,0 +1,28 @@
+{
+  List<Address> owners=segmentOwners[segment];
+  if (owners.size() < actualNumOwners && !locationAlreadyAdded(candidate,owners,currentLevel)) {
+    if (!ignoreMaxSegments) {
+      if (owners.isEmpty()) {
+        long maxSegments=Math.round(computeExpectedSegmentsForNode(candidate,1) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
+        if (stats.getPrimaryOwned(candidate) < maxSegments) {
+          addOwnerNoCheck(segment,candidate);
+          return true;
+        }
+      }
+ else {
+        long maxSegments=Math.round(computeExpectedSegmentsForNode(candidate,actualNumOwners) * OWNED_SEGMENTS_ALLOWED_VARIATION);
+        if (stats.getOwned(candidate) < maxSegments) {
+          addOwnerNoCheck(segment,candidate);
+          return true;
+        }
+      }
+    }
+ else {
+      if (!capacityFactors.get(candidate).equals(0f)) {
+        addOwnerNoCheck(segment,candidate);
+        return true;
+      }
+    }
+  }
+  return false;
+}

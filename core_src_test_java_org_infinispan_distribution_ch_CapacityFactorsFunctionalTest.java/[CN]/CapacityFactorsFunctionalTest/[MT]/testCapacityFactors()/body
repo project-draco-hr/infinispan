@@ -1,29 +1,29 @@
 {
   ConfigurationBuilder cb=new ConfigurationBuilder();
   cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-  cb.clustering().hash().numSegments(60);
+  cb.clustering().hash().numSegments(NUM_SEGMENTS);
   cb.clustering().hash().capacityFactor(0.5f);
   addClusterEnabledCacheManager(cb);
   waitForClusterToForm();
   assertCapacityFactors(0.5f);
-  assertPrimaryOwned(60);
-  assertOwned(60);
+  assertPrimaryOwned(NUM_SEGMENTS);
+  assertOwned(NUM_SEGMENTS);
   cb.clustering().hash().capacityFactor(1.5f);
   addClusterEnabledCacheManager(cb);
   waitForClusterToForm();
   assertCapacityFactors(0.5f,1.5f);
-  assertPrimaryOwned(15,45);
-  assertOwned(60,60);
+  assertPrimaryOwned(NUM_SEGMENTS / 4,NUM_SEGMENTS * 3 / 4);
+  assertOwned(NUM_SEGMENTS,NUM_SEGMENTS);
   cb.clustering().hash().capacityFactor(0.0f);
   addClusterEnabledCacheManager(cb);
   waitForClusterToForm();
   assertCapacityFactors(0.5f,1.5f,0.0f);
-  assertPrimaryOwned(15,45);
-  assertOwned(60,60,0);
+  assertPrimaryOwned(NUM_SEGMENTS / 4,NUM_SEGMENTS * 3 / 4,0);
+  assertOwned(NUM_SEGMENTS,NUM_SEGMENTS,0);
   cb.clustering().hash().capacityFactor(1.0f);
   addClusterEnabledCacheManager(cb);
   waitForClusterToForm();
   assertCapacityFactors(0.5f,1.5f,0.0f,1.0f);
-  assertPrimaryOwned(10,30,0,20);
-  assertOwned(20,60,0,40);
+  assertPrimaryOwned(NUM_SEGMENTS / 6,NUM_SEGMENTS * 3 / 6,0,NUM_SEGMENTS * 2 / 6);
+  assertOwned(NUM_SEGMENTS / 3,NUM_SEGMENTS,0,NUM_SEGMENTS * 2 / 3);
 }

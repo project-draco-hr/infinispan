@@ -2,6 +2,7 @@
   CacheMode mode=(transactional && !onePhase) ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC;
   ConfigurationBuilder configurationBuilder=getDefaultClusteredCacheConfig(mode,transactional);
   if (mode.isSynchronous())   configurationBuilder.clustering().sync().replTimeout(15000);
+  configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
   configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
   configurationBuilder.transaction().syncCommitPhase(false);
   configurationBuilder.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
