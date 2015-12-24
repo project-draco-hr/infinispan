@@ -1,28 +1,22 @@
 {
   List<NotifyingFuture<Void>> futures=new ArrayList<>();
   Deque<Class<?>> toFlush=new LinkedList<>();
-  boolean replicated=cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode().isReplicated();
   for (  Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
     EntityIndexBinding indexBinding=searchIntegrator.getIndexBinding(indexedType);
-    IndexManager[] indexManagers=indexBinding.getIndexManagers();
-    boolean shared=isShared(indexManagers[0]);
-    boolean sharded=indexManagers.length > 1;
-    IndexWorker indexWork;
-    if (shared && !sharded) {
+    MassIndexStrategy strategy=calculateStrategy(indexBinding,cache.getAdvancedCache().getCacheConfiguration());
+    boolean workerClean=true, workerFlush=true;
+    if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
       indexUpdater.purge(indexedType);
-      indexWork=new IndexWorker(indexedType,false);
+      workerClean=false;
+    }
+    if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
       toFlush.add(indexedType);
+      workerFlush=false;
     }
- else {
-      indexWork=new IndexWorker(indexedType,true);
-    }
+    IndexingExecutionMode indexingStrategy=strategy.getIndexingStrategy();
+    IndexWorker indexWork=new IndexWorker(indexedType,workerFlush,workerClean,indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER);
     DistributedTask<Void> task=executor.createDistributedTaskBuilder(indexWork).timeout(0,TimeUnit.NANOSECONDS).build();
-    if (replicated && shared && !sharded) {
-      futures.add(executor.submit(task));
-    }
- else {
-      futures.addAll((List)executor.submitEverywhere(task));
-    }
+    futures.addAll((List)executor.submitEverywhere(task));
   }
   return new ExecutionResult<>(futures,toFlush);
 }

@@ -1,0 +1,18 @@
+{
+  List<Cache<String,Entity>> initialCaches=caches();
+  populate(1,ENTRIES / 2,initialCaches);
+  checkAffinity();
+  addNode();
+  final List<Cache<String,Entity>> currentCaches=caches();
+  populate(ENTRIES / 2 + 1,ENTRIES,currentCaches);
+  checkAffinity();
+  CacheQuery q=Search.getSearchManager(pickCache(currentCaches)).getQuery(new MatchAllDocsQuery(),Entity.class);
+  assertEquals(ENTRIES,pickCache(currentCaches).size());
+  assertEquals(ENTRIES,q.list().size());
+  addNode();
+  checkAffinity();
+  assertEquals(ENTRIES,pickCache(caches()).size());
+  populate(ENTRIES + 1,ENTRIES * 2,currentCaches);
+  checkAffinity();
+  assertEquals(ENTRIES * 2,q.list().size());
+}

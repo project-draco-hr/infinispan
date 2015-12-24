@@ -4,8 +4,8 @@
   final Cache<Object,Integer> locks=cacheManager.getCache("locks");
   FileMetadata fileMetadata=new FileMetadata(10);
   fileMetadata.setSize(11);
-  metadata.put(new FileCacheKey("indexName","fileName"),fileMetadata);
-  final LocalLockMergingSegmentReadLocker locker=new LocalLockMergingSegmentReadLocker(locks,chunks,metadata,"indexName");
+  metadata.put(new FileCacheKey("indexName","fileName",-1),fileMetadata);
+  final LocalLockMergingSegmentReadLocker locker=new LocalLockMergingSegmentReadLocker(locks,chunks,metadata,"indexName",-1);
   final AtomicBoolean testFailed=new AtomicBoolean(false);
   final ExecutorService exec=Executors.newFixedThreadPool(NUM_THREADS);
   Runnable stressor=new Runnable(){
@@ -20,7 +20,7 @@
             System.out.print(".");
             Thread.sleep(7);
           }
-          if (metadata.get(new FileCacheKey("indexName","fileName")) == null) {
+          if (metadata.get(new FileCacheKey("indexName","fileName",-1)) == null) {
             testFailed.set(true);
             System.out.print("X");
           }

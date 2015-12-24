@@ -1,5 +1,5 @@
 {
-  FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename);
+  FileReadLockKey readLockKey=new FileReadLockKey(indexName,filename,affinitySegmentId);
   Integer lockValue=locksCache.get(readLockKey);
   boolean done=false;
   while (done == false) {
@@ -18,7 +18,7 @@
       lockValue=locksCache.putIfAbsent(readLockKey,2);
       done=(null == lockValue);
       if (done) {
-        final FileCacheKey fileKey=new FileCacheKey(indexName,filename);
+        final FileCacheKey fileKey=new FileCacheKey(indexName,filename,affinitySegmentId);
         if (metadataCache.get(fileKey) == null) {
           locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
           return false;

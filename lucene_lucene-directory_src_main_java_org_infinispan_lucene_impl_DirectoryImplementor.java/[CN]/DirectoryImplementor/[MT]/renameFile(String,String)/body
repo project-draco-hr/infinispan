@@ -1,20 +1,20 @@
 {
-  final FileCacheKey fromKey=new FileCacheKey(indexName,from);
+  final FileCacheKey fromKey=new FileCacheKey(indexName,from,affinitySegmentId);
   final FileMetadata metadata=metadataCache.get(fromKey);
   final int bufferSize=metadata.getBufferSize();
   int i=-1;
   Object ob;
   do {
-    final ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i,bufferSize);
+    final ChunkCacheKey fromChunkKey=new ChunkCacheKey(indexName,from,++i,bufferSize,affinitySegmentId);
     ob=chunksCache.get(fromChunkKey);
     if (ob == null) {
       break;
     }
-    final ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i,bufferSize);
+    final ChunkCacheKey toChunkKey=new ChunkCacheKey(indexName,to,i,bufferSize,affinitySegmentId);
     chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey,ob);
   }
  while (true);
-  metadataCache.put(new FileCacheKey(indexName,to),metadata);
+  metadataCache.put(new FileCacheKey(indexName,to,affinitySegmentId),metadata);
   fileOps.removeAndAdd(from,to);
   readLocks.deleteOrReleaseReadLock(from);
   if (trace) {
