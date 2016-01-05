@@ -1,0 +1,43 @@
+{
+  ComponentRegistry cr=cache.getAdvancedCache().getComponentRegistry();
+  PersistenceManager loaderManager=cr.getComponent(PersistenceManager.class);
+  Set<RestStore> stores=loaderManager.getStores(RestStore.class);
+  final AtomicInteger count=new AtomicInteger(0);
+  for (  RestStore store : stores) {
+    Set<Object> keys;
+    try {
+      keys=PersistenceUtil.toKeySet(store,null);
+    }
+ catch (    PersistenceException e) {
+      throw new CacheException(e);
+    }
+    ExecutorService es=Executors.newFixedThreadPool(threads);
+    for (    final Object key : keys) {
+      es.submit(new Runnable(){
+        @Override public void run(){
+          try {
+            cache.get(key);
+            int i=count.getAndIncrement();
+            if (log.isDebugEnabled() && i % 100 == 0)             log.debugf(">>    Moved %s keys\n",i);
+          }
+ catch (          Exception e) {
+            if ((key instanceof String) && ((String)key).matches("___MigrationManager_.+_KnownKeys___")) {
+            }
+ else {
+              log.keyMigrationFailed(Util.toStr(key),e);
+            }
+          }
+        }
+      }
+);
+    }
+    es.shutdown();
+    try {
+      while (!es.awaitTermination(500,TimeUnit.MILLISECONDS))       ;
+    }
+ catch (    InterruptedException e) {
+      throw new CacheException(e);
+    }
+  }
+  return count.longValue();
+}

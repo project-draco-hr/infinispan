@@ -1,0 +1,14 @@
+{
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    sourceRemoteDefaultCache.put(s,s,20,TimeUnit.SECONDS,30,TimeUnit.SECONDS);
+  }
+  assertEquals("A",targetRemoteDefaultCache.get("A"));
+  RollingUpgradeManager targetUpgradeManager=targetServerDefaultCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+  targetUpgradeManager.synchronizeData("hotrod");
+  assertEquals(sourceServerDefaultCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size(),targetServerDefaultCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
+  targetUpgradeManager.disconnectSource("hotrod");
+  MetadataValue<String> metadataValue=targetRemoteDefaultCache.getWithMetadata("B");
+  assertEquals(20,metadataValue.getLifespan());
+  assertEquals(30,metadataValue.getMaxIdle());
+}

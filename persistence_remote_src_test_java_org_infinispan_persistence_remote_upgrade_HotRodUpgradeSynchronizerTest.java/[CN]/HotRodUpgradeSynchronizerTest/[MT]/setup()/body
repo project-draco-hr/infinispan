@@ -1,17 +1,24 @@
 {
   ConfigurationBuilder serverBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
   sourceContainer=TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(serverBuilder));
-  sourceServerCache=sourceContainer.getCache();
+  sourceServerDefaultCache=sourceContainer.getCache();
+  sourceServerAltCache=sourceContainer.getCache(ALT_CACHE_NAME);
   sourceServer=HotRodClientTestingUtil.startHotRodServer(sourceContainer);
   ConfigurationBuilder targetConfigurationBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-  targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).addServer().host("localhost").port(sourceServer.getPort());
+  targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).ignoreModifications(true).addServer().host("localhost").port(sourceServer.getPort());
+  ConfigurationBuilder builderOldVersion=new ConfigurationBuilder();
+  builderOldVersion.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).ignoreModifications(true).remoteCacheName(ALT_CACHE_NAME).protocolVersion(OLD_PROTOCOL_VERSION).addServer().host("localhost").port(sourceServer.getPort());
   targetContainer=TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(targetConfigurationBuilder));
-  targetServerCache=targetContainer.getCache();
+  targetContainer.defineConfiguration(ALT_CACHE_NAME,hotRodCacheConfiguration(builderOldVersion).build());
+  targetServerDefaultCache=targetContainer.getCache();
+  targetServerAltCache=targetContainer.getCache(ALT_CACHE_NAME);
   targetServer=HotRodClientTestingUtil.startHotRodServer(targetContainer);
   sourceRemoteCacheManager=new RemoteCacheManager("localhost",sourceServer.getPort());
   sourceRemoteCacheManager.start();
-  sourceRemoteCache=sourceRemoteCacheManager.getCache();
+  sourceRemoteDefaultCache=sourceRemoteCacheManager.getCache();
+  sourceRemoteAltCache=sourceRemoteCacheManager.getCache(ALT_CACHE_NAME);
   targetRemoteCacheManager=new RemoteCacheManager("localhost",targetServer.getPort());
   targetRemoteCacheManager.start();
-  targetRemoteCache=targetRemoteCacheManager.getCache();
+  targetRemoteDefaultCache=targetRemoteCacheManager.getCache();
+  targetRemoteAltCache=targetRemoteCacheManager.getCache(ALT_CACHE_NAME);
 }

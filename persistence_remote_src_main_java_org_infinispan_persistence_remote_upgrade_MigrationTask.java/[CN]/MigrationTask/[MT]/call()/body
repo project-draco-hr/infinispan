@@ -1,0 +1,28 @@
+{
+  ComponentRegistry cr=cache.getAdvancedCache().getComponentRegistry();
+  PersistenceManager loaderManager=cr.getComponent(PersistenceManager.class);
+  Set<RemoteStore> stores=loaderManager.getStores(RemoteStore.class);
+  Marshaller marshaller=new MigrationMarshaller();
+  byte[] knownKeys;
+  try {
+    knownKeys=marshaller.objectToByteBuffer(MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS);
+  }
+ catch (  Exception e) {
+    throw new CacheException(e);
+  }
+  Iterator<RemoteStore> storeIterator=stores.iterator();
+  if (storeIterator.hasNext()) {
+    RemoteStore store=storeIterator.next();
+    final RemoteCache<Object,Object> storeCache=store.getRemoteCache();
+    RemoteStoreConfiguration storeConfig=store.getConfiguration();
+    if (!storeConfig.hotRodWrapping()) {
+      throw log.remoteStoreNoHotRodWrapping(cache.getName());
+    }
+    final AtomicInteger count=new AtomicInteger(0);
+    ExecutorService es=Executors.newFixedThreadPool(threads);
+    migrateEntriesWithMetadata(storeCache,cache,es,knownKeys,count,segments,readBatch);
+    gracefulShutdown(es);
+    return count.get();
+  }
+  return null;
+}

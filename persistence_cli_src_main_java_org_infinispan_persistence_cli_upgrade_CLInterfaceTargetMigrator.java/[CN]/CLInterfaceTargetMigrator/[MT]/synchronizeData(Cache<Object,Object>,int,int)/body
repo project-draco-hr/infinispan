@@ -1,0 +1,42 @@
+{
+  PersistenceManager loaderManager=getPersistenceManager(cache);
+  Set<CLInterfaceLoader> loaders=loaderManager.getStores(CLInterfaceLoader.class);
+  for (  CLInterfaceLoader loader : loaders) {
+    MarshalledEntry loadedKnownKey=loader.load(KNOWN_KEY);
+    if (loadedKnownKey != null) {
+      Set<Object> keys;
+      try {
+        keys=jsonMapper.readValue((String)loadedKnownKey.getValue(),HashSet.class);
+      }
+ catch (      IOException e) {
+        throw new CacheException("Unable to read JSON value: " + loadedKnownKey.getValue(),e);
+      }
+      ExecutorService es=Executors.newFixedThreadPool(threads);
+      final AtomicInteger count=new AtomicInteger(0);
+      for (      final Object key : keys) {
+        es.submit(new Runnable(){
+          @Override public void run(){
+            try {
+              cache.get(key);
+              int i=count.getAndIncrement();
+              if (log.isDebugEnabled() && i % 100 == 0)               log.debugf(">>    Moved %s keys\n",i);
+            }
+ catch (            Exception e) {
+              log.keyMigrationFailed(Util.toStr(key),e);
+            }
+          }
+        }
+);
+      }
+      es.shutdown();
+      try {
+        while (!es.awaitTermination(500,TimeUnit.MILLISECONDS))         ;
+      }
+ catch (      InterruptedException e) {
+        throw new CacheException(e);
+      }
+      return count.longValue();
+    }
+  }
+  throw log.missingMigrationData(cache.getName());
+}

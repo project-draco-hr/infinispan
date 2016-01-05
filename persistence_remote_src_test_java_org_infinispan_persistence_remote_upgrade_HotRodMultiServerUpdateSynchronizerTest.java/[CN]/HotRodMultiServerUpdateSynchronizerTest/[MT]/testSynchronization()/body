@@ -1,0 +1,17 @@
+{
+  RemoteCache<String,String> sourceRemoteCache=sourceCluster.remoteCache;
+  RemoteCache<String,String> targetRemoteCache=targetCluster.remoteCache;
+  for (char ch='A'; ch <= 'Z'; ch++) {
+    String s=Character.toString(ch);
+    sourceRemoteCache.put(s,s,20,TimeUnit.SECONDS,30,TimeUnit.SECONDS);
+  }
+  assertEquals("A",targetRemoteCache.get("A"));
+  RollingUpgradeManager upgradeManager=targetCluster.getRollingUpgradeManager();
+  long count=upgradeManager.synchronizeData("hotrod");
+  assertEquals(26,count);
+  assertEquals(sourceCluster.cache.size(),targetCluster.cache.size());
+  upgradeManager.disconnectSource("hotrod");
+  MetadataValue<String> metadataValue=targetRemoteCache.getWithMetadata("Z");
+  assertEquals(20,metadataValue.getLifespan());
+  assertEquals(30,metadataValue.getMaxIdle());
+}

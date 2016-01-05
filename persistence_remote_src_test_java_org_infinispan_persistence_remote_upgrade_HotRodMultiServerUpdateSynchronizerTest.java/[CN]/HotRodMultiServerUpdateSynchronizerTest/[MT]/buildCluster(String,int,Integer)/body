@@ -1,0 +1,20 @@
+{
+  List<HotRodServer> hotRodServers=new ArrayList<>();
+  List<EmbeddedCacheManager> embeddedCacheManagers=new ArrayList<>();
+  RemoteCacheManager remoteCacheManager;
+  for (int i=0; i < numMembers; i++) {
+    GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+    gcb.transport().defaultTransport().clusterName(name);
+    ConfigurationBuilder defaultClusteredCacheConfig=AbstractCacheTest.getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+    if (remoteCachePort != null) {
+      defaultClusteredCacheConfig.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true).ignoreModifications(true).addServer().host("localhost").port(remoteCachePort);
+    }
+    EmbeddedCacheManager clusteredCacheManager=TestCacheManagerFactory.createClusteredCacheManager(gcb,hotRodCacheConfiguration(defaultClusteredCacheConfig));
+    embeddedCacheManagers.add(clusteredCacheManager);
+    hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager));
+  }
+  int port=hotRodServers.get(0).getPort();
+  Configuration build=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder().addServer().port(port).host("localhost").build();
+  remoteCacheManager=new RemoteCacheManager(build);
+  return new Cluster(hotRodServers,embeddedCacheManagers,remoteCacheManager);
+}
