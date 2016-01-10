@@ -1,27 +1,2 @@
 {
-  Listener l=testListenerClassValidity(listener.getClass());
-  boolean foundMethods=false;
-  builder.setTarget(listener);
-  builder.setSubject(Security.getSubject());
-  builder.setSync(l.sync());
-  Map<Class<? extends Annotation>,Class<?>> allowedListeners=getAllowedMethodAnnotations(l);
-  for (  Method m : listener.getClass().getMethods()) {
-    if (!m.isSynthetic() || !m.isBridge()) {
-      for (      Map.Entry<Class<? extends Annotation>,Class<?>> annotationEntry : allowedListeners.entrySet()) {
-        final Class<? extends Annotation> annotationClass=annotationEntry.getKey();
-        if (m.isAnnotationPresent(annotationClass)) {
-          final Class<?> eventClass=annotationEntry.getValue();
-          testListenerMethodValidity(m,eventClass,annotationClass.getName());
-          m.setAccessible(true);
-          builder.setMethod(m);
-          builder.setAnnotation(annotationClass);
-          L invocation=builder.build();
-          getListenerCollectionForAnnotation(annotationClass).add(invocation);
-          foundMethods=true;
-        }
-      }
-    }
-  }
-  if (!foundMethods)   getLog().noAnnotateMethodsFoundInListener(listener.getClass());
-  return foundMethods;
 }
