@@ -5,17 +5,51 @@
   short status=readHeaderAndValidate(transport,params);
   byte[] finishedSegments=transport.readArray();
   int entriesSize=transport.readVInt();
-  Map.Entry<byte[],Object[]>[] entries=new Map.Entry[entriesSize];
+  List<Entry<Object,E>> entries=new ArrayList<>(entriesSize);
   if (entriesSize > 0) {
     int projectionsSize=transport.readVInt();
     for (int i=0; i < entriesSize; i++) {
-      byte[] key=transport.readArray();
-      Object[] projections=new Object[projectionsSize];
-      for (int j=0; j < projectionsSize; j++) {
-        projections[j]=transport.readArray();
+      short meta=transport.readByte();
+      long creation=-1;
+      int lifespan=-1;
+      long lastUsed=-1;
+      int maxIdle=-1;
+      long version=0;
+      if (meta == 1) {
+        short flags=transport.readByte();
+        if ((flags & INFINITE_LIFESPAN) != INFINITE_LIFESPAN) {
+          creation=transport.readLong();
+          lifespan=transport.readVInt();
+        }
+        if ((flags & INFINITE_MAXIDLE) != INFINITE_MAXIDLE) {
+          lastUsed=transport.readLong();
+          maxIdle=transport.readVInt();
+        }
+        version=transport.readLong();
       }
-      entries[i]=new SimpleEntry<>(key,projections);
+      byte[] key=transport.readArray();
+      Object value;
+      if (projectionsSize > 1) {
+        Object[] projections=new Object[projectionsSize];
+        for (int j=0; j < projectionsSize; j++) {
+          projections[j]=unmarshall(transport.readArray(),status);
+        }
+        value=projections;
+      }
+ else {
+        value=unmarshall(transport.readArray(),status);
+      }
+      if (meta == 1) {
+        value=new MetadataValueImpl<>(creation,lifespan,lastUsed,maxIdle,version,value);
+      }
+      if (segmentKeyTracker.track(key)) {
+        entries.add(new SimpleEntry<>(unmarshall(key,status),(E)value));
+      }
     }
+    segmentKeyTracker.segmentsFinished(finishedSegments);
   }
-  return new IterationNextResponse(status,finishedSegments,entries);
+  if (HotRodConstants.isInvalidIteration(status)) {
+    throw log.errorRetrievingNext(iterationId);
+  }
+  return new IterationNextResponse(status,entries,entriesSize > 0);
 }

@@ -1,23 +1,13 @@
 {
   try {
-    IterationNextOperation iterationNextOperation=operationsFactory.newIterationNextOperation(iterationId,transport);
+    IterationNextOperation<E> iterationNextOperation=operationsFactory.newIterationNextOperation(iterationId,transport,segmentKeyTracker);
     while (nextElements.isEmpty() && !endOfIteration) {
-      IterationNextResponse iterationNextResponse=iterationNextOperation.execute();
-      short status=iterationNextResponse.getStatus();
-      if (HotRodConstants.isInvalidIteration(status)) {
-        throw log.errorRetrievingNext(iterationId);
-      }
-      Entry<byte[],Object[]>[] entries=iterationNextResponse.getEntries();
-      if (entries.length == 0) {
+      IterationNextResponse<E> iterationNextResponse=iterationNextOperation.execute();
+      if (!iterationNextResponse.hasMore()) {
         endOfIteration=true;
         break;
       }
-      for (      Entry<byte[],Object[]> entry : entries) {
-        if (segmentKeyTracker.track(entry.getKey())) {
-          nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(),status),unmarshallValue(entry.getValue(),status)));
-        }
-      }
-      segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());
+      nextElements.addAll(iterationNextResponse.getEntries());
     }
   }
  catch (  TransportException e) {
