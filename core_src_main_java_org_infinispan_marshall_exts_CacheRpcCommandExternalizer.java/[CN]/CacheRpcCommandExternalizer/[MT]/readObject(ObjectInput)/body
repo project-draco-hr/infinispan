@@ -3,21 +3,25 @@
   byte methodId=(byte)input.readShort();
   String cacheName=input.readUTF();
   StreamingMarshaller marshaller=getCacheMarshaller(cacheName);
-  byte[] paramsRaw=new byte[UnsignedNumeric.readUnsignedInt(input)];
-  input.readFully(paramsRaw);
-  ByteArrayInputStream is=new ByteArrayInputStream(paramsRaw,0,paramsRaw.length);
-  ObjectInput paramsInput=marshaller.startObjectInput(is,true);
-  if (paramsInput instanceof ExtendedRiverUnmarshaller)   ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
-  try {
-    Object[] args=cmdExt.readParameters(paramsInput);
-    CacheRpcCommand cacheRpcCommand=cmdExt.fromStream(methodId,args,type,cacheName);
-    if (cacheRpcCommand instanceof TopologyAffectedCommand) {
-      int topologyId=input.readInt();
-      ((TopologyAffectedCommand)cacheRpcCommand).setTopologyId(topologyId);
+  ObjectInput paramsInput=reusableObjectInput.get();
+  final boolean firsTime=paramsInput == null;
+  if (firsTime) {
+    paramsInput=marshaller.startObjectInput(convertInputStream(input),true);
+    if (paramsInput instanceof ExtendedRiverUnmarshaller) {
+      ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
     }
-    return cacheRpcCommand;
+    reusableObjectInput.set(paramsInput);
+  }
+  CacheRpcCommand cacheRpcCommand;
+  try {
+    cacheRpcCommand=cmdExt.fromStream(methodId,cmdExt.readLegacyParameters(paramsInput),type,cacheName);
+    cmdExt.readCommandParameters(paramsInput,cacheRpcCommand);
   }
   finally {
-    marshaller.finishObjectInput(paramsInput);
+    if (firsTime) {
+      marshaller.finishObjectInput(paramsInput);
+      reusableObjectInput.remove();
+    }
   }
+  return cacheRpcCommand;
 }

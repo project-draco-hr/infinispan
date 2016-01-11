@@ -1,0 +1,17 @@
+{
+  if (value < 0) {
+    out.writeByte(0x80);
+    return;
+  }
+  if ((value & ~0x3F) == 0) {
+    out.writeByte(value & 0x3F);
+    return;
+  }
+  out.writeByte((value & 0x3F) | 0x40);
+  value>>>=6;
+  while ((value & ~0x7F) != 0) {
+    out.writeByte((byte)((value & 0x7f) | 0x80));
+    value>>>=7;
+  }
+  out.writeByte((byte)value);
+}

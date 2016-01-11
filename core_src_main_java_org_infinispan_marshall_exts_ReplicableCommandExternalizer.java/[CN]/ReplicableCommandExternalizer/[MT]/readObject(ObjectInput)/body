@@ -1,11 +1,5 @@
 {
-  byte type=input.readByte();
-  short methodId=input.readShort();
-  Object[] args=readParameters(input);
-  ReplicableCommand replicableCommand=cmdFactory.fromStream((byte)methodId,args,type);
-  if (replicableCommand instanceof TopologyAffectedCommand) {
-    int topologyId=input.readInt();
-    ((TopologyAffectedCommand)replicableCommand).setTopologyId(topologyId);
-  }
+  ReplicableCommand replicableCommand=readCommandHeader(input);
+  readCommandParameters(input,replicableCommand);
   return replicableCommand;
 }
