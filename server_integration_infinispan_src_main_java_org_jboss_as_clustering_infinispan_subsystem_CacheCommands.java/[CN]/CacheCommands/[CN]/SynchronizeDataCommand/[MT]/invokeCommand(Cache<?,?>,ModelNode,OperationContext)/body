@@ -1,0 +1,10 @@
+{
+  ComponentRegistry registry=SecurityActions.getComponentRegistry(cache.getAdvancedCache());
+  RollingUpgradeManager manager=registry.getComponent(RollingUpgradeManager.class);
+  if (manager != null) {
+    int readBatch=CacheResource.READ_BATCH.resolveModelAttribute(context,operation).asInt();
+    int writeThreads=CacheResource.WRITE_THREADS.resolveModelAttribute(context,operation).asInt();
+    manager.synchronizeData(operation.require(ModelKeys.MIGRATOR_NAME).asString(),readBatch,writeThreads);
+  }
+  return null;
+}
