@@ -1,13 +1,10 @@
 {
   super(delegate);
-  if (flags == null || flags.length == 0)   this.flags=null;
- else {
-    this.flags=EnumSet.noneOf(Flag.class);
-    for (    Flag flag : flags) {
-      this.flags.add(flag);
-    }
-  }
-  this.classLoader=new WeakReference<ClassLoader>(classLoader);
   if (flags == null && classLoader == null)   throw new IllegalArgumentException("There is no point in using a DecoratedCache if neither a ClassLoader nor any Flags are set.");
+  if (flags == null || flags.length == 0)   this.flags=EnumUtil.EMPTY_BIT_SET;
+ else {
+    this.flags=EnumUtil.bitSetOf(flags);
+  }
+  this.classLoader=new WeakReference<>(classLoader);
   cacheImplementation=(CacheImpl<K,V>)delegate;
 }

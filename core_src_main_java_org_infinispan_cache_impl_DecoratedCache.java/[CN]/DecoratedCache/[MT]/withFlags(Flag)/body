@@ -1,25 +1,12 @@
 {
   if (flags == null || flags.length == 0)   return this;
  else {
-    boolean containsAll;
-    if (this.flags != null) {
-      containsAll=true;
-      for (      Flag flag : flags) {
-        if (!this.flags.contains(flag)) {
-          containsAll=false;
-        }
-      }
-    }
- else {
-      containsAll=false;
-    }
-    if (containsAll) {
+    long newFlags=EnumUtil.bitSetOf(flags);
+    if (EnumUtil.containsAll(this.flags,newFlags)) {
       return this;
     }
  else {
-      EnumSet<Flag> newFlags=this.flags != null ? EnumSet.copyOf(this.flags) : EnumSet.noneOf(Flag.class);
-      Collections.addAll(newFlags,flags);
-      return new DecoratedCache<K,V>(this.cacheImplementation,this.classLoader.get(),newFlags);
+      return new DecoratedCache<>(this.cacheImplementation,this.classLoader.get(),EnumUtil.mergeBitSets(this.flags,newFlags));
     }
   }
 }

@@ -1,0 +1,9 @@
+{
+  long flags=addUnsafeFlags(explicitFlags);
+  Metadata merged=applyDefaultMetadata(metadata);
+  PutKeyValueCommand command=commandsFactory.buildPutKeyValueCommand(key,value,merged,flags);
+  command.setPutIfAbsent(true);
+  command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
+  ctx.setLockOwner(command.getKeyLockOwner());
+  return (V)executeCommandAndCommitIfNeeded(ctx,command);
+}

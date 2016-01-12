@@ -1,0 +1,28 @@
+{
+  GlobalTransaction gtx=ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
+  CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
+  ConsistentHash ch=cacheTopology.getReadConsistentHash();
+  Map<Address,List<Object>> ownerKeys=new HashMap<>();
+  for (  Object key : requestedKeys) {
+    Address owner=ch.locatePrimaryOwner(key);
+    List<Object> requestedKeysFromNode=ownerKeys.get(owner);
+    if (requestedKeysFromNode == null) {
+      ownerKeys.put(owner,requestedKeysFromNode=new ArrayList<>());
+    }
+    requestedKeysFromNode.add(key);
+  }
+  Map<Address,ReplicableCommand> commands=new HashMap<>();
+  for (  Map.Entry<Address,List<Object>> entry : ownerKeys.entrySet()) {
+    List<Object> keys=entry.getValue();
+    ClusteredGetAllCommand remoteGetAll=cf.buildClusteredGetAllCommand(keys,flagsBitSet,gtx);
+    commands.put(entry.getKey(),remoteGetAll);
+  }
+  RpcOptionsBuilder rpcOptionsBuilder=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,DeliverOrder.NONE);
+  RpcOptions options=rpcOptionsBuilder.build();
+  Map<Address,Response> responses=rpcManager.invokeRemotely(commands,options);
+  Map<Object,InternalCacheEntry> entries=new HashMap<>();
+  for (  Map.Entry<Address,Response> entry : responses.entrySet()) {
+    updateWithValues(((ClusteredGetAllCommand)commands.get(entry.getKey())).getKeys(),entry.getValue(),entries);
+  }
+  return entries;
+}

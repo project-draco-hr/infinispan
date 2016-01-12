@@ -1,6 +1,5 @@
 {
   if (trace)   log.tracef("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",segmentId,cacheName,sender,cacheEntries.size());
-  EnumSet<Flag> flags=EnumSet.of(PUT_FOR_STATE_TRANSFER,CACHE_MODE_LOCAL,IGNORE_RETURN_VALUES,SKIP_REMOTE_LOOKUP,SKIP_SHARED_CACHE_STORE,SKIP_OWNERSHIP_CHECK,SKIP_XSITE_BACKUP);
   boolean transactional=transactionManager != null;
   for (  InternalCacheEntry e : cacheEntries) {
     try {
@@ -13,7 +12,7 @@
  else {
         ctx=icf.createSingleKeyNonTxInvocationContext();
       }
-      PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getMetadata(),flags);
+      PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(e.getKey(),e.getValue(),e.getMetadata(),STATE_TRANSFER_FLAGS);
       ctx.setLockOwner(put.getKeyLockOwner());
       interceptorChain.invoke(ctx,put);
       if (transactionManager != null) {

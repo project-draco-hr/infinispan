@@ -1,8 +1,7 @@
 {
   acquireLocksIfNeeded();
-  Set<Flag> commandFlags=EnumSet.of(Flag.SKIP_REMOTE_LOOKUP,Flag.CACHE_MODE_LOCAL);
-  if (this.flags != null)   commandFlags.addAll(this.flags);
-  GetCacheEntryCommand command=commandsFactory.buildGetCacheEntryCommand(key,commandFlags);
+  long flagBitSet=EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP,Flag.CACHE_MODE_LOCAL);
+  GetCacheEntryCommand command=commandsFactory.buildGetCacheEntryCommand(key,EnumUtil.mergeBitSets(flagBitSet,getFlagsBitSet()));
   InvocationContext invocationContext=icf.createRemoteInvocationContextForCommand(command,getOrigin());
   CacheEntry cacheEntry=(CacheEntry)invoker.invoke(invocationContext,command);
   if (cacheEntry == null) {

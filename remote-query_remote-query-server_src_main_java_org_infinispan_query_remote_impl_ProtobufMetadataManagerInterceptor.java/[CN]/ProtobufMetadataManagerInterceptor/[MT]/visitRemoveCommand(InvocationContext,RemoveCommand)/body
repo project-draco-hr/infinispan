@@ -5,16 +5,16 @@
     }
     String key=(String)command.getKey();
     if (shouldIntercept(key)) {
-      VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,null,null);
+      VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,EnumUtil.EMPTY_BIT_SET,null);
       invoker.invoke(ctx,cmd);
-      cmd=commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX,null,null);
+      cmd=commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX,null,EnumUtil.EMPTY_BIT_SET);
       invoker.invoke(ctx,cmd);
       serializationContext.unregisterProtoFile(key);
       Map<String,FileDescriptor> fileDescriptors=serializationContext.getFileDescriptors();
       StringBuilder sb=new StringBuilder();
       for (      FileDescriptor fd : fileDescriptors.values()) {
         if (fd.isResolved()) {
-          cmd=commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX,null,null);
+          cmd=commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX,null,EnumUtil.EMPTY_BIT_SET);
           invoker.invoke(ctx,cmd);
         }
  else {
@@ -22,16 +22,16 @@
             sb.append('\n');
           }
           sb.append(fd.getName());
-          PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX,"One of the imported files is missing or has errors",null,null);
+          PutKeyValueCommand put=commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX,"One of the imported files is missing or has errors",null,EnumUtil.EMPTY_BIT_SET);
           put.setPutIfAbsent(true);
           invoker.invoke(ctx,put);
         }
       }
       if (sb.length() > 0) {
-        cmd=commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX,sb.toString(),null,null);
+        cmd=commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX,sb.toString(),null,EnumUtil.EMPTY_BIT_SET);
       }
  else {
-        cmd=commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX,null,null);
+        cmd=commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX,null,EnumUtil.EMPTY_BIT_SET);
       }
       invoker.invoke(ctx,cmd);
     }
