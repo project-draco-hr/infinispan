@@ -1,9 +1,14 @@
 {
-  executorService.submit(new Callable<Void>(){
-    public Void call(){
-      cleanupLeaverTransactions(e.getNewMembers());
-      return null;
+  try {
+    executorService.submit(new Callable<Void>(){
+      public Void call(){
+        cleanupLeaverTransactions(e.getNewMembers());
+        return null;
+      }
     }
-  }
 );
+  }
+ catch (  RejectedExecutionException x) {
+    if (!executorService.isShutdown())     throw x;
+  }
 }
