@@ -1,10 +1,12 @@
 {
   Query query=Search.getQueryFactory(remoteCache).from(UserPB.class).select(Expression.max("age")).having("age").gte(20).toBuilder().build();
-  ClientEvents.addContinuousQueryListener(remoteCache,new ContinuousQueryListener<String,Object[]>(){
+  ContinuousQuery<String,User> continuousQuery=Search.getContinuousQuery(remoteCache);
+  ContinuousQueryListener<String,Object[]> listener=new ContinuousQueryListener<String,Object[]>(){
     @Override public void resultJoining(    String key,    Object[] value){
     }
     @Override public void resultLeaving(    String key){
     }
   }
-,query);
+;
+  continuousQuery.addContinuousQueryListener(query,listener);
 }

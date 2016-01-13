@@ -16,8 +16,8 @@
     }
   }
 ;
-  Object clientListener=ClientEvents.addContinuousQueryListener(remoteCache,listener,query);
-  assertNotNull(clientListener);
+  ContinuousQuery<Integer,User> continuousQuery=Search.getContinuousQuery(remoteCache);
+  continuousQuery.addContinuousQueryListener(query,listener);
   expectElementsInQueue(joined,1);
   expectElementsInQueue(left,0);
   User user4=createUser(4,30);
@@ -33,7 +33,7 @@
   remoteCache.clear();
   expectElementsInQueue(joined,0);
   expectElementsInQueue(left,1);
-  remoteCache.removeClientListener(clientListener);
+  continuousQuery.removeContinuousQueryListener(listener);
   user1.setAge(25);
   remoteCache.put(1,user1);
   expectElementsInQueue(joined,0);

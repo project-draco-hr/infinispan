@@ -38,13 +38,13 @@
     }
   }
 ;
-  Object clientListener=ClientEvents.addContinuousQueryListener(remoteCache,listener,query);
-  assertNotNull(clientListener);
+  ContinuousQuery<String,User> cq=Search.getContinuousQuery(remoteCache);
+  cq.addContinuousQueryListener(query,listener);
   expectElementsInQueue(joined,2);
   expectElementsInQueue(left,0);
   joined.clear();
   left.clear();
-  remoteCache.removeClientListener(clientListener);
+  cq.removeContinuousQueryListener(listener);
   query.setParameter("ageParam",40);
   listener=new ContinuousQueryListener<String,Object[]>(){
     @Override public void resultJoining(    String key,    Object[] value){
@@ -55,8 +55,7 @@
     }
   }
 ;
-  clientListener=ClientEvents.addContinuousQueryListener(remoteCache,listener,query);
-  assertNotNull(clientListener);
+  cq.addContinuousQueryListener(query,listener);
   expectElementsInQueue(joined,3);
   expectElementsInQueue(left,0);
 }

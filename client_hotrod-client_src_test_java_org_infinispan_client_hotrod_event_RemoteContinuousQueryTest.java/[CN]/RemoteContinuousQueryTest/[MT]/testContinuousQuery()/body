@@ -38,8 +38,8 @@
     }
   }
 ;
-  Object clientListener=ClientEvents.addContinuousQueryListener(remoteCache,listener,query);
-  assertNotNull(clientListener);
+  ContinuousQuery<String,User> continuousQuery=Search.getContinuousQuery(remoteCache);
+  continuousQuery.addContinuousQueryListener(query,listener);
   expectElementsInQueue(joined,2);
   expectElementsInQueue(left,0);
   user3.setAge(30);
@@ -66,7 +66,7 @@
   assertNull(remoteCache.get("expiredUser2"));
   expectElementsInQueue(joined,0);
   expectElementsInQueue(left,2);
-  remoteCache.removeClientListener(clientListener);
+  continuousQuery.removeContinuousQueryListener(listener);
   user2.setAge(22);
   remoteCache.put("user" + user2.getId(),user2);
   expectElementsInQueue(joined,0);
