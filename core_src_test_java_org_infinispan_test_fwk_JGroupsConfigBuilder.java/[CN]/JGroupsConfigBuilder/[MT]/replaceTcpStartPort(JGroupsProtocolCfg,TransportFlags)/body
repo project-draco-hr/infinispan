@@ -1,5 +1,6 @@
 {
-  Map<String,String> props=jgroupsCfg.getProtocol(TCP).getProperties();
+  ProtocolType transportProtocol=jgroupsCfg.containsProtocol(TCP_NIO2) ? TCP_NIO2 : TCP;
+  Map<String,String> props=jgroupsCfg.getProtocol(transportProtocol).getProperties();
   Integer startPort=threadTcpStartPort.get();
   int portRange=TCP_PORT_RANGE_PER_THREAD;
   if (transportFlags.isSiteIndexSpecified()) {
@@ -12,5 +13,5 @@
   }
   props.put("bind_port",startPort.toString());
   props.put("port_range",String.valueOf(portRange - 1));
-  return replaceProperties(jgroupsCfg,props,TCP);
+  return replaceProperties(jgroupsCfg,props,transportProtocol);
 }
