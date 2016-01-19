@@ -2,7 +2,7 @@
   if (parsingResult.hasGroupingOrAggregations()) {
     throw log.queryMustNotUseGroupingOrAggregation();
   }
-  final ObjectPropertyHelper<?> propertyHelper=getFirstPhaseMatcher().getPropertyHelper();
+  final ObjectPropertyHelper<?> propertyHelper=getMatcher().getPropertyHelper();
   if (parsingResult.getSortFields() != null) {
     for (    SortField sortField : parsingResult.getSortFields()) {
       PropertyPath p=sortField.getPath();
@@ -79,7 +79,7 @@
               j++;
             }
             rowProcessor=new RowProcessor(){
-              final RowProcessor delegate=makeTypeConversionRowProcessor(projectedTypes);
+              final RowProcessor delegate=makeProjectionProcessor(projectedTypes);
               @Override public Object[] process(              Object[] inRow){
                 if (delegate != null) {
                   inRow=delegate.process(inRow);
@@ -94,29 +94,29 @@
 ;
           }
  else {
-            rowProcessor=makeTypeConversionRowProcessor(parsingResult.getProjectedTypes());
+            rowProcessor=makeProjectionProcessor(parsingResult.getProjectedTypes());
           }
         }
-        return new EmbeddedLuceneQuery(this,queryFactory,jpqlString,namedParameters,parsingResult.getProjections(),rowProcessor,startOffset,maxResults);
+        return new EmbeddedLuceneQuery(this,queryFactory,jpqlString,namedParameters,parsingResult.getProjections(),makeResultProcessor(rowProcessor),startOffset,maxResults);
       }
  else {
         String indexQueryStr=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),null,normalizedWhereClause,sortFields);
-        Query indexQuery=new EmbeddedLuceneQuery(this,queryFactory,indexQueryStr,namedParameters,null,null,startOffset,maxResults);
+        Query indexQuery=new EmbeddedLuceneQuery(this,queryFactory,indexQueryStr,namedParameters,null,makeResultProcessor(null),startOffset,maxResults);
         String projectionQueryStr=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),parsingResult.getProjectedPaths(),null,null);
-        return new HybridQuery(queryFactory,cache,projectionQueryStr,null,getObjectFilter(getSecondPhaseMatcher(),projectionQueryStr,null,null),-1,-1,indexQuery);
+        return new HybridQuery(queryFactory,cache,projectionQueryStr,null,getObjectFilter(getMatcher(),projectionQueryStr,null,null),-1,-1,indexQuery);
       }
     }
  else {
       String indexQueryStr=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),null,normalizedWhereClause,null);
-      Query indexQuery=new EmbeddedLuceneQuery(this,queryFactory,indexQueryStr,namedParameters,null,null,-1,-1);
+      Query indexQuery=new EmbeddedLuceneQuery(this,queryFactory,indexQueryStr,namedParameters,null,makeResultProcessor(null),-1,-1);
       String projectionQueryStr=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),parsingResult.getProjectedPaths(),null,sortFields);
-      return new HybridQuery(queryFactory,cache,projectionQueryStr,null,getObjectFilter(getSecondPhaseMatcher(),projectionQueryStr,null,null),startOffset,maxResults,indexQuery);
+      return new HybridQuery(queryFactory,cache,projectionQueryStr,null,getObjectFilter(getMatcher(),projectionQueryStr,null,null),startOffset,maxResults,indexQuery);
     }
   }
   if (expansion == ConstantBooleanExpr.TRUE) {
     return new EmbeddedQuery(this,queryFactory,cache,jpqlString,namedParameters,parsingResult.getProjections(),startOffset,maxResults);
   }
   String expandedQueryStr=JPATreePrinter.printTree(parsingResult.getTargetEntityName(),null,expansion,null);
-  Query expandedQuery=new EmbeddedLuceneQuery(this,queryFactory,expandedQueryStr,namedParameters,null,null,-1,-1);
-  return new HybridQuery(queryFactory,cache,jpqlString,namedParameters,getObjectFilter(getSecondPhaseMatcher(),jpqlString,namedParameters,null),startOffset,maxResults,expandedQuery);
+  Query expandedQuery=new EmbeddedLuceneQuery(this,queryFactory,expandedQueryStr,namedParameters,null,makeResultProcessor(null),-1,-1);
+  return new HybridQuery(queryFactory,cache,jpqlString,namedParameters,getObjectFilter(getMatcher(),jpqlString,namedParameters,null),startOffset,maxResults,expandedQuery);
 }
