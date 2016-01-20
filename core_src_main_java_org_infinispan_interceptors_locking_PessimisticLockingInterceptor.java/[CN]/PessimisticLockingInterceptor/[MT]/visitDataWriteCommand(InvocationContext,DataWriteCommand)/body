@@ -1,9 +1,11 @@
 {
   try {
+    Object key=command.getKey();
     if (!hasSkipLocking(command)) {
-      acquireRemoteIfNeeded(ctx,command.getKey(),command);
-      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,command.getKey(),getLockTimeoutMillis(command));
+      acquireRemoteIfNeeded(ctx,key,command);
+      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,key,getLockTimeoutMillis(command));
     }
+    ((TxInvocationContext<?>)ctx).addAffectedKey(key);
     return invokeNextInterceptor(ctx,command);
   }
  catch (  OutdatedTopologyException e) {

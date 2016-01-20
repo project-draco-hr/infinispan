@@ -1,8 +1,10 @@
 {
   try {
     if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-      acquireRemoteIfNeeded(ctx,command.getKey(),command);
-      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,command.getKey(),getLockTimeoutMillis(command));
+      Object key=command.getKey();
+      acquireRemoteIfNeeded(ctx,key,command);
+      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,key,getLockTimeoutMillis(command));
+      ((TxInvocationContext<?>)ctx).addAffectedKey(key);
     }
     return invokeNextInterceptor(ctx,command);
   }
