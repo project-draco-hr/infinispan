@@ -1,0 +1,32 @@
+{
+  if (operations == null) {
+    return Collections.emptyList();
+  }
+  Map<String,SiteStatus> statusMap=operations.clusterStatus();
+  if (statusMap.isEmpty()) {
+    return Collections.emptyList();
+  }
+  List<String> filterSites=new LinkedList<>();
+  for (  Map.Entry<String,SiteStatus> entry : statusMap.entrySet()) {
+switch (metric) {
+case ONLINE_SITES:
+      if (entry.getValue().isOnline()) {
+        filterSites.add(entry.getKey());
+      }
+    break;
+case OFFLINE_SITES:
+  if (entry.getValue().isOffline()) {
+    filterSites.add(entry.getKey());
+  }
+break;
+case MIXED_SITES:
+if (!entry.getValue().isOnline() && !entry.getValue().isOffline()) {
+filterSites.add(entry.getKey());
+}
+break;
+default :
+return Collections.emptyList();
+}
+}
+return filterSites;
+}

@@ -102,6 +102,20 @@ break;
 case TIME_SINCE_RESET:
 result.set(stats.getTimeSinceStart());
 break;
+case ONLINE_SITES:
+case OFFLINE_SITES:
+case MIXED_SITES:
+{
+GlobalComponentRegistry registry=SecurityActions.getGlobalComponentRegistry(cacheManager);
+Collection<String> sites=filterSitesByStatus(registry,metric);
+if (sites.isEmpty()) {
+result.setEmptyList();
+}
+ else {
+result.set(toModelNodeCollection(sites));
+}
+break;
+}
 default :
 context.getFailureDescription().set(String.format("Unknown metric %s",metric));
 break;

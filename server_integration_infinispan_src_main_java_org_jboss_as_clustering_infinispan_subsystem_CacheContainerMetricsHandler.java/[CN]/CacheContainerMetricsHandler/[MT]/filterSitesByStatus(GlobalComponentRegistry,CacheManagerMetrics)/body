@@ -1,0 +1,35 @@
+{
+  GlobalXSiteAdminOperations operations=registry.getComponent(GlobalXSiteAdminOperations.class);
+  if (operations == null) {
+    return Collections.emptyList();
+  }
+  Map<String,SiteStatus> siteStatusMap=operations.globalStatus();
+  if (siteStatusMap.isEmpty()) {
+    return Collections.emptyList();
+  }
+  List<String> filterSites=new LinkedList<>();
+  for (  Map.Entry<String,SiteStatus> statusEntry : siteStatusMap.entrySet()) {
+    String siteName=statusEntry.getKey();
+    SiteStatus status=statusEntry.getValue();
+switch (metric) {
+case ONLINE_SITES:
+      if (status.isOnline()) {
+        filterSites.add(siteName);
+      }
+    break;
+case OFFLINE_SITES:
+  if (status.isOffline()) {
+    filterSites.add(siteName);
+  }
+break;
+case MIXED_SITES:
+if (!status.isOnline() && !status.isOffline()) {
+filterSites.add(siteName);
+}
+break;
+default :
+return Collections.emptyList();
+}
+}
+return filterSites;
+}
