@@ -26,12 +26,22 @@
     assertTrue(p.getAge() <= 31);
   }
   cache().removeListener(listener);
-  listener.createEvents.clear();
-  listener.modifyEvents.clear();
-  Person value=new Person();
-  value.setName("George");
-  value.setAge(30);
-  cache().put(-1,value);
+  query.setParameter("ageParam",30);
+  listener=new EntryListener();
+  cache().addListener(listener,Search.makeFilter(query),null);
   assertTrue(listener.createEvents.isEmpty());
   assertTrue(listener.modifyEvents.isEmpty());
+  for (int i=0; i < 10; ++i) {
+    Person value=new Person();
+    value.setName("John");
+    value.setAge(i + 25);
+    cache().put(i,value);
+  }
+  assertEquals(10,cache.size());
+  assertTrue(listener.createEvents.isEmpty());
+  assertEquals(6,listener.modifyEvents.size());
+  for (  ObjectFilter.FilterResult r : listener.modifyEvents) {
+    Person p=(Person)r.getInstance();
+    assertTrue(p.getAge() <= 30);
+  }
 }
