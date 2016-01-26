@@ -1,0 +1,21 @@
+{
+  try {
+    long timeoutNanos=timeUnit.toNanos(timeout);
+    int loops=10;
+    int progressionSum=loops * (loops + 1) / 2;
+    long initialSleepNanos=timeoutNanos / progressionSum;
+    long sleepNanos=initialSleepNanos;
+    long expectedEndTime=System.nanoTime() + timeoutNanos;
+    while (expectedEndTime - System.nanoTime() > 0) {
+      if (condition.getAsBoolean())       return;
+      LockSupport.parkNanos(sleepNanos);
+      sleepNanos+=initialSleepNanos;
+    }
+    if (!condition.getAsBoolean()) {
+      fail(messageSupplier.get());
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Unexpected!",e);
+  }
+}
