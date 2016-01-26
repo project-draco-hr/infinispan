@@ -1,5 +1,4 @@
 {
-  ExecutorService service=Executors.newCachedThreadPool();
   List<HashSet<Integer>> sets=new ArrayList<>();
   List<Future<Integer>> futures=new ArrayList<Future<Integer>>();
   for (  EmbeddedCacheManager manager : cacheManagers) {
@@ -10,12 +9,11 @@
     sets.add(set);
   }
   for (  Set<Integer> s : sets) {
-    futures.add(service.submit(new ExerciseAtomicSetTask(s,NCALLS)));
+    futures.add(fork(new ExerciseAtomicSetTask(s,NCALLS)));
   }
   Integer total=0;
   for (  Future<Integer> future : futures) {
     total+=future.get();
   }
-  service.shutdown();
   assertEquals(NCALLS,total.intValue());
 }

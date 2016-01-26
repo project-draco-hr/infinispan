@@ -1,7 +1,7 @@
 {
   final Configuration distConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).clustering().stateTransfer().awaitInitialTransfer(false).hash().consistentHashFactory(new SyncConsistentHashFactory()).numSegments(NUM_SEGMENTS).build();
   final Configuration replConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).clustering().hash().numSegments(NUM_SEGMENTS).clustering().stateTransfer().awaitInitialTransfer(false).build();
-  ExecutorService executor=Executors.newFixedThreadPool(NUM_THREADS);
+  ExecutorService executor=Executors.newFixedThreadPool(NUM_THREADS,getTestThreadFactory("Worker"));
   ExecutorCompletionService<Object> completionService=new ExecutorCompletionService<Object>(executor);
   Future<Object>[] futures=new Future[NUM_NODES];
   try {

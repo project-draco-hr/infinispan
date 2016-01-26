@@ -6,10 +6,9 @@
   final AtomicBoolean post=new AtomicBoolean(false);
   final CountDownLatch started=new CountDownLatch(THREADS);
   final CountDownLatch finished=new CountDownLatch(THREADS);
-  ExecutorService executor=Executors.newFixedThreadPool(THREADS);
   for (int i=0; i < THREADS; ++i) {
     final int thread=i;
-    executor.execute(new Runnable(){
+    fork(new Runnable(){
       @Override public void run(){
         try {
           started.countDown();
@@ -61,7 +60,6 @@
   }
  finally {
     run.set(false);
-    executor.shutdown();
   }
   try {
     if (!finished.await(30,TimeUnit.SECONDS)) {

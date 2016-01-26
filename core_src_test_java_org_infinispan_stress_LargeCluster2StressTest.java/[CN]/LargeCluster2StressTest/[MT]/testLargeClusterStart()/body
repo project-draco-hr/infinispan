@@ -12,7 +12,7 @@
   final Configuration distConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).clustering().stateTransfer().awaitInitialTransfer(false).hash().consistentHashFactory(new SyncConsistentHashFactory()).numSegments(NUM_SEGMENTS).build();
   final Configuration replConfig=new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).clustering().hash().numSegments(NUM_SEGMENTS).clustering().stateTransfer().awaitInitialTransfer(false).build();
   final CountDownLatch managersLatch=new CountDownLatch(NUM_NODES);
-  ExecutorService executor=Executors.newFixedThreadPool(NUM_THREADS);
+  ExecutorService executor=Executors.newFixedThreadPool(NUM_THREADS,getTestThreadFactory("Worker"));
   final ExecutorCompletionService<Void> managerCompletionService=new ExecutorCompletionService<>(executor);
   final ExecutorCompletionService<Void> cacheCompletionService=new ExecutorCompletionService<Void>(executor);
   try {
