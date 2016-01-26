@@ -7,18 +7,25 @@
  else   if (ownsData && !isMember) {
     ownsData=false;
   }
-  if (isRebalance) {
+  boolean startRebalance=isRebalance;
+  if (!isRebalance) {
+    if (cacheTopology.getPendingCH() != null && this.cacheTopology.getPendingCH() == null) {
+      if (trace)       log.tracef("Forcing startRebalance = true");
+      startRebalance=true;
+    }
+  }
+  if (startRebalance) {
     stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS,cacheTopology.getTopologyId());
     cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),cacheTopology.getUnionCH(),cacheTopology.getTopologyId(),true);
   }
-  awaitTotalOrderTransactions(cacheTopology,isRebalance);
+  awaitTotalOrderTransactions(cacheTopology,startRebalance);
   waitingForState.set(false);
   final ConsistentHash newWriteCh=cacheTopology.getWriteConsistentHash();
   final ConsistentHash previousReadCh=this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
   final ConsistentHash previousWriteCh=this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
   stateTransferLock.acquireExclusiveTopologyLock();
   this.cacheTopology=cacheTopology;
-  if (isRebalance) {
+  if (startRebalance) {
     if (trace)     log.tracef("Start keeping track of keys for rebalance");
     commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
     commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
@@ -65,6 +72,10 @@
           log.tracef("On cache %s we have: added segments: %s; removed segments: %s",cacheName,addedSegments,removedSegments);
         }
         cancelTransfers(removedSegments);
+        if (!startRebalance) {
+          log.debugf("Not requesting segments %s because the last owner left the cluster",addedSegments);
+          addedSegments.clear();
+        }
         restartBrokenTransfers(cacheTopology,addedSegments);
       }
       if (!addedSegments.isEmpty()) {
@@ -72,9 +83,9 @@
       }
     }
     int rebalanceTopologyId=stateTransferTopologyId.get();
-    if (trace)     log.tracef("Topology update processed, stateTransferTopologyId = %d, isRebalance = %s, pending CH = %s",(Object)rebalanceTopologyId,isRebalance,cacheTopology.getPendingCH());
+    if (trace)     log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",(Object)rebalanceTopologyId,startRebalance,cacheTopology.getPendingCH());
     if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
-      if (!isRebalance && cacheTopology.getPendingCH() == null) {
+      if (!startRebalance && cacheTopology.getPendingCH() == null) {
         boolean changed=stateTransferTopologyId.compareAndSet(rebalanceTopologyId,NO_REBALANCE_IN_PROGRESS);
         if (changed) {
           stopApplyingState();
