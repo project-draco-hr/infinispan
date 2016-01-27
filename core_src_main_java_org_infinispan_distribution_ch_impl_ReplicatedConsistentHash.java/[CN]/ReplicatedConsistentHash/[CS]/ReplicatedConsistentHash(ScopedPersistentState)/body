@@ -1,0 +1,21 @@
+{
+  this.hashFunction=Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION),null);
+  int numMembers=Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
+  this.members=new ArrayList<>(numMembers);
+  for (int i=0; i < numMembers; i++) {
+    PersistentUUID uuid=PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER,i)));
+    Address address=JGroupsAddressCache.fromPersistentUUID(uuid);
+    if (address == null) {
+      throw new IllegalStateException("Unknown address for " + uuid);
+    }
+    this.members.add(address);
+  }
+  this.membersSet=Collections.unmodifiableSet(new HashSet<>(this.members));
+  int numPrimaryOwners=state.getIntProperty(STATE_PRIMARY_OWNERS_COUNT);
+  this.primaryOwners=new int[numPrimaryOwners];
+  for (int i=0; i < numPrimaryOwners; i++) {
+    this.primaryOwners[i]=state.getIntProperty(String.format(STATE_PRIMARY_OWNERS,i));
+  }
+  segments=computeSegments(primaryOwners);
+  segmentSize=Util.getSegmentSize(primaryOwners.length);
+}

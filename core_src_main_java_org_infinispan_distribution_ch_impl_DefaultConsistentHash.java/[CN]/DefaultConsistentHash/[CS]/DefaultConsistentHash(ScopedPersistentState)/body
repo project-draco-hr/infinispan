@@ -1,0 +1,30 @@
+{
+  this.numOwners=Integer.parseInt(state.getProperty(STATE_NUM_OWNERS));
+  int numMembers=Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
+  this.members=new ArrayList<>(numMembers);
+  for (int i=0; i < numMembers; i++) {
+    PersistentUUID uuid=PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER,i)));
+    Address address=JGroupsAddressCache.fromPersistentUUID(uuid);
+    if (address == null) {
+      throw new IllegalStateException("Unknown address for " + uuid);
+    }
+    this.members.add(address);
+  }
+  int numSegments=state.getIntProperty(STATE_NUM_SEGMENTS);
+  this.segmentSize=Util.getSegmentSize(numSegments);
+  this.segmentOwners=new List[numSegments];
+  for (int i=0; i < segmentOwners.length; i++) {
+    int segmentOwnerCount=Integer.parseInt(state.getProperty(String.format(STATE_SEGMENT_OWNER_COUNT,i)));
+    segmentOwners[i]=new ArrayList<>();
+    for (int j=0; j < segmentOwnerCount; j++) {
+      PersistentUUID uuid=PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER,i,j)));
+      segmentOwners[i].add(JGroupsAddressCache.fromPersistentUUID(uuid));
+    }
+  }
+  int numCapacityFactors=Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
+  this.capacityFactors=new float[numCapacityFactors];
+  for (int i=0; i < numCapacityFactors; i++) {
+    this.capacityFactors[i]=Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR,i)));
+  }
+  this.hashFunction=Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION),null);
+}

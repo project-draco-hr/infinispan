@@ -1,0 +1,23 @@
+{
+  state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH,this.getClass().getName());
+  state.setProperty(STATE_NUM_OWNERS,numOwners);
+  state.setProperty(STATE_NUM_SEGMENTS,getNumSegments());
+  ;
+  state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS,members.size());
+  for (int i=0; i < members.size(); i++) {
+    state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER,i),JGroupsAddressCache.getPersistentUUID(members.get(i)).toString());
+  }
+  state.setProperty(STATE_CAPACITY_FACTORS,capacityFactors.length);
+  for (int i=0; i < capacityFactors.length; i++) {
+    state.setProperty(String.format(STATE_CAPACITY_FACTOR,i),capacityFactors[i]);
+  }
+  state.setProperty(STATE_SEGMENT_OWNERS,segmentOwners.length);
+  for (int i=0; i < segmentOwners.length; i++) {
+    List<Address> segmentOwnerAddresses=segmentOwners[i];
+    state.setProperty(String.format(STATE_SEGMENT_OWNER_COUNT,i),segmentOwnerAddresses.size());
+    for (int j=0; j < segmentOwnerAddresses.size(); j++) {
+      state.setProperty(String.format(STATE_SEGMENT_OWNER,i,j),JGroupsAddressCache.getPersistentUUID(segmentOwnerAddresses.get(j)).toString());
+    }
+  }
+  state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION,hashFunction.getClass().getName());
+}
