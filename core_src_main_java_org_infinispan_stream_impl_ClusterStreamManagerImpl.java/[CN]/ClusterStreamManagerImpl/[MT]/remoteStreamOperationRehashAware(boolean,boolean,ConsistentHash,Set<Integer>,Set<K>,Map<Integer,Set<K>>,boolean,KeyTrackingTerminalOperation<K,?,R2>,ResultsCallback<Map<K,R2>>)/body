@@ -1,12 +1,13 @@
 {
   Map<Address,Set<Integer>> targets=determineTargets(ch,segments);
-  UUID uuid=UUID.randomUUID();
+  Integer id;
   if (!targets.isEmpty()) {
-    log.tracef("Performing remote rehash key aware operations %s for id %s",targets,uuid);
+    id=requestId.getAndIncrement();
+    log.tracef("Performing remote rehash key aware operations %s for id %s",targets,id);
     RequestTracker<Map<K,R2>> tracker=new RequestTracker<>(callback,targets,null);
-    currentlyRunning.put(uuid,tracker);
+    currentlyRunning.put(id,tracker);
     if (parallelDistribution) {
-      submitAsyncTasks(uuid,targets,keysToExclude,parallelStream,keysToInclude,includeLoader,StreamRequestCommand.Type.TERMINAL_KEY_REHASH,operation);
+      submitAsyncTasks(id,targets,keysToExclude,parallelStream,keysToInclude,includeLoader,StreamRequestCommand.Type.TERMINAL_KEY_REHASH,operation);
     }
  else {
       for (      Map.Entry<Address,Set<Integer>> targetInfo : targets.entrySet()) {
@@ -14,26 +15,30 @@
         Set<Integer> targetSegments=targetInfo.getValue();
         try {
           Set<K> keysExcluded=determineExcludedKeys(keysToExclude,targetSegments);
-          log.tracef("Submitting task to %s for %s excluding keys %s",dest,uuid,keysExcluded);
-          Response response=rpc.invokeRemotely(Collections.singleton(dest),factory.buildStreamRequestCommand(uuid,parallelStream,StreamRequestCommand.Type.TERMINAL_KEY_REHASH,targetSegments,keysToInclude,keysExcluded,includeLoader,operation),rpc.getDefaultRpcOptions(true)).values().iterator().next();
+          log.tracef("Submitting task to %s for %s excluding keys %s",dest,id,keysExcluded);
+          Response response=rpc.invokeRemotely(Collections.singleton(dest),factory.buildStreamRequestCommand(id,parallelStream,StreamRequestCommand.Type.TERMINAL_KEY_REHASH,targetSegments,keysToInclude,keysExcluded,includeLoader,operation),rpc.getDefaultRpcOptions(true)).values().iterator().next();
           if (!response.isSuccessful()) {
-            log.tracef("Unsuccessful response for %s from %s - making segments %s suspect",uuid,dest,targetSegments);
-            receiveResponse(uuid,dest,true,targetSegments,null);
+            log.tracef("Unsuccessful response for %s from %s - making segments %s suspect",id,dest,targetSegments);
+            receiveResponse(id,dest,true,targetSegments,null);
           }
         }
  catch (        Exception e) {
           boolean wasSuspect=containedSuspectException(e);
           if (!wasSuspect) {
-            log.tracef(e,"Encounted exception for %s from %s",uuid,dest);
+            log.tracef(e,"Encounted exception for %s from %s",id,dest);
             throw e;
           }
  else {
             log.tracef("Exception from %s contained a SuspectException, making all segments %s suspect",dest,targetSegments);
-            receiveResponse(uuid,dest,true,targetSegments,null);
+            receiveResponse(id,dest,true,targetSegments,null);
           }
         }
       }
     }
   }
-  return uuid;
+ else {
+    log.tracef("Not performing remote rehash key aware operation for request as no valid targets found");
+    id=null;
+  }
+  return id;
 }

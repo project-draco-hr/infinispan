@@ -2,7 +2,6 @@
   Set<Integer> segmentsToProcess=segmentsToFilter;
   TerminalOperation<R> op;
   do {
-    remoteResults.lostSegments.clear();
     ConsistentHash ch=dm.getReadConsistentHash();
     if (retryOnRehash) {
       op=new SegmentRetryingOperation<>(intermediateOperations,supplierForSegments(ch,segmentsToProcess,null),function);
@@ -10,7 +9,7 @@
  else {
       op=new SingleRunOperation<>(intermediateOperations,supplierForSegments(ch,segmentsToProcess,null),function);
     }
-    UUID id=csm.remoteStreamOperationRehashAware(getParallelDistribution(),parallel,ch,segmentsToProcess,keysToFilter,Collections.emptyMap(),includeLoader,op,remoteResults,earlyTerminatePredicate);
+    Object id=csm.remoteStreamOperationRehashAware(getParallelDistribution(),parallel,ch,segmentsToProcess,keysToFilter,Collections.emptyMap(),includeLoader,op,remoteResults,earlyTerminatePredicate);
     try {
       R localValue;
       boolean localRun=ch.getMembers().contains(localAddress);
@@ -33,16 +32,19 @@
  else {
         localValue=null;
       }
-      try {
-        if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,timeout,timeoutUnit)) {
-          throw new TimeoutException();
+      if (id != null) {
+        try {
+          if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,timeout,timeoutUnit)) {
+            throw new TimeoutException();
+          }
+        }
+ catch (        InterruptedException e) {
+          throw new CacheException(e);
         }
       }
- catch (      InterruptedException e) {
-        throw new CacheException(e);
-      }
-      segmentsToProcess=new HashSet<>(remoteResults.lostSegments);
-      if (!segmentsToProcess.isEmpty()) {
+      if (!remoteResults.lostSegments.isEmpty()) {
+        segmentsToProcess=new HashSet<>(remoteResults.lostSegments);
+        remoteResults.lostSegments.clear();
         log.tracef("Found %s lost segments for identifier %s",segmentsToProcess,id);
       }
  else {
@@ -53,6 +55,6 @@
       csm.forgetOperation(id);
     }
   }
- while (!remoteResults.lostSegments.isEmpty());
+ while (segmentsToProcess != null && !segmentsToProcess.isEmpty());
   return remoteResults.currentValue;
 }

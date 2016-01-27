@@ -1,0 +1,46 @@
+{
+  if (time <= 0) {
+    throw new IllegalArgumentException("Time must be greater than 0");
+  }
+  if (id == null) {
+    Objects.requireNonNull(id,"Identifier must be non null");
+  }
+  log.tracef("Awaiting completion of %s",id);
+  boolean completed=false;
+  long target=System.nanoTime() + unit.toNanos(time);
+  Throwable throwable=null;
+  while (target - System.nanoTime() > 0) {
+    RequestTracker tracker=currentlyRunning.get(id);
+    if (tracker == null) {
+      completed=true;
+      break;
+    }
+    if ((throwable=tracker.throwable) != null) {
+      break;
+    }
+    tracker.completionLock.lock();
+    try {
+      if (!currentlyRunning.containsKey(id)) {
+        completed=true;
+        throwable=tracker.throwable;
+        break;
+      }
+      if (!tracker.completionCondition.await(target - System.nanoTime(),TimeUnit.NANOSECONDS)) {
+        throwable=tracker.throwable;
+        completed=false;
+        break;
+      }
+    }
+  finally {
+      tracker.completionLock.unlock();
+    }
+  }
+  log.tracef("Returning back to caller due to %s being completed: %s",id,completed);
+  if (throwable != null) {
+    if (throwable instanceof RuntimeException) {
+      throw ((RuntimeException)throwable);
+    }
+    throw new CacheException(throwable);
+  }
+  return completed;
+}

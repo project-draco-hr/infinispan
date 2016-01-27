@@ -1,23 +1,25 @@
 {
   Map<Address,Set<Integer>> targets=determineTargets(ch,segments);
-  UUID uuid=UUID.randomUUID();
+  Integer id;
   if (!targets.isEmpty()) {
-    log.tracef("Performing remote operations %s for id %s",targets,uuid);
+    id=requestId.getAndIncrement();
+    log.tracef("Performing remote operations %s for id %s",targets,id);
     RequestTracker<R> tracker=new RequestTracker<>(callback,targets,earlyTerminatePredicate);
-    currentlyRunning.put(uuid,tracker);
+    currentlyRunning.put(id,tracker);
     if (parallelDistribution) {
-      submitAsyncTasks(uuid,targets,keysToExclude,parallelStream,keysToInclude,includeLoader,type,operation);
+      submitAsyncTasks(id,targets,keysToExclude,parallelStream,keysToInclude,includeLoader,type,operation);
     }
  else {
       for (      Map.Entry<Address,Set<Integer>> targetInfo : targets.entrySet()) {
         Set<Integer> targetSegments=targetInfo.getValue();
         Set<K> keysExcluded=determineExcludedKeys(keysToExclude,targetSegments);
-        rpc.invokeRemotely(Collections.singleton(targetInfo.getKey()),factory.buildStreamRequestCommand(uuid,parallelStream,type,targetSegments,keysToInclude,keysExcluded,includeLoader,operation),rpc.getDefaultRpcOptions(true));
+        rpc.invokeRemotely(Collections.singleton(targetInfo.getKey()),factory.buildStreamRequestCommand(id,parallelStream,type,targetSegments,keysToInclude,keysExcluded,includeLoader,operation),rpc.getDefaultRpcOptions(true));
       }
     }
   }
  else {
-    log.tracef("Not performing any remote operations for id %s as no valid targets found",uuid);
+    log.tracef("Not performing remote operation for request as no valid targets found");
+    id=null;
   }
-  return uuid;
+  return id;
 }

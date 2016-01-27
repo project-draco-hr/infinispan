@@ -1,17 +1,19 @@
 {
   ConsistentHash ch=dm.getConsistentHash();
   TerminalOperation<R> op=new SingleRunOperation<>(intermediateOperations,supplierForSegments(ch,segmentsToFilter,null),function);
-  UUID id=csm.remoteStreamOperation(getParallelDistribution(),parallel,ch,segmentsToFilter,keysToFilter,Collections.emptyMap(),includeLoader,op,remoteResults,earlyTerminatePredicate);
+  Object id=csm.remoteStreamOperation(getParallelDistribution(),parallel,ch,segmentsToFilter,keysToFilter,Collections.emptyMap(),includeLoader,op,remoteResults,earlyTerminatePredicate);
   try {
     R localValue=op.performOperation();
     remoteResults.onCompletion(null,Collections.emptySet(),localValue);
-    try {
-      if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,timeout,timeoutUnit)) {
-        throw new TimeoutException();
+    if (id != null) {
+      try {
+        if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) && !csm.awaitCompletion(id,timeout,timeoutUnit)) {
+          throw new TimeoutException();
+        }
       }
-    }
- catch (    InterruptedException e) {
-      throw new CacheException(e);
+ catch (      InterruptedException e) {
+        throw new CacheException(e);
+      }
     }
     log.tracef("Finished operation for id %s",id);
     return remoteResults.currentValue;
