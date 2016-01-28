@@ -5,9 +5,19 @@
   if (namedParameters == null) {
     throw new IllegalStateException("Query does not have parameters");
   }
-  if (!namedParameters.keySet().containsAll(paramValues.keySet())) {
-    Set<String> unknownParams=new HashSet<String>(paramValues.keySet());
-    unknownParams.removeAll(namedParameters.keySet());
+  Set<String> unknownParams=null;
+  for (  String paramName : paramValues.keySet()) {
+    if (paramName == null || paramName.isEmpty()) {
+      throw new IllegalArgumentException("Parameter name cannot be null or empty");
+    }
+    if (!namedParameters.containsKey(paramName)) {
+      if (unknownParams == null) {
+        unknownParams=new HashSet<String>();
+      }
+      unknownParams.add(paramName);
+    }
+  }
+  if (unknownParams != null) {
     throw new IllegalArgumentException("No parameters named '" + unknownParams + "' were found");
   }
   namedParameters.putAll(paramValues);
