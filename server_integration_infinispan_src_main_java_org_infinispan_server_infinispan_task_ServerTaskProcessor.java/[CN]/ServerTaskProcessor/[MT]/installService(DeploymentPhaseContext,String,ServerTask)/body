@@ -1,0 +1,9 @@
+{
+  TaskManagerService service=new TaskManagerService(implementationClassName,instance);
+  ServiceName extensionServiceName=ServiceName.JBOSS.append(EXTERNAL_TASK,implementationClassName.replaceAll("\\.","_"));
+  InfinispanLogger.ROOT_LOGGER.installDeployedCacheStore(implementationClassName);
+  ServiceBuilder<ServerTask> serviceBuilder=ctx.getServiceTarget().addService(extensionServiceName,service);
+  serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE);
+  serviceBuilder.addDependency(ServerTaskRegistryService.SERVICE_NAME,ServerTaskRegistry.class,service.getDeployedTaskManager());
+  serviceBuilder.install();
+}
