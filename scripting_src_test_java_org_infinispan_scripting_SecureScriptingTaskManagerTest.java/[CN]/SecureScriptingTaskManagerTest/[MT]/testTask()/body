@@ -1,0 +1,17 @@
+{
+  Security.doAs(PHEIDIPPIDES,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      String result=null;
+      result=(String)taskManager.runTask(SCRIPT_NAME,new TaskContext().addParameter("a","a")).get();
+      assertEquals("a",result);
+      return null;
+    }
+  }
+);
+  List<Task> tasks=taskManager.getTasks();
+  assertEquals(1,tasks.size());
+  ScriptTask scriptTask=(ScriptTask)tasks.get(0);
+  assertEquals("testRole.js",scriptTask.getName());
+  assertEquals(TaskExecutionMode.ONE_NODE,scriptTask.getExecutionMode());
+  assertEquals("Script",scriptTask.getType());
+}
