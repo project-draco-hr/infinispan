@@ -1,0 +1,19 @@
+{
+  int initialClusterSize=configuration.transport().initialClusterSize();
+  if (initialClusterSize > 1) {
+    long timeout=configuration.transport().initialClusterTimeout();
+    while (channel.getView().getMembers().size() < initialClusterSize) {
+      try {
+        log.debugf("Waiting for %d nodes, current view has %d",initialClusterSize,channel.getView().getMembers().size());
+        if (!waitForView(viewId + 1,timeout,TimeUnit.MILLISECONDS)) {
+          throw log.timeoutWaitingForInitialNodes(initialClusterSize,channel.getView().getMembers());
+        }
+      }
+ catch (      InterruptedException e) {
+        log.interruptedWaitingForCoordinator(e);
+        Thread.currentThread().interrupt();
+      }
+    }
+    log.debugf("Initial cluster size of %d nodes reached",initialClusterSize);
+  }
+}

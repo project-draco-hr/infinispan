@@ -1,0 +1,19 @@
+{
+  if (channel == null)   return false;
+  log.tracef("Waiting on view %d being accepted",viewId);
+  viewUpdateLock.lock();
+  try {
+    while (channel != null && getViewId() < viewId) {
+      if (time == 0) {
+        viewUpdateCondition.await();
+      }
+ else {
+        return viewUpdateCondition.await(time,timeUnit);
+      }
+    }
+    return true;
+  }
+  finally {
+    viewUpdateLock.unlock();
+  }
+}
