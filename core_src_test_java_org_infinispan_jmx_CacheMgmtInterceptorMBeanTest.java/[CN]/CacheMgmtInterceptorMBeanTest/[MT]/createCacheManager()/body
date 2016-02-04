@@ -1,11 +1,13 @@
 {
   cacheManager=TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
   ConfigurationBuilder configuration=getDefaultStandaloneCacheConfig(false);
+  configuration.eviction().strategy(EvictionStrategy.LRU).size(1).persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
   configuration.jmxStatistics().enable();
   cacheManager.defineConfiguration("test",configuration.build());
   cache=cacheManager.getCache("test");
   advanced=cache.getAdvancedCache();
   mgmtInterceptor=getCacheObjectName(JMX_DOMAIN,"test(local)","Statistics");
+  loader=(AdvancedLoadWriteStore)TestingUtil.getFirstLoader(cache);
   server=PerThreadMBeanServerLookup.getThreadMBeanServer();
   return cacheManager;
 }
