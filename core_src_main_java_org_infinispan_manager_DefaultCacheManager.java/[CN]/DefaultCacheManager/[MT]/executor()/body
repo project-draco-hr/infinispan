@@ -1,0 +1,13 @@
+{
+  if (globalComponentRegistry.getStatus() != ComponentStatus.RUNNING) {
+    throw new IllegalStateException("CacheManager must be started before retrieving a ClusterExecutor!");
+  }
+  JGroupsTransport transport=(JGroupsTransport)globalComponentRegistry.getComponent(Transport.class);
+  if (transport != null) {
+    long time=getCacheManagerConfiguration().transport().distributedSyncTimeout();
+    return new ClusterExecutorImpl(null,this,transport,time,TimeUnit.MILLISECONDS,globalComponentRegistry.getComponent(ExecutorService.class,KnownComponentNames.REMOTE_COMMAND_EXECUTOR));
+  }
+ else {
+    return new ClusterExecutorImpl(null,this,null,-1,TimeUnit.MILLISECONDS,ForkJoinPool.commonPool());
+  }
+}
