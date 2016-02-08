@@ -1,0 +1,20 @@
+{
+  Map<Address,Response> result=super.afterInvokeRemotely(command,responseMap);
+  log.debugf("After invoke remotely %s. Responses=%s",command,result);
+  if (!triggered && command instanceof PrepareCommand) {
+    log.debugf("Triggering %s and %s",TX1_LOCKED,TX1_UNSURE);
+    triggered=true;
+    try {
+      sequencer.advance(TX1_LOCKED);
+      sequencer.advance(TX1_UNSURE);
+    }
+ catch (    TimeoutException|InterruptedException e) {
+      throw new CacheException(e);
+    }
+    for (    Map.Entry<Address,Response> entry : result.entrySet()) {
+      entry.setValue(UnsureResponse.INSTANCE);
+    }
+    log.debugf("After invoke remotely %s. New Responses=%s",command,result);
+  }
+  return result;
+}

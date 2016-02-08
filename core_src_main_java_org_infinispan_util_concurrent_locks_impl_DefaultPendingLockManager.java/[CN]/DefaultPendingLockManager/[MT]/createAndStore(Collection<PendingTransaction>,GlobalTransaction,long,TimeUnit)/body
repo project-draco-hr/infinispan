@@ -1,9 +1,15 @@
 {
   if (transactions.isEmpty()) {
-    return PendingLockPromise.NO_OP;
+    return createAndStore(globalTransaction);
+  }
+  if (trace) {
+    log.tracef("Transactions pending for Transaction %s are %s",globalTransaction,transactions);
   }
   PendingLockPromiseImpl pendingLockPromise=new PendingLockPromiseImpl(transactions,timeService.expectedEndTime(time,unit));
   PendingLockPromise existing=pendingLockPromiseMap.putIfAbsent(globalTransaction,pendingLockPromise);
+  if (trace) {
+    log.tracef("Stored PendingLock is %s",existing != null ? existing : pendingLockPromise);
+  }
   if (existing != null) {
     return existing;
   }

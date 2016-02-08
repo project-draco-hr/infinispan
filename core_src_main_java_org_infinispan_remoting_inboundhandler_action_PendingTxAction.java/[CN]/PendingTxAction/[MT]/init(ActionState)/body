@@ -14,12 +14,8 @@
     context.getCacheTransaction().cleanupBackupLocks();
     keysToLock.removeAll(context.getLockedKeys());
   }
-  if (keysToLock.isEmpty()) {
-    cas(InternalState.CHECKING,InternalState.READY);
-    return ActionStatus.READY;
-  }
   PendingLockPromise promise=keysToLock.size() == 1 ? pendingLockManager.checkPendingTransactionsForKey(context,keysToLock.get(0),timeout,TimeUnit.MILLISECONDS) : pendingLockManager.checkPendingTransactionsForKeys(context,keysToLock,timeout,TimeUnit.MILLISECONDS);
-  if (promise == PendingLockPromise.NO_OP) {
+  if (promise.isReady()) {
     cas(InternalState.CHECKING,InternalState.READY);
     return ActionStatus.READY;
   }

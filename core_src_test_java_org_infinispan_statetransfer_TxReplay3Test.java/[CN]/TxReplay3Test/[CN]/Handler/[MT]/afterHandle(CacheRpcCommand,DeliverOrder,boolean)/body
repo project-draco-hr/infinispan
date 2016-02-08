@@ -1,0 +1,14 @@
+{
+  super.afterHandle(command,order,delegated);
+  log.debugf("After invoking %s. expected origin=%s",command,origin);
+  if (!triggered && command instanceof PrepareCommand && command.getOrigin().equals(origin)) {
+    log.debugf("Triggering %s.",TX2_PENDING);
+    triggered=true;
+    try {
+      sequencer.advance(TX2_PENDING);
+    }
+ catch (    TimeoutException|InterruptedException e) {
+      throw new CacheException(e);
+    }
+  }
+}

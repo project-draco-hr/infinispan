@@ -1,7 +1,10 @@
 {
-  PendingLockPromiseImpl pendingLockPromise=pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
+  PendingLockPromise pendingLockPromise=pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
+  if (trace) {
+    log.tracef("Await for pending transactions using %s",pendingLockPromise);
+  }
   if (pendingLockPromise != null) {
-    awaitOn(pendingLockPromise,ctx.getGlobalTransaction());
+    return awaitOn(pendingLockPromise,ctx.getGlobalTransaction(),time,unit);
   }
   final int txTopologyId=getTopologyId(ctx);
   if (txTopologyId != NO_PENDING_CHECK) {
