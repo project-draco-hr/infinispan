@@ -1,0 +1,15 @@
+{
+  QueryBuilder query=getQueryFactory().from(ServerEventImpl.class).orderBy("when",SortOrder.DESC).maxResults(count).startOffset(start);
+  if (category.isPresent()) {
+    if (level.isPresent()) {
+      query.having("category").eq(category.get()).and().having("level").eq(level.get());
+    }
+ else {
+      query.having("category").eq(category.get());
+    }
+  }
+ else   if (level.isPresent()) {
+    query.having("level").eq(level.get());
+  }
+  return query.build().list();
+}

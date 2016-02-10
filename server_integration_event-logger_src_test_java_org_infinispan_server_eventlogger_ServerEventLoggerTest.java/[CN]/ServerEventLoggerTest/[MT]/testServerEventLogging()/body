@@ -1,0 +1,26 @@
+{
+  withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager()){
+    @Override public void call() throws Exception {
+      cm.getCache();
+      EventLogger eventLogger=EventLogManager.getEventLogger(cm);
+      assertTrue(eventLogger.getClass().getName(),eventLogger instanceof ServerEventLogger);
+      eventLogger.info(EventLogCategory.CLUSTER,"message #1");
+      eventLogger.info(EventLogCategory.TASKS,"message #2");
+      eventLogger.warn(EventLogCategory.CLUSTER,"message #3");
+      eventLogger.warn(EventLogCategory.TASKS,"message #4");
+      List<EventLog> events=eventLogger.getEvents(0,10,Optional.of(EventLogCategory.CLUSTER),Optional.empty());
+      assertEquals(2,events.size());
+      assertEquals("message #3",events.get(0).getMessage());
+      assertEquals(EventLogLevel.WARN,events.get(0).getLevel());
+      assertEquals("message #1",events.get(1).getMessage());
+      assertEquals(EventLogLevel.INFO,events.get(1).getLevel());
+      events=eventLogger.getEvents(0,10,Optional.empty(),Optional.of(EventLogLevel.INFO));
+      assertEquals(2,events.size());
+      assertEquals("message #2",events.get(0).getMessage());
+      assertEquals(EventLogCategory.TASKS,events.get(0).getCategory());
+      assertEquals("message #1",events.get(1).getMessage());
+      assertEquals(EventLogCategory.CLUSTER,events.get(1).getCategory());
+    }
+  }
+);
+}
