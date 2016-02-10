@@ -1,6 +1,9 @@
 {
   super.setup();
-  taskManager=(TaskManagerImpl)cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+  GlobalComponentRegistry gcr=cacheManager.getGlobalComponentRegistry();
+  taskManager=(TaskManagerImpl)gcr.getComponent(TaskManager.class);
   taskEngine=new DummyTaskEngine();
   taskManager.registerTaskEngine(taskEngine);
+  memoryLogger=new MemoryEventLogger(cacheManager,gcr.getTimeService());
+  gcr.getComponent(EventLogManager.class).replaceEventLogger(memoryLogger);
 }
