@@ -1,0 +1,10 @@
+{
+  if (!response.isSuccessful()) {
+    Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
+    throw new CacheException(format("Unsuccessful response received from node '%s': %s",origin,response),cause);
+  }
+ else   if (response == CacheNotFoundResponse.INSTANCE) {
+    return;
+  }
+  values.put(origin,((SuccessfulResponse)response).getResponseValue());
+}

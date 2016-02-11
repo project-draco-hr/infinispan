@@ -1,17 +1,7 @@
 {
   if (totalOrder) {
     Map<Address,Response> responseMap=transport.invokeRemotely(transport.getMembers(),command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,filter,DeliverOrder.TOTAL,distributed);
-    Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
-    for (    Map.Entry<Address,Response> entry : responseMap.entrySet()) {
-      Address address=entry.getKey();
-      Response response=entry.getValue();
-      if (!response.isSuccessful()) {
-        Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
-        throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
-      }
-      responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
-    }
-    return responseValues;
+    return extractResponseValues(responseMap,null);
   }
   CompletableFuture<Map<Address,Response>> remoteFuture=transport.invokeRemotelyAsync(null,command,ResponseMode.SYNCHRONOUS,timeout,filter,DeliverOrder.NONE,false);
   gcr.wireDependencies(command);
@@ -23,24 +13,5 @@
  catch (  Throwable throwable) {
     throw new Exception(throwable);
   }
-  if (!localResponse.isSuccessful()) {
-    Exception exception=null;
-    if (localResponse instanceof ExceptionResponse) {
-      exception=((ExceptionResponse)localResponse).getException();
-    }
-    throw new CacheException("Unsuccessful local response: " + localResponse,exception);
-  }
-  Map<Address,Response> responseMap=remoteFuture.get(timeout,TimeUnit.MILLISECONDS);
-  Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
-  for (  Map.Entry<Address,Response> entry : responseMap.entrySet()) {
-    Address address=entry.getKey();
-    Response response=entry.getValue();
-    if (!response.isSuccessful()) {
-      Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
-      throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
-    }
-    responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
-  }
-  responseValues.put(transport.getAddress(),((SuccessfulResponse)localResponse).getResponseValue());
-  return responseValues;
+  return extractResponseValues(remoteFuture.get(timeout,TimeUnit.MILLISECONDS),localResponse);
 }
