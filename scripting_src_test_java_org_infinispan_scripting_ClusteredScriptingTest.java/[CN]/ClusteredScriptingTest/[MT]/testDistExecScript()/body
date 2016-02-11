@@ -1,10 +1,9 @@
 {
   ScriptingManager scriptingManager=getScriptingManager(manager(0));
-  Cache<String,String> cache=cache(0);
-  loadData(cache,"/macbeth.txt");
-  loadScript(scriptingManager,"/wordCountStream.js");
-  CompletableFuture<Map<String,Long>> resultsFuture=scriptingManager.runScript("wordCountStream.js",new TaskContext().cache(cache(0)));
-  Map<String,Long> results=resultsFuture.get();
-  assertEquals(3209,results.size());
-  assertEquals(results.get("macbeth"),Long.valueOf(287));
+  loadScript(scriptingManager,"/distExec.js");
+  CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture=scriptingManager.runScript("distExec.js",new TaskContext().cache(cache(0)));
+  ArrayList<JGroupsAddress> results=resultsFuture.get();
+  assertEquals(2,results.size());
+  assertTrue(results.contains(manager(0).getAddress()));
+  assertTrue(results.contains(manager(1).getAddress()));
 }

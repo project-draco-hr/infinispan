@@ -1,6 +1,10 @@
 {
   ScriptingManager scriptingManager=getScriptingManager(manager(0));
-  loadScript(scriptingManager,"/test.js");
-  executeScriptOnManager(0,"test.js");
-  executeScriptOnManager(1,"test.js");
+  Cache<String,String> cache=cache(0);
+  loadData(cache,"/macbeth.txt");
+  loadScript(scriptingManager,"/wordCountStream.js");
+  CompletableFuture<Map<String,Long>> resultsFuture=scriptingManager.runScript("wordCountStream.js",new TaskContext().cache(cache(0)));
+  Map<String,Long> results=resultsFuture.get();
+  assertEquals(3209,results.size());
+  assertEquals(results.get("macbeth"),Long.valueOf(287));
 }
