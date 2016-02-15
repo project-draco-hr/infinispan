@@ -3,9 +3,9 @@
     log.tracef("Transaction.enlistResource(%s) invoked in transaction with Xid=%s",resource,xid);
   }
   checkStatusBeforeRegister("resource");
-  for (  XAResource otherResource : resources) {
+  for (  Map.Entry<XAResource,Integer> otherResourceEntry : resources) {
     try {
-      if (otherResource.isSameRM(resource)) {
+      if (otherResourceEntry.getKey().isSameRM(resource)) {
         log.debug("Ignoring resource. It is already there.");
         return true;
       }
@@ -13,7 +13,7 @@
  catch (    XAException e) {
     }
   }
-  resources.add(resource);
+  resources.add(new AbstractMap.SimpleEntry<>(resource,null));
   try {
     if (trace) {
       log.tracef("XaResource.start() invoked in transaction with Xid=%s",xid);

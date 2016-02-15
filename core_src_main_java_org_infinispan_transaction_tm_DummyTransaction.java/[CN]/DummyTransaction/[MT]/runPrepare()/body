@@ -8,12 +8,14 @@
     return false;
   }
   status=Status.STATUS_PREPARING;
-  for (  XAResource res : getEnlistedResources()) {
+  for (  Map.Entry<XAResource,Integer> resourceStatusEntry : resources) {
+    final XAResource res=resourceStatusEntry.getKey();
     try {
       if (trace) {
         log.tracef("XaResource.prepare() for %s",res);
       }
-      res.prepare(xid);
+      int lastStatus=res.prepare(xid);
+      resourceStatusEntry.setValue(lastStatus);
     }
  catch (    XAException e) {
       if (trace) {

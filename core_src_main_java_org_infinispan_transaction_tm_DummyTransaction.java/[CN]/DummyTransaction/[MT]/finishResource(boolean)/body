@@ -3,11 +3,16 @@
   boolean heuristic=false;
   boolean error=false;
   Exception cause=null;
-  for (  XAResource res : getEnlistedResources()) {
+  for (  Map.Entry<XAResource,Integer> resourceStatusEntry : resources) {
+    final XAResource res=resourceStatusEntry.getKey();
     try {
       if (commit) {
         if (trace) {
           log.tracef("XaResource.commit() for %s",res);
+        }
+        if (resourceStatusEntry.getValue() == XAResource.XA_RDONLY) {
+          log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s",res);
+          continue;
         }
         res.commit(xid,false);
       }
