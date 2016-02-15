@@ -1,0 +1,19 @@
+{
+  if (value == null) {
+    throw new IllegalArgumentException("Null values are not allowed");
+  }
+  startInternalCache();
+  Transaction tx=suspendTx();
+  try {
+    runCommand(new Runnable(){
+      @Override public void run(){
+        knownClassesCache.put(new KeyValuePair<>(cacheName,clazz),value);
+      }
+    }
+);
+  }
+  finally {
+    resumeTx(tx);
+  }
+  localCacheInsert(clazz,value);
+}

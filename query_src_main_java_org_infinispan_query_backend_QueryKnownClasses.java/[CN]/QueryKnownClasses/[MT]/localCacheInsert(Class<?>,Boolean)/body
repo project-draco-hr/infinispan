@@ -1,0 +1,15 @@
+{
+synchronized (localCache) {
+    final Map<Class<?>,Boolean> currentContent=localCache.get();
+    final int currentSize=currentContent.size();
+    if (currentSize == 0) {
+      localCache.lazySet(Collections.singletonMap(key,value));
+    }
+ else {
+      Map<Class<?>,Boolean> updatedContent=new HashMap<>(currentSize + 1);
+      updatedContent.putAll(currentContent);
+      updatedContent.put(key,value);
+      localCache.lazySet(Collections.unmodifiableMap(updatedContent));
+    }
+  }
+}
