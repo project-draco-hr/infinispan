@@ -1,4 +1,9 @@
 {
   this.cacheManager=context.getCacheManager();
-  clusterRegistry=cacheManager.getGlobalComponentRegistry().getComponent(ClusterRegistry.class);
+  GlobalConfiguration globalConfiguration=cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+  CacheMode cacheMode=globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
+  ConfigurationBuilder cfg=new ConfigurationBuilder();
+  cfg.clustering().cacheMode(cacheMode).sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).security().authorization().disable();
+  InternalCacheRegistry internalCacheRegistry=cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+  internalCacheRegistry.registerInternalCache(CLUSTER_ROLE_MAPPER_CACHE,cfg.build(),EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
 }
