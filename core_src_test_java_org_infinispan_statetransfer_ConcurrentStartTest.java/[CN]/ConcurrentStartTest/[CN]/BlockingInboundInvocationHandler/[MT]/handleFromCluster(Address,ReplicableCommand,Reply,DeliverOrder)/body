@@ -1,12 +1,11 @@
 {
   if (command instanceof CacheTopologyControlCommand) {
-    if (((CacheTopologyControlCommand)command).getType() == CacheTopologyControlCommand.Type.POLICY_GET_STATUS) {
-      try {
-        checkPoint.trigger("blocked_" + origin);
-        checkPoint.awaitStrict("unblocked_" + origin,10,SECONDS);
-      }
- catch (      Exception e) {
-      }
+    try {
+      checkPoint.trigger("blocked_" + origin);
+      checkPoint.awaitStrict("unblocked_" + origin,10,SECONDS);
+    }
+ catch (    Exception e) {
+      log.warnf(e,"Error while blocking before command %s",command);
     }
   }
   delegate.handleFromCluster(origin,command,reply,order);
