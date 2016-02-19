@@ -1,9 +1,9 @@
 {
   withCacheManager(new CacheManagerCallable(createCacheManager()){
     @Override public void call() throws Exception {
-      JoiningNode newNode=new JoiningNode(cm);
-      Cache<String,Person> newCache=newNode.getCache();
-      newNode.waitForJoin(120000,caches().get(0),caches().get(1),newCache);
+      EmbeddedCacheManager newManager=createCacheManager();
+      Cache<String,Person> newCache=newManager.getCache();
+      TestingUtil.waitForRehashToComplete(caches().get(0),caches().get(1),newCache);
       int size=newCache.size();
       assertEquals(4,size);
       for (int i=0; i < size; i++)       assertEquals(persons[i],newCache.get(persons[i].getName()));
