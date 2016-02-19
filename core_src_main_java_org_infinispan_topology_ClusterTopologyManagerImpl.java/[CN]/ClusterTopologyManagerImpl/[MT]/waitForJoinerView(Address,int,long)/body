@@ -1,6 +1,13 @@
 {
-  if (joinerViewId > viewId) {
-    log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s",joinerViewId,viewId);
+  if (joinerViewId > viewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
+    if (trace) {
+      if (joinerViewId > viewId) {
+        log.tracef("Waiting to install view %s before processing join request from %s",joinerViewId,joiner);
+      }
+ else {
+        log.tracef("Waiting to recover cluster status before processing join request from %s",joiner);
+      }
+    }
     long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
 synchronized (clusterManagerLock) {
       while (viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
