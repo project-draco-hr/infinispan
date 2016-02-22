@@ -1,0 +1,20 @@
+{
+  List<Class<?>> reducedSet=new ArrayList<>(classes.length);
+  for (  Class<?> type : classes) {
+    if (!queryKnownClasses.containsKey(type)) {
+      reducedSet.add(type);
+    }
+  }
+  if (!reducedSet.isEmpty()) {
+    if (queryKnownClasses.isAutodetectEnabled()) {
+      Class<?>[] toAdd=reducedSet.toArray(new Class[reducedSet.size()]);
+      updateSearchFactory(toAdd);
+      for (      Class<?> c : toAdd) {
+        queryKnownClasses.put(c,hasIndex(c));
+      }
+    }
+ else     if (!allowUndeclared) {
+      log.detectedUnknownIndexedEntities(queryKnownClasses.getCacheName(),reducedSet.toString());
+    }
+  }
+}

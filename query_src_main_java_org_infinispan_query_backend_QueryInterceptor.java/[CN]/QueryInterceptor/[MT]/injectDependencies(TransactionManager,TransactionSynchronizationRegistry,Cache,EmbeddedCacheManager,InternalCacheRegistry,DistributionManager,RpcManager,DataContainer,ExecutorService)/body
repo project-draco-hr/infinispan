@@ -5,6 +5,8 @@
   this.rpcManager=rpcManager;
   this.asyncExecutor=e;
   this.dataContainer=dataContainer;
-  this.queryKnownClasses=new QueryKnownClasses(cache.getName(),cacheManager,internalCacheRegistry);
+  Set<Class<?>> indexedEntities=cache.getCacheConfiguration().indexing().indexedEntities();
+  this.indexedEntities=indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
+  this.queryKnownClasses=indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(),cacheManager,internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
   this.searchFactoryHandler=new SearchFactoryHandler(this.searchFactory,this.queryKnownClasses,new TransactionHelper(transactionManager));
 }

@@ -15,6 +15,12 @@
     }
   }
   builder.indexing().index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE).withProperties(indexingProperties).autoConfig(autoConfig);
+  final ModelNode indexedEntitiesModel=CacheConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context,cache);
+  if (indexing.isEnabled() && indexedEntitiesModel.isDefined()) {
+    for (    ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
+      String className=indexedEntityNode.asString();
+    }
+  }
   if (cache.hasDefined(ModelKeys.REMOTE_CACHE)) {
     builder.sites().backupFor().remoteCache(CacheConfigurationResource.REMOTE_CACHE.resolveModelAttribute(context,cache).asString());
   }

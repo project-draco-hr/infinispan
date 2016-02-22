@@ -1,11 +1,11 @@
 {
-  if (searchManager == null) {
+  if (!isIndexed) {
     throw log.cannotRunLuceneQueriesIfNotIndexed();
   }
   checkParameters(namedParameters);
   LuceneQueryParsingResult parsingResult=transformJpaToLucene(jpqlString,namedParameters);
   org.apache.lucene.search.Query luceneQuery=makeTypeQuery(parsingResult.getQuery(),parsingResult.getTargetEntityName());
-  CacheQuery cacheQuery=searchManager.getQuery(luceneQuery,parsingResult.getTargetEntity());
+  CacheQuery cacheQuery=getSearchManager().getQuery(luceneQuery,parsingResult.getTargetEntity());
   if (parsingResult.getSort() != null) {
     cacheQuery=cacheQuery.sort(parsingResult.getSort());
   }

@@ -3,9 +3,10 @@
   user.setId(1);
   user.setName("John");
   cache.put("user_" + user.getId(),user);
-  QueryCache queryCache=TestingUtil.extractGlobalComponent(cacheManager,QueryCache.class);
+  QueryEngine queryEngine=TestingUtil.extractComponent(cache,QueryEngine.class);
+  QueryCache queryCache=(QueryCache)TestingUtil.extractField(QueryEngine.class,queryEngine,"queryCache");
   QueryCache queryCacheSpy=spy(queryCache);
-  TestingUtil.replaceComponent(cacheManager,QueryCache.class,queryCacheSpy,true);
+  TestingUtil.replaceField(queryCacheSpy,"queryCache",queryEngine,QueryEngine.class);
   QueryFactory qf=Search.getQueryFactory(cache);
   QueryBuilder<Query> queryQueryBuilder=qf.from(UserHS.class).having("name").eq("John").toBuilder();
   String jpaQuery=((BaseQueryBuilder<Query>)queryQueryBuilder).accept(new JPAQueryGenerator());

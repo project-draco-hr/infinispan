@@ -1,0 +1,27 @@
+{
+  AdvancedCache<?,?> cache=cr.getComponent(Cache.class).getAdvancedCache();
+  GlobalConfiguration globalCfg=cr.getGlobalComponentRegistry().getGlobalConfiguration();
+  mbeanServer=JmxUtil.lookupMBeanServer(globalCfg);
+  String cacheManagerName=globalCfg.globalJmxStatistics().cacheManagerName();
+  String queryGroupName=getQueryGroupName(cacheManagerName,cache.getName());
+  jmxDomain=JmxUtil.buildJmxDomain(globalCfg,mbeanServer,queryGroupName);
+  InfinispanQueryStatisticsInfo stats=new InfinispanQueryStatisticsInfo(sf);
+  stats.setStatisticsEnabled(cfg.jmxStatistics().enabled());
+  try {
+    ObjectName statsObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component=Statistics");
+    JmxUtil.registerMBean(stats,statsObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to register query module statistics mbean",e);
+  }
+  ManageableComponentMetadata massIndexerCompMetadata=cr.getGlobalComponentRegistry().getComponentMetadataRepo().findComponentMetadata(MassIndexer.class).toManageableComponentMetadata();
+  try {
+    DistributedExecutorMassIndexer massIndexer=new DistributedExecutorMassIndexer(cache,sf);
+    ResourceDMBean mbean=new ResourceDMBean(massIndexer,massIndexerCompMetadata);
+    ObjectName massIndexerObjName=new ObjectName(jmxDomain + ":" + queryGroupName+ ",component="+ massIndexerCompMetadata.getJmxObjectName());
+    JmxUtil.registerMBean(mbean,massIndexerObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    throw new CacheException("Unable to create ",e);
+  }
+}

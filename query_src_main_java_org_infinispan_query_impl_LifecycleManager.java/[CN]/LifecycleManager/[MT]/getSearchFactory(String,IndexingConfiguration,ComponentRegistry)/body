@@ -1,0 +1,25 @@
+{
+  Object component=cr.getComponent(SearchIntegrator.class);
+  SearchIntegrator searchFactory=null;
+  if (component instanceof SearchIntegrator) {
+    searchFactory=(SearchIntegrator)component;
+  }
+  if (searchFactory == null) {
+    GlobalComponentRegistry globalComponentRegistry=cr.getGlobalComponentRegistry();
+    EmbeddedCacheManager uninitializedCacheManager=globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
+    Properties indexingProperties=addProgrammaticMappings(indexingConfiguration.properties(),cr);
+    Class<?>[] indexedEntities=indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
+    if (indexedEntities.length > 0 && hasInfinispanDirectory(indexingProperties)) {
+      String metadataCacheName=getMetadataCacheName(indexingProperties);
+      String lockingCacheName=getLockingCacheName(indexingProperties);
+      String dataCacheName=getDataCacheName(indexingProperties);
+      if (cacheName.equals(dataCacheName) || cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName)) {
+        indexedEntities=new Class[0];
+      }
+    }
+    SearchConfiguration config=new SearchableCacheConfiguration(indexedEntities,indexingProperties,uninitializedCacheManager,cr);
+    searchFactory=new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
+    cr.registerComponent(searchFactory,SearchIntegrator.class);
+  }
+  return searchFactory;
+}

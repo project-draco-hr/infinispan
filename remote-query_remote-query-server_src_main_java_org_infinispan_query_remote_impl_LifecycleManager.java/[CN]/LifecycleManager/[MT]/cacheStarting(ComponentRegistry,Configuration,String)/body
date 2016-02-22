@@ -2,14 +2,19 @@
   InternalCacheRegistry icr=cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
   if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName,InternalCacheRegistry.Flag.QUERYABLE)) {
     ProtobufMetadataManagerImpl protobufMetadataManager=(ProtobufMetadataManagerImpl)cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-    protobufMetadataManager.getCache();
-    cr.registerComponent(new ProtobufMatcher(protobufMetadataManager.getSerializationContext()),ProtobufMatcher.class);
-    if (cfg.compatibility().enabled()) {
-      cr.registerComponent(new CompatibilityReflectionMatcher(protobufMetadataManager.getSerializationContext()),CompatibilityReflectionMatcher.class);
+    SerializationContext serCtx=protobufMetadataManager.getSerializationContext();
+    cr.registerComponent(new ProtobufMatcher(serCtx),ProtobufMatcher.class);
+    boolean isCompatMode=cfg.compatibility().enabled();
+    if (isCompatMode) {
+      cr.registerComponent(new CompatibilityReflectionMatcher(serCtx),CompatibilityReflectionMatcher.class);
     }
-    if (cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled()) {
+    boolean isIndexed=cfg.indexing().index().isEnabled();
+    if (isIndexed && !isCompatMode) {
       log.infof("Registering RemoteValueWrapperInterceptor for cache %s",cacheName);
       createRemoteValueWrapperInterceptor(cr,cfg);
     }
+    AdvancedCache<?,?> cache=cr.getComponent(Cache.class).getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
+    RemoteQueryEngine remoteQueryEngine=new RemoteQueryEngine(cache,isIndexed,isCompatMode,serCtx);
+    cr.registerComponent(remoteQueryEngine,RemoteQueryEngine.class);
   }
 }

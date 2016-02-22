@@ -1,7 +1,7 @@
 {
   Configuration configuration=cr.getComponent(Configuration.class);
-  boolean indexingEnabled=configuration.indexing().index().isEnabled();
-  if (!indexingEnabled) {
+  IndexingConfiguration indexingConfiguration=configuration.indexing();
+  if (!indexingConfiguration.index().isEnabled()) {
     if (verifyChainContainsQueryInterceptor(cr)) {
       throw new IllegalStateException("It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found");
     }
@@ -10,12 +10,22 @@
   if (!verifyChainContainsQueryInterceptor(cr)) {
     throw new IllegalStateException("It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found");
   }
-  Cache<?,?> cache=cr.getComponent(Cache.class);
-  CommandInitializer initializer=cr.getComponent(CommandInitializer.class);
-  EmbeddedCacheManager cacheManager=cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-  initializer.setCacheManager(cacheManager);
-  QueryBox queryBox=new QueryBox();
-  queryBox.setCache(cache.getAdvancedCache());
-  cr.registerComponent(queryBox,QueryBox.class);
-  registerQueryMBeans(cache.getAdvancedCache(),cr,cacheName);
+  SearchIntegrator searchFactory=cr.getComponent(SearchIntegrator.class);
+  if (!indexingConfiguration.indexedEntities().isEmpty()) {
+    Properties indexingProperties=indexingConfiguration.properties();
+    if (hasInfinispanDirectory(indexingProperties)) {
+      String metadataCacheName=getMetadataCacheName(indexingProperties);
+      String lockingCacheName=getLockingCacheName(indexingProperties);
+      String dataCacheName=getDataCacheName(indexingProperties);
+      if (cacheName.equals(dataCacheName) && (cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName))) {
+        Class<?>[] indexedEntities=indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
+        searchFactory.addClasses(indexedEntities);
+        checkIndexableClasses(searchFactory,indexingConfiguration.indexedEntities());
+      }
+    }
+ else {
+      checkIndexableClasses(searchFactory,indexingConfiguration.indexedEntities());
+    }
+  }
+  registerQueryMBeans(cr,configuration,searchFactory);
 }

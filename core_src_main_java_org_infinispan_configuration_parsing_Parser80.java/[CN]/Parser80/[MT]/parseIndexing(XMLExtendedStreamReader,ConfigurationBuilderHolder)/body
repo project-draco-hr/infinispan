@@ -16,6 +16,25 @@ default :
 throw ParseUtils.unexpectedAttribute(reader,i);
 }
 }
-Properties indexingProperties=parseProperties(reader);
+Properties indexingProperties=new Properties();
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case INDEXED_ENTITIES:
+{
+parseIndexedEntities(reader,holder,builder);
+break;
+}
+case PROPERTY:
+{
+parseProperty(reader,indexingProperties);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
 builder.indexing().withProperties(indexingProperties);
 }
