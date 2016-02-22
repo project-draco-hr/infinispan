@@ -16,7 +16,11 @@
       if (localRun) {
         localValue=op.performOperation();
         if (dm.getReadConsistentHash().equals(ch)) {
-          remoteResults.onCompletion(null,ch.getPrimarySegmentsForOwner(localAddress),localValue);
+          Set<Integer> ourSegments=ch.getPrimarySegmentsForOwner(localAddress);
+          if (segmentsToProcess != null) {
+            ourSegments.retainAll(segmentsToProcess);
+          }
+          remoteResults.onCompletion(null,ourSegments,localValue);
         }
  else {
           if (segmentsToProcess != null) {
@@ -48,6 +52,9 @@
         log.tracef("Found %s lost segments for identifier %s",segmentsToProcess,id);
       }
  else {
+        if (segmentsToProcess != null) {
+          segmentsToProcess=null;
+        }
         log.tracef("Finished rehash aware operation for id %s",id);
       }
     }
