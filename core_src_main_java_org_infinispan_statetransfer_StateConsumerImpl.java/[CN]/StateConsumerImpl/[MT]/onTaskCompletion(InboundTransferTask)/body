@@ -1,14 +1,10 @@
 {
+  if (!inboundTransfer.isStartedSuccessfully()) {
+    retryOrNotifyCompletion(inboundTransfer);
+  }
   stateRequestCompletionService.backgroundTaskFinished(new Callable<Void>(){
     @Override public Void call() throws Exception {
-      removeTransfer(inboundTransfer);
-      if (!inboundTransfer.isCompletedSuccessfully() && !inboundTransfer.isCancelled()) {
-        retryTransferTask(inboundTransfer);
-      }
- else {
-        if (trace)         log.tracef("Inbound transfer finished: %s",inboundTransfer);
-        notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId());
-      }
+      retryOrNotifyCompletion(inboundTransfer);
       return null;
     }
   }

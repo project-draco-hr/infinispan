@@ -24,7 +24,8 @@ synchronized (transferMapsLock) {
   }
   stateRequestCompletionService.submit(new Callable<Void>(){
     @Override public Void call() throws Exception {
-      inboundTransfer.requestSegments();
+      boolean transferStarted=inboundTransfer.requestSegments();
+      if (!transferStarted)       return null;
       if (trace)       log.tracef("Waiting for inbound transfer to finish: %s",inboundTransfer);
       stateRequestCompletionService.continueTaskInBackground();
       return null;
