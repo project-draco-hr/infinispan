@@ -2,6 +2,13 @@
   String serverDir=System.getProperty("server1.dist");
   JavaArchive jar=ShrinkWrap.create(JavaArchive.class);
   jar.addClass(LocalTestServerTask.class);
-  jar.addAsServiceProvider(ServerTask.class,LocalTestServerTask.class);
-  jar.as(ZipExporter.class).exportTo(new File(serverDir,"/standalone/deployments/custom-task.jar"),true);
+  jar.addClass(LocalExceptionalServerTask.class);
+  jar.addClass(LocalMapReduceServerTask.class);
+  jar.addClass(JSExecutingServerTask.class);
+  jar.addAsServiceProvider(ServerTask.class,LocalTestServerTask.class,LocalExceptionalServerTask.class,LocalMapReduceServerTask.class,JSExecutingServerTask.class);
+  jar.addAsResource(new File("/stream_serverTask.js"));
+  jar.addAsManifestResource("MANIFEST.MF");
+  File f=new File(serverDir,"/standalone/deployments/custom-task.jar");
+  f.deleteOnExit();
+  jar.as(ZipExporter.class).exportTo(f,true);
 }

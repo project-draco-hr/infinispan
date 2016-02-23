@@ -1,0 +1,12 @@
+{
+  RemoteCacheManager rcm=ITestUtils.createCacheManager(server);
+  RemoteCache remoteCache=rcm.getCache();
+  remoteCache.put(1,"word1 word2 word3");
+  remoteCache.put(2,"word1 word2");
+  remoteCache.put(3,"word1");
+  Map<String,Long> result=(Map<String,Long>)remoteCache.execute(LocalMapReduceServerTask.NAME,Collections.emptyMap());
+  assertEquals(3,result.size());
+  assertEquals(3,result.get("word1").intValue());
+  assertEquals(2,result.get("word2").intValue());
+  assertEquals(1,result.get("word3").intValue());
+}

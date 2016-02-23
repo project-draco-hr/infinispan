@@ -2,8 +2,17 @@
   String[] serverDirs=new String[]{System.getProperty("server1.dist"),System.getProperty("server2.dist")};
   JavaArchive jar=ShrinkWrap.create(JavaArchive.class);
   jar.addClass(DistributedTestServerTask.class);
-  jar.addAsServiceProvider(ServerTask.class,DistributedTestServerTask.class);
+  jar.addClass(DistributedCacheUsingTask.class);
+  jar.addClass(DistributedMapReduceServerTask.class);
+  jar.addClass(DistributedJSExecutingServerTask.class);
+  jar.addClass(LocalMapReduceServerTask.class);
+  jar.addClass(JSExecutingServerTask.class);
+  jar.addAsServiceProvider(ServerTask.class,DistributedTestServerTask.class,DistributedCacheUsingTask.class,DistributedMapReduceServerTask.class,DistributedJSExecutingServerTask.class);
+  jar.addAsResource(new File("/stream_serverTask.js"));
+  jar.addAsManifestResource("MANIFEST.MF");
   for (  String serverDir : serverDirs) {
-    jar.as(ZipExporter.class).exportTo(new File(serverDir,"/standalone/deployments/custom-distributed-task.jar"),true);
+    File f=new File(serverDir,"/standalone/deployments/custom-distributed-task.jar");
+    f.deleteOnExit();
+    jar.as(ZipExporter.class).exportTo(f,true);
   }
 }
