@@ -1,0 +1,20 @@
+{
+  ManagementClient client=ManagementClient.getInstance();
+  if (isDistributedMode()) {
+    testCache="distTestCache";
+    client.addDistributedCache(testCache,"clustered","distCacheConfiguration");
+  }
+ else   if (isLocalMode()) {
+    final String targetContainer="local";
+    testCache="localTestCache";
+    client.addCacheContainer(targetContainer,testCache);
+    client.addConfigurations(targetContainer);
+    client.addSocketBinding("hotrod-local","clustered-sockets",11223);
+    client.addLocalCache(testCache,targetContainer,"localCacheConfiguration");
+    client.addHotRodEndpoint("hotrodLocal",targetContainer,testCache,"hotrod-local");
+  }
+ else {
+    testCache="replTestCache";
+    client.addReplicatedCache(testCache,"clustered","replicated");
+  }
+}

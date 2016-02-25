@@ -1,0 +1,14 @@
+{
+  ConfigurationBuilder config=new ConfigurationBuilder();
+  if (hotrodPortOverrides.length != 0 && getServers().size() != hotrodPortOverrides.length) {
+    throw new IllegalArgumentException("The number of defined ports is different from server count");
+  }
+  int index=0;
+  for (  RemoteInfinispanServer server : getServers()) {
+    int port=hotrodPortOverrides.length != 0 ? hotrodPortOverrides[index] : server.getHotrodEndpoint().getPort();
+    config.addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName()).port(port);
+    ++index;
+  }
+  config.balancingStrategy("org.infinispan.server.test.client.hotrod.HotRodTestRequestBalancingStrategy").balancingStrategy("org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy").forceReturnValues(false).tcpNoDelay(true).transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory").marshaller(new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader())).asyncExecutorFactory().factoryClass("org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory").addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size","10").addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size","100000").keySizeEstimate(64).valueSizeEstimate(512);
+  return config.build();
+}

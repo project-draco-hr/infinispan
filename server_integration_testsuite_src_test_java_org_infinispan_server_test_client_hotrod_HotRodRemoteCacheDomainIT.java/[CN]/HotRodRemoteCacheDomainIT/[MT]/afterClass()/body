@@ -1,0 +1,19 @@
+{
+  ManagementClient client=ManagementClient.getInstance();
+  if (isDistributedMode()) {
+    client.removeDistributedCache(testCache,"clustered");
+    client.removeDistributedCacheConfiguration("distCacheConfiguration","clustered");
+  }
+ else   if (isLocalMode()) {
+    final String targetContainer="local";
+    client.removeHotRodEndpoint("hotrodLocal");
+    client.removeLocalCache(testCache,targetContainer);
+    client.removeDistributedCacheConfiguration("localCacheConfiguration","local");
+    client.removeSocketBinding("hotrod-local","clustered-sockets");
+    client.removeConfigurations(targetContainer);
+    client.removeCacheContainer(targetContainer);
+  }
+ else {
+    client.removeReplicatedCache(testCache,"clustered");
+  }
+}

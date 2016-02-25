@@ -2,11 +2,10 @@
   ConfigurationBuilder confBuilder=new ConfigurationBuilder();
   addServers(confBuilder);
   RemoteCacheManager rcm=new RemoteCacheManager(confBuilder.build());
-  RemoteCache rc=rcm.getCache(TEST_CACHE_NAME);
+  RemoteCache rc=rcm.getCache(testCache);
   ConfigurationBuilder builder=new ConfigurationBuilder();
   addServers(builder);
   builder.balancingStrategy("org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy").forceReturnValues(false).tcpNoDelay(true).transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory").marshaller("org.infinispan.commons.marshall.jboss.GenericJBossMarshaller").asyncExecutorFactory().factoryClass("org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory").addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size","10").addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size","100000").keySizeEstimate(64).valueSizeEstimate(512);
   Configuration defaultConf=builder.build();
   assertEqualConfiguration(defaultConf,rc);
-  assertTrue(putGetFromDefaultCache(rcm));
 }
