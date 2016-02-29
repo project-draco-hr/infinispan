@@ -1,38 +1,14 @@
 {
   authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
-  if (!stopping) {
 synchronized (this) {
-      if (!stopping) {
-        log.debugf("Stopping cache manager %s on %s",configurationManager.getGlobalConfiguration().transport().clusterName(),getAddress());
-        stopping=true;
-        Set<String> cachesToStop=new LinkedHashSet<>(this.caches.size());
-        boolean defaultCacheHasDependency=false;
-        try {
-          List<String> ordered=cacheDependencyGraph.topologicalSort();
-          defaultCacheHasDependency=ordered.contains(DEFAULT_CACHE_NAME);
-          cachesToStop.addAll(ordered);
-        }
- catch (        CyclicDependencyException e) {
-          log.stopOrderIgnored();
-        }
-        cachesToStop.addAll(caches.keySet());
-        InternalCacheRegistry internalCacheRegistry=globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-        internalCacheRegistry.filterPrivateCaches(cachesToStop);
-        if (!defaultCacheHasDependency) {
-          cachesToStop.add(DEFAULT_CACHE_NAME);
-        }
-        for (        String cacheName : cachesToStop) {
-          terminate(cacheName);
-        }
-        globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-        globalComponentRegistry.stop();
-      }
- else {
-        log.trace("Ignore call to stop as the cache manager is stopping");
-      }
+    if (stopping) {
+      log.trace("Ignore call to stop as the cache manager is stopping");
+      return;
     }
-  }
- else {
-    log.trace("Ignore call to stop as the cache manager is stopping");
+    log.debugf("Stopping cache manager %s on %s",configurationManager.getGlobalConfiguration().transport().clusterName(),getAddress());
+    stopping=true;
+    stopCaches();
+    globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+    globalComponentRegistry.stop();
   }
 }
