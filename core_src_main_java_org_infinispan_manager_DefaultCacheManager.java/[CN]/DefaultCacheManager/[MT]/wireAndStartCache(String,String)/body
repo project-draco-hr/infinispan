@@ -1,6 +1,7 @@
 {
   CacheWrapper createdCacheWrapper=null;
-  Configuration c=null;
+  Configuration c;
+  boolean needToNotifyCacheStarted=false;
   try {
 synchronized (caches) {
       CacheWrapper existingCacheWrapper=caches.get(cacheName);
@@ -21,17 +22,23 @@ synchronized (caches) {
     }
     log.tracef("About to wire and start cache %s",cacheName);
     Cache<K,V> cache=new InternalCacheFactory<K,V>().createCache(c,globalComponentRegistry,cacheName);
+    ComponentRegistry cr=cache.getAdvancedCache().getComponentRegistry();
     if (cache.getAdvancedCache().getAuthorizationManager() != null) {
       cache=new SecureCacheImpl<K,V>(cache.getAdvancedCache());
     }
     createdCacheWrapper.setCache(cache);
+    boolean notStartedYet=cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
     cache.start();
+    needToNotifyCacheStarted=notStartedYet && cr.getStatus() == ComponentStatus.RUNNING;
     return cache;
   }
   finally {
     if (createdCacheWrapper != null) {
       log.tracef("Closing latch for cache %s",cacheName);
       createdCacheWrapper.latch.countDown();
+      if (needToNotifyCacheStarted) {
+        globalComponentRegistry.notifyCacheStarted(cacheName);
+      }
     }
   }
 }
