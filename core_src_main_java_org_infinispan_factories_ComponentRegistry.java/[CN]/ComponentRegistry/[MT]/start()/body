@@ -1,6 +1,14 @@
 {
   globalComponents.start();
   boolean needToNotify=state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+  if (state.needToDestroyFailedCache()) {
+    stop();
+  }
+  if (state.needToInitializeBeforeStart()) {
+    state=ComponentStatus.INSTANTIATED;
+    rewire();
+  }
+  if (!state.startAllowed())   return;
   cacheComponents();
   this.globalComponents.registerNamedComponentRegistry(this,cacheName);
   notifyCacheStarting(getComponent(Configuration.class));
