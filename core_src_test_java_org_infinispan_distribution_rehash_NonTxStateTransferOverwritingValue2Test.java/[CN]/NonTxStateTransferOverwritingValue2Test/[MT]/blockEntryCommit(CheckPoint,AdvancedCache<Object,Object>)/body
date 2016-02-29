@@ -7,24 +7,29 @@
         return;
       }
       final Address source=ctx.getOrigin();
-      CacheEntry newEntry=new CacheEntryDelegator(entry){
-        @Override public void commit(        DataContainer container,        Metadata metadata){
-          checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_"+ source);
-          try {
-            checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_"+ source,10,SECONDS);
-          }
- catch (          InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-catch (          TimeoutException e) {
-            throw new RuntimeException(e);
-          }
-          super.commit(container,metadata);
-          checkPoint.trigger("post_commit_entry_" + getKey() + "_from_"+ source);
-        }
+      if (entry instanceof ClearCacheEntry) {
+        super.commitEntry(entry,metadata,command,ctx,trackFlag,l1Invalidation);
       }
+ else {
+        CacheEntry newEntry=new CacheEntryDelegator(entry){
+          @Override public void commit(          DataContainer container,          Metadata metadata){
+            checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_"+ source);
+            try {
+              checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_"+ source,10,SECONDS);
+            }
+ catch (            InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+catch (            TimeoutException e) {
+              throw new RuntimeException(e);
+            }
+            super.commit(container,metadata);
+            checkPoint.trigger("post_commit_entry_" + getKey() + "_from_"+ source);
+          }
+        }
 ;
-      super.commitEntry(newEntry,metadata,command,ctx,trackFlag,l1Invalidation);
+        super.commitEntry(newEntry,metadata,command,ctx,trackFlag,l1Invalidation);
+      }
     }
   }
 ;
