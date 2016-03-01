@@ -2,14 +2,14 @@
   int batchSize=100;
   ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
   final TaskContext taskContext=new TaskContextImpl();
-  Set<Object> allKeys=new HashSet<Object>(batchSize);
+  Set<Object> allKeys=new ConcurrentHashSet<>();
   Set<Object> batch=new HashSet<Object>();
   loadAllKeys(state.get(),allKeys,keyFilter,executor);
   for (Iterator it=allKeys.iterator(); it.hasNext(); ) {
     batch.add(it.next());
     if (batch.size() == batchSize) {
       final Set<Object> toHandle=batch;
-      batch=new HashSet<Object>(batchSize);
+      batch=new HashSet<>(batchSize);
       submitProcessTask(cacheLoaderTask,eacs,taskContext,toHandle);
     }
   }
