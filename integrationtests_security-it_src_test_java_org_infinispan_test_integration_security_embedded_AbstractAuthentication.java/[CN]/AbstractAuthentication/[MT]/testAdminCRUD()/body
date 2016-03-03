@@ -3,15 +3,14 @@
   Security.doAs(admin,new PrivilegedExceptionAction<Void>(){
     public Void run() throws Exception {
       assertEquals(TEST_ENTRY_VALUE,secureCache.get(TEST_ENTRY_KEY));
-      secureCache.put("test","test value");
+      secureCache.putIfAbsent("test","test value");
       assertEquals("test value",secureCache.get("test"));
-      Cache<Object,Object> c=manager.getCache("adminCache");
-      c.start();
-      c.put("test","value");
-      assertEquals("value",c.get("test"));
-      c.remove("test");
-      assertEquals(null,c.get("test"));
-      c.stop();
+      secureCache.put("test","test value2");
+      assertEquals("test value2",secureCache.get("test"));
+      secureCache.remove("test");
+      assertEquals(null,secureCache.get("test"));
+      secureCache.clear();
+      assertEquals(0,secureCache.size());
       return null;
     }
   }
