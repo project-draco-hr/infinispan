@@ -2,6 +2,10 @@
   ClusteringDependentLogic cdl1=cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
   ClusteringDependentLogic replaceCdl=new ClusteringDependentLogicDelegator(cdl1){
     @Override public void commitEntry(    CacheEntry entry,    Metadata metadata,    FlagAffectedCommand command,    InvocationContext ctx,    Flag trackFlag,    boolean l1Invalidation){
+      if (entry instanceof ClearCacheEntry) {
+        super.commitEntry(entry,metadata,command,ctx,trackFlag,l1Invalidation);
+        return;
+      }
       final Address source=ctx.getOrigin();
       CacheEntry newEntry=new CacheEntryDelegator(entry){
         @Override public void commit(        DataContainer container,        Metadata metadata){
