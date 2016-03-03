@@ -1,6 +1,7 @@
 {
   ClusterCacheStatus cacheStatus;
-synchronized (clusterManagerLock) {
+  clusterManagerLock.lock();
+  try {
     waitForJoinerView(joiner,joinerViewId,joinInfo.getTimeout());
     if (!clusterManagerStatus.isRunning()) {
       log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",joiner,cacheName);
@@ -11,6 +12,9 @@ synchronized (clusterManagerLock) {
       return null;
     }
     cacheStatus=initCacheStatusIfAbsent(cacheName);
+  }
+  finally {
+    clusterManagerLock.unlock();
   }
   return cacheStatus.doJoin(joiner,joinInfo);
 }

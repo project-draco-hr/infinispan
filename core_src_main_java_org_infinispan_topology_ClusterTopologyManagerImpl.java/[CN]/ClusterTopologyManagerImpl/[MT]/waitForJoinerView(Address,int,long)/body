@@ -8,15 +8,12 @@
         log.tracef("Waiting to recover cluster status before processing join request from %s",joiner);
       }
     }
-    long endTime=timeService.expectedEndTime(timeout,TimeUnit.MILLISECONDS);
-synchronized (clusterManagerLock) {
-      while (viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
-        if (timeService.isTimeExpired(endTime) || !clusterManagerStatus.isRunning())         break;
-        clusterManagerLock.wait(timeService.remainingTime(endTime,TimeUnit.MILLISECONDS));
+    long nanosTimeout=TimeUnit.MILLISECONDS.toNanos(timeout);
+    while ((viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) && clusterManagerStatus.isRunning()) {
+      if (nanosTimeout <= 0) {
+        throw log.timeoutWaitingForView(joinerViewId);
       }
-    }
-    if (timeService.isTimeExpired(endTime)) {
-      throw new TimeoutException("Timed out waiting for view " + joinerViewId);
+      nanosTimeout=clusterStateChanged.awaitNanos(nanosTimeout);
     }
   }
 }

@@ -1,5 +1,6 @@
 {
-synchronized (clusterManagerLock) {
+  clusterManagerLock.lock();
+  try {
     if (newViewId < transport.getViewId()) {
       log.tracef("Ignoring old cluster view notification: %s",newViewId);
       return;
@@ -17,19 +18,26 @@ synchronized (clusterManagerLock) {
       clusterManagerStatus=ClusterManagerStatus.RECOVERING_CLUSTER;
     }
     viewId=newViewId;
-    clusterManagerLock.notifyAll();
+    clusterStateChanged.signalAll();
+  }
+  finally {
+    clusterManagerLock.unlock();
   }
   if (clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
     cacheStatusMap.clear();
     try {
       recoverClusterStatus(newViewId,mergeView,transport.getMembers());
-synchronized (clusterManagerLock) {
+      clusterManagerLock.lock();
+      try {
         if (viewId != newViewId) {
           log.debugf("View updated while we were recovering the cluster for view %d",newViewId);
           return;
         }
         clusterManagerStatus=ClusterManagerStatus.COORDINATOR;
-        clusterManagerLock.notifyAll();
+        clusterStateChanged.signalAll();
+      }
+  finally {
+        clusterManagerLock.unlock();
       }
     }
  catch (    InterruptedException e) {

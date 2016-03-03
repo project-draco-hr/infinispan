@@ -1,7 +1,11 @@
 {
-synchronized (clusterManagerLock) {
+  clusterManagerLock.lock();
+  try {
     clusterManagerStatus=ClusterManagerStatus.STOPPING;
-    clusterManagerLock.notifyAll();
+    clusterStateChanged.signalAll();
+  }
+  finally {
+    clusterManagerLock.unlock();
   }
   cacheManagerNotifier.removeListener(viewListener);
 }
