@@ -3,6 +3,7 @@
     Set<Integer> segmentsCopy=getSegments();
     if (segmentsCopy.isEmpty()) {
       log.tracef("Segments list is empty, skipping source %s",source);
+      return false;
     }
     if (trace) {
       log.tracef("Requesting segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
@@ -17,7 +18,10 @@
           log.tracef("Successfully requested segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
         }
       }
-      log.failedToRequestSegments(segmentsCopy,cacheName,source,new CacheException(String.valueOf(response)));
+ else {
+        Exception e=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : new CacheException(String.valueOf(response));
+        log.failedToRequestSegments(segmentsCopy,cacheName,source,e);
+      }
     }
  catch (    Exception e) {
       log.failedToRequestSegments(segmentsCopy,cacheName,source,e);
