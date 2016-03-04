@@ -1,13 +1,20 @@
 {
   if (!closed) {
-    IterationEndResponse endResponse=operationsFactory.newIterationEndOperation(iterationId,transport).execute();
-    short status=endResponse.getStatus();
-    if (HotRodConstants.isSuccess(status)) {
-      log.iterationClosed(iterationId);
+    try {
+      IterationEndResponse endResponse=operationsFactory.newIterationEndOperation(iterationId,transport).execute();
+      short status=endResponse.getStatus();
+      if (HotRodConstants.isSuccess(status)) {
+        log.iterationClosed(iterationId);
+      }
+      if (HotRodConstants.isInvalidIteration(status)) {
+        throw log.errorClosingIteration(iterationId);
+      }
     }
-    if (HotRodConstants.isInvalidIteration(status)) {
-      throw log.errorClosingIteration(iterationId);
+ catch (    TransportException te) {
+      log.ignoringServerUnreachable(iterationId);
     }
-    closed=true;
+ finally {
+      closed=true;
+    }
   }
 }
