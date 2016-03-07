@@ -1,0 +1,14 @@
+{
+  Map<Integer,Set<Map.Entry<Integer,Integer>>> target=generateEntriesPerSegment(ch,masterValues.entrySet());
+  Map<Integer,Set<Map.Entry<Integer,Integer>>> actual=generateEntriesPerSegment(ch,seenValues.entrySet());
+  for (  Map.Entry<Integer,Set<Map.Entry<Integer,Integer>>> entry : target.entrySet()) {
+    Set<Map.Entry<Integer,Integer>> entrySet=entry.getValue();
+    Set<Map.Entry<Integer,Integer>> actualEntries=actual.get(entry.getKey());
+    if (actualEntries != null) {
+      entrySet.removeAll(actualEntries);
+    }
+    if (!entrySet.isEmpty()) {
+      throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect amount " + (actualEntries != null ? actualEntries.size() : 0)+ " of entries, expected "+ entrySet.size()+ " for segment "+ entry.getKey()+ " missing entries "+ entrySet+ " on iteration "+ iteration);
+    }
+  }
+}
