@@ -5,12 +5,21 @@
       if (exception != null) {
         throw exception;
       }
+ else       if ((entry=queue.poll()) != null) {
+        if (consumer != null) {
+          consumer.accept(entry);
+        }
+        return entry;
+      }
       return null;
     }
     nextLock.lock();
     try {
       boolean interrupted=false;
-      while ((entry=queue.poll()) == null && !completed.get()) {
+      while (!completed.get()) {
+        if ((entry=queue.poll()) != null) {
+          break;
+        }
         try {
           nextCondition.await(100,TimeUnit.MILLISECONDS);
         }
@@ -19,10 +28,13 @@
         }
       }
       if (entry == null) {
-        if (exception != null) {
-          throw exception;
+        entry=queue.poll();
+        if (entry == null) {
+          if (exception != null) {
+            throw exception;
+          }
+          return null;
         }
-        return null;
       }
  else       if (interrupted) {
         Thread.currentThread().interrupt();
