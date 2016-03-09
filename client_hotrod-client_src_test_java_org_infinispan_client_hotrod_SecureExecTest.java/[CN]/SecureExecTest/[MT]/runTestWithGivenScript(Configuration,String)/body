@@ -1,0 +1,15 @@
+{
+  remoteCacheManager=new RemoteCacheManager(config);
+  Map<String,String> params=new HashMap<>();
+  params.put("a","guinness");
+  ScriptingManager scriptingManager=hotrodServer.getCacheManager().getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+  String scriptName=null;
+  try (InputStream is=this.getClass().getResourceAsStream(scriptPath)){
+    String script=TestingUtil.loadFileAsString(is);
+    scriptName=scriptPath.substring(1);
+    scriptingManager.addScript(scriptName,script);
+  }
+   String result=remoteCacheManager.getCache().execute(scriptName,params);
+  assertEquals("guinness",result);
+  assertEquals("guinness",remoteCacheManager.getCache().get("a"));
+}

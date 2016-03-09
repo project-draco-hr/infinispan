@@ -1,0 +1,11 @@
+{
+  SaslConfigurationBuilder config=new SaslConfigurationBuilder("DIGEST-MD5");
+  config.forIspnServer(server1).withServerName("node0");
+  config.forCredentials(HotRodSaslAuthTestBase.SUPERVISOR_LOGIN,HotRodSaslAuthTestBase.SUPERVISOR_PASSWD);
+  RemoteCacheManager rcm=new RemoteCacheManager(config.build(),true);
+  RemoteCache remoteCache=rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
+  List<String> result=(List<String>)remoteCache.execute(DistributedAuthServerTask.NAME,Collections.emptyMap());
+  assertEquals(2,result.size());
+  assertTrue("result list does not contain expected items.",result.containsAll(asList("node0","node1")));
+  rcm.stop();
+}

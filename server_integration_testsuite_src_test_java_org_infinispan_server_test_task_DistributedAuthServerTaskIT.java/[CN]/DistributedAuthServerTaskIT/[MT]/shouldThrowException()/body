@@ -1,0 +1,11 @@
+{
+  SaslConfigurationBuilder config=new SaslConfigurationBuilder("DIGEST-MD5");
+  config.forIspnServer(server1).withServerName("node0");
+  config.forCredentials(HotRodSaslAuthTestBase.ADMIN_LOGIN,HotRodSaslAuthTestBase.ADMIN_PASSWD);
+  RemoteCacheManager rcm=new RemoteCacheManager(config.build(),true);
+  RemoteCache remoteCache=rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
+  exceptionRule.expect(HotRodClientException.class);
+  exceptionRule.expectMessage("lacks 'EXEC' permission");
+  remoteCache.execute(DistributedAuthServerTask.NAME,Collections.emptyMap());
+  rcm.stop();
+}

@@ -1,0 +1,14 @@
+{
+  final GlobalConfigurationBuilder global=GlobalConfigurationBuilder.defaultClusteredBuilder();
+  final ConfigurationBuilder builder=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+  global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL).role("runner").permission(AuthorizationPermission.EXEC).permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).permission(AuthorizationPermission.ADMIN).role("pheidippides").permission(AuthorizationPermission.EXEC).permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE);
+  builder.security().authorization().enable().role("admin").role("runner").role("pheidippides");
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      createCluster(global,builder,2);
+      waitForClusterToForm();
+      return null;
+    }
+  }
+);
+}

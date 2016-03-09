@@ -1,10 +1,10 @@
 {
   GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
   GlobalAuthorizationConfigurationBuilder globalRoles=global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
-  globalRoles.role("runner").permission(AuthorizationPermission.EXEC).permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).permission(AuthorizationPermission.ADMIN).role("pheidippides").permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).permission(AuthorizationPermission.ADMIN).role("admin").permission(AuthorizationPermission.ALL);
+  globalRoles.role("user").permission(AuthorizationPermission.ALL).permission(AuthorizationPermission.EXEC);
   ConfigurationBuilder config=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-  config.security().authorization().enable().role("runner").role("pheidippides").role("admin");
-  cacheManager=TestCacheManagerFactory.createCacheManager(global,hotRodCacheConfiguration());
+  config.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller()).security().authorization().enable().role("user");
+  cacheManager=TestCacheManagerFactory.createCacheManager(global,config);
   cacheManager.getCache();
   return cacheManager;
 }

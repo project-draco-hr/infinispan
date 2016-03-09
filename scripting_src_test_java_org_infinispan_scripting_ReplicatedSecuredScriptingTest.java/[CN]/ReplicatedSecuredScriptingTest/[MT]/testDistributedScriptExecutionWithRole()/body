@@ -1,0 +1,22 @@
+{
+  ScriptingManager scriptingManager=getScriptingManager(manager(0));
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      loadScript(scriptingManager,"/testRole_dist.js");
+      return null;
+    }
+  }
+);
+  Security.doAs(RUNNER,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      Cache cache=manager(0).getCache();
+      List<JGroupsAddress> value=(List<JGroupsAddress>)scriptingManager.runScript("testRole_dist.js",new TaskContext().cache(cache).addParameter("a","value")).get();
+      assertEquals(value.get(0),manager(0).getAddress());
+      assertEquals(value.get(1),manager(1).getAddress());
+      assertEquals("value",cache.get("a"));
+      assertEquals("value",manager(1).getCache().get("a"));
+      return null;
+    }
+  }
+);
+}

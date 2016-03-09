@@ -1,0 +1,20 @@
+{
+  ScriptingManager scriptingManager=getScriptingManager(manager(0));
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      loadScript(scriptingManager,"/testRole.js");
+      return null;
+    }
+  }
+);
+  Security.doAs(PHEIDIPPIDES,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      Cache cache=manager(0).getCache();
+      String value=(String)scriptingManager.runScript("testRole.js",new TaskContext().cache(cache).addParameter("a","value")).get();
+      assertEquals("value",value);
+      assertEquals("value",cache.get("a"));
+      return null;
+    }
+  }
+);
+}

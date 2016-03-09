@@ -1,0 +1,13 @@
+{
+  withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode,false),TestCacheManagerFactory.createCacheManager(cacheMode,false)){
+    @Override public void call() throws Exception {
+      Cache cache=cms[0].getCache();
+      ScriptingManager scriptingManager=getScriptingManager(cms[0]);
+      loadScript(scriptingManager,"/test1.js");
+      cache.put("a","newValue");
+      executeScriptOnManager("test1.js",cms[0]);
+      executeScriptOnManager("test1.js",cms[1]);
+    }
+  }
+);
+}

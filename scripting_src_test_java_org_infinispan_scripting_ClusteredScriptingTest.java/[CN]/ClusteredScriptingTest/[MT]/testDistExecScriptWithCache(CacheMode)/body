@@ -1,0 +1,17 @@
+{
+  withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode,false),TestCacheManagerFactory.createCacheManager(cacheMode,false)){
+    public void call() throws Exception {
+      Cache cache1=cms[0].getCache();
+      Cache cache2=cms[1].getCache();
+      ScriptingManager scriptingManager=getScriptingManager(cms[0]);
+      loadScript(scriptingManager,"/distExec1.js");
+      waitForRehashToComplete(cache1,cache2);
+      CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture=scriptingManager.runScript("distExec1.js",new TaskContext().cache(cache1));
+      ArrayList<JGroupsAddress> results=resultsFuture.get();
+      assertEquals(2,results.size());
+      assertTrue(results.contains(cms[0].getAddress()));
+      assertTrue(results.contains(cms[1].getAddress()));
+    }
+  }
+);
+}

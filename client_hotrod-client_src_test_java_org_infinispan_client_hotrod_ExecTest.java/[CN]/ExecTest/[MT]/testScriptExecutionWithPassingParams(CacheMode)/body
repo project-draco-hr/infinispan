@@ -1,0 +1,20 @@
+{
+  String cacheName="testScriptExecutionWithPassingParams_" + cacheMode.toString();
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(cacheMode,true);
+  builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
+  defineInAll(cacheName,builder);
+  try (InputStream is=this.getClass().getResourceAsStream("/distExec.js")){
+    String script=TestingUtil.loadFileAsString(is);
+    clients.get(0).getCache(SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js",script);
+  }
+   populateCache(cacheName);
+  assertEquals(SIZE,clients.get(0).getCache(cacheName).size());
+  Map<String,String> params=new HashMap<>();
+  params.put("a","hoptimus prime");
+  List<String> result=clients.get(0).getCache(cacheName).execute("testScriptExecutionWithPassingParams.js",params);
+  assertEquals(SIZE + 1,client(0).getCache(cacheName).size());
+  assertEquals("hoptimus prime",clients.get(0).getCache(cacheName).get("a"));
+  assertEquals(2,result.size());
+  assertTrue(result.contains(manager(0).getAddress()));
+  assertTrue(result.contains(manager(1).getAddress()));
+}
