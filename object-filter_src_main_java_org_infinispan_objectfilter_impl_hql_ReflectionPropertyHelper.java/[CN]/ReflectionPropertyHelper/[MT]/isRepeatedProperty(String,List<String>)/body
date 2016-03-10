@@ -3,15 +3,19 @@
   if (entity == null) {
     throw new IllegalStateException("Unknown entity name " + entityType);
   }
-  ReflectionHelper.PropertyAccessor a=ReflectionHelper.getAccessor(entity,propertyPath.get(0));
-  if (a.isMultiple()) {
-    return true;
-  }
-  for (int i=1; i < propertyPath.size(); i++) {
-    a=a.getAccessor(propertyPath.get(i));
+  try {
+    ReflectionHelper.PropertyAccessor a=ReflectionHelper.getAccessor(entity,propertyPath.get(0));
     if (a.isMultiple()) {
       return true;
     }
+    for (int i=1; i < propertyPath.size(); i++) {
+      a=a.getAccessor(propertyPath.get(i));
+      if (a.isMultiple()) {
+        return true;
+      }
+    }
+  }
+ catch (  IntrospectionException e) {
   }
   return false;
 }
