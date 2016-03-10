@@ -1,22 +1,13 @@
 {
   final MemcachedClient mc1=new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(),server1.getMemcachedEndpoint().getPort());
   final MemcachedClient mc2=new MemcachedClient(server2.getMemcachedEndpoint().getInetAddress().getHostName(),server2.getMemcachedEndpoint().getPort());
-  mc2.set("k1","v1");
-  assertNotNull(mc2.get("k1"));
-  String value=mc1.get("k1");
-  if (value == null) {
-    eventually(new ITestUtils.Condition(){
-      @Override public boolean isSatisfied() throws Exception {
-        return mc1.get("k1") != null && mc2.get("k1") != null;
-      }
+  mc1.set("k1","v1");
+  eventually(new ITestUtils.Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return mc1.get("k1") != null && mc2.get("k1") != null;
     }
-,3000,10);
   }
- else {
-    mc2.set("k2","v2");
-    assertNotNull(mc2.get("k2"));
-    assertNull(mc1.get("k2"));
-    sleepForSecs(3.0);
-    assertNotNull(mc1.get("k2"));
-  }
+,3100,10);
+  assertEquals("v1",mc1.get("k1"));
+  assertEquals("v1",mc2.get("k1"));
 }
