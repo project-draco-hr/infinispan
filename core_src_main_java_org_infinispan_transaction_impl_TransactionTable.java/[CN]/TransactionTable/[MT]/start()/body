@@ -15,20 +15,20 @@
       }
     }
 ;
-    executorService=Executors.newSingleThreadScheduledExecutor(tf);
+    cleanupExecutor=Executors.newSingleThreadScheduledExecutor(tf);
     notifier.addListener(this);
     cacheManagerNotifier.addListener(this);
     boolean totalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
     if (!totalOrder) {
       completedTransactionsInfo=new CompletedTransactionsInfo();
       long interval=configuration.transaction().reaperWakeUpInterval();
-      executorService.scheduleAtFixedRate(new Runnable(){
+      cleanupExecutor.scheduleAtFixedRate(new Runnable(){
         @Override public void run(){
           completedTransactionsInfo.cleanupCompletedTransactions();
         }
       }
 ,interval,interval,TimeUnit.MILLISECONDS);
-      executorService.scheduleAtFixedRate(new Runnable(){
+      cleanupExecutor.scheduleAtFixedRate(new Runnable(){
         @Override public void run(){
           cleanupTimedOutTransactions();
         }
