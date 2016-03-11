@@ -1,0 +1,34 @@
+{
+  GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+  gcb.transport().nodeName(channel.getName());
+  gcb.globalJmxStatistics().allowDuplicateDomains(true);
+  FORK fork=new FORK();
+  fork.setUnknownForkHandler(new UnknownForkHandler(){
+    @Override public Object handleUnknownForkStack(    Message message,    String forkStackId){
+      return handle(message);
+    }
+    @Override public Object handleUnknownForkChannel(    Message message,    String forkChannelId){
+      return handle(message);
+    }
+    private Object handle(    Message message){
+      short id=ClassConfigurator.getProtocolId(RequestCorrelator.class);
+      RequestCorrelator.Header header=(RequestCorrelator.Header)message.getHeader(id);
+      if (header != null) {
+        log.debugf("Sending CacheNotFoundResponse reply for %s",header);
+        Message response=message.makeReply().setFlag(message.getFlags()).clearFlag(Message.Flag.RSVP,Message.Flag.SCOPED);
+        response.putHeader(FORK.ID,message.getHeader(FORK.ID));
+        response.putHeader(id,new RequestCorrelator.Header(RequestCorrelator.Header.RSP,header.req_id,id));
+        response.setBuffer(cacheNotFoundResponseBytes);
+        fork.down(new Event(Event.MSG,response));
+      }
+      return null;
+    }
+  }
+);
+  channel.getProtocolStack().addProtocol(fork);
+  ForkChannel fch=new ForkChannel(channel,"stack1","channel1");
+  CustomChannelLookup.registerChannel(name,fch,gcb,true);
+  EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build(),cacheCfg.build(),false);
+  registerCacheManager(cm);
+  return cm;
+}

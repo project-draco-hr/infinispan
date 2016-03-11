@@ -1,0 +1,13 @@
+{
+  GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+  gcb.transport().nodeName(name);
+  gcb.globalJmxStatistics().allowDuplicateDomains(true);
+  CustomChannelLookup.registerChannel(channel.getName(),channel,gcb,false);
+  EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build(),false);
+  Configuration replCfg=new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
+  cm.defineConfiguration(REPL_CACHE_NAME,replCfg);
+  Configuration distCfg=new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+  cm.defineConfiguration(DIST_CACHE_NAME,distCfg);
+  registerCacheManager(cm);
+  return cm;
+}
