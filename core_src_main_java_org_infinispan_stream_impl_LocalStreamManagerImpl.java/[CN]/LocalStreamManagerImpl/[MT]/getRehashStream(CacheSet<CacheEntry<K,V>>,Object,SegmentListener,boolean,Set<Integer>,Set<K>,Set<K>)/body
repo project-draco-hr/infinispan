@@ -1,6 +1,8 @@
 {
   CacheTopology topology=stm.getCacheTopology();
-  log.tracef("Topology for supplier is %s for id %s",topology,requestId);
+  if (trace) {
+    log.tracef("Topology for supplier is %s for id %s",topology,requestId);
+  }
   ConsistentHash readCH=topology.getCurrentCH();
   ConsistentHash pendingCH=topology.getPendingCH();
   if (pendingCH != null) {
@@ -15,20 +17,24 @@
       }
     }
     if (!lostSegments.isEmpty()) {
-      log.tracef("Lost segments %s during rehash for id %s",lostSegments,requestId);
+      if (trace) {
+        log.tracef("Lost segments %s during rehash for id %s",lostSegments,requestId);
+      }
       listener.lostSegments(lostSegments);
     }
- else {
+ else     if (trace) {
       log.tracef("Currently in the middle of a rehash for id %s",requestId);
     }
   }
  else {
     Set<Integer> ourSegments=readCH.getSegmentsForOwner(localAddress);
     if (segments.retainAll(ourSegments)) {
-      log.tracef("We found to be missing some segments requested for id %s",requestId);
+      if (trace) {
+        log.tracef("We found to be missing some segments requested for id %s",requestId);
+      }
       listener.localSegments(ourSegments);
     }
- else {
+ else     if (trace) {
       log.tracef("Hash %s for id %s",readCH,requestId);
     }
   }
