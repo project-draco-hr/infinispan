@@ -1,0 +1,12 @@
+{
+  GlobalConfigurationBuilder gcb1=new GlobalConfigurationBuilder();
+  gcb1.transport().nodeName(ch1.getName()).distributedSyncTimeout(10,SECONDS);
+  gcb1.globalJmxStatistics().allowDuplicateDomains(true);
+  CustomChannelLookup.registerChannel(gcb1,ch1,name1,false);
+  ConfigurationBuilder replCfg=new ConfigurationBuilder();
+  replCfg.clustering().cacheMode(CacheMode.REPL_SYNC);
+  replCfg.clustering().stateTransfer().timeout(10,SECONDS);
+  EmbeddedCacheManager cm1=new DefaultCacheManager(gcb1.build(),replCfg.build(),false);
+  registerCacheManager(cm1);
+  return cm1;
+}

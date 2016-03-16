@@ -1,19 +1,28 @@
 {
   if (!transport.isCoordinator()) {
     ReplicableCommand command=new CacheTopologyControlCommand(null,CacheTopologyControlCommand.Type.POLICY_GET_STATUS,transport.getAddress(),-1);
-    Address coordinator=transport.getCoordinator();
-    try {
-      Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,getGlobalTimeout(),null,DeliverOrder.NONE,false);
-      Response response=responseMap.get(coordinator);
-      if (response instanceof SuccessfulResponse) {
-        globalRebalancingEnabled=((Boolean)((SuccessfulResponse)response).getResponseValue());
+    Address coordinator=null;
+    Response response=null;
+    for (int i=INITIAL_CONNECTION_ATTEMPTS - 1; i >= 0; i--) {
+      try {
+        coordinator=transport.getCoordinator();
+        Map<Address,Response> responseMap=transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.SYNCHRONOUS,getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS,null,DeliverOrder.NONE,false);
+        response=responseMap.get(coordinator);
+        break;
       }
- else {
-        log.errorReadingRebalancingStatus(coordinator,null);
+ catch (      Exception e) {
+        if (i == 0 || !(e instanceof TimeoutException)) {
+          log.errorReadingRebalancingStatus(coordinator,e);
+          response=SuccessfulResponse.create(Boolean.TRUE);
+        }
+        log.debug("Timed out waiting for rebalancing status from coordinator, trying again");
       }
     }
- catch (    Exception e) {
-      log.errorReadingRebalancingStatus(coordinator,e);
+    if (response instanceof SuccessfulResponse) {
+      globalRebalancingEnabled=((Boolean)((SuccessfulResponse)response).getResponseValue());
+    }
+ else {
+      log.errorReadingRebalancingStatus(coordinator,new CacheException(response.toString()));
     }
   }
 }
