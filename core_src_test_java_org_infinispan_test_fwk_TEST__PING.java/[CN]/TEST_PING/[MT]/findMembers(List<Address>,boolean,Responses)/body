@@ -1,42 +1,4 @@
 {
-  if (!stopped) {
-    Map<Address,TEST_PING> discoveries=registerInDiscoveries();
-    boolean discardEnabled=isDiscardEnabled(this);
-    if (!discardEnabled) {
-synchronized (discoveries) {
-        if (!discoveries.isEmpty()) {
-          boolean traceEnabled=log.isTraceEnabled();
-          for (          TEST_PING discovery : discoveries.values()) {
-            if (discovery != this) {
-              boolean remoteDiscardEnabled=isDiscardEnabled(discovery);
-              if (!remoteDiscardEnabled && !discovery.stopped) {
-                addPingRsp(pingDatas,discovery);
-              }
- else               if (discovery.stopped) {
-                log.debug(String.format("%s is stopped, so no ping responses will be received",discovery.getLocalAddr()));
-              }
- else {
-                if (traceEnabled)                 log.trace("Skipping sending response cos DISCARD is on");
-                addPingRsp(null,discovery);
-              }
-            }
- else {
-              if (traceEnabled)               log.trace("Skipping sending discovery to self");
-            }
-          }
-        }
- else {
-          log.debug("No other nodes yet, marking this node as coord");
-          is_coord=true;
-        }
-      }
-    }
- else {
-      log.debug("Not sending discovery because DISCARD is on");
-    }
-  }
- else {
-    log.debug("Discovery protocol already stopped, so don't look for members");
-  }
+  doFindMembers(initialDiscovery,pingDatas);
   pingDatas.done();
 }
