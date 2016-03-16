@@ -1,19 +1,15 @@
 {
   if (channel == null)   return false;
   log.tracef("Waiting on view %d being accepted",viewId);
+  long remainingNanos=timeUnit.toNanos(timeout);
   viewUpdateLock.lock();
   try {
-    while (channel != null && getViewId() < viewId) {
-      if (time == 0) {
-        viewUpdateCondition.await();
-      }
- else {
-        return viewUpdateCondition.await(time,timeUnit);
-      }
+    while (channel != null && getViewId() < viewId && remainingNanos > 0) {
+      remainingNanos=viewUpdateCondition.awaitNanos(remainingNanos);
     }
-    return true;
   }
   finally {
     viewUpdateLock.unlock();
   }
+  return remainingNanos > 0;
 }

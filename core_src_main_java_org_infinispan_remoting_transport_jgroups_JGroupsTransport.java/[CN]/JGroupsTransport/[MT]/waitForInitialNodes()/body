@@ -1,19 +1,24 @@
 {
   int initialClusterSize=configuration.transport().initialClusterSize();
-  if (initialClusterSize > 1) {
-    long timeout=configuration.transport().initialClusterTimeout();
-    while (channel.getView().getMembers().size() < initialClusterSize) {
-      try {
-        log.debugf("Waiting for %d nodes, current view has %d",initialClusterSize,channel.getView().getMembers().size());
-        if (!waitForView(viewId + 1,timeout,TimeUnit.MILLISECONDS)) {
-          throw log.timeoutWaitingForInitialNodes(initialClusterSize,channel.getView().getMembers());
-        }
-      }
- catch (      InterruptedException e) {
-        log.interruptedWaitingForCoordinator(e);
-        Thread.currentThread().interrupt();
-      }
+  if (initialClusterSize <= 1)   return;
+  long timeout=configuration.transport().initialClusterTimeout();
+  long remainingNanos=TimeUnit.MILLISECONDS.toNanos(timeout);
+  viewUpdateLock.lock();
+  try {
+    while (channel != null && channel.getView().getMembers().size() < initialClusterSize && remainingNanos > 0) {
+      log.debugf("Waiting for %d nodes, current view has %d",initialClusterSize,channel.getView().getMembers().size());
+      remainingNanos=viewUpdateCondition.awaitNanos(remainingNanos);
     }
-    log.debugf("Initial cluster size of %d nodes reached",initialClusterSize);
   }
+ catch (  InterruptedException e) {
+    log.interruptedWaitingForCoordinator(e);
+    Thread.currentThread().interrupt();
+  }
+ finally {
+    viewUpdateLock.unlock();
+  }
+  if (remainingNanos <= 0) {
+    throw log.timeoutWaitingForInitialNodes(initialClusterSize,channel.getView().getMembers());
+  }
+  log.debugf("Initial cluster size of %d nodes reached",initialClusterSize);
 }
