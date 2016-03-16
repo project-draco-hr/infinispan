@@ -1,9 +1,8 @@
 {
-  Properties props=new Properties();
   HotRodServer hotRodServer2=server(1);
-  props.put("infinispan.client.hotrod.server_list","localhost:" + hotRodServer2.getPort() + ";localhost:"+ hotRodServer2.getPort());
-  props.put("infinispan.client.hotrod.ping_on_startup","true");
-  withRemoteCacheManager(new RemoteCacheManagerCallable(new InternalRemoteCacheManager(props)){
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.pingOnStartup(true).addServers("localhost:" + hotRodServer2.getPort() + ";localhost:"+ hotRodServer2.getPort());
+  withRemoteCacheManager(new RemoteCacheManagerCallable(new InternalRemoteCacheManager(clientBuilder.build())){
     @Override public void call(){
       TcpTransportFactory tcpTransportFactory=(TcpTransportFactory)((InternalRemoteCacheManager)rcm).getTransportFactory();
       for (int i=0; i < 10; i++) {
