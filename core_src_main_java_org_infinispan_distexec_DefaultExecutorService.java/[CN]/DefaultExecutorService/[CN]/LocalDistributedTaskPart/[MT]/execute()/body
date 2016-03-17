@@ -3,20 +3,17 @@
   try {
     Callable<V> call=new Callable<V>(){
       @Override public V call() throws Exception {
-        return doLocalInvoke();
-      }
-      private V doLocalInvoke() throws Exception {
         getCommand().init(cache);
         DistributedTaskLifecycleService lifecycle=DistributedTaskLifecycleService.getInstance();
         try {
           lifecycle.onPreExecute(getCommand().getCallable(),cache);
           cancellationService.register(Thread.currentThread(),getCommand().getUUID());
           V result=getCommand().perform(null);
-          future.notifyDone(result);
+          complete(result);
           return result;
         }
  catch (        Exception e) {
-          future.notifyException(e);
+          completeExceptionally(e);
           throw e;
         }
  finally {
@@ -26,7 +23,7 @@
       }
     }
 ;
-    future.setFuture(localExecutorService.submit(call));
+    localExecutorService.submit(call);
   }
  catch (  Throwable e1) {
     log.localExecutionFailed(e1);

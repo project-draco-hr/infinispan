@@ -1,0 +1,21 @@
+{
+  V result=null;
+  if (response == null) {
+    throw new IllegalStateException("Invalid response received " + response);
+  }
+  if (response.size() == 1) {
+    for (    Entry<Address,Response> e : response.entrySet()) {
+      Response value=e.getValue();
+      if (value instanceof SuccessfulResponse) {
+        result=(V)((SuccessfulResponse)value).getResponseValue();
+      }
+ else {
+        throw new ExecutionException(new Exception(value != null ? value.toString() : "Unknown cause"));
+      }
+    }
+  }
+ else {
+    throw new IllegalStateException("Invalid response " + response);
+  }
+  return result;
+}

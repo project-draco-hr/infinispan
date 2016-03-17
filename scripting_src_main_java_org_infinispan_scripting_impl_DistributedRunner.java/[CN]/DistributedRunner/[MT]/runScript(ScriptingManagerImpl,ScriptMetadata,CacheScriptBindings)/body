@@ -1,2 +1,14 @@
 {
+  Cache<?,?> masterCacheNode=(Cache<?,?>)binding.get(SystemBindings.CACHE.toString());
+  if (masterCacheNode == null) {
+    throw log.distributedTaskNeedCacheInBinding(metadata.name());
+  }
+  DefaultExecutorService des=new DefaultExecutorService(masterCacheNode);
+  try {
+    List<CompletableFuture<T>> tasks=des.submitEverywhere(new DistributedScript<T>(metadata));
+    return (CompletableFuture<T>)CompletableFutures.sequence(tasks);
+  }
+  finally {
+    des.shutdown();
+  }
 }

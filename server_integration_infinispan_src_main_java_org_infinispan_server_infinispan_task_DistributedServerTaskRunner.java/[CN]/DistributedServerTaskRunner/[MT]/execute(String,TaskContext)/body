@@ -1,2 +1,11 @@
 {
+  Cache<?,?> masterCacheNode=context.getCache().get();
+  DefaultExecutorService des=new DefaultExecutorService(masterCacheNode);
+  try {
+    List<CompletableFuture<T>> tasks=des.submitEverywhere(new DistributedServerTask<>(taskName,context.getParameters()));
+    return (CompletableFuture<T>)CompletableFutures.sequence(tasks);
+  }
+  finally {
+    des.shutdown();
+  }
 }
