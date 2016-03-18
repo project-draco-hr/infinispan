@@ -1,11 +1,12 @@
 {
   K key=marshalledEntry.getKey();
-  expiring.put(key,key);
-  try {
-    InternalMetadata metadata=marshalledEntry.getMetadata();
-    removeExpired(key,marshalledEntry.getValue(),metadata.lifespan() == -1 ? null : metadata.lifespan());
-  }
+  if (expiring.putIfAbsent(key,key) == null) {
+    try {
+      InternalMetadata metadata=marshalledEntry.getMetadata();
+      removeExpired(key,marshalledEntry.getValue(),metadata.lifespan() == -1 ? null : metadata.lifespan());
+    }
   finally {
-    expiring.remove(key);
+      expiring.remove(key);
+    }
   }
 }
