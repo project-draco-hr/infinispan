@@ -1,23 +1,2 @@
 {
-  final int numThreads=4;
-  final int numLoopsPerThread=3;
-  runConcurrently(new Callable(){
-    AtomicInteger indexOffset=new AtomicInteger();
-    public Void call(){
-      int index=indexOffset.getAndIncrement();
-      for (int j=0; j < numLoopsPerThread; j++) {
-        cache1.put("key" + index + "_"+ j,"value");
-      }
-      return null;
-    }
-  }
-,numThreads);
-  eventually(new Condition(){
-    @Override public boolean isSatisfied() throws Exception {
-      return cache2.size() == numThreads * numLoopsPerThread;
-    }
-  }
-);
-  ReplicationQueue replicationQueue=TestingUtil.extractComponent(cache1,ReplicationQueue.class);
-  assertEquals(0,replicationQueue.getElementsCount());
 }
