@@ -49,7 +49,13 @@ break;
 }
 case REPLICATION_QUEUE_EXECUTOR:
 {
+if (reader.getSchema().since(9,0)) {
+throw ParseUtils.unexpectedAttribute(reader,attribute.getLocalName());
+}
+ else {
+log.ignoredReplicationQueueAttribute(attribute.getLocalName(),reader.getLocation().getLineNumber());
 builder.replicationQueueThreadPool().read(createThreadPoolConfiguration(value,ASYNC_REPLICATION_QUEUE_EXECUTOR));
+}
 break;
 }
 case PERSISTENCE_EXECUTOR:

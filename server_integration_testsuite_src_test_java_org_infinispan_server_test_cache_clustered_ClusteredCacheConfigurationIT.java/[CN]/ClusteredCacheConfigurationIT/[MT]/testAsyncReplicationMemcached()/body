@@ -1,0 +1,13 @@
+{
+  final MemcachedClient mc1=new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(),server1.getMemcachedEndpoint().getPort());
+  final MemcachedClient mc2=new MemcachedClient(server2.getMemcachedEndpoint().getInetAddress().getHostName(),server2.getMemcachedEndpoint().getPort());
+  mc1.set("k1","v1");
+  eventually(new ITestUtils.Condition(){
+    @Override public boolean isSatisfied() throws Exception {
+      return mc1.get("k1") != null && mc2.get("k1") != null;
+    }
+  }
+,1000);
+  assertEquals("v1",mc1.get("k1"));
+  assertEquals("v1",mc2.get("k1"));
+}

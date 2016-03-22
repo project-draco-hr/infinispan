@@ -2,8 +2,12 @@
 switch (attribute) {
 case ASYNC_MARSHALLING:
 {
-      ClusteringConfigurationBuilder clustering=builder.clustering();
-      if (!clustering.cacheMode().isSynchronous())       clustering.async().asyncMarshalling(Boolean.parseBoolean(value));
+      if (reader.getSchema().since(9,0)) {
+        throw ParseUtils.unexpectedAttribute(reader,attribute.getLocalName());
+      }
+ else {
+        log.ignoredReplicationQueueAttribute(attribute.getLocalName(),reader.getLocation().getLineNumber());
+      }
       break;
     }
 case MODE:
@@ -14,14 +18,22 @@ case MODE:
   }
 case QUEUE_SIZE:
 {
-  int queueSize=Integer.parseInt(value);
-  builder.clustering().async().useReplQueue(queueSize > 0);
-  builder.clustering().async().replQueueMaxElements(queueSize);
+  if (reader.getSchema().since(9,0)) {
+    throw ParseUtils.unexpectedAttribute(reader,attribute.getLocalName());
+  }
+ else {
+    log.ignoredReplicationQueueAttribute(attribute.getLocalName(),reader.getLocation().getLineNumber());
+  }
   break;
 }
 case QUEUE_FLUSH_INTERVAL:
 {
-builder.clustering().async().replQueueInterval(Long.parseLong(value));
+if (reader.getSchema().since(9,0)) {
+  throw ParseUtils.unexpectedAttribute(reader,attribute.getLocalName());
+}
+ else {
+  log.ignoredReplicationQueueAttribute(attribute.getLocalName(),reader.getLocation().getLineNumber());
+}
 break;
 }
 case REMOTE_TIMEOUT:
