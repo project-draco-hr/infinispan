@@ -1,0 +1,19 @@
+{
+  Transaction transaction=new TransactionHS();
+  transaction.setId(3);
+  transaction.setDescription("Hotel");
+  transaction.setAccountId(2);
+  transaction.setAmount(45);
+  transaction.setDate(new Date(42));
+  transaction.setDebit(true);
+  transaction.setValid(true);
+  cache.put(transaction.getId(),transaction);
+  QueryFactory qf=org.infinispan.query.Search.getQueryFactory(cache);
+  Query q=qf.from(TransactionHS.class).select("id","isDebit","isDebit").having("description").eq("Hotel").toBuilder().build();
+  List<Object[]> list=q.list();
+  assertEquals(1,list.size());
+  assertEquals(3,list.get(0).length);
+  assertEquals(3,list.get(0)[0]);
+  assertEquals(true,list.get(0)[1]);
+  assertEquals(true,list.get(0)[2]);
+}
