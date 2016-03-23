@@ -1,0 +1,23 @@
+{
+  ConfigurationBuilder builder=holder.getCurrentConfigurationBuilder();
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case CLASS:
+      log.dataContainerConfigurationDeprecated();
+    builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value,holder.getClassLoader()));
+  break;
+case KEY_EQUIVALENCE:
+builder.dataContainer().keyEquivalence(Util.<Equivalence>getInstance(value,holder.getClassLoader()));
+break;
+case VALUE_EQUIVALENCE:
+builder.dataContainer().valueEquivalence(Util.<Equivalence>getInstance(value,holder.getClassLoader()));
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+builder.dataContainer().withProperties(parseProperties(reader));
+}

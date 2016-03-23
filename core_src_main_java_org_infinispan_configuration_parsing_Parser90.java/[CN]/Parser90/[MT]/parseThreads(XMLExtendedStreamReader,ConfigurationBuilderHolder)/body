@@ -1,0 +1,38 @@
+{
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case THREAD_FACTORY:
+{
+        parseThreadFactory(reader);
+        break;
+      }
+case CACHED_THREAD_POOL:
+{
+      parseCachedThreadPool(reader,holder);
+      break;
+    }
+case SCHEDULED_THREAD_POOL:
+{
+    parseScheduledThreadPool(reader,holder);
+    break;
+  }
+case BLOCKING_BOUNDED_QUEUE_THREAD_POOL:
+{
+  parseBlockingBoundedQueueThreadPool(reader,holder);
+  break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+for (Map.Entry<String,ThreadPoolConfigurationBuilder> entry : threadPools.entrySet()) {
+String threadFactoryName=threadPoolToThreadFactory.get(entry.getKey());
+if (threadFactoryName != null) {
+ThreadFactory threadFactory=threadFactories.get(threadFactoryName);
+entry.getValue().threadFactory(threadFactory);
+}
+}
+}

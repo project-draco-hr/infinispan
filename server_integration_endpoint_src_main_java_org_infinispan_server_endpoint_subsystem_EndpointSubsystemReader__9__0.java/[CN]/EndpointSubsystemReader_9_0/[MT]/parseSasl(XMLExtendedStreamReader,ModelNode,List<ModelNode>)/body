@@ -1,0 +1,73 @@
+{
+  PathAddress address=PathAddress.pathAddress(authentication.get(OP_ADDR)).append(PathElement.pathElement(ModelKeys.SASL,ModelKeys.SASL_NAME));
+  ModelNode sasl=Util.createAddOperation(address);
+  list.add(sasl);
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=reader.getAttributeValue(i);
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case MECHANISMS:
+{
+        for (        String mech : reader.getListAttributeValue(i)) {
+          SaslResource.MECHANISMS.parseAndAddParameterElement(mech,sasl,reader);
+        }
+        break;
+      }
+case QOP:
+{
+      for (      String qop : reader.getListAttributeValue(i)) {
+        SaslResource.QOP.parseAndAddParameterElement(qop,sasl,reader);
+      }
+      break;
+    }
+case SERVER_CONTEXT_NAME:
+{
+    SaslResource.SERVER_CONTEXT_NAME.parseAndSetParameter(value,sasl,reader);
+    break;
+  }
+case SERVER_NAME:
+{
+  SaslResource.SERVER_NAME.parseAndSetParameter(value,sasl,reader);
+  break;
+}
+case STRENGTH:
+{
+for (String strength : reader.getListAttributeValue(i)) {
+  SaslResource.STRENGTH.parseAndAddParameterElement(strength,sasl,reader);
+}
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+final EnumSet<Element> visited=EnumSet.noneOf(Element.class);
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+final Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case POLICY:
+{
+if (visited.contains(element)) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ else {
+visited.add(element);
+}
+parsePolicy(reader,sasl,list);
+break;
+}
+case PROPERTY:
+{
+parseProperty(reader,sasl,list);
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}
