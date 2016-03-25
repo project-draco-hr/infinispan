@@ -3,13 +3,13 @@
     LockState state=lockState;
 switch (state) {
 case WAITING:
-case ACQUIRED:
       if (casState(state,LockState.RELEASED)) {
         cleanup();
         notifyListeners();
         return true;
       }
     break;
+case ACQUIRED:
 case TIMED_OUT:
 case DEADLOCKED:
   if (casState(state,LockState.RELEASED)) {
@@ -17,8 +17,10 @@ case DEADLOCKED:
     return true;
   }
 break;
-default :
+case RELEASED:
 return false;
+default :
+throw new IllegalStateException("Unknown lock state " + state);
 }
 }
  while (true);

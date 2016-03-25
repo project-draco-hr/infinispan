@@ -1,9 +1,10 @@
 {
-  while (true) {
-switch (lockState) {
+  do {
+    LockState currentState=lockState;
+switch (currentState) {
 case WAITING:
       checkTimeout();
-    await(notifier,timeService.remainingTime(timeout,TimeUnit.MILLISECONDS),TimeUnit.MILLISECONDS);
+    await(notifier,timeService.remainingTime(timeout,TimeUnit.NANOSECONDS),TimeUnit.NANOSECONDS);
   break;
 case ACQUIRED:
 return;
@@ -16,7 +17,8 @@ case DEADLOCKED:
 cleanup();
 throw new DeadlockDetectedException("DeadLock detected");
 default :
-throw new IllegalStateException("Unknown lock state: " + lockState);
+throw new IllegalStateException("Unknown lock state: " + currentState);
 }
 }
+ while (true);
 }

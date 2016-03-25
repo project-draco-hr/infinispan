@@ -1,12 +1,13 @@
 {
   checkValidCancelState(state);
-  out:   do {
+  do {
     LockState currentState=lockState;
 switch (currentState) {
 case WAITING:
       if (casState(LockState.WAITING,state)) {
+        onCanceled(this);
         notifyListeners();
-        break out;
+        return;
       }
     break;
 case ACQUIRED:
@@ -15,11 +16,8 @@ case DEADLOCKED:
 case RELEASED:
   return;
 default :
-if (casState(currentState,state)) {
-  break out;
-}
+throw new IllegalStateException("Unknown lock state " + currentState);
 }
 }
  while (true);
-onCanceled(this);
 }
