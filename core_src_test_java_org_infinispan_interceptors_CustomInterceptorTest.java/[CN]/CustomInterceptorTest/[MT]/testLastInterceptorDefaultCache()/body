@@ -5,8 +5,9 @@
   final EmbeddedCacheManager cacheManager=TestCacheManagerFactory.createCacheManager(builder);
   withCacheManager(new CacheManagerCallable(cacheManager){
     @Override public void call(){
-      List<CommandInterceptor> interceptorChain=cacheManager.getCache().getAdvancedCache().getInterceptorChain();
-      assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(),FooInterceptor.class);
+      List<SequentialInterceptor> interceptors=cacheManager.getCache().getAdvancedCache().getSequentialInterceptorChain().getInterceptors();
+      Object o=interceptors.get(interceptors.size() - 2);
+      assertEquals(FooInterceptor.class,o.getClass());
       assertFalse(interceptor.putInvoked);
       cacheManager.getCache().put("k","v");
       assertEquals("v",cacheManager.getCache().get("k"));

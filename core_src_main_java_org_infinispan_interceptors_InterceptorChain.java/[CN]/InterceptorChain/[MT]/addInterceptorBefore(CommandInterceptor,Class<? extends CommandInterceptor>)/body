@@ -1,27 +1,3 @@
 {
-  final ReentrantLock lock=this.lock;
-  lock.lock();
-  try {
-    Class<? extends CommandInterceptor> interceptorClass=toAdd.getClass();
-    assertNotAdded(interceptorClass);
-    validateCustomInterceptor(interceptorClass);
-    if (firstInChain.getClass().equals(beforeInterceptor)) {
-      toAdd.setNext(firstInChain);
-      firstInChain=toAdd;
-      return true;
-    }
-    CommandInterceptor it=firstInChain;
-    while (it.getNext() != null) {
-      if (it.getNext().getClass().equals(beforeInterceptor)) {
-        toAdd.setNext(it.getNext());
-        it.setNext(toAdd);
-        return true;
-      }
-      it=it.getNext();
-    }
-    return false;
-  }
-  finally {
-    lock.unlock();
-  }
+  return sequentialInterceptorChain.addInterceptorBefore(toAdd,beforeInterceptor);
 }

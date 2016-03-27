@@ -1,8 +1,9 @@
 {
   TransactionMode transactionMode=configuration.transaction().transactionMode();
   boolean needsVersionAwareComponents=transactionMode.isTransactional() && Configurations.isVersioningEnabled(configuration);
-  InterceptorChain interceptorChain=new InterceptorChain(componentRegistry.getComponentMetadataRepo());
-  componentRegistry.registerComponent(interceptorChain,InterceptorChain.class);
+  SequentialInterceptorChain interceptorChain=new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
+  componentRegistry.registerComponent(interceptorChain,SequentialInterceptorChain.class);
+  componentRegistry.registerComponent(new InterceptorChain(interceptorChain),InterceptorChain.class);
   boolean invocationBatching=configuration.invocationBatching().enabled();
   boolean isTotalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
   CacheMode cacheMode=configuration.clustering().cacheMode();
@@ -44,8 +45,7 @@
   }
   if (transactionMode.isTransactional())   interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(),TxInterceptor.class),false);
   if (isUsingMarshalledValues(configuration)) {
-    CommandInterceptor interceptor;
-    interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
+    SequentialInterceptor interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
     interceptorChain.appendInterceptor(interceptor,false);
   }
   if (configuration.transaction().useEagerLocking()) {
@@ -159,7 +159,7 @@ interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterc
 break;
 case LOCAL:
 }
-CommandInterceptor callInterceptor=createInterceptor(new CallInterceptor(),CallInterceptor.class);
+SequentialInterceptor callInterceptor=createInterceptor(new CallInterceptor(),CallInterceptor.class);
 interceptorChain.appendInterceptor(callInterceptor,false);
 log.trace("Finished building default interceptor chain.");
 buildCustomInterceptors(interceptorChain,configuration.customInterceptors());

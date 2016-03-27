@@ -17,27 +17,23 @@
       storesMutex.writeLock().unlock();
     }
     if (loaders.isEmpty() && writers.isEmpty()) {
-      InterceptorChain chain=cache.getComponentRegistry().getComponent(InterceptorChain.class);
-      List<CommandInterceptor> loaderInterceptors=chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
-      if (loaderInterceptors.isEmpty()) {
+      SequentialInterceptorChain chain=cache.getAdvancedCache().getSequentialInterceptorChain();
+      SequentialInterceptor loaderInterceptor=chain.findInterceptorExtending(CacheLoaderInterceptor.class);
+      if (loaderInterceptor == null) {
         log.persistenceWithoutCacheLoaderInterceptor();
       }
  else {
-        for (        CommandInterceptor interceptor : loaderInterceptors) {
-          ((CacheLoaderInterceptor)interceptor).disableInterceptor();
-        }
+        ((CacheLoaderInterceptor)loaderInterceptor).disableInterceptor();
+        chain.removeInterceptor(loaderInterceptor.getClass());
       }
-      List<CommandInterceptor> writerInterceptors=chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
-      if (writerInterceptors.isEmpty()) {
+      SequentialInterceptor writerInterceptor=chain.findInterceptorExtending(CacheWriterInterceptor.class);
+      if (writerInterceptor == null) {
         log.persistenceWithoutCacheWriteInterceptor();
       }
  else {
-        for (        CommandInterceptor interceptor : writerInterceptors) {
-          ((CacheWriterInterceptor)interceptor).disableInterceptor();
-        }
+        ((CacheWriterInterceptor)writerInterceptor).disableInterceptor();
+        chain.removeInterceptor(writerInterceptor.getClass());
       }
-      removeInterceptors(loaderInterceptors);
-      removeInterceptors(writerInterceptors);
       enabled=false;
     }
   }

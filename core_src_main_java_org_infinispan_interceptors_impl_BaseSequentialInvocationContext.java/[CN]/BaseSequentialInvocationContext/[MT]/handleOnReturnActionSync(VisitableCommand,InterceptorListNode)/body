@@ -1,0 +1,19 @@
+{
+  SequentialInterceptor.ReturnHandler returnHandler=(SequentialInterceptor.ReturnHandler)actionValue;
+  Object returnValue=null;
+  Throwable throwable=null;
+  try {
+    returnValue=doInvokeNextSync(command,interceptorNode);
+  }
+ catch (  Throwable t) {
+    throwable=t;
+  }
+  CompletableFuture<Object> handlerFuture=returnHandler.handle(this,command,returnValue,throwable);
+  if (handlerFuture != null) {
+    return CompletableFutures.await(handlerFuture);
+  }
+ else {
+    if (throwable != null)     throw throwable;
+ else     return returnValue;
+  }
+}

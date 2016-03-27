@@ -1,0 +1,12 @@
+{
+  SequentialInterceptor interceptor=interceptorNode.interceptor;
+  nextInterceptor=interceptorNode.nextNode;
+  if (interceptor instanceof CommandInterceptor) {
+    return command.acceptVisitor(this,(CommandInterceptor)interceptor);
+  }
+  CompletableFuture<Void> nextVisitFuture=interceptor.visitCommand(this,command);
+  if (!nextVisitFuture.isDone()) {
+    CompletableFutures.await(nextVisitFuture);
+  }
+  return this.handleActionSync(command,interceptorNode);
+}

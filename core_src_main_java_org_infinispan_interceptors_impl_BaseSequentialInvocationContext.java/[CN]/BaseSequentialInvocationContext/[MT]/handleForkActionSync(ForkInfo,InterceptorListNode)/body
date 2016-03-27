@@ -1,0 +1,15 @@
+{
+  Object returnValue=null;
+  Throwable throwable=null;
+  try {
+    returnValue=forkInvocationSync(forkInfo.newCommand);
+  }
+ catch (  Throwable t) {
+    throwable=t;
+  }
+  CompletableFuture<Void> handlerFuture=forkInfo.forkReturnHandler.handle(this,forkInfo.savedCommand,returnValue,throwable);
+  if (!handlerFuture.isDone()) {
+    CompletableFutures.await(handlerFuture);
+  }
+  return handleActionSync(forkInfo.savedCommand,interceptorNode);
+}

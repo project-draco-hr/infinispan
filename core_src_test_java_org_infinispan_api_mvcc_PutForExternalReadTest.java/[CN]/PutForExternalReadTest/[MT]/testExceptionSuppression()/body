@@ -1,15 +1,15 @@
 {
   Cache<String,String> cache1=cache(0,CACHE_NAME);
   Cache<String,String> cache2=cache(1,CACHE_NAME);
-  cache1.getAdvancedCache().addInterceptorBefore(new CommandInterceptor(){
-    @Override public Object visitPutKeyValueCommand(    InvocationContext ctx,    PutKeyValueCommand command) throws Throwable {
-      throw new RuntimeException("Barf!");
-    }
-    @Override public Object visitRemoveCommand(    InvocationContext ctx,    RemoveCommand command) throws Throwable {
-      throw new RuntimeException("Barf!");
+  assertTrue(cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(new BaseSequentialInterceptor(){
+    @Override public CompletableFuture<Void> visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      if (command instanceof PutKeyValueCommand || command instanceof RemoveCommand) {
+        throw new RuntimeException("Barf!");
+      }
+      return ctx.continueInvocation();
     }
   }
-,CallInterceptor.class);
+,CallInterceptor.class));
   try {
     cache1.put(key,value);
     fail("Should have barfed");

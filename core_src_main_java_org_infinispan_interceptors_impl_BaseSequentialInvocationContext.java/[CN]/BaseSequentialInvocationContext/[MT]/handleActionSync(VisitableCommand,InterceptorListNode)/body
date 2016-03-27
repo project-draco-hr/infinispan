@@ -1,0 +1,24 @@
+{
+  if (EXTRA_LOGS && trace) {
+    log.tracef("Handling action %s/%s",actionName(action),className(actionValue));
+  }
+  if (action == SHORT_CIRCUIT) {
+    action=INVOKE_NEXT;
+    return actionValue;
+  }
+ else   if (action == INVOKE_NEXT) {
+    return doInvokeNextSync(command,interceptorNode.nextNode);
+  }
+ else   if (action == FORK_INVOCATION) {
+    action=INVOKE_NEXT;
+    ForkInfo forkInfo=(ForkInfo)actionValue;
+    return handleForkActionSync(forkInfo,interceptorNode.nextNode);
+  }
+ else   if (action == ON_RETURN) {
+    action=INVOKE_NEXT;
+    return handleOnReturnActionSync(command,interceptorNode.nextNode);
+  }
+ else {
+    throw new IllegalStateException("Illegal action type: " + action);
+  }
+}
