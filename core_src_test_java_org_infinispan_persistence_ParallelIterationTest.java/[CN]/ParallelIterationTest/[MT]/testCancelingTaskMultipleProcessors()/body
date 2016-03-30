@@ -2,11 +2,11 @@
   insertData();
   final ConcurrentMap<Object,Object> entries=new ConcurrentHashMap<>();
   final AtomicBoolean stopped=new AtomicBoolean(false);
-  store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+  loader.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
     @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
 synchronized (entries) {
         boolean shouldStop=entries.size() == 100 && !stopped.get();
-        log.info("shouldStop = " + shouldStop + ",entries size = "+ entries.size());
+        log.trace("shouldStop = " + shouldStop + ",entries size = "+ entries.size());
         if (shouldStop) {
           stopped.set(true);
           taskContext.stop();
@@ -16,8 +16,8 @@ synchronized (entries) {
       }
     }
   }
-,persistenceExecutor,true,true);
+,executor,true,true);
   assertTrue(stopped.get());
-  assertTrue(entries.size() <= 100 + numThreads(),"got " + entries.size() + " elements, expected less than "+ (100 + numThreads()));
+  assertTrue(entries.size() <= 100 + NUM_THREADS,"got " + entries.size() + " elements, expected less than "+ (100 + NUM_THREADS));
   assertTrue(entries.size() >= 100);
 }

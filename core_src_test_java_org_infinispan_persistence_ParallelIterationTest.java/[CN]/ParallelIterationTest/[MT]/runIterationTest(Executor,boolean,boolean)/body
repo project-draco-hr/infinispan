@@ -1,13 +1,12 @@
 {
-  assertEquals(store.size(),0);
-  int numEntries=insertData();
   final ConcurrentMap<Integer,Integer> entries=new ConcurrentHashMap<>();
   final ConcurrentMap<Integer,InternalMetadata> metadata=new ConcurrentHashMap<>();
   final AtomicBoolean sameKeyMultipleTimes=new AtomicBoolean();
   final AtomicInteger processed=new AtomicInteger();
-  final CyclicBarrier barrier=new CyclicBarrier(numThreads);
   final AtomicBoolean brokenBarrier=new AtomicBoolean(false);
-  store.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
+  assertEquals(loader.size(),0);
+  insertData();
+  loader.process(null,new AdvancedCacheLoader.CacheLoaderTask(){
     @Override public void processEntry(    MarshalledEntry marshalledEntry,    AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
       int key=unwrapKey(marshalledEntry.getKey());
       if (fetchValues) {
@@ -18,7 +17,7 @@
         }
       }
       if (marshalledEntry.getMetadata() != null) {
-        log.tracef("For key %d found metdata %s",key,marshalledEntry.getMetadata());
+        log.tracef("For key %d found metadata %s",key,marshalledEntry.getMetadata());
         InternalMetadata prevMetadata=metadata.put(key,marshalledEntry.getMetadata());
         if (prevMetadata != null) {
           log.warnf("Already a metadata present for key %s: %s",key,prevMetadata);
@@ -34,8 +33,8 @@
 ,persistenceExecutor1,fetchValues,fetchMetadata);
   assertFalse(sameKeyMultipleTimes.get());
   assertFalse(brokenBarrier.get());
-  assertEquals(processed.get(),numEntries);
-  for (int i=0; i < numEntries; i++) {
+  assertEquals(processed.get(),NUM_ENTRIES);
+  for (int i=0; i < NUM_ENTRIES; i++) {
     if (fetchValues) {
       assertEquals(entries.get(i),(Integer)i,"For key " + i);
     }
