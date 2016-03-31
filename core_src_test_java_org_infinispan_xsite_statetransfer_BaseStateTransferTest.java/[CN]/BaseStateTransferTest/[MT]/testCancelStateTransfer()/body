@@ -3,10 +3,20 @@
   assertOffline(LON,NYC);
   assertNoStateTransferInReceivingSite(NYC);
   assertNoStateTransferInSendingSite(LON);
-  final int amountOfData=chunkSize(LON) * 4;
-  for (int i=0; i < amountOfData; ++i) {
-    cache(LON,0).put(key(i),value(0));
+  DistributionManager dm0=cache(LON,0).getAdvancedCache().getDistributionManager();
+  Address coordLON=cache(LON,0).getCacheManager().getAddress();
+  Set<Object> keysOnCoordinator=new HashSet<>();
+  int i=0;
+  while (keysOnCoordinator.size() < chunkSize(LON)) {
+    Object key=key(i);
+    cache(LON,0).put(key,value(0));
+    if (dm0.getPrimaryLocation(key).equals(coordLON)) {
+      keysOnCoordinator.add(key);
+    }
+    ++i;
   }
+  int numKeys=i;
+  log.debugf("Coordinator %s is primary owner for %d keys: %s",coordLON,keysOnCoordinator.size(),keysOnCoordinator);
   assertInSite(NYC,new AssertCondition<Object,Object>(){
     @Override public void assertInCache(    Cache<Object,Object> cache){
       assertTrue(cache.isEmpty());
@@ -43,7 +53,7 @@
   assertNoStateTransferInSendingSite(LON);
   assertInSite(NYC,new AssertCondition<Object,Object>(){
     @Override public void assertInCache(    Cache<Object,Object> cache){
-      for (int i=0; i < amountOfData; ++i) {
+      for (int i=0; i < numKeys; ++i) {
         assertEquals(value(0),cache.get(key(i)));
       }
     }
