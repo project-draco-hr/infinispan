@@ -3,6 +3,21 @@ synchronized (this) {
     if (expectedMembers.contains(joiner)) {
       return false;
     }
+    if (persistentState.isPresent()) {
+      if (!joinInfo.getPersistentStateChecksum().isPresent()) {
+        if (status == ComponentStatus.INSTANTIATED) {
+          throw log.nodeWithoutPersistentStateJoiningCacheWithState(joiner,cacheName);
+        }
+      }
+ else       if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
+        throw log.nodeWithIncompatibleStateJoiningCache(joiner,cacheName);
+      }
+    }
+ else {
+      if (joinInfo.getPersistentStateChecksum().isPresent()) {
+        throw log.nodeWithPersistentStateJoiningClusterWithoutState(joiner,cacheName);
+      }
+    }
     if (this.joinInfo == null) {
       this.joinInfo=joinInfo;
     }
@@ -10,8 +25,9 @@ synchronized (this) {
     newCapacityFactors.put(joiner,joinInfo.getCapacityFactor());
     capacityFactors=Immutables.immutableMapWrap(newCapacityFactors);
     expectedMembers=immutableAdd(expectedMembers,joiner);
+    persistentUUIDManager.addPersistentAddressMapping(joiner,joinInfo.getPersistentUUID());
     joiners=immutableAdd(joiners,joiner);
-    if (trace)     log.tracef("Added joiner %s to cache %s: members = %s, joiners = %s",joiner,cacheName,expectedMembers,joiners);
+    if (trace)     log.tracef("Added joiner %s to cache %s with persistent uuid %s: members = %s, joiners = %s",joiner,cacheName,joinInfo.getPersistentUUID(),expectedMembers,joiners);
     return true;
   }
 }

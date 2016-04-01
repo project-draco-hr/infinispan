@@ -1,0 +1,26 @@
+{
+  List<Address> remappedMembers=new ArrayList<>(members.size());
+  for (Iterator<Address> i=members.iterator(); i.hasNext(); ) {
+    Address a=remapper.apply(i.next());
+    if (a == null) {
+      return null;
+    }
+    remappedMembers.add(a);
+  }
+  Map<Address,Float> remappedCapacityFactors=null;
+  if (capacityFactors != null) {
+    remappedCapacityFactors=new HashMap<>(members.size());
+    for (int i=0; i < members.size(); i++) {
+      remappedCapacityFactors.put(remapper.apply(members.get(i)),capacityFactors[i]);
+    }
+  }
+  List<Address>[] remappedSegmentOwners=new List[segmentOwners.length];
+  for (int i=0; i < segmentOwners.length; i++) {
+    List<Address> remappedOwners=new ArrayList<>(segmentOwners[i].size());
+    for (Iterator<Address> j=segmentOwners[i].iterator(); j.hasNext(); ) {
+      remappedOwners.add(remapper.apply(j.next()));
+    }
+    remappedSegmentOwners[i]=remappedOwners;
+  }
+  return new DefaultConsistentHash(this.hashFunction,this.numOwners,this.segmentOwners.length,remappedMembers,remappedCapacityFactors,remappedSegmentOwners);
+}

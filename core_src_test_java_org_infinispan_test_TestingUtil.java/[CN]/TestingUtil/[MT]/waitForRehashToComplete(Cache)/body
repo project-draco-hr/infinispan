@@ -9,18 +9,28 @@
     Address cacheAddress=c.getAdvancedCache().getRpcManager().getAddress();
     while (true) {
       CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
-      ConsistentHash currentCH=cacheTopology.getCurrentCH();
-      boolean rebalanceInProgress=cacheTopology.getPendingCH() != null;
-      boolean chContainsAllMembers=currentCH.getMembers().size() == caches.length;
-      boolean currentChIsBalanced=true;
-      int actualNumOwners=Math.min(currentCH.getNumOwners(),currentCH.getMembers().size());
-      for (int i=0; i < currentCH.getNumSegments(); i++) {
-        if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
-          currentChIsBalanced=false;
-          break;
+      boolean rebalanceInProgress;
+      boolean chContainsAllMembers;
+      boolean currentChIsBalanced;
+      if (cacheTopology != null) {
+        rebalanceInProgress=cacheTopology.getPendingCH() != null;
+        ConsistentHash currentCH=cacheTopology.getCurrentCH();
+        chContainsAllMembers=currentCH.getMembers().size() == caches.length;
+        currentChIsBalanced=true;
+        int actualNumOwners=Math.min(currentCH.getNumOwners(),currentCH.getMembers().size());
+        for (int i=0; i < currentCH.getNumSegments(); i++) {
+          if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
+            currentChIsBalanced=false;
+            break;
+          }
         }
+        if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)         break;
       }
-      if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)       break;
+ else {
+        rebalanceInProgress=false;
+        chContainsAllMembers=false;
+        currentChIsBalanced=true;
+      }
       if (System.nanoTime() - giveup > 0) {
         String message;
         if (!chContainsAllMembers) {

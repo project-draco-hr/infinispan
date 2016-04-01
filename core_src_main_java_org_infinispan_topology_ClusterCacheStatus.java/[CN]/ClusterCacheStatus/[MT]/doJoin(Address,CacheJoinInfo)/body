@@ -8,12 +8,27 @@ synchronized (this) {
       if (trace)       log.tracef("Trying to add node %s to cache %s, but it is already a member: " + "members = %s, joiners = %s",joiner,cacheName,expectedMembers,joiners);
       return new CacheStatusResponse(null,currentTopology,stableTopology,availabilityMode);
     }
-    if (isFirstMember) {
-      CacheTopology initialTopology=createInitialCacheTopology();
-      clusterTopologyManager.broadcastStableTopologyUpdate(cacheName,initialTopology,isTotalOrder(),isDistributed());
+    if (status == ComponentStatus.INSTANTIATED) {
+      if (persistentState.isPresent()) {
+        if (trace)         log.tracef("Node %s joining. Attempting to reform previous cluster",joiner);
+        CacheTopology topology=restoreCacheTopology(persistentState.get());
+        if (topology != null) {
+          status=ComponentStatus.RUNNING;
+          clusterTopologyManager.broadcastTopologyUpdate(cacheName,topology,availabilityMode,isTotalOrder(),isDistributed());
+          clusterTopologyManager.broadcastStableTopologyUpdate(cacheName,topology,isTotalOrder(),isDistributed());
+          return new CacheStatusResponse(null,currentTopology,stableTopology,availabilityMode);
+        }
+      }
+ else {
+        if (isFirstMember) {
+          CacheTopology initialTopology=createInitialCacheTopology();
+          status=ComponentStatus.RUNNING;
+          clusterTopologyManager.broadcastStableTopologyUpdate(cacheName,initialTopology,isTotalOrder(),isDistributed());
+        }
+      }
     }
     topologyBeforeRebalance=getCurrentTopology();
-    availabilityStrategy.onJoin(this,joiner);
+    if (topologyBeforeRebalance != null)     availabilityStrategy.onJoin(this,joiner);
   }
   return new CacheStatusResponse(null,topologyBeforeRebalance,stableTopology,availabilityMode);
 }

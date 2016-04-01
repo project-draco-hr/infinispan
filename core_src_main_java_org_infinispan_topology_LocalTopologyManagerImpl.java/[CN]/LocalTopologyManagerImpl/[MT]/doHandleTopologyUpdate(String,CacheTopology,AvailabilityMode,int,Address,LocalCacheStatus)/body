@@ -6,6 +6,10 @@
     return;
   }
 synchronized (cacheStatus) {
+    if (cacheTopology == null) {
+      return;
+    }
+    registerPersistentUUID(cacheTopology);
     CacheTopology existingTopology=cacheStatus.getCurrentTopology();
     if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
       log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
@@ -18,7 +22,7 @@ synchronized (cacheStatus) {
     if (cacheTopology.getPendingCH() != null) {
       unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
     }
-    CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH,cacheTopology.getActualMembers());
+    CacheTopology unionTopology=new CacheTopology(cacheTopology.getTopologyId(),cacheTopology.getRebalanceId(),cacheTopology.getCurrentCH(),cacheTopology.getPendingCH(),unionCH,cacheTopology.getActualMembers(),persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
     unionTopology.logRoutingTableInformation();
     boolean updateAvailabilityModeFirst=availabilityMode != AvailabilityMode.AVAILABLE;
     if (updateAvailabilityModeFirst && availabilityMode != null) {

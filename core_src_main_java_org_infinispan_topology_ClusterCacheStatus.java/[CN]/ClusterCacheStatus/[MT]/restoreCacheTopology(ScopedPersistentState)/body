@@ -1,0 +1,19 @@
+{
+  if (trace)   log.tracef("Attempting to restore CH for cache %s",cacheName);
+  ConsistentHash persistedCH=joinInfo.getConsistentHashFactory().fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
+  if (persistedCH == null || !getExpectedMembers().containsAll(persistedCH.getMembers())) {
+    if (trace)     log.tracef("Could not restore CH for cache %s, one or more addresses are missing",cacheName);
+    return null;
+  }
+  if (getExpectedMembers().size() > persistedCH.getMembers().size()) {
+    List<Address> extraneousMembers=new ArrayList<>(getExpectedMembers());
+    extraneousMembers.removeAll(persistedCH.getMembers());
+    throw log.extraneousMembersJoinRestoredCache(extraneousMembers,cacheName);
+  }
+  CacheTopology initialTopology=new CacheTopology(0,0,persistedCH,null,persistedCH.getMembers(),persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
+  setCurrentTopology(initialTopology);
+  setStableTopology(initialTopology);
+  rebalancingEnabled=true;
+  availabilityMode=AvailabilityMode.AVAILABLE;
+  return initialTopology;
+}

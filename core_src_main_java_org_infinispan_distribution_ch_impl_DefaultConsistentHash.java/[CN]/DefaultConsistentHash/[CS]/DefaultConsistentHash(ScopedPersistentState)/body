@@ -4,11 +4,7 @@
   this.members=new ArrayList<>(numMembers);
   for (int i=0; i < numMembers; i++) {
     PersistentUUID uuid=PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER,i)));
-    Address address=JGroupsAddressCache.fromPersistentUUID(uuid);
-    if (address == null) {
-      throw new IllegalStateException("Unknown address for " + uuid);
-    }
-    this.members.add(address);
+    this.members.add(uuid);
   }
   int numSegments=state.getIntProperty(STATE_NUM_SEGMENTS);
   this.segmentSize=Util.getSegmentSize(numSegments);
@@ -18,7 +14,7 @@
     segmentOwners[i]=new ArrayList<>();
     for (int j=0; j < segmentOwnerCount; j++) {
       PersistentUUID uuid=PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER,i,j)));
-      segmentOwners[i].add(JGroupsAddressCache.fromPersistentUUID(uuid));
+      segmentOwners[i].add(uuid);
     }
   }
   int numCapacityFactors=Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));

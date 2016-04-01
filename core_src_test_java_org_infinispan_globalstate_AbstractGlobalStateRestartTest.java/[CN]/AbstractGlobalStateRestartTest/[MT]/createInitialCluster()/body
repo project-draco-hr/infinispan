@@ -1,0 +1,13 @@
+{
+  waitForClusterToForm();
+  Map<JGroupsAddress,PersistentUUID> addressMappings=new LinkedHashMap<>();
+  for (int i=0; i < getClusterSize(); i++) {
+    LocalTopologyManager ltm=TestingUtil.extractGlobalComponent(manager(i),LocalTopologyManager.class);
+    PersistentUUID uuid=ltm.getPersistentUUID();
+    assertNotNull(uuid);
+    addressMappings.put((JGroupsAddress)manager(i).getAddress(),uuid);
+  }
+  fillData();
+  checkData();
+  return addressMappings;
+}

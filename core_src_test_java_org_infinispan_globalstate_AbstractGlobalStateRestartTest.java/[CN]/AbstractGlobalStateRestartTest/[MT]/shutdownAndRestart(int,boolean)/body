@@ -1,0 +1,49 @@
+{
+  Map<JGroupsAddress,PersistentUUID> addressMappings=createInitialCluster();
+  ConsistentHash oldConsistentHash=cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
+  cache(0).shutdown();
+  TestingUtil.killCacheManagers(this.cacheManagers);
+  for (int i=0; i < getClusterSize(); i++) {
+    checkStateDirNotEmpty(manager(i).getCacheManagerConfiguration().globalState().persistentLocation());
+  }
+  this.cacheManagers.clear();
+  createStatefulCacheManagers(false,extraneousNodePosition,reverse);
+  if (reverse) {
+    Map<JGroupsAddress,PersistentUUID> reversed=new LinkedHashMap<>();
+    reverseLinkedMap(addressMappings.entrySet().iterator(),reversed);
+    addressMappings=reversed;
+  }
+switch (extraneousNodePosition) {
+case -1:
+{
+      waitForClusterToForm();
+      checkClusterRestartedCorrectly(addressMappings);
+      checkData();
+      ConsistentHash newConsistentHash=cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
+      PersistentUUIDManager persistentUUIDManager=TestingUtil.extractGlobalComponent(manager(0),PersistentUUIDManager.class);
+      assertTrue(isEquivalent(addressMappings,oldConsistentHash,newConsistentHash,persistentUUIDManager));
+      break;
+    }
+case 0:
+{
+    for (int i=1; i < cacheManagers.size(); i++) {
+      try {
+        cache(i);
+        fail("Cache with state should not have joined coordinator without state");
+      }
+ catch (      CacheException e) {
+      }
+    }
+    break;
+  }
+default :
+{
+  try {
+    cache(extraneousNodePosition);
+    fail("Cache without state should not have joined coordinator with state");
+  }
+ catch (  CacheException e) {
+  }
+}
+}
+}

@@ -1,9 +1,10 @@
 {
+  PersistentUUIDManager persistentUUIDManager=new PersistentUUIDManagerImpl();
   ConsistentHash ch=createConsistentHash();
-  generateRandomPersistentUUIDs(ch.getMembers());
+  generateRandomPersistentUUIDs(ch.getMembers(),persistentUUIDManager);
   ScopedPersistentState state=new ScopedPersistentStateImpl("scope");
-  ch.toScopedState(state);
+  ch.remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(state);
   ConsistentHashFactory<?> hashFactory=createConsistentHashFactory();
-  ConsistentHash restoredCH=hashFactory.fromPersistentState(state);
+  ConsistentHash restoredCH=hashFactory.fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
   assertEquals(ch,restoredCH);
 }

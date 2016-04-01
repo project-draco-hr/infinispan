@@ -1,12 +1,13 @@
 {
 synchronized (this) {
-    if (currentTopology == null)     return;
+    if (currentTopology == null)     return false;
     boolean actualLeaver=removeMember(leaver);
-    if (!actualLeaver)     return;
+    if (!actualLeaver)     return false;
     availabilityStrategy.onGracefulLeave(this,leaver);
     boolean rebalanceCompleted=updateRebalanceMembers();
     if (rebalanceCompleted) {
       endRebalance();
     }
+    return expectedMembers.isEmpty();
   }
 }

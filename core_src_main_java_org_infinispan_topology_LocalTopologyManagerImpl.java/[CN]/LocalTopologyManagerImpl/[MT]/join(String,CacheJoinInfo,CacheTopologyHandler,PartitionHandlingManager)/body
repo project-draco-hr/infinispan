@@ -20,6 +20,9 @@
       }
  catch (      Exception e) {
         log.debugf(e,"Error sending join request for cache %s to coordinator",cacheName);
+        if (e.getCause() != null && e.getCause() instanceof CacheJoinException) {
+          throw (CacheJoinException)e.getCause();
+        }
         if (timeService.isTimeExpired(endTime)) {
           throw e;
         }

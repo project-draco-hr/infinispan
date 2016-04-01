@@ -1,0 +1,12 @@
+{
+  ComponentRegistry cr=gcr.getNamedComponentRegistry(cacheName);
+  CacheImpl<?,?> cache=(CacheImpl<?,?>)cr.getComponent(Cache.class);
+  cache.performGracefulShutdown();
+  ScopedPersistentState cacheState=new ScopedPersistentStateImpl(cacheName);
+  cacheState.setProperty(GlobalStateManagerImpl.VERSION,Version.getVersion());
+  cacheState.setProperty(GlobalStateManagerImpl.TIMESTAMP,timeService.instant().toString());
+  cacheState.setProperty(GlobalStateManagerImpl.VERSION_MAJOR,Version.getMajor());
+  LocalCacheStatus cacheStatus=runningCaches.get(cacheName);
+  cacheStatus.getCurrentTopology().getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(cacheState);
+  globalStateManager.writeScopedState(cacheState);
+}
