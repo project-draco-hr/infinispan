@@ -1,0 +1,23 @@
+{
+  HotRodOperation op=decodeCtx.header().op();
+  if (op.requireValue()) {
+    int valueLength=decodeCtx.params().valueLength();
+    if (in.readableBytes() < valueLength) {
+      return false;
+    }
+    byte[] bytes=new byte[valueLength];
+    in.readBytes(bytes);
+    decodeCtx.rawValue_$eq(bytes);
+  }
+switch (op.getDecoderRequirements()) {
+case VALUE_CUSTOM:
+    state(HotRodDecoderState.DECODE_VALUE_CUSTOM,in);
+  readCustomValue(in,out);
+return false;
+case VALUE:
+out.add(decodeCtx);
+resetRequested=true;
+return false;
+}
+return true;
+}

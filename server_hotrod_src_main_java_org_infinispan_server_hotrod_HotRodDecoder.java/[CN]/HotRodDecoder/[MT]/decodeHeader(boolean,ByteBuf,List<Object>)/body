@@ -1,0 +1,24 @@
+{
+  boolean shouldContinue=readHeader(in);
+  if (!shouldContinue) {
+    return false;
+  }
+  HotRodHeader header=decodeCtx.getHeader();
+  if (ignoreCache.test(header.cacheName())) {
+    throw new CacheUnavailableException();
+  }
+  decodeCtx.obtainCache(cacheManager,isLoopBack);
+  HotRodOperation op=header.op();
+switch (op.getDecoderRequirements()) {
+case HEADER_CUSTOM:
+    state(HotRodDecoderState.DECODE_HEADER_CUSTOM,in);
+  readCustomHeader(in,out);
+return false;
+case HEADER:
+out.add(decodeCtx);
+resetRequested=true;
+return false;
+default :
+return true;
+}
+}

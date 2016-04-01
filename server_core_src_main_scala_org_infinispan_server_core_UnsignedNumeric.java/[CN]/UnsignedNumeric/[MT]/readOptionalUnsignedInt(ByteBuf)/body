@@ -1,0 +1,17 @@
+{
+  if (in.readableBytes() < 1) {
+    in.resetReaderIndex();
+    return OptionalInt.empty();
+  }
+  byte b=in.readByte();
+  int i=b & 0x7F;
+  for (int shift=7; (b & 0x80) != 0; shift+=7) {
+    if (in.readableBytes() < 1) {
+      in.resetReaderIndex();
+      return OptionalInt.empty();
+    }
+    b=in.readByte();
+    i|=(b & 0x7FL) << shift;
+  }
+  return OptionalInt.of(i);
+}

@@ -1,0 +1,55 @@
+{
+  try {
+    if (decodeCtx.isTrace()) {
+      log.tracef("Decode using instance @%x",System.identityHashCode(this));
+    }
+    if (resetRequested) {
+      resetNow();
+    }
+    in.markReaderIndex();
+switch (state) {
+case DECODE_HEADER:
+      if (!decodeHeader(((InetSocketAddress)ctx.channel().remoteAddress()).getAddress().isLoopbackAddress(),in,out)) {
+        break;
+      }
+    state(HotRodDecoderState.DECODE_KEY,in);
+case DECODE_KEY:
+  if (!decodeKey(in,out)) {
+    break;
+  }
+state(HotRodDecoderState.DECODE_PARAMETERS,in);
+case DECODE_PARAMETERS:
+if (!decodeParameters(in,out)) {
+break;
+}
+state(HotRodDecoderState.DECODE_VALUE,in);
+case DECODE_VALUE:
+if (!decodeValue(in,out)) {
+break;
+}
+state(HotRodDecoderState.DECODE_HEADER,in);
+break;
+case DECODE_HEADER_CUSTOM:
+readCustomHeader(in,out);
+break;
+case DECODE_KEY_CUSTOM:
+readCustomKey(in,out);
+break;
+case DECODE_VALUE_CUSTOM:
+readCustomValue(in,out);
+break;
+}
+int remainingBytes;
+if (!out.isEmpty() && (remainingBytes=in.readableBytes()) > 0) {
+out.clear();
+in.readerIndex(in.writerIndex());
+HotRodHeader header=decodeCtx.header();
+throw new RequestParsingException("There are too many bytes for op " + header.op() + " for version "+ header.version()+ " - had "+ remainingBytes+ " left over",header.version(),header.messageId());
+}
+}
+ catch (Throwable t) {
+decodeCtx.setError(t);
+resetRequested=true;
+ctx.pipeline().fireExceptionCaught(new HotRodException(decodeCtx.createExceptionResponse(t),t));
+}
+}

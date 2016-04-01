@@ -1,0 +1,15 @@
+{
+  Channel ch=ctx.channel();
+  HotRodDecoder decoder=ctx.pipeline().get(HotRodDecoder.class);
+  CacheDecodeContext decodeCtx=decoder.decodeCtx;
+  log.debug("Exception caught",t);
+  if (t instanceof DecoderException) {
+    t=t.getCause();
+  }
+  if (t instanceof HotRodException) {
+    ch.writeAndFlush(((HotRodException)t).response(),ch.voidPromise());
+  }
+ else {
+    ch.writeAndFlush(decodeCtx.createExceptionResponse(t),ch.voidPromise());
+  }
+}

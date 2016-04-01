@@ -1,0 +1,24 @@
+{
+  HotRodOperation op=decodeCtx.getHeader().op();
+  if (op.requiresKey()) {
+    Option<byte[]> bytes=ExtendedByteBuf.readMaybeRangedBytes(in);
+    if (bytes.isDefined()) {
+      decodeCtx.key_$eq(bytes.get());
+    }
+ else {
+      return false;
+    }
+  }
+switch (op.getDecoderRequirements()) {
+case KEY_CUSTOM:
+    state(HotRodDecoderState.DECODE_KEY_CUSTOM,in);
+  readCustomKey(in,out);
+return false;
+case KEY:
+out.add(decodeCtx);
+resetRequested=true;
+return false;
+default :
+return true;
+}
+}
