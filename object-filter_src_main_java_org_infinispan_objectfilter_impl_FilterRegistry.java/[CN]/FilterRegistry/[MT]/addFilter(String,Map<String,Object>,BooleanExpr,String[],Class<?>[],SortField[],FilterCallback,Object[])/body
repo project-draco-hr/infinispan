@@ -14,14 +14,14 @@
   }
   List<List<AttributeId>> translatedProjections=null;
   if (projection != null && projection.length != 0) {
-    translatedProjections=new ArrayList<List<AttributeId>>(projection.length);
+    translatedProjections=new ArrayList<>(projection.length);
     for (    String projectionPath : projection) {
       translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
     }
   }
   List<List<AttributeId>> translatedSortFields=null;
   if (sortFields != null) {
-    LinkedHashMap<String,SortField> sortFieldMap=new LinkedHashMap<String,SortField>();
+    LinkedHashMap<String,SortField> sortFieldMap=new LinkedHashMap<>();
     for (    SortField sf : sortFields) {
       String path=sf.getPath().asStringPath();
       if (!sortFieldMap.containsKey(path)) {
@@ -29,14 +29,14 @@
       }
     }
     sortFields=sortFieldMap.values().toArray(new SortField[sortFieldMap.size()]);
-    translatedSortFields=new ArrayList<List<AttributeId>>(sortFields.length);
+    translatedSortFields=new ArrayList<>(sortFields.length);
     for (    SortField sortField : sortFields) {
       translatedSortFields.add(metadataAdapter.translatePropertyPath(sortField.getPath().getPath()));
     }
   }
   BooleanExpr normalizedQuery=booleanFilterNormalizer.normalize(query);
   BETree beTree=treeMaker.make(normalizedQuery);
-  FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId> filterSubscription=new FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId>(queryString,namedParameters,useIntervals,metadataAdapter,beTree,callback,projection,projectionTypes,translatedProjections,sortFields,translatedSortFields,eventTypes);
+  FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId> filterSubscription=new FilterSubscriptionImpl<>(queryString,namedParameters,useIntervals,metadataAdapter,beTree,callback,projection,projectionTypes,translatedProjections,sortFields,translatedSortFields,eventTypes);
   filterSubscription.registerProjection(predicateIndex);
   filterSubscription.subscribe(predicateIndex);
   filterSubscription.index=filterSubscriptions.size();
