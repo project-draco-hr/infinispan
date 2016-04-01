@@ -1,0 +1,19 @@
+{
+  Descriptor messageDescriptor=serCtx.getMessageDescriptor(type);
+  FieldDescriptor fd=null;
+  for (int i=0; i < attributePath.length; i++) {
+    String name=attributePath[i];
+    fd=messageDescriptor.findFieldByName(name);
+    if (fd == null) {
+      throw log.unknownField(name,messageDescriptor.getFullName());
+    }
+    IndexingMetadata indexingMetadata=messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+    if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+      throw log.fieldIsNotIndexed(name,messageDescriptor.getFullName());
+    }
+    if (i < attributePath.length - 1) {
+      messageDescriptor=fd.getMessageType();
+    }
+  }
+  return fd;
+}

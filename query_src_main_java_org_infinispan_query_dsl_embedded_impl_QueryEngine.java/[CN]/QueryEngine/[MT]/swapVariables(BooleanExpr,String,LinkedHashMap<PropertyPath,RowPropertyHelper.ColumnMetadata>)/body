@@ -39,7 +39,7 @@ class PropertyReplacer extends ExprVisitor {
       if (c == null) {
         throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toJpaString());
       }
-      return new PropertyValueExpr(c.getColumnName(),propertyValueExpr.isRepeated());
+      return new PropertyValueExpr(c.getColumnName(),propertyValueExpr.isRepeated(),propertyValueExpr.getPrimitiveType());
     }
     @Override public ValueExpr visit(    AggregationExpr aggregationExpr){
       PropertyPath p=new PropertyPath(aggregationExpr.getAggregationType(),aggregationExpr.getPropertyPath());
@@ -51,7 +51,7 @@ class PropertyReplacer extends ExprVisitor {
         c=new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType);
         columns.put(p,c);
       }
-      return new PropertyValueExpr(c.getColumnName(),aggregationExpr.isRepeated());
+      return new PropertyValueExpr(c.getColumnName(),aggregationExpr.isRepeated(),aggregationExpr.getPrimitiveType());
     }
   }
   return expr.acceptVisitor(new PropertyReplacer());

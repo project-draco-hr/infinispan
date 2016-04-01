@@ -1,0 +1,22 @@
+{
+  if (!isIndexed) {
+    throw log.cannotRunLuceneQueriesIfNotIndexed();
+  }
+  checkParameters(namedParameters);
+  LuceneQueryParsingResult luceneParsingResult=transform(filterParsingResult,namedParameters);
+  org.apache.lucene.search.Query luceneQuery=makeTypeQuery(luceneParsingResult.getQuery(),luceneParsingResult.getTargetEntityName());
+  CacheQuery cacheQuery=getSearchManager().getQuery(luceneQuery,getTargetedClass(luceneParsingResult));
+  if (luceneParsingResult.getSort() != null) {
+    cacheQuery=cacheQuery.sort(luceneParsingResult.getSort());
+  }
+  if (luceneParsingResult.getProjections() != null) {
+    cacheQuery=cacheQuery.projection(luceneParsingResult.getProjections());
+  }
+  if (startOffset >= 0) {
+    cacheQuery=cacheQuery.firstResult((int)startOffset);
+  }
+  if (maxResults > 0) {
+    cacheQuery=cacheQuery.maxResults(maxResults);
+  }
+  return cacheQuery;
+}

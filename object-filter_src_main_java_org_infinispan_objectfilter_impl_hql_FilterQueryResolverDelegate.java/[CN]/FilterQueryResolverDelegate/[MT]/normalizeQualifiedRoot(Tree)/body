@@ -1,10 +1,15 @@
 {
-  String entityNameForAlias=aliasToEntityType.get(root.getText());
+  String alias=root.getText();
+  String entityNameForAlias=aliasToEntityType.get(alias);
   if (entityNameForAlias == null) {
-    throw log.getUnknownAliasException(root.getText());
+    PropertyPath propertyPath=aliasToPropertyPath.get(alias);
+    if (propertyPath == null) {
+      throw log.getUnknownAliasException(alias);
+    }
+    return new PathedPropertyReference(StringHelper.join(propertyPath.getNodeNamesWithoutAlias()),null,false);
   }
   if (entityNamesResolver.getClassFromName(entityNameForAlias) == null) {
     throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
   }
-  return new PathedPropertyReference(root.getText(),new FilterEntityTypeDescriptor(entityNameForAlias,propertyHelper),true);
+  return new PathedPropertyReference(alias,new FilterEntityTypeDescriptor(entityNameForAlias,propertyHelper),true);
 }

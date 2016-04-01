@@ -1,0 +1,18 @@
+{
+  if (path.getFirstNode().isAlias()) {
+    String alias=path.getFirstNode().getName();
+    if (aliasToEntityType.containsKey(alias)) {
+      return path.getNodeNamesWithoutAlias();
+    }
+ else     if (aliasToPropertyPath.containsKey(alias)) {
+      PropertyPath propertyPath=aliasToPropertyPath.get(alias);
+      List<String> resolvedAlias=resolveAlias(propertyPath);
+      resolvedAlias.addAll(path.getNodeNamesWithoutAlias());
+      return resolvedAlias;
+    }
+ else {
+      throw log.getUnknownAliasException(alias);
+    }
+  }
+  return path.getNodeNamesWithoutAlias();
+}

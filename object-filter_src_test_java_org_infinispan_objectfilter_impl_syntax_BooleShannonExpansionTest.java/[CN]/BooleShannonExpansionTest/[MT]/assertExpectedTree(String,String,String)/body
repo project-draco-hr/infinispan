@@ -1,12 +1,12 @@
 {
-  FilterParsingResult<Class<?>> parsingResult=queryParser.parseQuery(jpaQuery,FilterProcessingChain.build(entityNamesResolver,propertyHelper,null));
+  FilterParsingResult<Class<?>> parsingResult=parser.parse(jpaQuery);
   BooleanExpr expr=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
   BooleShannonExpansion booleShannonExpansion=new BooleShannonExpansion(3,new BooleShannonExpansion.IndexedFieldProvider(){
-    @Override public boolean isIndexed(    List<String> propertyPath){
-      String last=propertyPath.get(propertyPath.size() - 1);
+    @Override public boolean isIndexed(    String[] propertyPath){
+      String last=propertyPath[propertyPath.length - 1];
       return !"number".equals(last) && !"license".equals(last);
     }
-    @Override public boolean isStored(    List<String> propertyPath){
+    @Override public boolean isStored(    String[] propertyPath){
       return isIndexed(propertyPath);
     }
   }

@@ -1,0 +1,41 @@
+{
+  try {
+    if (bridge instanceof NullEncodingTwoWayFieldBridge) {
+      return convertToPropertyType(value,((NullEncodingTwoWayFieldBridge)bridge).unwrap());
+    }
+ else     if (bridge instanceof TwoWayString2FieldBridgeAdaptor) {
+      return ((TwoWayString2FieldBridgeAdaptor)bridge).unwrap().stringToObject(value);
+    }
+ else     if (bridge instanceof TwoWayStringBridge) {
+      return ((TwoWayStringBridge)bridge).stringToObject(value);
+    }
+ else     if (bridge instanceof NumericFieldBridge) {
+switch ((NumericFieldBridge)bridge) {
+case INT_FIELD_BRIDGE:
+        return Integer.valueOf(value);
+case LONG_FIELD_BRIDGE:
+      return Long.valueOf(value);
+case FLOAT_FIELD_BRIDGE:
+    return Float.valueOf(value);
+case DOUBLE_FIELD_BRIDGE:
+  return Double.valueOf(value);
+default :
+return value;
+}
+}
+ else if (bridge instanceof StringEncodingCalendarBridge || bridge instanceof NumericEncodingCalendarBridge) {
+Calendar calendar=Calendar.getInstance();
+calendar.setTime(DateTools.stringToDate(value));
+return calendar;
+}
+ else if (bridge instanceof StringEncodingDateBridge || bridge instanceof NumericEncodingDateBridge) {
+return DateTools.stringToDate(value);
+}
+ else {
+return value;
+}
+}
+ catch (ParseException e) {
+throw new ParsingException(e);
+}
+}

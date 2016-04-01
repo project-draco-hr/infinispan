@@ -11,15 +11,15 @@
   QueryBuilder queryQueryBuilder=qf.from(UserHS.class).having("name").eq("John").toBuilder();
   String jpaQuery=((BaseQueryBuilder)queryQueryBuilder).accept(new JPAQueryGenerator());
   AtomicReference<Object> lastGetResult=captureLastGetResult(queryCacheSpy);
-  KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<String,Class>(jpaQuery,LuceneQueryParsingResult.class);
-  LuceneQueryParsingResult cachedParsingResult=queryCache.get(queryCacheKey);
+  KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<>(jpaQuery,FilterParsingResult.class);
+  FilterParsingResult cachedParsingResult=queryCache.get(queryCacheKey);
   assertNull(cachedParsingResult);
   queryQueryBuilder.build().list();
   cachedParsingResult=queryCache.get(queryCacheKey);
   assertNotNull(cachedParsingResult);
   InOrder inOrder=inOrder(queryCacheSpy);
   inOrder.verify(queryCacheSpy,calls(1)).get(queryCacheKey);
-  ArgumentCaptor<LuceneQueryParsingResult> captor=ArgumentCaptor.forClass(LuceneQueryParsingResult.class);
+  ArgumentCaptor<FilterParsingResult> captor=ArgumentCaptor.forClass(FilterParsingResult.class);
   inOrder.verify(queryCacheSpy,calls(1)).put(eq(queryCacheKey),captor.capture());
   inOrder.verifyNoMoreInteractions();
   assertNull(lastGetResult.get());

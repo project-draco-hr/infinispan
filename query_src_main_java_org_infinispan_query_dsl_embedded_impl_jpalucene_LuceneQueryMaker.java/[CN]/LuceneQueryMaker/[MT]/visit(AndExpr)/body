@@ -1,0 +1,15 @@
+{
+  BooleanJunction<BooleanJunction> booleanJunction=queryBuilder.bool();
+  for (  BooleanExpr c : andExpr.getChildren()) {
+    if (c instanceof NotExpr) {
+      c=((NotExpr)c).getChild();
+      Query transformedChild=c.acceptVisitor(this);
+      booleanJunction.must(transformedChild).not();
+    }
+ else {
+      Query transformedChild=c.acceptVisitor(this);
+      booleanJunction.must(transformedChild);
+    }
+  }
+  return booleanJunction.createQuery();
+}

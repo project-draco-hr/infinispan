@@ -1,0 +1,32 @@
+{
+  if (sortFields == null || sortFields.length == 0) {
+    return null;
+  }
+  SortField[] fields=new SortField[sortFields.length];
+  for (int i=0; i < fields.length; i++) {
+    org.infinispan.objectfilter.SortField sf=sortFields[i];
+    SortField.Type sortType=SortField.Type.STRING;
+    FieldBridge fieldBridge=fieldBridgeProvider.getFieldBridge(entityType,sf.getPath().getPath());
+    if (fieldBridge instanceof NullEncodingTwoWayFieldBridge) {
+      fieldBridge=((NullEncodingTwoWayFieldBridge)fieldBridge).unwrap();
+    }
+    if (fieldBridge instanceof NumericFieldBridge) {
+switch ((NumericFieldBridge)fieldBridge) {
+case INT_FIELD_BRIDGE:
+        sortType=SortField.Type.INT;
+      break;
+case LONG_FIELD_BRIDGE:
+    sortType=SortField.Type.LONG;
+  break;
+case FLOAT_FIELD_BRIDGE:
+sortType=SortField.Type.FLOAT;
+break;
+case DOUBLE_FIELD_BRIDGE:
+sortType=SortField.Type.DOUBLE;
+break;
+}
+}
+fields[i]=new SortField(sf.getPath().asStringPath(),sortType,!sf.isAscending());
+}
+return new Sort(fields);
+}

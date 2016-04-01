@@ -1,0 +1,60 @@
+{
+  final PropertyValueExpr pve=(PropertyValueExpr)condition.getChild();
+  final List<AttributeId> path=metadataAdapter.translatePropertyPath(pve.getPropertyPath());
+  final boolean isRepeated=pve.isRepeated();
+  if (condition instanceof ComparisonExpr) {
+    ComparisonExpr expr=(ComparisonExpr)condition;
+    ConstantValueExpr right=(ConstantValueExpr)expr.getRightChild();
+    Comparable rightConstant=right.getConstantValueAs(pve.getPrimitiveType(),namedParameters);
+switch (expr.getComparisonType()) {
+case NOT_EQUAL:
+      if (useIntervals) {
+        if (!(parent instanceof OrNode)) {
+          parent=new OrNode(parent);
+          int size=nodes.size();
+          parent.setLocation(size,size + 4);
+          nodes.add(parent);
+          treeCounters.add(3);
+        }
+        addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(Interval.getMinusInf(),false,rightConstant,false)));
+        addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(rightConstant,false,Interval.getPlusInf(),false)));
+        addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<Object>(isRepeated,IsNullCondition.INSTANCE));
+      }
+ else {
+        addPredicateNode(parent,nodes,treeCounters,!isNegated,path,new Predicate<Object>(isRepeated,new EqualsCondition(rightConstant)));
+      }
+    break;
+case EQUAL:
+  if (useIntervals) {
+    addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(rightConstant,true,rightConstant,true)));
+  }
+ else {
+    addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,new EqualsCondition(rightConstant)));
+  }
+break;
+case LESS:
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(Interval.getMinusInf(),false,rightConstant,false)));
+break;
+case LESS_OR_EQUAL:
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(Interval.getMinusInf(),false,rightConstant,true)));
+break;
+case GREATER:
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(rightConstant,false,Interval.getPlusInf(),false)));
+break;
+case GREATER_OR_EQUAL:
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new IntervalPredicate(isRepeated,new Interval(rightConstant,true,Interval.getPlusInf(),false)));
+break;
+default :
+throw new IllegalStateException("Unexpected comparison type: " + expr.getComparisonType());
+}
+}
+ else if (condition instanceof IsNullExpr) {
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,IsNullCondition.INSTANCE));
+}
+ else if (condition instanceof LikeExpr) {
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,new RegexCondition(((LikeExpr)condition).getPattern())));
+}
+ else {
+throw new IllegalStateException("Unexpected condition type: " + condition);
+}
+}

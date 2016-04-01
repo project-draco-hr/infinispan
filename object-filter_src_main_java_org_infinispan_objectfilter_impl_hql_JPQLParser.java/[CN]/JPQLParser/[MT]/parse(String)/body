@@ -1,0 +1,18 @@
+{
+  QueryResolverProcessor resolverProcessor=new QueryResolverProcessor(new FilterQueryResolverDelegate(entityNamesResolver,propertyHelper));
+  FilterPredicateFactory predicateFactory=new FilterPredicateFactory(entityNamesResolver,propertyHelper);
+  SingleEntityQueryBuilder<BooleanExpr> queryBuilder=SingleEntityQueryBuilder.getInstance(predicateFactory,propertyHelper);
+  SingleEntityHavingQueryBuilderImpl havingQueryBuilder=new SingleEntityHavingQueryBuilderImpl(entityNamesResolver,propertyHelper);
+  FilterRendererDelegate<TypeMetadata> rendererDelegate=new FilterRendererDelegate<>(jpaQuery,entityNamesResolver,propertyHelper,queryBuilder,havingQueryBuilder,makeParamPlaceholderMap());
+  QueryRendererProcessor rendererProcessor=new QueryRendererProcessor(rendererDelegate);
+  AstProcessingChain<FilterParsingResult<TypeMetadata>> chain=new AstProcessingChain<FilterParsingResult<TypeMetadata>>(){
+    @Override public Iterator<AstProcessor> iterator(){
+      return Arrays.asList(resolverProcessor,rendererProcessor).iterator();
+    }
+    @Override public FilterParsingResult<TypeMetadata> getResult(){
+      return rendererDelegate.getResult();
+    }
+  }
+;
+  return queryParser.parseQuery(jpaQuery,chain);
+}

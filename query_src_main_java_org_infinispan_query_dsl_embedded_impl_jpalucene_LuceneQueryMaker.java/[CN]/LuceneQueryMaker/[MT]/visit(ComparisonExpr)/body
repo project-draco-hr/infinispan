@@ -1,0 +1,24 @@
+{
+  PropertyValueExpr propertyValueExpr=(PropertyValueExpr)comparisonExpr.getLeftChild();
+  ConstantValueExpr constantValueExpr=(ConstantValueExpr)comparisonExpr.getRightChild();
+  Comparable value=constantValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(),namedParameters);
+  String[] propertyPath=propertyValueExpr.getPropertyPath();
+  String path=StringHelper.join(propertyPath);
+switch (comparisonExpr.getComparisonType()) {
+case NOT_EQUAL:
+    Query q=applyFieldBridge(propertyPath,queryBuilder.keyword().onField(path)).matching(value).createQuery();
+  return queryBuilder.bool().must(q).not().createQuery();
+case EQUAL:
+return applyFieldBridge(propertyPath,queryBuilder.keyword().onField(path)).matching(value).createQuery();
+case LESS:
+return applyFieldBridge(propertyPath,queryBuilder.range().onField(path)).below(value).excludeLimit().createQuery();
+case LESS_OR_EQUAL:
+return applyFieldBridge(propertyPath,queryBuilder.range().onField(path)).below(value).createQuery();
+case GREATER:
+return applyFieldBridge(propertyPath,queryBuilder.range().onField(path)).above(value).excludeLimit().createQuery();
+case GREATER_OR_EQUAL:
+return applyFieldBridge(propertyPath,queryBuilder.range().onField(path)).above(value).createQuery();
+default :
+throw new IllegalStateException("Unexpected comparison type: " + comparisonExpr.getComparisonType());
+}
+}

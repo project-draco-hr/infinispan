@@ -3,13 +3,14 @@
   String entityName=entityNameTree.getText();
   String prevAlias=aliasToEntityType.put(alias,entityName);
   if (prevAlias != null && !prevAlias.equalsIgnoreCase(entityName)) {
-    throw new UnsupportedOperationException("Alias reuse currently not supported: aliasTree " + alias + " already assigned to type "+ prevAlias);
-  }
-  if (entityNamesResolver.getClassFromName(entityName) == null) {
-    throw new IllegalStateException("Unknown entity name " + entityName);
+    throw new UnsupportedOperationException("Alias reuse currently not supported: alias " + alias + " already assigned to type "+ prevAlias);
   }
   if (targetType != null) {
     throw new IllegalStateException("Can't target multiple types: " + targetType + " already selected before "+ entityName);
   }
   targetType=entityName;
+  targetClass=entityNamesResolver.getClassFromName(entityName);
+  if (targetClass == null) {
+    throw new IllegalStateException("Unknown entity name " + entityName);
+  }
 }

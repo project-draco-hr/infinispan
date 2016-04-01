@@ -1,6 +1,11 @@
 {
-  final Comparable firstValue=((ConstantValueExpr)first.getRightChild()).getConstantValue();
-  final Comparable secondValue=((ConstantValueExpr)second.getRightChild()).getConstantValue();
+  final ConstantValueExpr firstConstant=(ConstantValueExpr)first.getRightChild();
+  final ConstantValueExpr secondConstant=(ConstantValueExpr)second.getRightChild();
+  if (firstConstant.isParameter() || secondConstant.isParameter()) {
+    return null;
+  }
+  final Comparable firstValue=firstConstant.getConstantValue();
+  final Comparable secondValue=secondConstant.getConstantValue();
   final int cmp=firstValue.compareTo(secondValue);
   if (first.getComparisonType() == ComparisonExpr.Type.EQUAL) {
     return optimizeEqAndInterval(first,second,isConjunction,cmp);

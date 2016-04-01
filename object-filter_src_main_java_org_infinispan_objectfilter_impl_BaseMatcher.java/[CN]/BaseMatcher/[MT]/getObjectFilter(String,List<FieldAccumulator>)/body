@@ -1,0 +1,13 @@
+{
+  final FilterParsingResult<TypeMetadata> parsingResult=getParser().parse(jpaQuery);
+  disallowGroupingAndAggregations(parsingResult);
+  if (parsingResult.getWhereClause() == ConstantBooleanExpr.FALSE) {
+    return new RejectObjectFilter<>(null,parsingResult);
+  }
+  final MetadataAdapter<TypeMetadata,AttributeMetadata,AttributeId> metadataAdapter=createMetadataAdapter(parsingResult.getTargetEntityMetadata());
+  if ((parsingResult.getWhereClause() == null || parsingResult.getWhereClause() == ConstantBooleanExpr.TRUE) && parsingResult.getSortFields() == null && parsingResult.getProjectedPaths() == null) {
+    return new AcceptObjectFilter<>(null,this,metadataAdapter,parsingResult);
+  }
+  FieldAccumulator[] accumulators=acc != null ? acc.toArray(new FieldAccumulator[acc.size()]) : null;
+  return new ObjectFilterImpl<>(this,metadataAdapter,jpaQuery,parsingResult.getParameterNames(),parsingResult.getWhereClause(),parsingResult.getProjections(),parsingResult.getProjectedTypes(),parsingResult.getSortFields(),accumulators);
+}

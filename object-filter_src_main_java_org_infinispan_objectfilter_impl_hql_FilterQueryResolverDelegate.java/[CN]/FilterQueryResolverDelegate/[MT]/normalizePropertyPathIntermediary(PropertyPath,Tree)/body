@@ -1,9 +1,10 @@
 {
   FilterTypeDescriptor sourceType=(FilterTypeDescriptor)path.getLastNode().getType();
-  if (!sourceType.hasProperty(propertyName.getText())) {
-    throw log.getNoSuchPropertyException(sourceType.toString(),propertyName.getText());
+  String propertyName=propertyNameTree.getText();
+  if (!sourceType.hasProperty(propertyName)) {
+    throw log.getNoSuchPropertyException(sourceType.toString(),propertyName);
   }
-  List<String> newPath=new LinkedList<>(path.getNodeNamesWithoutAlias());
-  newPath.add(propertyName.getText());
-  return new PathedPropertyReference(propertyName.getText(),new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(),newPath,propertyHelper),false);
+  List<String> newPath=resolveAlias(path);
+  newPath.add(propertyName);
+  return new PathedPropertyReference(propertyName,new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(),newPath,propertyHelper),false);
 }

@@ -1,3 +1,16 @@
 {
-  throw new UnsupportedOperationException("Not implemented");
+  String aliasText=identifier382.getText();
+  if (aliasToEntityType.containsKey(aliasText)) {
+    return normalizeQualifiedRoot(identifier382);
+  }
+  if (aliasToPropertyPath.containsKey(aliasText)) {
+    PropertyPath propertyPath=aliasToPropertyPath.get(aliasText);
+    if (propertyPath == null) {
+      throw log.getUnknownAliasException(aliasText);
+    }
+    FilterTypeDescriptor sourceType=(FilterTypeDescriptor)propertyPath.getNodes().get(0).getType();
+    List<String> resolveAlias=resolveAlias(propertyPath);
+    return new PathedPropertyReference(aliasText,new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(),resolveAlias,propertyHelper),true);
+  }
+  throw log.getUnknownAliasException(aliasText);
 }
