@@ -1,11 +1,16 @@
 {
-  if (forceOffline)   return true;
+  if (isOffline)   return true;
   if (!recordingOfflineStatus)   return false;
   if (takeOffline.minTimeToWait() > 0) {
-    if (!minTimeHasElapsed())     return false;
+    if (!internalMinTimeHasElapsed())     return false;
   }
   if (takeOffline.afterFailures() > 0) {
     if (takeOffline.afterFailures() <= failureCount) {
+      if (trace) {
+        log.trace("Site is failed: min failures reached.");
+      }
+      listener.siteOffline();
+      isOffline=true;
       return true;
     }
  else {
@@ -13,7 +18,16 @@
     }
   }
  else {
-    log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
-    return true;
+    if (takeOffline.minTimeToWait() > 0) {
+      if (trace) {
+        log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
+      }
+      listener.siteOffline();
+      isOffline=true;
+      return true;
+    }
+ else {
+      return false;
+    }
   }
 }

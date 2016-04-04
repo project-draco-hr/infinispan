@@ -1,6 +1,17 @@
 {
-  final OfflineStatus offlineStatus=new OfflineStatus(new TakeOfflineConfigurationBuilder(null,null).afterFailures(10).minTimeToWait(0).create(),TIME_SERVICE);
-  test(offlineStatus);
-  offlineStatus.reset();
-  test(offlineStatus);
+  final int minFailures=10;
+  final TestContext context=createNew(0,minFailures);
+  for (int i=0; i < minFailures - 1; i++) {
+    assertOffline(context,false);
+    addCommunicationFailure(context);
+  }
+  assertMinFailureCount(context,minFailures - 1);
+  assertOffline(context,false);
+  context.timeService.advance(1);
+  assertMinFailureCount(context,minFailures - 1);
+  assertOffline(context,false);
+  addCommunicationFailure(context);
+  assertMinFailureCount(context,minFailures);
+  assertOffline(context,true);
+  context.listener.check(SiteStatus.OFFLINE);
 }

@@ -2,6 +2,7 @@
   this.config=cache.getCacheConfiguration();
   this.cacheName=cache.getName();
   for (  BackupConfiguration bc : config.sites().enabledBackups()) {
+    final String siteName=bc.site();
     if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
       String backupPolicy=bc.failurePolicyClass();
       if (backupPolicy == null) {
@@ -11,7 +12,15 @@
       instance.init(cache);
       siteFailurePolicy.put(bc.site(),instance);
     }
-    OfflineStatus offline=new OfflineStatus(bc.takeOffline(),timeService);
-    offlineStatus.put(bc.site(),offline);
+    OfflineStatus offline=new OfflineStatus(bc.takeOffline(),timeService,new SiteStatusListener(){
+      @Override public void siteOnline(){
+        BackupSenderImpl.this.siteOnline(siteName);
+      }
+      @Override public void siteOffline(){
+        BackupSenderImpl.this.siteOffline(siteName);
+      }
+    }
+);
+    offlineStatus.put(siteName,offline);
   }
 }

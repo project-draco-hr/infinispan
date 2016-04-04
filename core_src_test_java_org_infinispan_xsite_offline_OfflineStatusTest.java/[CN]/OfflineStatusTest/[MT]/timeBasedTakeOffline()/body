@@ -1,2 +1,33 @@
 {
+  final long minTimeWait=3000;
+  final int minFailures=10;
+  final TestContext context=createNew(minTimeWait,minFailures);
+  for (int i=0; i < minFailures + 1; i++) {
+    assertOffline(context,false);
+    addCommunicationFailure(context);
+  }
+  assertMinFailureCount(context,minFailures + 1);
+  assertMinTimeElapsed(context,false);
+  assertOffline(context,false);
+  context.timeService.advance(minTimeWait + 1);
+  assertMinTimeElapsed(context,true);
+  assertMinFailureCount(context,minFailures + 1);
+  assertOffline(context,true);
+  context.offlineStatus.reset();
+  for (int i=0; i < minFailures - 1; i++) {
+    assertOffline(context,false);
+    addCommunicationFailure(context);
+  }
+  assertMinFailureCount(context,minFailures - 1);
+  assertMinTimeElapsed(context,false);
+  assertOffline(context,false);
+  context.timeService.advance(minTimeWait + 1);
+  assertMinFailureCount(context,minFailures - 1);
+  assertMinTimeElapsed(context,true);
+  assertOffline(context,false);
+  addCommunicationFailure(context);
+  assertMinTimeElapsed(context,true);
+  assertMinFailureCount(context,minFailures);
+  assertOffline(context,true);
+  context.listener.check(SiteStatus.OFFLINE,SiteStatus.ONLINE,SiteStatus.OFFLINE);
 }

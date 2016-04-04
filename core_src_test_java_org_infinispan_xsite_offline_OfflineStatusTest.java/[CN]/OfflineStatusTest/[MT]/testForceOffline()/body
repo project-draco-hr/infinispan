@@ -1,0 +1,24 @@
+{
+  final TestContext context=createNew(-1,-1);
+  addCommunicationFailure(context);
+  context.timeService.advance(1);
+  assertMinFailureCount(context,1);
+  assertOffline(context,false);
+  context.offlineStatus.forceOffline();
+  assertMinFailureCount(context,1);
+  assertOffline(context,true);
+  context.offlineStatus.bringOnline();
+  assertMinFailureCount(context,0);
+  assertOffline(context,false);
+  addCommunicationFailure(context);
+  context.timeService.advance(1);
+  assertMinFailureCount(context,1);
+  assertOffline(context,false);
+  context.offlineStatus.forceOffline();
+  assertMinFailureCount(context,1);
+  assertOffline(context,true);
+  context.offlineStatus.reset();
+  assertMinFailureCount(context,0);
+  assertOffline(context,false);
+  context.listener.check(SiteStatus.OFFLINE,SiteStatus.ONLINE,SiteStatus.OFFLINE,SiteStatus.ONLINE);
+}

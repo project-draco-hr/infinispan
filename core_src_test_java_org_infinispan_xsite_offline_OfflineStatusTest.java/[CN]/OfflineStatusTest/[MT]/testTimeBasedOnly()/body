@@ -1,0 +1,17 @@
+{
+  final long minWaitTime=3000;
+  final int minFailures=10;
+  final TestContext context=createNew(minWaitTime,-1);
+  for (int i=0; i < minFailures; i++) {
+    assertOffline(context,false);
+    addCommunicationFailure(context);
+  }
+  assertMinFailureCount(context,minFailures);
+  assertMinTimeElapsed(context,false);
+  assertOffline(context,false);
+  context.timeService.advance(minWaitTime + 1);
+  assertMinFailureCount(context,minFailures);
+  assertMinTimeElapsed(context,true);
+  assertOffline(context,true);
+  context.listener.check(SiteStatus.OFFLINE);
+}
