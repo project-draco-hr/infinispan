@@ -9,14 +9,14 @@
       throw new CacheException("The value must be a string");
     }
     if (!shouldIntercept(key)) {
-      return invokeNextInterceptor(ctx,command);
+      return ctx.continueInvocation();
     }
     if (!((String)key).endsWith(PROTO_KEY_SUFFIX)) {
       throw new CacheException("The key must end with \".proto\" : " + key);
     }
     VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,EnumUtil.EMPTY_BIT_SET,null);
     invoker.invoke(ctx.clone(),cmd);
-    final Object result=invokeNextInterceptor(ctx,command);
+    final Object result=ctx.forkInvocationSync(command);
     if (command.isSuccessful()) {
       FileDescriptorSource source=new FileDescriptorSource().addProtoFile((String)key,(String)value);
       ProgressCallback progressCallback=null;
@@ -37,9 +37,9 @@
         updateGlobalErrors(ctx,progressCallback.getErrorFiles());
       }
     }
-    return result;
+    return ctx.shortCircuit(result);
   }
  else {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
 }

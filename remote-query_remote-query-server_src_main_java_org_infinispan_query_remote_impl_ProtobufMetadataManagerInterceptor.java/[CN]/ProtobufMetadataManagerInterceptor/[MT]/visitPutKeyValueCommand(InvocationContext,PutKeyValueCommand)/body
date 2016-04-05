@@ -18,10 +18,10 @@
       }
     }
  else {
-      return invokeNextInterceptor(ctx,command);
+      return ctx.continueInvocation();
     }
   }
-  final Object result=invokeNextInterceptor(ctx,command);
+  final Object result=ctx.forkInvocationSync(command);
   if (command.isSuccessful()) {
     FileDescriptorSource source=new FileDescriptorSource().addProtoFile((String)key,(String)value);
     ProgressCallback progressCallback=null;
@@ -42,5 +42,5 @@
       updateGlobalErrors(ctx,progressCallback.getErrorFiles());
     }
   }
-  return result;
+  return ctx.shortCircuit(result);
 }

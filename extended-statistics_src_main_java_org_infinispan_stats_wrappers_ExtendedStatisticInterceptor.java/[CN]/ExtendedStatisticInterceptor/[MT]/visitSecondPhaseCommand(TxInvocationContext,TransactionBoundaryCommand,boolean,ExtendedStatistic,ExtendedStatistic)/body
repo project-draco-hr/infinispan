@@ -4,10 +4,10 @@
     log.tracef("Visit 2nd phase command %s. Is it local? %s. Transaction is %s",command,ctx.isOriginLocal(),globalTransaction.globalId());
   }
   long start=timeService.time();
-  Object ret=invokeNextInterceptor(ctx,command);
+  Object ret=ctx.forkInvocationSync(command);
   long end=timeService.time();
   updateTime(duration,counter,start,end,globalTransaction,ctx.isOriginLocal());
   cacheStatisticManager.setTransactionOutcome(commit,globalTransaction,ctx.isOriginLocal());
   cacheStatisticManager.terminateTransaction(globalTransaction,true,true);
-  return ret;
+  return ctx.shortCircuit(ret);
 }

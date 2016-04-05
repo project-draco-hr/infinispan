@@ -1,0 +1,15 @@
+{
+  Map<Object,Object> newMap=new HashMap<>(4);
+  for (  Map.Entry<Object,Object> e : command.getMap().entrySet()) {
+    Object key=e.getKey();
+    if (cdl.localNodeIsOwner(key)) {
+      entryFactory.wrapEntryForWriting(ctx,key,EntryFactory.Wrap.WRAP_ALL,true,false);
+      newMap.put(key,e.getValue());
+    }
+  }
+  if (newMap.size() > 0) {
+    PutMapCommand clonedCommand=commandFactory.buildPutMapCommand(newMap,command.getMetadata(),command.getFlagsBitSet());
+    ctx.forkInvocationSync(clonedCommand);
+  }
+  return null;
+}

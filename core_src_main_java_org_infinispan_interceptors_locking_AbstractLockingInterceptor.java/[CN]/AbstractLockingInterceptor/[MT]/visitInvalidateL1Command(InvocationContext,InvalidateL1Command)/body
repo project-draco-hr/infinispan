@@ -1,10 +1,10 @@
 {
   if (command.isCausedByALocalWrite(cdl.getAddress())) {
     if (trace)     getLog().trace("Skipping invalidation as the write operation originated here.");
-    return null;
+    return ctx.shortCircuit(null);
   }
   if (hasSkipLocking(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   final Object[] keys=command.getKeys();
   try {
@@ -20,11 +20,11 @@
         }
       }
       if (keysToInvalidate.isEmpty()) {
-        return null;
+        return ctx.shortCircuit(null);
       }
       command.setKeys(keysToInvalidate.toArray());
     }
-    return invokeNextInterceptor(ctx,command);
+    return ctx.shortCircuit(ctx.forkInvocationSync(command));
   }
   finally {
     command.setKeys(keys);

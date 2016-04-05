@@ -8,7 +8,7 @@
     command.setNewValue(converter.boxValue(command.getNewValue()));
   }
   addVersionIfNeeded(command);
-  Object ret=invokeNextInterceptor(ctx,command);
-  if (oldValue != null && ret instanceof Boolean)   return ret;
-  return converter.unboxValue(ret);
+  Object ret=ctx.forkInvocationSync(command);
+  if (oldValue != null && ret instanceof Boolean)   return ctx.shortCircuit(ret);
+  return ctx.shortCircuit(converter.unboxValue(ret));
 }

@@ -8,7 +8,7 @@
   try {
     simulateLocking(ctx,command,clusteringDependentLogic);
     if (ctx.isOriginLocal()) {
-      return invokeNextInterceptor(ctx,command);
+      return ctx.shortCircuit(ctx.forkInvocationSync(command));
     }
  else {
       TotalOrderRemoteTransactionState state=getTransactionState(ctx);
@@ -26,11 +26,11 @@
         if (trace) {
           log.tracef("Validating transaction %s ",command.getGlobalTransaction().globalId());
         }
-        Object result=invokeNextInterceptor(ctx,command);
+        Object result=ctx.forkInvocationSync(command);
         if (command.isOnePhaseCommit()) {
           totalOrderManager.release(state);
         }
-        return result;
+        return ctx.shortCircuit(result);
       }
   finally {
         state.prepared();

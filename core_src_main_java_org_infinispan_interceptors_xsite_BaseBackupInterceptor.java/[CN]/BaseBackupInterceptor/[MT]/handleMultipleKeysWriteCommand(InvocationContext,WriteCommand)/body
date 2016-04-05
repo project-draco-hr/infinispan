@@ -1,8 +1,8 @@
 {
   if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
-  Object result=invokeNextInterceptor(ctx,command);
+  Object result=ctx.forkInvocationSync(command);
   backupSender.processResponses(backupSender.backupWrite(command),command);
-  return result;
+  return ctx.shortCircuit(result);
 }

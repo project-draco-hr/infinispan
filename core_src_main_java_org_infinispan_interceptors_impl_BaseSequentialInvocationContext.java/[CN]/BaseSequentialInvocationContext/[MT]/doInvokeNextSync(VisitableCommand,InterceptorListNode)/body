@@ -1,10 +1,13 @@
 {
   SequentialInterceptor interceptor=interceptorNode.interceptor;
   nextInterceptor=interceptorNode.nextNode;
-  if (interceptor instanceof CommandInterceptor) {
-    return command.acceptVisitor(this,(CommandInterceptor)interceptor);
+  CompletableFuture<Void> nextVisitFuture;
+  if (interceptor instanceof DDSequentialInterceptor) {
+    nextVisitFuture=(CompletableFuture<Void>)command.acceptVisitor(this,(DDSequentialInterceptor)interceptor);
   }
-  CompletableFuture<Void> nextVisitFuture=interceptor.visitCommand(this,command);
+ else {
+    nextVisitFuture=interceptor.visitCommand(this,command);
+  }
   if (!nextVisitFuture.isDone()) {
     CompletableFutures.await(nextVisitFuture);
   }

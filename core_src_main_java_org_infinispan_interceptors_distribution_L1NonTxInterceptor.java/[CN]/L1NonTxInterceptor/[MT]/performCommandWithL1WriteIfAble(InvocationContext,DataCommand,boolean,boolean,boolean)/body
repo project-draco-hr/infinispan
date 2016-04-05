@@ -3,7 +3,7 @@
   if (ctx.isOriginLocal()) {
     Object key=command.getKey();
     if (skipL1Lookup(command,key)) {
-      returnValue=invokeNextInterceptor(ctx,command);
+      returnValue=ctx.forkInvocationSync(command);
     }
  else {
       returnValue=performL1Lookup(ctx,shouldAlwaysRunNextInterceptor,key,command,isEntry);
@@ -13,7 +13,7 @@
     if (registerL1) {
       l1Manager.addRequestor(command.getKey(),ctx.getOrigin());
     }
-    returnValue=invokeNextInterceptor(ctx,command);
+    returnValue=ctx.forkInvocationSync(command);
   }
-  return returnValue;
+  return ctx.shortCircuit(returnValue);
 }

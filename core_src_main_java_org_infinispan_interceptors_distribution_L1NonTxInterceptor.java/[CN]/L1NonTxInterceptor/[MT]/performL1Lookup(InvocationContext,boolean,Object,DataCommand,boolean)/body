@@ -6,7 +6,7 @@
       l1Manager.registerL1WriteSynchronizer(key,l1WriteSync);
       Object returnValue;
       try {
-        returnValue=invokeNextInterceptor(ctx,command);
+        returnValue=ctx.forkInvocationSync(command);
       }
   finally {
         l1Manager.unregisterL1WriteSynchronizer(key,l1WriteSync);
@@ -30,7 +30,7 @@
       try {
         returnValue=presentSync.get(replicationTimeout,TimeUnit.MILLISECONDS);
         if (runInterceptorOnConflict) {
-          returnValue=invokeNextInterceptor(ctx,command);
+          returnValue=ctx.forkInvocationSync(command);
         }
  else         if (!isEntry && returnValue instanceof InternalCacheEntry) {
           returnValue=((InternalCacheEntry)returnValue).getValue();
@@ -38,7 +38,7 @@
       }
  catch (      TimeoutException e) {
         log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!",replicationTimeout);
-        returnValue=invokeNextInterceptor(ctx,command);
+        returnValue=ctx.forkInvocationSync(command);
       }
       return returnValue;
     }

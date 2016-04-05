@@ -1,0 +1,15 @@
+{
+  long start=0;
+  boolean statisticsEnabled=getStatisticsEnabled(command);
+  if (statisticsEnabled)   start=timeService.time();
+  final Object retval=ctx.forkInvocationSync(command);
+  if (statisticsEnabled && ctx.isOriginLocal()) {
+    final long intervalMilliseconds=timeService.timeDuration(start,TimeUnit.MILLISECONDS);
+    final Map<Object,Object> data=command.getMap();
+    if (data != null && !data.isEmpty()) {
+      storeTimes.add(intervalMilliseconds);
+      stores.add(data.size());
+    }
+  }
+  return ctx.shortCircuit(retval);
+}

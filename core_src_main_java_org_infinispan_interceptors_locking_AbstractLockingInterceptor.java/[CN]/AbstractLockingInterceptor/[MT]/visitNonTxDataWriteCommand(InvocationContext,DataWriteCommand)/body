@@ -1,10 +1,10 @@
 {
   try {
     if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
-      return invokeNextInterceptor(ctx,command);
+      return ctx.shortCircuit(ctx.forkInvocationSync(command));
     }
     lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
-    return invokeNextInterceptor(ctx,command);
+    return ctx.shortCircuit(ctx.forkInvocationSync(command));
   }
   finally {
     lockManager.unlockAll(ctx);

@@ -1,0 +1,24 @@
+{
+  CacheSet<K> set=(CacheSet<K>)enlistReadAndInvokeNext(ctx,command);
+  if (ctx.isInTxScope()) {
+    return ctx.shortCircuit(new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache,command),set){
+      @Override public CloseableIterator<K> iterator(){
+        return new TransactionAwareKeyCloseableIterator<>(super.iterator(),(TxInvocationContext<LocalTransaction>)ctx,cache);
+      }
+      @Override public CloseableSpliterator<K> spliterator(){
+        Spliterator<K> parentSpliterator=super.spliterator();
+        long estimateSize=parentSpliterator.estimateSize() + ctx.getLookedUpEntries().size();
+        return new IteratorAsSpliterator.Builder<>(iterator()).setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize).setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      }
+      @Override public int size(){
+        long size=stream().count();
+        if (size > Integer.MAX_VALUE) {
+          return Integer.MAX_VALUE;
+        }
+        return (int)size;
+      }
+    }
+);
+  }
+  return ctx.shortCircuit(set);
+}

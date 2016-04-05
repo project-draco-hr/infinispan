@@ -1,7 +1,9 @@
 {
-  InterceptorChain chain=TestingUtil.extractComponent(cache,InterceptorChain.class);
-  for (  CommandInterceptor interceptor : chain.getInterceptorsWhichExtend(BlockingInterceptor.class)) {
-    ((BlockingInterceptor)interceptor).suspend(true);
-    chain.removeInterceptor(interceptor.getClass());
+  SequentialInterceptorChain chain=cache.getAdvancedCache().getSequentialInterceptorChain();
+  BlockingInterceptor blockingInterceptor=chain.findInterceptorExtending(BlockingInterceptor.class);
+  while (blockingInterceptor != null) {
+    blockingInterceptor.suspend(true);
+    chain.removeInterceptor(blockingInterceptor.getClass());
+    blockingInterceptor=chain.findInterceptorExtending(BlockingInterceptor.class);
   }
 }

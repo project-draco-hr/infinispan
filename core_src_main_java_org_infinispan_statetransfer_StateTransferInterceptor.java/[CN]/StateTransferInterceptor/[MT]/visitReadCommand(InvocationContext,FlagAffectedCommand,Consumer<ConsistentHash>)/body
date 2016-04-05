@@ -1,12 +1,12 @@
 {
   if (isLocalOnly(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   CacheTopology beginTopology=stateTransferManager.getCacheTopology();
   consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
   updateTopologyId(command);
   try {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.shortCircuit(ctx.forkInvocationSync(command));
   }
  catch (  CacheException e) {
     Throwable ce=e;

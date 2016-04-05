@@ -4,12 +4,12 @@
   if (ctx.isOriginLocal()) {
     command.setKey(converter.boxKey(key));
   }
-  Object ret=invokeNextInterceptor(ctx,command);
+  Object ret=ctx.forkInvocationSync(command);
   if (ret != null) {
     if (needsUnboxing(ctx)) {
-      return converter.unboxValue(ret);
+      return ctx.shortCircuit(converter.unboxValue(ret));
     }
-    return ret;
+    return ctx.shortCircuit(ret);
   }
-  return null;
+  return ctx.shortCircuit(null);
 }

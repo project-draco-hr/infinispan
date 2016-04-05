@@ -1,11 +1,11 @@
 {
   Map<Object,Object> result;
   try {
-    result=(Map<Object,Object>)super.visitGetAllCommand(ctx,command);
+    result=(Map<Object,Object>)ctx.forkInvocationSync(command);
   }
  catch (  RpcException e) {
     if (performPartitionCheck(ctx,command)) {
-      throw getLog().degradedModeKeysUnavailable(command.getKeys());
+      throw log.degradedModeKeysUnavailable(command.getKeys());
     }
  else {
       throw e;
@@ -25,9 +25,9 @@
         }
       }
       if (!missingKeys.isEmpty()) {
-        throw getLog().degradedModeKeysUnavailable(missingKeys);
+        throw log.degradedModeKeysUnavailable(missingKeys);
       }
     }
   }
-  return result;
+  return ctx.shortCircuit(result);
 }

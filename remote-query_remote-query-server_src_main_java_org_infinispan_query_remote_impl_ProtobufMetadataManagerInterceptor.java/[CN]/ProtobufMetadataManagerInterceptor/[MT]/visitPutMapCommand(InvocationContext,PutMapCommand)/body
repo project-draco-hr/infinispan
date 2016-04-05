@@ -18,7 +18,7 @@
   }
   VisitableCommand cmd=commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX,EnumUtil.EMPTY_BIT_SET,null);
   invoker.invoke(ctx.clone(),cmd);
-  final Object result=invokeNextInterceptor(ctx,command);
+  final Object result=ctx.forkInvocationSync(command);
   ProgressCallback progressCallback=null;
   if (ctx.isOriginLocal()) {
     progressCallback=new ProgressCallback(ctx);
@@ -36,5 +36,5 @@
   if (progressCallback != null) {
     updateGlobalErrors(ctx,progressCallback.getErrorFiles());
   }
-  return result;
+  return ctx.shortCircuit(result);
 }

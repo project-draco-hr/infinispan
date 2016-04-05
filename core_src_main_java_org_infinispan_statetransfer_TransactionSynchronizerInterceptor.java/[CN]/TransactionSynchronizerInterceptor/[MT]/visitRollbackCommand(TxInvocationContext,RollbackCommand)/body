@@ -2,10 +2,10 @@
   if (!ctx.isOriginLocal()) {
     CacheTransaction cacheTransaction=ctx.getCacheTransaction();
 synchronized (cacheTransaction) {
-      return super.visitRollbackCommand(ctx,command);
+      return ctx.shortCircuit(ctx.forkInvocationSync(command));
     }
   }
  else {
-    return super.visitRollbackCommand(ctx,command);
+    return ctx.continueInvocation();
   }
 }

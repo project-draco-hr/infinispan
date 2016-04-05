@@ -1,11 +1,15 @@
 {
+  CacheSet<K> keySet;
   if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
     if (ctx.isInTxScope()) {
-      return new TxBackingKeySet<>(getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command,(LocalTxInvocationContext)ctx);
+      keySet=new TxBackingKeySet<>(Caches.getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command,(LocalTxInvocationContext)ctx);
     }
  else {
-      return new BackingKeySet<>(getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command);
+      keySet=new BackingKeySet<>(Caches.getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command);
     }
   }
-  return (CacheSet<K>)super.visitKeySetCommand(ctx,command);
+ else {
+    keySet=(CacheSet<K>)ctx.forkInvocationSync(command);
+  }
+  return ctx.shortCircuit(keySet);
 }

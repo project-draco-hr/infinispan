@@ -8,13 +8,13 @@
     }
     command.setKeys(boxedKeys);
   }
-  Object ret=invokeNextInterceptor(ctx,command);
-  if (ret != null && !needsUnboxing(ctx))   return ret;
+  Object ret=ctx.forkInvocationSync(command);
+  if (ret != null && !needsUnboxing(ctx))   return ctx.shortCircuit(ret);
   if (ret != null) {
     if (command.isReturnEntries()) {
       Map<Object,CacheEntry> map=(Map<Object,CacheEntry>)ret;
       Map<Object,Object> unboxed=command.createMap();
-      for (      Map.Entry<Object,CacheEntry> entry : map.entrySet()) {
+      for (      Entry<Object,CacheEntry> entry : map.entrySet()) {
         CacheEntry cacheEntry=entry.getValue();
         if (cacheEntry == null) {
           unboxed.put(entry.getKey(),null);
@@ -28,17 +28,17 @@
           }
         }
       }
-      return unboxed;
+      return ctx.shortCircuit(unboxed);
     }
  else {
       Map<Object,Object> map=(Map<Object,Object>)ret;
       Map<Object,Object> unboxed=command.createMap();
-      for (      Map.Entry<Object,Object> entry : map.entrySet()) {
+      for (      Entry<Object,Object> entry : map.entrySet()) {
         Object value=entry == null ? null : entry.getValue();
         unboxed.put(converter.unboxKey(entry.getKey()),entry == null ? null : converter.unboxValue(value));
       }
-      return unboxed;
+      return ctx.shortCircuit(unboxed);
     }
   }
-  return null;
+  return ctx.shortCircuit(null);
 }

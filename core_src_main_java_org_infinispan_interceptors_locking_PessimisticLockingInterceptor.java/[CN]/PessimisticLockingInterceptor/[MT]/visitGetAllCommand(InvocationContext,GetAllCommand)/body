@@ -4,7 +4,7 @@
       acquireAllRemoteIfNeeded(ctx,command.getKeys(),command);
       lockAllOrRegisterBackupLock((TxInvocationContext<?>)ctx,(Collection<Object>)command.getKeys(),getLockTimeoutMillis(command));
     }
-    return invokeNextInterceptor(ctx,command);
+    return ctx.shortCircuit(ctx.forkInvocationSync(command));
   }
  catch (  Throwable t) {
     releaseLocksOnFailureBeforePrepare(ctx);

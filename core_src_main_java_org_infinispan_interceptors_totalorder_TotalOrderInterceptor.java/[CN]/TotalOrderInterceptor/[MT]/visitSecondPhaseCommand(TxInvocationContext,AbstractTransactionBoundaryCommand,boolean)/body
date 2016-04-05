@@ -6,9 +6,9 @@
   TotalOrderRemoteTransactionState state=getTransactionState(context);
   try {
     if (!processSecondCommand(state,commit) && !context.isOriginLocal()) {
-      return null;
+      return context.shortCircuit(null);
     }
-    return invokeNextInterceptor(context,command);
+    return context.shortCircuit(context.forkInvocationSync(command));
   }
  catch (  Throwable exception) {
     if (log.isDebugEnabled()) {

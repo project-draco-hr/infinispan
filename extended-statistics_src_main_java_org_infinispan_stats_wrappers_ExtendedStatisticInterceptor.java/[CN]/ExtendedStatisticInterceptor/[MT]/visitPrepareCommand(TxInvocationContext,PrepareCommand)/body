@@ -11,11 +11,11 @@
   boolean success=false;
   try {
     long start=timeService.time();
-    Object ret=invokeNextInterceptor(ctx,command);
+    Object ret=ctx.forkInvocationSync(command);
     long end=timeService.time();
     updateTime(PREPARE_EXECUTION_TIME,NUM_PREPARE_COMMAND,start,end,globalTransaction,ctx.isOriginLocal());
     success=true;
-    return ret;
+    return ctx.shortCircuit(ret);
   }
  catch (  TimeoutException e) {
     if (ctx.isOriginLocal() && isLockTimeout(e)) {

@@ -2,10 +2,9 @@
   if (trace) {
     log.tracef("Visit Get All Command %s. Is it in transaction scope? %s. Is it local? %s",command,ctx.isInTxScope(),ctx.isOriginLocal());
   }
-  Object retVal;
   if (ctx.isInTxScope()) {
     long start=timeService.time();
-    retVal=invokeNextInterceptor(ctx,command);
+    Object retVal=ctx.forkInvocationSync(command);
     long end=timeService.time();
     initStatsIfNecessary(ctx);
     int numRemote=0;
@@ -18,9 +17,9 @@
     }
     cacheStatisticManager.add(ALL_GET_EXECUTION,timeService.timeDuration(start,end,NANOSECONDS),getGlobalTransaction(ctx),ctx.isOriginLocal());
     cacheStatisticManager.add(NUM_GET,command.getKeys().size(),getGlobalTransaction(ctx),ctx.isOriginLocal());
+    return ctx.shortCircuit(retVal);
   }
  else {
-    retVal=invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
-  return retVal;
 }

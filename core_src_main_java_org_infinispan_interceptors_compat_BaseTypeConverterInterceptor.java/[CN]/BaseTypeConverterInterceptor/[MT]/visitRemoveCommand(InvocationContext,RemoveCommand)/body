@@ -6,7 +6,7 @@
     command.setKey(converter.boxKey(key));
     command.setValue(converter.boxValue(conditionalValue));
   }
-  Object ret=invokeNextInterceptor(ctx,command);
-  if (conditionalValue != null && ret instanceof Boolean)   return ret;
-  return ctx.isOriginLocal() ? converter.unboxValue(ret) : ret;
+  Object ret=ctx.forkInvocationSync(command);
+  if (conditionalValue != null && ret instanceof Boolean)   return ctx.shortCircuit(ret);
+  return ctx.shortCircuit(ctx.isOriginLocal() ? converter.unboxValue(ret) : ret);
 }

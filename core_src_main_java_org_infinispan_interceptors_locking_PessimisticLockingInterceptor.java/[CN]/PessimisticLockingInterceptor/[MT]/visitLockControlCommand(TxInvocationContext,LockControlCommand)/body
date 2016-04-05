@@ -3,7 +3,7 @@
   try {
     boolean skipLocking=hasSkipLocking(command);
     if (skipLocking) {
-      return invokeNextInterceptor(ctx,command);
+      return ctx.shortCircuit(ctx.forkInvocationSync(command));
     }
     if (ctx.isOriginLocal()) {
       final boolean isSingleKeyAndLocal=!command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
@@ -11,7 +11,7 @@
       if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
         LocalTransaction localTx=(LocalTransaction)ctx.getCacheTransaction();
         if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
-          invokeNextInterceptor(ctx,command);
+          ctx.forkInvocationSync(command);
         }
  else {
           log.tracef("Already own locks on keys: %s, skipping remote call",command.getKeys());
@@ -22,10 +22,10 @@
     if (command.isUnlock()) {
       if (ctx.isOriginLocal())       throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
       releaseLocksOnFailureBeforePrepare(ctx);
-      return Boolean.FALSE;
+      return ctx.shortCircuit(Boolean.FALSE);
     }
     lockAllOrRegisterBackupLock(ctx,command.getKeys(),getLockTimeoutMillis(command));
-    return Boolean.TRUE;
+    return ctx.shortCircuit(Boolean.TRUE);
   }
  catch (  Throwable te) {
     releaseLocksOnFailureBeforePrepare(ctx);

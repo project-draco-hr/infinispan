@@ -10,14 +10,14 @@
         if (remoteEntry != null) {
           entryFactory.wrapExternalEntry(ctx,key,remoteEntry,EntryFactory.Wrap.STORE,false);
         }
-        return command.perform(remoteEntry);
+        return ctx.shortCircuit(command.perform(remoteEntry));
       }
       InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
       if (localEntry != null) {
         entryFactory.wrapExternalEntry(ctx,key,localEntry,EntryFactory.Wrap.STORE,false);
       }
-      return command.perform(localEntry);
+      return ctx.shortCircuit(command.perform(localEntry));
     }
   }
-  return invokeNextInterceptor(ctx,command);
+  return ctx.continueInvocation();
 }

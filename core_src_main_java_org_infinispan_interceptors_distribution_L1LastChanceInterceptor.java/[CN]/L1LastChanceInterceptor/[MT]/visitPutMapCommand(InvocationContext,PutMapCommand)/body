@@ -1,5 +1,5 @@
 {
-  Object returnValue=invokeNextInterceptor(ctx,command);
+  Object returnValue=ctx.forkInvocationSync(command);
   if (shouldUpdateOnWriteCommand(command)) {
     Set<Object> keys=command.getMap().keySet();
     Set<Object> toInvalidate=new HashSet<Object>(keys.size());
@@ -15,5 +15,5 @@
       blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate,ctx.getOrigin(),true));
     }
   }
-  return returnValue;
+  return ctx.shortCircuit(returnValue);
 }

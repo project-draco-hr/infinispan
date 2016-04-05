@@ -1,0 +1,12 @@
+{
+  Object retVal=invokeNextAndApplyChanges(context,command,command.getMetadata());
+  if (context.isInTxScope()) {
+    for (    Object key : command.getAffectedKeys()) {
+      CacheEntry entry=context.lookupEntry(key);
+      if (entry != null) {
+        entry.setSkipLookup(true);
+      }
+    }
+  }
+  return context.shortCircuit(retVal);
+}

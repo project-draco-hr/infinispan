@@ -1,7 +1,7 @@
 {
-  Object retVal=invokeNextInterceptor(ctx,command);
+  Object retVal=ctx.forkInvocationSync(command);
   if (command.isOnePhaseCommit()) {
     blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
   }
-  return retVal;
+  return ctx.shortCircuit(retVal);
 }

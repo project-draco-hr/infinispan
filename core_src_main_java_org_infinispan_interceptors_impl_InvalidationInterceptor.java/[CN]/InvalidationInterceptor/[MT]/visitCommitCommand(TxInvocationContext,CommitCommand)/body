@@ -1,0 +1,13 @@
+{
+  Object retval=ctx.forkInvocationSync(command);
+  Set<Object> affectedKeys=ctx.getAffectedKeys();
+  try {
+    log.tracef("On commit, send invalidate for keys: %s",affectedKeys);
+    invalidateAcrossCluster(defaultSynchronous,affectedKeys.toArray(),ctx);
+  }
+ catch (  Throwable t) {
+    if (t instanceof RuntimeException)     throw t;
+ else     throw log.unableToBroadcastInvalidation(t);
+  }
+  return ctx.shortCircuit(retval);
+}

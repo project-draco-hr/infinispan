@@ -1,17 +1,15 @@
 {
   if (trace)   log.tracef("handleNonTxWriteCommand for command %s, topology id %d",command,command.getTopologyId());
   if (isLocalOnly(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   updateTopologyId(command);
   if (!ctx.isOriginLocal()) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   int commandTopologyId=command.getTopologyId();
-  Object localResult;
   try {
-    localResult=invokeNextInterceptor(ctx,command);
-    return localResult;
+    return ctx.shortCircuit(ctx.forkInvocationSync(command));
   }
  catch (  CacheException e) {
     Throwable ce=e;
@@ -25,7 +23,6 @@
     command.setTopologyId(newTopologyId);
     waitForTransactionData(newTopologyId);
     command.addFlag(Flag.COMMAND_RETRY);
-    localResult=handleNonTxWriteCommand(ctx,command);
+    return handleNonTxWriteCommand(ctx,command);
   }
-  return localResult;
 }

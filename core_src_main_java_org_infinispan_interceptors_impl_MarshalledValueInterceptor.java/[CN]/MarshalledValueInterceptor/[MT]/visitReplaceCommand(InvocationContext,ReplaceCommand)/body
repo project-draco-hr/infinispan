@@ -1,0 +1,17 @@
+{
+  MarshalledValue key, newValue, oldValue;
+  if (wrapKeys && !isTypeExcluded(command.getKey().getClass())) {
+    key=createMarshalledValue(command.getKey(),ctx);
+    command.setKey(key);
+  }
+  if (wrapValues && !isTypeExcluded(command.getNewValue().getClass())) {
+    newValue=createMarshalledValue(command.getNewValue(),ctx);
+    command.setNewValue(newValue);
+  }
+  if (wrapValues && command.getOldValue() != null && !isTypeExcluded(command.getOldValue().getClass())) {
+    oldValue=createMarshalledValue(command.getOldValue(),ctx);
+    command.setOldValue(oldValue);
+  }
+  Object retVal=ctx.forkInvocationSync(command);
+  return ctx.shortCircuit(processRetVal(retVal,ctx));
+}

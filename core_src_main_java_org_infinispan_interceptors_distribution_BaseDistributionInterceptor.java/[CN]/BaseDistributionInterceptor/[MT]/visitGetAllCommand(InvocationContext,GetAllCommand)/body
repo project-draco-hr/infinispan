@@ -1,6 +1,6 @@
 {
   if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   int commandTopologyId=command.getTopologyId();
   if (ctx.isOriginLocal()) {
@@ -54,7 +54,7 @@
     if (missingRemoteValues) {
       throw new OutdatedTopologyException("Remote values are missing because of a topology change");
     }
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
  else {
     int currentTopologyId=stateTransferManager.getCacheTopology().getTopologyId();
@@ -71,7 +71,6 @@
         }
       }
     }
-    Map<Object,Object> values=(Map<Object,Object>)invokeNextInterceptor(ctx,command);
-    return values;
+    return ctx.continueInvocation();
   }
 }

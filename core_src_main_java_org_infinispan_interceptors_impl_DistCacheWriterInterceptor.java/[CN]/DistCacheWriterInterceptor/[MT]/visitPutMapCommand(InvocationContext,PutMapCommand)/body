@@ -1,0 +1,15 @@
+{
+  Object returnValue=ctx.forkInvocationSync(command);
+  if (!isStoreEnabled(command) || ctx.isInTxScope())   return ctx.shortCircuit(returnValue);
+  Map<Object,Object> map=command.getMap();
+  int count=0;
+  for (  Object key : map.keySet()) {
+    if (isUsingLockDelegation && command.isForwarded() && !dm.getPrimaryLocation(key).equals(ctx.getOrigin()))     continue;
+    if (isProperWriter(ctx,command,key)) {
+      storeEntry(ctx,key,command);
+      count++;
+    }
+  }
+  if (getStatisticsEnabled())   cacheStores.getAndAdd(count);
+  return ctx.shortCircuit(returnValue);
+}

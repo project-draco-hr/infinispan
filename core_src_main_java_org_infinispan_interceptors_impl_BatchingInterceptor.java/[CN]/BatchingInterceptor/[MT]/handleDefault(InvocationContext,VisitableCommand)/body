@@ -1,0 +1,21 @@
+{
+  if (!ctx.isOriginLocal()) {
+    return ctx.continueInvocation();
+  }
+  Transaction tx;
+  if (transactionManager.getTransaction() != null || (tx=batchContainer.getBatchTransaction()) == null) {
+    return ctx.continueInvocation();
+  }
+  try {
+    transactionManager.resume(tx);
+    InvocationContext txInvocationContext=ctx;
+    if (!ctx.isInTxScope()) {
+      log.tracef("Called with a non-tx invocation context: %s",ctx);
+      txInvocationContext=invocationContextFactory.createInvocationContext(true,-1);
+    }
+    return ctx.shortCircuit(invoker.invoke(txInvocationContext,command));
+  }
+  finally {
+    if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())     transactionManager.suspend();
+  }
+}

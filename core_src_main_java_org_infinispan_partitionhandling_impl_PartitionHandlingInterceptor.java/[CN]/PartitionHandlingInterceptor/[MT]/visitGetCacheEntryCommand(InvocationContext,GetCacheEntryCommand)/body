@@ -2,16 +2,16 @@
   Object key=command.getKey();
   Object result;
   try {
-    result=super.visitGetCacheEntryCommand(ctx,command);
+    result=ctx.forkInvocationSync(command);
   }
  catch (  RpcException e) {
     if (performPartitionCheck(ctx,command)) {
-      throw getLog().degradedModeKeyUnavailable(key);
+      throw log.degradedModeKeyUnavailable(key);
     }
  else {
       throw e;
     }
   }
   postOperationPartitionCheck(ctx,command,key,result);
-  return result;
+  return ctx.shortCircuit(result);
 }

@@ -2,13 +2,13 @@
   Address origin=ctx.getOrigin();
   if (trace)   log.tracef("handleTxWriteCommand for command %s, origin %s",command,origin);
   if (isLocalOnly(command)) {
-    return invokeNextInterceptor(ctx,command);
+    return ctx.continueInvocation();
   }
   updateTopologyId(command);
   int retryTopologyId=-1;
   Object localResult=null;
   try {
-    localResult=invokeNextInterceptor(ctx,command);
+    localResult=ctx.forkInvocationSync(command);
   }
  catch (  OutdatedTopologyException e) {
     retryTopologyId=Math.max(currentTopologyId(),command.getTopologyId() + 1);
@@ -18,13 +18,13 @@
       command.setTopologyId(retryTopologyId);
       waitForTransactionData(retryTopologyId);
       log.tracef("Retrying command %s for topology %d",command,retryTopologyId);
-      localResult=handleTxWriteCommand(ctx,command);
+      return handleTxWriteCommand(ctx,command);
     }
   }
  else {
     if (currentTopologyId() > command.getTopologyId()) {
-      return UnsureResponse.INSTANCE;
+      return ctx.shortCircuit(UnsureResponse.INSTANCE);
     }
   }
-  return localResult;
+  return ctx.shortCircuit(localResult);
 }

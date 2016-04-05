@@ -19,7 +19,7 @@
       stateBeforePrepare[i]=internalCacheEntry != null ? internalCacheEntry.getValue() : null;
     }
   }
-  final Object toReturn=super.visitPrepareCommand(ctx,command);
+  final Object toReturn=ctx.forkInvocationSync(command);
   if (ctx.isTransactionValid()) {
     final TransactionContext transactionContext=makeTransactionalEventContext();
     for (int i=0; i < writeCommands.length; i++) {
@@ -41,5 +41,5 @@
       }
     }
   }
-  return toReturn;
+  return ctx.shortCircuit(toReturn);
 }

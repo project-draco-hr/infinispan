@@ -3,9 +3,9 @@
     throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
   }
   remoteGetBeforeWrite(ctx,command,command.getKey());
-  Object localResult=invokeNextInterceptor(ctx,command);
+  Object localResult=ctx.forkInvocationSync(command);
   if (isLocalModeForced(command)) {
-    return localResult;
+    return ctx.shortCircuit(localResult);
   }
   boolean isSync=isSynchronous(command);
   Address primaryOwner=cdl.getPrimaryOwner(command.getKey());
@@ -23,7 +23,7 @@
     if (primaryOwner.equals(rpcManager.getAddress())) {
       if (!command.isSuccessful()) {
         if (trace)         log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",command);
-        return localResult;
+        return ctx.shortCircuit(localResult);
       }
       List<Address> recipients=cdl.getOwners(command.getKey());
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
@@ -34,13 +34,13 @@
         command.setValueMatcher(valueMatcher.matcherForRetry());
       }
     }
-    return localResult;
+    return ctx.shortCircuit(localResult);
   }
  else {
     if (primaryOwner.equals(rpcManager.getAddress())) {
       if (!command.isSuccessful()) {
         if (trace)         log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).",command);
-        return localResult;
+        return ctx.shortCircuit(localResult);
       }
       List<Address> recipients=cdl.getOwners(command.getKey());
       if (trace)       log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",recipients);
@@ -54,7 +54,7 @@
           command.setValueMatcher(valueMatcher.matcherForRetry());
         }
       }
-      return localResult;
+      return ctx.shortCircuit(localResult);
     }
  else {
       if (trace)       log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
@@ -79,10 +79,10 @@ catch (      SuspectException e) {
         command.setValueMatcher(valueMatcher.matcherForRetry());
         throw e;
       }
-      if (!isSyncForwarding)       return localResult;
+      if (!isSyncForwarding)       return ctx.shortCircuit(localResult);
       Object primaryResult=getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
       command.updateStatusFromRemoteResponse(primaryResult);
-      return primaryResult;
+      return ctx.shortCircuit(primaryResult);
     }
   }
 }

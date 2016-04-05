@@ -1,0 +1,9 @@
+{
+  Object returnValue=ctx.forkInvocationSync(command);
+  if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())   return ctx.shortCircuit(returnValue);
+  if (!isProperWriter(ctx,command,command.getKey()))   return ctx.shortCircuit(returnValue);
+  Object key=command.getKey();
+  storeEntry(ctx,key,command);
+  if (getStatisticsEnabled())   cacheStores.incrementAndGet();
+  return ctx.shortCircuit(returnValue);
+}

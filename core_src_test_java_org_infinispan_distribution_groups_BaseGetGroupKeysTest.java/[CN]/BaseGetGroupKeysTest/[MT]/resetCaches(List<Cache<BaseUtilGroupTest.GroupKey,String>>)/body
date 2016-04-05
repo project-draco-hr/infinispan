@@ -1,8 +1,9 @@
 {
   for (  Cache cache : cacheList) {
-    InterceptorChain chain=TestingUtil.extractComponent(cache,InterceptorChain.class);
-    if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
-      ((BlockCommandInterceptor)chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0)).reset();
+    SequentialInterceptorChain chain=cache.getAdvancedCache().getSequentialInterceptorChain();
+    BlockCommandInterceptor interceptor=chain.findInterceptorExtending(BlockCommandInterceptor.class);
+    if (interceptor != null) {
+      interceptor.reset();
     }
   }
 }

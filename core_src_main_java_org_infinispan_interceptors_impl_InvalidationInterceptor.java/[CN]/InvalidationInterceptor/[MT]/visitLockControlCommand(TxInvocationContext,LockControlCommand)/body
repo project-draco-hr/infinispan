@@ -1,0 +1,9 @@
+{
+  Object retVal=ctx.forkInvocationSync(command);
+  if (ctx.isOriginLocal()) {
+    boolean sync=!command.isUnlock();
+    ((LocalTxInvocationContext)ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+    rpcManager.invokeRemotely(null,command,rpcManager.getDefaultRpcOptions(sync));
+  }
+  return ctx.shortCircuit(retVal);
+}
