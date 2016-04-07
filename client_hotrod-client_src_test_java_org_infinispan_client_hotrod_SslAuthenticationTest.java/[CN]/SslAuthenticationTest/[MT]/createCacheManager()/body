@@ -1,0 +1,13 @@
+{
+  GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
+  global.security().authorization().enable().principalRoleMapper(new CommonNameRoleMapper()).role("admin").permission(AuthorizationPermission.ALL).role("HotRod").permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).role("RodHot").permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE);
+  org.infinispan.configuration.cache.ConfigurationBuilder builder=hotRodCacheConfiguration();
+  builder.security().authorization().enable().role("HotRod").role("admin");
+  cacheManager=TestCacheManagerFactory.createCacheManager(global,builder);
+  cacheManager.getCache();
+  org.infinispan.configuration.cache.ConfigurationBuilder unauthorizedBuilder=hotRodCacheConfiguration();
+  unauthorizedBuilder.security().authorization().enable().role("RodHot").role("admin");
+  cacheManager.defineConfiguration(UNAUTHORIZED,unauthorizedBuilder.build());
+  cacheManager.getCache(UNAUTHORIZED);
+  return cacheManager;
+}

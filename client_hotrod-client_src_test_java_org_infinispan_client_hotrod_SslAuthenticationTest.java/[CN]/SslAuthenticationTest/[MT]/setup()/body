@@ -1,0 +1,33 @@
+{
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Object>(){
+    @Override public Void run() throws Exception {
+      cacheManager=createCacheManager();
+      if (cache == null)       cache=cacheManager.getCache();
+      return null;
+    }
+  }
+);
+  hotrodServer=new HotRodServer();
+  HotRodServerConfigurationBuilder serverBuilder=HotRodTestingUtil.getDefaultHotRodConfiguration();
+  ClassLoader tccl=Thread.currentThread().getContextClassLoader();
+  String keyStoreFileName=tccl.getResource("keystore.jks").getPath();
+  String trustStoreFileName=tccl.getResource("truststore.jks").getPath();
+  SimpleServerAuthenticationProvider sap=new SimpleServerAuthenticationProvider();
+  serverBuilder.ssl().enable().requireClientAuth(true).keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray()).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray());
+  serverBuilder.authentication().enable().serverName("localhost").addAllowedMech("EXTERNAL").serverAuthenticationProvider(sap);
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Object>(){
+    @Override public Void run() throws Exception {
+      hotrodServer.start(serverBuilder.build(),cacheManager);
+      return null;
+    }
+  }
+);
+  log.info("Started server on port: " + hotrodServer.getPort());
+  ConfigurationBuilder clientBuilder=new ConfigurationBuilder();
+  clientBuilder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).socketTimeout(3000).connectionPool().maxActive(1).security().authentication().enable().saslMechanism("EXTERNAL").callbackHandler(new CallbackHandler(){
+    @Override public void handle(    Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+    }
+  }
+).ssl().enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray()).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray()).connectionPool().timeBetweenEvictionRuns(2000);
+  remoteCacheManager=new RemoteCacheManager(clientBuilder.build());
+}
