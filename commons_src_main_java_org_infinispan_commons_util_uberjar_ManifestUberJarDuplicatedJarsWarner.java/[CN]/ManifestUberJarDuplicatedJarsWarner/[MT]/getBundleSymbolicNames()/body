@@ -1,0 +1,17 @@
+{
+  List<String> symbolicNames=new ArrayList<>();
+  try {
+    Enumeration<URL> resources=Thread.currentThread().getContextClassLoader().getResources(MANIFEST_LOCATION);
+    while (resources.hasMoreElements()) {
+      URL manifestUrl=resources.nextElement();
+      try (InputStream is=manifestUrl.openStream()){
+        Manifest manifest=new Manifest(is);
+        symbolicNames.add(manifest.getMainAttributes().getValue(SYMBOLIC_NAME_MANIFEST_ENTRY));
+      }
+     }
+  }
+ catch (  IOException e) {
+    logger.warn("Can not extract jar manifest from the classpath. Uber Jar classpath check is skipped.");
+  }
+  return symbolicNames;
+}
