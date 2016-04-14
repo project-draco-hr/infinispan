@@ -3,12 +3,6 @@
   if (isIdentifierProperty(docBuilder,propertyPath)) {
     return false;
   }
-  TypeMetadata typeMetadata=findTailTypeMetadata(docBuilder,propertyPath);
-  if (typeMetadata == null) {
-    return false;
-  }
-  String lastName=propertyPath[propertyPath.length - 1];
-  DocumentFieldMetadata fieldMetadata=typeMetadata.getPropertyMetadataForProperty(lastName).getFieldMetadataSet().iterator().next();
-  Index index=fieldMetadata.getIndex();
-  return index == Field.Index.ANALYZED || index == Field.Index.ANALYZED_NO_NORMS;
+  DocumentFieldMetadata fieldMetadata=getDocumentFieldMetadata(docBuilder,propertyPath);
+  return fieldMetadata != null && fieldMetadata.getIndex().isAnalyzed();
 }

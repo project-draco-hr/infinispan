@@ -1,0 +1,57 @@
+{
+class PropertyReplacer extends ExprVisitor {
+    @Override public BooleanExpr visit(    NotExpr notExpr){
+      return new NotExpr(notExpr.getChild().acceptVisitor(this));
+    }
+    @Override public BooleanExpr visit(    OrExpr orExpr){
+      List<BooleanExpr> visitedChildren=new ArrayList<>();
+      for (      BooleanExpr c : orExpr.getChildren()) {
+        visitedChildren.add(c.acceptVisitor(this));
+      }
+      return new OrExpr(visitedChildren);
+    }
+    @Override public BooleanExpr visit(    AndExpr andExpr){
+      List<BooleanExpr> visitedChildren=new ArrayList<>();
+      for (      BooleanExpr c : andExpr.getChildren()) {
+        visitedChildren.add(c.acceptVisitor(this));
+      }
+      return new AndExpr(visitedChildren);
+    }
+    @Override public BooleanExpr visit(    ConstantBooleanExpr constantBooleanExpr){
+      return constantBooleanExpr;
+    }
+    @Override public BooleanExpr visit(    IsNullExpr isNullExpr){
+      return new IsNullExpr(isNullExpr.getChild().acceptVisitor(this));
+    }
+    @Override public BooleanExpr visit(    ComparisonExpr comparisonExpr){
+      return new ComparisonExpr(comparisonExpr.getLeftChild().acceptVisitor(this),comparisonExpr.getRightChild(),comparisonExpr.getComparisonType());
+    }
+    @Override public BooleanExpr visit(    LikeExpr likeExpr){
+      return new LikeExpr(likeExpr.getChild().acceptVisitor(this),likeExpr.getPattern());
+    }
+    @Override public ValueExpr visit(    ConstantValueExpr constantValueExpr){
+      return constantValueExpr;
+    }
+    @Override public ValueExpr visit(    PropertyValueExpr propertyValueExpr){
+      PropertyPath p=new PropertyPath(null,propertyValueExpr.getPropertyPath());
+      RowPropertyHelper.ColumnMetadata c=columns.get(p);
+      if (c == null) {
+        throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toJpaString());
+      }
+      return new PropertyValueExpr(c.getColumnName(),propertyValueExpr.isRepeated(),propertyValueExpr.getPrimitiveType());
+    }
+    @Override public ValueExpr visit(    AggregationExpr aggregationExpr){
+      PropertyPath p=new PropertyPath(aggregationExpr.getAggregationType(),aggregationExpr.getPropertyPath());
+      RowPropertyHelper.ColumnMetadata c=columns.get(p);
+      if (c == null) {
+        Class<?> propertyType=propertyHelper.getPrimitivePropertyType(targetEntityName,aggregationExpr.getPropertyPath());
+        propertyType=FieldAccumulator.getOutputType(aggregationExpr.getAggregationType(),propertyType);
+        int idx=columns.size();
+        c=new RowPropertyHelper.ColumnMetadata(idx,"C" + idx,propertyType);
+        columns.put(p,c);
+      }
+      return new PropertyValueExpr(c.getColumnName(),aggregationExpr.isRepeated(),aggregationExpr.getPrimitiveType());
+    }
+  }
+  return expr.acceptVisitor(new PropertyReplacer());
+}

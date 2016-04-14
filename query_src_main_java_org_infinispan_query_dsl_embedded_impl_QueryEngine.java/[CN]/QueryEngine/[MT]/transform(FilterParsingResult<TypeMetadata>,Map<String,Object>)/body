@@ -1,0 +1,15 @@
+{
+  LuceneQueryParsingResult<TypeMetadata> luceneParsingResult;
+  if (queryCache != null && parsingResult.getParameterNames().isEmpty()) {
+    KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<>(parsingResult.getJpaQuery(),LuceneQueryParsingResult.class);
+    luceneParsingResult=queryCache.get(queryCacheKey);
+    if (luceneParsingResult == null) {
+      luceneParsingResult=createLuceneMaker().transform(parsingResult,namedParameters,getTargetedClass(parsingResult));
+      queryCache.put(queryCacheKey,luceneParsingResult);
+    }
+  }
+ else {
+    luceneParsingResult=createLuceneMaker().transform(parsingResult,namedParameters,getTargetedClass(parsingResult));
+  }
+  return luceneParsingResult;
+}
