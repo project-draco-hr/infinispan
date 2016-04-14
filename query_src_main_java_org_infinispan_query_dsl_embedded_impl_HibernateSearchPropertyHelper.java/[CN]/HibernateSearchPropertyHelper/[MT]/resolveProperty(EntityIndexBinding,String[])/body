@@ -1,0 +1,40 @@
+{
+  if (propertyPath.length == 0) {
+    return null;
+  }
+  DocumentBuilderIndexedEntity docBuilder=entityIndexBinding.getDocumentBuilder();
+  TypeMetadata rootTypeMetadata=docBuilder.getMetadata();
+  TypeMetadata typeMetadata=rootTypeMetadata;
+  List<EmbeddedTypeMetadata> embeddedTypeMetadataList=new ArrayList<>(propertyPath.length - 1);
+  for (int i=0; i < propertyPath.length; i++) {
+    if (i == propertyPath.length - 1) {
+      String propPath=StringHelper.join(propertyPath);
+      DocumentFieldMetadata documentFieldMetadata=typeMetadata.getDocumentFieldMetadataFor(propPath);
+      if (documentFieldMetadata != null) {
+        for (        PropertyMetadata pm : typeMetadata.getAllPropertyMetadata()) {
+          DocumentFieldMetadata fm=pm.getFieldMetadata(propPath);
+          if (fm != null) {
+            return new ResolvedProperty(rootTypeMetadata,embeddedTypeMetadataList,documentFieldMetadata,pm);
+          }
+        }
+        return null;
+      }
+    }
+    boolean found=false;
+    for (    EmbeddedTypeMetadata embeddedTypeMetadata : typeMetadata.getEmbeddedTypeMetadata()) {
+      if (embeddedTypeMetadata.getEmbeddedFieldName().equals(propertyPath[i])) {
+        embeddedTypeMetadataList.add(embeddedTypeMetadata);
+        if (i == propertyPath.length - 1) {
+          return new ResolvedProperty(rootTypeMetadata,embeddedTypeMetadataList,null,null);
+        }
+        typeMetadata=embeddedTypeMetadata;
+        found=true;
+        break;
+      }
+    }
+    if (!found) {
+      break;
+    }
+  }
+  return null;
+}

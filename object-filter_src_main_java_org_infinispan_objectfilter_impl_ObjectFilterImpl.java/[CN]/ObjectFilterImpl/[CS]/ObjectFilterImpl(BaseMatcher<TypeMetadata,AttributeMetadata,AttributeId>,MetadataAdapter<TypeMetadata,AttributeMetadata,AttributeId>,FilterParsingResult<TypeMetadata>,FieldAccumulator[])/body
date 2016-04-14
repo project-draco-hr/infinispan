@@ -1,0 +1,48 @@
+{
+  super(parsingResult,null);
+  this.projection=parsingResult.getProjections();
+  this.projectionTypes=parsingResult.getProjectedTypes();
+  this.sortFields=parsingResult.getSortFields();
+  if (acc != null) {
+    if (projectionTypes == null) {
+      throw new IllegalArgumentException("Accumulators can only be used with projections");
+    }
+    if (sortFields != null) {
+      throw new IllegalArgumentException("Accumulators cannot be used with sorting");
+    }
+  }
+  this.matcher=matcher;
+  this.metadataAdapter=metadataAdapter;
+  this.acc=acc;
+  if (projection != null && projection.length != 0) {
+    translatedProjections=new ArrayList<>(projection.length);
+    for (    String projectionPath : projection) {
+      translatedProjections.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(StringHelper.split(projectionPath)));
+    }
+  }
+ else {
+    translatedProjections=null;
+  }
+  if (sortFields != null) {
+    LinkedHashMap<String,SortField> sortFieldMap=new LinkedHashMap<>();
+    for (    SortField sf : sortFields) {
+      String path=sf.getPath().asStringPath();
+      if (!sortFieldMap.containsKey(path)) {
+        sortFieldMap.put(path,sf);
+      }
+    }
+    SortField[] sortFields=sortFieldMap.values().toArray(new SortField[sortFieldMap.size()]);
+    translatedSortFields=new ArrayList<>(sortFields.length);
+    for (    SortField sortField : sortFields) {
+      translatedSortFields.add(metadataAdapter.mapPropertyNamePathToFieldIdPath(sortField.getPath().getPath()));
+    }
+  }
+ else {
+    translatedSortFields=null;
+  }
+  BooleanFilterNormalizer booleanFilterNormalizer=new BooleanFilterNormalizer();
+  normalizedQuery=booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
+  if (getParameterNames().isEmpty()) {
+    subscribe();
+  }
+}

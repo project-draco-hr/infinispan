@@ -1,0 +1,17 @@
+{
+  EntityIndexBinding indexBinding=searchFactory.getIndexBinding(entityType);
+  if (indexBinding != null) {
+    ResolvedProperty resolvedProperty=resolveProperty(indexBinding,propertyPath);
+    if (resolvedProperty != null) {
+      List<String> translatedPropertyPath=new ArrayList<>(propertyPath.length);
+      for (      EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
+        translatedPropertyPath.add(embeddedTypeMetadata.getEmbeddedFieldName());
+      }
+      if (resolvedProperty.propertyMetadata != null) {
+        translatedPropertyPath.add(resolvedProperty.propertyMetadata.getPropertyAccessorName());
+      }
+      return translatedPropertyPath;
+    }
+  }
+  return super.mapPropertyNamePathToFieldIdPath(entityType,propertyPath);
+}

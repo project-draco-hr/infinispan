@@ -1,0 +1,22 @@
+{
+  EntityIndexBinding indexBinding=getEntityIndexBinding(entityType);
+  if (indexBinding != null) {
+    ResolvedProperty resolvedProperty=resolveProperty(indexBinding,propertyPath);
+    if (resolvedProperty != null) {
+      TypeMetadata typeMetadata=resolvedProperty.rootTypeMetadata;
+      for (      EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
+        ReflectionHelper.PropertyAccessor accessor=getPropertyAccessor(typeMetadata.getType(),embeddedTypeMetadata.getEmbeddedFieldName());
+        if (accessor.isMultiple()) {
+          return true;
+        }
+        typeMetadata=embeddedTypeMetadata;
+      }
+      if (resolvedProperty.propertyMetadata != null) {
+        ReflectionHelper.PropertyAccessor accessor=getPropertyAccessor(typeMetadata.getType(),resolvedProperty.propertyMetadata.getPropertyAccessorName());
+        return accessor.isMultiple();
+      }
+      return false;
+    }
+  }
+  return super.isRepeatedProperty(entityType,propertyPath);
+}

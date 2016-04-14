@@ -1,12 +1,33 @@
 {
-  Configuration configuration=cr.getComponent(Configuration.class);
-  boolean remoteValueWrappingEnabled=configuration.indexing().index().isEnabled() && !configuration.compatibility().enabled();
-  if (remoteValueWrappingEnabled) {
-    if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-      throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
+  InternalCacheRegistry icr=cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+  if (!icr.isInternalCache(cacheName)) {
+    Configuration cfg=cr.getComponent(Configuration.class);
+    boolean isIndexed=cfg.indexing().index().isEnabled();
+    boolean isCompatMode=cfg.compatibility().enabled();
+    if (isIndexed && !isCompatMode) {
+      if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+        throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
+      }
     }
-  }
- else   if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-    throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
+ else     if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+      throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
+    }
+    ProtobufMetadataManagerImpl protobufMetadataManager=(ProtobufMetadataManagerImpl)cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+    SerializationContext serCtx=protobufMetadataManager.getSerializationContext();
+    cr.registerComponent(new ProtobufMatcher(serCtx),ProtobufMatcher.class);
+    if (isCompatMode) {
+      SearchIntegrator searchFactory=cr.getComponent(SearchIntegrator.class);
+      CompatibilityReflectionMatcher compatibilityReflectionMatcher;
+      if (searchFactory == null) {
+        compatibilityReflectionMatcher=new CompatibilityReflectionMatcher(serCtx);
+      }
+ else {
+        compatibilityReflectionMatcher=new CompatibilityReflectionMatcher(serCtx,searchFactory);
+      }
+      cr.registerComponent(compatibilityReflectionMatcher,CompatibilityReflectionMatcher.class);
+    }
+    AdvancedCache<?,?> cache=cr.getComponent(Cache.class).getAdvancedCache();
+    RemoteQueryEngine remoteQueryEngine=new RemoteQueryEngine(cache,isIndexed,isCompatMode,serCtx);
+    cr.registerComponent(remoteQueryEngine,RemoteQueryEngine.class);
   }
 }

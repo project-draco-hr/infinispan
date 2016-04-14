@@ -1,15 +1,12 @@
 {
   InternalCacheRegistry icr=cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
   if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName,Flag.QUERYABLE)) {
-    ClassLoader classLoader=cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-    cr.registerComponent(new ReflectionMatcher(classLoader),ReflectionMatcher.class);
     boolean isIndexed=cfg.indexing().index().isEnabled();
     AdvancedCache<?,?> cache=cr.getComponent(Cache.class).getAdvancedCache();
-    QueryEngine queryEngine=new QueryEngine(cache,isIndexed);
-    cr.registerComponent(queryEngine,QueryEngine.class);
+    SearchIntegrator searchFactory=null;
     if (isIndexed) {
       log.registeringQueryInterceptor(cacheName);
-      SearchIntegrator searchFactory=getSearchFactory(cacheName,cfg.indexing(),cr);
+      searchFactory=getSearchFactory(cacheName,cfg.indexing(),cr);
       createQueryInterceptorIfNeeded(cr,cfg,searchFactory);
       addCacheDependencyIfNeeded(cacheName,cache.getCacheManager(),cfg.indexing());
       CommandInitializer initializer=cr.getComponent(CommandInitializer.class);
@@ -18,5 +15,8 @@
       queryBox.setCache(cache);
       cr.registerComponent(queryBox,QueryBox.class);
     }
+    registerMatcher(cr,searchFactory);
+    QueryEngine queryEngine=new QueryEngine(cache,isIndexed);
+    cr.registerComponent(queryEngine,QueryEngine.class);
   }
 }

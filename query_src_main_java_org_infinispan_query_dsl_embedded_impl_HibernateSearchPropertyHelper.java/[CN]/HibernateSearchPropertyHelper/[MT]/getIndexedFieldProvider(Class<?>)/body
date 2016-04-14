@@ -1,0 +1,17 @@
+{
+  EntityIndexBinding entityIndexBinding=searchFactory.getIndexBinding(type);
+  if (entityIndexBinding == null) {
+    return BooleShannonExpansion.IndexedFieldProvider.NO_INDEXING;
+  }
+  return new BooleShannonExpansion.IndexedFieldProvider(){
+    @Override public boolean isIndexed(    String[] propertyPath){
+      DocumentFieldMetadata fieldMetadata=getDocumentFieldMetadata(entityIndexBinding,propertyPath);
+      return fieldMetadata != null && fieldMetadata.getIndex().isIndexed();
+    }
+    @Override public boolean isStored(    String[] propertyPath){
+      DocumentFieldMetadata fieldMetadata=getDocumentFieldMetadata(entityIndexBinding,propertyPath);
+      return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
+    }
+  }
+;
+}
