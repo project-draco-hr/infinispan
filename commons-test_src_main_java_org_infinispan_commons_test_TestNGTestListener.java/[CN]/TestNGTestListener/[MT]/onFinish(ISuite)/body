@@ -1,0 +1,16 @@
+{
+  int count=0;
+  for (  Map.Entry<Thread,StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
+    Thread thread=s.getKey();
+    if (ignoreThread(thread))     continue;
+    if (count == 0) {
+      log.warn("Possible leaked threads at the end of the test suite:");
+    }
+    count++;
+    log.warnf("\"%s\" #%d %sprio=%d tid=0x%x nid=NA %s",thread.getName(),count,thread.isDaemon() ? "daemon " : "",thread.getPriority(),thread.getId(),thread.getState().toString().toLowerCase());
+    log.warnf("   java.lang.Thread.State: %s",thread.getState());
+    for (    StackTraceElement ste : s.getValue()) {
+      log.warnf("\t%s",ste);
+    }
+  }
+}
