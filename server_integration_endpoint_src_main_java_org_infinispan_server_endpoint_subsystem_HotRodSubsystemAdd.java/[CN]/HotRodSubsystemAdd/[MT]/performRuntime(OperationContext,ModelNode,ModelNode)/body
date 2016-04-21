@@ -13,43 +13,8 @@
   EndpointUtils.addCacheContainerDependency(builder,cacheContainerName,service.getCacheManager());
   EndpointUtils.addCacheDependency(builder,cacheContainerName,null);
   EndpointUtils.addSocketBindingDependency(builder,getSocketBindingName(operation),service.getSocketBinding());
-  if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION,ModelKeys.ENCRYPTION_NAME).isDefined()) {
-    EndpointUtils.addSecurityRealmDependency(builder,config.get(ModelKeys.ENCRYPTION,ModelKeys.ENCRYPTION_NAME,ModelKeys.SECURITY_REALM).asString(),service.getEncryptionSecurityRealm());
-  }
-  if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION,ModelKeys.AUTHENTICATION_NAME).isDefined()) {
-    ModelNode authentication=config.get(ModelKeys.AUTHENTICATION,ModelKeys.AUTHENTICATION_NAME);
-    EndpointUtils.addSecurityRealmDependency(builder,authentication.get(ModelKeys.SECURITY_REALM).asString(),service.getAuthenticationSecurityRealm());
-    if (authentication.hasDefined(ModelKeys.SASL) && authentication.get(ModelKeys.SASL,ModelKeys.SASL_NAME).isDefined()) {
-      AuthenticationConfigurationBuilder authenticationBuilder=configurationBuilder.authentication();
-      ModelNode sasl=authentication.get(ModelKeys.SASL,ModelKeys.SASL_NAME);
-      if (sasl.hasDefined(ModelKeys.SERVER_CONTEXT_NAME)) {
-        String serverContextName=sasl.get(ModelKeys.SERVER_CONTEXT_NAME).asString();
-        service.setServerContextName(serverContextName);
-        EndpointUtils.addSecurityDomainDependency(builder,serverContextName,service.getSaslSecurityDomain());
-      }
-      if (sasl.hasDefined(ModelKeys.SERVER_NAME)) {
-        authenticationBuilder.serverName(sasl.get(ModelKeys.SERVER_NAME).asString());
-      }
-      if (sasl.hasDefined(ModelKeys.MECHANISMS)) {
-        for (        ModelNode mech : sasl.get(ModelKeys.MECHANISMS).asList()) {
-          authenticationBuilder.addAllowedMech(mech.asString());
-        }
-      }
-      String qop=listAsString(sasl,ModelKeys.QOP);
-      if (qop != null) {
-        authenticationBuilder.addMechProperty(Sasl.QOP,qop);
-      }
-      String strength=listAsString(sasl,ModelKeys.STRENGTH);
-      if (strength != null) {
-        authenticationBuilder.addMechProperty(Sasl.STRENGTH,strength);
-      }
-      if (sasl.hasDefined(ModelKeys.PROPERTY)) {
-        for (        Property property : sasl.get(ModelKeys.PROPERTY).asPropertyList()) {
-          authenticationBuilder.addMechProperty(property.getName(),property.getValue().asProperty().getValue().asString());
-        }
-      }
-    }
-  }
+  processEncryption(config,service,builder);
+  processAuthentication(config,configurationBuilder,service,builder);
   builder.addDependency(Constants.EXTENSION_MANAGER_NAME,ExtensionManagerService.class,service.getExtensionManager());
   builder.install();
 }

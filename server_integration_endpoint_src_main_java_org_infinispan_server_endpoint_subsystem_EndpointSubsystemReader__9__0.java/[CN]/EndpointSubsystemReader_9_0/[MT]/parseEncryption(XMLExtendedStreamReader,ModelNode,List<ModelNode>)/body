@@ -22,6 +22,21 @@ default :
   }
 }
 }
-ParseUtils.requireNoContent(reader);
 operations.add(security);
+boolean skipTagCheckAtTheEnd=reader.hasNext();
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+final Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case SNI:
+{
+  parseSni(reader,security,operations);
+  break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+if (!skipTagCheckAtTheEnd) ParseUtils.requireNoContent(reader);
 }
