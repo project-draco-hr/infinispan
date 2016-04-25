@@ -6,14 +6,14 @@
       PreparedStatement ps=null;
       ResultSet rs=null;
       try {
-        String sql=tableManipulation.getLoadNonExpiredAllRowsSql();
+        String sql=tableManager.getLoadNonExpiredAllRowsSql();
         if (trace) {
           log.tracef("Running sql %s",sql);
         }
         conn=connectionFactory.getConnection();
         ps=conn.prepareStatement(sql,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_READ_ONLY);
         ps.setLong(1,ctx.getTimeService().wallClockTime());
-        ps.setFetchSize(tableManipulation.getFetchSize());
+        ps.setFetchSize(tableManager.getFetchSize());
         rs=ps.executeQuery();
         TaskContext taskContext=new TaskContextImpl();
         while (rs.next()) {

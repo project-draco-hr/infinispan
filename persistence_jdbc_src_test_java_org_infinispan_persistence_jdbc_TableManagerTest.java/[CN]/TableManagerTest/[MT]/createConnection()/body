@@ -1,0 +1,20 @@
+{
+  JdbcStringBasedStoreConfigurationBuilder storeBuilder=TestCacheManagerFactory.getDefaultCacheConfiguration(false).persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
+  UnitTestDatabaseManager.setDialect(storeBuilder);
+  UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(),false);
+  ConnectionFactoryConfiguration factoryConfiguration=UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder).create();
+  if (factoryConfiguration instanceof SimpleConnectionFactoryConfiguration) {
+    SimpleConnectionFactoryConfiguration simpleConfiguration=(SimpleConnectionFactoryConfiguration)factoryConfiguration;
+    connectionFactory=ConnectionFactory.getConnectionFactory(SimpleConnectionFactory.class);
+    connectionFactory.start(simpleConfiguration,connectionFactory.getClass().getClassLoader());
+    connection=connectionFactory.getConnection();
+  }
+ else   if (factoryConfiguration instanceof PooledConnectionFactoryConfiguration) {
+    PooledConnectionFactoryConfiguration pooledConfiguration=(PooledConnectionFactoryConfiguration)factoryConfiguration;
+    connectionFactory=ConnectionFactory.getConnectionFactory(PooledConnectionFactory.class);
+    connectionFactory.start(pooledConfiguration,connectionFactory.getClass().getClassLoader());
+    connection=connectionFactory.getConnection();
+  }
+  tableManager=TableManagerFactory.getManager(connectionFactory,storeBuilder.create());
+  tableManager.setCacheName("aName");
+}
