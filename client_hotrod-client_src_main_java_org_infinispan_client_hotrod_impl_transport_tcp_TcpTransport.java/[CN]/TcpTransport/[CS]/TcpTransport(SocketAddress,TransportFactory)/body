@@ -3,9 +3,11 @@
   this.serverAddress=serverAddress;
   try {
     if (transportFactory.getSSLContext() != null) {
-      SSLContext sslContext=transportFactory.getSSLContext();
       socketChannel=null;
-      socket=sslContext.getSocketFactory().createSocket();
+      SSLContext sslContext=transportFactory.getSSLContext();
+      SSLSocketFactory sslSocketFactory=sslContext.getSocketFactory();
+      socket=sslSocketFactory.createSocket();
+      setSniHostName(transportFactory.getSniHostName());
     }
  else {
       socketChannel=SocketChannel.open();
