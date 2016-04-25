@@ -1,0 +1,23 @@
+{
+  boolean isJoining=input.readBoolean();
+  int keyLen=input.readInt();
+  byte[] key=new byte[keyLen];
+  input.readFully(key);
+  byte[] value=null;
+  Object[] projection=null;
+  if (isJoining) {
+    int valueLen=input.readInt();
+    if (valueLen == -1) {
+      int projLen=input.readInt();
+      projection=new Object[projLen];
+      for (int i=0; i < projLen; i++) {
+        projection[i]=input.readObject();
+      }
+    }
+ else {
+      value=new byte[valueLen];
+      input.readFully(value);
+    }
+  }
+  return new ContinuousQueryResult(isJoining,key,value,projection);
+}

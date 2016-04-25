@@ -10,20 +10,13 @@
   ObjectFilter objectFilter=getObjectFilter();
   ObjectFilter.FilterResult f1=oldValue == null ? null : objectFilter.filter(oldValue);
   ObjectFilter.FilterResult f2=newValue == null ? null : objectFilter.filter(newValue);
-  ContinuousQueryResult result;
   if (f1 == null && f2 != null) {
-    result=new ContinuousQueryResult(true,(byte[])key,f2.getProjection() == null ? (byte[])newValue : null,f2.getProjection());
+    return makeFilterResult(true,key,f2.getProjection() == null ? newValue : null,f2.getProjection());
   }
  else   if (f1 != null && f2 == null) {
-    result=new ContinuousQueryResult(false,(byte[])key,null,null);
+    return makeFilterResult(false,key,null,null);
   }
  else {
     return null;
-  }
-  try {
-    return ProtobufUtil.toByteArray(serCtx,result);
-  }
- catch (  IOException e) {
-    throw new RuntimeException(e);
   }
 }

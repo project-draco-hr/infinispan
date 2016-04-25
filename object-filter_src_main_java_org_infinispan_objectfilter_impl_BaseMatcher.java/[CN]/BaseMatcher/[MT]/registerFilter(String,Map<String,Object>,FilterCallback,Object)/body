@@ -3,10 +3,9 @@
   disallowGroupingAndAggregations(parsingResult);
   write.lock();
   try {
-    FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByTypeName.get(parsingResult.getTargetEntityName());
+    FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByType.get(parsingResult.getTargetEntityMetadata());
     if (filterRegistry == null) {
       filterRegistry=new FilterRegistry<>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()),true);
-      filtersByTypeName.put(parsingResult.getTargetEntityName(),filterRegistry);
       filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(),filterRegistry);
     }
     return filterRegistry.addFilter(jpaQuery,namedParameters,parsingResult.getWhereClause(),parsingResult.getProjections(),parsingResult.getProjectedTypes(),parsingResult.getSortFields(),callback,eventType);

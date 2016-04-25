@@ -1,8 +1,8 @@
 {
-  FilterSubscriptionImpl filterSubscriptionImpl=(FilterSubscriptionImpl)filterSubscription;
+  FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId> filterSubscriptionImpl=(FilterSubscriptionImpl<TypeMetadata,AttributeMetadata,AttributeId>)filterSubscription;
   write.lock();
   try {
-    FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByTypeName.get(filterSubscriptionImpl.getEntityTypeName());
+    FilterRegistry<TypeMetadata,AttributeMetadata,AttributeId> filterRegistry=filtersByType.get(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
     if (filterRegistry != null) {
       filterRegistry.removeFilter(filterSubscription);
     }
@@ -10,7 +10,6 @@
       throw new IllegalStateException("Reached illegal state");
     }
     if (filterRegistry.getFilterSubscriptions().isEmpty()) {
-      filtersByTypeName.remove(filterRegistry.getMetadataAdapter().getTypeName());
       filtersByType.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
     }
   }
