@@ -1,0 +1,29 @@
+{
+  String sql=tableManager.getSelectIdRowSql();
+  if (trace) {
+    log.tracef("Running sql '%s'. Key string is '%s'",sql,keyStr);
+  }
+  PreparedStatement ps=null;
+  try {
+    ps=connection.prepareStatement(sql);
+    ps.setString(1,keyStr);
+    ResultSet rs=ps.executeQuery();
+    if (rs.next()) {
+      sql=tableManager.getUpdateRowSql();
+    }
+ else {
+      sql=tableManager.getInsertRowSql();
+    }
+    JdbcUtil.safeClose(rs);
+    JdbcUtil.safeClose(ps);
+    if (trace) {
+      log.tracef("Running sql '%s'. Key string is '%s'",sql,keyStr);
+    }
+    ps=connection.prepareStatement(sql);
+    prepareUpdateStatement(entry,keyStr,ps);
+    ps.executeUpdate();
+  }
+  finally {
+    JdbcUtil.safeClose(ps);
+  }
+}
