@@ -1,0 +1,17 @@
+{
+  Iterator<T> i=loadedServices.iterator();
+  while (i.hasNext()) {
+    try {
+      T service=i.next();
+      if (services.putIfAbsent(service.getClass().getName(),service) == null) {
+        LOG.debugf("Loading service impl: %s",service.getClass().getSimpleName());
+      }
+ else {
+        LOG.debugf("Ignoring already loaded service: %s",service.getClass().getSimpleName());
+      }
+    }
+ catch (    ServiceConfigurationError e) {
+      LOG.debugf("Skipping service impl",e);
+    }
+  }
+}

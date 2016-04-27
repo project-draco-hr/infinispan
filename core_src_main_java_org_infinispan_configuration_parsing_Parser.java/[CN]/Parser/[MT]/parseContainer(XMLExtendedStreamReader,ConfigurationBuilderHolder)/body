@@ -1,0 +1,175 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
+    GlobalConfigurationBuilder builder=holder.getGlobalConfigurationBuilder();
+switch (attribute) {
+case NAME:
+{
+        builder.globalJmxStatistics().cacheManagerName(value);
+        break;
+      }
+case ALIASES:
+{
+      log.ignoreXmlAttribute(attribute);
+      break;
+    }
+case DEFAULT_CACHE:
+{
+    holder.setDefaultCacheName(value);
+    break;
+  }
+case JNDI_NAME:
+{
+  log.ignoreXmlAttribute(attribute);
+  break;
+}
+case START:
+{
+log.ignoreXmlAttribute(attribute);
+break;
+}
+case ASYNC_EXECUTOR:
+{
+builder.asyncThreadPool().read(createThreadPoolConfiguration(value,ASYNC_OPERATIONS_EXECUTOR));
+break;
+}
+case LISTENER_EXECUTOR:
+{
+builder.listenerThreadPool().read(createThreadPoolConfiguration(value,ASYNC_NOTIFICATION_EXECUTOR));
+break;
+}
+case EVICTION_EXECUTOR:
+log.evictionExecutorDeprecated();
+case EXPIRATION_EXECUTOR:
+{
+builder.expirationThreadPool().read(createThreadPoolConfiguration(value,EXPIRATION_SCHEDULED_EXECUTOR));
+break;
+}
+case REPLICATION_QUEUE_EXECUTOR:
+{
+if (reader.getSchema().since(9,0)) {
+throw ParseUtils.unexpectedAttribute(reader,attribute.getLocalName());
+}
+ else {
+log.ignoredReplicationQueueAttribute(attribute.getLocalName(),reader.getLocation().getLineNumber());
+}
+break;
+}
+case PERSISTENCE_EXECUTOR:
+{
+builder.persistenceThreadPool().read(createThreadPoolConfiguration(value,PERSISTENCE_EXECUTOR));
+break;
+}
+case STATE_TRANSFER_EXECUTOR:
+{
+builder.stateTransferThreadPool().read(createThreadPoolConfiguration(value,STATE_TRANSFER_EXECUTOR));
+break;
+}
+case MODULE:
+{
+log.ignoreXmlAttribute(attribute);
+break;
+}
+case STATISTICS:
+{
+builder.globalJmxStatistics().enabled(Boolean.valueOf(value));
+break;
+}
+case SHUTDOWN_HOOK:
+{
+builder.shutdown().hookBehavior(ShutdownHookBehavior.valueOf(value));
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+}
+while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case TRANSPORT:
+{
+parseTransport(reader,holder);
+break;
+}
+case LOCAL_CACHE:
+{
+parseLocalCache(reader,holder,false);
+break;
+}
+case LOCAL_CACHE_CONFIGURATION:
+{
+parseLocalCache(reader,holder,true);
+break;
+}
+case INVALIDATION_CACHE:
+{
+parseInvalidationCache(reader,holder,false);
+break;
+}
+case INVALIDATION_CACHE_CONFIGURATION:
+{
+parseInvalidationCache(reader,holder,true);
+break;
+}
+case REPLICATED_CACHE:
+{
+parseReplicatedCache(reader,holder,false);
+break;
+}
+case REPLICATED_CACHE_CONFIGURATION:
+{
+parseReplicatedCache(reader,holder,true);
+break;
+}
+case DISTRIBUTED_CACHE:
+{
+parseDistributedCache(reader,holder,false);
+break;
+}
+case DISTRIBUTED_CACHE_CONFIGURATION:
+{
+parseDistributedCache(reader,holder,true);
+break;
+}
+case SERIALIZATION:
+{
+parseSerialization(reader,holder);
+break;
+}
+case MODULES:
+{
+parseModules(reader,holder);
+break;
+}
+case JMX:
+{
+parseJmx(reader,holder);
+break;
+}
+case SECURITY:
+{
+parseGlobalSecurity(reader,holder);
+break;
+}
+case GLOBAL_STATE:
+{
+if (reader.getSchema().since(8,1)) {
+parseGlobalState(reader,holder);
+}
+ else {
+throw ParseUtils.unexpectedElement(reader);
+}
+break;
+}
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+}
