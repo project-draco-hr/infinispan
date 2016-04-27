@@ -1,0 +1,31 @@
+{
+  writer.writeStartElement(Element.CACHE_CONTAINER);
+  GlobalConfiguration globalConfiguration=holder.getGlobalConfiguration();
+  writer.writeAttribute(Attribute.NAME,globalConfiguration.globalJmxStatistics().cacheManagerName());
+  globalConfiguration.globalJmxStatistics().attributes().write(writer,GlobalJmxStatisticsConfiguration.ENABLED,Attribute.STATISTICS);
+  writeTransport(writer,globalConfiguration);
+  writeSerialization(writer,globalConfiguration);
+  writeJMX(writer,globalConfiguration);
+  for (  Entry<String,Configuration> configuration : holder.getConfigurations().entrySet()) {
+    Configuration config=configuration.getValue();
+switch (config.clustering().cacheMode()) {
+case LOCAL:
+      writeLocalCache(writer,configuration.getKey(),config);
+    break;
+case DIST_ASYNC:
+case DIST_SYNC:
+  writeDistributedCache(writer,configuration.getKey(),config);
+break;
+case INVALIDATION_ASYNC:
+case INVALIDATION_SYNC:
+writeInvalidationCache(writer,configuration.getKey(),config);
+break;
+case REPL_ASYNC:
+case REPL_SYNC:
+writeReplicatedCache(writer,configuration.getKey(),config);
+break;
+default :
+break;
+}
+}
+}

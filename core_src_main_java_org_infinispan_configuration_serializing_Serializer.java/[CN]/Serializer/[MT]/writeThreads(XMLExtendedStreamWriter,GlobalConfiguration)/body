@@ -1,0 +1,22 @@
+{
+  writer.writeStartElement(Element.THREADS);
+  ConcurrentMap<String,DefaultThreadFactory> threadFactories=CollectionFactory.makeConcurrentMap();
+  for (  ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(),globalConfiguration.listenerThreadPool(),globalConfiguration.persistenceThreadPool(),globalConfiguration.replicationQueueThreadPool(),globalConfiguration.stateTransferThreadPool())) {
+    ThreadFactory threadFactory=threadPoolConfiguration.threadFactory();
+    if (threadFactory instanceof DefaultThreadFactory) {
+      DefaultThreadFactory tf=(DefaultThreadFactory)threadFactory;
+      threadFactories.putIfAbsent(tf.getName(),tf);
+    }
+  }
+  for (  DefaultThreadFactory threadFactory : threadFactories.values()) {
+    writeThreadFactory(writer,threadFactory);
+  }
+  for (  ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(),globalConfiguration.listenerThreadPool(),globalConfiguration.persistenceThreadPool(),globalConfiguration.replicationQueueThreadPool(),globalConfiguration.stateTransferThreadPool())) {
+    ThreadPoolExecutorFactory<?> threadPoolFactory=threadPoolConfiguration.threadPoolFactory();
+    if (threadPoolFactory != null) {
+      writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
+      writer.writeEndElement();
+    }
+  }
+  writer.writeEndElement();
+}

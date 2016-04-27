@@ -1,0 +1,33 @@
+{
+  if (configuration instanceof SingleFileStoreConfiguration) {
+    writeFileStore(writer,(SingleFileStoreConfiguration)configuration);
+  }
+ else   if (configuration instanceof ClusterLoaderConfiguration) {
+    writeClusterLoader(writer,(ClusterLoaderConfiguration)configuration);
+  }
+ else   if (configuration instanceof CustomStoreConfiguration) {
+    writeCustomStore(writer,(CustomStoreConfiguration)configuration);
+  }
+ else {
+    SerializedWith serializedWith=configuration.getClass().getAnnotation(SerializedWith.class);
+    if (serializedWith == null) {
+      ConfigurationFor configurationFor=configuration.getClass().getAnnotation(ConfigurationFor.class);
+      if (configuration instanceof AbstractStoreConfiguration && configurationFor != null) {
+        writer.writeComment("A serializer for the store configuration class " + configuration.getClass().getName() + " was not found. Using custom store mode");
+        AbstractStoreConfiguration asc=(AbstractStoreConfiguration)configuration;
+        writeGenericStore(writer,configurationFor.value().getName(),asc);
+      }
+ else       throw new UnsupportedOperationException("Cannot serialize store configuration " + configuration.getClass().getName());
+    }
+ else {
+      ConfigurationSerializer<StoreConfiguration> serializer;
+      try {
+        serializer=Util.getInstanceStrict(serializedWith.value());
+        serializer.serialize(writer,configuration);
+      }
+ catch (      Exception e) {
+        log.unableToInstantiateSerializer(serializedWith.value());
+      }
+    }
+  }
+}

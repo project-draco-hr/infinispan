@@ -1,0 +1,18 @@
+{
+  if (globalConfiguration.isClustered()) {
+    writer.writeStartElement(Element.JGROUPS);
+    writer.writeAttribute(Attribute.TRANSPORT,globalConfiguration.transport().transport().getClass().getName());
+    TypedProperties properties=globalConfiguration.transport().properties();
+    for (    String property : properties.stringPropertyNames()) {
+      if (property.startsWith("stack-")) {
+        String stackName=properties.getProperty(property);
+        String path=properties.getProperty("stackFilePath-" + stackName);
+        writer.writeStartElement(Element.STACK_FILE);
+        writer.writeAttribute(Attribute.NAME,stackName);
+        writer.writeAttribute(Attribute.PATH,path);
+        writer.writeEndElement();
+      }
+    }
+    writer.writeEndElement();
+  }
+}

@@ -1,2 +1,28 @@
 {
+  this.parserMappings=CollectionFactory.makeConcurrentMap();
+  this.cl=new WeakReference<>(classLoader);
+  Collection<ConfigurationParser> parsers=ServiceFinder.load(ConfigurationParser.class,cl.get(),ParserRegistry.class.getClassLoader());
+  for (  ConfigurationParser parser : parsers) {
+    Namespace[] namespaces=parser.getNamespaces();
+    if (namespaces == null) {
+      throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+    }
+    boolean skipParser=defaultOnly;
+    if (skipParser) {
+      for (      Namespace ns : namespaces) {
+        if ("".equals(ns.uri())) {
+          skipParser=false;
+        }
+      }
+    }
+    if (!skipParser) {
+      for (      Namespace ns : namespaces) {
+        QName qName=new QName(ns.uri(),ns.root());
+        ConfigurationParser existingParser=parserMappings.putIfAbsent(qName,parser);
+        if (existingParser != null && !parser.getClass().equals(existingParser.getClass())) {
+          log.parserRootElementAlreadyRegistered(qName,parser.getClass().getName(),existingParser.getClass().getName());
+        }
+      }
+    }
+  }
 }

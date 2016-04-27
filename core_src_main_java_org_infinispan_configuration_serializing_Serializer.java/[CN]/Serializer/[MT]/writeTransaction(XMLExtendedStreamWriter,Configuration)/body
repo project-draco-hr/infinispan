@@ -1,0 +1,16 @@
+{
+  TransactionConfiguration transaction=configuration.transaction();
+  AttributeSet attributes=transaction.attributes();
+  if (attributes.isModified()) {
+    writer.writeStartElement(Element.TRANSACTION);
+    TransactionMode mode=TransactionMode.fromConfiguration(transaction.transactionMode(),!transaction.useSynchronization(),transaction.recovery().enabled(),configuration.invocationBatching().enabled());
+    writer.writeAttribute(Attribute.MODE,mode.toString());
+    attributes.write(writer,TransactionConfiguration.AUTO_COMMIT,Attribute.AUTO_COMMIT);
+    attributes.write(writer,TransactionConfiguration.CACHE_STOP_TIMEOUT,Attribute.STOP_TIMEOUT);
+    attributes.write(writer,TransactionConfiguration.COMPLETED_TX_TIMEOUT,Attribute.COMPLETED_TX_TIMEOUT);
+    attributes.write(writer,TransactionConfiguration.LOCKING_MODE,Attribute.LOCKING);
+    attributes.write(writer,TransactionConfiguration.REAPER_WAKE_UP_INTERVAL,Attribute.REAPER_WAKE_UP_INTERVAL);
+    attributes.write(writer,TransactionConfiguration.TRANSACTION_PROTOCOL,Attribute.TRANSACTION_PROTOCOL);
+    writer.writeEndElement();
+  }
+}

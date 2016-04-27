@@ -1,0 +1,34 @@
+{
+  SitesConfiguration sites=configuration.sites();
+  if (sites.allBackups().size() > 0) {
+    writer.writeStartElement(Element.BACKUPS);
+    for (    BackupConfiguration backup : sites.allBackups()) {
+      writer.writeStartElement(Element.BACKUP);
+      AttributeSet attributes=backup.attributes();
+      attributes.write(writer,BackupConfiguration.ENABLED,Attribute.ENABLED);
+      attributes.write(writer,BackupConfiguration.SITE,Attribute.SITE);
+      attributes.write(writer,BackupConfiguration.STRATEGY,Attribute.STRATEGY);
+      attributes.write(writer,BackupConfiguration.REPLICATION_TIMEOUT,Attribute.TIMEOUT);
+      attributes.write(writer,BackupConfiguration.USE_TWO_PHASE_COMMIT,Attribute.USE_TWO_PHASE_COMMIT);
+      attributes.write(writer,BackupConfiguration.FAILURE_POLICY_CLASS,Attribute.FAILURE_POLICY_CLASS);
+      AttributeSet stateTransfer=backup.stateTransfer().attributes();
+      if (stateTransfer.isModified()) {
+        writer.writeStartElement(Element.STATE_TRANSFER);
+        stateTransfer.write(writer,XSiteStateTransferConfiguration.CHUNK_SIZE,Attribute.CHUNK_SIZE);
+        stateTransfer.write(writer,XSiteStateTransferConfiguration.MAX_RETRIES,Attribute.MAX_RETRIES);
+        stateTransfer.write(writer,XSiteStateTransferConfiguration.TIMEOUT,Attribute.TIMEOUT);
+        stateTransfer.write(writer,XSiteStateTransferConfiguration.WAIT_TIME,Attribute.WAIT_TIME);
+        writer.writeEndElement();
+      }
+      AttributeSet takeOffline=backup.takeOffline().attributes();
+      if (takeOffline.isModified()) {
+        writer.writeStartElement(Element.TAKE_OFFLINE);
+        takeOffline.write(writer,TakeOfflineConfiguration.AFTER_FAILURES,Attribute.TAKE_BACKUP_OFFLINE_AFTER_FAILURES);
+        takeOffline.write(writer,TakeOfflineConfiguration.MIN_TIME_TO_WAIT,Attribute.TAKE_BACKUP_OFFLINE_MIN_WAIT);
+        writer.writeEndElement();
+      }
+      writer.writeEndElement();
+    }
+    writer.writeEndElement();
+  }
+}
