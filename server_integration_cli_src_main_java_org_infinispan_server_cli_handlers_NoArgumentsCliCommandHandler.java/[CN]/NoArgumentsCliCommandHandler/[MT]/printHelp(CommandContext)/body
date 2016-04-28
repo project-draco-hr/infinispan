@@ -1,0 +1,19 @@
+{
+  String filename="help/" + cacheCommand.getName() + ".txt";
+  InputStream helpInput=WildFlySecurityManager.getClassLoaderPrivileged(NoArgumentsCliCommandHandler.class).getResourceAsStream(filename);
+  if (helpInput != null) {
+    BufferedReader reader=new BufferedReader(new InputStreamReader(helpInput));
+    try {
+      HelpFormatter.format(ctx,reader);
+    }
+ catch (    java.io.IOException e) {
+      throw new CommandFormatException("Failed to read " + filename + ": "+ e.getLocalizedMessage());
+    }
+ finally {
+      StreamUtils.safeClose(reader);
+    }
+  }
+ else {
+    throw new CommandFormatException("Failed to locate command description " + filename);
+  }
+}
