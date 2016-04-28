@@ -1,11 +1,10 @@
 {
   String buffer=op.getBuffer();
-  List<String> candidates=op.getCompletionCandidates();
   if (buffer.isEmpty()) {
     for (    String name : context.getCommandRegistry().getCommandNames()) {
       Command command=context.getCommandRegistry().getCommand(name);
       if (command.isAvailable(context)) {
-        candidates.add(name);
+        op.addCompletionCandidate(name);
       }
     }
   }
@@ -15,7 +14,7 @@
       for (      String name : context.getCommandRegistry().getCommandNames()) {
         Command command=context.getCommandRegistry().getCommand(name);
         if (command.isAvailable(context) && name.startsWith(procCmd.getCommand())) {
-          candidates.add(name);
+          op.addCompletionCandidate(name);
         }
       }
     }
@@ -31,10 +30,11 @@
             break;
           }
         }
+        List<String> candidates=new ArrayList<>();
         addPrefixMatches(procCmd.getCurrentArgument(),command.getOptions(),candidates);
         command.complete(context,procCmd,candidates);
+        op.addCompletionCandidates(candidates);
       }
     }
   }
-  Collections.sort(candidates);
 }
