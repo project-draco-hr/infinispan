@@ -1,0 +1,23 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  InputStream is;
+  if (userProperties != null && !userProperties.isEmpty()) {
+    this.properties=userProperties;
+    builder.withProperties(userProperties);
+  }
+ else   if ((is=findPropertiesFile()) != null) {
+    Properties fileProperties=new Properties();
+    try {
+      fileProperties.load(is);
+      this.properties=fileProperties;
+      builder.withProperties(fileProperties);
+    }
+ catch (    IOException e) {
+      throw new CacheException("Unable to load properties from `hotrod-client.properties`",e);
+    }
+  }
+ else {
+    builder.addServer().host("127.0.0.1").port(11222);
+  }
+  return builder;
+}
