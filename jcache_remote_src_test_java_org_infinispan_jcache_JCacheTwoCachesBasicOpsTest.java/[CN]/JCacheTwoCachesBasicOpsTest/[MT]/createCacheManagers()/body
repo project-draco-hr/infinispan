@@ -1,13 +1,13 @@
 {
-  createClusteredCaches(2,"default",hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC)));
+  createClusteredCaches(2,CACHE_NAME,hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC)));
   hotRodServer1=HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(0));
   hotRodServer2=HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(1));
   testSpecificClassLoader=new JCacheTestingUtil.TestClassLoader(JCacheTwoCachesBasicOpsTest.class.getClassLoader());
   Properties properties=new Properties();
   properties.put("infinispan.client.hotrod.server_list",hotRodServer1.getHost() + ":" + hotRodServer1.getPort());
-  cache1=createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader),JCacheTwoCachesBasicOpsTest.class,"default",properties);
+  cm1=createCacheManager(Caching.getCachingProvider(testSpecificClassLoader),JCacheTwoCachesBasicOpsTest.class,CACHE_NAME,properties);
   properties=new Properties();
   properties.put("infinispan.client.hotrod.server_list",hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
-  cache2=createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader),JCacheTwoCachesBasicOpsTest.class,"default",properties);
+  cm2=createCacheManager(Caching.getCachingProvider(testSpecificClassLoader),JCacheTwoCachesBasicOpsTest.class,CACHE_NAME,properties);
   waitForClusterToForm("default");
 }
