@@ -1,5 +1,5 @@
 {
-  Map<String,Number> map=new HashMap<String,Number>();
+  Map<String,Number> map=new HashMap<>();
   Stats stats=remoteCache.getStats();
   map.put(AVERAGE_READ_TIME,stats.getAverageReadTime());
   map.put(AVERAGE_WRITE_TIME,stats.getAverageWriteTime());
@@ -7,10 +7,11 @@
   map.put(EVICTIONS,stats.getEvictions());
   map.put(HITS,stats.getHits());
   map.put(MISSES,stats.getMisses());
-  if (isDistributed()) {
+  final CacheMode cacheMode=getCacheMode(remoteCache);
+  if (cacheMode.isDistributed()) {
     map.put(NUMBER_OF_ENTRIES,stats.getCurrentNumberOfEntries() / numOwners());
   }
- else {
+ else   if (!cacheMode.isReplicated()) {
     map.put(NUMBER_OF_ENTRIES,stats.getCurrentNumberOfEntries());
   }
   map.put(STORES,stats.getStores());
