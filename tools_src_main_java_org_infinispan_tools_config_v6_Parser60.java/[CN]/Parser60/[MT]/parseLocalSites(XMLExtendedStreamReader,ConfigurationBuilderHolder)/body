@@ -1,0 +1,24 @@
+{
+  ConfigurationBuilder ccb=holder.getCurrentConfigurationBuilder();
+  ParseUtils.requireNoAttributes(reader);
+  boolean isEmptyTag=false;
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    isEmptyTag=true;
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case BACKUPS:
+      ccb.sites().backups().clear();
+    parseBackups(reader,ccb);
+  break;
+case BACKUP_FOR:
+parseBackupFor(reader,ccb);
+break;
+default :
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+if (!isEmptyTag) {
+ccb.sites().backups().clear();
+ccb.sites().backupFor().reset();
+}
+}

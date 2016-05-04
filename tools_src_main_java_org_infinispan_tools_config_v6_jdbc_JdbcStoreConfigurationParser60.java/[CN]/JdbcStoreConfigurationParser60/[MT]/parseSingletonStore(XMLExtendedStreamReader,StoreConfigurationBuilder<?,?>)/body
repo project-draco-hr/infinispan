@@ -1,0 +1,26 @@
+{
+  for (int i=0; i < reader.getAttributeCount(); i++) {
+    ParseUtils.requireNoNamespaceAttribute(reader,i);
+    String value=replaceProperties(reader.getAttributeValue(i));
+    org.infinispan.tools.config.v6.Attribute attribute=org.infinispan.tools.config.v6.Attribute.forName(reader.getAttributeLocalName(i));
+switch (attribute) {
+case ENABLED:
+      if (Boolean.parseBoolean(value)) {
+        storeBuilder.singleton().enable();
+      }
+ else {
+        storeBuilder.singleton().disable();
+      }
+    break;
+case PUSH_STATE_TIMEOUT:
+  storeBuilder.singleton().pushStateTimeout(Long.parseLong(value));
+break;
+case PUSH_STATE_WHEN_COORDINATOR:
+storeBuilder.singleton().pushStateWhenCoordinator(Boolean.parseBoolean(value));
+break;
+default :
+throw ParseUtils.unexpectedAttribute(reader,i);
+}
+}
+ParseUtils.requireNoContent(reader);
+}

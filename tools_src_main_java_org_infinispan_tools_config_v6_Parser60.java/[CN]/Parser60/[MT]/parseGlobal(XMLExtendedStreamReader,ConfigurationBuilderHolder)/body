@@ -1,0 +1,89 @@
+{
+  GlobalConfigurationBuilder builder=holder.getGlobalConfigurationBuilder();
+  ParseUtils.requireNoAttributes(reader);
+  boolean transportParsed=false;
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case ASYNC_LISTENER_EXECUTOR:
+{
+        parseExecutor(reader,holder.getGlobalConfigurationBuilder().asyncThreadPool(),holder.getClassLoader());
+        break;
+      }
+case PERSISTENCE_EXECUTOR:
+{
+      parseExecutor(reader,holder.getGlobalConfigurationBuilder().persistenceThreadPool(),holder.getClassLoader());
+      break;
+    }
+case ASYNC_TRANSPORT_EXECUTOR:
+{
+    warnRemovedElement(element.getLocalName());
+    parseExecutor(reader,null,holder.getClassLoader());
+    break;
+  }
+case REMOTE_COMMAND_EXECUTOR:
+{
+  warnRemovedElement(element.getLocalName());
+  parseExecutor(reader,null,holder.getClassLoader());
+  break;
+}
+case EVICTION_SCHEDULED_EXECUTOR:
+{
+parseExecutor(reader,holder.getGlobalConfigurationBuilder().evictionThreadPool(),holder.getClassLoader());
+break;
+}
+case GLOBAL_JMX_STATISTICS:
+{
+parseGlobalJMXStatistics(reader,holder);
+break;
+}
+case MODULES:
+{
+parseModules(reader,holder);
+break;
+}
+case REPLICATION_QUEUE_SCHEDULED_EXECUTOR:
+{
+parseExecutor(reader,holder.getGlobalConfigurationBuilder().replicationQueueThreadPool(),holder.getClassLoader());
+break;
+}
+case SERIALIZATION:
+{
+parseSerialization(reader,holder);
+break;
+}
+case SHUTDOWN:
+{
+parseShutdown(reader,holder);
+break;
+}
+case TRANSPORT:
+{
+parseTransport(reader,holder);
+transportParsed=true;
+break;
+}
+case SITE:
+{
+parseGlobalSites(reader,holder);
+break;
+}
+case TOTAL_ORDER_EXECUTOR:
+warnRemovedElement(element.getLocalName());
+parseExecutor(reader,null,holder.getClassLoader());
+break;
+default :
+{
+throw ParseUtils.unexpectedElement(reader);
+}
+}
+}
+if (!transportParsed) {
+builder.transport().transport(null);
+}
+ else {
+if (builder.transport().getTransport() == null) {
+builder.transport().defaultTransport();
+}
+}
+}
