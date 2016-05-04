@@ -1,0 +1,14 @@
+{
+  SerializationContext serCtx=ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
+  serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto",PROTO_DEFINITIONS));
+  ProtobufIndexedFieldProvider userIndexedFieldProvider=new ProtobufIndexedFieldProvider(serCtx.getMessageDescriptor("User"));
+  ProtobufIndexedFieldProvider addressIndexedFieldProvider=new ProtobufIndexedFieldProvider(serCtx.getMessageDescriptor("User.Address"));
+  assertTrue(userIndexedFieldProvider.isIndexed(new String[]{"name"}));
+  assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"surname"}));
+  assertTrue(addressIndexedFieldProvider.isIndexed(new String[]{"street"}));
+  assertFalse(addressIndexedFieldProvider.isIndexed(new String[]{"postCode"}));
+  assertTrue(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses","street"}));
+  assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses","postCode"}));
+  assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses","street"}));
+  assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses","postCode"}));
+}
