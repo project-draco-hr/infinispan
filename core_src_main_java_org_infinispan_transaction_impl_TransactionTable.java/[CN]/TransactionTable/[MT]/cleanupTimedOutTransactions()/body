@@ -1,21 +1,2 @@
 {
-  if (trace)   log.tracef("About to cleanup remote transactions older than %d ms",configuration.transaction().completedTxTimeout());
-  long beginning=timeService.time();
-  long cutoffCreationTime=beginning - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
-  List<GlobalTransaction> toKill=new ArrayList<>();
-  for (  Map.Entry<GlobalTransaction,RemoteTransaction> e : remoteTransactions.entrySet()) {
-    GlobalTransaction gtx=e.getKey();
-    RemoteTransaction remoteTx=e.getValue();
-    if (remoteTx != null) {
-      if (trace)       log.tracef("Checking transaction %s",gtx);
-      if (remoteTx.getCreationTime() - cutoffCreationTime < 0) {
-        long duration=timeService.timeDuration(remoteTx.getCreationTime(),beginning,TimeUnit.MILLISECONDS);
-        log.remoteTransactionTimeout(gtx,duration);
-        toKill.add(gtx);
-      }
-    }
-  }
-  for (  GlobalTransaction gtx : toKill) {
-    killTransaction(gtx);
-  }
 }
