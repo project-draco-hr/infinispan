@@ -1,0 +1,14 @@
+{
+  if (distributed && !transactional) {
+    if ((ctx.isOriginLocal() ? !cdl.localNodeIsPrimaryOwner(key) : !cdl.localNodeIsOwner(key)) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (trace) {
+        log.tracef("Skip load for functional command %s. This node is not an owner of %s",cmd,key);
+      }
+      return true;
+    }
+ else {
+      return false;
+    }
+  }
+  return super.skipLoadForFunctionalWriteCommand(cmd,key,ctx);
+}
