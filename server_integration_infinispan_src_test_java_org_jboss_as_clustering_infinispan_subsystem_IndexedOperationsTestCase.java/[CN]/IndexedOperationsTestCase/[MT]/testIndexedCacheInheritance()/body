@@ -1,0 +1,12 @@
+{
+  String subsystemXml=getSubsystemXml();
+  KernelServices servicesA=createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
+  PathAddress address=getCacheConfigurationAddress("indexing",ModelKeys.REPLICATED_CACHE_CONFIGURATION,"booksCache").append(ModelKeys.INDEXING,ModelKeys.INDEXING_NAME);
+  ModelNode readOp=new ModelNode();
+  readOp.get(OP).set(READ_ATTRIBUTE_OPERATION);
+  readOp.get(OP_ADDR).set(address.toModelNode());
+  readOp.get(NAME).set(ModelKeys.INDEXING);
+  ModelNode result=servicesA.executeOperation(readOp);
+  Assert.assertEquals(SUCCESS,result.get(OUTCOME).asString());
+  Assert.assertEquals(Indexing.LOCAL.toString(),result.get(RESULT).asString());
+}
