@@ -1,0 +1,53 @@
+{
+  ExpirationParam param1;
+  ExpirationParam param2;
+  long version;
+  int size;
+  if (readExpiration) {
+    boolean pre22Version=Constants$.MODULE$.isVersionPre22(header.version());
+    byte firstUnit;
+    byte secondUnit;
+    if (pre22Version) {
+      firstUnit=secondUnit=TimeUnitValue.SECONDS();
+    }
+ else {
+      if (buffer.readableBytes() == 0) {
+        return null;
+      }
+      byte units=buffer.readByte();
+      firstUnit=(byte)((units & 0xf0) >> 4);
+      secondUnit=(byte)(units & 0x0f);
+    }
+    param1=readExpirationParam(pre22Version,hasFlag(header,ProtocolFlag.DefaultLifespan()),buffer,firstUnit);
+    if (param1 == null) {
+      return null;
+    }
+    param2=readExpirationParam(pre22Version,hasFlag(header,ProtocolFlag.DefaultMaxIdle()),buffer,secondUnit);
+    if (param2 == null) {
+      return null;
+    }
+  }
+ else {
+    param1=param2=DEFAULT_EXPIRATION;
+  }
+  if (readVersion) {
+    version=ExtendedByteBufJava.readUnsignedMaybeLong(buffer);
+    if (version == Integer.MIN_VALUE) {
+      return null;
+    }
+  }
+ else {
+    version=-1;
+  }
+  if (readSize) {
+    size=ExtendedByteBufJava.readMaybeVInt(buffer);
+    if (size == Integer.MIN_VALUE) {
+      return null;
+    }
+  }
+ else {
+    size=-1;
+  }
+  buffer.markReaderIndex();
+  return new RequestParameters(size,param1,param2,version);
+}

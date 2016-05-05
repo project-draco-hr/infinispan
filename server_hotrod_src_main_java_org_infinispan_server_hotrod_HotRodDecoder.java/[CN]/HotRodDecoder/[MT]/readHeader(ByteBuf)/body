@@ -7,7 +7,7 @@
     }
     short magic=buffer.readUnsignedByte();
     if (magic != Constants$.MODULE$.MAGIC_REQ()) {
-      if (decodeCtx.getError() == null) {
+      if (previousException == null) {
         throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic);
       }
  else {
@@ -16,13 +16,12 @@
       }
     }
  else {
-      decodeCtx.setError(null);
+      previousException=null;
     }
-    OptionalLong optLong=UnsignedNumeric.readOptionalUnsignedLong(buffer);
-    if (!optLong.isPresent()) {
+    long messageId=ExtendedByteBufJava.readMaybeVLong(buffer);
+    if (messageId == Integer.MIN_VALUE) {
       return false;
     }
-    long messageId=optLong.getAsLong();
     header.messageId_$eq(messageId);
     if (buffer.readableBytes() < 1) {
       buffer.resetReaderIndex();

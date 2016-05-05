@@ -1,0 +1,26 @@
+{
+  if (pre22Version) {
+    int duration=ExtendedByteBufJava.readMaybeVInt(buffer);
+    if (duration == Integer.MIN_VALUE) {
+      return null;
+    }
+ else     if (duration <= 0) {
+      duration=useDefault ? (int)EXPIRATION_DEFAULT : (int)EXPIRATION_NONE;
+    }
+    return new ExpirationParam(duration,timeUnit);
+  }
+ else {
+switch (timeUnit) {
+case 0x07:
+      return new ExpirationParam(EXPIRATION_DEFAULT,timeUnit);
+case 0x08:
+    return new ExpirationParam(EXPIRATION_NONE,timeUnit);
+default :
+  long timeDuration=ExtendedByteBufJava.readMaybeVLong(buffer);
+if (timeDuration == Long.MIN_VALUE) {
+  return null;
+}
+return new ExpirationParam(timeDuration,timeUnit);
+}
+}
+}
