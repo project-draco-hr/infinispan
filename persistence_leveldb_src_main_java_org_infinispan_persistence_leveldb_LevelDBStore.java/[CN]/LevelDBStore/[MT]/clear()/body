@@ -11,8 +11,9 @@
     if (stopped) {
       throw new PersistenceException("LevelDB is stopped");
     }
-    DBIterator it=db.iterator(new ReadOptions().fillCache(false));
-    if (configuration.clearThreshold() <= 0) {
+    Optional<DBIterator> optionalIterator=getDBIterator(this.db);
+    if (optionalIterator.isPresent() && configuration.clearThreshold() <= 0) {
+      DBIterator it=optionalIterator.get();
       try {
         for (it.seekToFirst(); it.hasNext(); ) {
           Map.Entry<byte[],byte[]> entry=it.next();

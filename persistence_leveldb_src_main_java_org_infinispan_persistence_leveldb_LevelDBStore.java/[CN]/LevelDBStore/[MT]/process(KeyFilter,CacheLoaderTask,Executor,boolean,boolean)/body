@@ -13,23 +13,26 @@
     if (stopped) {
       throw new PersistenceException("LevelDB is stopped");
     }
-    DBIterator it=db.iterator(new ReadOptions().fillCache(false));
+    Optional<DBIterator> optionalIterator=getDBIterator(this.db);
     try {
-      for (it.seekToFirst(); it.hasNext(); ) {
-        Map.Entry<byte[],byte[]> entry=it.next();
-        entries.add(entry);
-        if (entries.size() == batchSize) {
-          final List<Map.Entry<byte[],byte[]>> batch=entries;
-          entries=new ArrayList<Map.Entry<byte[],byte[]>>(batchSize);
-          submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,batch,loadValues,loadMetadata);
+      if (optionalIterator.isPresent()) {
+        DBIterator it=optionalIterator.get();
+        for (it.seekToFirst(); it.hasNext(); ) {
+          Map.Entry<byte[],byte[]> entry=it.next();
+          entries.add(entry);
+          if (entries.size() == batchSize) {
+            final List<Map.Entry<byte[],byte[]>> batch=entries;
+            entries=new ArrayList<Map.Entry<byte[],byte[]>>(batchSize);
+            submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,batch,loadValues,loadMetadata);
+          }
         }
-      }
-      if (!entries.isEmpty()) {
-        submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,entries,loadValues,loadMetadata);
-      }
-      eacs.waitUntilAllCompleted();
-      if (eacs.isExceptionThrown()) {
-        throw new PersistenceException("Execution exception!",eacs.getFirstException());
+        if (!entries.isEmpty()) {
+          submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,entries,loadValues,loadMetadata);
+        }
+        eacs.waitUntilAllCompleted();
+        if (eacs.isExceptionThrown()) {
+          throw new PersistenceException("Execution exception!",eacs.getFirstException());
+        }
       }
     }
  catch (    Exception e) {
@@ -37,7 +40,9 @@
     }
  finally {
       try {
-        it.close();
+        if (optionalIterator.isPresent()) {
+          optionalIterator.get().close();
+        }
       }
  catch (      IOException e) {
         log.warnUnableToCloseDbIterator(e);

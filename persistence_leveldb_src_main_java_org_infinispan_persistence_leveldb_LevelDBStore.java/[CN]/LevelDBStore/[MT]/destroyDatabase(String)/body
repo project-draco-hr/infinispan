@@ -1,4 +1,15 @@
 {
   File dir=new File(location);
-  dbFactory.destroy(dir,new Options());
+  try {
+    dbFactory.destroy(dir,new Options());
+  }
+ catch (  IOException e) {
+    if (dbFactory instanceof JniDBFactory) {
+      deleteFilesFromDirectory(dir);
+      log.warnAboutExceptionInLevelDB(e);
+    }
+ else {
+      throw e;
+    }
+  }
 }
