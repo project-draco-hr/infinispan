@@ -1,19 +1,13 @@
 {
-  Security.doAs(ADMIN,new PrivilegedAction<Void>(){
-    @Override public Void run(){
-      cacheManager.defineConfiguration("nonSecuredCache",TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
-      return null;
-    }
-  }
-);
-  cache("nonSecuredCache").put("a","value");
-  assertEquals("value",cacheManager.getCache("nonSecuredCache").get("a"));
-  String result=Security.doAs(RUNNER,new PrivilegedExceptionAction<String>(){
+  Cache<String,String> nonSecCache=cache("nonSecuredCache");
+  nonSecCache.put("a","value");
+  assertEquals("value",nonSecCache.get("a"));
+  String result=Security.doAs(PHEIDIPPIDES,new PrivilegedExceptionAction<String>(){
     @Override public String run() throws Exception {
-      return (String)scriptingManager.runScript("test.js",new TaskContext().addParameter("a","a").cache(cache("nonSecuredCache"))).get();
+      return (String)scriptingManager.runScript("testRoleWithCache.js",new TaskContext().addParameter("a","a").cache(nonSecCache)).get();
     }
   }
 );
   assertEquals("a",result);
-  assertEquals("a",cacheManager.getCache("nonSecuredCache").get("a"));
+  assertEquals("a",nonSecCache.get("a"));
 }
