@@ -1,0 +1,17 @@
+{
+  if (beanManager.getBeans(RemoteCacheManager.class).isEmpty()) {
+    LOGGER.addDefaultRemoteCacheManager();
+    event.addBean(createDefaultRemoteCacheManagerBean(beanManager));
+  }
+  for (  Map.Entry<Type,Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
+    event.addBean(new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(Reflections.getRawType(entry.getKey()))).addType(entry.getKey()).addQualifiers(entry.getValue()).beanLifecycle(new ContextualLifecycle<RemoteCache<?,?>>(){
+      @Override public RemoteCache<?,?> create(      Bean<RemoteCache<?,?>> bean,      CreationalContext<RemoteCache<?,?>> ctx){
+        return remoteCacheProducer.produce(ctx);
+      }
+      @Override public void destroy(      Bean<RemoteCache<?,?>> bean,      RemoteCache<?,?> instance,      CreationalContext<RemoteCache<?,?>> ctx){
+        remoteCacheProducer.dispose(instance);
+      }
+    }
+).create());
+  }
+}

@@ -1,0 +1,25 @@
+{
+  for (  final ConfigurationHolder holder : configurations) {
+    Bean<?> advancedCacheBean=new BeanBuilder(beanManager).readFromType(beanManager.createAnnotatedType(AdvancedCache.class)).qualifiers(Beans.buildQualifiers(holder.getQualifiers())).addType(new TypeLiteral<AdvancedCache<T,X>>(){
+    }
+.getType()).addType(new TypeLiteral<Cache<T,X>>(){
+    }
+.getType()).beanLifecycle(new ContextualLifecycle<AdvancedCache<?,?>>(){
+      @Override public AdvancedCache<?,?> create(      Bean<AdvancedCache<?,?>> bean,      CreationalContext<AdvancedCache<?,?>> creationalContext){
+        return new ContextualReference<AdvancedCacheProducer>(beanManager,AdvancedCacheProducer.class).create(Reflections.<CreationalContext<AdvancedCacheProducer>>cast(creationalContext)).get().getAdvancedCache(holder.getName(),holder.getQualifiers());
+      }
+    }
+).create();
+    event.addBean(advancedCacheBean);
+  }
+  if (beanManager.getBeans(Configuration.class).isEmpty()) {
+    LOGGER.addDefaultEmbeddedConfiguration();
+    final Configuration defaultConfiguration=new ConfigurationBuilder().build();
+    configurations.add(new ConfigurationHolder(defaultConfiguration,"",defaultQualifiers()));
+    event.addBean(createDefaultEmbeddedConfigurationBean(beanManager,defaultConfiguration));
+  }
+  if (beanManager.getBeans(EmbeddedCacheManager.class).isEmpty()) {
+    LOGGER.addDefaultEmbeddedCacheManager();
+    event.addBean(createDefaultEmbeddedCacheManagerBean(beanManager));
+  }
+}

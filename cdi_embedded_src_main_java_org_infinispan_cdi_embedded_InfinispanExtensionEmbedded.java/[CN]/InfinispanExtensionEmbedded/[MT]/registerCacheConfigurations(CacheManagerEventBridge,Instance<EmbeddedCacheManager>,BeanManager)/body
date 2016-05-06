@@ -4,20 +4,20 @@ synchronized (registerLock) {
       if (!registered) {
         final CreationalContext<Configuration> ctx=beanManager.createCreationalContext(null);
         final EmbeddedCacheManager defaultCacheManager=cacheManagers.select(DefaultLiteral.INSTANCE).get();
-        for (        ConfigurationHolder oneConfigurationHolder : configurations) {
-          final String cacheName=oneConfigurationHolder.getName();
-          final Configuration cacheConfiguration=oneConfigurationHolder.getProducer().produce(ctx);
-          final Set<Annotation> cacheQualifiers=oneConfigurationHolder.getQualifiers();
+        for (        ConfigurationHolder holder : configurations) {
+          final String cacheName=holder.getName();
+          final Configuration cacheConfiguration=holder.getConfiguration(ctx);
+          final Set<Annotation> cacheQualifiers=holder.getQualifiers();
           final Instance<EmbeddedCacheManager> specificCacheManager=cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
           final EmbeddedCacheManager cacheManager=specificCacheManager.isUnsatisfied() ? defaultCacheManager : specificCacheManager.get();
           if (!cacheName.trim().isEmpty()) {
             if (cacheConfiguration != null) {
               cacheManager.defineConfiguration(cacheName,cacheConfiguration);
-              logger.cacheConfigurationDefined(cacheName,cacheManager);
+              LOGGER.cacheConfigurationDefined(cacheName,cacheManager);
             }
  else             if (!cacheManager.getCacheNames().contains(cacheName)) {
               cacheManager.defineConfiguration(cacheName,cacheManager.getDefaultCacheConfiguration());
-              logger.cacheConfigurationDefined(cacheName,cacheManager);
+              LOGGER.cacheConfigurationDefined(cacheName,cacheManager);
             }
           }
           eventBridge.registerObservers(cacheQualifiers,cacheName,cacheManager);
