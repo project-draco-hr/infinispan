@@ -5,5 +5,14 @@
   AuthorizationConfigurationBuilder authConfig=config.security().authorization().enable();
   globalRoles.role("runner").permission(AuthorizationPermission.EXEC).permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).role("pheidippides").permission(AuthorizationPermission.EXEC).permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).role("admin").permission(AuthorizationPermission.ALL);
   authConfig.role("runner").role("pheidippides").role("admin");
-  return TestCacheManagerFactory.createCacheManager(global,config);
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(global,config);
+  Security.doAs(ADMIN,new PrivilegedExceptionAction<Void>(){
+    @Override public Void run() throws Exception {
+      cm.getCache(ScriptingTest.CACHE_NAME);
+      cm.getCache(SecureScriptingTest.CACHE_NAME);
+      return null;
+    }
+  }
+);
+  return cm;
 }

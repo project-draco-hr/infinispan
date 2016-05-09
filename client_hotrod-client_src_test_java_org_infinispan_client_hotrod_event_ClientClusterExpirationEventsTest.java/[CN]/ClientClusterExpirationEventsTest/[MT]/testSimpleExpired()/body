@@ -1,16 +1,2 @@
 {
-  final Integer key0=HotRodClientTestingUtil.getIntKeyForServer(server(0));
-  final EventLogListener<Integer> eventListener=new EventLogListener<>();
-  withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
-    @Override public void call(){
-      RemoteCache<Integer,String> remote=client(0).getCache();
-      eventListener.expectNoEvents();
-      remote.put(key0,"one",10,TimeUnit.MINUTES);
-      eventListener.expectOnlyCreatedEvent(key0,cache(0));
-      ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-      assertNull(remote.get(key0));
-      eventListener.expectOnlyExpiredEvent(key0,cache(0));
-    }
-  }
-);
 }

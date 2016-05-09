@@ -1,23 +1,2 @@
 {
-  final Integer key0=HotRodClientTestingUtil.getIntKeyForServer(server(0));
-  final Integer key1=HotRodClientTestingUtil.getIntKeyForServer(server(1));
-  for (  HotRodServer server : servers)   server.addCacheEventFilterFactory("static-filter-factory",new StaticCacheEventFilterFactory(key1));
-  final StaticFilteredEventLogListener<Integer> eventListener=new StaticFilteredEventLogListener<>();
-  withClientListener(eventListener,new RemoteCacheManagerCallable(client(0)){
-    @Override public void call(){
-      RemoteCache<Integer,String> remote=client(0).getCache();
-      eventListener.expectNoEvents();
-      remote.put(key0,"one",10,TimeUnit.MINUTES);
-      eventListener.expectNoEvents();
-      remote.put(key1,"two",10,TimeUnit.MINUTES);
-      eventListener.expectOnlyCreatedEvent(key1,cache(1));
-      ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-      ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-      assertNull(remote.get(key0));
-      eventListener.expectNoEvents();
-      assertNull(remote.get(key1));
-      eventListener.expectOnlyExpiredEvent(key1,cache(1));
-    }
-  }
-);
 }

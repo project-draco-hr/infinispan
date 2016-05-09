@@ -1,23 +1,2 @@
 {
-  final Integer key0=HotRodClientTestingUtil.getIntKeyForServer(server(0));
-  final Integer key1=HotRodClientTestingUtil.getIntKeyForServer(server(1));
-  final FilterCustomEventLogListener eventListener=new FilterCustomEventLogListener();
-  withClientListener(eventListener,new Object[]{key0},null,new RemoteCacheManagerCallable(client(0)){
-    @Override public void call(){
-      RemoteCache<Integer,String> remote=client(0).getCache();
-      remote.put(key0,"one");
-      eventListener.expectCreatedEvent(new CustomEvent(key0,null,1));
-      remote.put(key0,"newone");
-      eventListener.expectModifiedEvent(new CustomEvent(key0,null,2));
-      remote.put(key1,"two");
-      eventListener.expectCreatedEvent(new CustomEvent(key1,"two",1));
-      remote.put(key1,"dos");
-      eventListener.expectModifiedEvent(new CustomEvent(key1,"dos",2));
-      remote.remove(key0);
-      eventListener.expectRemovedEvent(new CustomEvent(key0,null,3));
-      remote.remove(key1);
-      eventListener.expectRemovedEvent(new CustomEvent(key1,null,3));
-    }
-  }
-);
 }

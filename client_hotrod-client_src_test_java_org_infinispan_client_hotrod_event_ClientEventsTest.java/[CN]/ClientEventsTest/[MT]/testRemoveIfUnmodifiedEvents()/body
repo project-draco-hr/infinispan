@@ -1,19 +1,2 @@
 {
-  final EventLogListener<Integer> eventListener=new EventLogListener<>();
-  withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
-    @Override public void call(){
-      RemoteCache<Integer,String> cache=rcm.getCache();
-      eventListener.expectNoEvents();
-      cache.removeWithVersion(1,0);
-      eventListener.expectNoEvents();
-      cache.putIfAbsent(1,"one");
-      eventListener.expectOnlyCreatedEvent(1,cache());
-      cache.removeWithVersion(1,0);
-      eventListener.expectNoEvents();
-      VersionedValue<String> versioned=cache.getVersioned(1);
-      cache.removeWithVersion(1,versioned.getVersion());
-      eventListener.expectOnlyRemovedEvent(1,cache());
-    }
-  }
-);
 }

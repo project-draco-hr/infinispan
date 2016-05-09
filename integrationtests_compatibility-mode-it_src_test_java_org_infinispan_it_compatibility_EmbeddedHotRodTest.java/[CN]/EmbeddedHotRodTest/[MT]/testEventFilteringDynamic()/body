@@ -1,7 +1,7 @@
 {
-  DynamicFilteredEventLogListener<Integer> eventListener=new DynamicFilteredEventLogListener<>(true);
-  Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
   RemoteCache<Integer,String> remote=cacheFactory.getHotRodCache();
+  DynamicFilteredEventLogListener<Integer> eventListener=new DynamicFilteredEventLogListener<>(remote);
+  Cache<Integer,String> embedded=cacheFactory.getEmbeddedCache();
   remote.addClientListener(eventListener,new Object[]{3},null);
   try {
     eventListener.expectNoEvents();
@@ -13,7 +13,7 @@
     eventListener.expectNoEvents();
     remote.put(3,"three");
     assertEquals("three",embedded.get(3));
-    eventListener.expectOnlyCreatedEvent(3,embedded);
+    eventListener.expectOnlyCreatedEvent(3);
     remote.replace(1,"new-one");
     assertEquals("new-one",embedded.get(1));
     eventListener.expectNoEvents();
@@ -22,7 +22,7 @@
     eventListener.expectNoEvents();
     remote.replace(3,"new-three");
     assertEquals("new-three",embedded.get(3));
-    eventListener.expectOnlyModifiedEvent(3,embedded);
+    eventListener.expectOnlyModifiedEvent(3);
     remote.remove(1);
     assertNull(embedded.get(1));
     eventListener.expectNoEvents();
@@ -31,7 +31,7 @@
     eventListener.expectNoEvents();
     remote.remove(3);
     assertNull(embedded.get(3));
-    eventListener.expectOnlyRemovedEvent(3,embedded);
+    eventListener.expectOnlyRemovedEvent(3);
   }
   finally {
     remote.removeClientListener(eventListener);

@@ -1,21 +1,2 @@
 {
-  final EventLogListener<String> eventListener=new EventLogListener<>();
-  withClientListener(eventListener,new RemoteCacheManagerCallable(remoteCacheManager){
-    @Override public void call(){
-      RemoteCache<String,Integer> cache=rcm.getCache();
-      eventListener.expectNoEvents();
-      cache.put("uno",1);
-      eventListener.expectOnlyCreatedEvent("uno",cache());
-      try {
-        cache.put("FailFailFail",99);
-        Assert.fail("SocketTimeoutException expected");
-      }
- catch (      HotRodClientException e) {
-        assertTrue(e.getCause() instanceof SocketTimeoutException);
-      }
-      cache.put("dos",2);
-      eventListener.expectOnlyCreatedEvent("dos",cache());
-    }
-  }
-);
 }
