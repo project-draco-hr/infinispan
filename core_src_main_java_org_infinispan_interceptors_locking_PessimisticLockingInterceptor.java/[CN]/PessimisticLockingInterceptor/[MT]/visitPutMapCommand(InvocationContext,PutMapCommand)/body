@@ -1,14 +1,2 @@
 {
-  try {
-    if (!hasSkipLocking(command)) {
-      final Collection<Object> affectedKeys=command.getMap().keySet();
-      acquireAllRemoteIfNeeded(ctx,affectedKeys,command);
-      lockAllOrRegisterBackupLock((TxInvocationContext<?>)ctx,affectedKeys,getLockTimeoutMillis(command));
-    }
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  Throwable te) {
-    releaseLocksOnFailureBeforePrepare(ctx);
-    throw te;
-  }
 }

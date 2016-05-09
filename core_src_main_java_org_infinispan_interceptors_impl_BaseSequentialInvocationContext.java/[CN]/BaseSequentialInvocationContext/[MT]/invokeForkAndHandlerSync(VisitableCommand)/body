@@ -1,0 +1,17 @@
+{
+  action=INVOKE_NEXT;
+  ForkInfo forkInfo=(ForkInfo)actionValue;
+  Object forkReturnValue=null;
+  Throwable throwable=null;
+  try {
+    forkReturnValue=forkInvocationSync(forkInfo.newCommand);
+  }
+ catch (  Throwable t) {
+    throwable=t;
+  }
+  if (trace) {
+    log.tracef("Invoking fork return handler %s with return value/exception: %s/%s",className(forkInfo.forkReturnHandler),className(forkReturnValue),className(throwable));
+  }
+  CompletableFuture handlerFuture=forkInfo.forkReturnHandler.handle(this,command,forkReturnValue,throwable);
+  CompletableFutures.await(handlerFuture);
+}

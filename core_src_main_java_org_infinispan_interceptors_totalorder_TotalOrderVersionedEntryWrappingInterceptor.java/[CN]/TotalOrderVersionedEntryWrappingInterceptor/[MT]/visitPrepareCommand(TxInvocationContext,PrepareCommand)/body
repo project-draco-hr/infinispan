@@ -1,21 +1,2 @@
 {
-  if (ctx.isOriginLocal()) {
-    ((VersionedPrepareCommand)command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
-    ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-    Object retVal=ctx.forkInvocationSync(command);
-    if (shouldCommitDuringPrepare(command,ctx)) {
-      commitContextEntries(ctx,null,null);
-    }
-    return ctx.shortCircuit(retVal);
-  }
-  wrapEntriesForPrepare(ctx,command);
-  Object retVal=ctx.forkInvocationSync(command);
-  EntryVersionsMap versionsMap=cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator,ctx,(VersionedPrepareCommand)command);
-  if (command.isOnePhaseCommit()) {
-    commitContextEntries(ctx,null,null);
-  }
- else {
-    if (trace)     log.tracef("Transaction %s will be committed in the 2nd phase",ctx.getGlobalTransaction().globalId());
-  }
-  return ctx.shortCircuit(versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet()));
 }

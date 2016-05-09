@@ -1,14 +1,10 @@
 {
-  try {
-    if (hasSkipLocking(command)) {
-      return ctx.shortCircuit(ctx.forkInvocationSync(command));
-    }
-    lockAllAndRecord(ctx,Arrays.asList(command.getKeys()),getLockTimeoutMillis(command));
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
+  if (hasSkipLocking(command)) {
+    return ctx.continueInvocation();
   }
-  finally {
-    if (!ctx.isInTxScope()) {
-      lockManager.unlockAll(ctx);
-    }
+  if (!ctx.isInTxScope()) {
+    ctx.onReturn(unlockAllReturnHandler);
   }
+  lockAllAndRecord(ctx,Arrays.asList(command.getKeys()),getLockTimeoutMillis(command));
+  return ctx.continueInvocation();
 }

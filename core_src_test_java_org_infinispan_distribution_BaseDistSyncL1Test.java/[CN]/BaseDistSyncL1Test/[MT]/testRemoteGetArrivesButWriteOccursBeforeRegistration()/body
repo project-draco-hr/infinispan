@@ -6,8 +6,8 @@
   ownerCache.put(key,firstValue);
   assertIsNotInL1(nonOwnerCache,key);
   CyclicBarrier getBarrier=new CyclicBarrier(3);
-  ownerCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(new BlockingInterceptor(getBarrier,GetCacheEntryCommand.class,true,false),getL1InterceptorClass());
-  backupOwnerCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(new BlockingInterceptor(getBarrier,GetCacheEntryCommand.class,true,false),getL1InterceptorClass());
+  addBlockingInterceptor(ownerCache,getBarrier,GetCacheEntryCommand.class,getL1InterceptorClass(),true);
+  addBlockingInterceptor(backupOwnerCache,getBarrier,GetCacheEntryCommand.class,getL1InterceptorClass(),true);
   try {
     Future<String> future=nonOwnerCache.getAsync(key);
     getBarrier.await(10,TimeUnit.SECONDS);

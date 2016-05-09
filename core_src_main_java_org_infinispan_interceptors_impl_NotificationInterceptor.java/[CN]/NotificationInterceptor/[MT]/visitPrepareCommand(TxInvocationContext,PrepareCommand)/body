@@ -1,5 +1,4 @@
 {
-  Object retval=ctx.forkInvocationSync(command);
-  if (command.isOnePhaseCommit())   notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(),true,ctx);
-  return ctx.shortCircuit(retval);
+  if (!command.isOnePhaseCommit())   return ctx.continueInvocation();
+  return ctx.onReturn(transactionCompleteReturnHandler);
 }

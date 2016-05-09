@@ -1,0 +1,13 @@
+{
+  boolean needBackupLocks=ctx.isOriginLocal() && (!isLockOwner(key) || isStateTransferInProgress());
+  boolean needRemoteLock=false;
+  if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+    final TxInvocationContext txContext=(TxInvocationContext)ctx;
+    LocalTransaction localTransaction=(LocalTransaction)txContext.getCacheTransaction();
+    needRemoteLock=!localTransaction.getAffectedKeys().contains(key);
+    if (!needRemoteLock) {
+      log.tracef("We already have lock for key %s, skip remote lock acquisition",key);
+    }
+  }
+  return needRemoteLock;
+}

@@ -1,9 +1,5 @@
 {
   markKeyAsRead(ctx,command,true);
-  try {
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
-  finally {
-    if (!ctx.isInTxScope())     lockManager.unlockAll(ctx);
-  }
+  if (ctx.isInTxScope())   return ctx.continueInvocation();
+  return ctx.onReturn(unlockAllReturnHandler);
 }

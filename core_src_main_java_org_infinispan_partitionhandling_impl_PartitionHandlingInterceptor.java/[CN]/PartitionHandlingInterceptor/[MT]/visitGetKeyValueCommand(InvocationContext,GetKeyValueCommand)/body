@@ -1,17 +1,3 @@
 {
-  Object key=command.getKey();
-  Object result;
-  try {
-    result=ctx.forkInvocationSync(command);
-  }
- catch (  RpcException e) {
-    if (performPartitionCheck(ctx,command)) {
-      throw log.degradedModeKeyUnavailable(key);
-    }
- else {
-      throw e;
-    }
-  }
-  postOperationPartitionCheck(ctx,command,key,result);
-  return ctx.shortCircuit(result);
+  return handleDataReadCommand(ctx,command);
 }

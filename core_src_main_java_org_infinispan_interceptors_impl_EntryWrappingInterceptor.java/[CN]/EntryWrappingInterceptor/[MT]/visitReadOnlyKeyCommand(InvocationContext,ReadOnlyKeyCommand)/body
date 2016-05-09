@@ -1,18 +1,2 @@
 {
-  try {
-    CacheEntry entry=entryFactory.wrapEntryForReading(ctx,command.getKey(),null);
-    if (entry == null && cdl.localNodeIsOwner(command.getKey())) {
-      entryFactory.wrapEntryForReading(ctx,command.getKey(),NullCacheEntry.getInstance());
-    }
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
-  finally {
-    if (!ctx.isInTxScope())     commitContextEntries(ctx,command,null);
- else {
-      CacheEntry entry=ctx.lookupEntry(command.getKey());
-      if (entry != null) {
-        entry.setSkipLookup(true);
-      }
-    }
-  }
 }

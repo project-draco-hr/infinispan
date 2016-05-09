@@ -1,18 +1,2 @@
 {
-  try {
-    Object key=command.getKey();
-    if (!hasSkipLocking(command)) {
-      acquireRemoteIfNeeded(ctx,key,command);
-      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,key,getLockTimeoutMillis(command));
-    }
-    ((TxInvocationContext<?>)ctx).addAffectedKey(key);
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  OutdatedTopologyException e) {
-    throw e;
-  }
-catch (  Throwable te) {
-    releaseLocksOnFailureBeforePrepare(ctx);
-    throw te;
-  }
 }

@@ -1,22 +1,2 @@
 {
-  CacheEntry entry=ctx.lookupEntry(key);
-  if (!valueIsMissing(entry)) {
-    return;
-  }
-  InternalCacheEntry remoteEntry=null;
-  if (writeNeedsRemoteValue(ctx,command,key)) {
-    if (!isValueAvailableLocally(dm.getReadConsistentHash(),key)) {
-      if (trace)       log.tracef("Doing a remote get for key %s",key);
-      remoteEntry=retrieveFromRemoteSource(key,ctx,false,command,false);
-      if (remoteEntry != null) {
-        entryFactory.wrapExternalEntry(ctx,key,remoteEntry,EntryFactory.Wrap.STORE,false);
-      }
-    }
-    if (remoteEntry == null) {
-      InternalCacheEntry localEntry=fetchValueLocallyIfAvailable(dm.getReadConsistentHash(),key);
-      if (localEntry != null) {
-        entryFactory.wrapExternalEntry(ctx,key,localEntry,EntryFactory.Wrap.STORE,false);
-      }
-    }
-  }
 }

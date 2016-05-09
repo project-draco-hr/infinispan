@@ -1,3 +1,6 @@
 {
-  return (ctx.isOriginLocal() && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) || (!ctx.isOriginLocal() && Configurations.isSecondPhaseAsync(cacheConfiguration)));
+  boolean shouldReleaseLocks=ctx.isOriginLocal() && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) || (!ctx.isOriginLocal() && Configurations.isSecondPhaseAsync(cacheConfiguration));
+  if (shouldReleaseLocks) {
+    lockManager.unlockAll(ctx);
+  }
 }

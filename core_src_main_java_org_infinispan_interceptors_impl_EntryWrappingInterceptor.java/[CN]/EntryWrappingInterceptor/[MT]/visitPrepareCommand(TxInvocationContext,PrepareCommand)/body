@@ -1,8 +1,7 @@
 {
   wrapEntriesForPrepare(ctx,command);
-  Object result=ctx.forkInvocationSync(command);
-  if (shouldCommitDuringPrepare(command,ctx)) {
-    commitContextEntries(ctx,null,null);
+  if (!shouldCommitDuringPrepare(command,ctx)) {
+    return ctx.continueInvocation();
   }
-  return ctx.shortCircuit(result);
+  return ctx.onReturn(commitEntriesOnSuccessReturnHandler);
 }

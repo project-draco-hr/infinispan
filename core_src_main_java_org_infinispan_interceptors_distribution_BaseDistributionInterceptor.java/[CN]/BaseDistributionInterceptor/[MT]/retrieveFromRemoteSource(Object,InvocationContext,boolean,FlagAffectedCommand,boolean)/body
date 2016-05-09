@@ -3,40 +3,5 @@
   ClusteredGetCommand get=cf.buildClusteredGetCommand(key,command.getFlagsBitSet(),acquireRemoteLock,gtx);
   get.setWrite(isWrite);
   RpcOptionsBuilder rpcOptionsBuilder=rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE,DeliverOrder.NONE);
-  int lastTopologyId=-1;
-  InternalCacheEntry value=null;
-  while (value == null) {
-    final CacheTopology cacheTopology=stateTransferManager.getCacheTopology();
-    final int currentTopologyId=cacheTopology.getTopologyId();
-    if (trace) {
-      log.tracef("Perform remote get for key %s. topologyId=%s, currentTopologyId=%s",key,lastTopologyId,currentTopologyId);
-    }
-    List<Address> targets;
-    if (lastTopologyId < currentTopologyId) {
-      lastTopologyId=currentTopologyId;
-      targets=new ArrayList<>(cacheTopology.getReadConsistentHash().locateOwners(key));
-    }
- else     if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
-      lastTopologyId=currentTopologyId + 1;
-      targets=new ArrayList<>(cacheTopology.getPendingCH().locateOwners(key));
-      targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
-      if (targets.isEmpty()) {
-        if (trace) {
-          log.tracef("No valid values found for key '%s' (topologyId=%s).",key,currentTopologyId);
-        }
-        break;
-      }
-    }
- else {
-      if (trace) {
-        log.tracef("No valid values found for key '%s' (topologyId=%s).",key,currentTopologyId);
-      }
-      break;
-    }
-    value=invokeClusterGetCommandRemotely(targets,rpcOptionsBuilder,get,key);
-    if (trace) {
-      log.tracef("Remote get of key '%s' (topologyId=%s) returns %s",key,currentTopologyId,value);
-    }
-  }
-  return value;
+  return handleRemoteValue(key,null,get,rpcOptionsBuilder,-1);
 }

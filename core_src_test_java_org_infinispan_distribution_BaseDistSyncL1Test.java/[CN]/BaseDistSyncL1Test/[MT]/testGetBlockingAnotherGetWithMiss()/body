@@ -1,25 +1,2 @@
 {
-  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
-  final Cache<Object,String> ownerCache=getFirstOwner(key);
-  assertIsNotInL1(nonOwnerCache,key);
-  CheckPoint checkPoint=new CheckPoint();
-  L1Manager l1Manager=waitUntilL1Registration(nonOwnerCache,checkPoint);
-  try {
-    log.warn("Doing get here - ignore all previous");
-    Future<String> getFuture=nonOwnerCache.getAsync(key);
-    checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked",10,TimeUnit.SECONDS);
-    Future<String> getFuture2=nonOwnerCache.getAsync(key);
-    try {
-      getFuture2.get(1,TimeUnit.SECONDS);
-      fail("Should have thrown a TimeoutException");
-    }
- catch (    TimeoutException e) {
-    }
-    checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
-    Assert.assertNull(getFuture.get(10,TimeUnit.SECONDS));
-    Assert.assertNull(getFuture2.get(10,TimeUnit.SECONDS));
-  }
-  finally {
-    TestingUtil.replaceComponent(nonOwnerCache,L1Manager.class,l1Manager,true);
-  }
 }

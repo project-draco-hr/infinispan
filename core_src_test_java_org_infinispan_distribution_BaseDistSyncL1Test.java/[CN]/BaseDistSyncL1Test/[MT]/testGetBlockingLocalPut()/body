@@ -1,27 +1,2 @@
 {
-  final Cache<Object,String> nonOwnerCache=getFirstNonOwner(key);
-  final Cache<Object,String> ownerCache=getFirstOwner(key);
-  ownerCache.put(key,firstValue);
-  assertIsNotInL1(nonOwnerCache,key);
-  CheckPoint checkPoint=new CheckPoint();
-  waitUntilAboutToAcquireLock(nonOwnerCache,checkPoint);
-  log.warn("Doing get here - ignore all previous");
-  Future<String> getFuture=nonOwnerCache.getAsync(key);
-  checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked",10,TimeUnit.SECONDS);
-  Future<String> putFuture=nonOwnerCache.putAsync(key,secondValue);
-  try {
-    putFuture.get(1,TimeUnit.SECONDS);
-    fail("Should have thrown a TimeoutException");
-  }
- catch (  TimeoutException e) {
-  }
-  checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
-  Assert.assertEquals(firstValue,getFuture.get(10,TimeUnit.SECONDS));
-  Assert.assertEquals(firstValue,putFuture.get(10,TimeUnit.SECONDS));
-  if (nonOwnerCache.getCacheConfiguration().transaction().transactionMode() == TransactionMode.TRANSACTIONAL) {
-    assertIsInL1(nonOwnerCache,key);
-  }
- else {
-    assertIsNotInL1(nonOwnerCache,key);
-  }
 }

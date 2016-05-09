@@ -1,9 +1,18 @@
 {
   InterceptorListNode savedInterceptorNode=nextInterceptor;
+  ReturnHandlerNode savedReturnHandler=nextReturnHandler;
+  nextReturnHandler=null;
   try {
-    return doInvokeNextSync(newCommand,savedInterceptorNode);
+    Object returnValue=invokeInterceptorsSync(newCommand,savedInterceptorNode);
+    return invokeReturnHandlersSync(newCommand,returnValue,null);
   }
-  finally {
+ catch (  Throwable t) {
+    Throwable throwable=extractCompletableFutureException(t);
+    return invokeReturnHandlersSync(newCommand,null,throwable);
+  }
+ finally {
+    action=INVOKE_NEXT;
     nextInterceptor=savedInterceptorNode;
+    nextReturnHandler=savedReturnHandler;
   }
 }

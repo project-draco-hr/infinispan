@@ -1,23 +1,2 @@
 {
-  if (isLocalOnly(command)) {
-    return ctx.continueInvocation();
-  }
-  CacheTopology beginTopology=stateTransferManager.getCacheTopology();
-  consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
-  updateTopologyId(command);
-  try {
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  CacheException e) {
-    Throwable ce=e;
-    while (ce instanceof RemoteException) {
-      ce=ce.getCause();
-    }
-    if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
-    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",currentTopologyId(),command);
-    int newTopologyId=Math.max(currentTopologyId(),command.getTopologyId() + 1);
-    command.setTopologyId(newTopologyId);
-    waitForTopology(newTopologyId);
-    return visitReadCommand(ctx,command,consistentHashUpdater);
-  }
 }

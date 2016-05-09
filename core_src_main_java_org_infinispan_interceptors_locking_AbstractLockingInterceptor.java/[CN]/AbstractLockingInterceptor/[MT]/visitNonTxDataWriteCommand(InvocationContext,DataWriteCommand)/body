@@ -1,12 +1,8 @@
 {
-  try {
-    if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
-      return ctx.shortCircuit(ctx.forkInvocationSync(command));
-    }
-    lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
+  if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
+    return ctx.continueInvocation();
   }
-  finally {
-    lockManager.unlockAll(ctx);
-  }
+  ctx.onReturn(unlockAllReturnHandler);
+  lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
+  return ctx.continueInvocation();
 }

@@ -1,16 +1,2 @@
 {
-  Object[] compositeKeys=command.getCompositeKeys();
-  try {
-    if (!hasSkipLocking(command)) {
-      Set<Object> keysToLock=new HashSet<>(Arrays.asList(compositeKeys));
-      acquireAllRemoteIfNeeded(ctx,keysToLock,command);
-      if (cdl.localNodeIsOwner(command.getKey())) {
-        lockAllAndRecord(ctx,keysToLock,getLockTimeoutMillis(command));
-      }
-    }
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  Throwable te) {
-    throw cleanLocksAndRethrow(ctx,te);
-  }
 }

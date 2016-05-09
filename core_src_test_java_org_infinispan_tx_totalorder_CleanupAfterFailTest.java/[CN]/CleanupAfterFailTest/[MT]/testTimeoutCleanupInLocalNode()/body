@@ -1,15 +1,15 @@
 {
   final CountDownLatch block=new CountDownLatch(1);
-  final CommandInterceptor interceptor=new BaseCustomInterceptor(){
-    @Override public Object visitPrepareCommand(    TxInvocationContext ctx,    PrepareCommand command) throws Throwable {
+  final BaseCustomSequentialInterceptor interceptor=new BaseCustomSequentialInterceptor(){
+    @Override public CompletableFuture<Void> visitPrepareCommand(    TxInvocationContext ctx,    PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
         block.await();
       }
-      return invokeNextInterceptor(ctx,command);
+      return ctx.continueInvocation();
     }
   }
 ;
-  final InterceptorChain chain=TestingUtil.extractComponent(cache(0),InterceptorChain.class);
+  final SequentialInterceptorChain chain=TestingUtil.extractComponent(cache(0),SequentialInterceptorChain.class);
   final Object key1=new MagicKey(cache(0));
   final Object key2=new MagicKey(cache(1));
   try {

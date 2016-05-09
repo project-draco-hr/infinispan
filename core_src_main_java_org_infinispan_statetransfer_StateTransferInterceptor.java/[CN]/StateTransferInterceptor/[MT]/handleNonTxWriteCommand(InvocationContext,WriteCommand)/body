@@ -1,28 +1,2 @@
 {
-  if (trace)   log.tracef("handleNonTxWriteCommand for command %s, topology id %d",command,command.getTopologyId());
-  if (isLocalOnly(command)) {
-    return ctx.continueInvocation();
-  }
-  updateTopologyId(command);
-  if (!ctx.isOriginLocal()) {
-    return ctx.continueInvocation();
-  }
-  int commandTopologyId=command.getTopologyId();
-  try {
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  CacheException e) {
-    Throwable ce=e;
-    while (ce instanceof RemoteException) {
-      ce=ce.getCause();
-    }
-    if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))     throw e;
-    int currentTopologyId=currentTopologyId();
-    if (trace)     log.tracef("Retrying command because of topology change, current topology is %d: %s",currentTopologyId,command);
-    int newTopologyId=Math.max(currentTopologyId,commandTopologyId + 1);
-    command.setTopologyId(newTopologyId);
-    waitForTransactionData(newTopologyId);
-    command.addFlag(Flag.COMMAND_RETRY);
-    return handleNonTxWriteCommand(ctx,command);
-  }
 }

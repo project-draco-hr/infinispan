@@ -1,18 +1,2 @@
 {
-  try {
-    if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-      Object key=command.getKey();
-      acquireRemoteIfNeeded(ctx,key,command);
-      lockOrRegisterBackupLock((TxInvocationContext<?>)ctx,key,getLockTimeoutMillis(command));
-      ((TxInvocationContext<?>)ctx).addAffectedKey(key);
-    }
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
-  }
- catch (  Throwable t) {
-    releaseLocksOnFailureBeforePrepare(ctx);
-    throw t;
-  }
- finally {
-    if (!ctx.isInTxScope())     lockManager.unlockAll(ctx);
-  }
 }

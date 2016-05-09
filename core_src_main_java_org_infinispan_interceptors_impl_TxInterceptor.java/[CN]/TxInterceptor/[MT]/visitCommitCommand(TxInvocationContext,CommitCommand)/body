@@ -1,18 +1,2 @@
 {
-  GlobalTransaction gtx=ctx.getGlobalTransaction();
-  if (!ctx.isOriginLocal()) {
-    if (txTable.isTransactionCompleted(gtx)) {
-      if (trace)       log.tracef("Transaction %s already completed, skipping commit",gtx);
-      return ctx.shortCircuit(null);
-    }
-    if (!isTotalOrder) {
-      replayRemoteTransactionIfNeeded((RemoteTxInvocationContext)ctx,command.getTopologyId());
-    }
-  }
-  if (this.statisticsEnabled)   commits.incrementAndGet();
-  Object result=ctx.forkInvocationSync(command);
-  if (!ctx.isOriginLocal() || isTotalOrder) {
-    txTable.remoteTransactionCommitted(gtx,false);
-  }
-  return ctx.shortCircuit(result);
 }

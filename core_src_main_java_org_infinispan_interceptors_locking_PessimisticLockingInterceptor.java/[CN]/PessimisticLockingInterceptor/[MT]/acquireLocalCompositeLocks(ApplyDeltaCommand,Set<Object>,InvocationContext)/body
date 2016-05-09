@@ -1,0 +1,11 @@
+{
+  if (cdl.localNodeIsPrimaryOwner(command.getKey())) {
+    lockAllAndRecord(ctx1,keysToLock,getLockTimeoutMillis(command));
+  }
+ else   if (cdl.localNodeIsOwner(command.getKey())) {
+    TxInvocationContext<?> txContext=(TxInvocationContext<?>)ctx1;
+    for (    Object key : keysToLock) {
+      txContext.getCacheTransaction().addBackupLockForKey(key);
+    }
+  }
+}

@@ -1,15 +1,6 @@
 {
-  try {
-    if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
-      streamSummaryContainer.addPut(command.getKey(),isRemote(command.getKey()));
-    }
-    return ctx.shortCircuit(ctx.forkInvocationSync(command));
+  if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
+    streamSummaryContainer.addPut(command.getKey(),isRemote(command.getKey()));
   }
- catch (  WriteSkewException wse) {
-    Object key=wse.getKey();
-    if (streamSummaryContainer.isEnabled() && key != null && ctx.isOriginLocal()) {
-      streamSummaryContainer.addWriteSkewFailed(key);
-    }
-    throw wse;
-  }
+  return ctx.onReturn(writeSkewReturnHandler);
 }

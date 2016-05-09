@@ -1,0 +1,19 @@
+{
+  if (trace)   log.tracef("Invoked with command %s and InvocationContext [%s]",command,ctx);
+  if (ctx == null)   throw new IllegalStateException("Null context not allowed!!");
+  ComponentStatus status=componentRegistry.getStatus();
+  if (command.ignoreCommandOnStatus(status)) {
+    log.debugf("Status: %s : Ignoring %s command",status,command);
+    return ctx.shortCircuit(null);
+  }
+ else {
+    if (status.isTerminated()) {
+      throw log.cacheIsTerminated(getCacheNamePrefix());
+    }
+ else     if (stoppingAndNotAllowed(status,ctx)) {
+      throw log.cacheIsStopping(getCacheNamePrefix());
+    }
+  }
+  invocationContextContainer.setThreadLocal(ctx);
+  return ctx.onReturn(defaultReturnHandler);
+}

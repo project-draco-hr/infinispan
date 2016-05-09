@@ -10,7 +10,12 @@
       }
       Method m=meta.getMethod();
       if (m == null) {
-        m=ReflectionUtil.findMethod(clazz,meta.getMethodName(),parameterClasses);
+        try {
+          m=ReflectionUtil.findMethod(clazz,meta.getMethodName(),parameterClasses);
+        }
+ catch (        CacheException e) {
+          throw new CacheException("Injection method not found in class " + clazz + ": "+ meta.getMethodName()+ Arrays.toString(parameterClasses),e);
+        }
         meta.setMethod(m);
       }
     }

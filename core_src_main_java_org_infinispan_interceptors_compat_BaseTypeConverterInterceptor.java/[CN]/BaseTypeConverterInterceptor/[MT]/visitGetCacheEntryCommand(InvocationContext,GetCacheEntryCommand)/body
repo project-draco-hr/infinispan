@@ -1,17 +1,2 @@
 {
-  Object key=command.getKey();
-  TypeConverter<Object,Object,Object,Object> converter=determineTypeConverter(command.getFlags());
-  if (ctx.isOriginLocal()) {
-    command.setKey(converter.boxKey(key));
-  }
-  Object ret=ctx.forkInvocationSync(command);
-  if (ret != null) {
-    CacheEntry entry=(CacheEntry)ret;
-    Object returnValue=entry.getValue();
-    if (needsUnboxing(ctx)) {
-      returnValue=converter.unboxValue(entry.getValue());
-    }
-    return ctx.shortCircuit(entryFactory.create(entry.getKey(),returnValue,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle()));
-  }
-  return ctx.shortCircuit(null);
 }

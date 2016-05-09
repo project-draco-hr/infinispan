@@ -1,26 +1,2 @@
 {
-  ResponseFilter filter=new ClusteredGetResponseValidityFilter(targets,rpcManager.getAddress());
-  RpcOptions options=rpcOptionsBuilder.responseFilter(filter).build();
-  Map<Address,Response> responses=rpcManager.invokeRemotely(targets,get,options);
-  if (!responses.isEmpty()) {
-    for (    Response r : responses.values()) {
-      if (r instanceof SuccessfulResponse) {
-        SuccessfulResponse response=(SuccessfulResponse)r;
-        Object responseValue=response.getResponseValue();
-        if (responseValue == null) {
-          continue;
-        }
-        InternalCacheValue cacheValue=(InternalCacheValue)responseValue;
-        InternalCacheEntry ice=cacheValue.toInternalCacheEntry(key);
-        if (rvrl != null) {
-          rvrl.remoteValueFound(ice);
-        }
-        return ice;
-      }
-    }
-  }
-  if (rvrl != null) {
-    rvrl.remoteValueNotFound(key);
-  }
-  return null;
 }

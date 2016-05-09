@@ -1,0 +1,36 @@
+{
+  if (!ctx.isOriginLocal())   return;
+  ExtendedStatistic stat=null;
+  if (throwable instanceof TimeoutException) {
+    if (isLockTimeout(((TimeoutException)throwable))) {
+      stat=NUM_LOCK_FAILED_TIMEOUT;
+    }
+  }
+ else   if (throwable instanceof DeadlockDetectedException) {
+    stat=NUM_LOCK_FAILED_DEADLOCK;
+  }
+ else   if (throwable instanceof WriteSkewException) {
+    stat=NUM_WRITE_SKEW;
+  }
+ else   if (throwable instanceof RemoteException) {
+    Throwable cause=throwable.getCause();
+    while (cause != null) {
+      if (cause instanceof TimeoutException) {
+        stat=NUM_LOCK_FAILED_TIMEOUT;
+        break;
+      }
+ else       if (cause instanceof DeadlockDetectedException) {
+        stat=NUM_LOCK_FAILED_DEADLOCK;
+        break;
+      }
+ else       if (cause instanceof WriteSkewException) {
+        stat=NUM_WRITE_SKEW;
+        break;
+      }
+      cause=cause.getCause();
+    }
+  }
+  if (stat != null) {
+    cacheStatisticManager.increment(stat,globalTransaction,true);
+  }
+}
