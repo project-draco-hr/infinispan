@@ -1,12 +1,16 @@
 {
   ObjectFilter.FilterResult filterResult=filterAndConverter.filterAndConvert(key,newValue,newMetadata);
   if (filterResult != null) {
-    try {
-      return ProtobufUtil.toWrappedByteArray(serCtx,new FilterResult(filterResult.getInstance(),filterResult.getProjection(),filterResult.getSortProjection()));
+    Object result=new FilterResult(filterResult.getInstance(),filterResult.getProjection(),filterResult.getSortProjection());
+    if (!isCompatMode) {
+      try {
+        result=ProtobufUtil.toWrappedByteArray(serCtx,result);
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
     }
- catch (    IOException e) {
-      throw new RuntimeException(e);
-    }
+    return result;
   }
   return null;
 }
