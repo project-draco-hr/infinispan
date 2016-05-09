@@ -1,0 +1,23 @@
+{
+  HotRodHeader h=cdc.header();
+switch (h.op()) {
+case ContainsKeyRequest:
+    writeResponse(cdc,ctx.channel(),cdc.containsKey());
+  break;
+case GetRequest:
+case GetWithVersionRequest:
+writeResponse(cdc,ctx.channel(),cdc.get());
+break;
+case GetWithMetadataRequest:
+writeResponse(cdc,ctx.channel(),cdc.getKeyMetadata());
+break;
+case PingRequest:
+writeResponse(cdc,ctx.channel(),new Response(h.version(),h.messageId(),h.cacheName(),h.clientIntel(),OperationResponse.PingResponse(),OperationStatus.Success(),h.topologyId()));
+break;
+case StatsRequest:
+writeResponse(cdc,ctx.channel(),cdc.decoder().createStatsResponse(cdc,transport));
+break;
+default :
+super.channelRead(ctx,msg);
+}
+}
