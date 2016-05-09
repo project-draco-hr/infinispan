@@ -1,0 +1,16 @@
+{
+  final Class<? extends AsyncInterceptor> interceptorClass=interceptor.getClass();
+  try {
+    log.debug("Wait for all executions paths to be ready to perform calls");
+    barrier.await();
+    for (int i=0; i < 2000; i++) {
+      ic.removeInterceptor(interceptorClass);
+      ic.addInterceptor(interceptor,1);
+    }
+    return null;
+  }
+  finally {
+    log.debug("Wait for all execution paths to finish");
+    barrier.await();
+  }
+}

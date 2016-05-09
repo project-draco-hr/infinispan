@@ -1,17 +1,17 @@
 {
   Attribute<Class> interceptorClassAttribute=attributes.attribute(INTERCEPTOR_CLASS);
-  Attribute<SequentialInterceptor> interceptorAttribute=attributes.attribute(INTERCEPTOR);
+  Attribute<AsyncInterceptor> interceptorAttribute=attributes.attribute(INTERCEPTOR);
   if (!interceptorClassAttribute.isNull() && !interceptorAttribute.isNull()) {
     throw log.interceptorClassAndInstanceDefined(interceptorClassAttribute.get().getName(),interceptorAttribute.get().toString());
   }
  else   if (interceptorClassAttribute.isNull() && interceptorAttribute.isNull()) {
     throw log.customInterceptorMissingClass();
   }
-  Class<? extends SequentialInterceptor> interceptorClass=interceptorClassAttribute.get();
+  Class<? extends AsyncInterceptor> interceptorClass=interceptorClassAttribute.get();
   if (interceptorClass == null) {
     interceptorClass=interceptorAttribute.get().getClass();
   }
-  if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass) && !BaseCustomSequentialInterceptor.class.isAssignableFrom(interceptorClass)) {
+  if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass) && !BaseCustomAsyncInterceptor.class.isAssignableFrom(interceptorClass)) {
     final String className=interceptorClass.getName();
     if (!className.startsWith("org.infinispan.")) {
       log.suggestCustomInterceptorInheritance(className);

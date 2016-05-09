@@ -1,8 +1,8 @@
 {
   TransactionMode transactionMode=configuration.transaction().transactionMode();
   boolean needsVersionAwareComponents=transactionMode.isTransactional() && Configurations.isVersioningEnabled(configuration);
-  SequentialInterceptorChain interceptorChain=new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
-  componentRegistry.registerComponent(interceptorChain,SequentialInterceptorChain.class);
+  AsyncInterceptorChain interceptorChain=new AsyncInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
+  componentRegistry.registerComponent(interceptorChain,AsyncInterceptorChain.class);
   componentRegistry.registerComponent(new InterceptorChain(interceptorChain),InterceptorChain.class);
   boolean invocationBatching=configuration.invocationBatching().enabled();
   boolean isTotalOrder=configuration.transaction().transactionProtocol().isTotalOrder();
@@ -45,7 +45,7 @@
   }
   if (transactionMode.isTransactional())   interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(),TxInterceptor.class),false);
   if (isUsingMarshalledValues(configuration)) {
-    SequentialInterceptor interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
+    AsyncInterceptor interceptor=createInterceptor(new MarshalledValueInterceptor(),MarshalledValueInterceptor.class);
     interceptorChain.appendInterceptor(interceptor,false);
   }
   if (configuration.transaction().useEagerLocking()) {
@@ -159,7 +159,7 @@ interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterc
 break;
 case LOCAL:
 }
-SequentialInterceptor callInterceptor=createInterceptor(new CallInterceptor(),CallInterceptor.class);
+AsyncInterceptor callInterceptor=createInterceptor(new CallInterceptor(),CallInterceptor.class);
 interceptorChain.appendInterceptor(callInterceptor,false);
 log.trace("Finished building default interceptor chain.");
 buildCustomInterceptors(interceptorChain,configuration.customInterceptors());

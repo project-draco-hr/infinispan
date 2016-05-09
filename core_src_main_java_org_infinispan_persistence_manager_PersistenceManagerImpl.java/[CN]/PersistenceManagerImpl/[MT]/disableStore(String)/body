@@ -17,8 +17,8 @@
       storesMutex.writeLock().unlock();
     }
     if (loaders.isEmpty() && writers.isEmpty()) {
-      SequentialInterceptorChain chain=cache.getAdvancedCache().getSequentialInterceptorChain();
-      SequentialInterceptor loaderInterceptor=chain.findInterceptorExtending(CacheLoaderInterceptor.class);
+      AsyncInterceptorChain chain=cache.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptor loaderInterceptor=chain.findInterceptorExtending(CacheLoaderInterceptor.class);
       if (loaderInterceptor == null) {
         log.persistenceWithoutCacheLoaderInterceptor();
       }
@@ -26,7 +26,7 @@
         ((CacheLoaderInterceptor)loaderInterceptor).disableInterceptor();
         chain.removeInterceptor(loaderInterceptor.getClass());
       }
-      SequentialInterceptor writerInterceptor=chain.findInterceptorExtending(CacheWriterInterceptor.class);
+      AsyncInterceptor writerInterceptor=chain.findInterceptorExtending(CacheWriterInterceptor.class);
       if (writerInterceptor == null) {
         log.persistenceWithoutCacheWriteInterceptor();
       }
