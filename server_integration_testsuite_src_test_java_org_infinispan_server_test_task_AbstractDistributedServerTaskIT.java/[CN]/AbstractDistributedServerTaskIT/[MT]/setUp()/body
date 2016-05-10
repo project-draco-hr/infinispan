@@ -1,0 +1,15 @@
+{
+  if (managers == null) {
+    Configuration conf;
+    managers=new ArrayList<>();
+    for (    RemoteInfinispanServer server : getServers()) {
+      conf=new ConfigurationBuilder().addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName()).port(server.getHotrodEndpoint().getPort()).build();
+      managers.add(new RemoteCacheManager(conf,true));
+    }
+  }
+  for (  RemoteCacheManager rcm : managers) {
+    rcm.getCache().clear();
+    rcm.getCache(CACHE_NAME).clear();
+    rcm.getCache(CACHE_NAME_TX).clear();
+  }
+}
