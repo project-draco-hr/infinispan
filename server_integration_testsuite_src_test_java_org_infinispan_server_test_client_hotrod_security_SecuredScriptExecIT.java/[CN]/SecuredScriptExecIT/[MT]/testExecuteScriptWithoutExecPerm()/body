@@ -1,0 +1,17 @@
+{
+  uploadScript("test.js");
+  SaslConfigurationBuilder config=new SaslConfigurationBuilder("DIGEST-MD5");
+  config.forIspnServer(server1).withServerName("node0");
+  config.forCredentials(WRITER_LOGIN,WRITER_PASSWD);
+  RemoteCacheManager writerRCM=new RemoteCacheManager(config.build(),true);
+  RemoteCache cache=writerRCM.getCache(CACHE_NAME);
+  Map<String,String> params=new HashMap<>();
+  params.put("key","test_key");
+  params.put("value","test_value");
+  try {
+    cache.execute("test.js",params);
+  }
+  finally {
+    writerRCM.stop();
+  }
+}

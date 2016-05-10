@@ -1,0 +1,13 @@
+{
+  SaslConfigurationBuilder config=new SaslConfigurationBuilder("DIGEST-MD5");
+  config.forIspnServer(server1).withServerName("node0");
+  config.forCredentials(EXECUTOR_LOGIN,EXECUTOR_PASSWORD);
+  RemoteCacheManager execRCM=new RemoteCacheManager(config.build(),true);
+  RemoteCache scriptCache=execRCM.getCache(ScriptingManager.SCRIPT_CACHE);
+  try {
+    scriptCache.put("shouldNotPass","1+1");
+  }
+  finally {
+    execRCM.stop();
+  }
+}
