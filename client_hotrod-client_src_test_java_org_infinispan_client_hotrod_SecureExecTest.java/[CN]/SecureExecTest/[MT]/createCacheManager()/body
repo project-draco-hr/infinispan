@@ -1,13 +1,11 @@
 {
   GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
   GlobalAuthorizationConfigurationBuilder globalRoles=global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
-  globalRoles.role("user").permission(AuthorizationPermission.ALL).permission(AuthorizationPermission.EXEC);
+  globalRoles.role("admin").permission(AuthorizationPermission.ALL).role("RWEuser").permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE).permission(AuthorizationPermission.EXEC).role("RWuser").permission(AuthorizationPermission.READ).permission(AuthorizationPermission.WRITE);
   ConfigurationBuilder config=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-  config.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller()).security().authorization().enable().role("user");
+  config.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
   cacheManager=TestCacheManagerFactory.createCacheManager(global,config);
-  ConfigurationBuilder config2=TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-  config2.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).security().authorization().enable().role("user");
-  cacheManager.defineConfiguration(CACHE_NAME,config2.build());
+  cacheManager.defineConfiguration(CACHE_NAME,config.build());
   cacheManager.getCache();
   return cacheManager;
 }
