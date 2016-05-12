@@ -1,0 +1,38 @@
+{
+  final AdvancedCache<Object,Object> cache0=advancedCache(0);
+  AdvancedCache<Object,Object> cache1=advancedCache(1);
+  AdvancedCache<Object,Object> cache2=advancedCache(2);
+  ControlledRpcManager crm=new ControlledRpcManager(cache0.getRpcManager());
+  cache0.getComponentRegistry().registerComponent(crm,RpcManager.class);
+  cache0.getComponentRegistry().rewire();
+  crm.blockBefore(operation.getCommandClass());
+  final MagicKey key=new MagicKey(cache1);
+  Future<Object> future=fork(new Callable<Object>(){
+    @Override public Object call() throws Exception {
+      return operation.perform(cache0,key);
+    }
+  }
+);
+  crm.waitForCommandToBlock();
+  TopologyUpdateListener listener=new TopologyUpdateListener();
+  cache0.addListener(listener);
+  cache1.stop();
+  if (!blockTopologyOnOriginator) {
+    listener.preLatch.open();
+    assertFalse(listener.broken);
+    if (!listener.postLatch.await(10,TimeUnit.SECONDS)) {
+      throw new TimeoutException();
+    }
+  }
+  crm.stopBlocking();
+  if (blockTopologyOnOriginator) {
+    TestingUtil.sleepThread(500);
+    listener.preLatch.open();
+    assertFalse(listener.broken);
+  }
+  Object result=future.get(10,TimeUnit.SECONDS);
+  assertNull(result);
+  log.tracef("Write operation is done");
+  assertEquals(operation.getValue(),cache0.get(key));
+  assertEquals(operation.getValue(),cache2.get(key));
+}
