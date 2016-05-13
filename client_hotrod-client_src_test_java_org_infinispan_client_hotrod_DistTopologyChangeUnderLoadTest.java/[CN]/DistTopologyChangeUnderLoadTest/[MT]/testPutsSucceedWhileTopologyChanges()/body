@@ -4,13 +4,10 @@
   assertEquals("v1",remote.get(1));
   PutHammer putHammer=new PutHammer();
   Future<Void> putHammerFuture=fork(putHammer);
-  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
-  registerCacheManager(cm);
-  HotRodClientTestingUtil.startHotRodServer(cm);
-  waitForClusterToForm();
-  TestingUtil.waitForRehashToComplete(cm.getCache(),cache(0));
+  HotRodServer newServer=addHotRodServer(getCacheConfiguration());
   TestingUtil.sleepThread(2000);
-  TestingUtil.killCacheManagers(cm);
+  HotRodClientTestingUtil.killServers(newServer);
+  TestingUtil.killCacheManagers(newServer.getCacheManager());
   TestingUtil.waitForRehashToComplete(cache(0));
   remote.put(-1,"minus one");
   RoundRobinBalancingStrategy strategy=getLoadBalancer(client(0));
