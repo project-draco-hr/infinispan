@@ -1,7 +1,7 @@
 {
   if (versionSeen == null) {
     if (trace) {
-      log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!",key);
+      log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!",toStr(key));
     }
     return true;
   }
@@ -9,12 +9,12 @@
   InternalCacheEntry ice=PersistenceUtil.loadAndStoreInDataContainer(container,persistenceManager,getKey(),ctx,timeService,ignored);
   if (ice == null) {
     if (trace) {
-      log.tracef("No entry for key %s found in data container",key);
+      log.tracef("No entry for key %s found in data container",toStr(key));
     }
     prevVersion=ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
     if (prevVersion == null) {
       if (trace) {
-        log.tracef("No looked up remote version for key %s found in context",key);
+        log.tracef("No looked up remote version for key %s found in context",toStr(key));
       }
       return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
     }
@@ -24,7 +24,7 @@
     if (prevVersion == null)     throw new IllegalStateException("Entries cannot have null versions!");
   }
   if (trace) {
-    log.tracef("Is going to compare versions %s and %s for key %s.",prevVersion,versionSeen,key);
+    log.tracef("Is going to compare versions %s and %s for key %s.",prevVersion,versionSeen,toStr(key));
   }
   InequalVersionComparisonResult result=prevVersion.compareTo(versionSeen);
   if (trace) {
