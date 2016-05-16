@@ -3,21 +3,21 @@
     waitForView(viewId);
   }
  catch (  InterruptedException e) {
-    return;
+    return false;
   }
 synchronized (cacheStatus) {
     if (cacheTopology == null) {
-      return;
+      return true;
     }
     registerPersistentUUID(cacheTopology);
     CacheTopology existingTopology=cacheStatus.getCurrentTopology();
     if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
       log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",cacheName,existingTopology.getTopologyId(),cacheTopology);
-      return;
+      return false;
     }
     CacheTopologyHandler handler=cacheStatus.getHandler();
     resetLocalTopologyBeforeRebalance(cacheName,cacheTopology,existingTopology,handler);
-    if (!updateCacheTopology(cacheName,cacheTopology,viewId,sender,cacheStatus))     return;
+    if (!updateCacheTopology(cacheName,cacheTopology,viewId,sender,cacheStatus))     return false;
     ConsistentHash unionCH=null;
     if (cacheTopology.getPendingCH() != null) {
       unionCH=cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),cacheTopology.getPendingCH());
@@ -38,5 +38,6 @@ synchronized (cacheStatus) {
     if (!updateAvailabilityModeFirst) {
       cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
     }
+    return true;
   }
 }

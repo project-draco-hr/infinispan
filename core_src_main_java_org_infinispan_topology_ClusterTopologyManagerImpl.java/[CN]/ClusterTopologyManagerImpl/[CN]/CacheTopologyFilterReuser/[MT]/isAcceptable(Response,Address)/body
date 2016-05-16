@@ -10,15 +10,16 @@
         seenTopologies.put(cacheTopology,cacheTopology);
         replaceCacheTopology=cacheTopology;
       }
-      CacheTopology replaceStableTopology=null;
-      if (!cacheTopology.equals(stableTopology)) {
+      CacheTopology replaceStableTopology;
+      if (!Objects.equals(cacheTopology,stableTopology)) {
         replaceStableTopology=seenTopologies.get(stableTopology);
         if (replaceStableTopology == null) {
           seenTopologies.put(stableTopology,stableTopology);
+          replaceStableTopology=stableTopology;
         }
       }
  else {
-        replaceStableTopology=replaceCacheTopology != null ? replaceCacheTopology : cacheTopology;
+        replaceStableTopology=replaceCacheTopology;
       }
       CacheJoinInfo info=csr.getCacheJoinInfo();
       CacheJoinInfo replaceInfo=seenInfos.get(info);
@@ -26,7 +27,7 @@
         seenInfos.put(info,info);
       }
       if (replaceCacheTopology != null || replaceStableTopology != null || replaceInfo != null) {
-        entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info,replaceCacheTopology != null ? replaceCacheTopology : cacheTopology,replaceStableTopology != null ? replaceStableTopology : stableTopology,csr.getAvailabilityMode()));
+        entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info,replaceCacheTopology,replaceStableTopology,csr.getAvailabilityMode()));
       }
     }
   }
