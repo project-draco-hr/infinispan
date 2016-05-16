@@ -1,5 +1,11 @@
 {
-  if (response instanceof Exception)   response=new ExceptionResponse((Exception)response);
- else   if (response instanceof Throwable)   response=new ExceptionResponse(new RuntimeException((Throwable)response));
-  return r.isAcceptable((Response)response,JGroupsTransport.fromJGroupsAddress(sender));
+  try {
+    if (response instanceof Exception)     response=new ExceptionResponse((Exception)response);
+ else     if (response instanceof Throwable)     response=new ExceptionResponse(new RuntimeException((Throwable)response));
+    return r.isAcceptable((Response)response,JGroupsTransport.fromJGroupsAddress(sender));
+  }
+ catch (  Throwable t) {
+    log.error("Exception in response filter: ",t);
+    throw t;
+  }
 }
