@@ -6,6 +6,7 @@
       return;
     }
     final boolean onExecutorService;
+    final boolean sync=order.preserveOrder();
     final BlockingRunnable runnable;
 switch (command.getCommandId()) {
 case TotalOrderVersionedPrepareCommand.COMMAND_ID:
@@ -17,18 +18,18 @@ case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
       }
     TotalOrderRemoteTransactionState state=((TotalOrderPrepareCommand)command).getOrCreateState();
   totalOrderManager.ensureOrder(state,((PrepareCommand)command).getKeysToLock());
-runnable=createRunnableForPrepare(state,(PrepareCommand)command,reply);
+runnable=createRunnableForPrepare(state,(PrepareCommand)command,reply,sync);
 onExecutorService=true;
 break;
 case TotalOrderCommitCommand.COMMAND_ID:
 case TotalOrderVersionedCommitCommand.COMMAND_ID:
 case RollbackCommand.COMMAND_ID:
 onExecutorService=true;
-runnable=createRunnableForCommitOrRollback(command,reply);
+runnable=createRunnableForCommitOrRollback(command,reply,sync);
 break;
 default :
 onExecutorService=executeOnExecutorService(order,command);
-runnable=createDefaultRunnable(command,reply,commandTopologyId,command.getCommandId() != StateRequestCommand.COMMAND_ID,onExecutorService);
+runnable=createDefaultRunnable(command,reply,commandTopologyId,command.getCommandId() != StateRequestCommand.COMMAND_ID,onExecutorService,sync);
 break;
 }
 handleRunnable(runnable,onExecutorService);

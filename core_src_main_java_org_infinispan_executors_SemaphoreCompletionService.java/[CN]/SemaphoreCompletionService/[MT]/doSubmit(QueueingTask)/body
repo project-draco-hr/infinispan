@@ -1,0 +1,23 @@
+{
+  if (blocking) {
+    try {
+      semaphore.acquire();
+    }
+ catch (    InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalLifecycleStateException();
+    }
+    try {
+      futureTask.run();
+    }
+  finally {
+      semaphore.release();
+    }
+  }
+ else {
+    queue.add(futureTask);
+    if (trace)     log.tracef("New task submitted, tasks in queue %d, available permits %d",queue.size(),semaphore.availablePermits());
+    executeFront();
+  }
+  return futureTask;
+}

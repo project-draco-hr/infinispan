@@ -3,7 +3,7 @@
     log.tracef("Total Order Anycast transaction %s with Total Order",command.getGlobalTransaction().globalId());
   }
   if (!ctx.hasModifications()) {
-    return;
+    return CompletableFutures.completedNull();
   }
   if (!ctx.isOriginLocal()) {
     throw new IllegalStateException("Expected a local context while TO-Anycast prepare command");
@@ -11,11 +11,6 @@
   if (!(command instanceof VersionedPrepareCommand)) {
     throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
   }
-  try {
-    KeysValidateFilter responseFilter=ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ? null : new KeysValidateFilter(rpcManager.getAddress(),ctx.getAffectedKeys());
-    totalOrderPrepare(recipients,command,responseFilter);
-  }
-  finally {
-    transactionRemotelyPrepared(ctx);
-  }
+  KeysValidateFilter responseFilter=ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ? null : new KeysValidateFilter(rpcManager.getAddress(),ctx.getAffectedKeys());
+  return totalOrderPrepare(ctx,command,recipients,responseFilter);
 }

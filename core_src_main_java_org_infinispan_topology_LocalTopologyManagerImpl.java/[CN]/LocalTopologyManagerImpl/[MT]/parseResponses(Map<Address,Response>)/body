@@ -1,0 +1,13 @@
+{
+  Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
+  for (  Map.Entry<Address,Response> entry : responseMap.entrySet()) {
+    Address address=entry.getKey();
+    Response response=entry.getValue();
+    if (!response.isSuccessful()) {
+      Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
+      throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
+    }
+    responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
+  }
+  return responseValues;
+}

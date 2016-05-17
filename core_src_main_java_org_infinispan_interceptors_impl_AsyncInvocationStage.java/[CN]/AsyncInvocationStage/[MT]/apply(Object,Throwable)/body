@@ -18,6 +18,7 @@
       }
     }
  else {
+      t=CompletableFutures.extractException(t);
       if (handler instanceof InvocationFinallyHandler) {
         ((InvocationFinallyHandler)handler).accept(ctx,command,null,t);
         throw t;
@@ -31,12 +32,7 @@
     }
   }
  catch (  Throwable t1) {
-    if (trace)     log.trace("Exception in invocation handler",t);
-    if (t1 instanceof CompletionException) {
-      throw ((CompletionException)t1);
-    }
- else {
-      throw new CompletionException(t1);
-    }
+    if (trace)     log.trace("Exception from invocation handler",t1);
+    throw CompletableFutures.asCompletionException(t1);
   }
 }

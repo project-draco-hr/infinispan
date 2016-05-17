@@ -1,22 +1,2 @@
 {
-  authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-  ComponentRegistry cacheComponentRegistry=globalComponentRegistry.getNamedComponentRegistry(cacheName);
-  if (cacheComponentRegistry != null) {
-    RemoveCacheCommand cmd=new RemoveCacheCommand(ByteString.fromString(cacheName),this);
-    Transport transport=getTransport();
-    try {
-      CompletableFuture<?> future=null;
-      if (transport != null) {
-        Configuration c=configurationManager.getConfigurationOrDefault(cacheName);
-        future=transport.invokeRemotelyAsync(null,cmd,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,c.clustering().remoteTimeout(),null,DeliverOrder.NONE,false);
-      }
-      cmd.perform(null);
-      if (future != null) {
-        future.get();
-      }
-    }
- catch (    Throwable t) {
-      throw new CacheException("Error removing cache",t);
-    }
-  }
 }

@@ -7,7 +7,7 @@
       if (trace) {
         log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]",command,origin);
       }
-      Runnable runnable=create(command,reply);
+      Runnable runnable=create(command,reply,order.preserveOrder());
       if (order.preserveOrder() || !command.canBlock()) {
         runnable.run();
       }
@@ -16,8 +16,8 @@
       }
     }
   }
- catch (  Throwable throwable) {
-    log.debug(throwable);
-    reply.reply(new ExceptionResponse(new CacheException(throwable)));
+ catch (  Throwable t) {
+    log.exceptionHandlingCommand(command,t);
+    reply.reply(exceptionHandlingCommand(t));
   }
 }

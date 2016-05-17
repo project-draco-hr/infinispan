@@ -1,0 +1,34 @@
+{
+switch (adminOperation) {
+case SITE_STATUS:
+{
+      if (backupSender.getOfflineStatus(siteName).isOffline()) {
+        return CompletableFuture.completedFuture(Status.OFFLINE);
+      }
+ else {
+        return CompletableFuture.completedFuture(Status.ONLINE);
+      }
+    }
+case STATUS:
+{
+    return CompletableFuture.completedFuture(backupSender.status());
+  }
+case TAKE_OFFLINE:
+{
+  return CompletableFuture.completedFuture(backupSender.takeSiteOffline(siteName));
+}
+case BRING_ONLINE:
+{
+return CompletableFuture.completedFuture(backupSender.bringSiteOnline(siteName));
+}
+case AMEND_TAKE_OFFLINE:
+{
+backupSender.getOfflineStatus(siteName).amend(afterFailures,minTimeToWait);
+return CompletableFutures.completedNull();
+}
+default :
+{
+throw new IllegalStateException("Unhandled admin operation " + adminOperation);
+}
+}
+}

@@ -1,0 +1,16 @@
+{
+  if (!ctx.isInTxScope())   return null;
+  if (modifications.isEmpty())   return null;
+  InvalidationFilterVisitor filterVisitor=new InvalidationFilterVisitor(modifications.size());
+  filterVisitor.visitCollection(ctx,modifications);
+  if (filterVisitor.containsPutForExternalRead) {
+    log.debug("Modification list contains a putForExternalRead operation.  Not invalidating.");
+  }
+ else   if (filterVisitor.containsLocalModeFlag) {
+    log.debug("Modification list contains a local mode flagged operation.  Not invalidating.");
+  }
+ else {
+    return filterVisitor.result;
+  }
+  return null;
+}

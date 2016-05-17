@@ -1,0 +1,25 @@
+{
+  final boolean trace=log.isTraceEnabled();
+  LogFactory.pushNDC(cacheName,trace);
+  try {
+switch (type) {
+case GET_TRANSACTIONS:
+      List<TransactionInfo> transactions=stateProvider.getTransactionsForSegments(getOrigin(),topologyId,segments);
+    return CompletableFuture.completedFuture(transactions);
+case START_STATE_TRANSFER:
+  stateProvider.startOutboundTransfer(getOrigin(),topologyId,segments);
+return CompletableFutures.completedNull();
+case CANCEL_STATE_TRANSFER:
+stateProvider.cancelOutboundTransfer(getOrigin(),topologyId,segments);
+return CompletableFutures.completedNull();
+case GET_CACHE_LISTENERS:
+Collection<DistributedCallable> listeners=stateProvider.getClusterListenersToInstall();
+return CompletableFuture.completedFuture(listeners);
+default :
+throw new CacheException("Unknown state request command type: " + type);
+}
+}
+  finally {
+LogFactory.popNDC(trace);
+}
+}

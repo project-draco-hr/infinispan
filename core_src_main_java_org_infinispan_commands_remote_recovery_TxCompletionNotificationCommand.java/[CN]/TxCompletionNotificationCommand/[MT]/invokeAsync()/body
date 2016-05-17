@@ -1,0 +1,26 @@
+{
+  log.tracef("Processing completed transaction %s",gtx);
+  RemoteTransaction remoteTx=null;
+  if (recoveryManager != null) {
+    if (xid != null) {
+      remoteTx=(RemoteTransaction)recoveryManager.removeRecoveryInformation(xid);
+    }
+ else {
+      remoteTx=(RemoteTransaction)recoveryManager.removeRecoveryInformation(internalId);
+    }
+  }
+  if (remoteTx == null && gtx != null) {
+    remoteTx=txTable.removeRemoteTransaction(gtx);
+  }
+  boolean successful=remoteTx != null && !remoteTx.isMarkedForRollback();
+  if (gtx != null) {
+    txTable.markTransactionCompleted(gtx,successful);
+  }
+ else   if (remoteTx != null) {
+    txTable.markTransactionCompleted(remoteTx.getGlobalTransaction(),successful);
+  }
+  if (remoteTx == null)   return CompletableFutures.completedNull();
+  forwardCommandRemotely(remoteTx);
+  lockManager.unlockAll(remoteTx.getLockedKeys(),remoteTx.getGlobalTransaction());
+  return CompletableFutures.completedNull();
+}

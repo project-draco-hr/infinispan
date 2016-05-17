@@ -2,12 +2,10 @@
   try {
     commandsFactory.initializeReplicableCommand(command,false);
     command.setOrigin(self);
-    return responseGenerator.getResponse(command,command.perform(null));
+    Object returnValue=command.invoke();
+    return responseGenerator.getResponse(command,returnValue);
   }
- catch (  Exception e) {
-    throw e;
-  }
-catch (  Throwable throwable) {
-    throw new CacheException("Problems invoking command.",throwable);
+ catch (  Throwable throwable) {
+    throw new RemoteException("Problems invoking command locally.",throwable);
   }
 }

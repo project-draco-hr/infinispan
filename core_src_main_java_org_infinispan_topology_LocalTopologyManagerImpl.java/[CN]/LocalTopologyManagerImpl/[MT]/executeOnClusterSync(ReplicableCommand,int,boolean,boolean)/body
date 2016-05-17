@@ -1,17 +1,7 @@
 {
   if (totalOrder) {
     Map<Address,Response> responseMap=transport.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,null,DeliverOrder.TOTAL,distributed);
-    Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
-    for (    Map.Entry<Address,Response> entry : responseMap.entrySet()) {
-      Address address=entry.getKey();
-      Response response=entry.getValue();
-      if (!response.isSuccessful()) {
-        Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
-        throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
-      }
-      responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
-    }
-    return responseValues;
+    return parseResponses(responseMap);
   }
   Future<Map<Address,Response>> remoteFuture=asyncTransportExecutor.submit(new Callable<Map<Address,Response>>(){
     @Override public Map<Address,Response> call() throws Exception {
@@ -23,7 +13,7 @@
   Response localResponse;
   try {
     if (trace)     log.tracef("Attempting to execute command on self: %s",command);
-    localResponse=(Response)command.perform(null);
+    localResponse=(Response)command.invoke();
   }
  catch (  Throwable throwable) {
     throw new Exception(throwable);
@@ -32,16 +22,7 @@
     throw new CacheException("Unsuccessful local response");
   }
   Map<Address,Response> responseMap=remoteFuture.get(timeout,TimeUnit.MILLISECONDS);
-  Map<Address,Object> responseValues=new HashMap<Address,Object>(transport.getMembers().size());
-  for (  Map.Entry<Address,Response> entry : responseMap.entrySet()) {
-    Address address=entry.getKey();
-    Response response=entry.getValue();
-    if (!response.isSuccessful()) {
-      Throwable cause=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : null;
-      throw new CacheException("Unsuccessful response received from node " + address + ": "+ response,cause);
-    }
-    responseValues.put(address,((SuccessfulResponse)response).getResponseValue());
-  }
+  Map<Address,Object> responseValues=parseResponses(responseMap);
   responseValues.put(transport.getAddress(),((SuccessfulResponse)localResponse).getResponseValue());
   return responseValues;
 }

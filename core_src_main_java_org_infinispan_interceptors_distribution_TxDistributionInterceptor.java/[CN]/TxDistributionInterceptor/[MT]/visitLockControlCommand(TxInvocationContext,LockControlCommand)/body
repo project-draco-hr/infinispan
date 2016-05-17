@@ -1,12 +1,2 @@
 {
-  if (ctx.isOriginLocal()) {
-    TxInvocationContext<LocalTransaction> localTxCtx=(TxInvocationContext<LocalTransaction>)ctx;
-    final Collection<Address> affectedNodes=cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
-    localTxCtx.getCacheTransaction().locksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
-    log.tracef("Registered remote locks acquired %s",affectedNodes);
-    RpcOptions rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,DeliverOrder.NONE).build();
-    Map<Address,Response> responseMap=rpcManager.invokeRemotely(affectedNodes,command,rpcOptions);
-    checkTxCommandResponses(responseMap,command,localTxCtx,localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
-  }
-  return invokeNext(ctx,command);
 }
