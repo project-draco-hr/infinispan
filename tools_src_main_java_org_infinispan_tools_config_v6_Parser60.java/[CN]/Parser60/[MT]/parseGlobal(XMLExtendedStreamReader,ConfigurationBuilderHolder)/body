@@ -2,34 +2,38 @@
   GlobalConfigurationBuilder builder=holder.getGlobalConfigurationBuilder();
   ParseUtils.requireNoAttributes(reader);
   boolean transportParsed=false;
+  DefaultThreadFactory threadFactory=new DefaultThreadFactory(INFINISPAN_FACTORY,new ThreadGroup("infinispan"),1,"%G %i",null,null);
   while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
     Element element=Element.forName(reader.getLocalName());
 switch (element) {
 case ASYNC_LISTENER_EXECUTOR:
 {
-        parseExecutor(reader,holder.getGlobalConfigurationBuilder().asyncThreadPool(),holder.getClassLoader());
+        ThreadPoolExecutorFactory executorFactory=createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+        holder.getGlobalConfigurationBuilder().listenerThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
         break;
       }
 case PERSISTENCE_EXECUTOR:
 {
-      parseExecutor(reader,holder.getGlobalConfigurationBuilder().persistenceThreadPool(),holder.getClassLoader());
+      ThreadPoolExecutorFactory executorFactory=createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+      holder.getGlobalConfigurationBuilder().persistenceThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
       break;
     }
 case ASYNC_TRANSPORT_EXECUTOR:
 {
-    warnRemovedElement(element.getLocalName());
-    parseExecutor(reader,null,holder.getClassLoader());
+    ThreadPoolExecutorFactory executorFactory=createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+    holder.getGlobalConfigurationBuilder().transport().transportThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
     break;
   }
 case REMOTE_COMMAND_EXECUTOR:
 {
-  warnRemovedElement(element.getLocalName());
-  parseExecutor(reader,null,holder.getClassLoader());
+  ThreadPoolExecutorFactory executorFactory=createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+  holder.getGlobalConfigurationBuilder().transport().remoteCommandThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
   break;
 }
 case EVICTION_SCHEDULED_EXECUTOR:
 {
-parseExecutor(reader,holder.getGlobalConfigurationBuilder().evictionThreadPool(),holder.getClassLoader());
+ThreadPoolExecutorFactory executorFactory=createScheduledThreadPoolExecutorFactory(parseExecutor(reader));
+holder.getGlobalConfigurationBuilder().expirationThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
 break;
 }
 case GLOBAL_JMX_STATISTICS:
@@ -44,7 +48,8 @@ break;
 }
 case REPLICATION_QUEUE_SCHEDULED_EXECUTOR:
 {
-parseExecutor(reader,holder.getGlobalConfigurationBuilder().replicationQueueThreadPool(),holder.getClassLoader());
+warnRemovedElement(element.getLocalName());
+parseExecutor(reader);
 break;
 }
 case SERIALIZATION:
@@ -70,7 +75,7 @@ break;
 }
 case TOTAL_ORDER_EXECUTOR:
 warnRemovedElement(element.getLocalName());
-parseExecutor(reader,null,holder.getClassLoader());
+parseExecutor(reader);
 break;
 default :
 {

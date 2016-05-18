@@ -1,0 +1,20 @@
+{
+  ThreadPoolExecutorFactory<?> threadPoolFactory=threadPoolConfiguration.threadPoolFactory();
+  if (threadPoolFactory != null) {
+    writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
+    writer.writeAttribute(Attribute.NAME,name);
+    ThreadFactory threadFactory=threadPoolConfiguration.threadFactory();
+    if (threadFactory instanceof DefaultThreadFactory) {
+      DefaultThreadFactory tf=(DefaultThreadFactory)threadFactory;
+      writer.writeAttribute(Attribute.THREAD_FACTORY,tf.getName());
+    }
+    if (threadPoolFactory instanceof BlockingThreadPoolExecutorFactory) {
+      BlockingThreadPoolExecutorFactory pool=(BlockingThreadPoolExecutorFactory)threadPoolFactory;
+      writer.writeAttribute(Attribute.MAX_THREADS,Integer.toString(pool.maxThreads()));
+      writer.writeAttribute(Attribute.CORE_THREADS,Integer.toString(pool.coreThreads()));
+      writer.writeAttribute(Attribute.QUEUE_LENGTH,Integer.toString(pool.queueLength()));
+      writer.writeAttribute(Attribute.KEEP_ALIVE_TIME,Long.toString(pool.keepAlive()));
+    }
+    writer.writeEndElement();
+  }
+}

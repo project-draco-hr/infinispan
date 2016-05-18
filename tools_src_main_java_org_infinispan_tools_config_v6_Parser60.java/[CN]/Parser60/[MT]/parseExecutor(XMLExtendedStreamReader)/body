@@ -1,7 +1,6 @@
 {
   for (int i=0; i < reader.getAttributeCount(); i++) {
     ParseUtils.requireNoNamespaceAttribute(reader,i);
-    String value=replaceProperties(reader.getAttributeValue(i));
     Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
 switch (attribute) {
 case FACTORY:
@@ -14,12 +13,13 @@ default :
     }
 }
 }
+Properties properties=new Properties();
 while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
 Element element=Element.forName(reader.getLocalName());
 switch (element) {
 case PROPERTIES:
 {
-    parseProperties(reader);
+    properties=parseProperties(reader);
     break;
   }
 default :
@@ -28,4 +28,5 @@ default :
 }
 }
 }
+return TypedProperties.toTypedProperties(properties);
 }

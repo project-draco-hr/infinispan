@@ -1,7 +1,7 @@
 {
   writer.writeStartElement(Element.THREADS);
   ConcurrentMap<String,DefaultThreadFactory> threadFactories=CollectionFactory.makeConcurrentMap();
-  for (  ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(),globalConfiguration.listenerThreadPool(),globalConfiguration.persistenceThreadPool(),globalConfiguration.replicationQueueThreadPool(),globalConfiguration.stateTransferThreadPool())) {
+  for (  ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.expirationThreadPool(),globalConfiguration.listenerThreadPool(),globalConfiguration.persistenceThreadPool(),globalConfiguration.replicationQueueThreadPool(),globalConfiguration.stateTransferThreadPool(),globalConfiguration.transport().remoteCommandThreadPool(),globalConfiguration.transport().transportThreadPool())) {
     ThreadFactory threadFactory=threadPoolConfiguration.threadFactory();
     if (threadFactory instanceof DefaultThreadFactory) {
       DefaultThreadFactory tf=(DefaultThreadFactory)threadFactory;
@@ -11,12 +11,13 @@
   for (  DefaultThreadFactory threadFactory : threadFactories.values()) {
     writeThreadFactory(writer,threadFactory);
   }
-  for (  ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(),globalConfiguration.listenerThreadPool(),globalConfiguration.persistenceThreadPool(),globalConfiguration.replicationQueueThreadPool(),globalConfiguration.stateTransferThreadPool())) {
-    ThreadPoolExecutorFactory<?> threadPoolFactory=threadPoolConfiguration.threadPoolFactory();
-    if (threadPoolFactory != null) {
-      writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
-      writer.writeEndElement();
-    }
-  }
+  writeThreadPool(writer,"async-pool",globalConfiguration.asyncThreadPool());
+  writeThreadPool(writer,"expiration-pool",globalConfiguration.expirationThreadPool());
+  writeThreadPool(writer,"listener-pool",globalConfiguration.listenerThreadPool());
+  writeThreadPool(writer,"persistence-pool",globalConfiguration.persistenceThreadPool());
+  writeThreadPool(writer,"replication-queue-pool",globalConfiguration.replicationQueueThreadPool());
+  writeThreadPool(writer,"state-transfer-pool",globalConfiguration.stateTransferThreadPool());
+  writeThreadPool(writer,"remote-command-pool",globalConfiguration.transport().remoteCommandThreadPool());
+  writeThreadPool(writer,"transport-pool",globalConfiguration.transport().transportThreadPool());
   writer.writeEndElement();
 }
