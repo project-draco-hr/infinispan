@@ -1,6 +1,18 @@
 {
   writer.writeStartElement(Element.DISTRIBUTED_CACHE);
+  configuration.clustering().hash().attributes().write(writer);
   writeCommonClusteredCacheAttributes(writer,configuration);
   writeCommonCacheAttributesElements(writer,name,configuration);
+  GroupsConfiguration groups=configuration.clustering().hash().groups();
+  if (groups.attributes().isModified()) {
+    writer.writeStartElement(Element.GROUPS);
+    groups.attributes().write(writer,GroupsConfiguration.ENABLED);
+    for (    Grouper<?> grouper : groups.groupers()) {
+      writer.writeStartElement(Element.GROUPER);
+      writer.writeAttribute(Attribute.CLASS,grouper.getClass().getName());
+      writer.writeEndElement();
+    }
+    writer.writeEndElement();
+  }
   writer.writeEndElement();
 }
