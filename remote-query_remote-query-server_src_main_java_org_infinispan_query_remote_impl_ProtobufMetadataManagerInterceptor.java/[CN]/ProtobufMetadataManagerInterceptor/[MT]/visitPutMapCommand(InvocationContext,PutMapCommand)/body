@@ -21,7 +21,7 @@
   final Object result=ctx.forkInvocationSync(command);
   ProgressCallback progressCallback=null;
   if (ctx.isOriginLocal()) {
-    progressCallback=new ProgressCallback(ctx);
+    progressCallback=new ProgressCallback(ctx,command.getFlagsBitSet());
     source.withProgressCallback(progressCallback);
   }
  else {
@@ -34,7 +34,7 @@
     throw new CacheException(e);
   }
   if (progressCallback != null) {
-    updateGlobalErrors(ctx,progressCallback.getErrorFiles());
+    updateGlobalErrors(ctx,progressCallback.getErrorFiles(),command.getFlagsBitSet());
   }
   return ctx.shortCircuit(result);
 }
