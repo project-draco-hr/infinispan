@@ -3,7 +3,10 @@
   createHotRodServers(NUM_NODES,cfgBuilder);
   waitForClusterToForm();
   JPAContinuousQueryProtobufCacheEventFilterConverterFactory factory=new JPAContinuousQueryProtobufCacheEventFilterConverterFactory();
-  server(0).addCacheEventFilterConverterFactory(JPAContinuousQueryProtobufCacheEventFilterConverterFactory.FACTORY_NAME,factory);
+  for (int i=0; i < NUM_NODES; i++) {
+    server(i).addCacheEventFilterConverterFactory(JPAContinuousQueryProtobufCacheEventFilterConverterFactory.FACTORY_NAME,factory);
+    TestingUtil.replaceComponent(server(i).getCacheManager(),TimeService.class,timeService,true);
+  }
   remoteCache=client(0).getCache();
   RemoteCache<String,String> metadataCache=client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
   metadataCache.put("sample_bank_account/bank.proto",Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto",getClass().getClassLoader())));

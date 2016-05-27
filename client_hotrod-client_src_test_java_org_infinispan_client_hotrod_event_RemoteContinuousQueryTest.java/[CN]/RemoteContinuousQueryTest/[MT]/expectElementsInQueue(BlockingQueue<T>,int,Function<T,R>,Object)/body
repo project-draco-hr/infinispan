@@ -1,0 +1,35 @@
+{
+  List<Object> expectedValues;
+  if (expectedValue.length != 0) {
+    if (expectedValue.length != numElements) {
+      throw new IllegalArgumentException("The number of expected values must either match the number of expected elements or no expected values should be specified.");
+    }
+    expectedValues=new ArrayList<>(expectedValue.length);
+    Collections.addAll(expectedValues,expectedValue);
+  }
+ else {
+    expectedValues=null;
+  }
+  for (int i=0; i < numElements; i++) {
+    final T o;
+    try {
+      o=queue.poll(5,TimeUnit.SECONDS);
+      assertNotNull("Queue was empty after reading " + i + " elements!",o);
+    }
+ catch (    InterruptedException e) {
+      throw new AssertionError("Interrupted while waiting for condition",e);
+    }
+    if (expectedValues != null) {
+      Object v=valueTransformer != null ? valueTransformer.apply(o) : o;
+      boolean found=expectedValues.remove(v);
+      assertTrue("Expectation failed on element number " + i + ", unexpected value: "+ v,found);
+    }
+  }
+  try {
+    Object o=queue.poll(5,TimeUnit.SECONDS);
+    assertNull("No more elements expected in queue!",o);
+  }
+ catch (  InterruptedException e) {
+    throw new AssertionError("Interrupted while waiting for condition",e);
+  }
+}
