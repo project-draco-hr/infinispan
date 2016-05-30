@@ -8,8 +8,10 @@
   ContinuousQuery<Object,Object> cq2=Search.getContinuousQuery(cache());
   cq2.addContinuousQueryListener(query2,listener);
   final Map<Object,Integer> joined=listener.getJoined();
+  final Map<Object,Integer> updated=listener.getUpdated();
   final Map<Object,Integer> left=listener.getLeft();
   assertEquals(0,joined.size());
+  assertEquals(0,updated.size());
   assertEquals(0,left.size());
   Person value=new Person();
   value.setName("John");
@@ -17,12 +19,14 @@
   cache().put(1,value);
   assertEquals(1,joined.size());
   assertEquals(2,joined.get(1).intValue());
+  assertEquals(0,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   value=new Person();
   value.setName("Joe");
   cache().replace(1,value);
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(1,left.size());
   joined.clear();
   left.clear();
@@ -31,6 +35,7 @@
   value.setAge(31);
   cache().replace(1,value);
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   left.clear();
@@ -40,6 +45,7 @@
   cache().put(1,value);
   assertEquals(1,joined.size());
   assertEquals(1,joined.get(1).intValue());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   left.clear();
@@ -48,6 +54,7 @@
   value.setAge(29);
   cache().put(1,value);
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   left.clear();
@@ -55,4 +62,5 @@
   assertEquals(0,joined.size());
   assertEquals(1,left.size());
   assertEquals(2,left.get(1).intValue());
+  assertEquals(1,updated.size());
 }

@@ -8,12 +8,15 @@
   ObjectFilter.FilterResult f2=newValue == null ? null : objectFilter.filter(newValue);
   if (f1 == null) {
     if (f2 != null) {
-      return (C)new ContinuousQueryResult<>(true,f2.getProjection() == null ? newValue : null,f2.getProjection());
+      return (C)new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.JOINING,f2.getProjection() == null ? newValue : null,f2.getProjection());
     }
   }
  else {
-    if (f2 == null) {
-      return (C)new ContinuousQueryResult<V>(false,null,null);
+    if (f2 != null) {
+      return (C)new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.UPDATED,f2.getProjection() == null ? newValue : null,f2.getProjection());
+    }
+ else {
+      return (C)new ContinuousQueryResult<V>(ContinuousQueryResult.ResultType.LEAVING,null,null);
     }
   }
   return null;

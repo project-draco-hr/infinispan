@@ -3,10 +3,17 @@
   ContinuousQueryResult cqr=(ContinuousQueryResult)ProtobufUtil.fromWrappedByteArray(serializationContext,eventData);
   Object key=ProtobufUtil.fromWrappedByteArray(serializationContext,cqr.getKey());
   Object value=cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext,cqr.getValue()) : cqr.getProjection();
-  if (cqr.isJoining()) {
+switch (cqr.getResultType()) {
+case JOINING:
     listener.resultJoining((K)key,(C)value);
-  }
- else {
-    listener.resultLeaving((K)key);
-  }
+  break;
+case UPDATED:
+listener.resultUpdated((K)key,(C)value);
+break;
+case LEAVING:
+listener.resultLeaving((K)key);
+break;
+default :
+throw new IllegalStateException("Unexpected result type : " + cqr.getResultType());
+}
 }

@@ -1,11 +1,11 @@
 {
-  boolean isJoining=input.readBoolean();
+  ContinuousQueryResult.ResultType resultType=ContinuousQueryResult.ResultType.values()[input.readInt()];
   int keyLen=input.readInt();
   byte[] key=new byte[keyLen];
   input.readFully(key);
   byte[] value=null;
   Object[] projection=null;
-  if (isJoining) {
+  if (resultType != ContinuousQueryResult.ResultType.LEAVING) {
     int valueLen=input.readInt();
     if (valueLen == -1) {
       int projLen=input.readInt();
@@ -19,5 +19,5 @@
       input.readFully(value);
     }
   }
-  return new ContinuousQueryResult(isJoining,key,value,projection);
+  return new ContinuousQueryResult(resultType,key,value,projection);
 }

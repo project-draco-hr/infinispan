@@ -1,10 +1,24 @@
 {
   ContinuousQueryResult<V> cqr=event.getValue();
-  if (cqr.isJoining()) {
+switch (cqr.getResultType()) {
+case JOINING:
+{
+      C value=cqr.getValue() != null ? (C)cqr.getValue() : (C)cqr.getProjection();
+      listener.resultJoining(event.getKey(),value);
+      break;
+    }
+case UPDATED:
+{
     C value=cqr.getValue() != null ? (C)cqr.getValue() : (C)cqr.getProjection();
-    listener.resultJoining(event.getKey(),value);
+    listener.resultUpdated(event.getKey(),value);
+    break;
   }
- else {
-    listener.resultLeaving(event.getKey());
-  }
+case LEAVING:
+{
+  listener.resultLeaving(event.getKey());
+  break;
+}
+default :
+throw new IllegalStateException("Unexpected result type : " + cqr.getResultType());
+}
 }

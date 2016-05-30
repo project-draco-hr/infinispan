@@ -1,9 +1,13 @@
 {
-  output.writeBoolean(continuousQueryResult.isJoining);
-  if (continuousQueryResult.isJoining) {
+  output.writeInt(continuousQueryResult.resultType.ordinal());
+  if (continuousQueryResult.resultType != ResultType.LEAVING) {
     if (continuousQueryResult.projection != null) {
       output.writeObject(null);
-      output.writeObject(continuousQueryResult.projection);
+      int projLen=continuousQueryResult.projection.length;
+      output.writeInt(projLen);
+      for (int i=0; i < projLen; i++) {
+        output.writeObject(continuousQueryResult.projection[i]);
+      }
     }
  else {
       output.writeObject(continuousQueryResult.value);

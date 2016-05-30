@@ -11,8 +11,10 @@
   CallCountingCQResultListener<Object,Object> listener=new CallCountingCQResultListener<>();
   cq.addContinuousQueryListener(query,listener);
   final Map<Object,Integer> joined=listener.getJoined();
+  final Map<Object,Integer> updated=listener.getUpdated();
   final Map<Object,Integer> left=listener.getLeft();
   assertEquals(1,joined.size());
+  assertEquals(0,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   for (int i=0; i < 10; i++) {
@@ -22,6 +24,7 @@
     cache().put(i,value);
   }
   assertEquals(5,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   for (int i=0; i < 2; i++) {
@@ -31,16 +34,19 @@
     cache().put(i,value);
   }
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(2,left.size());
   left.clear();
   for (int i=4; i < 20; i++) {
     cache().remove(i);
   }
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(2,left.size());
   left.clear();
   cache().clear();
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(2,left.size());
   left.clear();
   for (int i=0; i < 2; i++) {
@@ -50,12 +56,14 @@
     cache().put(i,value,5,TimeUnit.MILLISECONDS);
   }
   assertEquals(2,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
   joined.clear();
   timeService.advance(6);
   cache.getAdvancedCache().getExpirationManager().processExpiration();
   assertEquals(0,cache().size());
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(2,left.size());
   left.clear();
   cq.removeContinuousQueryListener(listener);
@@ -66,5 +74,6 @@
     cache().put(i,value);
   }
   assertEquals(0,joined.size());
+  assertEquals(1,updated.size());
   assertEquals(0,left.size());
 }
