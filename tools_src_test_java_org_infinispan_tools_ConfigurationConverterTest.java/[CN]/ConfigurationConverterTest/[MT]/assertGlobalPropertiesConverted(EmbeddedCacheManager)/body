@@ -1,0 +1,29 @@
+{
+  GlobalConfiguration globalConfiguration=cm.getCacheManagerConfiguration();
+  assertEquals("infinispan-cluster",globalConfiguration.transport().clusterName());
+  assertEquals("r1",globalConfiguration.transport().rackId());
+  assertEquals("m1",globalConfiguration.transport().machineId());
+  assertEquals("s1",globalConfiguration.transport().siteId());
+  assertTrue(globalConfiguration.transport().transport() instanceof CustomTransport);
+  TypedProperties props=globalConfiguration.transport().properties();
+  boolean stackVerified=false;
+  for (  String name : props.stringPropertyNames()) {
+    if (name.startsWith("stackFilePath-")) {
+      assertEquals("jgroups-udp.xml",props.get(name));
+      stackVerified=true;
+    }
+  }
+  if (!stackVerified) {
+    fail("The stack verification failed! No stack element present.");
+  }
+  assertTransportFactories(globalConfiguration);
+  assertGlobalSerialization(globalConfiguration);
+  assertGlobalExecutorsConverted(globalConfiguration);
+  assertTrue(globalConfiguration.globalJmxStatistics().allowDuplicateDomains());
+  assertTrue(globalConfiguration.globalJmxStatistics().mbeanServerLookup() instanceof org.infinispan.jmx.PerThreadMBeanServerLookup);
+  assertTrue(globalConfiguration.globalJmxStatistics().enabled());
+  assertEquals("funky_domain",globalConfiguration.globalJmxStatistics().domain());
+  assertEquals("TestCacheManager",globalConfiguration.globalJmxStatistics().cacheManagerName());
+  assertEquals("testValue",globalConfiguration.globalJmxStatistics().properties().get("testKey"));
+  assertEquals("REGISTER",globalConfiguration.shutdown().hookBehavior().name());
+}

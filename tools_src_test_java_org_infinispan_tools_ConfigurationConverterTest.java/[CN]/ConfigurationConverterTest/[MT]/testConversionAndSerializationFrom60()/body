@@ -1,0 +1,29 @@
+{
+  ByteArrayOutputStream baos=new ByteArrayOutputStream();
+  ConfigurationConverter.convert(ConfigurationConverterTest.class.getResourceAsStream("/6.0.xml"),baos);
+  try (OutputStream outputStream=new FileOutputStream(SERIALIZED_CONFIG_FILE_NAME)){
+    baos.writeTo(outputStream);
+  }
+   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml(SERIALIZED_CONFIG_FILE_NAME,true,false,false)){
+    @Override public void call(){
+      assertGlobalPropertiesConverted(cm);
+      assertDefaultConfigApplied(cm);
+      assertDataContainerConverted(cm);
+      assertIndexingConverted(cm);
+      assertTransactionConverted(cm);
+      assertLockingConverted(cm);
+      assertCompatibilityConverted(cm);
+      assertVersioningConverted(cm);
+      assertBackupsConverted(cm);
+      assertExpirationEvictionConverted(cm);
+      assertCustomInterceptorsConverted(cm);
+      assertDeadlockDetectionConverted(cm);
+      assertJmxStatisticsConverted(cm);
+      assertStoreAsBinaryConverted(cm);
+      assertClusteringConverted(cm);
+      assertPersistenceConverted(cm);
+      assertUnsafeConverted(cm);
+    }
+  }
+);
+}

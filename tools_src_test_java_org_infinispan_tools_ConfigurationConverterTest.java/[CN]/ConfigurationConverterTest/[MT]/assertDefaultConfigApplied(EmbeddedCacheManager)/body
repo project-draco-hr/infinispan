@@ -1,0 +1,16 @@
+{
+  for (  String cacheName : cm.getCacheNames()) {
+    Configuration config=cm.getCacheConfiguration(cacheName);
+    if (!cacheName.startsWith("transaction") && !cacheName.startsWith("tx")) {
+      assertFalse("Assertion failed for cache: " + cacheName,config.transaction().transactionMode().isTransactional());
+      assertEquals(123,config.transaction().reaperWakeUpInterval());
+      assertEquals(3123,config.transaction().completedTxTimeout());
+    }
+    if (!cacheName.startsWith("locking")) {
+      assertEquals(1000,config.locking().lockAcquisitionTimeout());
+      assertEquals(100,config.locking().concurrencyLevel());
+    }
+    if (!cacheName.equals("jmxEnabled"))     assertFalse(config.jmxStatistics().enabled());
+ else     assertTrue(config.jmxStatistics().enabled());
+  }
+}

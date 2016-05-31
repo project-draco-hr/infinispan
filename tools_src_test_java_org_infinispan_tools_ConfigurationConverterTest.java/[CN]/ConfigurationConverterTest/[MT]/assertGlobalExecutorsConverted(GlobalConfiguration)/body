@@ -1,0 +1,27 @@
+{
+  DefaultThreadFactory threadFactory;
+  BlockingThreadPoolExecutorFactory threadPool;
+  threadFactory=globalConfiguration.listenerThreadPool().threadFactory();
+  assertEquals("infinispan",threadFactory.threadGroup().getName());
+  assertEquals("%G %i",threadFactory.threadNamePattern());
+  assertEquals(1,threadFactory.initialPriority());
+  threadPool=globalConfiguration.listenerThreadPool().threadPoolFactory();
+  assertEquals(2,threadPool.coreThreads());
+  assertEquals(5,threadPool.maxThreads());
+  assertEquals(12000,threadPool.queueLength());
+  assertEquals(60000,threadPool.keepAlive());
+  threadFactory=globalConfiguration.persistenceThreadPool().threadFactory();
+  assertEquals("infinispan",threadFactory.threadGroup().getName());
+  assertEquals("%G %i",threadFactory.threadNamePattern());
+  assertEquals(1,threadFactory.initialPriority());
+  threadPool=globalConfiguration.persistenceThreadPool().threadPoolFactory();
+  assertEquals(6,threadPool.coreThreads());
+  assertEquals(6,threadPool.maxThreads());
+  assertEquals(10001,threadPool.queueLength());
+  assertEquals(60000,threadPool.keepAlive());
+  threadFactory=globalConfiguration.expirationThreadPool().threadFactory();
+  assertEquals("infinispan",threadFactory.threadGroup().getName());
+  assertEquals("%G %i",threadFactory.threadNamePattern());
+  assertEquals(1,threadFactory.initialPriority());
+  assertNotNull(globalConfiguration.expirationThreadPool().threadPoolFactory());
+}

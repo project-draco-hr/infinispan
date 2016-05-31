@@ -1,0 +1,38 @@
+{
+  Configuration config=cm.getCacheConfiguration("withSitesEnabled");
+  assertFalse(config.clustering().cacheMode().isClustered());
+  assertTrue(config.sites().backupFor().isBackupFor("test1","test"));
+  assertTrue(config.sites().hasInUseBackup("backupTest"));
+  assertTrue(config.sites().hasEnabledBackups());
+  List<BackupConfiguration> backupConfigs=config.sites().allBackups();
+  for (  BackupConfiguration backupConfig : backupConfigs) {
+    if (backupConfig.site().equals("backupTest")) {
+      assertTrue(backupConfig.enabled());
+      assertFalse(backupConfig.isAsyncBackup());
+      assertEquals("SYNC",backupConfig.strategy().name());
+      assertEquals(17000,backupConfig.replicationTimeout());
+      assertTrue(backupConfig.isTwoPhaseCommit());
+      assertEquals(15,backupConfig.takeOffline().afterFailures());
+      assertEquals(12000,backupConfig.takeOffline().minTimeToWait());
+      assertEquals("IGNORE",backupConfig.backupFailurePolicy().name());
+    }
+ else     if (backupConfig.site().equals("backupTest1")) {
+      assertFalse(backupConfig.enabled());
+      assertTrue(backupConfig.isAsyncBackup());
+      assertEquals("ASYNC",backupConfig.strategy().name());
+      assertEquals(18000,backupConfig.replicationTimeout());
+      assertFalse(backupConfig.isTwoPhaseCommit());
+      assertEquals("org.infinispan.xsite.CountingCustomFailurePolicy",backupConfig.failurePolicyClass());
+      assertEquals(17,backupConfig.takeOffline().afterFailures());
+      assertEquals(13000,backupConfig.takeOffline().minTimeToWait());
+      assertEquals("CUSTOM",backupConfig.backupFailurePolicy().name());
+    }
+  }
+  assertEquals(BackupFailurePolicy.IGNORE,config.sites().getFailurePolicy("backupTest"));
+  assertEquals(BackupFailurePolicy.CUSTOM,config.sites().getFailurePolicy("backupTest1"));
+  config=cm.getCacheConfiguration("withEmptyBackups");
+  assertFalse(config.clustering().cacheMode().isClustered());
+  assertTrue(config.sites().backupFor().isBackupFor("test1","test"));
+  assertFalse(config.sites().hasEnabledBackups());
+  assertEquals(0,config.sites().allBackups().size());
+}
