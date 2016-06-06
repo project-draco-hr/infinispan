@@ -2,47 +2,28 @@
   ModelNode store=Util.getEmptyOperation(ModelDescriptionConstants.ADD,null);
   String name=ModelKeys.STRING_KEYED_JDBC_STORE_NAME;
   Map<PathAddress,ModelNode> additionalConfigurationOperations=new LinkedHashMap<>();
-  for (int i=0; i < reader.getAttributeCount(); i++) {
-    String value=reader.getAttributeValue(i);
-    Attribute attribute=Attribute.forName(reader.getAttributeLocalName(i));
-switch (attribute) {
-case DATASOURCE:
+  name=parseCommonJDBCAttributes(name,store,reader);
+  if (!store.hasDefined(ModelKeys.DATASOURCE)) {
+    throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.DATASOURCE));
+  }
+  PathAddress storeAddress=setOperationAddress(store,PathAddress.pathAddress(cache.get(OP_ADDR)),StringKeyedJDBCStoreResource.PATH,name);
+  while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+    Element element=Element.forName(reader.getLocalName());
+switch (element) {
+case STRING_KEYED_TABLE:
 {
-        BaseJDBCStoreConfigurationResource.DATA_SOURCE.parseAndSetParameter(value,store,reader);
+        this.parseJDBCStoreTable(reader,store.get(ModelKeys.STRING_KEYED_TABLE).setEmptyObject());
         break;
       }
-case DIALECT:
+case WRITE_BEHIND:
 {
-      BaseJDBCStoreConfigurationResource.DIALECT.parseAndSetParameter(value,store,reader);
+      parseStoreWriteBehind(reader,store,additionalConfigurationOperations);
       break;
     }
 default :
 {
-    name=this.parseStoreAttribute(name,reader,i,attribute,value,store);
+    this.parseStoreProperty(reader,store,additionalConfigurationOperations);
   }
-}
-}
-if (!store.hasDefined(ModelKeys.DATASOURCE)) {
-throw ParseUtils.missingRequired(reader,EnumSet.of(Attribute.DATASOURCE));
-}
-PathAddress storeAddress=setOperationAddress(store,PathAddress.pathAddress(cache.get(OP_ADDR)),StringKeyedJDBCStoreResource.PATH,name);
-while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-Element element=Element.forName(reader.getLocalName());
-switch (element) {
-case STRING_KEYED_TABLE:
-{
-  this.parseJDBCStoreTable(reader,store.get(ModelKeys.STRING_KEYED_TABLE).setEmptyObject());
-  break;
-}
-case WRITE_BEHIND:
-{
-parseStoreWriteBehind(reader,store,additionalConfigurationOperations);
-break;
-}
-default :
-{
-this.parseStoreProperty(reader,store,additionalConfigurationOperations);
-}
 }
 }
 operations.put(storeAddress,store);
