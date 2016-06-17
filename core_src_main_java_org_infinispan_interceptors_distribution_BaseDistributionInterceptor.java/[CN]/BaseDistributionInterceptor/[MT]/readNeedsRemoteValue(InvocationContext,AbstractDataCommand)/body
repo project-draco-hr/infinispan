@@ -1,12 +1,3 @@
 {
-  if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
-    return false;
-  }
-  Object key=command.getKey();
-  ConsistentHash ch=stateTransferManager.getCacheTopology().getReadConsistentHash();
-  boolean shouldFetchFromRemote=!isValueAvailableLocally(ch,key);
-  if (!shouldFetchFromRemote && trace) {
-    getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s",toStr(key),rpcManager.getAddress(),ch.locateOwners(key));
-  }
-  return shouldFetchFromRemote;
+  return ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL) && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP);
 }
