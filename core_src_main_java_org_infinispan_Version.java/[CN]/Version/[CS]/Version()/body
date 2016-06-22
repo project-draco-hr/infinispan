@@ -1,7 +1,15 @@
 {
-  String parts[]=getParts(Injected.getVersion());
+  Properties properties=new Properties();
+  try (InputStream is=Version.class.getResourceAsStream("/META-INF/infinispan-version.properties")){
+    properties.load(is);
+  }
+ catch (  Exception e) {
+  }
+  version=properties.getProperty("infinispan.version","0.0.0-SNAPSHOT");
+  codename=properties.getProperty("infinispan.codename","N/A");
+  String parts[]=getParts(version);
   versionId=readVersionBytes(parts[0],parts[1],parts[2],parts[3]);
-  versionShort=getVersionShort(Injected.getVersion());
+  versionShort=getVersionShort(version);
   moduleSlot=String.format("%s-%s.%s",MODULE_PREFIX,parts[0],parts[1]);
   marshallVersion=Short.valueOf(parts[0] + parts[1]);
   majorMinor=String.format("%s.%s",parts[0],parts[1]);
