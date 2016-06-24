@@ -2,7 +2,9 @@
   if (trace) {
     log.tracef("Transaction.commit() invoked in transaction with Xid=%s",xid);
   }
-  checkDone("Cannot commit transaction.");
+  if (isDone()) {
+    throw new IllegalStateException("Transaction is done. Cannot commit transaction.");
+  }
   runPrepare();
   runCommit(false);
 }

@@ -2,7 +2,9 @@
   if (trace) {
     log.tracef("Transaction.rollback() invoked in transaction with Xid=%s",xid);
   }
-  checkDone("Cannot rollback transaction");
+  if (isDone()) {
+    throw new IllegalStateException("Transaction is done. Cannot rollback transaction");
+  }
   try {
     status=Status.STATUS_MARKED_ROLLBACK;
     endResources();

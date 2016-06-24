@@ -1,0 +1,9 @@
+{
+  if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync && !partitionHandlingManager.isTransactionPartiallyCommitted(gtx)) {
+    final TxCompletionNotificationCommand command=commandsFactory.buildTxCompletionNotificationCommand(null,gtx);
+    final Collection<Address> owners=clusteringLogic.getOwners(filterDeltaCompositeKeys(localTransaction.getAffectedKeys()));
+    Collection<Address> commitNodes=localTransaction.getCommitNodes(owners,rpcManager.getTopologyId(),rpcManager.getMembers());
+    if (trace)     log.tracef("About to invoke tx completion notification on commitNodes: %s",commitNodes);
+    rpcManager.invokeRemotely(commitNodes,command,rpcManager.getDefaultRpcOptions(false,DeliverOrder.NONE));
+  }
+}

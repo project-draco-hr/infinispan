@@ -1,0 +1,9 @@
+{
+  final GlobalTransaction gtx=localTransaction.getGlobalTransaction();
+  removeLocalTransaction(localTransaction);
+  if (trace)   log.tracef("Committed in onePhase? %s isOptimistic? %s",committedInOnePhase,isOptimisticCache());
+  if (committedInOnePhase && isOptimisticCache())   return;
+  if (isClustered()) {
+    removeTransactionInfoRemotely(localTransaction,gtx);
+  }
+}

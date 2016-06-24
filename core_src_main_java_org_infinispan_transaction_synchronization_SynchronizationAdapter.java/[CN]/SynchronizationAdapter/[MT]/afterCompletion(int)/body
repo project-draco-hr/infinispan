@@ -1,26 +1,3 @@
 {
-  if (trace) {
-    log.tracef("afterCompletion(%s) called for %s.",status,localTransaction);
-  }
-  boolean isOnePhase;
-  if (status == Status.STATUS_COMMITTED) {
-    try {
-      isOnePhase=txCoordinator.commit(localTransaction,false);
-    }
- catch (    XAException e) {
-      throw new CacheException("Could not commit.",e);
-    }
-    releaseLocksForCompletedTransaction(localTransaction,isOnePhase);
-  }
- else   if (status == Status.STATUS_ROLLEDBACK) {
-    try {
-      txCoordinator.rollback(localTransaction);
-    }
- catch (    XAException e) {
-      throw new CacheException("Could not commit.",e);
-    }
-  }
- else {
-    throw new IllegalArgumentException("Unknown status: " + status);
-  }
+  txTable.afterCompletion(localTransaction,status);
 }
