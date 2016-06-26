@@ -1,0 +1,15 @@
+{
+  GlobalConfiguration globalCfg=cacheManager.getCacheManagerConfiguration();
+  mbeanServer=JmxUtil.lookupMBeanServer(globalCfg);
+  String groupName=String.format("type=Server,name=%s",getQualifiedName());
+  String jmxDomain=JmxUtil.buildJmxDomain(globalCfg,mbeanServer,groupName);
+  ManageableComponentMetadata meta=LifecycleCallbacks.componentMetadataRepo.findComponentMetadata(transport.getClass()).toManageableComponentMetadata();
+  try {
+    DynamicMBean dynamicMBean=new ResourceDMBean(transport,meta);
+    transportObjName=new ObjectName(String.format("%s:%s,component=%s",jmxDomain,groupName,meta.getJmxObjectName()));
+    JmxUtil.registerMBean(dynamicMBean,transportObjName,mbeanServer);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+}
