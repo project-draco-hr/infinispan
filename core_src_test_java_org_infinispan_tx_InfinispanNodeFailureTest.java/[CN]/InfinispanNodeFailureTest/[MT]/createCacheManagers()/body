@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC,true);
+  configuration.locking().useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED).lockAcquisitionTimeout(20000);
+  configuration.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC).useSynchronization(false).syncCommitPhase(true).syncRollbackPhase(true).recovery().disable();
+  configuration.clustering().hash().numSegments(60).stateTransfer().fetchInMemoryState(false);
+  viewLatch=new CountDownLatch(1);
+  GlobalConfigurationBuilder global=new GlobalConfigurationBuilder();
+  global.transport().transport(new DelayedViewJGroupsTransport(viewLatch));
+  addClusterEnabledCacheManager(global,configuration);
+  addClusterEnabledCacheManager(configuration);
+  addClusterEnabledCacheManager(configuration);
+}
