@@ -32,6 +32,7 @@
   assertFalse(singleFileStoreConfiguration.singletonStore().enabled());
   config=cm.getCacheConfiguration("withFileStoreDisabledAsync");
   assertFalse(config.clustering().cacheMode().isClustered());
+  assertFalse(config.persistence().usingAsyncStore());
   assertFalse(config.persistence().passivation());
   assertTrue(config.persistence().usingStores());
   assertEquals(1,config.persistence().stores().size());
@@ -43,6 +44,7 @@
   assertTrue(singleFileStoreConfiguration.fetchPersistentState());
   assertTrue(singleFileStoreConfiguration.ignoreModifications());
   assertTrue(singleFileStoreConfiguration.purgeOnStartup());
+  assertFalse(singleFileStoreConfiguration.async().enabled());
   assertFalse(singleFileStoreConfiguration.singletonStore().enabled());
   config=cm.getCacheConfiguration("withLoaderDefaults");
   assertFalse(config.clustering().cacheMode().isClustered());
@@ -67,10 +69,16 @@
   assertTrue(config.persistence().stores().get(0) instanceof ClusterLoaderConfiguration);
   clusterLoaderConfiguration=(ClusterLoaderConfiguration)config.persistence().stores().get(0);
   assertEquals(15000,clusterLoaderConfiguration.remoteCallTimeout());
+  assertTrue(clusterLoaderConfiguration.preload());
+  assertTrue(clusterLoaderConfiguration.fetchPersistentState());
+  assertTrue(clusterLoaderConfiguration.ignoreModifications());
+  assertTrue(clusterLoaderConfiguration.purgeOnStartup());
+  assertTrue(clusterLoaderConfiguration.shared());
   config=cm.getCacheConfiguration("lockingWithJDBCLoader");
   assertTrue(config.clustering().cacheMode().isClustered());
   assertTrue(config.clustering().cacheMode().isSynchronous());
   assertEquals(20000,config.clustering().sync().replTimeout());
+  assertFalse(config.persistence().usingAsyncStore());
   assertTrue(config.persistence().passivation());
   assertTrue(config.persistence().usingStores());
   assertEquals(1,config.persistence().stores().size());
@@ -81,6 +89,7 @@
   assertTrue(singleFileStoreConfiguration.ignoreModifications());
   assertTrue(singleFileStoreConfiguration.purgeOnStartup());
   assertFalse(singleFileStoreConfiguration.shared());
+  assertFalse(singleFileStoreConfiguration.async().enabled());
   assertTrue(singleFileStoreConfiguration.singletonStore().enabled());
   config=cm.getCacheConfiguration("jdbcStringBasedWithConnectionPool");
   assertFalse(config.clustering().cacheMode().isClustered());
