@@ -3,14 +3,9 @@
   byte methodId=(byte)input.readShort();
   ByteString cacheName=ByteString.readObject(input);
   StreamingMarshaller marshaller=getCacheMarshaller(cacheName);
-  ObjectInput paramsInput=reusableObjectInput.get();
-  final boolean firsTime=paramsInput == null;
-  if (firsTime) {
-    paramsInput=marshaller.startObjectInput(convertInputStream(input),true);
-    if (paramsInput instanceof ExtendedRiverUnmarshaller) {
-      ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
-    }
-    reusableObjectInput.set(paramsInput);
+  ObjectInput paramsInput=marshaller.startObjectInput(convertInputStream(input),true);
+  if (paramsInput instanceof ExtendedRiverUnmarshaller) {
+    ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
   }
   CacheRpcCommand cacheRpcCommand;
   try {
@@ -18,10 +13,7 @@
     cmdExt.readCommandParameters(paramsInput,cacheRpcCommand);
   }
   finally {
-    if (firsTime) {
-      marshaller.finishObjectInput(paramsInput);
-      reusableObjectInput.remove();
-    }
+    marshaller.finishObjectInput(paramsInput);
   }
   return cacheRpcCommand;
 }

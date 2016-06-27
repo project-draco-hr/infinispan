@@ -7,20 +7,17 @@
     final boolean onExecutorService=executeOnExecutorService(order,command);
     final BlockingRunnable runnable;
 switch (command.getCommandId()) {
-case MultipleRpcCommand.COMMAND_ID:
-      runnable=createReadyActionRunnable(command,reply,commandTopologyId,true,onExecutorService,createReadyActionForMultipleRpcCommand((MultipleRpcCommand)command));
-    break;
 case PrepareCommand.COMMAND_ID:
 case VersionedPrepareCommand.COMMAND_ID:
-  if (pessimisticLocking) {
-    runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
-  }
+      if (pessimisticLocking) {
+        runnable=createDefaultRunnable(command,reply,commandTopologyId,true,onExecutorService);
+      }
  else {
-    runnable=createReadyActionRunnable(command,reply,commandTopologyId,true,onExecutorService,createReadyAction(commandTopologyId,(PrepareCommand)command));
-  }
-break;
+        runnable=createReadyActionRunnable(command,reply,commandTopologyId,true,onExecutorService,createReadyAction(commandTopologyId,(PrepareCommand)command));
+      }
+    break;
 case LockControlCommand.COMMAND_ID:
-runnable=createReadyActionRunnable(command,reply,commandTopologyId,true,onExecutorService,createReadyAction(commandTopologyId,(LockControlCommand)command));
+  runnable=createReadyActionRunnable(command,reply,commandTopologyId,true,onExecutorService,createReadyAction(commandTopologyId,(LockControlCommand)command));
 break;
 default :
 runnable=createDefaultRunnable(command,reply,commandTopologyId,command.getCommandId() != StateRequestCommand.COMMAND_ID,onExecutorService);

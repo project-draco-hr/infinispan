@@ -1,19 +1,11 @@
 {
-  ObjectOutput paramsOutput=reusableObjectOutput.get();
-  final boolean firstTime=paramsOutput == null;
-  if (firstTime) {
-    BufferSizePredictor sizePredictor=marshaller.getBufferSizePredictor(cmd);
-    int estimatedSize=sizePredictor.nextSize(cmd);
-    paramsOutput=marshaller.startObjectOutput(convertObjectOutput(oo),true,estimatedSize);
-    reusableObjectOutput.set(paramsOutput);
-  }
+  BufferSizePredictor sizePredictor=marshaller.getBufferSizePredictor(cmd);
+  int estimatedSize=sizePredictor.nextSize(cmd);
+  ObjectOutput paramsOutput=marshaller.startObjectOutput(convertObjectOutput(oo),true,estimatedSize);
   try {
     cmdExt.writeCommandParameters(paramsOutput,cmd);
   }
   finally {
-    if (firstTime) {
-      marshaller.finishObjectOutput(paramsOutput);
-      reusableObjectOutput.remove();
-    }
+    marshaller.finishObjectOutput(paramsOutput);
   }
 }
