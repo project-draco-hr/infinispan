@@ -1,3 +1,6 @@
 {
-  performSearchWork(value,keyToString(key),WorkType.DELETE,transactionContext);
+  ShardIdentifierProvider shardIdentifierProvider=searchFactory.getIndexBinding(value.getClass()).getShardIdentifierProvider();
+  if (shardIdentifierProvider == null || !(shardIdentifierProvider instanceof AffinityShardIdentifierProvider) || isPrimaryOwner(key)) {
+    performSearchWork(value,keyToString(key),WorkType.DELETE,transactionContext);
+  }
 }

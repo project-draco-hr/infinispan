@@ -1,0 +1,14 @@
+{
+  if (!tce.isPre()) {
+    logDebug("Topology changed notification for %s: %s",getIndexName(),tce);
+    Address localAddress=rpcManager.getAddress();
+    Address previousOwner=tce.getConsistentHashAtStart().locatePrimaryOwnerForSegment(segment);
+    Address newOwner=tce.getConsistentHashAtEnd().locatePrimaryOwnerForSegment(segment);
+    if (previousOwner.equals(localAddress) && !newOwner.equals(localAddress)) {
+      handleOwnershipLost(newOwner);
+    }
+ else     if (!previousOwner.equals(localAddress) && newOwner.equals(localAddress)) {
+      handleOwnershipAcquired();
+    }
+  }
+}

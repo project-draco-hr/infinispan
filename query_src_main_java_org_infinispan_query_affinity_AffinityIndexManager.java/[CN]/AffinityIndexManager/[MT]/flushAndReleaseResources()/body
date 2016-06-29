@@ -1,0 +1,23 @@
+{
+  Address lockHolder=getLockHolder(getIndexName());
+  if (lockHolder != null) {
+    InfinispanDirectoryProvider directoryProvider=(InfinispanDirectoryProvider)getDirectoryProvider();
+    int activeDeleteTasks=directoryProvider.getActiveDeleteTasks();
+    boolean wasInterrupted=false;
+    while (activeDeleteTasks > 0) {
+      try {
+        Thread.sleep(POLL_WAIT);
+        logDebug("Waiting for pending delete tasks, remaining: %s",activeDeleteTasks);
+        activeDeleteTasks=directoryProvider.getActiveDeleteTasks();
+      }
+ catch (      InterruptedException e) {
+        wasInterrupted=true;
+      }
+    }
+    if (wasInterrupted) {
+      Thread.currentThread().interrupt();
+    }
+    logDebug("Flushing directory provider");
+    super.flushAndReleaseResources();
+  }
+}

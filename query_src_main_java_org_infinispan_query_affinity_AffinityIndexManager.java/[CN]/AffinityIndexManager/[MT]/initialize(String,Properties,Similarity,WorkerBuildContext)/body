@@ -1,0 +1,15 @@
+{
+  super.initialize(indexName,properties,similarity,buildContext);
+  ServiceManager serviceManager=buildContext.getServiceManager();
+  ComponentRegistryService componentRegistryService=serviceManager.requestService(ComponentRegistryService.class);
+  ComponentRegistry componentRegistry=componentRegistryService.getComponentRegistry();
+  asyncExecutor=componentRegistry.getComponent(ExecutorService.class,ASYNC_OPERATIONS_EXECUTOR);
+  distributionManager=componentRegistry.getComponent(DistributionManager.class);
+  rpcManager=componentRegistry.getComponent(RpcManager.class);
+  cache=componentRegistry.getComponent(Cache.class);
+  keyTransformationHandler=componentRegistry.getComponent(QueryInterceptor.class).getKeyTransformationHandler();
+  SearchIntegrator component=componentRegistry.getComponent(SearchIntegrator.class);
+  AffinityErrorHandler errorHandler=(AffinityErrorHandler)component.getErrorHandler();
+  cache.addListener(new TopologyChangeListener());
+  errorHandler.initialize(this);
+}

@@ -1,0 +1,18 @@
+{
+  if (queryInterceptor.isStopping()) {
+    throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
+  }
+  List<LuceneWork> luceneWorks=searchFactory.getWorkSerializer().toLuceneWorks(serializedModel);
+  List<LuceneWork> workToApply=transformKeysToStrings(luceneWorks);
+  for (  LuceneWork luceneWork : luceneWorks) {
+    IndexManager im=getIndexManagerForWrites(luceneWork);
+    try {
+      if (log.isDebugEnabled())       log.debugf("Performing remote affinity work %s command on index %s",workToApply,im.getIndexName());
+      im.performOperations(Collections.singletonList(luceneWork),null);
+    }
+ catch (    Exception e) {
+      return new ExceptionResponse(e);
+    }
+  }
+  return SuccessfulResponse.create(Boolean.TRUE);
+}

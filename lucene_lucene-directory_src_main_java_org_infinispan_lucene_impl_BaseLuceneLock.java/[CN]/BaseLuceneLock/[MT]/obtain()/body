@@ -1,14 +1,15 @@
 {
-  Object previousValue=noCacheStoreCache.putIfAbsent(keyOfLock,keyOfLock);
+  Object previousValue=noCacheStoreCache.putIfAbsent(keyOfLock,valueOfLock);
+  if (trace)   log.tracef("Result of lock acquiring %s",previousValue);
   if (previousValue == null) {
     if (trace) {
-      log.tracef("Lock: %s acquired for index: %s",lockName,indexName);
+      log.tracef("Lock: %s acquired for index: %s from %s",lockName,indexName,valueOfLock);
     }
     return true;
   }
  else {
     if (trace) {
-      log.tracef("Lock: %s not acquired for index: %s, was taken already.",lockName,indexName);
+      log.tracef("Lock: %s not acquired for index: %s from %s, was taken already by %s.",lockName,indexName,valueOfLock,previousValue);
     }
     return false;
   }
