@@ -1,0 +1,17 @@
+{
+  String[] caches=new String[]{"cache1","cache2"};
+  Node nodeA=startNewNode(caches);
+  Node nodeB=startNewNode(caches);
+  ConfigurationBuilder clientBuilder=new ConfigurationBuilder();
+  clientBuilder.addServers(getServerList(nodeA,nodeB));
+  RemoteCacheManager client=new RemoteCacheManager(clientBuilder.build());
+  RemoteCache<Integer,String> cache1=client.getCache("cache1");
+  RemoteCache<Integer,String> cache2=client.getCache("cache2");
+  startNewNode(caches);
+  nodeB.kill();
+  assertTrue(cache1.isEmpty());
+  assertTrue(cache2.isEmpty());
+  nodeA.kill();
+  assertTrue(cache1.isEmpty());
+  assertTrue(cache2.isEmpty());
+}
