@@ -2,16 +2,16 @@
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
     @Override public void call(){
       Configuration cnf=cm.getCacheConfiguration(simpleCacheName);
-      Assert.assertTrue(cnf.customInterceptors().interceptors().isEmpty());
+      assertTrue(cnf.customInterceptors().interceptors().isEmpty());
       SimpleInterceptor interceptor=new SimpleInterceptor();
       Configuration conf=new ConfigurationBuilder().customInterceptors().addInterceptor().interceptor(interceptor).position(InterceptorConfiguration.Position.FIRST).build();
       cm.defineConfiguration(simpleCacheName,conf);
       cnf=cm.getCacheConfiguration(simpleCacheName);
-      Assert.assertFalse(cnf.customInterceptors().interceptors().isEmpty());
-      Assert.assertFalse(interceptor.putOkay);
+      assertFalse(cnf.customInterceptors().interceptors().isEmpty());
+      assertFalse(interceptor.putOkay);
       cm.getCache(simpleCacheName).put("key1","value1");
-      Assert.assertTrue(interceptor.putOkay);
-      Assert.assertEquals("value1",cm.getCache(simpleCacheName).get("key1"));
+      assertTrue(interceptor.putOkay);
+      assertEquals("value1",cm.getCache(simpleCacheName).get("key1"));
     }
   }
 );

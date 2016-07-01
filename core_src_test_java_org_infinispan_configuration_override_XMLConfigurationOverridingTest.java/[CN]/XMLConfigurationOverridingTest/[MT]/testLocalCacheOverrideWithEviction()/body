@@ -1,15 +1,15 @@
 {
   withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml")){
     @Override public void call(){
-      Assert.assertEquals(EvictionStrategy.NONE,cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
+      assertEquals(EvictionStrategy.NONE,cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
       Configuration newConfig=new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU).size(5).build();
       cm.defineConfiguration(simpleCacheName,newConfig);
-      Assert.assertEquals(EvictionStrategy.LRU,cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
-      Assert.assertEquals(5,cm.getCacheConfiguration(simpleCacheName).eviction().maxEntries());
+      assertEquals(EvictionStrategy.LRU,cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
+      assertEquals(5,cm.getCacheConfiguration(simpleCacheName).eviction().maxEntries());
       for (int i=0; i < 10; i++) {
         cm.getCache(simpleCacheName).put("test" + i,"value" + i);
       }
-      Assert.assertTrue(cm.getCache(simpleCacheName).size() <= 5);
+      assertTrue(cm.getCache(simpleCacheName).size() <= 5);
     }
   }
 );
