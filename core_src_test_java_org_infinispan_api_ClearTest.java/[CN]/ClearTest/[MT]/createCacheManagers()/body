@@ -1,0 +1,12 @@
+{
+  ConfigurationBuilder builder=getDefaultClusteredCacheConfig(cacheMode,transactional,transactional);
+  builder.clustering().hash().numSegments(3).stateTransfer().fetchInMemoryState(true).locking().lockAcquisitionTimeout(1000l);
+  if (transactional) {
+    builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup()).syncCommitPhase(true).syncRollbackPhase(true).lockingMode(lockingMode);
+  }
+  createCluster(builder,3);
+  waitForClusterToForm();
+  c0=advancedCache(0);
+  c1=advancedCache(1);
+  c2=advancedCache(2);
+}

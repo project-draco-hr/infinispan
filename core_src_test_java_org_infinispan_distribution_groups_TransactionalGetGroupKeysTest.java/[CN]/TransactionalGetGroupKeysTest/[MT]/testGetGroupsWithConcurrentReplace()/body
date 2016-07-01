@@ -1,0 +1,23 @@
+{
+  final TestCache testCache=createTestCacheAndReset(GROUP,this.<GroupKey,String>caches());
+  initCache(testCache.primaryOwner);
+  final TransactionManager tm=tm(testCache.testCache);
+  tm.begin();
+  testCache.testCache.put(key(10),value(10));
+  testCache.testCache.put(key(11),value(11));
+  Map<GroupKey,String> groupKeySet=testCache.testCache.getGroup(GROUP);
+  Map<GroupKey,String> expectedGroupSet=createMap(0,12);
+  final Transaction tx=tm.suspend();
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+  testCache.primaryOwner.put(key(1),value(-1));
+  if ((factory == TestCacheFactory.PRIMARY_OWNER || factory == TestCacheFactory.BACKUP_OWNER) && isolationLevel == IsolationLevel.READ_COMMITTED) {
+    expectedGroupSet.put(key(1),value(-1));
+  }
+  tm.resume(tx);
+  groupKeySet=testCache.testCache.getGroup(GROUP);
+  tm.commit();
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+  groupKeySet=testCache.testCache.getGroup(GROUP);
+  expectedGroupSet.put(key(1),value(-1));
+  AssertJUnit.assertEquals(expectedGroupSet,groupKeySet);
+}

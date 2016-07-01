@@ -1,0 +1,13 @@
+{
+  log.debugf("Injecting BlockCommandInterceptor in %s",cache);
+  AsyncInterceptorChain chain=cache.getAdvancedCache().getAsyncInterceptorChain();
+  BlockCommandInterceptor interceptor=chain.findInterceptorExtending(BlockCommandInterceptor.class);
+  if (interceptor == null) {
+    interceptor=new BlockCommandInterceptor(log);
+    EntryWrappingInterceptor ewi=chain.findInterceptorExtending(EntryWrappingInterceptor.class);
+    AssertJUnit.assertTrue(chain.addInterceptorAfter(interceptor,ewi.getClass()));
+  }
+  interceptor.reset();
+  log.debugf("Injected BlockCommandInterceptor in %s. Interceptor=%s",cache,interceptor);
+  return interceptor;
+}

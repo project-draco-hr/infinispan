@@ -1,16 +1,16 @@
 {
   Cache<GroupKey,String> primaryOwner=null;
-  AdvancedCache<GroupKey,String> backupOwner=null;
+  AdvancedCache<GroupKey,String> nonOwner=null;
   for (  Cache<GroupKey,String> cache : cacheList) {
     GroupManager groupManager=TestingUtil.extractComponent(cache,GroupManager.class);
     if (primaryOwner == null && groupManager.isPrimaryOwner(groupName)) {
       primaryOwner=cache;
     }
- else     if (backupOwner == null && groupManager.isOwner(groupName)) {
-      backupOwner=cache.getAdvancedCache();
+ else     if (nonOwner == null && !groupManager.isOwner(groupName)) {
+      nonOwner=cache.getAdvancedCache();
     }
-    if (primaryOwner != null && backupOwner != null) {
-      return new TestCache(primaryOwner,backupOwner);
+    if (primaryOwner != null && nonOwner != null) {
+      return new TestCache(primaryOwner,nonOwner);
     }
   }
   throw new IllegalStateException("didn't find a cache... should never happen!");

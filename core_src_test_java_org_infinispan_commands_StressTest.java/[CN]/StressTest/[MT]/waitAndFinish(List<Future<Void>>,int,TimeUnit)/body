@@ -1,0 +1,16 @@
+{
+  Throwable e=exceptions.poll(timeout,timeUnit);
+  if (e != null) {
+    Throwable e2=e;
+    do {
+      log.error("Exception in another thread",e2);
+      e2=exceptions.poll();
+    }
+ while (e2 != null);
+    throw e;
+  }
+  complete.set(true);
+  for (  Future future : futures) {
+    future.get(1,TimeUnit.MINUTES);
+  }
+}
