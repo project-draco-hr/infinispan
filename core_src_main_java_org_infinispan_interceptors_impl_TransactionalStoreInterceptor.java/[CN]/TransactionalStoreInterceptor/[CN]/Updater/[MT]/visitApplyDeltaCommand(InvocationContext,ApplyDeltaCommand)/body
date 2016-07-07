@@ -1,0 +1,17 @@
+{
+  CacheEntry entry=ctx.lookupEntry(command.getKey());
+  InternalCacheEntry ice;
+  if (entry instanceof InternalCacheEntry) {
+    ice=(InternalCacheEntry)entry;
+  }
+ else   if (entry instanceof DeltaAwareCacheEntry) {
+    AtomicHashMap<?,?> uncommittedChanges=((DeltaAwareCacheEntry)entry).getUncommittedChages();
+    ice=entryFactory.create(entry.getKey(),uncommittedChanges,entry.getMetadata(),entry.getLifespan(),entry.getMaxIdle());
+  }
+ else {
+    ice=entryFactory.create(entry);
+  }
+  MarshalledEntryImpl marshalledEntry=new MarshalledEntryImpl(ice.getKey(),ice.getValue(),PersistenceUtil.internalMetadata(ice),marshaller);
+  modifications.addMarshalledEntry(ice.getKey(),marshalledEntry);
+  return null;
+}

@@ -1,7 +1,17 @@
 {
   if (writer != null) {
     if (writer instanceof DelegatingCacheWriter)     writer.init(ctx);
-    writers.add(writer);
+    if (undelegate(writer) instanceof TransactionalCacheWriter && cfg.transactional()) {
+      if (configuration.transaction().transactionMode().isTransactional()) {
+        txWriters.add((TransactionalCacheWriter)writer);
+      }
+ else {
+        nonTxWriters.add(writer);
+      }
+    }
+ else {
+      nonTxWriters.add(writer);
+    }
     configMap.put(writer,cfg);
   }
 }

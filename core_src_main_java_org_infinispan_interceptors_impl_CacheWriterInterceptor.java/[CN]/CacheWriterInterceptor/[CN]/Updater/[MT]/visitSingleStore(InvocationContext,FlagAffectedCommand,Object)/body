@@ -1,9 +1,9 @@
 {
   if (isProperWriter(ctx,command,key)) {
     if (generateStatistics)     putCount++;
-    InternalCacheValue sv=getStoredValue(key,ctx);
+    InternalCacheValue sv=entryFactory.getValueFromCtxOrCreateNew(key,ctx);
     MarshalledEntryImpl me=new MarshalledEntryImpl(key,sv.getValue(),internalMetadata(sv),marshaller);
-    persistenceManager.writeToAllStores(me,command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
+    persistenceManager.writeToAllNonTxStores(me,command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
   }
   return null;
 }

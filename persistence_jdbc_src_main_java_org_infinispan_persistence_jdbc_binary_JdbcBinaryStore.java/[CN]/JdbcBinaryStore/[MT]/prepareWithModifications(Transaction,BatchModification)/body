@@ -1,0 +1,25 @@
+{
+  try {
+    Connection connection=getTxConnection(transaction);
+    connection.setAutoCommit(false);
+    Map<Integer,Bucket> existingBuckets=getExistingBuckets(connection,batchModification);
+    Set<Bucket> newBuckets=updateAndCreateBuckets(batchModification.getMarshalledEntries(),batchModification.getKeysToRemove(),existingBuckets);
+    try (PreparedStatement insertBatch=connection.prepareStatement(tableManager.getInsertRowSql());PreparedStatement updateBatch=connection.prepareStatement(tableManager.getUpdateRowSql())){
+      for (      Bucket bucket : existingBuckets.values()) {
+        if (newBuckets.contains(bucket)) {
+          prepareWriteStatement(insertBatch,bucket,tableManager.getInsertRowSql());
+          insertBatch.addBatch();
+        }
+ else {
+          prepareWriteStatement(updateBatch,bucket,tableManager.getUpdateRowSql());
+          updateBatch.addBatch();
+        }
+      }
+      insertBatch.executeBatch();
+      updateBatch.executeBatch();
+    }
+   }
+ catch (  SQLException|InterruptedException e) {
+    throw log.prepareTxFailure(e);
+  }
+}

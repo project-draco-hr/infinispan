@@ -1,0 +1,24 @@
+{
+  List<MarshalledEntry> stringEntries=new ArrayList<>();
+  List<MarshalledEntry> binaryEntries=new ArrayList<>();
+  for (  MarshalledEntry entry : batchModification.getMarshalledEntries()) {
+    if (stringStore.supportsKey(entry.getKey().getClass()))     stringEntries.add(entry);
+ else     binaryEntries.add(entry);
+  }
+  List<Object> stringKeysToDelete=new ArrayList<>();
+  List<Object> binaryKeysToDelete=new ArrayList<>();
+  for (  Object key : batchModification.getKeysToRemove()) {
+    if (stringStore.supportsKey(key.getClass()))     stringKeysToDelete.add(key);
+ else     binaryKeysToDelete.add(key);
+  }
+  TxStatus txStatus=new TxStatus();
+  if (!(stringEntries.isEmpty() && stringKeysToDelete.isEmpty())) {
+    stringStore.prepareWithModifications(transaction,batchModification);
+    txStatus.registeredWithStringStore=true;
+  }
+  if (!(binaryEntries.isEmpty() && binaryKeysToDelete.isEmpty())) {
+    binaryStore.prepareWithModifications(transaction,batchModification);
+    txStatus.registeredWithBinaryStore=true;
+  }
+  if (txStatus.registeredWithBinaryStore || txStatus.registeredWithStringStore)   transactionStatus.put(transaction,txStatus);
+}

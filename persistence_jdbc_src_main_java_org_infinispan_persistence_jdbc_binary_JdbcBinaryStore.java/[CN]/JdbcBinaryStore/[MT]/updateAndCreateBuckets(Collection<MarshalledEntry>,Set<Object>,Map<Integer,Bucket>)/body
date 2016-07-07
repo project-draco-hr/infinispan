@@ -1,0 +1,33 @@
+{
+  Set<Bucket> newBuckets=new HashSet<>();
+  for (  MarshalledEntry entry : modifiedEntries) {
+    Integer bucketKey=getBuckedId(entry.getKey());
+    Object entryKey=entry.getKey();
+    InternalMetadata m=entry.getMetadata();
+    Bucket existingBucket=existingBuckets.get(bucketKey);
+    if (m != null && m.isExpired(ctx.getTimeService().wallClockTime())) {
+      if (existingBucket != null) {
+        existingBucket.removeEntry(entryKey);
+      }
+      continue;
+    }
+    if (existingBucket == null) {
+      Bucket bucket=new Bucket(keyEquivalence);
+      bucket.setBucketId(bucketKey);
+      bucket.addEntry(entryKey,entry);
+      existingBuckets.put(bucketKey,bucket);
+      newBuckets.add(bucket);
+    }
+ else {
+      existingBucket.addEntry(entryKey,entry);
+    }
+  }
+  for (  Object entryKey : keysToDelete) {
+    Integer bucketKey=getBuckedId(entryKey);
+    Bucket existingBucket=existingBuckets.get(bucketKey);
+    if (existingBucket != null) {
+      existingBucket.removeEntry(entryKey);
+    }
+  }
+  return newBuckets;
+}

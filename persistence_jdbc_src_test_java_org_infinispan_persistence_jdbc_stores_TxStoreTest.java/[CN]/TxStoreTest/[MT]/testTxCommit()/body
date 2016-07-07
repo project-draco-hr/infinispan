@@ -1,0 +1,14 @@
+{
+  cache.put(KEY1,VAL1);
+  TransactionManager tm=TestingUtil.getTransactionManager(cache);
+  tm.begin();
+  cache.put(KEY2,VAL1);
+  String oldValue=cache.put(KEY1,VAL2);
+  assertEquals(oldValue,VAL1);
+  tm.commit();
+  String cacheVal=cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get(KEY1);
+  assertEquals(cacheVal,VAL2);
+  assertRowCount(2);
+  assertEquals(store.load(KEY1).getValue(),VAL2);
+  assertEquals(store.load(KEY2).getValue(),VAL1);
+}

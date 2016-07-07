@@ -1,0 +1,12 @@
+{
+  if (ctx.isOriginLocal()) {
+    Transaction tx=ctx.getTransaction();
+    Updater modBuilder=new Updater(ctx.getCacheTransaction().getAffectedKeys());
+    List<WriteCommand> modifications=ctx.getCacheTransaction().getAllModifications();
+    for (    WriteCommand writeCommand : modifications) {
+      writeCommand.acceptVisitor(ctx,modBuilder);
+    }
+    persistenceManager.prepareAllTxStores(tx,modBuilder.modifications,SHARED);
+  }
+  return ctx.continueInvocation();
+}

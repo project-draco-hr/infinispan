@@ -2,21 +2,14 @@
   if (enabled) {
     storesMutex.writeLock().lock();
     try {
-      Iterator<CacheLoader> clIt=loaders.iterator();
-      while (clIt.hasNext()) {
-        CacheLoader l=clIt.next();
-        if (undelegate(l).getClass().getName().equals(storeType))         clIt.remove();
-      }
-      Iterator<CacheWriter> cwIt=writers.iterator();
-      while (cwIt.hasNext()) {
-        CacheWriter w=cwIt.next();
-        if (undelegate(w).getClass().getName().equals(storeType))         cwIt.remove();
-      }
+      removeCacheLoader(storeType,loaders);
+      removeCacheWriter(storeType,nonTxWriters);
+      removeCacheWriter(storeType,txWriters);
     }
   finally {
       storesMutex.writeLock().unlock();
     }
-    if (loaders.isEmpty() && writers.isEmpty()) {
+    if (loaders.isEmpty() && nonTxWriters.isEmpty() && txWriters.isEmpty()) {
       AsyncInterceptorChain chain=cache.getAdvancedCache().getAsyncInterceptorChain();
       AsyncInterceptor loaderInterceptor=chain.findInterceptorExtending(CacheLoaderInterceptor.class);
       if (loaderInterceptor == null) {
@@ -28,7 +21,13 @@
       }
       AsyncInterceptor writerInterceptor=chain.findInterceptorExtending(CacheWriterInterceptor.class);
       if (writerInterceptor == null) {
-        log.persistenceWithoutCacheWriteInterceptor();
+        writerInterceptor=chain.findInterceptorWithClass(TransactionalStoreInterceptor.class);
+        if (writerInterceptor == null) {
+          log.persistenceWithoutCacheWriteInterceptor();
+        }
+ else {
+          chain.removeInterceptor(writerInterceptor.getClass());
+        }
       }
  else {
         ((CacheWriterInterceptor)writerInterceptor).disableInterceptor();
