@@ -1,0 +1,21 @@
+{
+  Connection conn=null;
+  Statement statement=null;
+  try {
+    String sql=tableManager.getDeleteAllRowsSql();
+    conn=connectionFactory.getConnection();
+    statement=conn.createStatement();
+    int result=statement.executeUpdate(sql);
+    if (log.isTraceEnabled()) {
+      log.tracef("Successfully removed %d rows.",result);
+    }
+  }
+ catch (  SQLException ex) {
+    log.failedClearingJdbcCacheStore(ex);
+    throw new PersistenceException("Failed clearing cache store",ex);
+  }
+ finally {
+    JdbcUtil.safeClose(statement);
+    connectionFactory.releaseConnection(conn);
+  }
+}

@@ -3,15 +3,9 @@
   PreparedStatement ps=null;
   try {
     String sql=tableManager.getInsertRowSql();
-    ByteBuffer byteBuffer=JdbcUtil.marshall(ctx.getMarshaller(),bucket.getStoredEntries());
-    if (trace) {
-      log.tracef("Running insertBucket. Sql: '%s', on bucket: %s stored value size is %d bytes",sql,bucket,byteBuffer.getLength());
-    }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
-    ps.setBinaryStream(1,new ByteArrayInputStream(byteBuffer.getBuf(),byteBuffer.getOffset(),byteBuffer.getLength()),byteBuffer.getLength());
-    ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-    ps.setString(3,bucket.getBucketIdAsString());
+    prepareWriteStatement(ps,bucket,sql);
     int insertedRows=ps.executeUpdate();
     if (insertedRows != 1) {
       throw new PersistenceException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");

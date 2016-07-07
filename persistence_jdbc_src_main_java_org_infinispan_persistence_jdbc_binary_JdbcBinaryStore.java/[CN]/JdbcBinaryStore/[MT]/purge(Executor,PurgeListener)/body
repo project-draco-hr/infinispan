@@ -2,9 +2,9 @@
   Connection conn=null;
   PreparedStatement ps=null;
   ResultSet rs=null;
-  Collection<Bucket> expiredBuckets=new ArrayList<Bucket>(BATCH_SIZE);
+  Collection<Bucket> expiredBuckets=new ArrayList<>(BATCH_SIZE);
   ExecutorCompletionService ecs=new ExecutorCompletionService(threadPool);
-  BlockingQueue<Bucket> emptyBuckets=new LinkedBlockingQueue<Bucket>();
+  BlockingQueue<Bucket> emptyBuckets=new LinkedBlockingQueue<>();
   int tasksScheduled=0;
   int tasksCompleted=0;
   try {
@@ -25,8 +25,8 @@
         expiredBuckets.add(bucket);
         if (expiredBuckets.size() == BATCH_SIZE) {
           ++tasksScheduled;
-          ecs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
-          expiredBuckets=new ArrayList<Bucket>(BATCH_SIZE);
+          ecs.submit(new BucketPurger(expiredBuckets,task,conn,emptyBuckets));
+          expiredBuckets=new ArrayList<>(BATCH_SIZE);
         }
       }
  else {
@@ -38,7 +38,7 @@
     }
     if (!expiredBuckets.isEmpty()) {
       ++tasksScheduled;
-      ecs.submit(new BucketPurger(expiredBuckets,task,ctx.getMarshaller(),conn,emptyBuckets));
+      ecs.submit(new BucketPurger(expiredBuckets,task,conn,emptyBuckets));
     }
     try {
       while (tasksCompleted < tasksScheduled) {

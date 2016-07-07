@@ -8,10 +8,7 @@
     }
     conn=connectionFactory.getConnection();
     ps=conn.prepareStatement(sql);
-    ByteBuffer buffer=JdbcUtil.marshall(ctx.getMarshaller(),bucket.getStoredEntries());
-    ps.setBinaryStream(1,new ByteArrayInputStream(buffer.getBuf(),buffer.getOffset(),buffer.getLength()),buffer.getLength());
-    ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-    ps.setString(3,bucket.getBucketIdAsString());
+    prepareWriteStatement(ps,bucket,sql);
     int updatedRows=ps.executeUpdate();
     if (updatedRows != 1) {
       throw new PersistenceException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");

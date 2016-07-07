@@ -1,0 +1,9 @@
+{
+  if (trace) {
+    log.tracef("Sql: '%s', on bucket: %s",sql,bucket);
+  }
+  ByteBuffer buffer=marshall(bucket.getStoredEntries());
+  ps.setBinaryStream(1,new ByteArrayInputStream(buffer.getBuf(),buffer.getOffset(),buffer.getLength()),buffer.getLength());
+  ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
+  ps.setString(3,bucket.getBucketIdAsString());
+}

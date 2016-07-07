@@ -1,6 +1,6 @@
 {
   log.trace("Purger task started");
-  List<Integer> purgedBuckets=new ArrayList(buckets.size());
+  List<Integer> purgedBuckets=new ArrayList<>(buckets.size());
 {
     PreparedStatement ps=null;
     try {
@@ -12,10 +12,7 @@
           if (purgeListener != null)           purgeListener.entryPurged(key);
         }
         if (!bucket.isEmpty()) {
-          ByteBuffer byteBuffer=JdbcUtil.marshall(marshaller,bucket.getStoredEntries());
-          ps.setBinaryStream(1,new ByteArrayInputStream(byteBuffer.getBuf(),byteBuffer.getOffset(),byteBuffer.getLength()),byteBuffer.getLength());
-          ps.setLong(2,bucket.timestampOfFirstEntryToExpire());
-          ps.setString(3,bucket.getBucketIdAsString());
+          prepareWriteStatement(ps,bucket,sql);
           ps.addBatch();
           purgedBuckets.add(bucket.getBucketId());
         }

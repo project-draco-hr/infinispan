@@ -1,0 +1,29 @@
+{
+  Throwable cause=null;
+  try {
+    tableManager.stop();
+  }
+ catch (  Throwable t) {
+    cause=t.getCause();
+    if (cause == null)     cause=t;
+    log.debug("Exception while stopping",t);
+  }
+  try {
+    if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
+      log.tracef("Stopping mananged connection factory: %s",connectionFactory);
+      connectionFactory.stop();
+    }
+  }
+ catch (  Throwable t) {
+    if (cause == null) {
+      cause=t;
+    }
+ else {
+      t.addSuppressed(cause);
+    }
+    log.debug("Exception while stopping",t);
+  }
+  if (cause != null) {
+    throw new PersistenceException("Exceptions occurred while stopping store",cause);
+  }
+}
