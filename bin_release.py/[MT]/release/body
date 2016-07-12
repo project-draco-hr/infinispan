@@ -1,0 +1,92 @@
+def release():
+    global settings
+    global uploader
+    global git
+    assert_python_minimum_version(2, 5)
+    require_settings_file()
+    if (len(sys.argv) < 2):
+        help_and_exit()
+    base_dir = os.getcwd()
+    version = validate_version(sys.argv[1])
+    branch = 'master'
+    mvn_only = False
+    if (len(sys.argv) > 2):
+        if sys.argv[2].startswith('--mvn-only'):
+            mvn_only = True
+        else:
+            branch = sys.argv[2]
+    if (len(sys.argv) > 3):
+        if sys.argv[3].startswith('--mvn-only'):
+            mvn_only = True
+        else:
+            prettyprint(('Unknown argument %s' % sys.argv[3]), Levels.WARNING)
+            help_and_exit()
+    prettyprint(("Releasing Infinispan version %s from branch '%s'" % (version, branch)), Levels.INFO)
+    sure = input_with_default('Are you sure you want to continue?', 'N')
+    if (not sure.upper().startswith('Y')):
+        prettyprint('... User Abort!', Levels.WARNING)
+        sys.exit(1)
+    prettyprint('OK, releasing! Please stand by ...', Levels.INFO)
+    if settings['dry_run']:
+        prettyprint('*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***', Levels.DEBUG)
+        prettyprint(('Your settings are %s' % settings), Levels.DEBUG)
+        uploader = DryRunUploader()
+    else:
+        uploader = Uploader()
+    git = Git(branch, version)
+    if (not git.is_upstream_clone()):
+        proceed = input_with_default(('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END)), 'N')
+        if (not proceed.upper().startswith('Y')):
+            prettyprint('... User Abort!', Levels.WARNING)
+            sys.exit(1)
+    prettyprint('Step 1: Cleaning up working directory (un-tracked and modified files)', Levels.INFO)
+    git.clean_release_directory()
+    prettyprint('Step 1: Complete', Levels.INFO)
+    prettyprint(('Step 2: Tagging %s in git as %s' % (branch, version)), Levels.INFO)
+    tag_release(version, branch)
+    prettyprint('Step 2: Complete', Levels.INFO)
+    prettyprint('Step 3: Updating version number in source files', Levels.INFO)
+    version_next = update_versions(base_dir, version)
+    prettyprint('Step 3: Complete', Levels.INFO)
+    prettyprint('Step 4: Build and test', Levels.INFO)
+    maven_build_distribution(version)
+    prettyprint('Step 4: Complete', Levels.INFO)
+    if (not mvn_only):
+        async_processes = []
+        unzip_archive(version)
+        prettyprint('Step 5: Prepare docs', Levels.INFO)
+        prepare_docs(base_dir, version)
+        prettyprint('Step 5: Complete', Levels.INFO)
+        prettyprint('Step 6: Uploading docs', Levels.INFO)
+        do_task(upload_docs, [base_dir, version], async_processes)
+        prettyprint('Step 6: Complete', Levels.INFO)
+        prettyprint('Step 7: Uploading Artifacts', Levels.INFO)
+        do_task(upload_artifacts, [('%s/distribution/target/distribution' % base_dir), version], async_processes)
+        do_task(upload_artifacts, [('%s/as-modules/client/target/distribution' % base_dir), version], async_processes)
+        do_task(upload_artifacts, [('%s/as-modules/embedded/target/distribution' % base_dir), version], async_processes)
+        do_task(upload_artifacts, [('%s/server/integration/target/distribution' % base_dir), version], async_processes)
+        prettyprint('Step 7: Complete', Levels.INFO)
+        prettyprint('Step 8: Uploading to configuration XML schema', Levels.INFO)
+        do_task(upload_schema, [base_dir, version], async_processes)
+        prettyprint('Step 8: Complete', Levels.INFO)
+        for p in async_processes:
+            p.start()
+        for p in async_processes:
+            p.join()
+    git.tag_for_release()
+    step_no = 9
+    if mvn_only:
+        step_no = 5
+    git.switch_to_branch()
+    if (version_next is not None):
+        prettyprint(('Step %s: Updating version number for next release' % step_no), Levels.INFO)
+        update_versions(base_dir, version_next)
+        prettyprint(('Step %s: Complete' % step_no), Levels.INFO)
+    if (not settings['dry_run']):
+        git.push_tag_to_origin()
+        if (version_next is not None):
+            git.push_branch_to_origin()
+        git.cleanup()
+    else:
+        prettyprint(('In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s.' % git.working_branch), Levels.DEBUG)
+    prettyprint('\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://mojo.redhat.com/docs/DOC-60994', Levels.INFO)
