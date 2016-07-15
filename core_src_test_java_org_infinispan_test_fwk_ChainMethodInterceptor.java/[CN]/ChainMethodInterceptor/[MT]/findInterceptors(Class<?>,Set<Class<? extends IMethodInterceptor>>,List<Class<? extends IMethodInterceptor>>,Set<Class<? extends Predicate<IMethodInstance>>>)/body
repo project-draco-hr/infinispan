@@ -1,0 +1,15 @@
+{
+  if (clazz == null || clazz.equals(Object.class))   return;
+  findInterceptors(clazz.getSuperclass(),interceptorSet,interceptorList,filters);
+  TestSelector annotation=clazz.getAnnotation(TestSelector.class);
+  if (annotation != null) {
+    for (    Class<? extends IMethodInterceptor> interceptor : annotation.interceptors()) {
+      if (interceptorSet.add(interceptor)) {
+        interceptorList.add(interceptor);
+      }
+    }
+    for (    Class<? extends Predicate<IMethodInstance>> filter : annotation.filters()) {
+      filters.add(filter);
+    }
+  }
+}
