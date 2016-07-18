@@ -1,0 +1,21 @@
+{
+  for (Class<?> clazz=getDelegate().getClass(); clazz != null; clazz=clazz.getSuperclass()) {
+    for (    Method m : clazz.getDeclaredMethods()) {
+      if (m.isAnnotationPresent(annotation)) {
+        m.setAccessible(true);
+switch (m.getParameterCount()) {
+case 0:
+          m.invoke(getDelegate(),(Object[])null);
+        break;
+case 1:
+      if (m.getParameterTypes()[0].isAssignableFrom(ITestContext.class)) {
+        m.invoke(getDelegate(),new Object[]{ctx});
+        break;
+      }
+default :
+    fail("Cannot invoke " + annotation.getSimpleName() + " method because of unknown parameters: "+ m.getName());
+}
+}
+}
+}
+}
