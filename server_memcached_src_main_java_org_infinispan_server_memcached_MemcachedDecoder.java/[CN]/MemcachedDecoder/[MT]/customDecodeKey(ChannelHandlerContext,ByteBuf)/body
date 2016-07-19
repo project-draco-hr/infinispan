@@ -1,0 +1,17 @@
+{
+  Channel ch=ctx.channel();
+switch (header.operation) {
+case AppendRequest:
+case PrependRequest:
+case IncrementRequest:
+case DecrementRequest:
+    key=readKey(buffer).getKey();
+  checkpoint(MemcachedDecoderState.DECODE_PARAMETERS);
+break;
+case FlushAllRequest:
+flushAll(buffer,ch,true);
+break;
+default :
+throw new IllegalArgumentException("Operation " + header.operation + " not supported!");
+}
+}

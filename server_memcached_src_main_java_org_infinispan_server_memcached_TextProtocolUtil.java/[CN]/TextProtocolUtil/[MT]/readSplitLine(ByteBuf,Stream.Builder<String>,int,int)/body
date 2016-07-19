@@ -1,0 +1,30 @@
+{
+  byte next=buffer.readByte();
+  if (next == CR) {
+    next=buffer.readByte();
+    if (next == LF) {
+      byte[] bytes=new byte[length];
+      buffer.getBytes(start,bytes);
+      builder.add(new String(bytes,CHARSET));
+      return builder.build();
+    }
+ else {
+      return readSplitLine(buffer,builder,start,length + 1);
+    }
+  }
+ else   if (next == LF) {
+    byte[] bytes=new byte[length];
+    buffer.getBytes(start,bytes);
+    builder.add(new String(bytes,CHARSET));
+    return builder.build();
+  }
+ else   if (next == SP) {
+    byte[] bytes=new byte[length];
+    buffer.getBytes(start,bytes);
+    builder.add(new String(bytes,CHARSET));
+    return readSplitLine(buffer,builder,start + length + 1,0);
+  }
+ else {
+    return readSplitLine(buffer,builder,start,length + 1);
+  }
+}

@@ -1,0 +1,49 @@
+{
+  byte[] prev=cache.get(key);
+  Object ret;
+  MemcachedOperation op=header.operation;
+  if (prev != null) {
+    BigInteger prevCounter=new BigInteger(new String(prev));
+    BigInteger delta=validateDelta(params.delta);
+    BigInteger candidateCounter;
+switch (op) {
+case IncrementRequest:
+      candidateCounter=prevCounter.add(delta);
+    candidateCounter=candidateCounter.compareTo(MAX_UNSIGNED_LONG) > 0 ? MIN_UNSIGNED : candidateCounter;
+  break;
+case DecrementRequest:
+candidateCounter=prevCounter.subtract(delta);
+candidateCounter=candidateCounter.compareTo(MIN_UNSIGNED) < 0 ? MIN_UNSIGNED : candidateCounter;
+break;
+default :
+throw new IllegalArgumentException("Operation " + op + " not supported!");
+}
+String counterString=candidateCounter.toString();
+if (cache.replace(key,prev,counterString.getBytes(),buildMetadata())) {
+if (isStatsEnabled) {
+if (op == MemcachedOperation.IncrementRequest) {
+incrHits.incrementAndGet();
+}
+ else {
+decrHits.incrementAndGet();
+}
+}
+ret=!params.noReply ? counterString + CRLF : null;
+}
+ else {
+throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter);
+}
+}
+ else {
+if (isStatsEnabled) {
+if (op == MemcachedOperation.IncrementRequest) {
+incrMisses.incrementAndGet();
+}
+ else {
+decrMisses.incrementAndGet();
+}
+}
+ret=!params.noReply ? NOT_FOUND : null;
+}
+writeResponse(ch,ret);
+}

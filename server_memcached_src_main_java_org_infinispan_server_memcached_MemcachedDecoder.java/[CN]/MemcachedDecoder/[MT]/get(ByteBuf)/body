@@ -1,0 +1,18 @@
+{
+  List<String> keys=readKeys(buffer);
+  if (keys.size() > 1) {
+    Map<String,CacheEntry<String,byte[]>> map=new HashMap<>();
+    for (    String key : keys) {
+      CacheEntry<String,byte[]> entry=cache.getCacheEntry(checkKeyLength(key,true,buffer));
+      if (entry != null) {
+        map.put(key,entry);
+      }
+    }
+    return createMultiGetResponse(map);
+  }
+ else {
+    String key=checkKeyLength(keys.get(0),true,buffer);
+    CacheEntry<String,byte[]> entry=cache.getCacheEntry(key);
+    return createGetResponse(key,entry);
+  }
+}

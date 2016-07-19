@@ -1,0 +1,31 @@
+{
+  header=new RequestHeader();
+  Optional<Boolean> endOfOp=readHeader(buffer,header);
+  if (!endOfOp.isPresent()) {
+    return;
+  }
+  Channel ch=ctx.channel();
+  String cacheName=cache.getName();
+  if (ignoreCache.test(cacheName))   throw new CacheUnavailableException(cacheName);
+  cacheConfiguration=getCacheConfiguration();
+  defaultLifespanTime=cacheConfiguration.expiration().lifespan();
+  defaultMaxIdleTime=cacheConfiguration.expiration().maxIdle();
+  if (endOfOp.get()) {
+    Object message;
+switch (header.operation) {
+case StatsRequest:
+      message=writeResponse(ch,createStatsResponse());
+    break;
+default :
+  customDecodeHeader(ctx,buffer);
+message=null;
+break;
+}
+if (message instanceof PartialResponse) {
+out.add(((PartialResponse)message).buffer);
+}
+}
+ else {
+checkpoint(MemcachedDecoderState.DECODE_KEY);
+}
+}

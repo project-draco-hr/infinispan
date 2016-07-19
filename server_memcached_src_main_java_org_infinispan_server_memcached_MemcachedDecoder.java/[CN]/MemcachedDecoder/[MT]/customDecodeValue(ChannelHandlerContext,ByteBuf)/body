@@ -1,0 +1,40 @@
+{
+  Channel ch=ctx.channel();
+switch (header.operation) {
+case AppendRequest:
+case PrependRequest:
+    Object ret;
+  readValue(buffer);
+byte[] prev=cache.get(key);
+if (prev != null) {
+byte[] concatenated;
+switch (header.operation) {
+case AppendRequest:
+  concatenated=concat(prev,rawValue);
+break;
+case PrependRequest:
+concatenated=concat(rawValue,prev);
+break;
+default :
+throw new IllegalArgumentException("Operation " + header.operation + " not supported!");
+}
+if (cache.replace(key,prev,concatenated,buildMetadata())) {
+ret=!params.noReply ? STORED : null;
+}
+ else {
+ret=!params.noReply ? NOT_STORED : null;
+}
+}
+ else {
+ret=!params.noReply ? NOT_STORED : null;
+}
+writeResponse(ch,ret);
+break;
+case IncrementRequest:
+case DecrementRequest:
+incrDecr(ch);
+break;
+default :
+throw new IllegalArgumentException("Operation " + header.operation + " not supported!");
+}
+}

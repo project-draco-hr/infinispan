@@ -1,0 +1,23 @@
+{
+  byte[] data=entry.getValue();
+  byte[] dataSize=String.valueOf(data.length).getBytes();
+  byte[] key=k.getBytes();
+  byte[] flags;
+  Metadata metadata=entry.getMetadata();
+  if (metadata instanceof MemcachedMetadata) {
+    long metaFlags=((MemcachedMetadata)metadata).flags;
+    flags=String.valueOf(metaFlags).getBytes();
+  }
+ else {
+    flags=ZERO;
+  }
+  int flagsSize=flags.length;
+  ByteBuf buf=buffer(VALUE_SIZE + key.length + data.length+ flagsSize+ dataSize.length+ 6+ extraSpace);
+  buf.writeBytes(VALUE);
+  buf.writeBytes(key);
+  buf.writeByte(SP);
+  buf.writeBytes(flags);
+  buf.writeByte(SP);
+  buf.writeBytes(dataSize);
+  return buf;
+}

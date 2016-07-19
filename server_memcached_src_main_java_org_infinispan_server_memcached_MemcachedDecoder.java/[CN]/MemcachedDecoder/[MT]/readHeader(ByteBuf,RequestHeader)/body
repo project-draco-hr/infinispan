@@ -1,0 +1,16 @@
+{
+  boolean endOfOp=readElement(buffer,byteBuffer);
+  String streamOp=extractString(byteBuffer);
+  MemcachedOperation op=toRequest(streamOp,endOfOp,buffer);
+  if (op == MemcachedOperation.StatsRequest && !endOfOp) {
+    String line=readDiscardedLine(buffer).trim();
+    if (!line.isEmpty())     throw new StreamCorruptedException("Stats command does not accept arguments: " + line);
+ else     endOfOp=true;
+  }
+  if (op == MemcachedOperation.VerbosityRequest) {
+    if (!endOfOp)     skipLine(buffer);
+    throw new StreamCorruptedException("Memcached 'verbosity' command is unsupported");
+  }
+  header.operation=op;
+  return Optional.of(endOfOp);
+}

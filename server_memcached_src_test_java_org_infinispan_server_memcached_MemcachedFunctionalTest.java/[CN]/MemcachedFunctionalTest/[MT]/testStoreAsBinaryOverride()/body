@@ -1,0 +1,17 @@
+{
+  ConfigurationBuilder builder=TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+  builder.storeAsBinary().enable();
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createCacheManager(builder);
+  Configuration cfg=builder.build();
+  cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build().defaultCacheName(),cfg);
+  assertTrue(cfg.storeAsBinary().enabled());
+  MemcachedServer testServer=startMemcachedTextServer(cm,server.getPort() + 33);
+  try {
+    Cache memcachedCache=cm.getCache(testServer.getConfiguration().defaultCacheName());
+    assertFalse(memcachedCache.getCacheConfiguration().storeAsBinary().enabled());
+  }
+  finally {
+    cm.stop();
+    testServer.stop();
+  }
+}

@@ -1,0 +1,27 @@
+{
+  StringBuilder sb=new StringBuilder();
+  if (t instanceof MemcachedException) {
+    Throwable cause=t.getCause();
+    if (cause instanceof UnknownOperationException) {
+      log.exceptionReported(cause);
+      return ERROR;
+    }
+ else     if (cause instanceof ClosedChannelException) {
+      log.exceptionReported(cause);
+      return null;
+    }
+ else     if (cause instanceof IOException || cause instanceof NumberFormatException || cause instanceof IllegalStateException) {
+      return logAndCreateErrorMessage(sb,(MemcachedException)t);
+    }
+ else {
+      return sb.append(t.getMessage()).append(CRLF);
+    }
+  }
+ else   if (t instanceof ClosedChannelException) {
+    log.exceptionReported(t);
+    return null;
+  }
+ else {
+    return sb.append(SERVER_ERROR).append(t.getMessage()).append(CRLF);
+  }
+}

@@ -1,0 +1,22 @@
+{
+  int index=0;
+  long flags=getFlags(args.get(index));
+  if (flags < 0)   throw new StreamCorruptedException("Flags cannot be negative: " + flags);
+  index+=1;
+  int streamLifespan=getLifespan(args.get(index));
+  int lifespan=streamLifespan <= 0 ? -1 : getLifespan(args.get(index));
+  index+=1;
+  int length=getLength(args.get(index));
+  if (length < 0)   throw new StreamCorruptedException("Negative bytes length provided: " + length);
+  long streamVersion;
+  if (header.operation == MemcachedOperation.ReplaceIfUnmodifiedRequest) {
+    index+=1;
+    streamVersion=getVersion(args.get(index));
+  }
+ else {
+    streamVersion=1;
+  }
+  index+=1;
+  boolean noReply=parseNoReply(index,args);
+  return new MemcachedParameters(length,lifespan,-1,streamVersion,noReply,flags,"",0);
+}

@@ -1,0 +1,15 @@
+{
+  for (int i=1; i < 5; ++i) {
+    String key=k(m,"k" + i + "-");
+    String value=v(m,"v" + i + "-");
+    OperationFuture<Boolean> f=client.set(key,0,value);
+    assertTrue(f.get(timeout,TimeUnit.SECONDS));
+    assertEquals(client.get(key),value);
+  }
+  OperationFuture<Boolean> f=client.flush();
+  assertTrue(f.get(timeout,TimeUnit.SECONDS));
+  for (int i=1; i < 5; ++i) {
+    String key=k(m,"k" + i + "-");
+    assertNull(client.get(key));
+  }
+}

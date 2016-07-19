@@ -1,0 +1,16 @@
+{
+  OperationFuture<Boolean> f=client.set(k(m),0,"blah");
+  assertTrue(f.get(timeout,TimeUnit.SECONDS));
+  CountDownLatch latch=new CountDownLatch(1);
+  NoReplyListener listener=new NoReplyListener(latch);
+  cache.addListener(listener);
+  try {
+    sendNoWait(op);
+    log.debug("No reply delete sent, wait...");
+    boolean completed=latch.await(10,TimeUnit.SECONDS);
+    assertTrue("Timed out waiting for remove to be executed",completed);
+  }
+  finally {
+    cache.removeListener(listener);
+  }
+}

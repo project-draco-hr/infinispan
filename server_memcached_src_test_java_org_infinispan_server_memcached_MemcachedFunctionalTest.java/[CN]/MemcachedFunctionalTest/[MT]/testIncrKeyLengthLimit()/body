@@ -1,0 +1,13 @@
+{
+  String keyUnderLimit=generateRandomString(249);
+  OperationFuture<Boolean> f=client.set(keyUnderLimit,0,"78");
+  assertTrue(f.get(timeout,TimeUnit.SECONDS));
+  assertEquals(client.get(keyUnderLimit),"78");
+  String keyInLimit=generateRandomString(250);
+  f=client.set(keyInLimit,0,"89");
+  assertTrue(f.get(timeout,TimeUnit.SECONDS));
+  assertEquals(client.get(keyInLimit),"89");
+  String keyAboveLimit=generateRandomString(251);
+  String resp=incr(keyAboveLimit,1);
+  assertClientError(resp);
+}

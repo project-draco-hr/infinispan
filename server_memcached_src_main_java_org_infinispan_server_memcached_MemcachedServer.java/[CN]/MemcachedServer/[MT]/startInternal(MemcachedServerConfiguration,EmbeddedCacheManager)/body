@@ -1,0 +1,10 @@
+{
+  if (!cacheManager.cacheExists(configuration.defaultCacheName())) {
+    cacheManager.defineConfiguration(configuration.defaultCacheName(),new ConfigurationBuilder().read(cacheManager.getDefaultCacheConfiguration()).build());
+  }
+  ExpirationConfiguration expConfig=cacheManager.getCacheConfiguration(configuration.defaultCacheName()).expiration();
+  if (expConfig.lifespan() >= 0 || expConfig.maxIdle() >= 0)   throw log.invalidExpiration(configuration.defaultCacheName());
+  Cache<String,byte[]> cache=cacheManager.getCache(configuration.defaultCacheName());
+  memcachedCache=cache.getAdvancedCache();
+  super.startInternal(configuration,cacheManager);
+}

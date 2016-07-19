@@ -1,0 +1,19 @@
+{
+  Channel ch=ctx.channel();
+  log.debug("Exception caught",cause);
+  if (!(cause instanceof IOException)) {
+    Object errorResponse=createErrorResponse(cause);
+    if (errorResponse != null) {
+      if (errorResponse instanceof byte[]) {
+        ch.writeAndFlush(wrappedBuffer((byte[])errorResponse),ch.voidPromise());
+      }
+ else       if (errorResponse instanceof CharSequence) {
+        ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence)errorResponse,CharsetUtil.UTF_8),ch.voidPromise());
+      }
+ else {
+        ch.writeAndFlush(errorResponse,ch.voidPromise());
+      }
+    }
+  }
+  resetParams();
+}

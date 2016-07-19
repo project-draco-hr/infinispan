@@ -1,0 +1,15 @@
+{
+  try (Socket socket=new Socket(server.getHost(),server.getPort())){
+    socket.getOutputStream().write(req.getBytes());
+    if (wait) {
+      Stream.Builder<String> builder=Stream.builder();
+      for (int i=0; i < expectedResponses; ++i) {
+        builder.accept(readLine(socket.getInputStream(),new StringBuilder()));
+      }
+      return builder.build().collect(Collectors.toList());
+    }
+ else {
+      return Collections.emptyList();
+    }
+  }
+ }

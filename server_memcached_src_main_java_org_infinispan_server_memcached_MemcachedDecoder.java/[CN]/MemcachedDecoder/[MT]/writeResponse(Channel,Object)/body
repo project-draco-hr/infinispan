@@ -1,0 +1,29 @@
+{
+  try {
+    if (response != null) {
+      if (isTrace)       log.tracef("Write response %s",response);
+      if (response instanceof ByteBuf[]) {
+        for (        ByteBuf buf : (ByteBuf[])response) {
+          ch.write(buf,ch.voidPromise());
+          ch.flush();
+        }
+      }
+ else       if (response instanceof byte[]) {
+        ch.writeAndFlush(wrappedBuffer((byte[])response),ch.voidPromise());
+      }
+ else       if (response instanceof CharSequence) {
+        ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence)response,CharsetUtil.UTF_8),ch.voidPromise());
+      }
+ else       if (response instanceof PartialResponse) {
+        return response;
+      }
+ else {
+        ch.writeAndFlush(response,ch.voidPromise());
+      }
+    }
+    return null;
+  }
+  finally {
+    resetParams();
+  }
+}

@@ -1,0 +1,32 @@
+{
+  List<String> args=readSplitLine(b);
+  boolean endOfOp=false;
+  if (args.size() != 0) {
+    if (isTrace)     log.tracef("Operation parameters: %s",args);
+    try {
+switch (header.operation) {
+case PutRequest:
+        params=readStorageParameters(args,b);
+      break;
+case RemoveRequest:
+    params=readRemoveParameters(args);
+  break;
+case IncrementRequest:
+case DecrementRequest:
+endOfOp=true;
+params=readIncrDecrParameters(args);
+break;
+case FlushAllRequest:
+params=readFlushAllParameters(args);
+break;
+default :
+params=readStorageParameters(args,b);
+break;
+}
+}
+ catch (ArrayIndexOutOfBoundsException e) {
+throw new IOException("Missing content in command line " + args);
+}
+}
+return endOfOp;
+}
