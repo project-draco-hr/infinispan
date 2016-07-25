@@ -1,0 +1,26 @@
+{
+  Set<ServerAddress> members=new HashSet<>();
+  Map<ServerAddress,List<Integer>> allHashIds=new HashMap<>();
+  List<Integer> hashIdsOfAddr=new ArrayList<>();
+  ServerAddress prevNode=null;
+  for (int i=1; i <= numServersInTopo; ++i) {
+    ServerAddress node=new ServerAddress(readString(buf),readUnsignedShort(buf));
+    int hashId=buf.readInt();
+    if (prevNode == null || node.equals(prevNode)) {
+      if (prevNode == null)       prevNode=node;
+      hashIdsOfAddr.add(hashId);
+    }
+ else {
+      allHashIds.put(prevNode,hashIdsOfAddr);
+      members.add(prevNode);
+      prevNode=node;
+      hashIdsOfAddr=new ArrayList<>();
+      hashIdsOfAddr.add(hashId);
+    }
+    if (i == numServersInTopo) {
+      allHashIds.put(prevNode,hashIdsOfAddr);
+      members.add(prevNode);
+    }
+  }
+  return new TestHashDistAware10Response(topologyId,members,allHashIds,numOwners,hashFunction,hashSpace);
+}

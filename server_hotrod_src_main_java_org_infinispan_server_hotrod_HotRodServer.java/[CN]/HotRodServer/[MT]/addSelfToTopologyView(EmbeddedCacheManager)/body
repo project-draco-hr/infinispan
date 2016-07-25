@@ -1,0 +1,12 @@
+{
+  addressCache=cacheManager.getCache(configuration.topologyCacheName());
+  clusterAddress=cacheManager.getAddress();
+  address=new ServerAddress(configuration.proxyHost(),configuration.proxyPort());
+  distributedExecutorService=new DefaultExecutorService(addressCache);
+  viewChangeListener=new CrashedMemberDetectorListener(addressCache,this);
+  cacheManager.addListener(viewChangeListener);
+  topologyChangeListener=new ReAddMyAddressListener(addressCache,clusterAddress,address);
+  addressCache.addListener(topologyChangeListener);
+  log.debugf("Map %s cluster address with %s server endpoint in address cache",clusterAddress,address);
+  addressCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD,Flag.GUARANTEED_DELIVERY).put(clusterAddress,address);
+}

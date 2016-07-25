@@ -1,0 +1,14 @@
+{
+  IterationState iterationState=iterationStateMap.get(iterationId);
+  if (iterationState != null) {
+    int i=0;
+    List<CacheEntry> entries=new ArrayList<>(iterationState.batch);
+    while (i++ < iterationState.batch && iterationState.iterator.hasNext()) {
+      entries.add(iterationState.iterator.next());
+    }
+    return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()),OperationStatus.Success,entries,iterationState.compatInfo,iterationState.metadata);
+  }
+ else {
+    return new IterableIterationResult(Collections.emptySet(),OperationStatus.InvalidIteration,Collections.emptyList(),null,false);
+  }
+}

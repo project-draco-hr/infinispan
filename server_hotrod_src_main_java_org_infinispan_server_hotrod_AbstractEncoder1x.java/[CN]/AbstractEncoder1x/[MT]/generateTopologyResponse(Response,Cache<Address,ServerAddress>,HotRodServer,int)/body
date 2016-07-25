@@ -1,0 +1,21 @@
+{
+  AdvancedCache<byte[],byte[]> cache=server.getCacheInstance(r.cacheName,addressCache.getCacheManager(),false,true);
+  List<Address> cacheMembers=cache.getRpcManager().getMembers();
+  int responseTopologyId=currentTopologyId;
+  if (!addressCache.keySet().containsAll(cacheMembers)) {
+    int clientTopologyId=r.topologyId;
+    if (currentTopologyId - clientTopologyId < 2) {
+      return null;
+    }
+ else {
+      responseTopologyId-=1;
+    }
+  }
+  Configuration config=cache.getCacheConfiguration();
+  if (r.clientIntel == Constants.INTELLIGENCE_TOPOLOGY_AWARE || !config.clustering().cacheMode().isDistributed()) {
+    return new TopologyAwareResponse(responseTopologyId,addressCache,0);
+  }
+ else {
+    return createHashDistAwareResp(responseTopologyId,addressCache,config);
+  }
+}

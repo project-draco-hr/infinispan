@@ -1,0 +1,20 @@
+{
+  AdvancedCache cache=null;
+  if (!skipCacheCheck)   cache=knownCaches.get(cacheName);
+  if (cache == null) {
+    String validCacheName=cacheName.isEmpty() ? configuration.defaultCacheName() : cacheName;
+    Cache<byte[],byte[]> tmpCache=SecurityActions.getCache(cacheManager,validCacheName);
+    Configuration cacheConfiguration=SecurityActions.getCacheConfiguration(tmpCache.getAdvancedCache());
+    boolean compatibility=cacheConfiguration.compatibility().enabled();
+    boolean indexing=cacheConfiguration.indexing().index().isEnabled();
+    if (compatibility || indexing)     cache=tmpCache.getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
+ else     cache=tmpCache.getAdvancedCache();
+    knownCacheConfigurations.put(cacheName,cacheConfiguration);
+    knownCacheRegistries.put(cacheName,SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache()));
+    if (addToKnownCaches) {
+      knownCaches.put(cacheName,cache);
+    }
+    tryRegisterMigrationManager(cacheName,cache);
+  }
+  return cache;
+}

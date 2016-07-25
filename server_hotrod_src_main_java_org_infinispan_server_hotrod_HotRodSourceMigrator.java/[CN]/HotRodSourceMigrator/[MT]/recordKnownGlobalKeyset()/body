@@ -1,0 +1,13 @@
+{
+  try {
+    byte[] bak=marshaller.objectToByteBuffer(KNOWN_KEY);
+    Set<byte[]> allKeys=cache.keySet();
+    Set<byte[]> copy=allKeys.stream().collect(Collectors.toSet());
+    copy.remove(bak);
+    Metadata metadata=new Builder().version(new NumericVersion(1)).build();
+    cache.put(bak,marshaller.objectToByteBuffer(copy),metadata);
+  }
+ catch (  InterruptedException|IOException e) {
+    throw new CacheException(e);
+  }
+}

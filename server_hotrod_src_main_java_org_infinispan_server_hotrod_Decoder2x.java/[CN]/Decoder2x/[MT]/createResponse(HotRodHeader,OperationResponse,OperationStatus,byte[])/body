@@ -1,0 +1,25 @@
+{
+  if (hasFlag(h,ProtocolFlag.ForceReturnPreviousValue)) {
+switch (st) {
+case Success:
+switch (h.op) {
+case PutRequest:
+case ReplaceRequest:
+case RemoveIfUnmodifiedRequest:
+case RemoveRequest:
+case ReplaceIfUnmodifiedRequest:
+        return new ResponseWithPrevious(h.version,h.messageId,h.cacheName,h.clientIntel,op,OperationStatus.SuccessWithPrevious,h.topologyId,Optional.ofNullable(prev));
+    }
+  break;
+case OperationNotExecuted:
+switch (h.op) {
+case PutIfAbsentRequest:
+case ReplaceIfUnmodifiedRequest:
+case RemoveIfUnmodifiedRequest:
+  return new ResponseWithPrevious(h.version,h.messageId,h.cacheName,h.clientIntel,op,OperationStatus.NotExecutedWithPrevious,h.topologyId,Optional.ofNullable(prev));
+}
+break;
+}
+}
+return new Response(h.version,h.messageId,h.cacheName,h.clientIntel,op,st,h.topologyId);
+}

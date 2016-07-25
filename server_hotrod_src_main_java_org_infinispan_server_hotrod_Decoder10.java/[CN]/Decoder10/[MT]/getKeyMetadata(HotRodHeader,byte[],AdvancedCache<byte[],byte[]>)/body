@@ -1,0 +1,14 @@
+{
+  CacheEntry<byte[],byte[]> ce=cache.getAdvancedCache().getCacheEntry(k);
+  if (ce != null) {
+    InternalCacheEntry<byte[],byte[]> ice=(InternalCacheEntry<byte[],byte[]>)ce;
+    NumericVersion entryVersion=(NumericVersion)ice.getMetadata().version();
+    byte[] v=ce.getValue();
+    int lifespan=ice.getLifespan() < 0 ? -1 : (int)(ice.getLifespan() / 1000);
+    int maxIdle=ice.getMaxIdle() < 0 ? -1 : (int)(ice.getMaxIdle() / 1000);
+    return new GetWithMetadataResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetWithMetadataResponse,OperationStatus.Success,h.topologyId,v,entryVersion.getVersion(),ice.getCreated(),lifespan,ice.getLastUsed(),maxIdle);
+  }
+ else {
+    return new GetWithMetadataResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetWithMetadataResponse,OperationStatus.KeyDoesNotExist,h.topologyId,null,0,-1,-1,-1,-1);
+  }
+}

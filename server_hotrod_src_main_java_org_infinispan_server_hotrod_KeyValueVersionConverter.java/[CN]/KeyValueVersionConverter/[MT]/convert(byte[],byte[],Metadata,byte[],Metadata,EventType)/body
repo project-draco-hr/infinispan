@@ -1,0 +1,12 @@
+{
+  int capacity=UnsignedNumeric.sizeUnsignedInt(key.length) + key.length + (newValue != null ? UnsignedNumeric.sizeUnsignedInt(newValue.length) + newValue.length + 8 : 0);
+  byte[] out=new byte[capacity];
+  int offset=UnsignedNumeric.writeUnsignedInt(out,0,key.length);
+  offset+=putBytes(key,offset,out);
+  if (newValue != null) {
+    offset+=UnsignedNumeric.writeUnsignedInt(out,offset,newValue.length);
+    offset+=putBytes(newValue,offset,out);
+    putLong(((NumericVersion)newMetadata.version()).getVersion(),offset,out);
+  }
+  return out;
+}

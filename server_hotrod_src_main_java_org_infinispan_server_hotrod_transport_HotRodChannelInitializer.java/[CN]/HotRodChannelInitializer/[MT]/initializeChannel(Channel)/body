@@ -1,0 +1,14 @@
+{
+  super.initializeChannel(ch);
+  AuthenticationHandler authHandler=hotRodServer.getConfiguration().authentication().enabled() ? new AuthenticationHandler(hotRodServer) : null;
+  if (authHandler != null) {
+    ch.pipeline().addLast("authentication-1",authHandler);
+  }
+  ch.pipeline().addLast("local-handler",new LocalContextHandler(transport));
+  ch.pipeline().addLast("handler",new ContextHandler(hotRodServer,transport,executor));
+  ch.pipeline().addLast("exception",new HotRodExceptionHandler());
+  if (LogFactory.getLog(HotRodAccessLoggingHandler.class,Log.class).isTraceEnabled()) {
+    ch.pipeline().addBefore("decoder","logging",new HotRodAccessLoggingHandler());
+    ch.pipeline().addAfter("encoder","logging-context",LoggingContextHandler.getInstance());
+  }
+}

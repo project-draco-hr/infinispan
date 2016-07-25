@@ -1,0 +1,75 @@
+{
+  log.tracef("Encode %s so that it's sent to the server",msg);
+  if (msg instanceof PartialOp) {
+    PartialOp partial=(PartialOp)msg;
+    buffer.writeByte((byte)partial.magic);
+    writeUnsignedLong(partial.id,buffer);
+    buffer.writeByte(partial.version);
+    buffer.writeByte(partial.code);
+  }
+ else   if (msg instanceof AddClientListenerOp) {
+    AddClientListenerOp op=(AddClientListenerOp)msg;
+    writeHeader(op,buffer);
+    writeRangedBytes(op.listenerId,buffer);
+    buffer.writeByte(op.includeState ? 1 : 0);
+    writeNamedFactory(op.filterFactory,buffer);
+    writeNamedFactory(op.converterFactory,buffer);
+    if (protocolVersion >= 21)     buffer.writeByte(op.useRawData ? 1 : 0);
+  }
+ else   if (msg instanceof RemoveClientListenerOp) {
+    RemoveClientListenerOp op=(RemoveClientListenerOp)msg;
+    writeHeader(op,buffer);
+    writeRangedBytes(op.listenerId,buffer);
+  }
+ else   if (msg instanceof Op) {
+    Op op=(Op)msg;
+    writeHeader(op,buffer);
+    if (protocolVersion < 20)     writeRangedBytes(new byte[0],buffer);
+    if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19 && op.code != 0x1D && op.code != 0x1F && op.code != 0x21 && op.code != 0x23 && op.code != 0x29) {
+      writeRangedBytes(op.key,buffer);
+      if (op.value != null) {
+        if (op.code != 0x0D) {
+          if (protocolVersion >= 22) {
+            if (op.lifespan > 0 || op.maxIdle > 0) {
+              buffer.writeByte(0);
+              writeUnsignedInt(op.lifespan,buffer);
+              writeUnsignedInt(op.maxIdle,buffer);
+            }
+ else {
+              buffer.writeByte(0x88);
+            }
+          }
+ else {
+            writeUnsignedInt(op.lifespan,buffer);
+            writeUnsignedInt(op.maxIdle,buffer);
+          }
+        }
+        if (op.code == 0x09 || op.code == 0x0D) {
+          buffer.writeLong(op.dataVersion);
+        }
+        if (op.code != 0x0D) {
+          writeRangedBytes(op.value,buffer);
+        }
+      }
+    }
+ else     if (op.code == 0x19) {
+      writeUnsignedInt(((BulkGetOp)op).count,buffer);
+    }
+ else     if (op.code == 0x1D) {
+      writeUnsignedInt(((BulkGetKeysOp)op).scope,buffer);
+    }
+ else     if (op.code == 0x1F) {
+      writeRangedBytes(((QueryOp)op).query,buffer);
+    }
+ else     if (op.code == 0x23) {
+      AuthOp authop=(AuthOp)op;
+      if (!authop.mech.isEmpty()) {
+        writeRangedBytes(authop.mech.getBytes(),buffer);
+      }
+ else {
+        writeUnsignedInt(0,buffer);
+      }
+      writeRangedBytes(((AuthOp)op).response,buffer);
+    }
+  }
+}

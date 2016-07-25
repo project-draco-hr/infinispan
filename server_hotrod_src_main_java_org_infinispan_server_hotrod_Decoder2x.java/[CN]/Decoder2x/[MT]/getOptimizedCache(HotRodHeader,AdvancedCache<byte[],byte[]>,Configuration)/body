@@ -1,0 +1,23 @@
+{
+  boolean isTransactional=cacheCfg.transaction().transactionMode().isTransactional();
+  boolean isClustered=cacheCfg.clustering().cacheMode().isClustered();
+  AdvancedCache<byte[],byte[]> optCache=c;
+  if (isClustered && !isTransactional && h.op.isConditional()) {
+    log.warnConditionalOperationNonTransactional(h.op.toString());
+  }
+  if (h.op.canSkipCacheLoading() && hasFlag(h,ProtocolFlag.SkipCacheLoader)) {
+    optCache=c.withFlags(Flag.SKIP_CACHE_LOAD);
+  }
+  if (h.op.canSkipIndexing() && hasFlag(h,ProtocolFlag.SkipIndexing)) {
+    optCache=c.withFlags(Flag.SKIP_INDEXING);
+  }
+  if (!hasFlag(h,ProtocolFlag.ForceReturnPreviousValue)) {
+    if (h.op.isNotConditionalAndCanReturnPrevious()) {
+      optCache=optCache.withFlags(Flag.IGNORE_RETURN_VALUES);
+    }
+  }
+ else   if (!isTransactional && h.op.canReturnPreviousValue()) {
+    log.warnForceReturnPreviousNonTransactional(h.op.toString());
+  }
+  return optCache;
+}

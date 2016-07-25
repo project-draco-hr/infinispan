@@ -1,0 +1,16 @@
+{
+  saslClient=sc;
+  byte[] saslResponse=saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : new byte[0];
+  ClientHandler handler=(ClientHandler)ch.pipeline().last();
+  AuthOp op=new AuthOp(0xA0,protocolVersion,(byte)0x23,defaultCacheName,(byte)1,0,saslClient.getMechanismName(),saslResponse);
+  writeOp(op);
+  TestAuthResponse response=(TestAuthResponse)handler.getResponse(op.id);
+  while (!saslClient.isComplete() || !response.complete) {
+    saslResponse=saslClient.evaluateChallenge(response.challenge);
+    op=new AuthOp(0xA0,protocolVersion,(byte)0x23,defaultCacheName,(byte)1,0,"",saslResponse);
+    writeOp(op);
+    response=(TestAuthResponse)handler.getResponse(op.id);
+  }
+  saslClient.dispose();
+  return response;
+}

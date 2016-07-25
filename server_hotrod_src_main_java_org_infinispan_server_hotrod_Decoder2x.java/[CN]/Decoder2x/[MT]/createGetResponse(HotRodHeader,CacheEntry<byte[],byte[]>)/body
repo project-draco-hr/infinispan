@@ -1,0 +1,17 @@
+{
+  HotRodOperation op=h.op;
+  if (entry != null && op == HotRodOperation.GetRequest)   return new GetResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetResponse,OperationStatus.Success,h.topologyId,entry.getValue());
+ else   if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
+    long version;
+    NumericVersion numericVersion=(NumericVersion)entry.getMetadata().version();
+    if (numericVersion != null) {
+      version=numericVersion.getVersion();
+    }
+ else {
+      version=0;
+    }
+    return new GetWithVersionResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetWithVersionResponse,OperationStatus.Success,h.topologyId,entry.getValue(),version);
+  }
+ else   if (op == HotRodOperation.GetRequest)   return new GetResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetResponse,OperationStatus.KeyDoesNotExist,h.topologyId,null);
+ else   return new GetWithVersionResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationResponse.GetWithVersionResponse,OperationStatus.KeyDoesNotExist,h.topologyId,null,0);
+}

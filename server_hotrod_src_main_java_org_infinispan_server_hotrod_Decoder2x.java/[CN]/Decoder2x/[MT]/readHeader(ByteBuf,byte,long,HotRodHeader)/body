@@ -1,0 +1,124 @@
+{
+  if (header.op == null) {
+    int readableBytes=buffer.readableBytes();
+    if (readableBytes < 2) {
+      return false;
+    }
+    byte streamOp=buffer.readByte();
+    int length=ExtendedByteBufJava.readMaybeVInt(buffer);
+    if (length == Integer.MIN_VALUE || length > buffer.readableBytes()) {
+      return false;
+    }
+ else     if (length == 0) {
+      header.cacheName="";
+    }
+ else {
+      byte[] bytes=new byte[length];
+      buffer.readBytes(bytes);
+      header.cacheName=new String(bytes,CharsetUtil.UTF_8);
+    }
+switch (streamOp) {
+case 0x01:
+      header.op=HotRodOperation.PutRequest;
+    break;
+case 0x03:
+  header.op=HotRodOperation.GetRequest;
+break;
+case 0x05:
+header.op=HotRodOperation.PutIfAbsentRequest;
+break;
+case 0x07:
+header.op=HotRodOperation.ReplaceRequest;
+break;
+case 0x09:
+header.op=HotRodOperation.ReplaceIfUnmodifiedRequest;
+break;
+case 0x0B:
+header.op=HotRodOperation.RemoveRequest;
+break;
+case 0x0D:
+header.op=HotRodOperation.RemoveIfUnmodifiedRequest;
+break;
+case 0x0F:
+header.op=HotRodOperation.ContainsKeyRequest;
+break;
+case 0x11:
+header.op=HotRodOperation.GetWithVersionRequest;
+break;
+case 0x13:
+header.op=HotRodOperation.ClearRequest;
+break;
+case 0x15:
+header.op=HotRodOperation.StatsRequest;
+break;
+case 0x17:
+header.op=HotRodOperation.PingRequest;
+break;
+case 0x19:
+header.op=HotRodOperation.BulkGetRequest;
+break;
+case 0x1B:
+header.op=HotRodOperation.GetWithMetadataRequest;
+break;
+case 0x1D:
+header.op=HotRodOperation.BulkGetKeysRequest;
+break;
+case 0x1F:
+header.op=HotRodOperation.QueryRequest;
+break;
+case 0x21:
+header.op=HotRodOperation.AuthMechListRequest;
+break;
+case 0x23:
+header.op=HotRodOperation.AuthRequest;
+break;
+case 0x25:
+header.op=HotRodOperation.AddClientListenerRequest;
+break;
+case 0x27:
+header.op=HotRodOperation.RemoveClientListenerRequest;
+break;
+case 0x29:
+header.op=HotRodOperation.SizeRequest;
+break;
+case 0x2B:
+header.op=HotRodOperation.ExecRequest;
+break;
+case 0x2D:
+header.op=HotRodOperation.PutAllRequest;
+break;
+case 0x2F:
+header.op=HotRodOperation.GetAllRequest;
+break;
+case 0x31:
+header.op=HotRodOperation.IterationStartRequest;
+break;
+case 0x33:
+header.op=HotRodOperation.IterationNextRequest;
+break;
+case 0x35:
+header.op=HotRodOperation.IterationEndRequest;
+break;
+default :
+throw new HotRodUnknownOperationException("Unknown operation: " + streamOp,version,messageId);
+}
+buffer.markReaderIndex();
+}
+int flag=ExtendedByteBufJava.readMaybeVInt(buffer);
+if (flag == Integer.MIN_VALUE) {
+return false;
+}
+if (buffer.readableBytes() < 2) {
+return false;
+}
+byte clientIntelligence=buffer.readByte();
+int topologyId=ExtendedByteBufJava.readMaybeVInt(buffer);
+if (topologyId == Integer.MIN_VALUE) {
+return false;
+}
+header.flag=flag;
+header.clientIntel=clientIntelligence;
+header.topologyId=topologyId;
+buffer.markReaderIndex();
+return true;
+}

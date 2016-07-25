@@ -1,0 +1,25 @@
+{
+  String cacheName=header.cacheName;
+  AdvancedCache<byte[],byte[]> cache=server.getKnownCacheInstance(cacheName);
+  if (cache == null) {
+    InternalCacheRegistry icr=cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+    if (icr.isPrivateCache(cacheName)) {
+      throw new RequestParsingException(String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'",cacheName),header.version,header.messageId);
+    }
+ else     if (icr.internalCacheHasFlag(cacheName,InternalCacheRegistry.Flag.PROTECTED)) {
+      if (!cacheManager.getCacheManagerConfiguration().security().authorization().enabled() && !loopback) {
+        throw new RequestParsingException(String.format("Remote requests are allowed to protected caches only over loopback or if authorization is enabled. Do no send remote requests to cache '%s'",cacheName),header.version,header.messageId);
+      }
+ else {
+        cache=server.getCacheInstance(cacheName,cacheManager,true,false);
+      }
+    }
+ else     if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
+      throw new CacheNotFoundException(String.format("Cache with name '%s' not found amongst the configured caches",cacheName),header.version,header.messageId);
+    }
+ else {
+      cache=server.getCacheInstance(cacheName,cacheManager,true,true);
+    }
+  }
+  this.cache=decoder.getOptimizedCache(header,cache,server.getCacheConfiguration(cacheName));
+}

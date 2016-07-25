@@ -1,0 +1,21 @@
+{
+  Optional<Integer> length=readMaybeVInt(bf);
+  if (length.isPresent()) {
+    int l=length.get();
+    if (bf.readableBytes() >= l) {
+      if (l > 0) {
+        byte[] array=new byte[l];
+        bf.readBytes(array);
+        return Optional.of(array);
+      }
+ else {
+        return Optional.of(new byte[0]);
+      }
+    }
+ else {
+      bf.resetReaderIndex();
+      return Optional.empty();
+    }
+  }
+ else   return Optional.empty();
+}

@@ -1,0 +1,36 @@
+{
+  AdvancedCache<byte[],byte[]> cache=server.getCacheInstance(r.cacheName,server.getCacheManager(),false,true);
+  DistributionManager distManager=cache.getDistributionManager();
+  ConsistentHash ch=distManager.getConsistentHash();
+  Map<Address,ServerAddress> topologyMap=h.serverEndpointsMap;
+  if (topologyMap.isEmpty()) {
+    log.noMembersInHashTopology(ch,topologyMap.toString());
+    buffer.writeByte(0);
+  }
+ else {
+    log.tracef("Write hash distribution change response header %s",h);
+    int numSegments=ch.getNumSegments();
+    KeyPartitioner keyPartitioner=((PartitionerConsistentHash)ch).getKeyPartitioner();
+    List<Integer> segmentHashIds=extractSegmentEndHashes(keyPartitioner);
+    List<KeyValuePair<ServerAddress,Integer>> serverHashes=new ArrayList<>(numSegments);
+    for (    Map.Entry<Address,ServerAddress> entry : topologyMap.entrySet()) {
+      for (int segmentIdx=0; segmentIdx < numSegments; ++segmentIdx) {
+        int ownerIdx=ch.locateOwnersForSegment(segmentIdx).indexOf(entry.getKey());
+        if (ownerIdx >= 0) {
+          Integer segmentHashId=segmentHashIds.get(segmentIdx);
+          int hashId=(segmentHashId + ownerIdx) & Integer.MAX_VALUE;
+          serverHashes.add(new KeyValuePair<>(entry.getValue(),hashId));
+        }
+      }
+    }
+    int totalNumServers=serverHashes.size();
+    writeCommonHashTopologyHeader(buffer,h.topologyId,h.numOwners,h.hashFunction,h.hashSpace,totalNumServers);
+    for (    KeyValuePair<ServerAddress,Integer> serverHash : serverHashes) {
+      ExtendedByteBuf.writeString(serverHash.getKey().getHost(),buffer);
+      ExtendedByteBuf.writeUnsignedShort(serverHash.getKey().getPort(),buffer);
+      int hashId=serverHash.getValue();
+      if (trace)       log.tracef("Writing hash id %d for %s:%s",(Object)hashId,serverHash.getKey().getHost(),serverHash.getKey().getPort());
+      buffer.writeInt(hashId);
+    }
+  }
+}

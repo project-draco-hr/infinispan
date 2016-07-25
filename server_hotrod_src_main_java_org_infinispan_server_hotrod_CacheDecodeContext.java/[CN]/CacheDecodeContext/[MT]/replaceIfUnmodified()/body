@@ -1,0 +1,16 @@
+{
+  CacheEntry<byte[],byte[]> entry=cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
+  if (entry != null) {
+    byte[] prev=entry.getValue();
+    NumericVersion streamVersion=new NumericVersion(params.streamVersion);
+    if (entry.getMetadata().version().equals(streamVersion)) {
+      boolean replaced=cache.replace(key,prev,(byte[])operationDecodeContext,buildMetadata());
+      if (replaced)       return successResp(prev);
+ else       return notExecutedResp(prev);
+    }
+ else {
+      return notExecutedResp(prev);
+    }
+  }
+ else   return notExistResp();
+}

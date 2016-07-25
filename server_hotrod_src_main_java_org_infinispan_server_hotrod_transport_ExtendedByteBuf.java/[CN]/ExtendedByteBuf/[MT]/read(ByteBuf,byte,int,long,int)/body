@@ -1,0 +1,14 @@
+{
+  if ((b & 0x80) == 0)   return Optional.of(i);
+ else {
+    if (count > 9)     throw new IllegalStateException("Stream corrupted.  A variable length long cannot be longer than 9 bytes.");
+    if (buf.readableBytes() >= 1) {
+      byte bb=buf.readByte();
+      return read(buf,bb,shift + 7,i | (bb & 0x7FL) << shift,count + 1);
+    }
+ else {
+      buf.resetReaderIndex();
+      return Optional.empty();
+    }
+  }
+}

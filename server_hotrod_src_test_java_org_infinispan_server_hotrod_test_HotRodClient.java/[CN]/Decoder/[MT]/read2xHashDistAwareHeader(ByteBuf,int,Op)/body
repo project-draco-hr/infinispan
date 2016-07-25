@@ -1,0 +1,23 @@
+{
+  int numServersInTopo=readUnsignedInt(buf);
+  List<ServerAddress> members=new ArrayList<>();
+  for (int i=0; i < numServersInTopo; ++i) {
+    ServerAddress node=new ServerAddress(readString(buf),readUnsignedShort(buf));
+    members.add(node);
+  }
+  byte hashFunction=buf.readByte();
+  int numSegments=readUnsignedInt(buf);
+  List<Iterable<ServerAddress>> segments=new ArrayList<>();
+  if (hashFunction > 0) {
+    for (int i=1; i <= numSegments; ++i) {
+      byte owners=buf.readByte();
+      List<ServerAddress> membersInSegment=new ArrayList<>();
+      for (int j=1; j <= owners; ++j) {
+        int index=readUnsignedInt(buf);
+        membersInSegment.add(members.get(index));
+      }
+      segments.add(membersInSegment);
+    }
+  }
+  return new TestHashDistAware20Response(topologyId,members,segments,hashFunction);
+}

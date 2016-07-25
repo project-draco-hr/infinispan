@@ -1,0 +1,33 @@
+{
+  if (e instanceof InvalidMagicIdException) {
+    log.exceptionReported(e);
+    return new ErrorResponse((byte)0,0,"",(short)1,OperationStatus.InvalidMagicOrMsgId,0,e.toString());
+  }
+ else   if (e instanceof HotRodUnknownOperationException) {
+    log.exceptionReported(e);
+    HotRodUnknownOperationException hruoe=(HotRodUnknownOperationException)e;
+    return new ErrorResponse(hruoe.version,hruoe.messageId,"",(short)1,OperationStatus.UnknownOperation,0,e.toString());
+  }
+ else   if (e instanceof UnknownVersionException) {
+    log.exceptionReported(e);
+    UnknownVersionException uve=(UnknownVersionException)e;
+    return new ErrorResponse(uve.version,uve.messageId,"",(short)1,OperationStatus.UnknownVersion,0,e.toString());
+  }
+ else   if (e instanceof RequestParsingException) {
+    log.exceptionReported(e);
+    String msg=e.getCause() == null ? e.toString() : String.format("%s: %s",e.getMessage(),e.getCause().toString());
+    RequestParsingException rpe=(RequestParsingException)e;
+    return new ErrorResponse(rpe.version,rpe.messageId,"",(short)1,OperationStatus.ParseError,0,msg);
+  }
+ else   if (e instanceof IllegalStateException) {
+    log.exceptionReported(e);
+    return decoder.createErrorResponse(header,e);
+  }
+ else   if (decoder != null) {
+    return decoder.createErrorResponse(header,e);
+  }
+ else {
+    log.exceptionReported(e);
+    return new ErrorResponse((byte)0,0,"",(short)1,OperationStatus.ServerError,1,e.toString());
+  }
+}

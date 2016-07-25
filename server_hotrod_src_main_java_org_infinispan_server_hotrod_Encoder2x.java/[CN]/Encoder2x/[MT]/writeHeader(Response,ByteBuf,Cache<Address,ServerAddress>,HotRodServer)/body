@@ -1,0 +1,28 @@
+{
+  ComponentRegistry cr=server.getCacheRegistry(r.cacheName);
+  Configuration configuration=server.getCacheConfiguration(r.cacheName);
+  CacheMode cacheMode=configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
+  CacheTopology cacheTopology=cacheMode.isClustered() ? cr.getStateTransferManager().getCacheTopology() : null;
+  Optional<AbstractTopologyResponse> newTopology=getTopologyResponse(r,addressCache,cacheMode,cacheTopology);
+  buf.writeByte(Constants.MAGIC_RES);
+  ExtendedByteBuf.writeUnsignedLong(r.messageId,buf);
+  buf.writeByte(r.operation.getCode());
+  writeStatus(r,buf,server);
+  if (newTopology.isPresent()) {
+    AbstractTopologyResponse topology=newTopology.get();
+    if (topology instanceof TopologyAwareResponse) {
+      writeTopologyUpdate((TopologyAwareResponse)topology,buf);
+      if (r.clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE)       writeEmptyHashInfo(topology,buf);
+    }
+ else     if (topology instanceof HashDistAware20Response) {
+      writeHashTopologyUpdate((HashDistAware20Response)topology,cacheTopology,buf);
+    }
+ else {
+      throw new IllegalArgumentException("Unsupported response: " + topology);
+    }
+  }
+ else {
+    if (isTrace)     log.trace("Write topology response header with no change");
+    buf.writeByte(0);
+  }
+}

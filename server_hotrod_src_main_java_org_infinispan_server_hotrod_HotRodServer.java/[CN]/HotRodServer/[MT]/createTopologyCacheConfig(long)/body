@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout()).locking().lockAcquisitionTimeout(configuration.topologyLockTimeout()).eviction().strategy(EvictionStrategy.NONE).expiration().lifespan(-1).maxIdle(-1).dataContainer().keyEquivalence(AnyEquivalence.getInstance()).valueEquivalence(AnyEquivalence.getInstance());
+  if (configuration.topologyStateTransfer()) {
+    builder.clustering().stateTransfer().awaitInitialTransfer(configuration.topologyAwaitInitialTransfer()).fetchInMemoryState(true).timeout(distSyncTimeout + configuration.topologyReplTimeout());
+  }
+ else {
+    builder.persistence().addClusterLoader().remoteCallTimeout(configuration.topologyReplTimeout());
+  }
+  return builder;
+}

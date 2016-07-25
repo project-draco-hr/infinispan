@@ -1,0 +1,26 @@
+{
+  long id=messageId.incrementAndGet();
+switch (targetEventType) {
+case PLAIN:
+switch (event.getType()) {
+case CACHE_ENTRY_CREATED:
+case CACHE_ENTRY_MODIFIED:
+      KeyValuePair<OperationResponse,Boolean> responseType=getEventResponseType(event);
+    return keyWithVersionEvent(key,dataVersion,responseType.getKey(),responseType.getValue());
+case CACHE_ENTRY_REMOVED:
+case CACHE_ENTRY_EXPIRED:
+  responseType=getEventResponseType(event);
+return new Events.KeyEvent(version,id,responseType.getKey(),listenerId,responseType.getValue(),key);
+default :
+throw log.unexpectedEvent(event);
+}
+case CUSTOM_PLAIN:
+KeyValuePair<OperationResponse,Boolean> responseType=getEventResponseType(event);
+return new Events.CustomEvent(version,id,responseType.getKey(),listenerId,responseType.getValue(),value);
+case CUSTOM_RAW:
+responseType=getEventResponseType(event);
+return new Events.CustomRawEvent(version,id,responseType.getKey(),listenerId,responseType.getValue(),value);
+default :
+throw new IllegalArgumentException("Event type not supported: " + targetEventType);
+}
+}

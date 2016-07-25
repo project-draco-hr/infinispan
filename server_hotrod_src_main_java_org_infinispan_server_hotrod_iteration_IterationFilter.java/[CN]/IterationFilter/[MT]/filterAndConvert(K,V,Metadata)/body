@@ -1,0 +1,27 @@
+{
+  if (providedFilter.isPresent()) {
+    KeyValueFilterConverter<K,V,C> f=providedFilter.get();
+    if (!compat && !binary) {
+      try {
+        K unmarshalledKey=(K)filterMarshaller.objectFromByteBuffer((byte[])key);
+        V unmarshalledValue=(V)filterMarshaller.objectFromByteBuffer((byte[])value);
+        C result=f.filterAndConvert(unmarshalledKey,unmarshalledValue,metadata);
+        if (result != null) {
+          return (C)filterMarshaller.objectToByteBuffer(result);
+        }
+ else {
+          return null;
+        }
+      }
+ catch (      IOException|ClassNotFoundException|InterruptedException e) {
+        throw new CacheException(e);
+      }
+    }
+ else {
+      return (C)f.filterAndConvert(key,value,metadata);
+    }
+  }
+ else {
+    return (C)value;
+  }
+}

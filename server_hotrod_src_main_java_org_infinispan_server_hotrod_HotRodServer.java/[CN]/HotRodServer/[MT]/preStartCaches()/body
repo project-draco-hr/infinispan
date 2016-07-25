@@ -1,0 +1,9 @@
+{
+  InternalCacheRegistry icr=cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+  boolean authz=cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
+  for (  String cacheName : cacheManager.getCacheNames()) {
+    AdvancedCache cache=getCacheInstance(cacheName,cacheManager,false,(!icr.internalCacheHasFlag(cacheName,InternalCacheRegistry.Flag.PROTECTED) || authz));
+    Configuration cacheCfg=SecurityActions.getCacheConfiguration(cache);
+    validateCacheConfiguration(cacheCfg);
+  }
+}

@@ -1,0 +1,38 @@
+{
+  if (t instanceof SuspectException) {
+    return createNodeSuspectedErrorResponse(h,t);
+  }
+ else   if (t instanceof IllegalLifecycleStateException) {
+    return createIllegalLifecycleStateErrorResponse(h,t);
+  }
+ else   if (t instanceof IOException) {
+    return new ErrorResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationStatus.ParseError,h.topologyId,t.toString());
+  }
+ else   if (t instanceof TimeoutException) {
+    return new ErrorResponse(h.version,h.messageId,h.cacheName,h.clientIntel,OperationStatus.OperationTimedOut,h.topologyId,t.toString());
+  }
+ else   if (t instanceof CacheException) {
+    Throwable cause=t.getCause();
+    if (cause instanceof SuspectedException) {
+      return createNodeSuspectedErrorResponse(h,cause);
+    }
+ else     if (cause instanceof IllegalLifecycleStateException) {
+      return createIllegalLifecycleStateErrorResponse(h,cause);
+    }
+ else     if (cause instanceof InterruptedException) {
+      return createIllegalLifecycleStateErrorResponse(h,cause);
+    }
+ else {
+      return createServerErrorResponse(h,cause);
+    }
+  }
+ else   if (t instanceof InterruptedException) {
+    return createIllegalLifecycleStateErrorResponse(h,t);
+  }
+ else   if (t instanceof PrivilegedActionException) {
+    return createErrorResponse(h,t.getCause());
+  }
+ else {
+    return createServerErrorResponse(h,t);
+  }
+}

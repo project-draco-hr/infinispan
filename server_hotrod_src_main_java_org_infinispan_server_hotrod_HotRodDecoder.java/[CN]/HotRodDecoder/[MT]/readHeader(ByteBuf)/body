@@ -1,12 +1,12 @@
 {
-  AbstractVersionedDecoder decoder=decodeCtx.decoder();
-  HotRodHeader header=decodeCtx.header();
+  VersionedDecoder decoder=decodeCtx.decoder;
+  HotRodHeader header=decodeCtx.header;
   if (decoder == null) {
     if (buffer.readableBytes() < 1) {
       return false;
     }
     short magic=buffer.readUnsignedByte();
-    if (magic != Constants$.MODULE$.MAGIC_REQ()) {
+    if (magic != Constants.MAGIC_REQ) {
       if (previousException == null) {
         throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic);
       }
@@ -22,30 +22,30 @@
     if (messageId == Integer.MIN_VALUE) {
       return false;
     }
-    header.messageId_$eq(messageId);
+    header.messageId=messageId;
     if (buffer.readableBytes() < 1) {
       buffer.resetReaderIndex();
       return false;
     }
     byte version=(byte)buffer.readUnsignedByte();
-    header.version_$eq(version);
-    if (Constants$.MODULE$.isVersion2x(version)) {
-      decoder=Decoder2x$.MODULE$;
+    header.version=version;
+    if (Constants.isVersion2x(version)) {
+      decoder=new Decoder2x();
     }
- else     if (Constants$.MODULE$.isVersion1x(version)) {
-      decoder=Decoder10$.MODULE$;
+ else     if (Constants.isVersion1x(version)) {
+      decoder=new Decoder10();
     }
  else {
       throw new UnknownVersionException("Unknown version:" + version,version,messageId);
     }
-    decodeCtx.setDecoder(decoder);
+    decodeCtx.decoder=decoder;
     buffer.markReaderIndex();
   }
   try {
-    if (!decoder.readHeader(buffer,header.version(),header.messageId(),header)) {
+    if (!decoder.readHeader(buffer,header.version,header.messageId,header)) {
       return false;
     }
-    if (decodeCtx.isTrace()) {
+    if (CacheDecodeContext.isTrace) {
       log.tracef("Decoded header %s",header);
     }
     return true;
@@ -54,6 +54,6 @@
     throw e;
   }
 catch (  Exception e) {
-    throw new RequestParsingException("Unable to parse header",header.version(),header.messageId(),e);
+    throw new RequestParsingException("Unable to parse header",header.version,header.messageId,e);
   }
 }

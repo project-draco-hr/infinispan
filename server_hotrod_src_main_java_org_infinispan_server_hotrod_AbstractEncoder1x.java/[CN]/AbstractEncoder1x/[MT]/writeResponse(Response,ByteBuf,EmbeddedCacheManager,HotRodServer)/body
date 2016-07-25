@@ -1,0 +1,86 @@
+{
+  if (r instanceof ResponseWithPrevious) {
+    Optional<byte[]> prev=((ResponseWithPrevious)r).previous;
+    if (prev.isPresent())     ExtendedByteBuf.writeRangedBytes(prev.get(),buf);
+ else     ExtendedByteBuf.writeUnsignedInt(0,buf);
+  }
+ else   if (r instanceof StatsResponse) {
+    Map<String,String> stats=((StatsResponse)r).stats;
+    ExtendedByteBuf.writeUnsignedInt(stats.size(),buf);
+    for (    Map.Entry<String,String> entry : stats.entrySet()) {
+      ExtendedByteBuf.writeString(entry.getKey(),buf);
+      ExtendedByteBuf.writeString(entry.getValue(),buf);
+    }
+  }
+ else   if (r instanceof GetWithVersionResponse) {
+    GetWithVersionResponse gwvr=(GetWithVersionResponse)r;
+    if (gwvr.status == OperationStatus.Success) {
+      buf.writeLong(gwvr.dataVersion);
+      ExtendedByteBuf.writeRangedBytes(gwvr.data,buf);
+    }
+  }
+ else   if (r instanceof GetWithMetadataResponse) {
+    GetWithMetadataResponse gwmr=(GetWithMetadataResponse)r;
+    if (gwmr.status == OperationStatus.Success) {
+      byte flags=(gwmr.lifespan < 0 ? Constants.INFINITE_LIFESPAN : (byte)0);
+      flags|=(gwmr.maxIdle < 0 ? Constants.INFINITE_MAXIDLE : (byte)0);
+      buf.writeByte(flags);
+      if (gwmr.lifespan >= 0) {
+        buf.writeLong(gwmr.created);
+        ExtendedByteBuf.writeUnsignedInt(gwmr.lifespan,buf);
+      }
+      if (gwmr.maxIdle >= 0) {
+        buf.writeLong(gwmr.lastUsed);
+        ExtendedByteBuf.writeUnsignedInt(gwmr.maxIdle,buf);
+      }
+      buf.writeLong(gwmr.dataVersion);
+      ExtendedByteBuf.writeRangedBytes(gwmr.data,buf);
+    }
+  }
+ else   if (r instanceof BulkGetResponse) {
+    if (trace)     log.trace("About to respond to bulk get request");
+    BulkGetResponse bgr=(BulkGetResponse)r;
+    if (bgr.status == OperationStatus.Success) {
+      int count;
+      if (bgr.count != 0) {
+        log.tracef("About to write (max) %d messages to the client",bgr.count);
+        count=bgr.count;
+      }
+ else {
+        count=Integer.MAX_VALUE;
+      }
+      Iterator<Map.Entry<byte[],byte[]>> iterator=bgr.entries.iterator();
+      while (iterator.hasNext() && count-- > 0) {
+        Map.Entry<byte[],byte[]> entry=iterator.next();
+        buf.writeByte(1);
+        ExtendedByteBuf.writeRangedBytes(entry.getKey(),buf);
+        ExtendedByteBuf.writeRangedBytes(entry.getValue(),buf);
+      }
+      buf.writeByte(0);
+    }
+  }
+ else   if (r instanceof BulkGetKeysResponse) {
+    log.trace("About to respond to bulk get keys request");
+    BulkGetKeysResponse bgkr=(BulkGetKeysResponse)r;
+    if (bgkr.status == OperationStatus.Success) {
+      while (bgkr.iterator.hasNext()) {
+        byte[] key=bgkr.iterator.next();
+        buf.writeByte(1);
+        ExtendedByteBuf.writeRangedBytes(key,buf);
+      }
+      buf.writeByte(0);
+    }
+  }
+ else   if (r instanceof GetResponse) {
+    if (r.status == OperationStatus.Success)     ExtendedByteBuf.writeRangedBytes(((GetResponse)r).data,buf);
+  }
+ else   if (r instanceof QueryResponse) {
+    ExtendedByteBuf.writeRangedBytes(((QueryResponse)r).result,buf);
+  }
+ else   if (r instanceof ErrorResponse) {
+    ExtendedByteBuf.writeString(((ErrorResponse)r).msg,buf);
+  }
+ else   if (buf == null) {
+    throw new IllegalArgumentException("Response received is unknown: " + r);
+  }
+}

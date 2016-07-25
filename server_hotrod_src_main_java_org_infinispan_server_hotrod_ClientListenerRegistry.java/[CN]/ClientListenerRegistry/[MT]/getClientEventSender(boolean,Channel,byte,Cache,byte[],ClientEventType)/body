@@ -1,0 +1,21 @@
+{
+  CompatibilityModeConfiguration compatibility=cache.getCacheConfiguration().compatibility();
+  if (compatibility.enabled()) {
+    if (includeState) {
+      StatelessClientEventSender delegate=new StatelessClientEventSender(ch,listenerId,version,eventType);
+      return new StatefulCompatibilityClientEventSender(delegate,new HotRodTypeConverter(compatibility.marshaller()));
+    }
+ else {
+      StatelessClientEventSender delegate=new StatelessClientEventSender(ch,listenerId,version,eventType);
+      return new StatelessCompatibilityClientEventSender(delegate,new HotRodTypeConverter(compatibility.marshaller()));
+    }
+  }
+ else {
+    if (includeState) {
+      return new StatefulClientEventSender(ch,listenerId,version,eventType);
+    }
+ else {
+      return new StatelessClientEventSender(ch,listenerId,version,eventType);
+    }
+  }
+}

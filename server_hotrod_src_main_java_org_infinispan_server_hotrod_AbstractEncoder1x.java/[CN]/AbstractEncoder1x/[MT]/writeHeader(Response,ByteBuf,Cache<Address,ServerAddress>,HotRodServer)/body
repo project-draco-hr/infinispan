@@ -1,0 +1,23 @@
+{
+  AbstractTopologyResponse topologyResp=getTopologyResponse(r,addressCache,server);
+  buf.writeByte(Constants.MAGIC_RES);
+  ExtendedByteBuf.writeUnsignedLong(r.messageId,buf);
+  buf.writeByte(r.operation.getCode());
+  buf.writeByte(r.status.getCode());
+  if (topologyResp != null) {
+    if (topologyResp instanceof TopologyAwareResponse) {
+      TopologyAwareResponse tar=(TopologyAwareResponse)topologyResp;
+      if (r.clientIntel == Constants.INTELLIGENCE_TOPOLOGY_AWARE)       writeTopologyUpdate(tar,buf);
+ else       writeLimitedHashTopologyUpdate(tar,buf);
+    }
+ else     if (topologyResp instanceof AbstractHashDistAwareResponse) {
+      writeHashTopologyUpdate((AbstractHashDistAwareResponse)topologyResp,server,r,buf);
+    }
+ else {
+      throw new IllegalArgumentException("Unsupported response instance: " + topologyResp);
+    }
+  }
+ else {
+    writeNoTopologyUpdate(buf);
+  }
+}

@@ -1,0 +1,14 @@
+{
+  Iterator<SaslServerFactory> saslFactories=SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(),true);
+  while (saslFactories.hasNext()) {
+    SaslServerFactory saslFactory=saslFactories.next();
+    String[] saslFactoryMechs=saslFactory.getMechanismNames(configuration.authentication().mechProperties());
+    for (    String supportedMech : saslFactoryMechs) {
+      for (      String mech : configuration.authentication().allowedMechs()) {
+        if (supportedMech.equals(mech)) {
+          saslMechFactories.putIfAbsent(mech,saslFactory);
+        }
+      }
+    }
+  }
+}

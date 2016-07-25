@@ -1,0 +1,16 @@
+{
+  log.tracef("Return limited hash distribution aware header because the client %s doesn't ",t);
+  Map<Address,ServerAddress> topologyMap=t.serverEndpointsMap;
+  if (topologyMap.isEmpty()) {
+    log.noMembersInTopology();
+    buffer.writeByte(0);
+  }
+ else {
+    writeCommonHashTopologyHeader(buffer,t.topologyId,0,(byte)0,0,topologyMap.size());
+    for (    ServerAddress address : topologyMap.values()) {
+      ExtendedByteBuf.writeString(address.getHost(),buffer);
+      ExtendedByteBuf.writeUnsignedShort(address.getPort(),buffer);
+      buffer.writeInt(0);
+    }
+  }
+}

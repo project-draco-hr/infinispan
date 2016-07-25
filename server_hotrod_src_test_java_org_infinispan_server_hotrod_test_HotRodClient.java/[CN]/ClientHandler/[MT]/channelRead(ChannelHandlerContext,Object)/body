@@ -1,0 +1,29 @@
+{
+  if (msg instanceof TestKeyWithVersionEvent) {
+    TestKeyWithVersionEvent e=(TestKeyWithVersionEvent)msg;
+switch (e.getOperation()) {
+case CacheEntryCreatedEventResponse:
+      clientListeners.get(e.listenerId).onCreated(e);
+    break;
+case CacheEntryModifiedEventResponse:
+  clientListeners.get(e.listenerId).onModified(e);
+break;
+}
+}
+ else if (msg instanceof TestKeyEvent) {
+TestKeyEvent e=(TestKeyEvent)msg;
+clientListeners.get(e.listenerId).onRemoved(e);
+}
+ else if (msg instanceof TestCustomEvent) {
+TestCustomEvent e=(TestCustomEvent)msg;
+clientListeners.get(e.listenerId).onCustom(e);
+}
+ else if (msg instanceof TestResponse) {
+TestResponse resp=(TestResponse)msg;
+log.tracef("Put %s in responses",resp);
+responses.put(resp.getMessageId(),resp);
+}
+ else {
+throw new IllegalArgumentException("Unsupport object: " + msg);
+}
+}

@@ -1,0 +1,18 @@
+{
+  CacheEntry<byte[],byte[]> entry=cache.getCacheEntry(key);
+  if (entry != null) {
+    byte[] prev=entry.getValue();
+    NumericVersion streamVersion=new NumericVersion(params.streamVersion);
+    if (entry.getMetadata().version().equals(streamVersion)) {
+      boolean removed=cache.remove(key,prev);
+      if (removed)       return successResp(prev);
+ else       return notExecutedResp(prev);
+    }
+ else {
+      return notExecutedResp(prev);
+    }
+  }
+ else {
+    return notExistResp();
+  }
+}

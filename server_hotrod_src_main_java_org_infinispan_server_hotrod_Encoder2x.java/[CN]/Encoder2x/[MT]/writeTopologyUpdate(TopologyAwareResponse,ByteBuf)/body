@@ -1,0 +1,17 @@
+{
+  Map<Address,ServerAddress> topologyMap=t.serverEndpointsMap;
+  if (topologyMap.isEmpty()) {
+    log.noMembersInTopology();
+    buffer.writeByte(0);
+  }
+ else {
+    if (isTrace)     log.tracef("Write topology change response header %s",t);
+    buffer.writeByte(1);
+    ExtendedByteBuf.writeUnsignedInt(t.topologyId,buffer);
+    ExtendedByteBuf.writeUnsignedInt(topologyMap.size(),buffer);
+    for (    ServerAddress address : topologyMap.values()) {
+      ExtendedByteBuf.writeString(address.getHost(),buffer);
+      ExtendedByteBuf.writeUnsignedShort(address.getPort(),buffer);
+    }
+  }
+}

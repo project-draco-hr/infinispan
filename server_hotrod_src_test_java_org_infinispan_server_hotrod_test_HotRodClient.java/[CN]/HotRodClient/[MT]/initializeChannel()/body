@@ -1,0 +1,13 @@
+{
+  EventLoopGroup eventLoopGroup=new NioEventLoopGroup();
+  Bootstrap bootstrap=new Bootstrap();
+  bootstrap.group(eventLoopGroup);
+  bootstrap.handler(new NettyInitializers(new ClientChannelInitializer(this,rspTimeoutSeconds,sslEngine,protocolVersion)));
+  bootstrap.channel(NioSocketChannel.class);
+  bootstrap.option(ChannelOption.TCP_NODELAY,true);
+  bootstrap.option(ChannelOption.SO_KEEPALIVE,true);
+  ChannelFuture connectFuture=bootstrap.connect(new InetSocketAddress(host,port));
+  Channel ch=connectFuture.syncUninterruptibly().channel();
+  assertTrue(connectFuture.isSuccess());
+  return ch;
+}

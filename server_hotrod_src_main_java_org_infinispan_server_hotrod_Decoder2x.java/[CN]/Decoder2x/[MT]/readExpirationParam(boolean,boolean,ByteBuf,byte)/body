@@ -1,0 +1,26 @@
+{
+  if (pre22Version) {
+    int duration=ExtendedByteBufJava.readMaybeVInt(buffer);
+    if (duration == Integer.MIN_VALUE) {
+      return null;
+    }
+ else     if (duration <= 0) {
+      duration=useDefault ? (int)EXPIRATION_DEFAULT : (int)EXPIRATION_NONE;
+    }
+    return new CacheDecodeContext.ExpirationParam(duration,TimeUnitValue.decode(timeUnit));
+  }
+ else {
+switch (timeUnit) {
+case 0x07:
+      return new CacheDecodeContext.ExpirationParam(EXPIRATION_DEFAULT,TimeUnitValue.decode(timeUnit));
+case 0x08:
+    return new CacheDecodeContext.ExpirationParam(EXPIRATION_NONE,TimeUnitValue.decode(timeUnit));
+default :
+  long timeDuration=ExtendedByteBufJava.readMaybeVLong(buffer);
+if (timeDuration == Long.MIN_VALUE) {
+  return null;
+}
+return new CacheDecodeContext.ExpirationParam(timeDuration,TimeUnitValue.decode(timeUnit));
+}
+}
+}
