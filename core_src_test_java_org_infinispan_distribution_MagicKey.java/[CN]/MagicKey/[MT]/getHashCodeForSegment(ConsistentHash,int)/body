@@ -1,0 +1,22 @@
+{
+  int[] hcs=hashCodes.get(ch);
+  if (hcs == null) {
+    hashCodes.put(ch,hcs=new int[ch.getNumSegments()]);
+  }
+  int hc=hcs[segment];
+  if (hc != 0) {
+    return hc;
+  }
+  Random r=new Random();
+  int attemptsLeft=100 * ch.getNumSegments();
+  Integer dummy;
+  do {
+    dummy=r.nextInt();
+    attemptsLeft--;
+    if (attemptsLeft < 0) {
+      throw new IllegalStateException("Could not find any key in segment " + segment);
+    }
+  }
+ while (ch.getSegment(dummy) != segment);
+  return hcs[segment]=dummy.intValue();
+}
