@@ -1,5 +1,5 @@
 {
-  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC,tx);
+  ConfigurationBuilder configuration=getDefaultClusteredCacheConfig(cacheMode,transactional);
   configuration.clustering().stateTransfer().fetchInMemoryState(performRehashing);
   if (lockingMode != null) {
     configuration.transaction().lockingMode(lockingMode);
@@ -9,18 +9,18 @@
     configuration.unsafe().unreliableReturnValues(true);
     configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
   }
-  if (tx) {
+  if (transactional) {
     configuration.invocationBatching().enable();
     if (onePhaseCommitOptimization) {
       configuration.transaction().use1PcForAutoCommitTransactions(true);
     }
   }
-  if (sync)   configuration.clustering().remoteTimeout(60,TimeUnit.SECONDS);
+  if (cacheMode.isSynchronous())   configuration.clustering().remoteTimeout(60,TimeUnit.SECONDS);
   configuration.locking().lockAcquisitionTimeout(lockTimeout,TimeUnit.SECONDS);
   configuration.clustering().l1().enabled(l1CacheEnabled);
-  if (groupsEnabled) {
+  if (groupers) {
     configuration.clustering().hash().groups().enabled(true);
-    configuration.clustering().hash().groups().withGroupers(groupers);
+    configuration.clustering().hash().groups().withGroupers(Collections.singletonList(new KXGrouper()));
   }
   if (l1CacheEnabled)   configuration.clustering().l1().invalidationThreshold(l1Threshold);
   return configuration;
