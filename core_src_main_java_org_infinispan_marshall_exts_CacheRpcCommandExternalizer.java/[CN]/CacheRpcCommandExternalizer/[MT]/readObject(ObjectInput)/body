@@ -2,18 +2,14 @@
   byte type=input.readByte();
   byte methodId=(byte)input.readShort();
   ByteString cacheName=ByteString.readObject(input);
-  StreamingMarshaller marshaller=getCacheMarshaller(cacheName);
-  ObjectInput paramsInput=marshaller.startObjectInput(convertInputStream(input),true);
-  if (paramsInput instanceof ExtendedRiverUnmarshaller) {
-    ((ExtendedRiverUnmarshaller)paramsInput).setInfinispanMarshaller(marshaller);
-  }
+  ObjectInput paramsInput=globalMarshaller.startObjectInput(convertInputStream(input),true);
   CacheRpcCommand cacheRpcCommand;
   try {
     cacheRpcCommand=cmdExt.fromStream(methodId,type,cacheName);
     cmdExt.readCommandParameters(paramsInput,cacheRpcCommand);
   }
   finally {
-    marshaller.finishObjectInput(paramsInput);
+    globalMarshaller.finishObjectInput(paramsInput);
   }
   return cacheRpcCommand;
 }
