@@ -1,0 +1,23 @@
+{
+  if (classLoader == null)   return new Properties();
+  FileLookup fileLookup=FileLookupFactory.newInstance();
+  String propertyPath=poolConfig.propertyFile();
+  InputStream is=null;
+  try {
+    if (propertyPath != null) {
+      is=fileLookup.lookupFileStrict(propertyPath,classLoader);
+    }
+ else     if (classLoader.getResource(HIKARI_PROPERTIES) != null) {
+      is=fileLookup.lookupFileStrict(HIKARI_PROPERTIES,classLoader);
+    }
+    if (is != null) {
+      Properties properties=new Properties();
+      properties.load(is);
+      return properties;
+    }
+  }
+ catch (  IOException e) {
+    log.errorLoadingHikariCPProperties(PooledConnectionFactoryConfiguration.class.getName());
+  }
+  return new Properties();
+}

@@ -1,26 +1,11 @@
 {
-  logFileOverride(classLoader);
-  PooledConnectionFactoryConfiguration pooledConfiguration;
+  PooledConnectionFactoryConfiguration poolConfig;
   if (config instanceof PooledConnectionFactoryConfiguration) {
-    pooledConfiguration=(PooledConnectionFactoryConfiguration)config;
+    poolConfig=(PooledConnectionFactoryConfiguration)config;
   }
  else {
     throw new PersistenceException("ConnectionFactoryConfiguration passed in must be an instance of " + "PooledConnectionFactoryConfiguration");
   }
-  pooledDataSource=new ComboPooledDataSource();
-  pooledDataSource.setProperties(new Properties());
-  try {
-    Class.forName(pooledConfiguration.driverClass(),true,ComboPooledDataSource.class.getClassLoader());
-    pooledDataSource.setDriverClass(pooledConfiguration.driverClass());
-  }
- catch (  Exception e) {
-    log.errorInstantiatingJdbcDriver(pooledConfiguration.driverClass(),e);
-    throw new PersistenceException(String.format("Error while instatianting JDBC driver: '%s'",pooledConfiguration.driverClass()),e);
-  }
-  pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
-  pooledDataSource.setUser(pooledConfiguration.username());
-  pooledDataSource.setPassword(pooledConfiguration.password());
-  if (trace) {
-    log.tracef("Started connection factory with config: %s",config);
-  }
+  connectionPool=C3P0ConnectionPool.forceC3P0() ? new C3P0ConnectionPool(classLoader,poolConfig) : new HikariConnectionPool(classLoader,poolConfig);
+  if (trace)   log.tracef("Started connection factory with config: %s",config);
 }

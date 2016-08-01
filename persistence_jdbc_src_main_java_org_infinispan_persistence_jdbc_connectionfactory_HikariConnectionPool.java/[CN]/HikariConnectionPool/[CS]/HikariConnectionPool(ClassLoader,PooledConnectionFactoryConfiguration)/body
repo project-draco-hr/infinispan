@@ -1,0 +1,16 @@
+{
+  try {
+    Properties properties=loadPropertiesFile(classLoader,poolConfig);
+    if (poolConfig.connectionUrl() != null)     properties.setProperty("jdbcUrl",poolConfig.connectionUrl());
+    if (poolConfig.driverClass() != null)     properties.setProperty("driverClassName",poolConfig.driverClass());
+    if (poolConfig.username() != null)     properties.setProperty("dataSource.user",poolConfig.username());
+    if (poolConfig.password() != null)     properties.setProperty("dataSource.password",poolConfig.password());
+    HikariConfig hikariConfig=new HikariConfig(properties);
+    hikariConfig.setRegisterMbeans(true);
+    hikari=new HikariDataSource(hikariConfig);
+  }
+ catch (  Exception e) {
+    log.errorCreatingHikariCP(e);
+    throw new PersistenceException("Error creating HikariCP instance: ",e);
+  }
+}

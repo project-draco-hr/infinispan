@@ -1,0 +1,16 @@
+{
+  logWarnMessages(poolConfig);
+  logFileOverride(classLoader);
+  c3p0.setProperties(new Properties());
+  try {
+    Class.forName(poolConfig.driverClass(),true,ComboPooledDataSource.class.getClassLoader());
+    c3p0.setDriverClass(poolConfig.driverClass());
+  }
+ catch (  Exception e) {
+    log.errorInstantiatingJdbcDriver(poolConfig.driverClass(),e);
+    throw new PersistenceException(String.format("Error while instatianting JDBC driver: '%s'",poolConfig.driverClass()),e);
+  }
+  c3p0.setJdbcUrl(poolConfig.connectionUrl());
+  c3p0.setUser(poolConfig.username());
+  c3p0.setPassword(poolConfig.password());
+}
