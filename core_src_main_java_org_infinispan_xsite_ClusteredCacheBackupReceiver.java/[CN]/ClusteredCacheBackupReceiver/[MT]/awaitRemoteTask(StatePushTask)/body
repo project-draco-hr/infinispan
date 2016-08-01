@@ -11,17 +11,14 @@
       if (trace) {
         log.tracef("Cache not found in node '%s'. Retrying locally!",task.address);
       }
-      if (!cache.getStatus().allowInvocations()) {
-        throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-      }
+      assertAllowInvocation();
       task.executeLocal();
     }
   }
  catch (  Exception e) {
-    if (!cache.getStatus().allowInvocations()) {
-      throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-    }
-    if (cache.getAdvancedCache().getRpcManager().getMembers().contains(task.address) && !cache.getAdvancedCache().getRpcManager().getAddress().equals(task.address)) {
+    assertAllowInvocation();
+    RpcManager rpcManager=cache.getRpcManager();
+    if (rpcManager.getMembers().contains(task.address) && !rpcManager.getAddress().equals(task.address)) {
       if (trace) {
         log.tracef(e,"An exception was sent by %s. Retrying!",task.address);
       }

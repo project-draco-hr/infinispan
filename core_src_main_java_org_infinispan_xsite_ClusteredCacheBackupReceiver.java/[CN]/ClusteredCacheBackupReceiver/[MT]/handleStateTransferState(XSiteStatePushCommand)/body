@@ -1,9 +1,7 @@
 {
-  if (!cache.getStatus().allowInvocations()) {
-    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-  }
+  assertAllowInvocation();
   final long endTime=timeService.expectedEndTime(cmd.getTimeout(),TimeUnit.MILLISECONDS);
-  final ClusteringDependentLogic clusteringDependentLogic=cache.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+  final ClusteringDependentLogic clusteringDependentLogic=cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
   final Map<Address,List<XSiteState>> primaryOwnersChunks=new HashMap<>();
   final Address localAddress=clusteringDependentLogic.getAddress();
   if (trace) {
@@ -45,14 +43,12 @@
   }
   while (!tasks.isEmpty() && !timeService.isTimeExpired(endTime)) {
     for (Iterator<StatePushTask> iterator=tasks.iterator(); iterator.hasNext(); ) {
-      if (awaitRemoteTask(cache,iterator.next())) {
+      if (awaitRemoteTask(iterator.next())) {
         iterator.remove();
       }
     }
   }
-  if (!cache.getStatus().allowInvocations()) {
-    throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-  }
+  assertAllowInvocation();
   if (!tasks.isEmpty()) {
     throw new TimeoutException("Unable to apply state in the time limit.");
   }
