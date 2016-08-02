@@ -21,16 +21,10 @@
   RspListFuture retval=new RspListFuture(request);
   if (request == null) {
     if (broadcast) {
-      retval.complete(EMPTY_RESPONSES_LIST);
+      retval.complete(Responses.EMPTY);
     }
  else {
-      List<Rsp<Response>> rsps=new ArrayList<>(dests.size());
-      for (      Address dest : dests) {
-        Rsp<Response> rsp=new Rsp<>(dest);
-        rsp.setSuspected();
-        rsps.add(rsp);
-      }
-      retval.complete(new RspList<>(rsps));
+      retval.complete(Responses.suspected(dests));
     }
   }
   if (timeout > 0 && !retval.isDone()) {

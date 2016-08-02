@@ -1,0 +1,23 @@
+{
+  for (  Rsp<Response> rsp : rsps) {
+    Throwable exception;
+    if (rsp == null) {
+    }
+ else     if (rsp.wasSuspected()) {
+      timeoutException.addSuppressed(new RpcException(rsp.getSender() + " was suspected"));
+    }
+ else     if (rsp.wasUnreachable()) {
+      timeoutException.addSuppressed(new RpcException(rsp.getSender() + " was unreachable"));
+    }
+ else     if ((exception=rsp.getException()) != null) {
+      timeoutException.addSuppressed(exception);
+    }
+ else     if (rsp.getValue() instanceof ExceptionResponse) {
+      timeoutException.addSuppressed(((ExceptionResponse)rsp.getValue()).getException());
+    }
+ else {
+      timeoutException.addSuppressed(new RpcException("Not accepted: " + rsp.getValue()));
+    }
+  }
+  return timeoutException;
+}
