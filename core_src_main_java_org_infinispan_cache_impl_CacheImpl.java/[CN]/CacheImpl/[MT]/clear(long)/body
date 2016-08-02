@@ -1,0 +1,11 @@
+{
+  final Transaction tx=suspendOngoingTransactionIfExists();
+  try {
+    InvocationContext context=invocationContextFactory.createClearNonTxInvocationContext();
+    ClearCommand command=commandsFactory.buildClearCommand(explicitFlags);
+    invoker.invoke(context,command);
+  }
+  finally {
+    resumePreviousOngoingTransaction(tx,true,"Had problems trying to resume a transaction after clear()");
+  }
+}

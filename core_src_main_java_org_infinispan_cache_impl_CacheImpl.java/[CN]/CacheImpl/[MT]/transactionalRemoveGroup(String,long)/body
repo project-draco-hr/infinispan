@@ -1,0 +1,23 @@
+{
+  final boolean onGoingTransaction=getOngoingTransaction() != null;
+  if (!onGoingTransaction) {
+    tryBegin();
+  }
+  try {
+    InvocationContext context=getInvocationContextWithImplicitTransaction(false,UNBOUNDED);
+    Map<K,V> keys=internalGetGroup(groupName,explicitFlagsBitSet,context);
+    long removeFlags=addIgnoreReturnValuesFlag(explicitFlagsBitSet);
+    for (    K key : keys.keySet()) {
+      removeInternal(key,removeFlags,context);
+    }
+    if (!onGoingTransaction) {
+      tryCommit();
+    }
+  }
+ catch (  RuntimeException e) {
+    if (!onGoingTransaction) {
+      tryRollback();
+    }
+    throw e;
+  }
+}

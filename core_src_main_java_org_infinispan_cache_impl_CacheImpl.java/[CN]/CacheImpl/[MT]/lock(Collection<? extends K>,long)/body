@@ -1,0 +1,10 @@
+{
+  if (!config.transaction().transactionMode().isTransactional())   throw new UnsupportedOperationException("Calling lock() on non-transactional caches is not allowed");
+  if (keys == null || keys.isEmpty()) {
+    throw new IllegalArgumentException("Cannot lock empty list of keys");
+  }
+  InvocationContext ctx=getInvocationContextForWrite(UNBOUNDED,false);
+  LockControlCommand command=commandsFactory.buildLockControlCommand(keys,flagsBitSet);
+  ctx.setLockOwner(command.getKeyLockOwner());
+  return (Boolean)invoker.invoke(ctx,command);
+}

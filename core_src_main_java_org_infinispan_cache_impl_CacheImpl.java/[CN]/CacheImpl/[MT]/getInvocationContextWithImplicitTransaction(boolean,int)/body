@@ -1,0 +1,16 @@
+{
+  InvocationContext invocationContext;
+  boolean txInjected=false;
+  if (config.transaction().transactionMode().isTransactional() && !isPutForExternalRead) {
+    Transaction transaction=getOngoingTransaction();
+    if (transaction == null && config.transaction().autoCommit()) {
+      transaction=tryBegin();
+      txInjected=true;
+    }
+    invocationContext=getInvocationContext(transaction,txInjected);
+  }
+ else {
+    invocationContext=getInvocationContextForWrite(keyCount,isPutForExternalRead);
+  }
+  return invocationContext;
+}
