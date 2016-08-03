@@ -1,0 +1,19 @@
+{
+  InputStream is=null;
+  try {
+    if (keyStoreFileName.startsWith(CLASSPATH_RESOURCE)) {
+      String fileName=keyStoreFileName.substring(keyStoreFileName.indexOf(":") + 1);
+      is=Util.getResourceAsStream(fileName,classLoader);
+      if (is == null) {
+        throw log.cannotFindResource(keyStoreFileName);
+      }
+    }
+ else {
+      is=new BufferedInputStream(new FileInputStream(keyStoreFileName));
+    }
+    ks.load(is,keyStorePassword);
+  }
+  finally {
+    Util.close(is);
+  }
+}
