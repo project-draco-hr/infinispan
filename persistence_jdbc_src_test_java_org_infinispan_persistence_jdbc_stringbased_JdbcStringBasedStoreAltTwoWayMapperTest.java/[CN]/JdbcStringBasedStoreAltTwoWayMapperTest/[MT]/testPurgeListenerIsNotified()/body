@@ -1,0 +1,10 @@
+{
+  InternalCacheEntry first=TestInternalCacheEntryFactory.create(MIRCEA,"val",1000);
+  cacheStore.write(marshalledEntry(first,marshaller));
+  assertRowCount(1);
+  Thread.sleep(1100);
+  AdvancedCacheWriter.PurgeListener purgeListener=mock(AdvancedCacheWriter.PurgeListener.class);
+  cacheStore.purge(new WithinThreadExecutor(),purgeListener);
+  verify(purgeListener).entryPurged(MIRCEA);
+  assertRowCount(0);
+}
