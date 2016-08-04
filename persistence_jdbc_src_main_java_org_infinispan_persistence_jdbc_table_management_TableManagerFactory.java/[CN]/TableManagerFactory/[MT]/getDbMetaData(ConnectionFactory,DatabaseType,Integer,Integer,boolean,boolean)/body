@@ -1,5 +1,5 @@
 {
-  if (databaseType != null && majorVersion != null && minorVersion != null)   return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert);
+  if (databaseType != null && majorVersion != null && minorVersion != null)   return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert,disableIndexing);
   Connection connection=null;
   if (majorVersion == null || minorVersion == null) {
     try {
@@ -11,7 +11,7 @@
       if (LOG.isDebugEnabled()) {
         LOG.debugf("Guessing database version as '%s'.  If this is incorrect, please specify both the correct " + "major and minor version of your database using the 'databaseMajorVersion' and " + "'databaseMinorVersion' attributes in your configuration.",version);
       }
-      if (databaseType != null)       return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert);
+      if (databaseType != null)       return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert,disableIndexing);
     }
  catch (    SQLException e) {
       if (LOG.isDebugEnabled())       LOG.debug("Unable to retrieve DB Major and Minor versions from JDBC metadata.",e);
@@ -23,7 +23,7 @@
   try {
     connection=connectionFactory.getConnection();
     String dbProduct=connection.getMetaData().getDatabaseProductName();
-    return new DbMetaData(guessDialect(dbProduct),majorVersion,minorVersion,disableUpsert);
+    return new DbMetaData(guessDialect(dbProduct),majorVersion,minorVersion,disableUpsert,disableIndexing);
   }
  catch (  Exception e) {
     if (LOG.isDebugEnabled())     LOG.debug("Unable to guess dialect from JDBC metadata.",e);
@@ -35,7 +35,7 @@
   try {
     connection=connectionFactory.getConnection();
     String dbProduct=connectionFactory.getConnection().getMetaData().getDriverName();
-    return new DbMetaData(guessDialect(dbProduct),majorVersion,minorVersion,disableUpsert);
+    return new DbMetaData(guessDialect(dbProduct),majorVersion,minorVersion,disableUpsert,disableIndexing);
   }
  catch (  Exception e) {
     if (LOG.isDebugEnabled())     LOG.debug("Unable to guess database dialect from JDBC driver name.",e);
@@ -47,5 +47,5 @@
     throw new CacheConfigurationException("Unable to detect database dialect from JDBC driver name or connection metadata.  Please provide this manually using the 'dialect' property in your configuration.  Supported database dialect strings are " + Arrays.toString(DatabaseType.values()));
   }
   if (LOG.isDebugEnabled())   LOG.debugf("Guessing database dialect as '%s'.  If this is incorrect, please specify the correct dialect using the 'dialect' attribute in your configuration.  Supported database dialect strings are %s",databaseType,Arrays.toString(DatabaseType.values()));
-  return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert);
+  return new DbMetaData(databaseType,majorVersion,minorVersion,disableUpsert,disableIndexing);
 }
