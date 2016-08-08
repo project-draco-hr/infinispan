@@ -1,5 +1,7 @@
 {
   CacheEntry<K,V> entry=ctx.lookupEntry(key);
   if (entry == null)   return null;
-  return perform(entry);
+  ReadEntryView<K,V> ro=(entry == null || entry.isNull()) ? EntryViews.noValue((K)key) : EntryViews.readOnly(entry);
+  R ret=f.apply(ro);
+  return snapshot(ret);
 }

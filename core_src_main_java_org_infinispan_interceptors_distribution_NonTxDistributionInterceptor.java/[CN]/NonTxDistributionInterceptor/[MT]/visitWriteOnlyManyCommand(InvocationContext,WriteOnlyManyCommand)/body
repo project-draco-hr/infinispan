@@ -27,7 +27,11 @@
         compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
       }
  catch (      ExecutionException e) {
-        throw new RemoteException("Exception while processing put on primary owner",e.getCause());
+        Throwable cause=e.getCause();
+        if (cause instanceof RemoteException) {
+          throw cause.getCause();
+        }
+        throw new RemoteException("Exception while processing put on primary owner",cause);
       }
 catch (      TimeoutException e) {
         throw new CacheException(e);
@@ -74,7 +78,12 @@ catch (      TimeoutException e) {
           compFuture.get(options.timeout(),TimeUnit.MILLISECONDS);
         }
  catch (        ExecutionException e) {
-          throw new RemoteException("Exception while processing put on backup owner",e.getCause());
+          if (e.getCause() instanceof RemoteException) {
+            throw e.getCause();
+          }
+ else {
+            throw new RemoteException("Exception while processing put on backup owner",e.getCause());
+          }
         }
 catch (        TimeoutException e) {
           throw new CacheException(e);

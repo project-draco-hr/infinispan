@@ -1,2 +1,9 @@
 {
+  ArrayList<R> retvals=new ArrayList<R>(keys.size());
+  for (  K k : keys) {
+    CacheEntry<K,V> me=lookupCacheEntry(ctx,k);
+    R ret=f.apply(me == null || me.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(me));
+    retvals.add(snapshot(ret));
+  }
+  return retvals.stream();
 }
