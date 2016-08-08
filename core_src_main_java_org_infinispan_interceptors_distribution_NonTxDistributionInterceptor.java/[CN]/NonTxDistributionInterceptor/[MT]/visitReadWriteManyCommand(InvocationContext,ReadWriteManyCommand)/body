@@ -1,5 +1,5 @@
 {
-  Set<Object> originalMap=command.getKeys();
+  Collection<Object> originalKeys=command.getKeys();
   ConsistentHash ch=dm.getConsistentHash();
   Address localAddress=rpcManager.getAddress();
   if (ctx.isOriginLocal()) {
@@ -11,7 +11,7 @@
       }
       Set<Integer> segments=ch.getPrimarySegmentsForOwner(member);
       if (!segments.isEmpty()) {
-        Set<Object> segmentKeysSet=new ReadOnlySegmentAwareSet<>(originalMap,ch,segments);
+        Collection<Object> segmentKeysSet=new ReadOnlySegmentAwareCollection<>(originalKeys,ch,segments);
         if (!segmentKeysSet.isEmpty()) {
           ReadWriteManyCommand copy=new ReadWriteManyCommand(command);
           copy.setKeys(segmentKeysSet);
@@ -67,7 +67,7 @@ catch (      TimeoutException e) {
       command.setForwarded(true);
       for (      Entry<Address,Set<Integer>> entry : backupOwnerSegments.entrySet()) {
         Set<Integer> segments=entry.getValue();
-        Set<Object> segmentKeysSet=new ReadOnlySegmentAwareSet<>(originalMap,ch,segments);
+        Collection<Object> segmentKeysSet=new ReadOnlySegmentAwareCollection<>(originalKeys,ch,segments);
         if (!segmentKeysSet.isEmpty()) {
           ReadWriteManyCommand copy=new ReadWriteManyCommand(command);
           copy.setKeys(segmentKeysSet);
