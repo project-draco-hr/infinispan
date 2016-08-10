@@ -5,12 +5,11 @@
   final String cacheName;
   if (config.hasDefined(ModelKeys.CACHE)) {
     cacheName=config.get(ModelKeys.CACHE).asString();
-    configurationBuilder.defaultCacheName(cacheName);
   }
  else {
-    cacheName="memcachedCache";
+    cacheName=MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE;
   }
-  final ProtocolServerService service=new ProtocolServerService(getServiceName(operation),MemcachedServer.class,configurationBuilder);
+  final ProtocolServerService service=new ProtocolServerService(getServiceName(operation),MemcachedServer.class,configurationBuilder,cacheName);
   ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"memcached"),service);
   String cacheContainerName=getCacheContainerName(operation);
   EndpointUtils.addCacheContainerDependency(builder,cacheContainerName,service.getCacheManager());
