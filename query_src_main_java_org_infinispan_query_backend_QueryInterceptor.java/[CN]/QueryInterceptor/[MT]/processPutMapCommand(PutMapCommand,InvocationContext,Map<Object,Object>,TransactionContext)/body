@@ -1,17 +1,19 @@
 {
-  if (shouldModifyIndexes(command,ctx)) {
-    Map<Object,Object> dataMap=command.getMap();
-    final boolean usingSkipIndexCleanupFlag=usingSkipIndexCleanup(command);
-    for (    Map.Entry<Object,Object> entry : dataMap.entrySet()) {
-      final Object key=extractValue(entry.getKey());
-      final Object value=extractValue(entry.getValue());
-      final Object previousValue=previousValues.get(key);
-      if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
-        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+  Map<Object,Object> dataMap=command.getMap();
+  final boolean usingSkipIndexCleanupFlag=usingSkipIndexCleanup(command);
+  for (  Map.Entry<Object,Object> entry : dataMap.entrySet()) {
+    final Object key=extractValue(entry.getKey());
+    final Object value=extractValue(entry.getValue());
+    final Object previousValue=previousValues.get(key);
+    if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      if (shouldModifyIndexes(command,ctx,key)) {
         removeFromIndexes(previousValue,key,transactionContext);
       }
-      if (updateKnownTypesIfNeeded(value)) {
-        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+    }
+    if (updateKnownTypesIfNeeded(value)) {
+      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      if (shouldModifyIndexes(command,ctx,key)) {
         updateIndexes(usingSkipIndexCleanupFlag,value,key,transactionContext);
       }
     }

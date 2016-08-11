@@ -1,20 +1,22 @@
 {
-  if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command,ctx)) {
-    final boolean usingSkipIndexCleanupFlag=usingSkipIndexCleanup(command);
-    Object p2=extractValue(command.getNewValue());
-    final boolean newValueIsIndexed=updateKnownTypesIfNeeded(p2);
+  if (valueReplaced != null && command.isSuccessful()) {
     Object key=extractValue(command.getKey());
-    if (!usingSkipIndexCleanupFlag) {
-      final Object p1=extractValue(command.getOldValue());
-      final boolean originalIsIndexed=updateKnownTypesIfNeeded(p1);
-      if (p1 != null && originalIsIndexed) {
-        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-        removeFromIndexes(p1,key,transactionContext);
+    if (shouldModifyIndexes(command,ctx,key)) {
+      final boolean usingSkipIndexCleanupFlag=usingSkipIndexCleanup(command);
+      Object p2=extractValue(command.getNewValue());
+      final boolean newValueIsIndexed=updateKnownTypesIfNeeded(p2);
+      if (!usingSkipIndexCleanupFlag) {
+        final Object p1=extractValue(command.getOldValue());
+        final boolean originalIsIndexed=updateKnownTypesIfNeeded(p1);
+        if (p1 != null && originalIsIndexed) {
+          transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+          removeFromIndexes(p1,key,transactionContext);
+        }
       }
-    }
-    if (newValueIsIndexed) {
-      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      updateIndexes(usingSkipIndexCleanupFlag,p2,key,transactionContext);
+      if (newValueIsIndexed) {
+        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+        updateIndexes(usingSkipIndexCleanupFlag,p2,key,transactionContext);
+      }
     }
   }
 }

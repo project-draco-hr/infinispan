@@ -1,9 +1,12 @@
 {
-  if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(command,ctx)) {
-    final Object value=extractValue(valueRemoved);
-    if (updateKnownTypesIfNeeded(value)) {
-      transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      removeFromIndexes(value,extractValue(command.getKey()),transactionContext);
+  if (command.isSuccessful() && !command.isNonExistent()) {
+    Object key=extractValue(command.getKey());
+    if (shouldModifyIndexes(command,ctx,key)) {
+      final Object value=extractValue(valueRemoved);
+      if (updateKnownTypesIfNeeded(value)) {
+        transactionContext=transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+        removeFromIndexes(value,key,transactionContext);
+      }
     }
   }
 }
