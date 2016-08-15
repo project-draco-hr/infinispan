@@ -3,13 +3,21 @@
   AdvancedCache cache1=(cache1IsOwner ? getFirstOwner(key) : getFirstNonOwner(key)).getAdvancedCache();
   AdvancedCache cache2=(cache2IsOwner ? getFirstOwner(key) : getFirstNonOwner(key)).getAdvancedCache();
   assertNull(cache1.put(key,one));
-  haveSecondaryThreadTakeLock(cache2);
+  log.trace("About to try to acquire a lock.");
+  cache2.getTransactionManager().begin();
+  if (!cache2.lock(key)) {
+    fail("Could not acquire lock");
+  }
+  Transaction tx2=cache2.getTransactionManager().suspend();
   cache1.getTransactionManager().begin();
   boolean locked=cache1.withFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT,Flag.FAIL_SILENTLY).lock(key);
   assertFalse(locked);
   Object removed=cache1.withFlags(Flag.SKIP_LOCKING).remove(key);
   assertEquals(one,removed);
-  haveSecondaryThreadReleaseLock(cache2);
+  Transaction tx1=cache1.getTransactionManager().suspend();
+  cache2.getTransactionManager().resume(tx2);
+  cache2.getTransactionManager().commit();
+  cache1.getTransactionManager().resume(tx1);
   cache1.getTransactionManager().commit();
   assertNull(cache2.get(key));
   log.tracef("End cache1IsOwner = %s, cache2IsOwner %s",cache1IsOwner,cache2IsOwner);
