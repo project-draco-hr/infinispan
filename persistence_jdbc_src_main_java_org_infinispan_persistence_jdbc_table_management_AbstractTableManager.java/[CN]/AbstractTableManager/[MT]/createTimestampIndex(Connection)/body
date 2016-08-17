@@ -1,31 +1,11 @@
 {
   if (metaData.isIndexingDisabled())   return;
-  ResultSet rs=null;
-  try {
-    TableName table=getTableName();
-    DatabaseMetaData meta=conn.getMetaData();
-    rs=meta.getIndexInfo(null,table.getSchema(),table.getName(),false,false);
-    boolean indexExists=false;
-    while (rs.next()) {
-      String indexName=rs.getString("INDEX_NAME");
-      if (indexName.equalsIgnoreCase(getIndexName())) {
-        indexExists=true;
-        break;
-      }
+  boolean indexExists=timestampIndexExists(conn);
+  if (!indexExists) {
+    String ddl=String.format("CREATE INDEX %s ON %s (%s)",getIndexName(true),getTableName(),config.timestampColumnName());
+    if (log.isTraceEnabled()) {
+      log.tracef("Adding timestamp index with following DDL: '%s'.",ddl);
     }
-    if (!indexExists) {
-      String ddl=String.format("CREATE INDEX %s ON %s (%s)",getIndexName(),getTableName(),config.timestampColumnName());
-      if (log.isTraceEnabled()) {
-        log.tracef("Adding timestamp index with following DDL: '%s'.",ddl);
-      }
-      executeUpdateSql(conn,ddl);
-    }
-    timestampIndexExists=true;
-  }
- catch (  SQLException e) {
-    throw new PersistenceException(e);
-  }
- finally {
-    JdbcUtil.safeClose(rs);
+    executeUpdateSql(conn,ddl);
   }
 }

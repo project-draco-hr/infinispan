@@ -1,0 +1,21 @@
+{
+  ResultSet rs=null;
+  try {
+    TableName table=getTableName();
+    DatabaseMetaData meta=conn.getMetaData();
+    rs=meta.getIndexInfo(null,table.getSchema(),table.getName(),false,false);
+    while (rs.next()) {
+      String indexName=rs.getString("INDEX_NAME");
+      if (indexName.equalsIgnoreCase(getIndexName(false))) {
+        return true;
+      }
+    }
+  }
+ catch (  SQLException e) {
+    throw new PersistenceException(e);
+  }
+ finally {
+    JdbcUtil.safeClose(rs);
+  }
+  return false;
+}
