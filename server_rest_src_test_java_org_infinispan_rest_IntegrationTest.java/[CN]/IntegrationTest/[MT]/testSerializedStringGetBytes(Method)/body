@@ -1,0 +1,14 @@
+{
+  byte[] data=("v-" + m.getName()).getBytes("UTF-8");
+  ByteArrayOutputStream bout=new ByteArrayOutputStream();
+  ObjectOutputStream oo=new ObjectOutputStream(bout);
+  oo.writeObject(data);
+  oo.flush();
+  byte[] bytes=bout.toByteArray();
+  put(fullPathKey(m),bytes,"application/x-java-serialized-object");
+  byte[] bytesRead=get(m,Optional.empty(),Optional.of("application/x-java-serialized-object")).getResponseBody();
+  assertTrue(Arrays.equals(bytes,bytesRead));
+  ObjectInputStream oin=new ObjectInputStream(new ByteArrayInputStream(bytesRead));
+  byte[] dataBack=(byte[])oin.readObject();
+  assertTrue(Arrays.equals(data,dataBack));
+}

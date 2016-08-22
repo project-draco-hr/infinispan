@@ -1,0 +1,15 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  PutMethod put=new PutMethod(fullPathKey);
+  put.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  call(put);
+  HttpMethodBase get=call(new GetMethod(fullPathKey));
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  String etag=get.getResponseHeader("ETag").getValue();
+  DeleteMethod delete=new DeleteMethod(fullPathKey);
+  delete.setRequestHeader("If-None-Match",etag);
+  assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED,call(delete).getStatusCode());
+  DeleteMethod deleteAgain=new DeleteMethod(fullPathKey);
+  deleteAgain.setRequestHeader("If-None-Match","x");
+  assertEquals(HttpServletResponse.SC_OK,call(deleteAgain).getStatusCode());
+}

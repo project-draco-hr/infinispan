@@ -1,0 +1,10 @@
+{
+  put(m);
+  HttpMethodBase result=get(m);
+  String dateLast=result.getResponseHeader("Last-Modified").getValue();
+  String dateMinus=addDay(dateLast,-1);
+  String datePlus=addDay(dateLast,1);
+  assertNotNull(get(m,Optional.of(dateLast)).getResponseBodyAsString());
+  assertNotNull(get(m,Optional.of(datePlus)).getResponseBodyAsString());
+  result=get(m,Optional.of(dateMinus),Optional.empty(),HttpServletResponse.SC_PRECONDITION_FAILED);
+}

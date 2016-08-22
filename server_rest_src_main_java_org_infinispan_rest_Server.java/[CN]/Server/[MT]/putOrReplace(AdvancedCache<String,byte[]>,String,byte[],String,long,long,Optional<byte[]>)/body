@@ -1,0 +1,16 @@
+{
+  Metadata metadata=createMetadata(cache.getCacheConfiguration(),dataType,ttl,idleTime);
+  if (prevCond.isPresent()) {
+    boolean replaced=cache.replace(key,prevCond.get(),data,metadata);
+    if (replaced) {
+      return Response.ok().build();
+    }
+ else {
+      return Response.status(HttpServletResponse.SC_PRECONDITION_FAILED).build();
+    }
+  }
+ else {
+    cache.put(key,data,metadata);
+    return Response.ok().build();
+  }
+}

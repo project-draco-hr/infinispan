@@ -1,0 +1,25 @@
+{
+  byte[] newByteArray=(byte[])value;
+  byte[] oldByteArray=(byte[])oldValue;
+  String oldAsString=new String(oldByteArray);
+  String newAsString=new String(newByteArray);
+  try {
+    if (Arrays.equals(newByteArray,"data2".getBytes())) {
+      log.debug("Let v3 apply...");
+      v3PutLatch.countDown();
+      log.debug("Wait until v2 can be stored");
+      boolean cont=v2PutLatch.await(10,TimeUnit.SECONDS);
+      if (!cont)       fail("Timed out waiting for v2 to be allowed");
+    }
+ else     if (Arrays.equals(newByteArray,"data3".getBytes())) {
+      log.debugf("About to store v3, let v2 apply, oldValue(for v3)=%s",oldAsString);
+      v2PutLatch.countDown();
+      v2FinishLatch.await(10,TimeUnit.SECONDS);
+    }
+  }
+ catch (  InterruptedException e) {
+    throw new CacheException(e);
+  }
+  log.debugf("Replace key=%s, oldValue=%s, value=%s",key,oldAsString,newAsString);
+  return super.replace(key,oldValue,value,metadata);
+}

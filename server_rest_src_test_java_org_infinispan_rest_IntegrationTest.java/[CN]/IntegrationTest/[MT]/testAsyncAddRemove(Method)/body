@@ -1,0 +1,14 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  PostMethod put=new PostMethod(fullPathKey);
+  put.setRequestHeader("performAsync","true");
+  put.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  call(put);
+  Thread.sleep(50);
+  assertEquals(HttpServletResponse.SC_OK,call(new HeadMethod(fullPathKey)).getStatusCode());
+  DeleteMethod del=new DeleteMethod(fullPathKey);
+  del.setRequestHeader("performAsync","true");
+  call(del);
+  Thread.sleep(50);
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,call(new HeadMethod(fullPathKey)).getStatusCode());
+}

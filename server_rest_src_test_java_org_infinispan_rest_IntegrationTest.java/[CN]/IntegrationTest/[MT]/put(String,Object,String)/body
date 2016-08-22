@@ -1,0 +1,18 @@
+{
+  PutMethod put=new PutMethod(path);
+  put.setRequestHeader("Content-Type",contentType);
+  RequestEntity reqEntity;
+  if (data instanceof String) {
+    reqEntity=new StringRequestEntity((String)data,null,null);
+  }
+ else   if (data instanceof byte[]) {
+    reqEntity=new InputStreamRequestEntity(new ByteArrayInputStream((byte[])data));
+  }
+ else {
+    throw new IllegalArgumentException("Only String or byte[] allowed, received: " + data.getClass());
+  }
+  put.setRequestEntity(reqEntity);
+  call(put);
+  assertEquals(HttpServletResponse.SC_OK,put.getStatusCode());
+  return put;
+}

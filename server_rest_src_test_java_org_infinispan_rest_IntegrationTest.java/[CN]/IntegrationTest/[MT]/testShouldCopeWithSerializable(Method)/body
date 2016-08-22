@@ -1,0 +1,34 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  call(new GetMethod(fullPathKey));
+  MySer obj=new MySer();
+  obj.name="mic";
+  getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName(),obj);
+  getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName() + "2","hola");
+  getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).put(m.getName() + "3",new MyNonSer());
+  GetMethod get=new GetMethod(fullPathKey);
+  get.setRequestHeader("Accept","application/x-java-serialized-object");
+  call(get);
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  ObjectInputStream in=new ObjectInputStream(get.getResponseBodyAsStream());
+  MySer res=(MySer)in.readObject();
+  assertNotNull(res);
+  assertEquals("mic",res.name);
+  assertEquals("application/x-java-serialized-object",get.getResponseHeader("Content-Type").getValue());
+  HttpMethodBase getStr=call(new GetMethod(fullPathKey + "2"));
+  assertEquals("hola",getStr.getResponseBodyAsString());
+  assertEquals("text/plain",getStr.getResponseHeader("Content-Type").getValue());
+  get.setRequestHeader("Accept","application/json");
+  call(get);
+  assertEquals("{\"name\":\"mic\"}",get.getResponseBodyAsString());
+  assertEquals("application/json",get.getResponseHeader("Content-Type").getValue());
+  get.setRequestHeader("Accept","application/xml");
+  call(get);
+  assertEquals("application/xml",get.getResponseHeader("Content-Type").getValue());
+  assertTrue(get.getResponseBodyAsString().indexOf("<org.infinispan.rest.MySer>") > -1);
+  GetMethod get3=new GetMethod(fullPathKey + "3");
+  get3.setRequestHeader("Accept","application/json");
+  call(get3);
+  assertEquals("{\"name\":\"mic\"}",get3.getResponseBodyAsString());
+  assertEquals("application/json",get3.getResponseHeader("Content-Type").getValue());
+}

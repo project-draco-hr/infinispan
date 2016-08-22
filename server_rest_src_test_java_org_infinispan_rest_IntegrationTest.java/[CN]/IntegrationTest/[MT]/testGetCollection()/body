@@ -1,0 +1,20 @@
+{
+  PostMethod post_a=new PostMethod(fullPath + "/a");
+  post_a.setRequestEntity(new StringRequestEntity("data","application/text",null));
+  call(post_a);
+  PostMethod post_b=new PostMethod(fullPath + "/b");
+  post_b.setRequestEntity(new StringRequestEntity("data","application/text",null));
+  call(post_b);
+  String html=getCollection("text/html");
+  assertTrue(html.contains("<a href=\"" + cacheName + "/a\">a</a>"));
+  assertTrue(html.contains("<a href=\"" + cacheName + "/b\">b</a>"));
+  String xml=getCollection("application/xml");
+  assertTrue(xml.contains("<key>a</key>"));
+  assertTrue(xml.contains("<key>b</key>"));
+  String plain=getCollection("text/plain;charset=UTF-8");
+  assertTrue(plain.contains("a" + System.lineSeparator()));
+  assertTrue(plain.contains("b" + System.lineSeparator()));
+  String json=getCollection("application/json");
+  assertTrue(json.contains("\"a\""));
+  assertTrue(json.contains("\"b\""));
+}

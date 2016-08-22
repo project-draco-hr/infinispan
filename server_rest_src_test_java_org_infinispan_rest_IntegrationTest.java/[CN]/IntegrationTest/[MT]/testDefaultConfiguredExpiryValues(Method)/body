@@ -1,0 +1,52 @@
+{
+  String cacheName="evictExpiryCache";
+  String fullPathKey=String.format("%s/rest/%s/%s",HOST,cacheName,m.getName());
+  PostMethod post=new PostMethod(fullPathKey);
+  post.setRequestHeader("timeToLiveSeconds","-1");
+  post.setRequestEntity(new StringRequestEntity("data","text/plain","UTF-8"));
+  call(post);
+  Thread.sleep(5000);
+  HttpMethodBase get=call(new GetMethod(fullPathKey));
+  assertEquals("data",get.getResponseBodyAsString());
+  assertNull(get.getResponseHeader("Expires"));
+  long startTime=System.currentTimeMillis();
+  int lifespan=3000;
+  fullPathKey=fullPathKey + "-2";
+  post=new PostMethod(fullPathKey);
+  post.setRequestHeader("Content-Type","application/text");
+  post.setRequestHeader("timeToLiveSeconds","0");
+  post.setRequestHeader("maxIdleTimeSeconds","0");
+  post.setRequestEntity(new StringRequestEntity("data2","text/plain","UTF-8"));
+  call(post);
+  while (System.currentTimeMillis() < startTime + lifespan) {
+    get=call(new GetMethod(fullPathKey));
+    String response=get.getResponseBodyAsString();
+    if (System.currentTimeMillis() < startTime + lifespan) {
+      assertEquals("data2",response);
+      assertNotNull(get.getResponseHeader("Expires"));
+      Thread.sleep(100);
+    }
+  }
+  waitNotFound(startTime,lifespan,fullPathKey);
+  assertEquals(SC_NOT_FOUND,call(new GetMethod(fullPathKey)).getStatusCode());
+  startTime=System.currentTimeMillis();
+  lifespan=0;
+  fullPathKey="%s-3".format(fullPathKey);
+  post=new PostMethod(fullPathKey);
+  post.setRequestHeader("timeToLiveSeconds","0");
+  post.setRequestEntity(new StringRequestEntity("data3","text/plain","UTF-8"));
+  call(post);
+  Thread.sleep(1000);
+  get=call(new GetMethod(fullPathKey));
+  String response=get.getResponseBodyAsString();
+  assertEquals("data3",response);
+  Thread.sleep(2000);
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,call(new GetMethod(fullPathKey)).getStatusCode());
+  fullPathKey="%s-4".format(fullPathKey);
+  post=new PostMethod(fullPathKey);
+  post.setRequestHeader("maxIdleTimeSeconds","0");
+  post.setRequestEntity(new StringRequestEntity("data4","text/plain","UTF-8"));
+  call(post);
+  Thread.sleep(2500);
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,call(new GetMethod(fullPathKey)).getStatusCode());
+}

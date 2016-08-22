@@ -1,0 +1,23 @@
+{
+  if (isCacheIgnored.test(name)) {
+    throw new CacheUnavailableException("Cache with name '" + name + "' is temporarily unavailable.");
+  }
+  boolean isKnownCache=knownCaches.containsKey(name);
+  if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(name) && !isKnownCache && !instance.getCacheNames().contains(name))   throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches");
+  if (isKnownCache) {
+    return knownCaches.get(name);
+  }
+ else {
+    InternalCacheRegistry icr=instance.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+    if (icr.isPrivateCache(name)) {
+      throw new CacheUnavailableException(String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'",name));
+    }
+ else     if (!allowInternalCacheAccess && icr.isInternalCache(name)) {
+      throw new CacheUnavailableException(String.format("Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'",name));
+    }
+    Cache<String,byte[]> cache=name.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? instance.getCache() : instance.getCache(name);
+    tryRegisterMigrationManager(cache);
+    knownCaches.put(name,cache.getAdvancedCache());
+    return cache.getAdvancedCache();
+  }
+}

@@ -1,0 +1,12 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  PostMethod post=new PostMethod(fullPathKey);
+  post.setRequestEntity(new StringRequestEntity("data","application/text",null));
+  call(post);
+  HttpMethodBase get=call(new HeadMethod(fullPathKey));
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  assertNotNull(get.getResponseHeader("ETag").getValue());
+  assertNotNull(get.getResponseHeader("Last-Modified").getValue());
+  assertEquals("application/text",get.getResponseHeader("Content-Type").getValue());
+  assertNull(get.getResponseBodyAsString());
+}

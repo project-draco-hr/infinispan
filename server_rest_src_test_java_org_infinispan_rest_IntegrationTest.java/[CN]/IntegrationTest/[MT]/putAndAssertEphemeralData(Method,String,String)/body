@@ -1,0 +1,20 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  PostMethod post=new PostMethod(fullPathKey);
+  int maxWaitTime=0;
+  if (!timeToLiveSeconds.isEmpty()) {
+    maxWaitTime=Math.max(maxWaitTime,Integer.parseInt(timeToLiveSeconds));
+    post.setRequestHeader("timeToLiveSeconds",timeToLiveSeconds);
+  }
+  if (!maxIdleTimeSeconds.isEmpty()) {
+    maxWaitTime=Math.max(maxWaitTime,Integer.parseInt(maxIdleTimeSeconds));
+    post.setRequestHeader("maxIdleTimeSeconds",maxIdleTimeSeconds);
+  }
+  post.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  call(post);
+  HttpMethodBase get=call(new GetMethod(fullPathKey));
+  assertEquals("data",get.getResponseBodyAsString());
+  TestingUtil.sleepThread((maxWaitTime + 1) * 1000);
+  call(get);
+  assertEquals(HttpServletResponse.SC_NOT_FOUND,get.getStatusCode());
+}

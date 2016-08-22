@@ -1,0 +1,20 @@
+{
+  String contentType=input.readUTF();
+  int number=input.readUnsignedByte();
+switch (number) {
+case Immortal:
+    return new MimeMetadata(contentType);
+case Expirable:
+  long lifespan=input.readLong();
+long maxIdle=input.readLong();
+return new MimeExpirableMetadata(contentType,lifespan,TimeUnit.MILLISECONDS,maxIdle,TimeUnit.MILLISECONDS);
+case LifespanExpirable:
+lifespan=input.readLong();
+return new MimeLifespanExpirableMetadata(contentType,lifespan,TimeUnit.MILLISECONDS);
+case MaxIdleExpirable:
+maxIdle=input.readLong();
+return new MimeMaxIdleExpirableMetadata(contentType,maxIdle,TimeUnit.MILLISECONDS);
+default :
+throw new IllegalArgumentException("Unsupported type: " + number);
+}
+}

@@ -1,0 +1,14 @@
+{
+  String cacheName="evictExpiryCache";
+  String fullPathKey=String.format("%s/rest/%s/%s",HOST,cacheName,m.getName());
+  PostMethod post=new PostMethod(fullPathKey);
+  post.setRequestHeader("timeToLiveSeconds","10");
+  post.setRequestEntity(new StringRequestEntity("data","text/plain","UTF-8"));
+  call(post);
+  Thread.sleep(2000);
+  HttpMethodBase get=call(new GetMethod(fullPathKey));
+  assertEquals("data",get.getResponseBodyAsString());
+  assertNotNull(get.getResponseHeader("Cache-Control"));
+  int retrievedMaxAge=CacheControl.valueOf(get.getResponseHeader("Cache-Control").getValue()).getMaxAge();
+  assertTrue(retrievedMaxAge > 0);
+}

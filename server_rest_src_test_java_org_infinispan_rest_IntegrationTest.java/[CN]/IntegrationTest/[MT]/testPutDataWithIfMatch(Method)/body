@@ -1,0 +1,17 @@
+{
+  String fullPathKey=fullPath + "/" + m.getName();
+  PutMethod put=new PutMethod(fullPathKey);
+  put.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  call(put);
+  HttpMethodBase get=call(new GetMethod(fullPathKey));
+  assertEquals(HttpServletResponse.SC_OK,get.getStatusCode());
+  String etag=get.getResponseHeader("ETag").getValue();
+  PutMethod reput=new PutMethod(fullPathKey);
+  reput.setRequestHeader("If-Match",etag);
+  reput.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  assertEquals(HttpServletResponse.SC_OK,call(reput).getStatusCode());
+  PutMethod reputAgain=new PutMethod(fullPathKey);
+  reputAgain.setRequestHeader("If-Match","x");
+  reputAgain.setRequestEntity(new StringRequestEntity("data","application/text","UTF-8"));
+  assertEquals(HttpServletResponse.SC_PRECONDITION_FAILED,call(reputAgain).getStatusCode());
+}
