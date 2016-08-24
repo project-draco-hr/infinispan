@@ -1,0 +1,14 @@
+{
+  User fromCache=remoteCache0.get(1);
+  assertNotNull(fromCache);
+  assertUser1(fromCache);
+  QueryFactory qf=Search.getQueryFactory(remoteCache0);
+  Query query=qf.from(UserPB.class).select(property("name"),count("age")).having("age").gte(5).toBuilder().groupBy("name").orderBy("name").build();
+  List<Object[]> list=query.list();
+  assertNotNull(list);
+  assertEquals(2,list.size());
+  assertEquals(Object[].class,list.get(0).getClass());
+  assertEquals(Object[].class,list.get(1).getClass());
+  assertEquals("Adrian",list.get(0)[0]);
+  assertEquals("Tom",list.get(1)[0]);
+}
