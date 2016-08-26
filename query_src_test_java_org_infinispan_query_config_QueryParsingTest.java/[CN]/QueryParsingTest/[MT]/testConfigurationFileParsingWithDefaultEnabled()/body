@@ -1,2 +1,25 @@
 {
+  ParserRegistry parserRegistry=new ParserRegistry(Thread.currentThread().getContextClassLoader());
+  ConfigurationBuilderHolder holder=parserRegistry.parseFile("configuration-parsing-test-enbledInDefault.xml");
+  Configuration defaultConfiguration=holder.getDefaultConfigurationBuilder().build();
+  assertEquals(defaultConfiguration.indexing().properties().size(),2);
+  assertTrue(defaultConfiguration.indexing().index().isEnabled());
+  assertEquals(defaultConfiguration.indexing().properties().getProperty("hibernate.search.default.directory_provider"),"someDefault");
+  Map<String,ConfigurationBuilder> namedConfigurations=holder.getNamedConfigurationBuilders();
+  Configuration nonSearchableCfg=namedConfigurations.get("not-searchable").build();
+  assertFalse(nonSearchableCfg.indexing().index().isEnabled());
+  Configuration simpleCfg=namedConfigurations.get("simple").build();
+  assertTrue(simpleCfg.indexing().index().isEnabled());
+  assertEquals(simpleCfg.indexing().properties().size(),2);
+  Configuration memoryCfg=namedConfigurations.get("memory-searchable").build();
+  assertTrue(memoryCfg.indexing().index().isEnabled());
+  assertFalse(memoryCfg.indexing().index().isLocalOnly());
+  assertEquals(memoryCfg.indexing().properties().size(),2);
+  assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"),"ram");
+  Configuration diskCfg=namedConfigurations.get("disk-searchable").build();
+  assertTrue(diskCfg.indexing().index().isEnabled());
+  assertTrue(diskCfg.indexing().index().isLocalOnly());
+  assertEquals(diskCfg.indexing().properties().size(),3);
+  assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"),"filesystem");
+  assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"),"true");
 }

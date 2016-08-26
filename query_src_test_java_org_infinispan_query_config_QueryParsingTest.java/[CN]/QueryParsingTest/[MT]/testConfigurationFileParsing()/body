@@ -1,2 +1,27 @@
 {
+  ParserRegistry parserRegistry=new ParserRegistry(Thread.currentThread().getContextClassLoader());
+  ConfigurationBuilderHolder holder=parserRegistry.parseFile("configuration-parsing-test.xml");
+  Configuration defaultConfiguration=holder.getDefaultConfigurationBuilder().build();
+  assertEquals(defaultConfiguration.indexing().properties().size(),0);
+  assertFalse(defaultConfiguration.indexing().index().isEnabled());
+  Map<String,ConfigurationBuilder> namedConfigurations=holder.getNamedConfigurationBuilders();
+  Configuration simpleCfg=namedConfigurations.get("simple").build();
+  assertFalse(simpleCfg.indexing().index().isEnabled());
+  assertEquals(simpleCfg.indexing().properties().size(),0);
+  Configuration memoryCfg=namedConfigurations.get("memory-searchable").build();
+  assertTrue(memoryCfg.indexing().index().isEnabled());
+  assertEquals(2,memoryCfg.indexing().properties().size());
+  assertEquals(memoryCfg.indexing().properties().getProperty("default.directory_provider"),"ram");
+  Configuration diskCfg=namedConfigurations.get("disk-searchable").build();
+  assertTrue(diskCfg.indexing().index().isEnabled());
+  assertEquals(diskCfg.indexing().properties().size(),3);
+  assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"),"filesystem");
+  assertEquals(diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use"),"true");
+  Configuration replDefaults=namedConfigurations.get("repl-with-default").build();
+  assertTrue(replDefaults.indexing().index().isEnabled());
+  assertFalse(replDefaults.indexing().properties().isEmpty());
+  Configuration affinity=namedConfigurations.get("dist-with-affinity").build();
+  assertTrue(affinity.indexing().index().isEnabled());
+  assertTrue(affinity.indexing().index().isPrimaryOwner());
+  assertEquals(affinity.indexing().properties().getProperty("default.indexmanager"),AffinityIndexManager.class.getName());
 }
