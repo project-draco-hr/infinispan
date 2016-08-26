@@ -3,12 +3,7 @@
     Map<Address,Response> responseMap=transport.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,null,DeliverOrder.TOTAL,distributed);
     return parseResponses(responseMap);
   }
-  Future<Map<Address,Response>> remoteFuture=asyncTransportExecutor.submit(new Callable<Map<Address,Response>>(){
-    @Override public Map<Address,Response> call() throws Exception {
-      return transport.invokeRemotely(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,null,DeliverOrder.NONE,false);
-    }
-  }
-);
+  Future<Map<Address,Response>> remoteFuture=transport.invokeRemotelyAsync(null,command,ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,timeout,null,DeliverOrder.NONE,false);
   gcr.wireDependencies(command);
   Response localResponse;
   try {

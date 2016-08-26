@@ -1,0 +1,28 @@
+{
+  while (true) {
+    Runnable runnable=null;
+    lock.lock();
+    try {
+      if (availablePermits >= 0) {
+        runnable=queue.poll();
+      }
+      if (runnable == null) {
+        availablePermits++;
+        break;
+      }
+    }
+  finally {
+      lock.unlock();
+    }
+    try {
+      NDC.push(name);
+      runnable.run();
+    }
+ catch (    Throwable t) {
+      log.error("Exception in task",t);
+    }
+ finally {
+      NDC.pop();
+    }
+  }
+}

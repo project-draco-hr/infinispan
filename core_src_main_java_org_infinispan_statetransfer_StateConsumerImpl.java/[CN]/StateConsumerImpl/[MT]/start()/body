@@ -2,5 +2,5 @@
   CacheMode mode=configuration.clustering().cacheMode();
   isFetchEnabled=(mode.isDistributed() || mode.isReplicated()) && (configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState());
   rpcOptions=rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(timeout,TimeUnit.MILLISECONDS).build();
-  stateRequestCompletionService=new SemaphoreCompletionService<>(stateTransferExecutor,1);
+  stateRequestExecutor=new LimitedExecutor("StateRequest-" + cacheName,stateTransferExecutor,1);
 }

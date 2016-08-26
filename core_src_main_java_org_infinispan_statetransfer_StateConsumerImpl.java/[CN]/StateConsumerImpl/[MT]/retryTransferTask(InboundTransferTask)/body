@@ -9,10 +9,13 @@ synchronized (transferMapsLock) {
       failedSegments.addAll(task.getSegments());
     }
     failedSegments.retainAll(getOwnedSegments(cacheTopology.getWriteConsistentHash()));
-    Map<Address,Set<Integer>> sources=new HashMap<Address,Set<Integer>>();
-    findSources(failedSegments,sources,excludedSources);
-    for (    Map.Entry<Address,Set<Integer>> e : sources.entrySet()) {
-      addTransfer(e.getKey(),e.getValue());
+    failedSegments.retainAll(transfersBySegment.keySet());
+    if (!failedSegments.isEmpty()) {
+      Map<Address,Set<Integer>> sources=new HashMap<Address,Set<Integer>>();
+      findSources(failedSegments,sources,excludedSources);
+      for (      Map.Entry<Address,Set<Integer>> e : sources.entrySet()) {
+        addTransfer(e.getKey(),e.getValue());
+      }
     }
   }
 }

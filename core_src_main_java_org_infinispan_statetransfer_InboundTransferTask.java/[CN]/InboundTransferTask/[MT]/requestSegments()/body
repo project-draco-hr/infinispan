@@ -1,9 +1,10 @@
 {
-  if (!isCancelled && isStarted.compareAndSet(false,true)) {
+  if (!isCancelled) {
     Set<Integer> segmentsCopy=getSegments();
     if (segmentsCopy.isEmpty()) {
       log.tracef("Segments list is empty, skipping source %s",source);
-      return false;
+      completionFuture.complete(null);
+      return completionFuture;
     }
     if (trace) {
       log.tracef("Requesting segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
@@ -13,19 +14,21 @@
       Map<Address,Response> responses=rpcManager.invokeRemotely(Collections.singleton(source),cmd,rpcOptions);
       Response response=responses.get(source);
       if (response instanceof SuccessfulResponse) {
-        isStartedSuccessfully=true;
         if (trace) {
           log.tracef("Successfully requested segments %s of cache %s from node %s",segmentsCopy,cacheName,source);
         }
+        return completionFuture;
       }
  else {
         Exception e=response instanceof ExceptionResponse ? ((ExceptionResponse)response).getException() : new CacheException(String.valueOf(response));
         log.failedToRequestSegments(segmentsCopy,cacheName,source,e);
+        completionFuture.completeExceptionally(e);
       }
     }
  catch (    Exception e) {
       log.failedToRequestSegments(segmentsCopy,cacheName,source,e);
+      completionFuture.completeExceptionally(e);
     }
   }
-  return isStartedSuccessfully;
+  return completionFuture;
 }

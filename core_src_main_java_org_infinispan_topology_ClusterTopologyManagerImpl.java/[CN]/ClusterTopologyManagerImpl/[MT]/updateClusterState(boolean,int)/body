@@ -1,0 +1,27 @@
+{
+  clusterManagerLock.lock();
+  try {
+    if (newViewId < transport.getViewId()) {
+      log.tracef("Ignoring old cluster view notification: %s",newViewId);
+      return false;
+    }
+    boolean isCoordinator=transport.isCoordinator();
+    boolean becameCoordinator=isCoordinator && !clusterManagerStatus.isCoordinator();
+    if (trace) {
+      log.tracef("Received new cluster view: %d, isCoordinator = %s, old status = %s",(Object)newViewId,isCoordinator,clusterManagerStatus);
+    }
+    if (!isCoordinator) {
+      clusterManagerStatus=ClusterManagerStatus.REGULAR_MEMBER;
+      return false;
+    }
+    if (becameCoordinator || mergeView) {
+      clusterManagerStatus=ClusterManagerStatus.RECOVERING_CLUSTER;
+    }
+    viewId=newViewId;
+    clusterStateChanged.signalAll();
+  }
+  finally {
+    clusterManagerLock.unlock();
+  }
+  return true;
+}

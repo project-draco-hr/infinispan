@@ -1,0 +1,34 @@
+{
+  cacheStatusMap.clear();
+  try {
+    recoverClusterStatus(newViewId,transport.getMembers());
+    clusterManagerLock.lock();
+    try {
+      if (viewId != newViewId) {
+        log.debugf("View updated while we were recovering the cluster for view %d",newViewId);
+        return false;
+      }
+      clusterManagerStatus=ClusterManagerStatus.COORDINATOR;
+      clusterStateChanged.signalAll();
+    }
+  finally {
+      clusterManagerLock.unlock();
+    }
+  }
+ catch (  InterruptedException e) {
+    if (trace)     log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+  }
+catch (  SuspectException e) {
+    if (trace)     log.tracef("Cluster state recovery interrupted because a member was lost. Will retry.");
+  }
+catch (  Exception e) {
+    if (clusterManagerStatus.isRunning()) {
+      CLUSTER.failedToRecoverClusterState(e);
+      eventLogManager.getEventLogger().detail(e).fatal(EventLogCategory.CLUSTER,MESSAGES.clusterRecoveryFailed(transport.getMembers()));
+    }
+ else {
+      log.tracef("Cluster state recovery failed because the coordinator is shutting down");
+    }
+  }
+  return true;
+}

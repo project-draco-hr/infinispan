@@ -1,0 +1,29 @@
+{
+synchronized (this) {
+    try {
+      if (statusResponses.isEmpty()) {
+        throw new IllegalArgumentException("Should have at least one current topology");
+      }
+      HashMap<Address,CacheJoinInfo> joinInfos=new HashMap<>();
+      Set<CacheTopology> currentTopologies=new HashSet<>();
+      Set<CacheTopology> stableTopologies=new HashSet<>();
+      for (      Map.Entry<Address,CacheStatusResponse> e : statusResponses.entrySet()) {
+        Address sender=e.getKey();
+        CacheStatusResponse response=e.getValue();
+        joinInfos.put(sender,response.getCacheJoinInfo());
+        if (response.getCacheTopology() != null) {
+          currentTopologies.add(response.getCacheTopology());
+        }
+        if (response.getStableTopology() != null) {
+          stableTopologies.add(response.getStableTopology());
+        }
+      }
+      log.debugf("Recovered %d partition(s) for cache %s: %s",currentTopologies.size(),cacheName,currentTopologies);
+      recoverMembers(joinInfos,currentTopologies,stableTopologies);
+      availabilityStrategy.onPartitionMerge(this,statusResponses.values());
+    }
+ catch (    Exception e) {
+      log.failedToRecoverCacheState(cacheName,e);
+    }
+  }
+}

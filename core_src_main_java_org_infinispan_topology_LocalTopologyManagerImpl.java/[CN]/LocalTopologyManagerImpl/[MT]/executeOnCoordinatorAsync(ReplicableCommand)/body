@@ -1,21 +1,2 @@
 {
-  if (transport.isCoordinator()) {
-    asyncTransportExecutor.execute(new Runnable(){
-      @Override public void run(){
-        if (trace)         log.tracef("Attempting to execute command on self: %s",command);
-        gcr.wireDependencies(command);
-        try {
-          command.invoke();
-        }
- catch (        Throwable t) {
-          log.errorf(t,"Failed to execute ReplicableCommand %s on coordinator async: %s",command,t.getMessage());
-        }
-      }
-    }
-);
-  }
- else {
-    Address coordinator=transport.getCoordinator();
-    transport.invokeRemotely(Collections.singleton(coordinator),command,ResponseMode.ASYNCHRONOUS,0,null,DeliverOrder.NONE,false);
-  }
 }
