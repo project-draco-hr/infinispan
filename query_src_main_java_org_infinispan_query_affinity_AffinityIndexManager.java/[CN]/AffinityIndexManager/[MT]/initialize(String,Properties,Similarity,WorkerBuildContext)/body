@@ -1,8 +1,15 @@
 {
-  super.initialize(indexName,properties,similarity,buildContext);
   ServiceManager serviceManager=buildContext.getServiceManager();
   ComponentRegistryService componentRegistryService=serviceManager.requestService(ComponentRegistryService.class);
   ComponentRegistry componentRegistry=componentRegistryService.getComponentRegistry();
+  transactionHelper=new TransactionHelper(componentRegistry.getComponent(TransactionManager.class));
+  Transaction tx=transactionHelper.suspendTxIfExists();
+  try {
+    super.initialize(indexName,properties,similarity,buildContext);
+  }
+  finally {
+    transactionHelper.resume(tx);
+  }
   asyncExecutor=componentRegistry.getComponent(ExecutorService.class,ASYNC_OPERATIONS_EXECUTOR);
   distributionManager=componentRegistry.getComponent(DistributionManager.class);
   rpcManager=componentRegistry.getComponent(RpcManager.class);

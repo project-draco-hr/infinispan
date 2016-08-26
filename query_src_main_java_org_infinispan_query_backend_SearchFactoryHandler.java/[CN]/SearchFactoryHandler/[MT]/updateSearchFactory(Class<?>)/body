@@ -11,12 +11,13 @@
       return;
     }
     final Class<?>[] newtypes=reducedSet.toArray(new Class<?>[reducedSet.size()]);
-    transactionHelper.runSuspendingTx(new Operation(){
-      @Override public void execute(){
-        searchFactory.addClasses(newtypes);
-      }
+    Transaction tx=transactionHelper.suspendTxIfExists();
+    try {
+      searchFactory.addClasses(newtypes);
     }
-);
+  finally {
+      transactionHelper.resume(tx);
+    }
     for (    Class<?> type : newtypes) {
       if (hasIndex(type)) {
         log.detectedUnknownIndexedEntity(queryKnownClasses.getCacheName(),type.getName());

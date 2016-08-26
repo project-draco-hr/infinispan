@@ -1,4 +1,10 @@
 {
-  InfinispanDirectoryProvider directoryProvider=(InfinispanDirectoryProvider)getDirectoryProvider();
-  return directoryProvider.getLockOwner(indexName,IndexWriter.WRITE_LOCK_NAME);
+  Transaction tx=transactionHelper.suspendTxIfExists();
+  try {
+    InfinispanDirectoryProvider directoryProvider=(InfinispanDirectoryProvider)getDirectoryProvider();
+    return directoryProvider.getLockOwner(indexName,IndexWriter.WRITE_LOCK_NAME);
+  }
+  finally {
+    transactionHelper.resume(tx);
+  }
 }
