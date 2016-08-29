@@ -5,26 +5,18 @@
   cache(1).put(k1,"v1");
   Object k2=new MagicKey(cache(p1.node(0)),cache(p0.node(0)));
   cache(2).put(k2,"v2");
-  List<Address> allMembers=advancedCache(0).getRpcManager().getMembers();
-  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
-  eventually(new Condition(){
-    @Override public boolean isSatisfied() throws Exception {
-      for (int i=0; i < numMembersInCluster; i++) {
-        if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
-          return false;
-        }
-      }
-      return true;
-    }
+  HashSet<Address> allMembers=new HashSet<>(advancedCache(0).getRpcManager().getMembers());
+  assertStableTopologyMembers(allMembers,partitionHandlingManager(0));
+  assertStableTopologyMembers(allMembers,partitionHandlingManager(1));
+  assertStableTopologyMembers(allMembers,partitionHandlingManager(2));
+  for (int i=0; i < numMembersInCluster; i++) {
+    assertEquals(AvailabilityMode.AVAILABLE,partitionHandlingManager(i).getAvailabilityMode());
   }
-);
   splitCluster(p0.getNodes(),p1.getNodes());
   TestingUtil.waitForRehashToComplete(cache(p0.node(0)),cache(p0.node(1)));
   partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
   partition(1).assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
-  assertEquals(partitionHandlingManager(p1.node(0)).getLastStableTopology().getMembers(),allMembers);
+  assertStableTopologyMembers(allMembers,partitionHandlingManager(p1.node(0)));
   partition(0).assertKeyAvailableForRead(k0,"v0");
   partition(0).assertKeyAvailableForRead(k1,"v1");
   partition(0).assertKeyAvailableForRead(k2,"v2");
@@ -45,9 +37,9 @@
   partition(1).assertKeyNotAvailableForWrite(k1);
   partition(1).assertKeyNotAvailableForWrite(k2);
   partition(0).merge(partition(1));
-  assertEquals(new HashSet<>(partitionHandlingManager(0).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
-  assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()),new HashSet<>(allMembers));
+  expectStableTopologyMembers(allMembers,partitionHandlingManager(0));
+  expectStableTopologyMembers(allMembers,partitionHandlingManager(1));
+  expectStableTopologyMembers(allMembers,partitionHandlingManager(2));
   partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
   assertExpectedValue("v00",k0);
   assertExpectedValue("v11",k1);
