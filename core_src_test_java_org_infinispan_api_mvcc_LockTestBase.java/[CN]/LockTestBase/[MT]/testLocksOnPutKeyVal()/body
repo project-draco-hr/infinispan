@@ -1,2 +1,21 @@
 {
+  Cache<String,String> cache=lockTestData.cache;
+  DummyTransactionManager tm=(DummyTransactionManager)lockTestData.tm;
+  tm.begin();
+  cache.put("k","v");
+  assertTrue(tm.getTransaction().runPrepare());
+  assertLocked("k");
+  tm.getTransaction().runCommit(false);
+  assertNoLocks();
+  tm.begin();
+  assertEquals("v",cache.get("k"));
+  assertNotLocked("k");
+  tm.commit();
+  assertNoLocks();
+  tm.begin();
+  cache.remove("k");
+  assertTrue(tm.getTransaction().runPrepare());
+  assertLocked("k");
+  tm.getTransaction().runCommit(false);
+  assertNoLocks();
 }

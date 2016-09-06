@@ -1,2 +1,15 @@
 {
+  LockTestData tl=lockTestData;
+  Cache<String,String> cache=tl.cache;
+  TransactionManager tm=tl.tm;
+  tm.begin();
+  cache.get("a");
+  Transaction tx=tm.suspend();
+  cache.put("a","v2");
+  assertEquals(cache.get("a"),"v2");
+  tm.resume(tx);
+  assertNull("expected null but received " + cache.get("a"),cache.get("a"));
+  cache.remove("a");
+  tm.commit();
+  assertNull("expected null but received " + cache.get("a"),cache.get("a"));
 }

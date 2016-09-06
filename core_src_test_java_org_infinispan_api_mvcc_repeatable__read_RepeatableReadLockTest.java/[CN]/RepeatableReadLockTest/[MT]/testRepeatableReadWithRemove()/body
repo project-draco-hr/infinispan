@@ -1,2 +1,20 @@
 {
+  LockTestData tl=lockTestData;
+  Cache<String,String> cache=tl.cache;
+  TransactionManager tm=tl.tm;
+  cache.put("k","v");
+  tm.begin();
+  assertNotNull(cache.get("k"));
+  Transaction reader=tm.suspend();
+  tm.begin();
+  assertNotNull(cache.remove("k"));
+  assertNull(cache.get("k"));
+  tm.commit();
+  assertNull(cache.get("k"));
+  tm.resume(reader);
+  assertNotNull(cache.get("k"));
+  assertEquals("v",cache.get("k"));
+  tm.commit();
+  assertNull(cache.get("k"));
+  assertNoLocks();
 }

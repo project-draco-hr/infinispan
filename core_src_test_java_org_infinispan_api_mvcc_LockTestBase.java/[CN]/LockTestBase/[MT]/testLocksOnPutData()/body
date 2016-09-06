@@ -1,2 +1,18 @@
 {
+  LockTestData tl=lockTestData;
+  Cache<String,String> cache=tl.cache;
+  TransactionManager tm=tl.tm;
+  tm.begin();
+  cache.putAll(Collections.singletonMap("k","v"));
+  assertEquals("v",cache.get("k"));
+  final DummyTransaction tx=((DummyTransactionManager)tm).getTransaction();
+  assertTrue(tx.runPrepare());
+  assertLocked("k");
+  tx.runCommit(false);
+  assertNoLocks();
+  tm.begin();
+  assertEquals("v",cache.get("k"));
+  assertNoLocks();
+  tm.commit();
+  assertNoLocks();
 }

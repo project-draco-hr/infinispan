@@ -1,2 +1,20 @@
 {
+  LockTestData tl=lockTestData;
+  Cache<String,String> cache=tl.cache;
+  TransactionManager tm=tl.tm;
+  cache.put("k","v");
+  tm.begin();
+  cache.put("k","v2");
+  Transaction write=tm.suspend();
+  tm.begin();
+  assertEquals("v",cache.get("k"));
+  Transaction read=tm.suspend();
+  tm.resume(write);
+  tm.commit();
+  assertNoLocks();
+  tm.resume(read);
+  if (repeatableRead)   assertEquals("Should have repeatable read","v",cache.get("k"));
+ else   assertEquals("Read committed should see committed changes","v2",cache.get("k"));
+  tm.commit();
+  assertNoLocks();
 }

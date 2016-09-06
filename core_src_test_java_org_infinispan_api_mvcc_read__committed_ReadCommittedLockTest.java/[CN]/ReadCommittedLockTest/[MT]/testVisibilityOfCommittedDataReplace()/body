@@ -1,2 +1,20 @@
 {
+  Cache<String,String> c=lockTestData.cache;
+  c.put("k","v");
+  assertEquals("v",c.get("k"));
+  lockTestData.tm.begin();
+  assertEquals("v",c.get("k"));
+  assertEquals("v",c.get("k"));
+  Transaction reader=lockTestData.tm.suspend();
+  lockTestData.tm.begin();
+  c.replace("k","v2");
+  Transaction writer=lockTestData.tm.suspend();
+  lockTestData.tm.resume(reader);
+  assertEquals("Should not read uncommitted data","v",c.get("k"));
+  reader=lockTestData.tm.suspend();
+  lockTestData.tm.resume(writer);
+  lockTestData.tm.commit();
+  lockTestData.tm.resume(reader);
+  assertEquals("Should read committed data","v2",c.get("k"));
+  lockTestData.tm.commit();
 }
