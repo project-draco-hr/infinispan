@@ -5,7 +5,7 @@
   Cache<?,?> metadataCache=cacheManager.getCache(metadataCacheName);
   Cache<?,?> dataCache=cacheManager.getCache(dataCacheName);
   Cache<?,?> lockingCache=cacheManager.getCache(lockingCacheName);
-  org.infinispan.lucene.directory.BuildContext directoryBuildContext=DirectoryBuilder.newDirectoryInstance(metadataCache,dataCache,lockingCache,directoryProviderName).writeFileListAsynchronously(writeFileListAsync).deleteOperationsExecutor(deletesExecutor.getExecutor());
+  org.infinispan.lucene.directory.BuildContext directoryBuildContext=DirectoryBuilder.newDirectoryInstance(metadataCache,dataCache,lockingCache,directoryProviderName).writeFileListAsynchronously(writeFileListAsync).deleteOperationsExecutor(isAsync ? new WithinThreadExecutor() : deletesExecutor.getExecutor());
   if (chunkSize != null) {
     directoryBuildContext.chunkSize(chunkSize.intValue());
   }

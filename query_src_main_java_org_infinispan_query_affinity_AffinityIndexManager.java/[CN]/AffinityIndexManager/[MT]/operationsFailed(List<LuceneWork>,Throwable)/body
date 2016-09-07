@@ -1,0 +1,13 @@
+{
+  log.debugf(cause,"Operations '%s' failed in the backend",failingOperations);
+  if (cause instanceof LockObtainFailedException) {
+    this.lockObtainFailed(failingOperations);
+  }
+  if (cause instanceof SearchException) {
+    Throwable rootCause=cause.getCause();
+    if (rootCause instanceof InvalidLockException) {
+      log.warnf(cause,"Retrying failed operations");
+      this.retryOperations(failingOperations);
+    }
+  }
+}

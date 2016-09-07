@@ -1,23 +1,21 @@
 {
-  Address lockHolder=getLockHolder(getIndexName());
-  if (lockHolder != null) {
-    InfinispanDirectoryProvider directoryProvider=(InfinispanDirectoryProvider)getDirectoryProvider();
-    int activeDeleteTasks=directoryProvider.getActiveDeleteTasks();
-    boolean wasInterrupted=false;
-    while (activeDeleteTasks > 0) {
-      try {
-        Thread.sleep(POLL_WAIT);
-        logDebug("Waiting for pending delete tasks, remaining: %s",activeDeleteTasks);
-        activeDeleteTasks=directoryProvider.getActiveDeleteTasks();
-      }
- catch (      InterruptedException e) {
-        wasInterrupted=true;
-      }
+  InfinispanDirectoryProvider directoryProvider=(InfinispanDirectoryProvider)getDirectoryProvider();
+  int activeDeleteTasks=directoryProvider.pendingDeleteTasks();
+  boolean wasInterrupted=false;
+  long endTime=System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(POLL_WAIT);
+  while (activeDeleteTasks > 0 && endTime - System.nanoTime() > 0) {
+    try {
+      Thread.sleep(10);
+      log.debugf("Waiting for pending delete tasks, remaining: %s",activeDeleteTasks);
+      activeDeleteTasks=directoryProvider.pendingDeleteTasks();
     }
-    if (wasInterrupted) {
-      Thread.currentThread().interrupt();
+ catch (    InterruptedException e) {
+      wasInterrupted=true;
     }
-    logDebug("Flushing directory provider");
-    super.flushAndReleaseResources();
   }
+  if (wasInterrupted) {
+    Thread.currentThread().interrupt();
+  }
+  log.debugf("Flushing directory provider");
+  super.flushAndReleaseResources();
 }
