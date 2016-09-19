@@ -1,0 +1,27 @@
+{
+  initAndCheck(m);
+  CountDownLatch arrival=new CountDownLatch(2);
+  CountDownLatch release1=new CountDownLatch(1);
+  CountDownLatch release2=new CountDownLatch(1);
+  cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival,release1),0);
+  cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival,release2),0);
+  org.infinispan.remoting.transport.Address address1=cache(1).getCacheManager().getAddress();
+  org.infinispan.remoting.transport.Address address2=cache(2).getCacheManager().getAddress();
+  List<org.infinispan.remoting.transport.Address> owners=Arrays.asList(address1,address2);
+  ClusteredGetCommand clusteredGet=new ClusteredGetCommand(key,ByteString.fromString(cache(0).getName()),0,AnyEquivalence.getInstance());
+  final int timeout=15;
+  RpcOptions rpcOptions=new RpcOptions(timeout,TimeUnit.SECONDS,null,ResponseMode.WAIT_FOR_VALID_RESPONSE,DeliverOrder.NONE);
+  CompletableFuture<Map<org.infinispan.remoting.transport.Address,Response>> future=cache(0).getAdvancedCache().getRpcManager().invokeRemotelyAsync(owners,clusteredGet,rpcOptions);
+  assertTrue(arrival.await(10,TimeUnit.SECONDS));
+  installNewView(cache(0),cache(0),cache(1));
+  assertFalse(future.isDone());
+  long requestAllowed=System.nanoTime();
+  release1.countDown();
+  Map<org.infinispan.remoting.transport.Address,Response> responses=future.get();
+  long requestCompleted=System.nanoTime();
+  assertTrue(responses.get(address1).isSuccessful());
+  assertNotNull(((SuccessfulResponse)responses.get(address1)).getResponseValue());
+  assertTrue(responses.get(address2) instanceof CacheNotFoundResponse);
+  assertTrue(TimeUnit.NANOSECONDS.toSeconds(requestCompleted - requestAllowed) < timeout);
+  release2.countDown();
+}
