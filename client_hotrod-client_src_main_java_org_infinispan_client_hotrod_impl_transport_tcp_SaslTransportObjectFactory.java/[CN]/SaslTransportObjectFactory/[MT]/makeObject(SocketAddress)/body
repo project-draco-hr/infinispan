@@ -3,33 +3,34 @@
   if (trace) {
     log.tracef("Created tcp transport: %s",tcpTransport);
   }
+  AuthenticationConfiguration authentication=configuration.security().authentication();
   List<String> serverMechs=mechList(tcpTransport,defaultCacheTopologyId);
-  if (!serverMechs.contains(configuration.saslMechanism())) {
-    throw log.unsupportedMech(configuration.saslMechanism(),serverMechs);
+  if (!serverMechs.contains(authentication.saslMechanism())) {
+    throw log.unsupportedMech(authentication.saslMechanism(),serverMechs);
   }
   SaslClient saslClient;
-  if (configuration.clientSubject() != null) {
-    saslClient=Subject.doAs(configuration.clientSubject(),new PrivilegedExceptionAction<SaslClient>(){
+  if (authentication.clientSubject() != null) {
+    saslClient=Subject.doAs(authentication.clientSubject(),new PrivilegedExceptionAction<SaslClient>(){
       @Override public SaslClient run() throws Exception {
-        CallbackHandler callbackHandler=configuration.callbackHandler();
+        CallbackHandler callbackHandler=authentication.callbackHandler();
         if (callbackHandler == null) {
           callbackHandler=NoOpCallbackHandler.INSTANCE;
         }
-        return Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),callbackHandler);
+        return Sasl.createSaslClient(new String[]{authentication.saslMechanism()},null,"hotrod",authentication.serverName(),authentication.saslProperties(),callbackHandler);
       }
     }
 );
   }
  else {
-    saslClient=Sasl.createSaslClient(new String[]{configuration.saslMechanism()},null,"hotrod",configuration.serverName(),configuration.saslProperties(),configuration.callbackHandler());
+    saslClient=Sasl.createSaslClient(new String[]{authentication.saslMechanism()},null,"hotrod",authentication.serverName(),authentication.saslProperties(),authentication.callbackHandler());
   }
   if (trace) {
-    log.tracef("Authenticating using mech: %s",configuration.saslMechanism());
+    log.tracef("Authenticating using mech: %s",authentication.saslMechanism());
   }
-  byte response[]=saslClient.hasInitialResponse() ? evaluateChallenge(saslClient,EMPTY_BYTES) : EMPTY_BYTES;
-  byte challenge[]=auth(tcpTransport,defaultCacheTopologyId,configuration.saslMechanism(),response);
+  byte response[]=saslClient.hasInitialResponse() ? evaluateChallenge(saslClient,EMPTY_BYTES,authentication.clientSubject()) : EMPTY_BYTES;
+  byte challenge[]=auth(tcpTransport,defaultCacheTopologyId,authentication.saslMechanism(),response);
   while (!saslClient.isComplete() && challenge != null) {
-    response=evaluateChallenge(saslClient,challenge);
+    response=evaluateChallenge(saslClient,challenge,authentication.clientSubject());
     if (response == null) {
       break;
     }

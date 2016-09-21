@@ -1,0 +1,13 @@
+{
+  org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder=new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+  clientBuilder.addServer().host("localhost").port(server(0).getPort());
+  clientBuilder.clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE);
+  withRemoteCacheManager(new RemoteCacheManagerCallable(new InternalRemoteCacheManager(clientBuilder.build())){
+    @Override public void call(){
+      rcm.getCache();
+      TcpTransportFactory tcpTransportFactory=(TcpTransportFactory)((InternalRemoteCacheManager)rcm).getTransportFactory();
+      assertEquals(2,tcpTransportFactory.getServers().size());
+    }
+  }
+);
+}
