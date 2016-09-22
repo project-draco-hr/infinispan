@@ -2,13 +2,18 @@
   checkNotClosed();
   if (trace)   log.tracef("Invoke containsKey(key=%s)",key);
   if (key == null)   throw log.parameterMustNotBeNull("key");
-  if (lockRequired(key)) {
-    return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
-      @Override public Boolean call(){
-        return skipCacheLoadCache.containsKey(key);
+  try {
+    if (lockRequired(key)) {
+      return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
+        @Override public Boolean call(){
+          return skipCacheLoadCache.containsKey(key);
+        }
       }
-    }
 );
+    }
+    return skipCacheLoadAndStatsCache.containsKey(key);
   }
-  return skipCacheLoadAndStatsCache.containsKey(key);
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
+  }
 }

@@ -3,19 +3,24 @@
     throw log.cacheClosed(cache.getStatus());
   }
   List<Future<V>> futures=new ArrayList<Future<V>>();
-  for (  final K key : cache.keySet()) {
-    if (lockRequired(key)) {
-      new WithProcessorLock<Void>().call(key,new Callable<Void>(){
-        @Override public Void call(){
-          cache.remove(key);
-          return null;
+  try {
+    for (    final K key : cache.keySet()) {
+      if (lockRequired(key)) {
+        new WithProcessorLock<Void>().call(key,new Callable<Void>(){
+          @Override public Void call(){
+            cache.remove(key);
+            return null;
+          }
         }
-      }
 );
-    }
+      }
  else {
-      futures.add(cache.removeAsync(key));
+        futures.add(cache.removeAsync(key));
+      }
     }
+  }
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
   }
   for (  Future<V> future : futures) {
     try {
@@ -25,8 +30,17 @@
       Thread.currentThread().interrupt();
       throw new CacheException("Interrupted while waiting for remove to complete");
     }
-catch (    Exception e) {
-      throw Exceptions.launderCacheWriterException(e);
+catch (    TimeoutException e) {
+      throw new CacheException("Timed out while waiting for remove to complete");
+    }
+catch (    ExecutionException e) {
+      Throwable cause=e.getCause();
+      if (cause instanceof org.infinispan.commons.CacheException) {
+        throw Exceptions.launderException((org.infinispan.commons.CacheException)cause);
+      }
+ else {
+        throw new CacheException(cause);
+      }
     }
   }
 }

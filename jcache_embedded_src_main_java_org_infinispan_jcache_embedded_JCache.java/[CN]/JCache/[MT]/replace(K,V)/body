@@ -1,12 +1,17 @@
 {
   checkNotClosed();
-  if (lockRequired(key)) {
-    return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
-      @Override public Boolean call(){
-        return replace(skipCacheLoadCache,skipCacheLoadCache,key,null,value,false);
+  try {
+    if (lockRequired(key)) {
+      return new WithProcessorLock<Boolean>().call(key,new Callable<Boolean>(){
+        @Override public Boolean call(){
+          return replace(skipCacheLoadCache,skipCacheLoadCache,key,null,value,false);
+        }
       }
-    }
 );
+    }
+    return replace(skipCacheLoadCache,skipCacheLoadCache,key,null,value,false);
   }
-  return replace(skipCacheLoadCache,skipCacheLoadCache,key,null,value,false);
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
+  }
 }

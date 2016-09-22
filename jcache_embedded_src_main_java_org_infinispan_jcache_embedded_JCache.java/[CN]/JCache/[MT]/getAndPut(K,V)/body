@@ -1,12 +1,17 @@
 {
   checkNotClosed();
-  if (lockRequired(key)) {
-    return new WithProcessorLock<V>().call(key,new Callable<V>(){
-      @Override public V call(){
-        return put(skipCacheLoadCache,skipCacheLoadCache,key,value,false);
+  try {
+    if (lockRequired(key)) {
+      return new WithProcessorLock<V>().call(key,new Callable<V>(){
+        @Override public V call(){
+          return put(skipCacheLoadCache,skipCacheLoadCache,key,value,false);
+        }
       }
-    }
 );
+    }
+    return put(skipCacheLoadCache,skipCacheLoadCache,key,value,false);
   }
-  return put(skipCacheLoadCache,skipCacheLoadCache,key,value,false);
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
+  }
 }

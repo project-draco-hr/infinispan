@@ -1,5 +1,10 @@
 {
-  V value=configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
-  if (value != null)   updateTTLForAccessed(cache,key,value);
-  return value;
+  try {
+    V value=configuration.isReadThrough() ? cache.get(key) : skipCacheLoadCache.get(key);
+    if (value != null)     updateTTLForAccessed(cache,key,value);
+    return value;
+  }
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
+  }
 }

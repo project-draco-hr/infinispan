@@ -1,9 +1,14 @@
 {
   checkNotClosed();
   if (keys == null)   throw log.parameterMustNotBeNull("keys");
-  if (jcacheLoader == null && jcacheWriter != null)   setListenerCompletion(listener);
- else   if (jcacheLoader != null) {
-    loadAllFromJCacheLoader(keys,replaceExistingValues,listener,ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE),skipCacheLoadCache);
+  try {
+    if (jcacheLoader == null && jcacheWriter != null)     setListenerCompletion(listener);
+ else     if (jcacheLoader != null) {
+      loadAllFromJCacheLoader(keys,replaceExistingValues,listener,ignoreReturnValuesCache.withFlags(Flag.SKIP_CACHE_STORE),skipCacheLoadCache);
+    }
+ else     loadAllFromInfinispanCacheLoader(keys,replaceExistingValues,listener);
   }
- else   loadAllFromInfinispanCacheLoader(keys,replaceExistingValues,listener);
+ catch (  org.infinispan.commons.CacheException e) {
+    throw Exceptions.launderException(e);
+  }
 }
