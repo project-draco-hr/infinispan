@@ -1,0 +1,10 @@
+{
+  EventDispatcher dispatcher=clientListeners.get(listenerId);
+  removeClientListener(listenerId);
+  invokeFailoverEvent(dispatcher);
+  dispatcher.op.execute();
+  if (trace) {
+    SocketAddress failedServerAddress=dispatcher.transport.getRemoteSocketAddress();
+    log.tracef("Fallback listener id %s from a failed server %s to %s",Util.printArray(listenerId),failedServerAddress,dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
+  }
+}

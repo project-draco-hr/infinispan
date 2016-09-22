@@ -1,18 +1,2 @@
 {
-  List<byte[]> failoverListenerIds=new ArrayList<>();
-  for (  Map.Entry<byte[],EventDispatcher> entry : clientListeners.entrySet()) {
-    EventDispatcher dispatcher=entry.getValue();
-    if (failedServers.contains(dispatcher.transport.getRemoteSocketAddress()))     failoverListenerIds.add(entry.getKey());
-  }
-  if (trace && failoverListenerIds.isEmpty())   log.tracef("No event listeners registered in faild servers: %s",failedServers);
-  for (  byte[] listenerId : failoverListenerIds) {
-    EventDispatcher dispatcher=clientListeners.get(listenerId);
-    removeClientListener(listenerId);
-    invokeFailoverEvent(dispatcher);
-    dispatcher.op.execute();
-    if (trace) {
-      SocketAddress failedServerAddress=dispatcher.transport.getRemoteSocketAddress();
-      log.tracef("Fallback listener id %s from a failed server %s to %s",Util.printArray(listenerId),failedServerAddress,dispatcher.op.getDedicatedTransport().getRemoteSocketAddress());
-    }
-  }
 }

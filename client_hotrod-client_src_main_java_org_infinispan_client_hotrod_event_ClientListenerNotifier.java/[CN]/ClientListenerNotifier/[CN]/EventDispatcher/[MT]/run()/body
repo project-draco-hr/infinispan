@@ -20,6 +20,11 @@
  else       if (clientEvent != null) {
         log.unexpectedErrorConsumingEvent(clientEvent,e);
       }
+ else       if (cause instanceof IOException && cause.getMessage().contains("Connection reset by peer")) {
+        tryFailoverClientListener();
+        stopped=true;
+        return;
+      }
  else {
         log.unrecoverableErrorReadingEvent(e,transport.getRemoteSocketAddress());
         stopped=true;
