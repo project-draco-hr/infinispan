@@ -1,30 +1,40 @@
 {
-  Future<Void> node3Join=null;
-  int opCount=100;
+  int opCount=10;
   for (int i=0; i < opCount; i++) {
-    cache(0).put("k" + i,"some data");
-    if (i == (opCount / 2)) {
-      node3Join=fork(new Callable<Void>(){
-        @Override public Void call() throws Exception {
-          TestResourceTracker.testThreadStarted(RehashWithL1Test.this);
-          EmbeddedCacheManager cm=addClusterEnabledCacheManager(builder,new TransportFlags().withMerge(true));
-          cm.getCache();
-          return null;
-        }
-      }
-);
-    }
-    Thread.sleep(10);
+    cache(1).put("k" + i,"some data");
   }
-  if (node3Join == null)   throw new Exception("Node 3 not joined");
-  node3Join.get();
+  for (int j=0; j < caches().size(); j++) {
+    log.debugf("Populating L1 on %s",address(j));
+    for (int i=0; i < opCount; i++) {
+      assertEquals("Wrong value for k" + i,"some data",cache(j).get("k" + i));
+    }
+  }
+  int killIndex=caches().size() - 1;
+  log.debugf("Killing node %s",address(killIndex));
+  killMember(killIndex);
+  for (int j=0; j < caches().size(); j++) {
+    log.debugf("Checking values on %s",address(j));
+    for (int i=0; i < opCount; i++) {
+      String key="k" + i;
+      assertEquals("Wrong value for key " + key,"some data",cache(j).get(key));
+    }
+  }
+  log.debugf("Starting a new joiner");
+  EmbeddedCacheManager cm=addClusterEnabledCacheManager(builder);
+  cm.getCache();
+  for (int j=0; j < caches().size() - 1; j++) {
+    log.debugf("Checking values on %s",address(j));
+    for (int i=0; i < opCount; i++) {
+      assertNull("wrong value for k" + i,cache(j).get("k" + i));
+    }
+  }
   for (int i=0; i < opCount; i++) {
     cache(0).remove("k" + i);
-    Thread.sleep(10);
   }
   for (int i=0; i < opCount; i++) {
     String key="k" + i;
     assertFalse(cache(0).containsKey(key));
+    assertFalse("Key: " + key + " is present in cache at "+ cache(0),cache(0).containsKey(key));
     assertFalse("Key: " + key + " is present in cache at "+ cache(1),cache(1).containsKey(key));
     assertFalse("Key: " + key + " is present in cache at "+ cache(2),cache(2).containsKey(key));
   }
