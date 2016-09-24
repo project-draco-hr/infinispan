@@ -1,12 +1,15 @@
 {
-  try {
-    EmbeddedCacheManager cacheManager=new DefaultCacheManager("config/leveldb-config-" + LevelDBStoreConfiguration.ImplementationType.AUTO.toString().toLowerCase() + ".xml");
-    Cache<String,String> cache=cacheManager.getCache("testCache");
-    cache.put("hello","there 52 xml");
-    cache.stop();
-    cacheManager.stop();
-  }
-  finally {
-    Util.recursiveFileRemove("/tmp/leveldb/52");
-  }
+  InputStream configSTream=ConfigurationTest.class.getResourceAsStream("/config/leveldb-config-auto.xml");
+  ConfigurationBuilderHolder configHolder=new ParserRegistry().parse(configSTream);
+  Configuration cacheConfig=configHolder.getNamedConfigurationBuilders().get("testCache").build();
+  assertFalse(cacheConfig.persistence().passivation());
+  assertEquals(cacheConfig.persistence().stores().size(),1);
+  StoreConfiguration cacheLoaderConfig=cacheConfig.persistence().stores().get(0);
+  assertTrue(cacheLoaderConfig.shared());
+  assertTrue(cacheLoaderConfig.preload());
+  assertTrue(cacheLoaderConfig instanceof LevelDBStoreConfiguration);
+  LevelDBStoreConfiguration leveldbConfig=(LevelDBStoreConfiguration)cacheLoaderConfig;
+  assertEquals("/tmp/leveldb/52/data",leveldbConfig.location());
+  assertEquals("/tmp/leveldb/52/expired",leveldbConfig.expiredLocation());
+  assertEquals(LevelDBStoreConfiguration.ImplementationType.AUTO,leveldbConfig.implementationType());
 }
