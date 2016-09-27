@@ -1,0 +1,16 @@
+{
+  AsyncInterceptorChain chain=newInterceptorChain(new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return invokeNext(ctx,testSubCommand);
+    }
+  }
+,new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return returnWith(command instanceof LockControlCommand ? "subCommand" : "command");
+    }
+  }
+);
+  InvocationContext context=newInvocationContext();
+  Object returnValue=chain.invoke(context,testCommand);
+  assertEquals("subCommand",returnValue);
+}

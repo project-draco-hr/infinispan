@@ -1,10 +1,12 @@
 {
   if (hasSkipLocking(command)) {
-    return ctx.continueInvocation();
+    return invokeNext(ctx,command);
   }
-  if (!ctx.isInTxScope()) {
-    ctx.onReturn(unlockAllReturnHandler);
+  try {
+    lockAllAndRecord(ctx,Arrays.asList(command.getKeys()),getLockTimeoutMillis(command));
   }
-  lockAllAndRecord(ctx,Arrays.asList(command.getKeys()),getLockTimeoutMillis(command));
-  return ctx.continueInvocation();
+ catch (  Throwable t) {
+    lockManager.unlockAll(ctx);
+  }
+  return invokeNext(ctx,command).handle(unlockAllReturnHandler);
 }

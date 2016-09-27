@@ -1,0 +1,19 @@
+{
+  CompletableFuture<Object> f=new CompletableFuture<>();
+  AsyncInterceptorChain chain=newInterceptorChain(new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return invokeNextAsync(ctx,testSubCommand,f);
+    }
+  }
+,new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return returnWith(command instanceof LockControlCommand ? "subCommand" : "command");
+    }
+  }
+);
+  InvocationContext context=newInvocationContext();
+  CompletableFuture<Object> invokeFuture=chain.invokeAsync(context,testCommand);
+  assertFalse(invokeFuture.isDone());
+  f.complete("v");
+  assertEquals("subCommand",invokeFuture.get(10,SECONDS));
+}

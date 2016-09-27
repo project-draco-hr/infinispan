@@ -1,0 +1,31 @@
+{
+  Object rv;
+  if (t != null) {
+    if (t.getCause() != null && t instanceof CompletionException) {
+      t=t.getCause();
+    }
+    stage=new ExceptionStage(ctx,command,t);
+    rv=null;
+  }
+ else {
+    try {
+      rv=stage.get();
+    }
+ catch (    Throwable t1) {
+      t=t1;
+      rv=null;
+    }
+  }
+  if (handler == null) {
+    return new ExceptionStage(ctx,command,new NullPointerException("Handler must be set for apply"));
+  }
+  try {
+    if (trace)     log.tracef("Executing invocation handler %s with command %s",Stages.className(handler),command);
+    stage=handler.apply(stage,ctx,command,rv,t);
+  }
+ catch (  Throwable t1) {
+    if (trace)     log.tracef(t1,"Exception in invocation handler %s",handler);
+    stage=new ExceptionStage(ctx,command,t1);
+  }
+  return stage;
+}

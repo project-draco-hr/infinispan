@@ -1,0 +1,14 @@
+{
+  CompletableFuture<Object> f=new CompletableFuture<>();
+  AsyncInterceptorChain chain=newInterceptorChain(new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return returnWithAsync(f);
+    }
+  }
+);
+  InvocationContext context=newInvocationContext();
+  CompletableFuture<Object> invokeFuture=chain.invokeAsync(context,testCommand);
+  assertFalse(invokeFuture.isDone());
+  f.complete("v1");
+  assertEquals("v1",invokeFuture.get(10,SECONDS));
+}

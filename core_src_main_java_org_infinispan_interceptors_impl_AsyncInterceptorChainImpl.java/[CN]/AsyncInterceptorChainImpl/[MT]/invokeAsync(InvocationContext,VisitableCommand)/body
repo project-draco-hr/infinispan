@@ -1,3 +1,11 @@
 {
-  return ((BaseAsyncInvocationContext)ctx).invoke(command,firstInterceptor);
+  try {
+    BasicInvocationStage stage=firstInterceptor.visitCommand(ctx,command);
+    return stage.toCompletableFuture();
+  }
+ catch (  Throwable t) {
+    CompletableFuture<Object> cf=new CompletableFuture<>();
+    cf.completeExceptionally(t);
+    return cf;
+  }
 }

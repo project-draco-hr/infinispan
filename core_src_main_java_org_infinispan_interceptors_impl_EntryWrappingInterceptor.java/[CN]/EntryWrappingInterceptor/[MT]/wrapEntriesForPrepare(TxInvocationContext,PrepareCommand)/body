@@ -1,7 +1,10 @@
 {
   if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
     for (    WriteCommand c : command.getModifications()) {
-      c.acceptVisitor(ctx,entryWrappingVisitor);
+      InvocationStage visitorStage=(InvocationStage)c.acceptVisitor(ctx,entryWrappingVisitor);
+      if (visitorStage != null) {
+        visitorStage.get();
+      }
       if (c.hasFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER)) {
         ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
       }

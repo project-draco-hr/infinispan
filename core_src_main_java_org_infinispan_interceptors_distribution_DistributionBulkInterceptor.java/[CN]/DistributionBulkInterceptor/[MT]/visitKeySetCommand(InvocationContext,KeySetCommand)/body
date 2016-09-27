@@ -1,7 +1,7 @@
 {
   CacheSet<K> keySet;
   if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-    return ctx.continueInvocation();
+    return invokeNext(ctx,command);
   }
   if (ctx.isInTxScope()) {
     keySet=new TxBackingKeySet<>(Caches.getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command,(LocalTxInvocationContext)ctx);
@@ -9,5 +9,5 @@
  else {
     keySet=new BackingKeySet<>(Caches.getCacheWithFlags(cache,command),cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(),command);
   }
-  return ctx.shortCircuit(keySet);
+  return returnWith(keySet);
 }

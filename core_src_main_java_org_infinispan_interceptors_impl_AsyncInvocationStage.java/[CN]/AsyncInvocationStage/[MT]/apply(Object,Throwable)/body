@@ -1,0 +1,42 @@
+{
+  try {
+    if (trace)     log.tracef("Executing invocation handler %s with command %s",Stages.className(handler),command);
+    if (t == null) {
+      if (handler instanceof InvocationFinallyHandler) {
+        ((InvocationFinallyHandler)handler).accept(ctx,command,rv,null);
+        return rv;
+      }
+ else       if (handler instanceof InvocationSuccessHandler) {
+        ((InvocationSuccessHandler)handler).accept(ctx,command,rv);
+        return rv;
+      }
+ else       if (handler instanceof InvocationReturnValueHandler) {
+        return ((InvocationReturnValueHandler)handler).apply(ctx,command,rv);
+      }
+ else {
+        return rv;
+      }
+    }
+ else {
+      if (handler instanceof InvocationFinallyHandler) {
+        ((InvocationFinallyHandler)handler).accept(ctx,command,null,t);
+        throw t;
+      }
+ else       if (handler instanceof InvocationExceptionHandler) {
+        return ((InvocationExceptionHandler)handler).apply(ctx,command,t);
+      }
+ else {
+        throw t;
+      }
+    }
+  }
+ catch (  Throwable t1) {
+    if (trace)     log.trace("Exception in invocation handler",t);
+    if (t1 instanceof CompletionException) {
+      throw ((CompletionException)t1);
+    }
+ else {
+      throw new CompletionException(t1);
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  AsyncInterceptorChain chain=newInterceptorChain(new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return returnWith("v1");
+    }
+  }
+,new BaseAsyncInterceptor(){
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+      return returnWith("v2");
+    }
+  }
+);
+  InvocationContext context=newInvocationContext();
+  Object returnValue=chain.invoke(context,testCommand);
+  assertEquals("v1",returnValue);
+}

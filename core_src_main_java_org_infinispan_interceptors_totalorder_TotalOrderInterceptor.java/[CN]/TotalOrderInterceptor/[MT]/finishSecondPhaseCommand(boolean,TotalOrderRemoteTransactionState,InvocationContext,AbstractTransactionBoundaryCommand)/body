@@ -1,0 +1,14 @@
+{
+  if (state != null && state.isFinished()) {
+    totalOrderManager.release(state);
+    if (commit) {
+      transactionTable.remoteTransactionCommitted(txCommand.getGlobalTransaction(),false);
+    }
+ else {
+      transactionTable.remoteTransactionRollback(txCommand.getGlobalTransaction());
+    }
+    if (ctx.isOriginLocal()) {
+      executorService.checkForReadyTasks();
+    }
+  }
+}

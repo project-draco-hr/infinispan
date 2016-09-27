@@ -1,0 +1,14 @@
+{
+  if (valueFuture.isDone()) {
+    InvocationStage stage;
+    try {
+      Object value=valueFuture.join();
+      stage=new ReturnValueStage(null,null,value);
+    }
+ catch (    Throwable t) {
+      stage=new ExceptionStage(null,null,extractException(t));
+    }
+    return stage;
+  }
+  return new AsyncInvocationStage(null,null,valueFuture);
+}

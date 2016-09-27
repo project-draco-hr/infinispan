@@ -15,7 +15,7 @@
     if (primaryOwner.equals(rpcManager.getAddress())) {
       if (!command.isSuccessful()) {
         if (trace)         log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).",command);
-        return CompletableFuture.completedFuture(localResult);
+        return returnWith(localResult);
       }
       List<Address> recipients=cdl.getOwners(command.getKey());
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
@@ -26,13 +26,13 @@
         command.setValueMatcher(valueMatcher.matcherForRetry());
       }
     }
-    return CompletableFuture.completedFuture(localResult);
+    return returnWith(localResult);
   }
  else {
     if (primaryOwner.equals(rpcManager.getAddress())) {
       if (!command.isSuccessful()) {
         if (trace)         log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).",command);
-        return CompletableFuture.completedFuture(localResult);
+        return returnWith(localResult);
       }
       List<Address> recipients=cdl.getOwners(command.getKey());
       if (trace)       log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",recipients);
@@ -46,7 +46,7 @@
           command.setValueMatcher(valueMatcher.matcherForRetry());
         }
       }
-      return CompletableFuture.completedFuture(localResult);
+      return returnWith(localResult);
     }
  else {
       if (trace)       log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded",primaryOwner);
@@ -58,10 +58,10 @@
   finally {
         command.setValueMatcher(valueMatcher.matcherForRetry());
       }
-      if (!isSyncForwarding)       return CompletableFuture.completedFuture(localResult);
+      if (!isSyncForwarding)       return returnWith(localResult);
       Object primaryResult=getResponseFromPrimaryOwner(primaryOwner,addressResponseMap);
       command.updateStatusFromRemoteResponse(primaryResult);
-      return CompletableFuture.completedFuture(primaryResult);
+      return returnWith(primaryResult);
     }
   }
 }

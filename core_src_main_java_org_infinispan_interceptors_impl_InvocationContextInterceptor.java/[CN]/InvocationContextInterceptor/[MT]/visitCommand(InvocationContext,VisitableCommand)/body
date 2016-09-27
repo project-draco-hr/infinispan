@@ -4,7 +4,7 @@
   ComponentStatus status=componentRegistry.getStatus();
   if (command.ignoreCommandOnStatus(status)) {
     log.debugf("Status: %s : Ignoring %s command",status,command);
-    return ctx.shortCircuit(null);
+    return returnWith(null);
   }
  else {
     if (status.isTerminated()) {
@@ -14,5 +14,6 @@
       throw log.cacheIsStopping(getCacheNamePrefix());
     }
   }
-  return ctx.onReturn(defaultReturnHandler);
+  InvocationStage stage=invokeNext(ctx,command);
+  return stage.exceptionally(suppressExceptionsHandler);
 }

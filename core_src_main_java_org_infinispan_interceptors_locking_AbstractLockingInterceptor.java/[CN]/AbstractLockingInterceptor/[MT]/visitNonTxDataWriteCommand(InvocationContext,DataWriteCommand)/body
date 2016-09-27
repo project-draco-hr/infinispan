@@ -1,8 +1,13 @@
 {
   if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
-    return ctx.continueInvocation();
+    return invokeNext(ctx,command);
   }
-  ctx.onReturn(unlockAllReturnHandler);
-  lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
-  return ctx.continueInvocation();
+  try {
+    lockAndRecord(ctx,command.getKey(),getLockTimeoutMillis(command));
+  }
+ catch (  Throwable t) {
+    lockManager.unlockAll(ctx);
+    throw t;
+  }
+  return invokeNext(ctx,command).handle(unlockAllReturnHandler);
 }

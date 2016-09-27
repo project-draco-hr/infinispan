@@ -3,14 +3,14 @@
   final Cache<MagicKey,String> cache2=cache(1,CACHE_NAME);
   final CyclicBarrier barrier=new CyclicBarrier(2);
   cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor(){
-    @Override public CompletableFuture<Void> visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
+    @Override public BasicInvocationStage visitCommand(    InvocationContext ctx,    VisitableCommand command) throws Throwable {
       if (command instanceof PutKeyValueCommand) {
         if (!ctx.isOriginLocal()) {
           barrier.await(10,TimeUnit.SECONDS);
           barrier.await(10,TimeUnit.SECONDS);
         }
       }
-      return ctx.continueInvocation();
+      return invokeNext(ctx,command);
     }
   }
 ,0);
