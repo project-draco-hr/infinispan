@@ -1,0 +1,12 @@
+{
+  client=HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext,SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER){
+    @Override protected void prepareSocket(    SSLSocket socket) throws IOException {
+      if (sniHostName.isPresent()) {
+        SSLParameters sslParameters=socket.getSSLParameters();
+        sslParameters.setServerNames(Arrays.asList(new SNIHostName(sniHostName.get())));
+        socket.setSSLParameters(sslParameters);
+      }
+    }
+  }
+).build();
+}

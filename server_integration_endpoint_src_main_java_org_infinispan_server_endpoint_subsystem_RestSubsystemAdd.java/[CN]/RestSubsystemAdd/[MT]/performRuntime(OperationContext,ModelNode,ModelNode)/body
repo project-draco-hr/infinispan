@@ -1,14 +1,16 @@
 {
   ModelNode config=Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
-  final RestService service=new RestService(config);
+  final RestService service=new RestService(getServiceName(config),config);
   ServiceBuilder<?> builder=context.getServiceTarget().addService(EndpointUtils.getServiceName(operation,"rest"),service);
-  EndpointUtils.addCacheContainerDependency(builder,service.getCacheContainerName(),service.getCacheManager());
-  EndpointUtils.addCacheDependency(builder,service.getCacheContainerName(),null);
+  String cacheContainerName=config.hasDefined(ModelKeys.CACHE_CONTAINER) ? config.get(ModelKeys.CACHE_CONTAINER).asString() : null;
+  EndpointUtils.addCacheContainerDependency(builder,cacheContainerName,service.getCacheManager());
+  EndpointUtils.addCacheDependency(builder,cacheContainerName,null);
   EndpointUtils.addSocketBindingDependency(builder,getSocketBindingName(operation),service.getSocketBinding());
   builder.addDependency(PathManagerService.SERVICE_NAME,PathManager.class,service.getPathManagerInjector());
-  if (service.getSecurityDomain() != null) {
-    EndpointUtils.addSecurityDomainDependency(builder,service.getSecurityDomain(),service.getSecurityDomainContextInjector());
+  if (config.hasDefined(ModelKeys.SECURITY_DOMAIN)) {
+    EndpointUtils.addSecurityDomainDependency(builder,config.get(ModelKeys.SECURITY_DOMAIN).asString(),service.getSecurityDomainContextInjector());
   }
+  EncryptableSubsystemHelper.processEncryption(config,service,builder);
   builder.setInitialMode(ServiceController.Mode.ACTIVE);
   builder.install();
 }

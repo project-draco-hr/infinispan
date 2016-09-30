@@ -1,2 +1,50 @@
 {
+  ROOT_LOGGER.endpointStarting(serverName);
+  boolean done=false;
+  try {
+    if (defaultCacheName != null) {
+      configurationBuilder.defaultCacheName(defaultCacheName);
+    }
+ else {
+      configurationBuilder.defaultCacheName(((DefaultCacheContainer)cacheManager.getValue()).getDefaultCacheName());
+    }
+    SocketBinding socketBinding=getSocketBinding().getValue();
+    InetSocketAddress socketAddress=socketBinding.getSocketAddress();
+    configurationBuilder.host(socketAddress.getAddress().getHostAddress());
+    configurationBuilder.port(socketAddress.getPort());
+    SecurityRealm encryptionRealm=encryptionSecurityRealm.getOptionalValue();
+    final String qual;
+    if (encryptionRealm != null) {
+      EncryptableServiceHelper.fillSecurityConfiguration(this,configurationBuilder.ssl());
+      qual=isSniEnabled() ? " (SSL+SNI)" : " (SSL)";
+    }
+ else {
+      qual="";
+    }
+    if (configurationBuilder instanceof HotRodServerConfigurationBuilder) {
+      HotRodServerConfigurationBuilder hotRodBuilder=(HotRodServerConfigurationBuilder)configurationBuilder;
+      if (serverContextName != null) {
+        hotRodBuilder.authentication().serverSubject(getServerSubject(serverContextName));
+      }
+      SecurityRealm authenticationRealm=authenticationSecurityRealm.getOptionalValue();
+      if (authenticationRealm != null) {
+        hotRodBuilder.authentication().serverAuthenticationProvider(new EndpointServerAuthenticationProvider(authenticationRealm));
+      }
+    }
+    ROOT_LOGGER.endpointStarted(serverName + qual,NetworkUtils.formatAddress(socketAddress));
+    startProtocolServer(configurationBuilder.build());
+    addToExtensionManagerIfHotRod();
+    done=true;
+  }
+ catch (  StartException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw ROOT_LOGGER.failedStart(e,serverName);
+  }
+ finally {
+    if (!done) {
+      doStop();
+    }
+  }
 }
