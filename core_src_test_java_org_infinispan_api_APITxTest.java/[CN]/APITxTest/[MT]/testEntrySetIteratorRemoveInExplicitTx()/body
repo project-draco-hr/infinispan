@@ -1,0 +1,16 @@
+{
+  assertEquals(0,cache.size());
+  cache.put("k1","v1");
+  TransactionManager tm1=TestingUtil.getTransactionManager(cache);
+  tm1.begin();
+  try {
+    try (CloseableIterator<Map.Entry<Object,Object>> entryIterator=cache.entrySet().iterator()){
+      entryIterator.next();
+      entryIterator.remove();
+      assertEquals(0,cache.size());
+    }
+   }
+  finally {
+    tm1.rollback();
+  }
+}
