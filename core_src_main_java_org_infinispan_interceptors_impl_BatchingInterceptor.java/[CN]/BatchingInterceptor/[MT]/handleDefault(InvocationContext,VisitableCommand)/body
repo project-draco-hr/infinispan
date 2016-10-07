@@ -1,2 +1,21 @@
 {
+  if (!ctx.isOriginLocal()) {
+    return invokeNext(ctx,command);
+  }
+  Transaction tx;
+  if (transactionManager.getTransaction() != null || (tx=batchContainer.getBatchTransaction()) == null) {
+    return invokeNext(ctx,command);
+  }
+  try {
+    transactionManager.resume(tx);
+    if (ctx.isInTxScope()) {
+      return invokeNext(ctx,command);
+    }
+    log.tracef("Called with a non-tx invocation context: %s",ctx);
+    InvocationContext txInvocationContext=invocationContextFactory.createInvocationContext(true,-1);
+    return invokeNext(txInvocationContext,command);
+  }
+  finally {
+    suspendTransaction();
+  }
 }
