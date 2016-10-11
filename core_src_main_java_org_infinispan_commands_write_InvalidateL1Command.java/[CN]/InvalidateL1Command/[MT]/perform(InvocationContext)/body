@@ -7,7 +7,12 @@
       DataLocality locality=dm.getLocality(k);
       if (!locality.isLocal()) {
         if (trace)         log.tracef("Invalidating key %s.",k);
-        invalidate(ctx,k);
+        MVCCEntry e=(MVCCEntry)ctx.lookupEntry(k);
+        notify(ctx,e,true);
+        e.setRemoved(true);
+        e.setChanged(true);
+        e.setCreated(false);
+        e.setValid(false);
       }
  else {
         log.tracef("Not invalidating key %s as it is local now",k);

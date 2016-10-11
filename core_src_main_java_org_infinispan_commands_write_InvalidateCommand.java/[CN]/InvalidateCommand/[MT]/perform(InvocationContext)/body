@@ -2,8 +2,15 @@
   if (trace) {
     log.tracef("Invalidating keys %s",toStr(Arrays.asList(keys)));
   }
-  for (  Object k : keys) {
-    invalidate(ctx,k);
+  for (  Object key : keys) {
+    MVCCEntry e=(MVCCEntry)ctx.lookupEntry(key);
+    if (e != null) {
+      notify(ctx,e,true);
+      e.setChanged(true);
+      e.setRemoved(true);
+      e.setCreated(false);
+      e.setValid(false);
+    }
   }
   return null;
 }
