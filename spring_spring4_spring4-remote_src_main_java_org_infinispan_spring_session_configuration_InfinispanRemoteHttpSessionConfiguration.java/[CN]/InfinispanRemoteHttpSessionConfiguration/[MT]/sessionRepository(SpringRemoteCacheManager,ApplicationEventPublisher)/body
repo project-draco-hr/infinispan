@@ -1,0 +1,16 @@
+{
+  Objects.requireNonNull(cacheName,"Cache name can not be null");
+  Objects.requireNonNull(cacheManager,"Cache Manager can not be null");
+  Objects.requireNonNull(eventPublisher,"Event Publisher can not be null");
+  SpringCache cacheForSessions=cacheManager.getCache(cacheName);
+  InfinispanRemoteSessionRepository sessionRepository=new InfinispanRemoteSessionRepository(cacheForSessions){
+    @Override public MapSession createSession(){
+      MapSession session=super.createSession();
+      session.setMaxInactiveIntervalInSeconds(maxInactiveIntervalInSeconds);
+      return session;
+    }
+  }
+;
+  sessionRepository.setApplicationEventPublisher(eventPublisher);
+  return sessionRepository;
+}

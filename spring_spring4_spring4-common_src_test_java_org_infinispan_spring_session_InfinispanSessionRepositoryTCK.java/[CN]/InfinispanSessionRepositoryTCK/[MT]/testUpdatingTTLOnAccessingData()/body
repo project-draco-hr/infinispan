@@ -1,0 +1,13 @@
+{
+  MapSession session=sessionRepository.createSession();
+  long accessTimeBeforeSaving=session.getLastAccessedTime();
+  sessionRepository.save(session);
+  long accessTimeAfterSaving=session.getLastAccessedTime();
+  long accessTimeAfterAccessing=sessionRepository.getSession(session.getId()).getLastAccessedTime();
+  assertTrue(accessTimeBeforeSaving > 0);
+  assertTrue(accessTimeBeforeSaving <= System.currentTimeMillis());
+  assertTrue(accessTimeAfterSaving > 0);
+  assertTrue(accessTimeAfterSaving <= System.currentTimeMillis());
+  assertTrue(accessTimeAfterAccessing > 0);
+  assertTrue(accessTimeAfterAccessing >= accessTimeAfterSaving);
+}
