@@ -1,0 +1,11 @@
+{
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  if (mode.isClustered()) {
+    builder.clustering().cacheMode(mode);
+  }
+  builder.jmxStatistics().enable().transaction().transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup()).autoCommit(autoCommit);
+  EmbeddedCacheManager cm=TestCacheManagerFactory.createClusteredCacheManager(builder);
+  timeService=new ControlledTimeService(0);
+  TestingUtil.replaceComponent(cm,TimeService.class,timeService,true);
+  return cm;
+}

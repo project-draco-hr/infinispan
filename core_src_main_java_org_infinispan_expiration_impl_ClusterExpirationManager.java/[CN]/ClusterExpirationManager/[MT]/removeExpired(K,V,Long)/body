@@ -1,3 +1,28 @@
 {
-  cache.removeExpired(key,value,lifespan);
+  if (needTransaction) {
+    TransactionManager tm=cache.getTransactionManager();
+    try {
+      Transaction tx=tm.suspend();
+      try {
+        tm.begin();
+        cache.removeExpired(key,value,lifespan);
+      }
+ catch (      NotSupportedException|SystemException e) {
+        tm.rollback();
+        throw e;
+      }
+ finally {
+        tm.commit();
+      }
+      if (tx != null) {
+        tm.resume(tx);
+      }
+    }
+ catch (    RollbackException|NotSupportedException|SystemException|HeuristicMixedException|HeuristicRollbackException|InvalidTransactionException e) {
+      throw new CacheException(e);
+    }
+  }
+ else {
+    cache.removeExpired(key,value,lifespan);
+  }
 }
