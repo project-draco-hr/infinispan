@@ -1,0 +1,22 @@
+{
+  try {
+    byte[] keyBytes=marshall(key);
+    semaphore.acquire();
+    try {
+      if (stopped) {
+        throw new PersistenceException("RocksDB is stopped");
+      }
+      if (db.get(keyBytes) == null) {
+        return false;
+      }
+      db.remove(keyBytes);
+    }
+  finally {
+      semaphore.release();
+    }
+    return true;
+  }
+ catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+}

@@ -1,0 +1,44 @@
+{
+  int batchSize=100;
+  ExecutorAllCompletionService eacs=new ExecutorAllCompletionService(executor);
+  final TaskContext taskContext=new TaskContextImpl();
+  List<Entry> entries=new ArrayList<>(batchSize);
+  try {
+    semaphore.acquire();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.",e);
+  }
+  try {
+    if (stopped) {
+      throw new PersistenceException("RocksDB is stopped");
+    }
+    Optional<RocksIterator> optionalIterator=wrapIterator(this.db);
+    if (optionalIterator.isPresent()) {
+      try (RocksIterator it=optionalIterator.get()){
+        for (it.seekToFirst(); it.isValid(); it.next()) {
+          Entry entry=new Entry(it.key(),it.value());
+          entries.add(entry);
+          if (entries.size() == batchSize) {
+            final List<Entry> batch=entries;
+            entries=new ArrayList<>(batchSize);
+            submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,batch,loadValues,loadMetadata);
+          }
+        }
+        if (!entries.isEmpty()) {
+          submitProcessTask(cacheLoaderTask,keyFilter,eacs,taskContext,entries,loadValues,loadMetadata);
+        }
+        eacs.waitUntilAllCompleted();
+        if (eacs.isExceptionThrown()) {
+          throw new PersistenceException("Execution exception!",eacs.getFirstException());
+        }
+      }
+ catch (      Exception e) {
+        throw new PersistenceException(e);
+      }
+    }
+  }
+  finally {
+    semaphore.release();
+  }
+}

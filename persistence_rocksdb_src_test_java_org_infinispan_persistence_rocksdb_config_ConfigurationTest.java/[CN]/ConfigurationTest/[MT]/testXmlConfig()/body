@@ -1,0 +1,14 @@
+{
+  InputStream configSTream=ConfigurationTest.class.getResourceAsStream("/config/rocksdb-config.xml");
+  ConfigurationBuilderHolder configHolder=new ParserRegistry().parse(configSTream);
+  Configuration cacheConfig=configHolder.getNamedConfigurationBuilders().get("testCache").build();
+  assertFalse(cacheConfig.persistence().passivation());
+  assertEquals(cacheConfig.persistence().stores().size(),1);
+  StoreConfiguration cacheLoaderConfig=cacheConfig.persistence().stores().get(0);
+  assertTrue(cacheLoaderConfig.shared());
+  assertTrue(cacheLoaderConfig.preload());
+  assertTrue(cacheLoaderConfig instanceof RocksDBStoreConfiguration);
+  RocksDBStoreConfiguration rocksdbConfig=(RocksDBStoreConfiguration)cacheLoaderConfig;
+  assertEquals("/tmp/rocksdb/52/data",rocksdbConfig.location());
+  assertEquals("/tmp/rocksdb/52/expired",rocksdbConfig.expiredLocation());
+}

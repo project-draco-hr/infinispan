@@ -70,10 +70,10 @@
     }
     return builder;
   }
- else   if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {
-    final LevelDBStoreConfigurationBuilder builder=persistenceBuilder.addStore(LevelDBStoreConfigurationBuilder.class);
-    final String path=((resolvedValue=LevelDBStoreConfigurationResource.PATH.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName+ File.separatorChar+ "data";
-    final String relativeTo=((resolvedValue=LevelDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
+ else   if (storeKey.equals(ModelKeys.ROCKSDB_STORE)) {
+    final RocksDBStoreConfigurationBuilder builder=persistenceBuilder.addStore(RocksDBStoreConfigurationBuilder.class);
+    final String path=((resolvedValue=RocksDBStoreConfigurationResource.PATH.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName+ File.separatorChar+ "data";
+    final String relativeTo=((resolvedValue=RocksDBStoreConfigurationResource.RELATIVE_TO.resolveModelAttribute(context,store)).isDefined()) ? resolvedValue.asString() : ServerEnvironment.SERVER_DATA_DIR;
     Injector<PathManager> injector=new SimpleInjector<PathManager>(){
       volatile PathManager.Callback.Handle callbackHandle;
       @Override public void inject(      PathManager value){
@@ -93,8 +93,8 @@
     final String expirationPath;
     if (expirationDefined) {
       ModelNode expiration=store.get(ModelKeys.EXPIRATION,ModelKeys.EXPIRATION_NAME);
-      expirationPath=LevelDBExpirationConfigurationResource.PATH.resolveModelAttribute(context,expiration).asString();
-      builder.expiryQueueSize(LevelDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context,expiration).asInt());
+      expirationPath=RocksDBExpirationConfigurationResource.PATH.resolveModelAttribute(context,expiration).asString();
+      builder.expiryQueueSize(RocksDBExpirationConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context,expiration).asInt());
     }
  else {
       expirationPath=InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + containerName+ File.separatorChar+ "expiration";
@@ -119,13 +119,8 @@
     if (store.hasDefined(ModelKeys.CLEAR_THRESHOLD))     builder.clearThreshold(store.get(ModelKeys.CLEAR_THRESHOLD).asInt());
     if (store.hasDefined(ModelKeys.COMPRESSION)) {
       ModelNode node=store.get(ModelKeys.COMPRESSION,ModelKeys.COMPRESSION_NAME);
-      final CompressionType compressionType=CompressionType.valueOf(LevelDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context,node).asString());
+      final CompressionType compressionType=CompressionType.valueOf(RocksDBCompressionConfigurationResource.TYPE.resolveModelAttribute(context,node).asString());
       builder.compressionType(compressionType);
-    }
-    if (store.hasDefined(ModelKeys.IMPLEMENTATION)) {
-      ModelNode node=store.get(ModelKeys.IMPLEMENTATION,ModelKeys.IMPLEMENTATION_NAME);
-      final LevelDBStoreConfiguration.ImplementationType implementationType=LevelDBStoreConfiguration.ImplementationType.valueOf(LevelDBImplementationConfigurationResource.TYPE.resolveModelAttribute(context,node).asString());
-      builder.implementationType(implementationType);
     }
     return builder;
   }

@@ -1,0 +1,16 @@
+{
+  GlobalConfiguration globalConfig=new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).transport().defaultTransport().build();
+  Configuration cacheConfig=new ConfigurationBuilder().persistence().addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDataDirectory).expiredLocation(tmpExpiredDirectory).build();
+  StoreConfiguration cacheLoaderConfig=cacheConfig.persistence().stores().get(0);
+  assertTrue(cacheLoaderConfig instanceof RocksDBStoreConfiguration);
+  RocksDBStoreConfiguration rocksdbConfig=(RocksDBStoreConfiguration)cacheLoaderConfig;
+  assertEquals(tmpDataDirectory,rocksdbConfig.location());
+  assertEquals(tmpExpiredDirectory,rocksdbConfig.expiredLocation());
+  EmbeddedCacheManager cacheManager=new DefaultCacheManager(globalConfig);
+  cacheManager.defineConfiguration("testCache",cacheConfig);
+  cacheManager.start();
+  Cache<String,String> cache=cacheManager.getCache("testCache");
+  cache.put("hello","there");
+  cache.stop();
+  cacheManager.stop();
+}

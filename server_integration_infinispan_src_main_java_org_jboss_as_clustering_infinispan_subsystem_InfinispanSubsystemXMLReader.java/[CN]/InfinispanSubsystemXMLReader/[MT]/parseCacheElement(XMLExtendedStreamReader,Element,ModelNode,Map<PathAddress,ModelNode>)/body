@@ -82,12 +82,27 @@ break;
 }
 case LEVELDB_STORE:
 {
+if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+throw ParseUtils.unexpectedElement(reader);
+}
+ else {
 this.parseLevelDBStore(reader,cache,operations);
+}
 break;
 }
 case REST_STORE:
 {
 this.parseRestStore(reader,cache,operations);
+break;
+}
+case ROCKSDB_STORE:
+{
+if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+this.parseRocksDBStore(reader,cache,operations);
+}
+ else {
+throw ParseUtils.unexpectedElement(reader);
+}
 break;
 }
 case INDEXING:

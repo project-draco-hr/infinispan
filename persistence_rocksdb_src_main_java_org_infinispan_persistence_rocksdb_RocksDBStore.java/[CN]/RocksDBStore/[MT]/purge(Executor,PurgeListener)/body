@@ -1,0 +1,81 @@
+{
+  try {
+    semaphore.acquire();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore: CacheStore is likely stopped.",e);
+  }
+  try {
+    if (stopped) {
+      throw new PersistenceException("RocksDB is stopped");
+    }
+    List<ExpiryEntry> entries=new ArrayList<>();
+    expiryEntryQueue.drainTo(entries);
+    for (    ExpiryEntry entry : entries) {
+      final byte[] expiryBytes=marshall(entry.expiry);
+      final byte[] keyBytes=marshall(entry.key);
+      final byte[] existingBytes=expiredDb.get(expiryBytes);
+      if (existingBytes != null) {
+        final Object existing=unmarshall(existingBytes);
+        if (existing instanceof List) {
+          ((List<Object>)existing).add(entry.key);
+          expiredDb.put(expiryBytes,marshall(existing));
+        }
+ else {
+          List<Object> al=new ArrayList<>(2);
+          al.add(existing);
+          al.add(entry.key);
+          expiredDb.put(expiryBytes,marshall(al));
+        }
+      }
+ else {
+        expiredDb.put(expiryBytes,keyBytes);
+      }
+    }
+    List<Long> times=new ArrayList<>();
+    List<Object> keys=new ArrayList<>();
+    long now=ctx.getTimeService().wallClockTime();
+    Optional<RocksIterator> optionalIterator=wrapIterator(expiredDb);
+    if (optionalIterator.isPresent()) {
+      try (RocksIterator it=optionalIterator.get()){
+        for (it.seekToFirst(); it.isValid(); it.next()) {
+          Long time=(Long)unmarshall(it.key());
+          if (time > now)           break;
+          times.add(time);
+          Object key=unmarshall(it.value());
+          if (key instanceof List)           keys.addAll((List<?>)key);
+ else           keys.add(key);
+        }
+        for (        Long time : times) {
+          expiredDb.remove(marshall(time));
+        }
+        if (!keys.isEmpty())         log.debugf("purge (up to) %d entries",keys.size());
+        int count=0;
+        for (        Object key : keys) {
+          byte[] keyBytes=marshall(key);
+          byte[] b=db.get(keyBytes);
+          if (b == null)           continue;
+          MarshalledEntry me=(MarshalledEntry)ctx.getMarshaller().objectFromByteBuffer(b);
+          if (me.getMetadata() != null && me.getMetadata().isExpired(now)) {
+            db.remove(keyBytes);
+            purgeListener.entryPurged(key);
+            count++;
+          }
+        }
+        if (count != 0)         log.debugf("purged %d entries",count);
+      }
+ catch (      Exception e) {
+        throw new PersistenceException(e);
+      }
+    }
+  }
+ catch (  PersistenceException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw new PersistenceException(e);
+  }
+ finally {
+    semaphore.release();
+  }
+}

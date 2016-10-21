@@ -1,0 +1,11 @@
+{
+  GlobalConfigurationBuilder gcb=new GlobalConfigurationBuilder();
+  gcb.globalJmxStatistics().allowDuplicateDomains(true);
+  ConfigurationBuilder builder=new ConfigurationBuilder();
+  builder.persistence().addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDirectory(this.getClass()));
+  EmbeddedCacheManager cm=new DefaultCacheManager(gcb.build(),builder.build());
+  Cache<String,String> cache=cm.getCache();
+  cache.put("a","a");
+  assertEquals("a",cache.get("a"));
+  cm.stop();
+}

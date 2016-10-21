@@ -1,0 +1,23 @@
+{
+  removeDataFilesIfExists();
+  controller.start(CONTAINER);
+  RemoteInfinispanCacheManager managerJmx=server.getCacheManager("local");
+  RemoteInfinispanCache cacheJmx=managerJmx.getCache("testcache");
+  RemoteCache<String,String> cache=createManager().getCache();
+  cache.clear();
+  assertEquals(0,cacheJmx.getNumberOfEntries());
+  cache.put("key1","1");
+  assertEquals("1",cache.get("key1"));
+  System.out.println("Stored via Hot Rod:");
+  assertTrue(dataDir.exists());
+  assertTrue(dataDir.isDirectory());
+  assertTrue(expiredDir.exists());
+  assertTrue(expiredDir.isDirectory());
+  controller.stop(CONTAINER);
+  RocksDB db=RocksDB.open(new Options(),dataDir.getAbsolutePath());
+  log.tracef("RocksDB file " + dataDir.getAbsolutePath() + " contents:");
+  for (RocksIterator i=db.newIterator(); i.isValid(); i.next()) {
+    log.tracef("key \"" + Hex.encodeHexString(i.key()) + "\": value \""+ Hex.encodeHexString(i.value())+ "\"");
+    assertNotNull(i.value());
+  }
+}

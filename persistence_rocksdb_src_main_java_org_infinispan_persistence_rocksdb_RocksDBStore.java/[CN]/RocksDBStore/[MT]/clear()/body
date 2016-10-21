@@ -1,0 +1,45 @@
+{
+  long count=0;
+  boolean destroyDatabase=false;
+  try {
+    semaphore.acquire();
+  }
+ catch (  InterruptedException e) {
+    throw new PersistenceException("Cannot acquire semaphore",e);
+  }
+  try {
+    if (stopped) {
+      throw new PersistenceException("RocksDB is stopped");
+    }
+    Optional<RocksIterator> optionalIterator=wrapIterator(this.db);
+    if (optionalIterator.isPresent() && configuration.clearThreshold() <= 0) {
+      try (RocksIterator it=optionalIterator.get()){
+        for (it.seekToFirst(); it.isValid(); it.next()) {
+          db.remove(it.key());
+          count++;
+          if (count > configuration.clearThreshold()) {
+            destroyDatabase=true;
+            break;
+          }
+        }
+      }
+ catch (      RocksDBException e) {
+        destroyDatabase=true;
+      }
+    }
+ else {
+      destroyDatabase=true;
+    }
+  }
+  finally {
+    semaphore.release();
+  }
+  if (destroyDatabase) {
+    try {
+      reinitAllDatabases();
+    }
+ catch (    Exception e) {
+      throw new PersistenceException(e);
+    }
+  }
+}
