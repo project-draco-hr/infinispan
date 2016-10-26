@@ -1,6 +1,6 @@
 {
   if (log.isDebugEnabled()) {
-    log.debugf("Building Lucene query for : %s",filterParsingResult.getJpaQuery());
+    log.debugf("Building Lucene query for : %s",filterParsingResult.getQueryString());
   }
   if (!isIndexed) {
     throw log.cannotRunLuceneQueriesIfNotIndexed();
@@ -8,6 +8,9 @@
   checkParameters(namedParameters);
   LuceneQueryParsingResult luceneParsingResult=transform(filterParsingResult,namedParameters);
   org.apache.lucene.search.Query luceneQuery=makeTypeQuery(luceneParsingResult.getQuery(),luceneParsingResult.getTargetEntityName());
+  if (log.isDebugEnabled()) {
+    log.debugf("The resulting Lucene query is : %s",luceneQuery.toString());
+  }
   CacheQuery cacheQuery=getSearchManager().getQuery(luceneQuery,getTargetedClass(filterParsingResult));
   if (luceneParsingResult.getSort() != null) {
     cacheQuery=cacheQuery.sort(luceneParsingResult.getSort());

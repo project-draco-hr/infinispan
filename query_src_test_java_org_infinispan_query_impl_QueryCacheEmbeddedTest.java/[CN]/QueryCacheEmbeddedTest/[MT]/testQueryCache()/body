@@ -9,9 +9,9 @@
   TestingUtil.replaceField(queryCacheSpy,"queryCache",queryEngine,QueryEngine.class);
   QueryFactory qf=Search.getQueryFactory(cache);
   QueryBuilder queryQueryBuilder=qf.from(UserHS.class).having("name").eq("John").toBuilder();
-  String jpaQuery=((BaseQueryBuilder)queryQueryBuilder).accept(new JPAQueryGenerator());
+  String queryString=((BaseQueryBuilder)queryQueryBuilder).accept(new JPAQueryGenerator());
   AtomicReference<Object> lastGetResult=captureLastGetResult(queryCacheSpy);
-  KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<>(jpaQuery,FilterParsingResult.class);
+  KeyValuePair<String,Class> queryCacheKey=new KeyValuePair<>(queryString,FilterParsingResult.class);
   FilterParsingResult cachedParsingResult=queryCache.get(queryCacheKey);
   assertNull(cachedParsingResult);
   queryQueryBuilder.build().list();
