@@ -3,20 +3,32 @@
   String[] propertyPath=propertyValueExpr.getPropertyPath();
   ensureNotAnalyzed(propertyPath);
   StringBuilder lucenePattern=new StringBuilder(likeExpr.getPattern());
+  boolean isEscaped=false;
   for (int i=0; i < lucenePattern.length(); i++) {
-switch (lucenePattern.charAt(i)) {
-case LUCENE_MULTIPLE_CHARACTERS_WILDCARD:
-case LUCENE_SINGLE_CHARACTER_WILDCARD:
-      lucenePattern.insert(i,'\\');
-    i++;
-  break;
-case '%':
-lucenePattern.setCharAt(i,LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
-break;
-case '_':
-lucenePattern.setCharAt(i,LUCENE_SINGLE_CHARACTER_WILDCARD);
-break;
-}
-}
-return applyFieldBridge(propertyPath,queryBuilder.keyword().wildcard().onField(StringHelper.join(propertyPath))).matching(lucenePattern.toString()).createQuery();
+    char c=lucenePattern.charAt(i);
+    if (!isEscaped && c == likeExpr.getEscapeChar()) {
+      isEscaped=true;
+      lucenePattern.deleteCharAt(i);
+    }
+ else {
+      if (isEscaped) {
+        isEscaped=false;
+      }
+ else {
+        if (c == LikeExpr.MULTIPLE_CHARACTERS_WILDCARD) {
+          lucenePattern.setCharAt(i,LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
+          continue;
+        }
+ else         if (c == LikeExpr.SINGLE_CHARACTER_WILDCARD) {
+          lucenePattern.setCharAt(i,LUCENE_SINGLE_CHARACTER_WILDCARD);
+          continue;
+        }
+      }
+      if (c == LUCENE_SINGLE_CHARACTER_WILDCARD || c == LUCENE_MULTIPLE_CHARACTERS_WILDCARD) {
+        lucenePattern.insert(i,LUCENE_WILDCARD_ESCAPE_CHARACTER);
+        i++;
+      }
+    }
+  }
+  return applyFieldBridge(propertyPath,queryBuilder.keyword().wildcard().onField(StringHelper.join(propertyPath))).matching(lucenePattern.toString()).createQuery();
 }

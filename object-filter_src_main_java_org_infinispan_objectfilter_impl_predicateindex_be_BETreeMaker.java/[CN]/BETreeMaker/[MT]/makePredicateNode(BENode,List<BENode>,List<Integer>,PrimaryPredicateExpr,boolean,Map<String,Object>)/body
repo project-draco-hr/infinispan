@@ -52,9 +52,10 @@ throw new IllegalStateException("Unexpected comparison type: " + expr.getCompari
 addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,IsNullCondition.INSTANCE));
 }
  else if (condition instanceof LikeExpr) {
-addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,new RegexCondition(((LikeExpr)condition).getPattern())));
+LikeExpr likeExpr=(LikeExpr)condition;
+addPredicateNode(parent,nodes,treeCounters,isNegated,path,new Predicate<>(isRepeated,new LikeCondition(likeExpr.getPattern(),likeExpr.getEscapeChar())));
 }
  else {
-throw new IllegalStateException("Unexpected condition type: " + condition);
+throw new IllegalStateException("Unexpected condition type (" + condition.getClass().getSimpleName() + "): "+ condition);
 }
 }
