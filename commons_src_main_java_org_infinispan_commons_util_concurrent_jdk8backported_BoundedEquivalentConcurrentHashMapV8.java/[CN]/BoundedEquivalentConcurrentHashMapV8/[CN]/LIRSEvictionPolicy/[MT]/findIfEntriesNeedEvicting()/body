@@ -25,21 +25,9 @@
       break;
     }
   }
-  Collection<LIRSNode<K,V>> tlEvicted=nodesToEvictTL.get();
-  if (tlEvicted == null) {
-    tlEvicted=Collections.emptyList();
-  }
- else {
-    nodesToEvictTL.remove();
-  }
-  if (evictCount != 0 || !tlEvicted.isEmpty()) {
-    @SuppressWarnings("unchecked") LIRSNode<K,V>[] queueContents=new LIRSNode[evictCount + tlEvicted.size()];
-    Iterator<LIRSNode<K,V>> tlIterator=tlEvicted.iterator();
+  if (evictCount != 0) {
+    @SuppressWarnings("unchecked") LIRSNode<K,V>[] queueContents=new LIRSNode[evictCount];
     int offset=0;
-    while (tlIterator.hasNext()) {
-      queueContents[evictCount + offset]=tlIterator.next();
-      offset++;
-    }
     int evictedValues=evictCount;
     int decEvict=evictCount;
     Object[] hirDetails=new Object[2];
@@ -111,7 +99,7 @@ if (tabAt(tab,i) == f) {
 synchronized (evict) {
     if (evict.state == Recency.EVICTING) {
       evict.setState(Recency.EVICTED);
-      V prevValue=map.replaceNode(evict.getKey(),null,null,true);
+      V prevValue=map.replaceNode(evict.getKey(),null,null,false,true);
       removedNodes.add(new Node<>(-1,null,evict.getKey(),prevValue,null));
     }
  else     if (evict.state == Recency.HIR_NONRESIDENT) {
